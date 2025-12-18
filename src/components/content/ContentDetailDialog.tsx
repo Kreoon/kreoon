@@ -17,7 +17,7 @@ import { es } from "date-fns/locale";
 import { 
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
-  Clock, CheckCircle, Trash2, MessageSquare, Send
+  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen
 } from "lucide-react";
 import {
   AlertDialog,
@@ -809,38 +809,72 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
           {/* Video Tab */}
           <TabsContent value="video" className="space-y-6 mt-4">
-            {/* Video Final */}
-            <div className="space-y-3">
-              <h4 className="font-medium flex items-center gap-2">
-                <Video className="h-4 w-4" /> Video Final
-              </h4>
-              
-              {content.video_url ? (
-                <div className="space-y-2">
-                  <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                    {renderVideoEmbed(content.video_url)}
+            {/* Layout en dos columnas para videos verticales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Video Final */}
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Video className="h-4 w-4" /> Video Final
+                </h4>
+                
+                {content.video_url ? (
+                  <div className="space-y-2">
+                    <div className="rounded-lg overflow-hidden bg-muted flex items-center justify-center" style={{ minHeight: '400px', maxHeight: '500px' }}>
+                      {renderVideoEmbed(content.video_url)}
+                    </div>
+                    <a 
+                      href={content.video_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                    >
+                      Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
                   </div>
-                  <a 
-                    href={content.video_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline flex items-center gap-1"
-                  >
-                    {content.video_url} <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              ) : (
-                <div className="aspect-video rounded-lg border-2 border-dashed border-border flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No hay video cargado</p>
-                    <p className="text-xs">Agrega una URL en la pestaña General</p>
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ minHeight: '300px' }}>
+                    <div className="text-center text-muted-foreground">
+                      <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No hay video cargado</p>
+                      <p className="text-xs">Agrega una URL en la pestaña General</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+
+              {/* Video de Referencia */}
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <LinkIcon className="h-4 w-4" /> Video de Referencia
+                </h4>
+                
+                {content.reference_url ? (
+                  <div className="space-y-2">
+                    <div className="rounded-lg overflow-hidden bg-muted flex items-center justify-center" style={{ minHeight: '400px', maxHeight: '500px' }}>
+                      {renderVideoEmbed(content.reference_url)}
+                    </div>
+                    <a 
+                      href={content.reference_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                    >
+                      Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ minHeight: '300px' }}>
+                    <div className="text-center text-muted-foreground">
+                      <LinkIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No hay video de referencia</p>
+                      <p className="text-xs">Agrega una URL en la pestaña General</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Comentarios del Cliente - Justo debajo del video final */}
+            {/* Comentarios del Cliente - Justo debajo de los videos */}
             <div className="space-y-3 pt-4 border-t">
               <h4 className="font-medium flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" /> Comentarios / Novedades
@@ -886,59 +920,33 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
             </div>
 
-            {/* Video de Referencia */}
-            <div className="space-y-3 pt-4 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <LinkIcon className="h-4 w-4" /> Video de Referencia
-              </h4>
-              
-              {content.reference_url ? (
-                <div className="space-y-2">
-                  <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                    {renderVideoEmbed(content.reference_url)}
-                  </div>
-                  <a 
-                    href={content.reference_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline flex items-center gap-1"
-                  >
-                    {content.reference_url} <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              ) : (
-                <div className="aspect-video rounded-lg border-2 border-dashed border-border flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <LinkIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No hay video de referencia</p>
-                    <p className="text-xs">Agrega una URL en la pestaña General</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Carpeta Drive - Contenido Crudo */}
             {content.drive_url && (
-              <div className="space-y-2 pt-4 border-t">
+              <div className="space-y-3 pt-4 border-t">
                 <h4 className="font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4" /> Carpeta de Contenido Crudo (Drive)
+                  <FolderOpen className="h-4 w-4" /> Contenido Crudo (Drive)
                 </h4>
-                <div className="rounded-lg overflow-hidden bg-muted border" style={{ height: '400px' }}>
-                  <iframe
-                    src={content.drive_url.includes('/folders/') 
-                      ? content.drive_url.replace('/folders/', '/embeddedfolderview?id=').split('?')[0] + '#list'
-                      : content.drive_url.replace('/view', '/preview')}
-                    className="w-full h-full"
-                    frameBorder="0"
-                  />
-                </div>
                 <a 
                   href={content.drive_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                  className="block group"
                 >
-                  Abrir carpeta en Drive <ExternalLink className="h-3 w-3" />
+                  <div className="rounded-xl border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-8 transition-all hover:border-primary/50 hover:from-primary/10 hover:to-primary/20 hover:shadow-lg">
+                    <div className="flex flex-col items-center justify-center text-center space-y-4">
+                      <div className="p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                        <FolderOpen className="h-12 w-12 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-lg text-foreground">Carpeta de Contenido Crudo</p>
+                        <p className="text-sm text-muted-foreground mt-1">Haz clic para abrir en Google Drive</p>
+                      </div>
+                      <div className="flex items-center gap-2 text-primary font-medium">
+                        <span>Abrir carpeta</span>
+                        <ExternalLink className="h-4 w-4" />
+                      </div>
+                    </div>
+                  </div>
                 </a>
               </div>
             )}
