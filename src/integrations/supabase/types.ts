@@ -298,39 +298,60 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           avatar_url: string | null
           bio: string | null
+          city: string | null
           created_at: string | null
+          document_number: string | null
+          document_type: string | null
           email: string
+          facebook: string | null
           full_name: string
           id: string
+          instagram: string | null
           is_ambassador: boolean | null
           phone: string | null
           portfolio_url: string | null
+          tiktok: string | null
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
           created_at?: string | null
+          document_number?: string | null
+          document_type?: string | null
           email: string
+          facebook?: string | null
           full_name: string
           id: string
+          instagram?: string | null
           is_ambassador?: boolean | null
           phone?: string | null
           portfolio_url?: string | null
+          tiktok?: string | null
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
           created_at?: string | null
+          document_number?: string | null
+          document_type?: string | null
           email?: string
+          facebook?: string | null
           full_name?: string
           id?: string
+          instagram?: string | null
           is_ambassador?: boolean | null
           phone?: string | null
           portfolio_url?: string | null
+          tiktok?: string | null
           updated_at?: string | null
         }
         Relationships: []
