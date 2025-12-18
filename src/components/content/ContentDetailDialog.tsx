@@ -295,52 +295,85 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     }
   };
 
+// Helper function to check if URL is vertical video (social media)
+  const isVerticalVideo = (url: string) => {
+    return url.includes('instagram.com') || 
+           url.includes('tiktok.com') || 
+           url.includes('/shorts/') ||
+           url.includes('/reel/');
+  };
+
 // Helper function to render embedded video player
-  const renderVideoEmbed = (url: string, label?: string) => {
+  const renderVideoEmbed = (url: string) => {
     if (!url) return null;
+    
+    const isVertical = isVerticalVideo(url);
+    const containerClass = isVertical 
+      ? "w-full h-full flex items-center justify-center"
+      : "w-full h-full";
+    const iframeClass = isVertical
+      ? "w-auto h-full max-w-full"
+      : "w-full h-full";
     
     // TikTok
     if (url.includes('tiktok.com')) {
       const videoId = url.match(/video\/(\d+)/)?.[1];
       if (videoId) {
         return (
-          <iframe
-            src={`https://www.tiktok.com/embed/v2/${videoId}`}
-            className="w-full h-full"
-            allowFullScreen
-          />
+          <div className={containerClass}>
+            <iframe
+              src={`https://www.tiktok.com/embed/v2/${videoId}`}
+              className={iframeClass}
+              style={isVertical ? { aspectRatio: '9/16', height: '100%' } : undefined}
+              allowFullScreen
+            />
+          </div>
         );
       }
     }
     
     // Instagram - Clean URL and create embed
     if (url.includes('instagram.com')) {
-      // Extract the base URL without query parameters
       let cleanUrl = url.split('?')[0];
-      // Remove trailing slash
       cleanUrl = cleanUrl.replace(/\/$/, '');
-      // Add /embed to the path
-      const embedUrl = cleanUrl + '/embed';
+      const embedUrl = cleanUrl + '/embed/captioned';
       return (
-        <iframe
-          src={embedUrl}
-          className="w-full h-full"
-          allowFullScreen
-          scrolling="no"
-          frameBorder="0"
-        />
+        <div className={containerClass}>
+          <iframe
+            src={embedUrl}
+            className={iframeClass}
+            style={isVertical ? { aspectRatio: '9/16', height: '100%' } : undefined}
+            allowFullScreen
+            scrolling="no"
+            frameBorder="0"
+          />
+        </div>
       );
     }
     
-    // YouTube
+    // YouTube Shorts (vertical)
+    if (url.includes('/shorts/')) {
+      const embedUrl = url.replace('/shorts/', '/embed/');
+      return (
+        <div className={containerClass}>
+          <iframe
+            src={embedUrl}
+            className={iframeClass}
+            style={{ aspectRatio: '9/16', height: '100%' }}
+            allowFullScreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          />
+        </div>
+      );
+    }
+    
+    // YouTube (horizontal)
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       let embedUrl = url;
       if (url.includes('watch?v=')) {
         embedUrl = url.replace('watch?v=', 'embed/');
       } else if (url.includes('youtu.be/')) {
         embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
-      } else if (url.includes('/shorts/')) {
-        embedUrl = url.replace('/shorts/', '/embed/');
       }
       return (
         <iframe
@@ -819,7 +852,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 
                 {content.video_url ? (
                   <div className="space-y-2">
-                    <div className="rounded-lg overflow-hidden bg-muted flex items-center justify-center" style={{ minHeight: '400px', maxHeight: '500px' }}>
+                    <div 
+                      className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
+                      style={{ height: '480px' }}
+                    >
                       {renderVideoEmbed(content.video_url)}
                     </div>
                     <a 
@@ -832,7 +868,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     </a>
                   </div>
                 ) : (
-                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ minHeight: '300px' }}>
+                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '300px' }}>
                     <div className="text-center text-muted-foreground">
                       <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
                       <p>No hay video cargado</p>
@@ -850,7 +886,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 
                 {content.reference_url ? (
                   <div className="space-y-2">
-                    <div className="rounded-lg overflow-hidden bg-muted flex items-center justify-center" style={{ minHeight: '400px', maxHeight: '500px' }}>
+                    <div 
+                      className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
+                      style={{ height: '480px' }}
+                    >
                       {renderVideoEmbed(content.reference_url)}
                     </div>
                     <a 
@@ -863,7 +902,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     </a>
                   </div>
                 ) : (
-                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ minHeight: '300px' }}>
+                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '300px' }}>
                     <div className="text-center text-muted-foreground">
                       <LinkIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
                       <p>No hay video de referencia</p>
