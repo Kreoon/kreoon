@@ -313,16 +313,21 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       }
     }
     
-    // Instagram
+    // Instagram - Clean URL and create embed
     if (url.includes('instagram.com')) {
-      const embedUrl = url.includes('/reel/') || url.includes('/p/') 
-        ? url.replace(/\/$/, '') + '/embed'
-        : url;
+      // Extract the base URL without query parameters
+      let cleanUrl = url.split('?')[0];
+      // Remove trailing slash
+      cleanUrl = cleanUrl.replace(/\/$/, '');
+      // Add /embed to the path
+      const embedUrl = cleanUrl + '/embed';
       return (
         <iframe
           src={embedUrl}
           className="w-full h-full"
           allowFullScreen
+          scrolling="no"
+          frameBorder="0"
         />
       );
     }
@@ -835,65 +840,14 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               )}
             </div>
 
-            {/* Video de Referencia */}
-            <div className="space-y-3 pt-4 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <LinkIcon className="h-4 w-4" /> Video de Referencia
-              </h4>
-              
-              {content.reference_url ? (
-                <div className="space-y-2">
-                  <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                    {renderVideoEmbed(content.reference_url)}
-                  </div>
-                  <a 
-                    href={content.reference_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline flex items-center gap-1"
-                  >
-                    {content.reference_url} <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              ) : (
-                <div className="aspect-video rounded-lg border-2 border-dashed border-border flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <LinkIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No hay video de referencia</p>
-                    <p className="text-xs">Agrega una URL en la pestaña General</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Drive URL for raw video */}
-            {content.drive_url && (
-              <div className="space-y-2 pt-4 border-t">
-                <h4 className="font-medium flex items-center gap-2">
-                  <Video className="h-4 w-4" /> Video Crudo (Drive)
-                </h4>
-                <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                  {renderVideoEmbed(content.drive_url)}
-                </div>
-                <a 
-                  href={content.drive_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1"
-                >
-                  {content.drive_url} <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            )}
-
-            {/* Comentarios del Cliente */}
+            {/* Comentarios del Cliente - Justo debajo del video final */}
             <div className="space-y-3 pt-4 border-t">
               <h4 className="font-medium flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" /> Comentarios / Novedades
               </h4>
               
               {/* Lista de comentarios */}
-              <div className="space-y-3 max-h-60 overflow-y-auto">
+              <div className="space-y-3 max-h-48 overflow-y-auto">
                 {comments.length > 0 ? (
                   comments.map((comment) => (
                     <div key={comment.id} className="p-3 bg-muted rounded-lg">
@@ -931,6 +885,63 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </Button>
               </div>
             </div>
+
+            {/* Video de Referencia */}
+            <div className="space-y-3 pt-4 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <LinkIcon className="h-4 w-4" /> Video de Referencia
+              </h4>
+              
+              {content.reference_url ? (
+                <div className="space-y-2">
+                  <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                    {renderVideoEmbed(content.reference_url)}
+                  </div>
+                  <a 
+                    href={content.reference_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                  >
+                    {content.reference_url} <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              ) : (
+                <div className="aspect-video rounded-lg border-2 border-dashed border-border flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <LinkIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No hay video de referencia</p>
+                    <p className="text-xs">Agrega una URL en la pestaña General</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Carpeta Drive - Contenido Crudo */}
+            {content.drive_url && (
+              <div className="space-y-2 pt-4 border-t">
+                <h4 className="font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4" /> Carpeta de Contenido Crudo (Drive)
+                </h4>
+                <div className="rounded-lg overflow-hidden bg-muted border" style={{ height: '400px' }}>
+                  <iframe
+                    src={content.drive_url.includes('/folders/') 
+                      ? content.drive_url.replace('/folders/', '/embeddedfolderview?id=').split('?')[0] + '#list'
+                      : content.drive_url.replace('/view', '/preview')}
+                    className="w-full h-full"
+                    frameBorder="0"
+                  />
+                </div>
+                <a 
+                  href={content.drive_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                >
+                  Abrir carpeta en Drive <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 
