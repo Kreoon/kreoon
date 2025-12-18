@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
@@ -7,7 +9,7 @@ import { RecentActivityReal } from "@/components/dashboard/RecentActivityReal";
 import { TopCreatorsReal } from "@/components/dashboard/TopCreatorsReal";
 import { CreateContentDialog } from "@/components/content/CreateContentDialog";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
-import { Video, Users, CheckCircle, Clock, Search, Bell, Plus, Filter } from "lucide-react";
+import { Video, Users, CheckCircle, Clock, Search, Bell, Plus, Filter, CalendarIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
@@ -17,6 +19,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 // Determinar qué columnas son visibles para cada rol
 const getVisibleColumns = (role: string, contentItem?: Content, userId?: string) => {
@@ -120,6 +125,8 @@ const Index = () => {
   const [filterEditorId, setFilterEditorId] = useState<string>('all');
   const [filterClientId, setFilterClientId] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [startDateFilter, setStartDateFilter] = useState<Date | undefined>(undefined);
+  const [deadlineFilter, setDeadlineFilter] = useState<Date | undefined>(undefined);
   
   // Listas para filtros
   const [creators, setCreators] = useState<{id: string; name: string}[]>([]);
@@ -213,16 +220,32 @@ const Index = () => {
   // Columnas visibles
   const visibleColumns = getVisibleColumns(primaryRole);
 
-  // Filtrar contenido por búsqueda
+  // Filtrar contenido por búsqueda y fechas
   const filteredContent = content.filter(c => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      c.title.toLowerCase().includes(term) ||
-      c.description?.toLowerCase().includes(term) ||
-      c.client?.name?.toLowerCase().includes(term) ||
-      c.creator?.full_name?.toLowerCase().includes(term)
-    );
+    // Filtro de texto
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = (
+        c.title.toLowerCase().includes(term) ||
+        c.description?.toLowerCase().includes(term) ||
+        c.client?.name?.toLowerCase().includes(term)
+      );
+      if (!matchesSearch) return false;
+    }
+    
+    // Filtro de fecha inicial
+    if (startDateFilter) {
+      const contentStartDate = c.start_date ? new Date(c.start_date) : null;
+      if (!contentStartDate || contentStartDate < startDateFilter) return false;
+    }
+    
+    // Filtro de fecha de entrega
+    if (deadlineFilter) {
+      const contentDeadline = c.deadline ? new Date(c.deadline) : null;
+      if (!contentDeadline || contentDeadline > deadlineFilter) return false;
+    }
+    
+    return true;
   });
 
   // Agrupar contenido por estado
@@ -357,8 +380,71 @@ const Index = () => {
 
           {/* Filtros para admin */}
           {isAdmin && (
-            <div className="flex items-center gap-3 px-6 pb-4">
+            <div className="flex flex-wrap items-center gap-3 px-6 pb-4">
               <Filter className="h-4 w-4 text-muted-foreground" />
+              
+              {/* Filtro Fecha Inicial */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[180px] justify-start text-left font-normal",
+                      !startDateFilter && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDateFilter ? format(startDateFilter, "dd/MM/yyyy", { locale: es }) : "Fecha inicial"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDateFilter}
+                    onSelect={setStartDateFilter}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {startDateFilter && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setStartDateFilter(undefined)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+
+              {/* Filtro Fecha Entrega */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[180px] justify-start text-left font-normal",
+                      !deadlineFilter && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {deadlineFilter ? format(deadlineFilter, "dd/MM/yyyy", { locale: es }) : "Fecha entrega"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={deadlineFilter}
+                    onSelect={setDeadlineFilter}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {deadlineFilter && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeadlineFilter(undefined)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+
+              <div className="h-6 w-px bg-border" />
+
               <Select value={filterCreatorId} onValueChange={setFilterCreatorId}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Todos los creadores" />
