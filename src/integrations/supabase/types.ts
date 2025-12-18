@@ -57,22 +57,35 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          campaign_week: string | null
           client_id: string | null
           created_at: string | null
+          creator_assigned_at: string | null
           creator_id: string | null
+          creator_paid: boolean | null
           creator_payment: number | null
           deadline: string | null
+          delivered_at: string | null
           description: string | null
+          drive_url: string | null
+          editor_assigned_at: string | null
           editor_id: string | null
+          editor_paid: boolean | null
           editor_payment: number | null
           id: string
+          invoiced: boolean | null
           is_ambassador_content: boolean | null
           notes: string | null
           paid_at: string | null
+          product: string | null
+          recorded_at: string | null
+          reference_url: string | null
           script: string | null
           script_approved_at: string | null
           script_approved_by: string | null
+          start_date: string | null
           status: Database["public"]["Enums"]["content_status"] | null
+          strategist_id: string | null
           thumbnail_url: string | null
           title: string
           updated_at: string | null
@@ -81,22 +94,35 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          campaign_week?: string | null
           client_id?: string | null
           created_at?: string | null
+          creator_assigned_at?: string | null
           creator_id?: string | null
+          creator_paid?: boolean | null
           creator_payment?: number | null
           deadline?: string | null
+          delivered_at?: string | null
           description?: string | null
+          drive_url?: string | null
+          editor_assigned_at?: string | null
           editor_id?: string | null
+          editor_paid?: boolean | null
           editor_payment?: number | null
           id?: string
+          invoiced?: boolean | null
           is_ambassador_content?: boolean | null
           notes?: string | null
           paid_at?: string | null
+          product?: string | null
+          recorded_at?: string | null
+          reference_url?: string | null
           script?: string | null
           script_approved_at?: string | null
           script_approved_by?: string | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["content_status"] | null
+          strategist_id?: string | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string | null
@@ -105,22 +131,35 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          campaign_week?: string | null
           client_id?: string | null
           created_at?: string | null
+          creator_assigned_at?: string | null
           creator_id?: string | null
+          creator_paid?: boolean | null
           creator_payment?: number | null
           deadline?: string | null
+          delivered_at?: string | null
           description?: string | null
+          drive_url?: string | null
+          editor_assigned_at?: string | null
           editor_id?: string | null
+          editor_paid?: boolean | null
           editor_payment?: number | null
           id?: string
+          invoiced?: boolean | null
           is_ambassador_content?: boolean | null
           notes?: string | null
           paid_at?: string | null
+          product?: string | null
+          recorded_at?: string | null
+          reference_url?: string | null
           script?: string | null
           script_approved_at?: string | null
           script_approved_by?: string | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["content_status"] | null
+          strategist_id?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string | null

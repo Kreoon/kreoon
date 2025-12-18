@@ -24,7 +24,8 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
           *,
           client:clients(*),
           creator:profiles!content_creator_id_fkey(*),
-          editor:profiles!content_editor_id_fkey(*)
+          editor:profiles!content_editor_id_fkey(*),
+          strategist:profiles!content_strategist_id_fkey(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -125,7 +126,8 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
           *,
           client:clients(*),
           creator:profiles!content_creator_id_fkey(*),
-          editor:profiles!content_editor_id_fkey(*)
+          editor:profiles!content_editor_id_fkey(*),
+          strategist:profiles!content_strategist_id_fkey(*)
         `)
         .order('created_at', { ascending: false });
 
