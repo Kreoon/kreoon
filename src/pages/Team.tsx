@@ -259,10 +259,14 @@ export default function Team() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="team" className="w-full">
+      <Tabs defaultValue="all-users" className="w-full">
         <TabsList>
-          <TabsTrigger value="team" className="gap-2">
+          <TabsTrigger value="all-users" className="gap-2">
             <Users className="w-4 h-4" />
+            Todos los Usuarios
+          </TabsTrigger>
+          <TabsTrigger value="team" className="gap-2">
+            <Shield className="w-4 h-4" />
             Equipo
           </TabsTrigger>
           <TabsTrigger value="clients" className="gap-2">
@@ -270,6 +274,71 @@ export default function Team() {
             Clientes
           </TabsTrigger>
         </TabsList>
+
+        {/* All Users Tab */}
+        <TabsContent value="all-users" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Usuarios Registrados ({profiles.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {profiles.map(profile => (
+                  <div key={profile.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={profile.avatar_url || ''} />
+                        <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{profile.full_name}</p>
+                          {profile.is_ambassador && (
+                            <Star className="w-4 h-4 text-primary fill-primary" />
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{profile.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      {profile.roles.length === 0 ? (
+                        <Badge variant="outline" className="text-muted-foreground">
+                          Sin rol
+                        </Badge>
+                      ) : (
+                        profile.roles.map(role => (
+                          <Badge 
+                            key={role} 
+                            className={`${ROLE_COLORS[role]} cursor-pointer hover:opacity-75`}
+                            onClick={() => handleRemoveRole(profile.id, role)}
+                            title="Clic para eliminar rol"
+                          >
+                            {ROLE_LABELS[role]} ×
+                          </Badge>
+                        ))
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => {
+                          setSelectedUser(profile);
+                          setAddRoleDialog(true);
+                        }}
+                      >
+                        <Plus className="w-3 h-3" />
+                        Rol
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="team" className="mt-6 space-y-6">
           {/* Admins */}
