@@ -250,8 +250,9 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         </DialogHeader>
 
         <Tabs defaultValue="general" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="video">Video</TabsTrigger>
             <TabsTrigger value="equipo">Equipo</TabsTrigger>
             <TabsTrigger value="fechas">Fechas</TabsTrigger>
             {isAdmin && <TabsTrigger value="pagos">Pagos</TabsTrigger>}
@@ -607,6 +608,93 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
             </TabsContent>
           )}
+
+          {/* Video Tab */}
+          <TabsContent value="video" className="space-y-4 mt-4">
+            <div className="space-y-4">
+              <h4 className="font-medium flex items-center gap-2">
+                <Video className="h-4 w-4" /> Video Final
+              </h4>
+              
+              {content.video_url ? (
+                <div className="space-y-3">
+                  {/* Embedded Video */}
+                  <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                    {content.video_url.includes('youtube.com') || content.video_url.includes('youtu.be') ? (
+                      <iframe
+                        src={content.video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                        className="w-full h-full"
+                        allowFullScreen
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      />
+                    ) : content.video_url.includes('vimeo.com') ? (
+                      <iframe
+                        src={content.video_url.replace('vimeo.com', 'player.vimeo.com/video')}
+                        className="w-full h-full"
+                        allowFullScreen
+                      />
+                    ) : content.video_url.includes('drive.google.com') ? (
+                      <iframe
+                        src={content.video_url.replace('/view', '/preview')}
+                        className="w-full h-full"
+                        allowFullScreen
+                      />
+                    ) : content.video_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                      <video
+                        src={content.video_url}
+                        className="w-full h-full object-contain"
+                        controls
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <a 
+                          href={content.video_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-2"
+                        >
+                          <ExternalLink className="h-5 w-5" />
+                          Ver video en nueva pestaña
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <a 
+                    href={content.video_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                  >
+                    {content.video_url} <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              ) : (
+                <div className="aspect-video rounded-lg border-2 border-dashed border-border flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No hay video cargado</p>
+                    <p className="text-xs">Agrega una URL en la pestaña General</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Drive URL for raw video */}
+              {content.drive_url && (
+                <div className="pt-4 border-t">
+                  <Label className="text-muted-foreground text-xs">Video Crudo (Drive)</Label>
+                  <a 
+                    href={content.drive_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline flex items-center gap-1 mt-1"
+                  >
+                    {content.drive_url} <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
+            </div>
+          </TabsContent>
         </Tabs>
 
         {/* Actions */}
