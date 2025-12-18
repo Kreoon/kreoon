@@ -12,10 +12,13 @@ import Creators from "./pages/Creators";
 import Scripts from "./pages/Scripts";
 import Clients from "./pages/Clients";
 import Settings from "./pages/Settings";
+import Team from "./pages/Team";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import EditorDashboard from "./pages/EditorDashboard";
 import ClientDashboard from "./pages/ClientDashboard";
+import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
+import { MainLayout } from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient();
 
@@ -28,12 +31,14 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<ProtectedRoute allowedRoles={['admin']}><Index /></ProtectedRoute>} />
-            <Route path="/content" element={<ProtectedRoute allowedRoles={['admin']}><Content /></ProtectedRoute>} />
-            <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><Creators /></ProtectedRoute>} />
-            <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin']}><Scripts /></ProtectedRoute>} />
-            <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><Clients /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><Settings /></ProtectedRoute>} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Index /></MainLayout></ProtectedRoute>} />
+            <Route path="/content" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
+            <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Creators /></MainLayout></ProtectedRoute>} />
+            <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
+            <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
+            <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
             <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><CreatorDashboard /></ProtectedRoute>} />
             <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><EditorDashboard /></ProtectedRoute>} />
             <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><ClientDashboard /></ProtectedRoute>} />
