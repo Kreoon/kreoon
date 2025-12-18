@@ -1,0 +1,108 @@
+import { 
+  LayoutDashboard, 
+  Video, 
+  Users, 
+  FileText, 
+  Building2, 
+  Settings,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
+import { NavLink, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+
+const navigation = [
+  { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Contenido", href: "/content", icon: Video },
+  { name: "Creadores", href: "/creators", icon: Users },
+  { name: "Guiones IA", href: "/scripts", icon: Sparkles },
+  { name: "Clientes", href: "/clients", icon: Building2 },
+  { name: "Configuración", href: "/settings", icon: Settings },
+];
+
+export function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
+
+  return (
+    <aside 
+      className={cn(
+        "fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 ease-in-out",
+        collapsed ? "w-20" : "w-64"
+      )}
+    >
+      <div className="flex h-full flex-col">
+        {/* Logo */}
+        <div className={cn(
+          "flex h-16 items-center border-b border-sidebar-border px-4",
+          collapsed ? "justify-center" : "justify-between"
+        )}>
+          {!collapsed && (
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+                <span className="text-lg font-bold text-primary-foreground">U</span>
+              </div>
+              <div>
+                <h1 className="text-sm font-bold text-sidebar-foreground">UGC Colombia</h1>
+                <p className="text-xs text-sidebar-foreground/60">Content Agency</p>
+              </div>
+            </div>
+          )}
+          {collapsed && (
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <span className="text-lg font-bold text-primary-foreground">U</span>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 space-y-1 p-3">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  isActive 
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" 
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  collapsed && "justify-center px-2"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-sidebar-primary-foreground")} />
+                {!collapsed && <span>{item.name}</span>}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* Collapse button */}
+        <div className="border-t border-sidebar-border p-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCollapsed(!collapsed)}
+            className={cn(
+              "w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              collapsed && "px-2"
+            )}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4" />
+                <span>Colapsar</span>
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </aside>
+  );
+}
