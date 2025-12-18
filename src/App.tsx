@@ -3,12 +3,18 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
 import Content from "./pages/Content";
 import Creators from "./pages/Creators";
 import Scripts from "./pages/Scripts";
 import Clients from "./pages/Clients";
 import Settings from "./pages/Settings";
+import CreatorDashboard from "./pages/CreatorDashboard";
+import EditorDashboard from "./pages/EditorDashboard";
+import ClientDashboard from "./pages/ClientDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,15 +25,21 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/content" element={<Content />} />
-          <Route path="/creators" element={<Creators />} />
-          <Route path="/scripts" element={<Scripts />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<ProtectedRoute allowedRoles={['admin']}><Index /></ProtectedRoute>} />
+            <Route path="/content" element={<ProtectedRoute allowedRoles={['admin']}><Content /></ProtectedRoute>} />
+            <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><Creators /></ProtectedRoute>} />
+            <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin']}><Scripts /></ProtectedRoute>} />
+            <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><Clients /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><Settings /></ProtectedRoute>} />
+            <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><CreatorDashboard /></ProtectedRoute>} />
+            <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><EditorDashboard /></ProtectedRoute>} />
+            <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><ClientDashboard /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
