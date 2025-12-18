@@ -2,3 +2,12 @@ project_id = "hfooshsteglylhvrpuka"
 
 [functions.multi-ai]
 verify_jwt = false
+
+[functions.send-invitation]
+verify_jwt = true
+
+[functions.content-ai]
+verify_jwt = false
+
+[functions.api]
+verify_jwt = false
