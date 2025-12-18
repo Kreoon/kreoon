@@ -17,6 +17,24 @@ interface AIResponse {
   error?: string;
 }
 
+interface ProviderStatus {
+  lovable: boolean;
+  anthropic: boolean;
+  openrouter: boolean;
+  google_drive: boolean;
+}
+
+// Verificar qué APIs están disponibles
+function getAvailableProviders(): ProviderStatus {
+  return {
+    lovable: !!Deno.env.get("LOVABLE_API_KEY"),
+    anthropic: !!Deno.env.get("ANTHROPIC_API_KEY"),
+    openrouter: !!Deno.env.get("OPENROUTER_API_KEY"),
+    google_drive: !!(Deno.env.get("GOOGLE_DRIVE_CLIENT_ID") && Deno.env.get("GOOGLE_DRIVE_CLIENT_SECRET")),
+  };
+}
+
+// Llamar a Lovable AI (Gemini, GPT)
 async function callLovableAI(messages: Message[], model: string): Promise<AIResponse> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   
@@ -54,6 +72,7 @@ async function callLovableAI(messages: Message[], model: string): Promise<AIResp
   }
 }
 
+// Llamar a Claude (Anthropic)
 async function callClaude(messages: Message[]): Promise<AIResponse> {
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
   
@@ -62,7 +81,6 @@ async function callClaude(messages: Message[]): Promise<AIResponse> {
   }
 
   try {
-    // Convert messages format for Claude API
     const systemMessage = messages.find(m => m.role === "system")?.content || "";
     const conversationMessages = messages.filter(m => m.role !== "system").map(m => ({
       role: m.role,
@@ -101,6 +119,47 @@ async function callClaude(messages: Message[]): Promise<AIResponse> {
   }
 }
 
+// Llamar a OpenRouter (cualquier LLM)
+async function callOpenRouter(messages: Message[], model: string): Promise<AIResponse> {
+  const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
+  
+  if (!OPENROUTER_API_KEY) {
+    return { model: `openrouter/${model}`, content: "", success: false, error: "OPENROUTER_API_KEY not configured" };
+  }
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://lovable.dev",
+        "X-Title": "Content Studio",
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Error with OpenRouter (${model}):`, errorText);
+      return { model: `openrouter/${model}`, content: "", success: false, error: `HTTP ${response.status}` };
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "";
+    
+    return { model: `openrouter/${model}`, content, success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error(`Error calling OpenRouter (${model}):`, error);
+    return { model: `openrouter/${model}`, content: "", success: false, error: errorMessage };
+  }
+}
+
+// Combinar respuestas de múltiples IAs
 async function combineResponses(responses: AIResponse[], originalPrompt: string): Promise<string> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   
@@ -114,7 +173,11 @@ async function combineResponses(responses: AIResponse[], originalPrompt: string)
     return successfulResponses[0].content;
   }
 
-  // Use Gemini to synthesize the best response from multiple models
+  if (!LOVABLE_API_KEY) {
+    // Si no hay Lovable AI, concatenar las respuestas
+    return successfulResponses.map(r => `**${r.model}:**\n${r.content}`).join("\n\n---\n\n");
+  }
+
   const synthesisPrompt = `Eres un experto en síntesis de información. Se te proporcionan respuestas de múltiples modelos de IA a la misma pregunta. Tu tarea es combinar lo mejor de cada respuesta en una única respuesta coherente, completa y bien estructurada.
 
 PREGUNTA ORIGINAL:
@@ -122,7 +185,7 @@ ${originalPrompt}
 
 RESPUESTAS DE LOS MODELOS:
 
-${successfulResponses.map((r, i) => `--- ${r.model.toUpperCase()} ---\n${r.content}\n`).join("\n")}
+${successfulResponses.map((r) => `--- ${r.model.toUpperCase()} ---\n${r.content}\n`).join("\n")}
 
 INSTRUCCIONES:
 1. Identifica los puntos clave únicos de cada respuesta
@@ -149,7 +212,6 @@ Proporciona la respuesta sintetizada:`;
     });
 
     if (!response.ok) {
-      // If synthesis fails, return the first successful response
       return successfulResponses[0].content;
     }
 
@@ -167,14 +229,51 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, models, mode = "combine" } = await req.json();
+    const { 
+      messages, 
+      models, 
+      mode = "combine",
+      openRouterModel, // Modelo específico de OpenRouter (ej: "anthropic/claude-3-opus", "meta-llama/llama-3-70b")
+      action // "status" para obtener estado de proveedores
+    } = await req.json();
+
+    // Endpoint para verificar estado de proveedores
+    if (action === "status") {
+      const providers = getAvailableProviders();
+      return new Response(
+        JSON.stringify({ 
+          providers,
+          availableModels: {
+            lovable: providers.lovable ? ["gemini", "gemini-pro", "gpt", "gpt-pro"] : [],
+            anthropic: providers.anthropic ? ["claude"] : [],
+            openrouter: providers.openrouter ? ["any model from openrouter.ai"] : [],
+          }
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!messages || !Array.isArray(messages)) {
       throw new Error("Messages array is required");
     }
 
-    // Default models if not specified
-    const selectedModels = models || ["gemini", "gpt", "claude"];
+    const providers = getAvailableProviders();
+    console.log("Available providers:", providers);
+
+    // Auto-detectar modelos disponibles si no se especifican
+    let selectedModels = models || [];
+    
+    if (selectedModels.length === 0) {
+      if (providers.lovable) {
+        selectedModels.push("gemini", "gpt");
+      }
+      if (providers.anthropic) {
+        selectedModels.push("claude");
+      }
+      if (providers.openrouter && openRouterModel) {
+        selectedModels.push("openrouter");
+      }
+    }
     
     console.log("Calling models:", selectedModels);
     console.log("Mode:", mode);
@@ -182,31 +281,64 @@ serve(async (req) => {
     // Call all selected models in parallel
     const promises: Promise<AIResponse>[] = [];
 
-    if (selectedModels.includes("gemini")) {
-      promises.push(callLovableAI(messages, "google/gemini-2.5-flash"));
+    for (const model of selectedModels) {
+      switch (model) {
+        case "gemini":
+          if (providers.lovable) {
+            promises.push(callLovableAI(messages, "google/gemini-2.5-flash"));
+          }
+          break;
+        case "gemini-pro":
+          if (providers.lovable) {
+            promises.push(callLovableAI(messages, "google/gemini-2.5-pro"));
+          }
+          break;
+        case "gpt":
+          if (providers.lovable) {
+            promises.push(callLovableAI(messages, "openai/gpt-5-mini"));
+          }
+          break;
+        case "gpt-pro":
+          if (providers.lovable) {
+            promises.push(callLovableAI(messages, "openai/gpt-5"));
+          }
+          break;
+        case "claude":
+          if (providers.anthropic) {
+            promises.push(callClaude(messages));
+          }
+          break;
+        case "openrouter":
+          if (providers.openrouter && openRouterModel) {
+            promises.push(callOpenRouter(messages, openRouterModel));
+          }
+          break;
+        default:
+          // Si el modelo empieza con "openrouter:", usar OpenRouter
+          if (model.startsWith("openrouter:") && providers.openrouter) {
+            const orModel = model.replace("openrouter:", "");
+            promises.push(callOpenRouter(messages, orModel));
+          }
+      }
     }
-    if (selectedModels.includes("gemini-pro")) {
-      promises.push(callLovableAI(messages, "google/gemini-2.5-pro"));
-    }
-    if (selectedModels.includes("gpt")) {
-      promises.push(callLovableAI(messages, "openai/gpt-5-mini"));
-    }
-    if (selectedModels.includes("gpt-pro")) {
-      promises.push(callLovableAI(messages, "openai/gpt-5"));
-    }
-    if (selectedModels.includes("claude")) {
-      promises.push(callClaude(messages));
+
+    if (promises.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: "No AI providers available or configured. Add API keys in the backend settings.",
+          providers
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const responses = await Promise.all(promises);
     
-    console.log("Responses received:", responses.map(r => ({ model: r.model, success: r.success })));
+    console.log("Responses received:", responses.map(r => ({ model: r.model, success: r.success, error: r.error })));
 
-    // Get the user's question for synthesis context
     const userMessage = messages.find(m => m.role === "user")?.content || "";
 
     if (mode === "combine") {
-      // Combine all responses into one synthesized response
       const combinedResponse = await combineResponses(responses, userMessage);
       
       return new Response(
@@ -214,15 +346,27 @@ serve(async (req) => {
           response: combinedResponse,
           models_used: responses.filter(r => r.success).map(r => r.model),
           individual_responses: responses,
+          providers,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else if (mode === "first") {
+      const firstSuccess = responses.find(r => r.success);
+      return new Response(
+        JSON.stringify({
+          response: firstSuccess?.content || "",
+          model_used: firstSuccess?.model,
+          providers,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
-      // Return all responses separately
+      // mode === "individual"
       return new Response(
         JSON.stringify({
           responses,
           models_used: responses.filter(r => r.success).map(r => r.model),
+          providers,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -231,11 +375,17 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in multi-ai function:", error);
     
-    // Handle rate limit errors
     if (errorMessage.includes("429") || errorMessage.includes("rate limit")) {
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    if (errorMessage.includes("402")) {
+      return new Response(
+        JSON.stringify({ error: "Payment required. Please add credits to your account." }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     
