@@ -71,10 +71,25 @@ export interface Content {
   paid_at: string | null;
   created_at: string;
   updated_at: string;
+  // Nuevos campos
+  product: string | null;
+  campaign_week: string | null;
+  strategist_id: string | null;
+  start_date: string | null;
+  invoiced: boolean;
+  drive_url: string | null;
+  creator_assigned_at: string | null;
+  editor_assigned_at: string | null;
+  delivered_at: string | null;
+  recorded_at: string | null;
+  reference_url: string | null;
+  creator_paid: boolean;
+  editor_paid: boolean;
   // Relaciones
   client?: Client;
   creator?: Profile;
   editor?: Profile;
+  strategist?: Profile;
 }
 
 export interface ContentComment {

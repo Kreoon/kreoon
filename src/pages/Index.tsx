@@ -1,10 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { RecentActivityReal } from "@/components/dashboard/RecentActivityReal";
 import { TopCreatorsReal } from "@/components/dashboard/TopCreatorsReal";
+import { CreateContentDialog } from "@/components/content/CreateContentDialog";
+import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
 import { Video, Users, CheckCircle, Clock, Search, Bell, Plus, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,10 +15,8 @@ import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_ORDER, STATUS_LABELS } f
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
 
 // Determinar qué columnas son visibles para cada rol
 const getVisibleColumns = (role: string, contentItem?: Content, userId?: string) => {
@@ -132,6 +132,9 @@ const Index = () => {
   
   // Dialog para detalle
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  
+  // Dialog para crear contenido
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Determinar el rol principal del usuario
   const primaryRole = isAdmin ? 'admin' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'admin';
@@ -327,10 +330,12 @@ const Index = () => {
                 <Bell className="h-5 w-5" />
               </Button>
               
-              <Button variant="glow" className="gap-2">
-                <Plus className="h-4 w-4" />
-                Nuevo Proyecto
-              </Button>
+              {isAdmin && (
+                <Button variant="glow" className="gap-2" onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="h-4 w-4" />
+                  Nuevo Proyecto
+                </Button>
+              )}
             </div>
           </div>
 
@@ -468,82 +473,19 @@ const Index = () => {
       </div>
 
       {/* Content Detail Dialog */}
-      <Dialog open={!!selectedContent} onOpenChange={() => setSelectedContent(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{selectedContent?.title}</DialogTitle>
-          </DialogHeader>
-          
-          {selectedContent && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="secondary">
-                  {STATUS_LABELS[selectedContent.status]}
-                </Badge>
-                {selectedContent.is_ambassador_content && (
-                  <Badge variant="outline">Ambassador</Badge>
-                )}
-              </div>
+      <ContentDetailDialog
+        content={selectedContent}
+        open={!!selectedContent}
+        onOpenChange={(open) => !open && setSelectedContent(null)}
+        onUpdate={refetch}
+      />
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Cliente:</span>
-                  <p className="font-medium">{selectedContent.client?.name || 'Sin cliente'}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Creador:</span>
-                  <p className="font-medium">{selectedContent.creator?.full_name || 'Sin asignar'}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Editor:</span>
-                  <p className="font-medium">{selectedContent.editor?.full_name || 'Sin asignar'}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Fecha límite:</span>
-                  <p className="font-medium">
-                    {selectedContent.deadline 
-                      ? new Date(selectedContent.deadline).toLocaleDateString() 
-                      : 'Sin fecha'}
-                  </p>
-                </div>
-              </div>
-
-              {selectedContent.description && (
-                <div>
-                  <span className="text-muted-foreground text-sm">Descripción:</span>
-                  <p className="mt-1">{selectedContent.description}</p>
-                </div>
-              )}
-
-              {selectedContent.script && (
-                <div>
-                  <span className="text-muted-foreground text-sm">Guión:</span>
-                  <div className="mt-1 p-3 bg-muted rounded-lg text-sm whitespace-pre-wrap max-h-48 overflow-y-auto">
-                    {selectedContent.script}
-                  </div>
-                </div>
-              )}
-
-              {(selectedContent.creator_payment > 0 || selectedContent.editor_payment > 0) && (
-                <div className="flex gap-4 pt-2 border-t">
-                  {selectedContent.creator_payment > 0 && (
-                    <div>
-                      <span className="text-muted-foreground text-sm">Pago creador:</span>
-                      <p className="font-semibold text-success">${selectedContent.creator_payment}</p>
-                    </div>
-                  )}
-                  {selectedContent.editor_payment > 0 && (
-                    <div>
-                      <span className="text-muted-foreground text-sm">Pago editor:</span>
-                      <p className="font-semibold text-success">${selectedContent.editor_payment}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Create Content Dialog */}
+      <CreateContentDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={refetch}
+      />
     </MainLayout>
   );
 };
