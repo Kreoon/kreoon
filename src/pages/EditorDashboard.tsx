@@ -24,8 +24,9 @@ import {
 } from 'lucide-react';
 
 const EDITOR_COLUMNS: { status: ContentStatus; title: string; color: string }[] = [
-  { status: 'editing', title: 'Por Editar', color: 'bg-purple-500' },
-  { status: 'review', title: 'En Revisión', color: 'bg-orange-500' },
+  { status: 'recorded', title: 'Por Editar', color: 'bg-cyan-500' },
+  { status: 'editing', title: 'En Edición', color: 'bg-purple-500' },
+  { status: 'delivered', title: 'Entregado', color: 'bg-emerald-500' },
   { status: 'approved', title: 'Aprobados', color: 'bg-success' },
 ];
 
@@ -35,19 +36,26 @@ export default function EditorDashboard() {
   const { toast } = useToast();
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
 
-  const handleMoveToReview = async (item: Content) => {
-    try {
-      await updateContentStatus(item.id, 'review');
-      toast({
-        title: 'Enviado a revisión',
-        description: 'El cliente revisará el contenido'
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo actualizar el estado',
-        variant: 'destructive'
-      });
+  const handleMoveToNext = async (item: Content) => {
+    const statusFlow: Record<string, ContentStatus> = {
+      'recorded': 'editing',
+      'editing': 'delivered'
+    };
+    const nextStatus = statusFlow[item.status];
+    if (nextStatus) {
+      try {
+        await updateContentStatus(item.id, nextStatus);
+        toast({
+          title: 'Estado actualizado',
+          description: `Movido a ${STATUS_LABELS[nextStatus]}`
+        });
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo actualizar el estado',
+          variant: 'destructive'
+        });
+      }
     }
   };
 
@@ -123,7 +131,7 @@ export default function EditorDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">
-                  {content.filter(c => c.status === 'editing').length}
+                  {content.filter(c => c.status === 'recorded').length}
                 </p>
                 <p className="text-sm text-muted-foreground">Por editar</p>
               </div>
@@ -137,7 +145,7 @@ export default function EditorDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">
-                  {content.filter(c => c.status === 'review').length}
+                  {content.filter(c => c.status === 'editing').length}
                 </p>
                 <p className="text-sm text-muted-foreground">En revisión</p>
               </div>
@@ -212,16 +220,16 @@ export default function EditorDashboard() {
                           </div>
                         )}
 
-                        {column.status === 'editing' && (
+                        {(column.status === 'recorded' || column.status === 'editing') && (
                           <Button 
                             size="sm" 
                             className="w-full mt-3"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleMoveToReview(item);
+                              handleMoveToNext(item);
                             }}
                           >
-                            Enviar a revisión
+                            Siguiente paso
                             <ArrowRight className="w-4 h-4 ml-2" />
                           </Button>
                         )}

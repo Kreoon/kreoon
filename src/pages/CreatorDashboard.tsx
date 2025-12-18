@@ -27,10 +27,11 @@ import {
 } from 'lucide-react';
 
 const CREATOR_COLUMNS: { status: ContentStatus; title: string; color: string }[] = [
-  { status: 'script_approved', title: 'Por Grabar', color: 'bg-info' },
-  { status: 'recording', title: 'En Grabación', color: 'bg-primary' },
-  { status: 'editing', title: 'En Edición', color: 'bg-purple-500' },
-  { status: 'review', title: 'En Revisión', color: 'bg-orange-500' },
+  { status: 'assigned', title: 'Asignados', color: 'bg-purple-500' },
+  { status: 'recording', title: 'En Grabación', color: 'bg-orange-500' },
+  { status: 'recorded', title: 'Grabado', color: 'bg-cyan-500' },
+  { status: 'editing', title: 'En Edición', color: 'bg-pink-500' },
+  { status: 'delivered', title: 'Entregado', color: 'bg-emerald-500' },
   { status: 'approved', title: 'Aprobados', color: 'bg-success' },
 ];
 
@@ -74,13 +75,17 @@ export default function CreatorDashboard() {
 
   const handleMoveToNext = async (item: Content) => {
     const statusFlow: Record<ContentStatus, ContentStatus> = {
-      'draft': 'script_pending',
+      'draft': 'script_approved',
       'script_pending': 'script_approved',
-      'script_approved': 'recording',
-      'recording': 'editing',
-      'editing': 'review',
+      'script_approved': 'assigned',
+      'assigned': 'recording',
+      'recording': 'recorded',
+      'recorded': 'editing',
+      'editing': 'delivered',
+      'delivered': 'approved',
+      'issue': 'editing',
       'review': 'approved',
-      'approved': 'paid',
+      'approved': 'approved',
       'rejected': 'draft',
       'paid': 'paid'
     };
