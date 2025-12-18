@@ -22,7 +22,9 @@ import {
   Mail,
   Phone,
   Star,
-  Loader2
+  Loader2,
+  Send,
+  UserPlus
 } from 'lucide-react';
 
 const ROLE_LABELS: Record<AppRole, string> = {
@@ -58,6 +60,14 @@ export default function Team() {
   const [addRoleDialog, setAddRoleDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [newRole, setNewRole] = useState<AppRole>('creator');
+
+  // Invitation state
+  const [inviteDialog, setInviteDialog] = useState(false);
+  const [inviteData, setInviteData] = useState({
+    email: '',
+    role: 'creator' as AppRole
+  });
+  const [sendingInvite, setSendingInvite] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -245,6 +255,45 @@ export default function Team() {
     }
   };
 
+  const handleSendInvitation = async () => {
+    if (!inviteData.email) {
+      toast({
+        title: 'Error',
+        description: 'El email es requerido',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setSendingInvite(true);
+    try {
+      const response = await supabase.functions.invoke('send-invitation', {
+        body: {
+          email: inviteData.email,
+          role: inviteData.role,
+          inviter_name: user?.email || 'Admin'
+        }
+      });
+
+      if (response.error) throw response.error;
+
+      toast({
+        title: 'Invitación enviada',
+        description: `Se envió la invitación a ${inviteData.email}`
+      });
+      setInviteDialog(false);
+      setInviteData({ email: '', role: 'creator' });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo enviar la invitación. Verifica la configuración de email.',
+        variant: 'destructive'
+      });
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -259,6 +308,65 @@ export default function Team() {
 
   return (
     <div className="space-y-6">
+      {/* Header with invite button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Gestión de Equipo</h1>
+          <p className="text-muted-foreground">Administra usuarios, roles y clientes</p>
+        </div>
+        <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <UserPlus className="w-4 h-4" />
+              Invitar Usuario
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Invitar nuevo usuario</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="invite-email">Email *</Label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  value={inviteData.email}
+                  onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
+                  placeholder="usuario@ejemplo.com"
+                />
+              </div>
+              <div>
+                <Label>Rol</Label>
+                <Select 
+                  value={inviteData.role} 
+                  onValueChange={(v) => setInviteData({ ...inviteData, role: v as AppRole })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="creator">Creador</SelectItem>
+                    <SelectItem value="editor">Editor</SelectItem>
+                    <SelectItem value="client">Cliente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setInviteDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSendInvitation} disabled={sendingInvite} className="gap-2">
+                {sendingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Enviar Invitación
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
       <Tabs defaultValue="all-users" className="w-full">
         <TabsList>
           <TabsTrigger value="all-users" className="gap-2">
