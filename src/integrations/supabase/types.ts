@@ -339,6 +339,10 @@ export type Database = {
         | "approved"
         | "rejected"
         | "paid"
+        | "assigned"
+        | "recorded"
+        | "delivered"
+        | "issue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -477,6 +481,10 @@ export const Constants = {
         "approved",
         "rejected",
         "paid",
+        "assigned",
+        "recorded",
+        "delivered",
+        "issue",
       ],
     },
   },
