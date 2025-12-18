@@ -222,6 +222,107 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     }
   };
 
+// Helper function to render embedded video player
+  const renderVideoEmbed = (url: string, label?: string) => {
+    if (!url) return null;
+    
+    // TikTok
+    if (url.includes('tiktok.com')) {
+      const videoId = url.match(/video\/(\d+)/)?.[1];
+      if (videoId) {
+        return (
+          <iframe
+            src={`https://www.tiktok.com/embed/v2/${videoId}`}
+            className="w-full h-full"
+            allowFullScreen
+          />
+        );
+      }
+    }
+    
+    // Instagram
+    if (url.includes('instagram.com')) {
+      const embedUrl = url.includes('/reel/') || url.includes('/p/') 
+        ? url.replace(/\/$/, '') + '/embed'
+        : url;
+      return (
+        <iframe
+          src={embedUrl}
+          className="w-full h-full"
+          allowFullScreen
+        />
+      );
+    }
+    
+    // YouTube
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      let embedUrl = url;
+      if (url.includes('watch?v=')) {
+        embedUrl = url.replace('watch?v=', 'embed/');
+      } else if (url.includes('youtu.be/')) {
+        embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
+      } else if (url.includes('/shorts/')) {
+        embedUrl = url.replace('/shorts/', '/embed/');
+      }
+      return (
+        <iframe
+          src={embedUrl}
+          className="w-full h-full"
+          allowFullScreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        />
+      );
+    }
+    
+    // Vimeo
+    if (url.includes('vimeo.com')) {
+      return (
+        <iframe
+          src={url.replace('vimeo.com', 'player.vimeo.com/video')}
+          className="w-full h-full"
+          allowFullScreen
+        />
+      );
+    }
+    
+    // Google Drive
+    if (url.includes('drive.google.com')) {
+      return (
+        <iframe
+          src={url.replace('/view', '/preview')}
+          className="w-full h-full"
+          allowFullScreen
+        />
+      );
+    }
+    
+    // Direct video files
+    if (url.match(/\.(mp4|webm|ogg)$/i)) {
+      return (
+        <video
+          src={url}
+          className="w-full h-full object-contain"
+          controls
+        />
+      );
+    }
+    
+    // Fallback: link to open externally
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <a 
+          href={url} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-primary hover:underline flex items-center gap-2"
+        >
+          <ExternalLink className="h-5 w-5" />
+          Ver video en nueva pestaña
+        </a>
+      </div>
+    );
+  };
+
   if (!content) return null;
 
   const canEdit = isAdmin;
@@ -610,56 +711,18 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
           )}
 
           {/* Video Tab */}
-          <TabsContent value="video" className="space-y-4 mt-4">
-            <div className="space-y-4">
+          <TabsContent value="video" className="space-y-6 mt-4">
+            {/* Video Final */}
+            <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2">
                 <Video className="h-4 w-4" /> Video Final
               </h4>
               
               {content.video_url ? (
-                <div className="space-y-3">
-                  {/* Embedded Video */}
+                <div className="space-y-2">
                   <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                    {content.video_url.includes('youtube.com') || content.video_url.includes('youtu.be') ? (
-                      <iframe
-                        src={content.video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                        className="w-full h-full"
-                        allowFullScreen
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      />
-                    ) : content.video_url.includes('vimeo.com') ? (
-                      <iframe
-                        src={content.video_url.replace('vimeo.com', 'player.vimeo.com/video')}
-                        className="w-full h-full"
-                        allowFullScreen
-                      />
-                    ) : content.video_url.includes('drive.google.com') ? (
-                      <iframe
-                        src={content.video_url.replace('/view', '/preview')}
-                        className="w-full h-full"
-                        allowFullScreen
-                      />
-                    ) : content.video_url.match(/\.(mp4|webm|ogg)$/i) ? (
-                      <video
-                        src={content.video_url}
-                        className="w-full h-full object-contain"
-                        controls
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <a 
-                          href={content.video_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline flex items-center gap-2"
-                        >
-                          <ExternalLink className="h-5 w-5" />
-                          Ver video en nueva pestaña
-                        </a>
-                      </div>
-                    )}
+                    {renderVideoEmbed(content.video_url)}
                   </div>
-                  
                   <a 
                     href={content.video_url} 
                     target="_blank" 
@@ -678,22 +741,58 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Drive URL for raw video */}
-              {content.drive_url && (
-                <div className="pt-4 border-t">
-                  <Label className="text-muted-foreground text-xs">Video Crudo (Drive)</Label>
+            {/* Video de Referencia */}
+            <div className="space-y-3 pt-4 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <LinkIcon className="h-4 w-4" /> Video de Referencia
+              </h4>
+              
+              {content.reference_url ? (
+                <div className="space-y-2">
+                  <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                    {renderVideoEmbed(content.reference_url)}
+                  </div>
                   <a 
-                    href={content.drive_url} 
+                    href={content.reference_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline flex items-center gap-1 mt-1"
+                    className="text-sm text-primary hover:underline flex items-center gap-1"
                   >
-                    {content.drive_url} <ExternalLink className="h-3 w-3" />
+                    {content.reference_url} <ExternalLink className="h-3 w-3" />
                   </a>
+                </div>
+              ) : (
+                <div className="aspect-video rounded-lg border-2 border-dashed border-border flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <LinkIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No hay video de referencia</p>
+                    <p className="text-xs">Agrega una URL en la pestaña General</p>
+                  </div>
                 </div>
               )}
             </div>
+
+            {/* Drive URL for raw video */}
+            {content.drive_url && (
+              <div className="space-y-2 pt-4 border-t">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Video className="h-4 w-4" /> Video Crudo (Drive)
+                </h4>
+                <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                  {renderVideoEmbed(content.drive_url)}
+                </div>
+                <a 
+                  href={content.drive_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                >
+                  {content.drive_url} <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 
