@@ -140,13 +140,29 @@ const Index = () => {
   const primaryRole = isAdmin ? 'admin' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'admin';
 
   // Fetch content según rol
-  const { content, loading, updateContentStatus, refetch } = useContentWithFilters({
+  const { content, loading, updateContentStatus, deleteContent, refetch } = useContentWithFilters({
     userId: user?.id,
     role: primaryRole as any,
     creatorId: filterCreatorId !== 'all' ? filterCreatorId : undefined,
     editorId: filterEditorId !== 'all' ? filterEditorId : undefined,
     clientId: filterClientId !== 'all' ? filterClientId : undefined
   });
+
+  const handleDeleteContent = async (contentId: string) => {
+    try {
+      await deleteContent(contentId);
+      toast({
+        title: "Proyecto eliminado",
+        description: "El proyecto se ha eliminado correctamente"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el proyecto",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Cargar listas para filtros (solo admin)
   useEffect(() => {
@@ -478,6 +494,7 @@ const Index = () => {
         open={!!selectedContent}
         onOpenChange={(open) => !open && setSelectedContent(null)}
         onUpdate={refetch}
+        onDelete={handleDeleteContent}
       />
 
       {/* Create Content Dialog */}
