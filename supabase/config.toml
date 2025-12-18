@@ -1,1 +1,4 @@
 project_id = "hfooshsteglylhvrpuka"
+
+[functions.multi-ai]
+verify_jwt = false
