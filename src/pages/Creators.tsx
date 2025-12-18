@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CreatorDetailDialog } from "@/components/team/CreatorDetailDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,7 @@ interface Creator {
   email: string;
   avatar_url: string | null;
   phone: string | null;
+  bio: string | null;
   role: 'creator' | 'editor';
   content_count: number;
 }
@@ -34,6 +36,7 @@ const Creators = () => {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
 
   const fetchCreators = async () => {
     setLoading(true);
@@ -56,7 +59,7 @@ const Creators = () => {
       // Get profiles
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url, phone')
+        .select('id, full_name, email, avatar_url, phone, bio')
         .in('id', userIds);
 
       // Get content counts
@@ -88,6 +91,7 @@ const Creators = () => {
         email: p.email,
         avatar_url: p.avatar_url,
         phone: p.phone,
+        bio: p.bio,
         role: roleMap.get(p.id) as 'creator' | 'editor',
         content_count: countMap.get(p.id) || 0
       }));
@@ -189,7 +193,8 @@ const Creators = () => {
               {filteredCreators.map((creator) => (
                 <div 
                   key={creator.id}
-                  className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-lg hover:border-primary/20"
+                  onClick={() => setSelectedCreator(creator)}
+                  className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-lg hover:border-primary/20 cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-4">
                     {creator.avatar_url ? (
@@ -256,6 +261,13 @@ const Creators = () => {
           )}
         </div>
       </div>
+
+      <CreatorDetailDialog
+        creator={selectedCreator}
+        open={!!selectedCreator}
+        onOpenChange={(open) => !open && setSelectedCreator(null)}
+        onUpdate={fetchCreators}
+      />
     </MainLayout>
   );
 };

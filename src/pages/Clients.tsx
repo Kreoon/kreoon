@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ interface Client {
   name: string;
   logo_url: string | null;
   contact_email: string | null;
+  contact_phone: string | null;
   notes: string | null;
   created_at: string;
   content_count: number;
@@ -37,6 +39,7 @@ const Clients = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -74,6 +77,7 @@ const Clients = () => {
         name: c.name,
         logo_url: c.logo_url,
         contact_email: c.contact_email,
+        contact_phone: c.contact_phone,
         notes: c.notes,
         created_at: c.created_at || '',
         content_count: countMap.get(c.id)?.total || 0,
@@ -176,7 +180,8 @@ const Clients = () => {
               {filteredClients.map((client) => (
                 <div 
                   key={client.id}
-                  className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-lg hover:border-primary/20"
+                  onClick={() => setSelectedClient(client)}
+                  className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-lg hover:border-primary/20 cursor-pointer"
                 >
                   <div className="flex items-start gap-4 mb-4">
                     {client.logo_url ? (
@@ -257,6 +262,13 @@ const Clients = () => {
           )}
         </div>
       </div>
+
+      <ClientDetailDialog
+        client={selectedClient}
+        open={!!selectedClient}
+        onOpenChange={(open) => !open && setSelectedClient(null)}
+        onUpdate={fetchClients}
+      />
     </MainLayout>
   );
 };
