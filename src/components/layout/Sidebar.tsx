@@ -27,8 +27,12 @@ const navigation = [
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
-export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+interface SidebarProps {
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
+}
+
+export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
@@ -116,7 +120,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => onCollapsedChange(!collapsed)}
             className={cn(
               "w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               collapsed && "px-2"

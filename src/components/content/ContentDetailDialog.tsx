@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus } from "@/types/database";
+import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +17,7 @@ import { es } from "date-fns/locale";
 import { 
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
-  Clock, CheckCircle, Trash2
+  Clock, CheckCircle, Trash2, MessageSquare, Send
 } from "lucide-react";
 import {
   AlertDialog,
@@ -46,9 +46,13 @@ interface SelectOption {
 
 export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onDelete }: ContentDetailDialogProps) {
   const { toast } = useToast();
-  const { isAdmin, isClient } = useAuth();
+  const { isAdmin, isClient, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<ContentStatus | null>(null);
+  const [comments, setComments] = useState<(ContentComment & { profile?: { full_name: string } })[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [loadingComment, setLoadingComment] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -104,9 +108,78 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         editor_paid: content.editor_paid || false,
         invoiced: content.invoiced || false
       });
+      setCurrentStatus(content.status);
       fetchOptions();
+      fetchComments();
     }
   }, [content]);
+
+  const fetchComments = async () => {
+    if (!content) return;
+    const { data: commentsData } = await supabase
+      .from('content_comments')
+      .select('*')
+      .eq('content_id', content.id)
+      .order('created_at', { ascending: false });
+    
+    if (commentsData && commentsData.length > 0) {
+      const userIds = [...new Set(commentsData.map(c => c.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
+      const commentsWithProfiles = commentsData.map(c => ({
+        ...c,
+        profile: { full_name: profileMap.get(c.user_id) || 'Usuario' }
+      }));
+      setComments(commentsWithProfiles);
+    } else {
+      setComments([]);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!content || !newComment.trim() || !user) return;
+    setLoadingComment(true);
+    try {
+      const { error } = await supabase
+        .from('content_comments')
+        .insert({
+          content_id: content.id,
+          user_id: user.id,
+          comment: newComment.trim()
+        });
+      if (error) throw error;
+      setNewComment("");
+      fetchComments();
+      toast({ title: "Comentario agregado" });
+    } catch (error) {
+      toast({ title: "Error al agregar comentario", variant: "destructive" });
+    } finally {
+      setLoadingComment(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: ContentStatus) => {
+    if (!content) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('content')
+        .update({ status: newStatus })
+        .eq('id', content.id);
+      if (error) throw error;
+      setCurrentStatus(newStatus);
+      toast({ title: "Estado actualizado", description: `Nuevo estado: ${STATUS_LABELS[newStatus]}` });
+      onUpdate?.();
+    } catch (error) {
+      toast({ title: "Error al actualizar estado", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchOptions = async () => {
     const { data: clientsData } = await supabase
@@ -331,9 +404,9 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-3">
-              <Video className="h-5 w-5 text-primary" />
+          <div className="flex items-center justify-between gap-4">
+            <DialogTitle className="flex items-center gap-3 flex-1 min-w-0">
+              <Video className="h-5 w-5 text-primary shrink-0" />
               {editMode ? (
                 <Input
                   value={formData.title}
@@ -341,12 +414,31 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   className="text-xl font-bold"
                 />
               ) : (
-                content.title
+                <span className="truncate">{content.title}</span>
               )}
             </DialogTitle>
-            <Badge className={STATUS_COLORS[content.status]}>
-              {STATUS_LABELS[content.status]}
-            </Badge>
+            {(isAdmin || isClient) ? (
+              <Select 
+                value={currentStatus || content.status} 
+                onValueChange={(v) => handleStatusChange(v as ContentStatus)}
+                disabled={loading}
+              >
+                <SelectTrigger className={`w-auto min-w-[140px] ${STATUS_COLORS[currentStatus || content.status]}`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_ORDER.map(status => (
+                    <SelectItem key={status} value={status}>
+                      {STATUS_LABELS[status]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge className={STATUS_COLORS[content.status]}>
+                {STATUS_LABELS[content.status]}
+              </Badge>
+            )}
           </div>
         </DialogHeader>
 
@@ -793,6 +885,52 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </a>
               </div>
             )}
+
+            {/* Comentarios del Cliente */}
+            <div className="space-y-3 pt-4 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" /> Comentarios / Novedades
+              </h4>
+              
+              {/* Lista de comentarios */}
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {comments.length > 0 ? (
+                  comments.map((comment) => (
+                    <div key={comment.id} className="p-3 bg-muted rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium">{comment.profile?.full_name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
+                        </span>
+                      </div>
+                      <p className="text-sm">{comment.comment}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No hay comentarios aún
+                  </p>
+                )}
+              </div>
+              
+              {/* Agregar comentario */}
+              <div className="flex gap-2">
+                <Textarea 
+                  placeholder="Agregar un comentario o novedad..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="flex-1 min-h-[60px]"
+                />
+                <Button 
+                  onClick={handleAddComment} 
+                  disabled={loadingComment || !newComment.trim()}
+                  size="icon"
+                  className="shrink-0"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
 
