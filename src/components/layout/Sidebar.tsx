@@ -7,12 +7,15 @@ import {
   Settings,
   Sparkles,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  UsersRound,
+  LogOut
 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -20,12 +23,20 @@ const navigation = [
   { name: "Creadores", href: "/creators", icon: Users },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Clientes", href: "/clients", icon: Building2 },
+  { name: "Equipo", href: "/team", icon: UsersRound },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, profile } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   return (
     <aside 
@@ -81,8 +92,27 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Collapse button */}
-        <div className="border-t border-sidebar-border p-3">
+        {/* User & Actions */}
+        <div className="border-t border-sidebar-border p-3 space-y-2">
+          {!collapsed && profile && (
+            <div className="px-3 py-2 text-xs text-sidebar-foreground/60 truncate">
+              {profile.email}
+            </div>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            className={cn(
+              "w-full text-sidebar-foreground/70 hover:bg-destructive/20 hover:text-destructive",
+              collapsed && "px-2"
+            )}
+          >
+            <LogOut className="h-4 w-4" />
+            {!collapsed && <span className="ml-2">Cerrar sesión</span>}
+          </Button>
+
           <Button
             variant="ghost"
             size="sm"
