@@ -14,16 +14,331 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          notes: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      content: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          client_id: string | null
+          created_at: string | null
+          creator_id: string | null
+          creator_payment: number | null
+          deadline: string | null
+          description: string | null
+          editor_id: string | null
+          editor_payment: number | null
+          id: string
+          is_ambassador_content: boolean | null
+          notes: string | null
+          paid_at: string | null
+          script: string | null
+          script_approved_at: string | null
+          script_approved_by: string | null
+          status: Database["public"]["Enums"]["content_status"] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          creator_id?: string | null
+          creator_payment?: number | null
+          deadline?: string | null
+          description?: string | null
+          editor_id?: string | null
+          editor_payment?: number | null
+          id?: string
+          is_ambassador_content?: boolean | null
+          notes?: string | null
+          paid_at?: string | null
+          script?: string | null
+          script_approved_at?: string | null
+          script_approved_by?: string | null
+          status?: Database["public"]["Enums"]["content_status"] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          creator_id?: string | null
+          creator_payment?: number | null
+          deadline?: string | null
+          description?: string | null
+          editor_id?: string | null
+          editor_payment?: number | null
+          id?: string
+          is_ambassador_content?: boolean | null
+          notes?: string | null
+          paid_at?: string | null
+          script?: string | null
+          script_approved_at?: string | null
+          script_approved_by?: string | null
+          status?: Database["public"]["Enums"]["content_status"] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_comments: {
+        Row: {
+          comment: string
+          content_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          content_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          content_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_comments_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_history: {
+        Row: {
+          content_id: string
+          created_at: string | null
+          id: string
+          new_status: Database["public"]["Enums"]["content_status"]
+          notes: string | null
+          old_status: Database["public"]["Enums"]["content_status"] | null
+          user_id: string | null
+        }
+        Insert: {
+          content_id: string
+          created_at?: string | null
+          id?: string
+          new_status: Database["public"]["Enums"]["content_status"]
+          notes?: string | null
+          old_status?: Database["public"]["Enums"]["content_status"] | null
+          user_id?: string | null
+        }
+        Update: {
+          content_id?: string
+          created_at?: string | null
+          id?: string
+          new_status?: Database["public"]["Enums"]["content_status"]
+          notes?: string | null
+          old_status?: Database["public"]["Enums"]["content_status"] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_history_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          content_id: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payment_type: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          content_id?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_type: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          content_id?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_type?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          is_ambassador: boolean | null
+          phone: string | null
+          portfolio_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          is_ambassador?: boolean | null
+          phone?: string | null
+          portfolio_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_ambassador?: boolean | null
+          phone?: string | null
+          portfolio_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_roles: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "creator" | "editor" | "client"
+      content_status:
+        | "draft"
+        | "script_pending"
+        | "script_approved"
+        | "recording"
+        | "editing"
+        | "review"
+        | "approved"
+        | "rejected"
+        | "paid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +465,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "creator", "editor", "client"],
+      content_status: [
+        "draft",
+        "script_pending",
+        "script_approved",
+        "recording",
+        "editing",
+        "review",
+        "approved",
+        "rejected",
+        "paid",
+      ],
+    },
   },
 } as const
