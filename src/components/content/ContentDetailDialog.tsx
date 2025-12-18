@@ -17,14 +17,26 @@ import { es } from "date-fns/locale";
 import { 
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
-  Clock, CheckCircle
+  Clock, CheckCircle, Trash2
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ContentDetailDialogProps {
   content: Content | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate?: () => void;
+  onDelete?: (contentId: string) => void;
 }
 
 interface SelectOption {
@@ -32,7 +44,7 @@ interface SelectOption {
   name: string;
 }
 
-export function ContentDetailDialog({ content, open, onOpenChange, onUpdate }: ContentDetailDialogProps) {
+export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onDelete }: ContentDetailDialogProps) {
   const { toast } = useToast();
   const { isAdmin, isClient } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -599,22 +611,53 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate }: C
 
         {/* Actions */}
         {canEdit && (
-          <div className="flex justify-end gap-3 pt-4 border-t mt-4">
-            {editMode ? (
-              <>
-                <Button variant="outline" onClick={() => setEditMode(false)}>
-                  Cancelar
+          <div className="flex justify-between pt-4 border-t mt-4">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Eliminar
                 </Button>
-                <Button onClick={handleSave} disabled={loading}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Guardar
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar proyecto?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto "{content.title}".
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      onDelete?.(content.id);
+                      onOpenChange(false);
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <div className="flex gap-3">
+              {editMode ? (
+                <>
+                  <Button variant="outline" onClick={() => setEditMode(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSave} disabled={loading}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Guardar
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => setEditMode(true)}>
+                  Editar
                 </Button>
-              </>
-            ) : (
-              <Button onClick={() => setEditMode(true)}>
-                Editar
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         )}
       </DialogContent>

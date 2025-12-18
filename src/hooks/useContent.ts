@@ -67,6 +67,16 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     await fetchContent();
   };
 
+  const deleteContent = async (contentId: string) => {
+    const { error } = await supabase
+      .from('content')
+      .delete()
+      .eq('id', contentId);
+
+    if (error) throw error;
+    await fetchContent();
+  };
+
   const approveContent = async (contentId: string, approverId: string) => {
     const { error } = await supabase
       .from('content')
@@ -106,6 +116,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     refetch: fetchContent,
     updateContentStatus,
     updateContent,
+    deleteContent,
     approveContent,
     approveScript
   };
@@ -171,6 +182,16 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     await fetchContent();
   };
 
+  const deleteContent = async (contentId: string) => {
+    const { error } = await supabase
+      .from('content')
+      .delete()
+      .eq('id', contentId);
+
+    if (error) throw error;
+    await fetchContent();
+  };
+
   useEffect(() => {
     fetchContent();
   }, [fetchContent]);
@@ -180,6 +201,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     loading,
     error,
     refetch: fetchContent,
-    updateContentStatus
+    updateContentStatus,
+    deleteContent
   };
 }
