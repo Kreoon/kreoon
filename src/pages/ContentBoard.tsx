@@ -1,15 +1,16 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { CreateContentDialog } from "@/components/content/CreateContentDialog";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
-import { Search, Plus, Filter, CalendarIcon, X } from "lucide-react";
+import { Search, Plus, Filter, CalendarIcon, X, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
-import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_ORDER, STATUS_LABELS } from "@/types/database";
+import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_ORDER, STATUS_LABELS, Product } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,8 +20,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
-// Columnas del tablero (sin "pagado")
-const BOARD_COLUMNS = KANBAN_COLUMNS.filter(col => col.status !== 'paid');
+// Usamos directamente KANBAN_COLUMNS ya que no incluye 'paid'
+const BOARD_COLUMNS = KANBAN_COLUMNS;
 
 // Verificar si un movimiento de estado es válido según el rol
 const canMoveToStatus = (
@@ -71,6 +72,8 @@ export default function ContentBoard() {
   const [filterCreatorId, setFilterCreatorId] = useState<string>('all');
   const [filterEditorId, setFilterEditorId] = useState<string>('all');
   const [filterClientId, setFilterClientId] = useState<string>('all');
+  const [filterProductId, setFilterProductId] = useState<string>('all');
+  const [filterCampaignWeek, setFilterCampaignWeek] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [startDateFilter, setStartDateFilter] = useState<Date | undefined>(undefined);
   const [deadlineFilter, setDeadlineFilter] = useState<Date | undefined>(undefined);
@@ -79,6 +82,7 @@ export default function ContentBoard() {
   const [creators, setCreators] = useState<{id: string; name: string}[]>([]);
   const [editors, setEditors] = useState<{id: string; name: string}[]>([]);
   const [clients, setClients] = useState<{id: string; name: string}[]>([]);
+  const [products, setProducts] = useState<{id: string; name: string; client_name?: string}[]>([]);
   
   // Estado de drag
   const [draggingContent, setDraggingContent] = useState<Content | null>(null);
@@ -156,12 +160,37 @@ export default function ContentBoard() {
         .select('id, name');
       
       setClients(clientsList?.map(c => ({ id: c.id, name: c.name })) || []);
+
+      // Fetch products with client name
+      const { data: productsList } = await supabase
+        .from('products')
+        .select('id, name, client_id, clients(name)')
+        .order('name');
+      
+      setProducts(productsList?.map(p => ({ 
+        id: p.id, 
+        name: p.name,
+        client_name: (p.clients as any)?.name 
+      })) || []);
     };
 
     fetchFilters();
   }, [isAdmin]);
 
-  // Filtrar contenido por búsqueda y fechas
+  // Extract unique campaign weeks from content
+  const campaignWeeks = useMemo(() => {
+    const weeks = new Set<string>();
+    content.forEach(c => {
+      if (c.campaign_week) weeks.add(c.campaign_week);
+    });
+    return Array.from(weeks).sort((a, b) => {
+      const numA = parseInt(a) || 0;
+      const numB = parseInt(b) || 0;
+      return numA - numB;
+    });
+  }, [content]);
+
+  // Filtrar contenido por búsqueda, fechas, producto y campaña
   const filteredContent = content.filter(c => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -181,6 +210,16 @@ export default function ContentBoard() {
     if (deadlineFilter) {
       const contentDeadline = c.deadline ? new Date(c.deadline) : null;
       if (!contentDeadline || contentDeadline > deadlineFilter) return false;
+    }
+
+    // Filtro por producto
+    if (filterProductId !== 'all') {
+      if (c.product_id !== filterProductId) return false;
+    }
+
+    // Filtro por campaña/semana
+    if (filterCampaignWeek) {
+      if (c.campaign_week !== filterCampaignWeek) return false;
     }
     
     return true;
@@ -417,6 +456,35 @@ export default function ContentBoard() {
                 ))}
               </SelectContent>
             </Select>
+
+            <div className="h-6 w-px bg-border hidden md:block" />
+
+            <Select value={filterProductId} onValueChange={setFilterProductId}>
+              <SelectTrigger className="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm">
+                <SelectValue placeholder="Productos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los productos</SelectItem>
+                {products.map(p => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name} {p.client_name && <span className="text-muted-foreground">({p.client_name})</span>}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              type="text"
+              placeholder="Campaña/Semana"
+              value={filterCampaignWeek}
+              onChange={(e) => setFilterCampaignWeek(e.target.value)}
+              className="w-[100px] md:w-[120px] h-8 md:h-9 text-xs md:text-sm"
+            />
+            {filterCampaignWeek && (
+              <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0" onClick={() => setFilterCampaignWeek('')}>
+                <X className="h-3 w-3 md:h-4 md:w-4" />
+              </Button>
+            )}
           </div>
         )}
       </header>
