@@ -536,67 +536,131 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   const canEditVideoUrl = isAdmin || (isEditor && content.editor_id === user?.id);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-6">
-        <DialogHeader className="pr-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-            <DialogTitle className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-              <Video className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-              {editMode ? (
-                <Input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="text-base sm:text-xl font-bold"
-                />
-              ) : (
-                <span className="truncate text-sm sm:text-base">{content.title}</span>
-              )}
-            </DialogTitle>
-            {(isAdmin || isClient || isEditor) ? (
-              <Select 
-                value={currentStatus || content.status} 
-                onValueChange={(v) => handleStatusChange(v as ContentStatus)}
-                disabled={loading}
-              >
-                <SelectTrigger className={`w-full sm:w-auto sm:min-w-[140px] text-xs sm:text-sm ${STATUS_COLORS[currentStatus || content.status]}`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_ORDER.map(status => (
-                    <SelectItem key={status} value={status}>
-                      {STATUS_LABELS[status]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Badge className={`text-xs ${STATUS_COLORS[content.status]}`}>
-                {STATUS_LABELS[content.status]}
-              </Badge>
-            )}
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0">
+        {/* Hero Header - Landing Page Style */}
+        <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-6 sm:p-8 border-b">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0" style={{ 
+              backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
+              backgroundSize: '24px 24px'
+            }} />
           </div>
-        </DialogHeader>
+          
+          <div className="relative">
+            {/* Top Row: Status & Actions */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                {(isAdmin || isClient || isEditor) ? (
+                  <Select 
+                    value={currentStatus || content.status} 
+                    onValueChange={(v) => handleStatusChange(v as ContentStatus)}
+                    disabled={loading}
+                  >
+                    <SelectTrigger className={`w-auto min-w-[140px] text-sm font-medium ${STATUS_COLORS[currentStatus || content.status]}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_ORDER.map(status => (
+                        <SelectItem key={status} value={status}>
+                          {STATUS_LABELS[status]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge className={`text-sm px-3 py-1 ${STATUS_COLORS[content.status]}`}>
+                    {STATUS_LABELS[content.status]}
+                  </Badge>
+                )}
+                
+                {formData.is_published && (
+                  <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
+                    <Share2 className="h-3 w-3 mr-1" />
+                    Publicado
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {canEdit && (
+                  <Button
+                    variant={editMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setEditMode(!editMode)}
+                  >
+                    {editMode ? "Cancelar" : "Editar"}
+                  </Button>
+                )}
+                {editMode && (
+                  <Button onClick={handleSave} disabled={loading} size="sm">
+                    <Save className="h-4 w-4 mr-1" />
+                    Guardar
+                  </Button>
+                )}
+              </div>
+            </div>
 
-        <Tabs defaultValue="video" className="mt-2 sm:mt-4">
-          {/* Tab visibility based on role:
-              - Video: client sees (Cliente asignado, creador asignado, editor asignado)
-              - Material: creator and editor only (not client)
-              - General: creator and editor only (not client)
-              - Equipo: admin only
-              - Fechas: admin only
-              - Pagos: admin only
-          */}
-          <TabsList className={`grid w-full h-auto gap-1 ${
-            isClient ? 'grid-cols-1' : 
-            isAdmin ? 'grid-cols-3 sm:grid-cols-6' : 
-            (isCreator || isEditor) ? 'grid-cols-3' : 'grid-cols-3'
-          }`}>
-            <TabsTrigger value="video" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Video</TabsTrigger>
-            {(isCreator || isEditor || isAdmin) && <TabsTrigger value="material" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Material</TabsTrigger>}
-            {(isCreator || isEditor || isAdmin) && <TabsTrigger value="general" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">General</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="equipo" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Equipo</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="fechas" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Fechas</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="pagos" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Pagos</TabsTrigger>}
-          </TabsList>
+            {/* Title */}
+            <DialogHeader className="space-y-2">
+              <DialogTitle className="text-2xl sm:text-3xl font-bold tracking-tight">
+                {editMode ? (
+                  <Input
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="text-2xl sm:text-3xl font-bold h-auto py-2 bg-background/50"
+                  />
+                ) : (
+                  content.title
+                )}
+              </DialogTitle>
+            </DialogHeader>
+
+            {/* Meta Info Row */}
+            <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
+              {content.client?.name && (
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                  <Package className="h-4 w-4" />
+                  <span>{content.client.name}</span>
+                </div>
+              )}
+              {selectedProduct?.name && (
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                  <Target className="h-4 w-4" />
+                  <span>{selectedProduct.name}</span>
+                </div>
+              )}
+              {content.campaign_week && (
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                  <Calendar className="h-4 w-4" />
+                  <span>{content.campaign_week}</span>
+                </div>
+              )}
+              {content.deadline && (
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                  <Clock className="h-4 w-4" />
+                  <span>Entrega: {formatDate(content.deadline)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area with Tabs */}
+        <div className="overflow-y-auto max-h-[calc(90vh-200px)] p-4 sm:p-6">
+          <Tabs defaultValue="video">
+            <TabsList className={`grid w-full h-auto gap-1 mb-6 ${
+              isClient ? 'grid-cols-1' : 
+              isAdmin ? 'grid-cols-3 sm:grid-cols-6' : 
+              (isCreator || isEditor) ? 'grid-cols-3' : 'grid-cols-3'
+            }`}>
+              <TabsTrigger value="video" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Video</TabsTrigger>
+              {(isCreator || isEditor || isAdmin) && <TabsTrigger value="material" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Material</TabsTrigger>}
+              {(isCreator || isEditor || isAdmin) && <TabsTrigger value="general" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">General</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="equipo" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Equipo</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="fechas" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Fechas</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="pagos" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Pagos</TabsTrigger>}
+            </TabsList>
 
           {/* Video Tab - Reorganized: Video+Comments + Script Generator Form */}
           <TabsContent value="video" className="space-y-6 mt-4">
@@ -1375,61 +1439,40 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
             </TabsContent>
           )}
-        </Tabs>
+          </Tabs>
+        </div>
 
-        {/* Actions - Creators/Editors can edit, only admins can delete */}
-        {(canEdit || canEditAsCreatorOrEditor) && (
-          <div className="flex justify-between pt-4 border-t mt-4">
-            {canEdit ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Eliminar
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>¿Eliminar proyecto?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto "{content.title}".
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => {
-                        onDelete?.(content.id);
-                        onOpenChange(false);
-                      }}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Eliminar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            ) : (
-              <div />
-            )}
-
-            <div className="flex gap-3">
-              {editMode ? (
-                <>
-                  <Button variant="outline" onClick={() => setEditMode(false)}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={handleSave} disabled={loading}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Guardar
-                  </Button>
-                </>
-              ) : (
-                <Button onClick={() => setEditMode(true)}>
-                  Editar
+        {/* Footer Actions - Delete only (Edit/Save moved to header) */}
+        {canEdit && (
+          <div className="border-t p-4 bg-muted/30">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Eliminar Proyecto
                 </Button>
-              )}
-            </div>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar proyecto?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto "{content.title}".
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      onDelete?.(content.id);
+                      onOpenChange(false);
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
       </DialogContent>
