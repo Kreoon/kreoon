@@ -75,6 +75,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     reference_url: "",
     video_url: "",
     video_urls: [] as string[],
+    hooks_count: 1,
     drive_url: "",
     script: "",
     description: "",
@@ -106,6 +107,11 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
   useEffect(() => {
     if (content) {
+      const existingVideoUrls = (content as any).video_urls || [];
+      const hooksCount = (content as any).hooks_count || Math.max(existingVideoUrls.length, 1);
+      // Initialize video_urls array based on hooks_count
+      const videoUrls = Array.from({ length: hooksCount }, (_, i) => existingVideoUrls[i] || '');
+      
       setFormData({
         title: content.title || "",
         product: content.product || "",
@@ -120,7 +126,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         campaign_week: content.campaign_week || "",
         reference_url: content.reference_url || "",
         video_url: content.video_url || "",
-        video_urls: (content as any).video_urls || [],
+        video_urls: videoUrls,
+        hooks_count: hooksCount,
         drive_url: content.drive_url || "",
         script: content.script || "",
         description: content.description || "",
@@ -301,6 +308,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         reference_url: formData.reference_url || null,
         video_url: formData.video_url || null,
         video_urls: formData.video_urls.filter(url => url.trim() !== ''),
+        hooks_count: formData.hooks_count,
         drive_url: formData.drive_url || null,
         script: formData.script || null,
         description: formData.description || null,
@@ -635,104 +643,96 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             {/* Section 1: Videos Finales (Hooks) + Comments side by side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Videos Finales (Multiple) */}
-              <div className="space-y-3">
-                <h4 className="font-medium flex items-center gap-2">
-                  <Video className="h-4 w-4" /> Videos Finales (Hooks)
-                </h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Video className="h-4 w-4" /> Videos Finales (Hooks)
+                  </h4>
+                  
+                  {/* Hooks count selector - edit mode only */}
+                  {editMode && canEditVideoTab && (
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm text-muted-foreground">Cantidad:</Label>
+                      <Select
+                        value={String(formData.hooks_count)}
+                        onValueChange={(value) => {
+                          const newCount = parseInt(value);
+                          const newUrls = Array.from({ length: newCount }, (_, i) => formData.video_urls[i] || '');
+                          setFormData({ ...formData, hooks_count: newCount, video_urls: newUrls });
+                        }}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                            <SelectItem key={num} value={String(num)}>{num}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Show hooks count badge when not editing */}
+                {!editMode && formData.hooks_count > 1 && (
+                  <Badge variant="secondary" className="w-fit">
+                    {formData.hooks_count} hooks configurados
+                  </Badge>
+                )}
                 
-                {/* Display existing videos */}
-                {formData.video_urls.length > 0 ? (
-                  <div className="space-y-4">
-                    {formData.video_urls.map((videoUrl, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-muted-foreground">Hook {index + 1}</span>
-                          {editMode && canEditVideoTab && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const newUrls = formData.video_urls.filter((_, i) => i !== index);
-                                setFormData({ ...formData, video_urls: newUrls });
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
+                {/* Video URL inputs based on hooks_count */}
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                  {formData.video_urls.map((videoUrl, index) => (
+                    <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                      <span className="text-sm font-medium">Hook {index + 1}</span>
+                      
+                      {videoUrl && (
                         <div 
                           className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-                          style={{ height: '250px' }}
+                          style={{ height: '200px' }}
                         >
                           {renderVideoEmbed(videoUrl)}
                         </div>
-                        {editMode && canEditVideoTab ? (
-                          <Input
-                            value={videoUrl}
-                            onChange={(e) => {
-                              const newUrls = [...formData.video_urls];
-                              newUrls[index] = e.target.value;
-                              setFormData({ ...formData, video_urls: newUrls });
-                            }}
-                            placeholder="https://..."
-                            type="url"
-                          />
-                        ) : (
-                          <a 
-                            href={videoUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                          >
-                            Ver video <ExternalLink className="h-3 w-3 shrink-0" />
-                          </a>
-                        )}
+                      )}
+                      
+                      {editMode && canEditVideoTab ? (
+                        <Input
+                          value={videoUrl}
+                          onChange={(e) => {
+                            const newUrls = [...formData.video_urls];
+                            newUrls[index] = e.target.value;
+                            setFormData({ ...formData, video_urls: newUrls });
+                          }}
+                          placeholder="https://... (URL del video editado)"
+                          type="url"
+                        />
+                      ) : videoUrl ? (
+                        <a 
+                          href={videoUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                        >
+                          Ver video <ExternalLink className="h-3 w-3 shrink-0" />
+                        </a>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Sin video cargado</p>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {/* Show empty state only if no hooks configured */}
+                  {formData.video_urls.length === 0 && !editMode && (
+                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center p-6">
+                      <div className="text-center text-muted-foreground">
+                        <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No hay videos configurados</p>
                       </div>
-                    ))}
-                  </div>
-                ) : !editMode && (
-                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
-                    <div className="text-center text-muted-foreground">
-                      <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No hay videos cargados</p>
                     </div>
-                  </div>
-                )}
-
-                {/* Add new video URL in edit mode */}
-                {editMode && canEditVideoTab && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFormData({ ...formData, video_urls: [...formData.video_urls, ''] })}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> Agregar Video (Hook)
-                  </Button>
-                )}
-
-                {/* Legacy single video_url support */}
-                {content.video_url && formData.video_urls.length === 0 && (
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium text-muted-foreground">Video Principal</span>
-                    <div 
-                      className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-                      style={{ height: '250px' }}
-                    >
-                      {renderVideoEmbed(content.video_url)}
-                    </div>
-                    <a 
-                      href={content.video_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                    >
-                      Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
-                    </a>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-
               {/* Comments */}
               <div className="space-y-3">
                 <h4 className="font-medium flex items-center gap-2">
