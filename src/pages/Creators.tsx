@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Star, Video, Trash2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -145,7 +144,7 @@ const Creators = () => {
   };
 
   return (
-    <MainLayout>
+    <>
       <div className="min-h-screen">
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
           <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
@@ -269,7 +268,7 @@ const Creators = () => {
         onOpenChange={(open) => !open && setSelectedCreator(null)}
         onUpdate={fetchCreators}
       />
-    </MainLayout>
+    </>
   );
 };
 

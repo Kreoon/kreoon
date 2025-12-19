@@ -1,4 +1,3 @@
-import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { User, Bell, Shield, Palette, Globe } from "lucide-react";
 
@@ -32,42 +31,40 @@ const settingsSections = [
 
 const Settings = () => {
   return (
-    <MainLayout>
-      <div className="min-h-screen">
-        <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex h-16 items-center justify-between px-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Configuración</h1>
-              <p className="text-sm text-muted-foreground">Personaliza tu experiencia en la plataforma</p>
-            </div>
-          </div>
-        </header>
-
-        <div className="p-6 max-w-3xl">
-          <div className="space-y-4">
-            {settingsSections.map((section) => (
-              <div 
-                key={section.title}
-                className="flex items-center justify-between p-5 rounded-xl border border-border bg-card hover:border-primary/20 transition-all cursor-pointer group"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                    <section.icon className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-card-foreground">{section.title}</h3>
-                    <p className="text-sm text-muted-foreground">{section.description}</p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm">
-                  Configurar
-                </Button>
-              </div>
-            ))}
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+        <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6">
+          <div>
+            <h1 className="text-lg md:text-xl font-bold text-foreground">Configuración</h1>
+            <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Personaliza tu experiencia en la plataforma</p>
           </div>
         </div>
+      </header>
+
+      <div className="p-4 md:p-6 max-w-3xl">
+        <div className="space-y-3 md:space-y-4">
+          {settingsSections.map((section) => (
+            <div 
+              key={section.title}
+              className="flex items-center justify-between p-4 md:p-5 rounded-xl border border-border bg-card hover:border-primary/20 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
+                  <section.icon className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+                <div>
+                  <h3 className="text-sm md:text-base font-semibold text-card-foreground">{section.title}</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground">{section.description}</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="text-xs md:text-sm">
+                Configurar
+              </Button>
+            </div>
+          ))}
+        </div>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 
