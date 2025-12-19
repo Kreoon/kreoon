@@ -57,6 +57,7 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          bunny_embed_url: string | null
           campaign_week: string | null
           client_id: string | null
           created_at: string | null
@@ -93,12 +94,15 @@ export type Database = {
           thumbnail_url: string | null
           title: string
           updated_at: string | null
+          video_processing_started_at: string | null
+          video_processing_status: string | null
           video_url: string | null
           views_count: number | null
         }
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          bunny_embed_url?: string | null
           campaign_week?: string | null
           client_id?: string | null
           created_at?: string | null
@@ -135,12 +139,15 @@ export type Database = {
           thumbnail_url?: string | null
           title: string
           updated_at?: string | null
+          video_processing_started_at?: string | null
+          video_processing_status?: string | null
           video_url?: string | null
           views_count?: number | null
         }
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          bunny_embed_url?: string | null
           campaign_week?: string | null
           client_id?: string | null
           created_at?: string | null
@@ -177,6 +184,8 @@ export type Database = {
           thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
+          video_processing_started_at?: string | null
+          video_processing_status?: string | null
           video_url?: string | null
           views_count?: number | null
         }
