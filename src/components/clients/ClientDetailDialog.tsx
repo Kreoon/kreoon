@@ -10,13 +10,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Content, STATUS_LABELS, STATUS_COLORS } from "@/types/database";
+import { Content, STATUS_LABELS, STATUS_COLORS, ClientPackage, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PaymentStatus } from "@/types/database";
 import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
+import { ClientPackageDialog } from "@/components/clients/ClientPackageDialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { 
   Building2, Video, Save, Mail, Phone, Calendar, DollarSign, 
-  Package, Plus, Trash2, Edit2, ExternalLink
+  Package, Plus, Trash2, Edit2, ExternalLink, ShoppingBag, CheckCircle
 } from "lucide-react";
 import {
   AlertDialog,
@@ -65,6 +66,12 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductDialog, setShowProductDialog] = useState(false);
+  
+  // Packages state
+  const [packages, setPackages] = useState<ClientPackage[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<ClientPackage | null>(null);
+  const [showPackageDialog, setShowPackageDialog] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -83,8 +90,46 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
       });
       fetchClientContent();
       fetchProducts();
+      fetchPackages();
     }
   }, [client]);
+
+  const fetchPackages = async () => {
+    if (!client) return;
+    setLoadingPackages(true);
+    try {
+      const { data } = await supabase
+        .from('client_packages')
+        .select('*')
+        .eq('client_id', client.id)
+        .order('created_at', { ascending: false });
+      setPackages((data || []) as ClientPackage[]);
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+    } finally {
+      setLoadingPackages(false);
+    }
+  };
+
+  const handleDeletePackage = async (packageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('client_packages')
+        .delete()
+        .eq('id', packageId);
+      
+      if (error) throw error;
+      
+      toast({ title: "Paquete eliminado" });
+      fetchPackages();
+    } catch (error) {
+      console.error('Error deleting package:', error);
+      toast({ 
+        title: "Error al eliminar", 
+        variant: "destructive" 
+      });
+    }
+  };
 
   const fetchProducts = async () => {
     if (!client) return;
@@ -220,11 +265,12 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         </DialogHeader>
 
         <Tabs defaultValue="info" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="info">Información</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="info">Info</TabsTrigger>
+            <TabsTrigger value="packages">Paquetes ({packages.length})</TabsTrigger>
             <TabsTrigger value="products">Productos ({products.length})</TabsTrigger>
             <TabsTrigger value="content">Videos ({assignedContent.length})</TabsTrigger>
-            <TabsTrigger value="stats">Estadísticas</TabsTrigger>
+            <TabsTrigger value="stats">Stats</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-4 mt-4">
@@ -306,7 +352,166 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             )}
           </TabsContent>
 
-          {/* Products Tab - NEW */}
+          {/* Packages Tab */}
+          <TabsContent value="packages" className="space-y-4 mt-4">
+            {isAdmin && (
+              <div className="flex justify-end">
+                <Button onClick={() => { setSelectedPackage(null); setShowPackageDialog(true); }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuevo Paquete
+                </Button>
+              </div>
+            )}
+
+            {loadingPackages ? (
+              <div className="space-y-3">
+                {[1, 2].map(i => (
+                  <Skeleton key={i} className="h-32 rounded-lg" />
+                ))}
+              </div>
+            ) : packages.length === 0 ? (
+              <div className="text-center py-12">
+                <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground mb-3">No hay paquetes registrados</p>
+                {isAdmin && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => { setSelectedPackage(null); setShowPackageDialog(true); }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear primer paquete
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {packages.map((pkg) => {
+                  const pendingAmount = pkg.total_value - pkg.paid_amount;
+                  const contentDelivered = assignedContent.filter(c => 
+                    ['approved', 'paid'].includes(c.status)
+                  ).length;
+                  const contentOwed = pkg.content_quantity - contentDelivered;
+
+                  return (
+                    <div 
+                      key={pkg.id}
+                      className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <ShoppingBag className="h-4 w-4 text-primary shrink-0" />
+                            <h4 className="font-semibold truncate">{pkg.name}</h4>
+                            <Badge className={PAYMENT_STATUS_COLORS[pkg.payment_status as PaymentStatus]}>
+                              {PAYMENT_STATUS_LABELS[pkg.payment_status as PaymentStatus]}
+                            </Badge>
+                          </div>
+                          
+                          {pkg.description && (
+                            <p className="text-sm text-muted-foreground mb-3">{pkg.description}</p>
+                          )}
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
+                            <div className="p-2 rounded bg-muted/50">
+                              <p className="text-muted-foreground">Videos</p>
+                              <p className="font-semibold">{pkg.content_quantity}</p>
+                            </div>
+                            <div className="p-2 rounded bg-muted/50">
+                              <p className="text-muted-foreground">Hooks/Video</p>
+                              <p className="font-semibold">{pkg.hooks_per_video}</p>
+                            </div>
+                            <div className="p-2 rounded bg-muted/50">
+                              <p className="text-muted-foreground">Creadores</p>
+                              <p className="font-semibold">{pkg.creators_count}</p>
+                            </div>
+                            <div className="p-2 rounded bg-muted/50">
+                              <p className="text-muted-foreground">Productos</p>
+                              <p className="font-semibold">{pkg.product_ids?.length || pkg.products_count}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-4 text-sm">
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="h-4 w-4 text-primary" />
+                              <span className="font-medium">${pkg.total_value.toLocaleString()}</span>
+                              <span className="text-muted-foreground">valor</span>
+                            </div>
+                            {pkg.payment_status === 'paid' ? (
+                              <div className="flex items-center gap-1 text-success">
+                                <CheckCircle className="h-4 w-4" />
+                                <span>Pagado completo</span>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-1 text-success">
+                                  <span className="font-medium">${pkg.paid_amount.toLocaleString()}</span>
+                                  <span className="text-muted-foreground">recaudado</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-warning">
+                                  <span className="font-medium">${pendingAmount.toLocaleString()}</span>
+                                  <span className="text-muted-foreground">pendiente</span>
+                                </div>
+                              </>
+                            )}
+                            {contentOwed > 0 && pkg.payment_status === 'paid' && (
+                              <div className="flex items-center gap-1 text-info">
+                                <Video className="h-4 w-4" />
+                                <span className="font-medium">{contentOwed}</span>
+                                <span className="text-muted-foreground">videos por entregar</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {isAdmin && (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => { setSelectedPackage(pkg); setShowPackageDialog(true); }}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Eliminar paquete?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción eliminará permanentemente "{pkg.name}".
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeletePackage(pkg.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Products Tab */}
           <TabsContent value="products" className="space-y-4 mt-4">
             {isAdmin && (
               <div className="flex justify-end">
@@ -536,6 +741,16 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
           fetchProducts();
           setShowProductDialog(false);
         }}
+      />
+
+      {/* Package Dialog */}
+      <ClientPackageDialog
+        clientId={client.id}
+        package_={selectedPackage}
+        products={products as any}
+        open={showPackageDialog}
+        onOpenChange={setShowPackageDialog}
+        onSuccess={fetchPackages}
       />
     </Dialog>
   );

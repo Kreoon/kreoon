@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_packages: {
+        Row: {
+          client_id: string
+          content_quantity: number
+          created_at: string
+          creators_count: number | null
+          description: string | null
+          hooks_per_video: number | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          paid_amount: number
+          paid_at: string | null
+          payment_status: string
+          product_ids: string[] | null
+          products_count: number | null
+          total_value: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          content_quantity?: number
+          created_at?: string
+          creators_count?: number | null
+          description?: string | null
+          hooks_per_video?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          paid_amount?: number
+          paid_at?: string | null
+          payment_status?: string
+          product_ids?: string[] | null
+          products_count?: number | null
+          total_value?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          content_quantity?: number
+          created_at?: string
+          creators_count?: number | null
+          description?: string | null
+          hooks_per_video?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          paid_amount?: number
+          paid_at?: string | null
+          payment_status?: string
+          product_ids?: string[] | null
+          products_count?: number | null
+          total_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_packages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           contact_email: string | null
