@@ -615,6 +615,15 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, get
                 <Play className="h-10 w-10 text-white" fill="white" />
               </div>
             </div>
+
+            {/* Published Badge - Only for admins */}
+            {isAdmin && (
+              <div className="absolute top-2 right-2">
+                <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
+                  {item.is_published ? 'Publicado' : 'Privado'}
+                </Badge>
+              </div>
+            )}
           </>
         ) : (
           <>
@@ -684,46 +693,35 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, get
             </div>
           </>
         )}
+      </div>
 
-        {/* Published Badge - Only for admins */}
-        {!isPlaying && isAdmin && (
-          <div className="absolute top-2 right-2">
-            <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
-              {item.is_published ? 'Publicado' : 'Privado'}
-            </Badge>
+      {/* Stats Bar - Between video and info */}
+      <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-t border-border">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 text-muted-foreground text-xs">
+            <Eye className="h-3.5 w-3.5" />
+            <span>{formatCount(item.views_count)}</span>
           </div>
-        )}
-
-        {/* Stats and Like Button */}
-        {!isPlaying && (
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
-                <Eye className="h-3 w-3" />
-                {formatCount(item.views_count)}
-              </div>
-              <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
-                <Heart className="h-3 w-3" />
-                {formatCount(item.likes_count)}
-              </div>
-            </div>
-            
-            {/* Like Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onLike(item.id);
-              }}
-              className={`p-2 rounded-full transition-colors ${
-                item.is_liked 
-                  ? 'bg-red-500 text-white' 
-                  : 'bg-black/50 text-white hover:bg-red-500/80'
-              }`}
-            >
-              <Heart className="h-4 w-4" fill={item.is_liked ? "currentColor" : "none"} />
-            </button>
+          <div className="flex items-center gap-1 text-muted-foreground text-xs">
+            <Heart className="h-3.5 w-3.5" />
+            <span>{formatCount(item.likes_count)}</span>
           </div>
-        )}
+        </div>
+        
+        {/* Like Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onLike(item.id);
+          }}
+          className={`p-1.5 rounded-full transition-colors ${
+            item.is_liked 
+              ? 'bg-red-500 text-white' 
+              : 'bg-muted text-muted-foreground hover:bg-red-500/20 hover:text-red-500'
+          }`}
+        >
+          <Heart className="h-4 w-4" fill={item.is_liked ? "currentColor" : "none"} />
+        </button>
       </div>
 
       {/* Info */}
