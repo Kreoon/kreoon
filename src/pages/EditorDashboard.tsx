@@ -26,7 +26,8 @@ import {
   LayoutDashboard,
   Columns,
   TrendingUp,
-  Play
+  Play,
+  Star
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -187,12 +188,20 @@ export default function EditorDashboard() {
           <h1 className="text-xl sm:text-2xl font-bold">Panel de Editor</h1>
           <p className="text-sm text-muted-foreground">Bienvenido, {profile?.full_name}</p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-          <DollarSign className="w-4 h-4 text-success" />
-          <span className="font-semibold text-success text-sm">
-            ${pendingPayment.toLocaleString()}
-          </span>
-          <span className="text-xs text-muted-foreground hidden sm:inline">pendiente</span>
+        <div className="flex flex-wrap items-center gap-3">
+          {profile?.is_ambassador && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
+              <Star className="w-4 h-4 text-primary fill-primary" />
+              <span className="font-medium text-primary text-sm">Embajador</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
+            <DollarSign className="w-4 h-4 text-success" />
+            <span className="font-semibold text-success text-sm">
+              ${pendingPayment.toLocaleString()}
+            </span>
+            <span className="text-xs text-muted-foreground hidden sm:inline">pendiente</span>
+          </div>
         </div>
       </div>
 

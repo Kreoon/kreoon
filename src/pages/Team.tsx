@@ -565,7 +565,12 @@ export default function Team() {
                           <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{editor.full_name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{editor.full_name}</p>
+                            {editor.is_ambassador && (
+                              <Star className="w-4 h-4 text-primary fill-primary" />
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground">{editor.email}</p>
                         </div>
                       </div>

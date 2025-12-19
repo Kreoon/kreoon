@@ -27,6 +27,7 @@ interface Creator {
   bio: string | null;
   role: 'creator' | 'editor';
   content_count: number;
+  is_ambassador: boolean;
 }
 
 const Creators = () => {
@@ -58,7 +59,7 @@ const Creators = () => {
       // Get profiles
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url, phone, bio')
+        .select('id, full_name, email, avatar_url, phone, bio, is_ambassador')
         .in('id', userIds);
 
       // Get content counts
@@ -92,7 +93,8 @@ const Creators = () => {
         phone: p.phone,
         bio: p.bio,
         role: roleMap.get(p.id) as 'creator' | 'editor',
-        content_count: countMap.get(p.id) || 0
+        content_count: countMap.get(p.id) || 0,
+        is_ambassador: p.is_ambassador || false
       }));
 
       setCreators(creatorsData);
@@ -208,12 +210,24 @@ const Creators = () => {
                         <User className="h-6 w-6 text-primary" />
                       </div>
                     )}
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${roleLabels[creator.role].className}`}>
-                      {roleLabels[creator.role].label}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${roleLabels[creator.role].className}`}>
+                        {roleLabels[creator.role].label}
+                      </span>
+                      {creator.is_ambassador && (
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary gap-0.5">
+                          <Star className="h-3 w-3 fill-primary" />
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <h3 className="font-semibold text-card-foreground mb-1">{creator.full_name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-card-foreground">{creator.full_name}</h3>
+                    {creator.is_ambassador && (
+                      <Star className="h-4 w-4 text-primary fill-primary" />
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground mb-4 truncate">{creator.email}</p>
 
                   <div className="flex items-center justify-between pt-4 border-t border-border">
