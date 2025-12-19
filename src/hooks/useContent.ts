@@ -22,9 +22,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
         .from('content')
         .select(`
           *,
-          client:clients(*),
-          creator:profiles!content_creator_id_fkey(*),
-          editor:profiles!content_editor_id_fkey(*)
+          client:clients(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -37,7 +35,38 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
       const { data, error: queryError } = await query;
 
       if (queryError) throw queryError;
-      setContent((data || []) as unknown as Content[]);
+      
+      // Obtener perfiles de creadores y editores
+      const contentData = data || [];
+      const creatorIds = [...new Set(contentData.filter(c => c.creator_id).map(c => c.creator_id))];
+      const editorIds = [...new Set(contentData.filter(c => c.editor_id).map(c => c.editor_id))];
+      
+      let creatorMap = new Map();
+      let editorMap = new Map();
+      
+      if (creatorIds.length > 0) {
+        const { data: creators } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', creatorIds);
+        creators?.forEach(c => creatorMap.set(c.id, c));
+      }
+      
+      if (editorIds.length > 0) {
+        const { data: editors } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', editorIds);
+        editors?.forEach(e => editorMap.set(e.id, e));
+      }
+      
+      const contentWithProfiles = contentData.map(item => ({
+        ...item,
+        creator: item.creator_id ? creatorMap.get(item.creator_id) : null,
+        editor: item.editor_id ? editorMap.get(item.editor_id) : null
+      }));
+      
+      setContent(contentWithProfiles as unknown as Content[]);
     } catch (err) {
       console.error('Error fetching content:', err);
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -134,9 +163,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
         .from('content')
         .select(`
           *,
-          client:clients(*),
-          creator:profiles!content_creator_id_fkey(*),
-          editor:profiles!content_editor_id_fkey(*)
+          client:clients(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -161,7 +188,38 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
       const { data, error: queryError } = await query;
 
       if (queryError) throw queryError;
-      setContent((data || []) as unknown as Content[]);
+      
+      // Obtener perfiles de creadores y editores
+      const contentData = data || [];
+      const creatorIds = [...new Set(contentData.filter(c => c.creator_id).map(c => c.creator_id))];
+      const editorIds = [...new Set(contentData.filter(c => c.editor_id).map(c => c.editor_id))];
+      
+      let creatorMap = new Map();
+      let editorMap = new Map();
+      
+      if (creatorIds.length > 0) {
+        const { data: creators } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', creatorIds);
+        creators?.forEach(c => creatorMap.set(c.id, c));
+      }
+      
+      if (editorIds.length > 0) {
+        const { data: editors } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', editorIds);
+        editors?.forEach(e => editorMap.set(e.id, e));
+      }
+      
+      const contentWithProfiles = contentData.map(item => ({
+        ...item,
+        creator: item.creator_id ? creatorMap.get(item.creator_id) : null,
+        editor: item.editor_id ? editorMap.get(item.editor_id) : null
+      }));
+      
+      setContent(contentWithProfiles as unknown as Content[]);
     } catch (err) {
       console.error('Error fetching content:', err);
       setError(err instanceof Error ? err.message : 'Error desconocido');
