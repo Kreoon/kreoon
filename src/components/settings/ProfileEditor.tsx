@@ -163,21 +163,47 @@ export function ProfileEditor() {
 
     setUploading(true);
     try {
-      // Convert to base64 for simple storage (or use Supabase Storage if configured)
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64 = event.target?.result as string;
-        setProfile(prev => ({ ...prev, avatar_url: base64 }));
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
+      // Create a unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+
+      // Delete old avatar if exists (ignore errors)
+      if (profile.avatar_url && profile.avatar_url.includes('avatars')) {
+        const oldPath = profile.avatar_url.split('/avatars/')[1];
+        if (oldPath) {
+          await supabase.storage.from('avatars').remove([oldPath]);
+        }
+      }
+
+      // Upload new avatar
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
+      
+      toast({
+        title: "Avatar actualizado",
+        description: "Tu foto de perfil se ha subido correctamente"
+      });
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast({
         title: "Error",
-        description: "No se pudo subir la imagen",
+        description: "No se pudo subir la imagen. Intenta de nuevo.",
         variant: "destructive"
       });
+    } finally {
       setUploading(false);
     }
   };
