@@ -236,18 +236,51 @@ export default function ClientDashboard() {
           notes: clientData.notes || ''
         });
 
-        const { data: contentData } = await supabase
+        const { data: contentData, error: contentError } = await supabase
           .from('content')
           .select(`
             *,
-            client:clients(*),
-            creator:profiles!content_creator_id_fkey(*),
-            editor:profiles!content_editor_id_fkey(*)
+            client:clients(*)
           `)
           .eq('client_id', clientData.id)
           .order('created_at', { ascending: false });
 
-        setContent((contentData || []) as unknown as Content[]);
+        if (contentError) {
+          console.error('Error fetching content:', contentError);
+          setContent([]);
+        } else {
+          // Obtener perfiles de creadores y editores
+          const contentItems = contentData || [];
+          const creatorIds = [...new Set(contentItems.filter(c => c.creator_id).map(c => c.creator_id))];
+          const editorIds = [...new Set(contentItems.filter(c => c.editor_id).map(c => c.editor_id))];
+          
+          let creatorMap = new Map();
+          let editorMap = new Map();
+          
+          if (creatorIds.length > 0) {
+            const { data: creators } = await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .in('id', creatorIds);
+            creators?.forEach(c => creatorMap.set(c.id, c));
+          }
+          
+          if (editorIds.length > 0) {
+            const { data: editors } = await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .in('id', editorIds);
+            editors?.forEach(e => editorMap.set(e.id, e));
+          }
+          
+          const contentWithProfiles = contentItems.map(item => ({
+            ...item,
+            creator: item.creator_id ? creatorMap.get(item.creator_id) : null,
+            editor: item.editor_id ? editorMap.get(item.editor_id) : null
+          }));
+          
+          setContent(contentWithProfiles as unknown as Content[]);
+        }
 
         const { data: packagesData } = await supabase
           .from('client_packages')
