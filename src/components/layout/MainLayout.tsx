@@ -6,7 +6,7 @@ import { TourProvider } from "@/components/tour/TourProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, LogOut, Building2 } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MainLayoutProps {
@@ -20,12 +20,85 @@ const clientNavigation = [
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
+// Editor navigation items for mobile bottom bar
+const editorMobileNavigation = [
+  { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard },
+  { name: "Tablero", href: "/board", icon: Kanban },
+  { name: "Contenido", href: "/portfolio", icon: Video },
+  { name: "Guiones", href: "/scripts", icon: Sparkles },
+  { name: "Config", href: "/settings", icon: Settings },
+];
+
 export function MainLayout({
   children
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { isClient, signOut, profile } = useAuth();
+  const { isClient, isEditor, isAdmin, signOut, profile } = useAuth();
   const location = useLocation();
+  
+  // For editors, show editor-specific layout with bottom nav on mobile
+  if (isEditor && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Editor Desktop Sidebar */}
+        <div className="hidden md:block">
+          <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
+        </div>
+        
+        {/* Editor Mobile Header */}
+        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-4 md:hidden">
+          <div className="flex-1 flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500">
+              <Scissors className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-sm font-bold">Panel Editor</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </header>
+
+        {/* Editor Mobile Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
+          <div className="flex justify-around py-2">
+            {editorMobileNavigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="text-[10px]">{item.name}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+        </nav>
+        
+        {/* Desktop Header with Notifications */}
+        <div className={`hidden md:flex fixed top-0 right-0 z-30 h-14 items-center px-4 transition-[left] duration-300 ${sidebarCollapsed ? "left-20" : "left-64"}`}>
+          <div className="ml-auto">
+            <NotificationBell />
+          </div>
+        </div>
+        
+        {/* Main Content */}
+        <main className={`pb-16 md:pb-0 transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
+          <div className="min-h-screen p-4 md:p-6 md:pt-6">
+            {children}
+          </div>
+        </main>
+      </div>
+    );
+  }
   
   // For clients, show a simpler sidebar
   if (isClient) {
