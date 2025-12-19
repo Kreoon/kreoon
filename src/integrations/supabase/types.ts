@@ -78,8 +78,10 @@ export type Database = {
           notes: string | null
           paid_at: string | null
           product: string | null
+          product_id: string | null
           recorded_at: string | null
           reference_url: string | null
+          sales_angle: string | null
           script: string | null
           script_approved_at: string | null
           script_approved_by: string | null
@@ -115,8 +117,10 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           product?: string | null
+          product_id?: string | null
           recorded_at?: string | null
           reference_url?: string | null
+          sales_angle?: string | null
           script?: string | null
           script_approved_at?: string | null
           script_approved_by?: string | null
@@ -152,8 +156,10 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           product?: string | null
+          product_id?: string | null
           recorded_at?: string | null
           reference_url?: string | null
+          sales_angle?: string | null
           script?: string | null
           script_approved_at?: string | null
           script_approved_by?: string | null
@@ -171,6 +177,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
           {
@@ -292,6 +305,62 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          brief_url: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          id: string
+          ideal_avatar: string | null
+          market_research: string | null
+          name: string
+          onboarding_url: string | null
+          research_url: string | null
+          sales_angles: string[] | null
+          strategy: string | null
+          updated_at: string
+        }
+        Insert: {
+          brief_url?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          ideal_avatar?: string | null
+          market_research?: string | null
+          name: string
+          onboarding_url?: string | null
+          research_url?: string | null
+          sales_angles?: string[] | null
+          strategy?: string | null
+          updated_at?: string
+        }
+        Update: {
+          brief_url?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          ideal_avatar?: string | null
+          market_research?: string | null
+          name?: string
+          onboarding_url?: string | null
+          research_url?: string | null
+          sales_angles?: string[] | null
+          strategy?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
