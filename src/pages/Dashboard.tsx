@@ -837,7 +837,7 @@ export default function Dashboard() {
 
       <div className="p-6 lg:p-8 space-y-8">
         {/* Main KPIs Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div data-tour="stats-section" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <LargeKpiCard
             title="Total Contenidos"
             value={totalContent}

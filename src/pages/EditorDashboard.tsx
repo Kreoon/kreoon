@@ -131,7 +131,7 @@ export default function EditorDashboard() {
 
       {/* Stats */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div data-tour="editor-stats" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <Card 
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => openKpiDialog('Total Asignados', content)}
@@ -232,7 +232,7 @@ export default function EditorDashboard() {
         </div>
 
         {/* Kanban Board */}
-        <div className="overflow-x-auto pb-4">
+        <div data-tour="editor-kanban" className="overflow-x-auto pb-4">
           <div className="flex gap-4 min-w-max">
             {EDITOR_COLUMNS.map(column => (
               <div key={column.status} className="w-80 flex-shrink-0">

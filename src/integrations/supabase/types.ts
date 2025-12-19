@@ -567,6 +567,7 @@ export type Database = {
           email: string
           facebook: string | null
           full_name: string
+          has_seen_tour: boolean | null
           id: string
           instagram: string | null
           is_ambassador: boolean | null
@@ -586,6 +587,7 @@ export type Database = {
           email: string
           facebook?: string | null
           full_name: string
+          has_seen_tour?: boolean | null
           id: string
           instagram?: string | null
           is_ambassador?: boolean | null
@@ -605,6 +607,7 @@ export type Database = {
           email?: string
           facebook?: string | null
           full_name?: string
+          has_seen_tour?: boolean | null
           id?: string
           instagram?: string | null
           is_ambassador?: boolean | null

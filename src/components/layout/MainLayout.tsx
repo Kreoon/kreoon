@@ -2,6 +2,7 @@ import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { TourProvider } from "@/components/tour/TourProvider";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -35,7 +36,7 @@ export function MainLayout({
       
       {/* Desktop Header with Notifications */}
       <div className={`hidden md:flex fixed top-0 right-0 z-30 h-14 items-center px-4 transition-[left] duration-300 ${sidebarCollapsed ? "left-20" : "left-64"}`}>
-        <div className="ml-auto">
+        <div className="ml-auto" data-tour="notification-bell">
           <NotificationBell />
         </div>
       </div>
@@ -46,6 +47,9 @@ export function MainLayout({
           {children}
         </div>
       </main>
+
+      {/* Tour Provider */}
+      <TourProvider />
     </div>
   );
 }

@@ -290,7 +290,7 @@ export default function ClientDashboard() {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-3">
+            <div data-tour="client-stats" className="grid grid-cols-2 gap-3">
               <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
                 <CardContent className="p-4">
                   <Video className="h-5 w-5 text-primary mb-2" />
@@ -344,7 +344,7 @@ export default function ClientDashboard() {
             )}
 
             {/* Recent Content */}
-            <div>
+            <div data-tour="client-content">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold">Contenido Reciente</h3>
                 <Button variant="ghost" size="sm" onClick={() => setActiveTab('content')}>
@@ -376,7 +376,7 @@ export default function ClientDashboard() {
             </div>
 
             {/* Quick Links */}
-            <div className="grid grid-cols-2 gap-3">
+            <div data-tour="client-products" className="grid grid-cols-2 gap-3">
               <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/portfolio')}>
                 <Play className="h-5 w-5" />
                 <span className="text-xs">Ver Portafolio</span>
