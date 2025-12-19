@@ -646,7 +646,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium flex items-center gap-2">
-                    <Video className="h-4 w-4" /> Videos Finales (Hooks)
+                    <Video className="h-4 w-4" /> Videos Finales (Variables)
                   </h4>
                   
                   {/* Hooks count selector - edit mode only */}
@@ -677,7 +677,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 {/* Show hooks count badge when not editing */}
                 {!editMode && formData.hooks_count > 1 && (
                   <Badge variant="secondary" className="w-fit">
-                    {formData.hooks_count} hooks configurados
+                    {formData.hooks_count} variables configuradas
                   </Badge>
                 )}
                 
@@ -685,7 +685,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                   {formData.video_urls.map((videoUrl, index) => (
                     <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
-                      <span className="text-sm font-medium">Hook {index + 1}</span>
+                      <span className="text-sm font-medium">Variable {index + 1}</span>
                       
                       {videoUrl && (
                         <div 
@@ -997,22 +997,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </h4>
                 
                 <div className="grid gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-muted-foreground text-xs">URL Final (Video Editado)</Label>
-                    {editMode && canEditVideoUrl ? (
-                      <Input
-                        value={formData.video_url}
-                        onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                        type="url"
-                        placeholder="https://..."
-                      />
-                    ) : content.video_url ? (
-                      <a href={content.video_url} target="_blank" rel="noopener noreferrer" 
-                         className="text-primary hover:underline flex items-center gap-1">
-                        {content.video_url} <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ) : <p className="text-muted-foreground">—</p>}
-                  </div>
 
                   <div className="space-y-1">
                     <Label className="text-muted-foreground text-xs">URL Drive Video Crudo</Label>
