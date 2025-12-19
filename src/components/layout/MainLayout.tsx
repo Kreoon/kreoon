@@ -2,8 +2,11 @@ import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ChatPanel } from "@/components/chat/ChatPanel";
+import { ChatButton } from "@/components/chat/ChatButton";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { usePresence } from "@/hooks/usePresence";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors } from "lucide-react";
@@ -33,8 +36,12 @@ export function MainLayout({
   children
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { isClient, isEditor, isAdmin, signOut, profile } = useAuth();
+  const [chatOpen, setChatOpen] = useState(false);
+  const { isClient, isEditor, isAdmin, isCreator, signOut, profile } = useAuth();
   const location = useLocation();
+  
+  // Track user presence
+  usePresence();
   
   // For editors, show editor-specific layout with bottom nav on mobile
   if (isEditor && !isAdmin) {
@@ -54,6 +61,7 @@ export function MainLayout({
             <span className="text-sm font-bold">Panel Editor</span>
           </div>
           <div className="flex items-center gap-2">
+            <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
             <NotificationBell />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
@@ -84,18 +92,22 @@ export function MainLayout({
         </nav>
         
         {/* Desktop Header with Notifications */}
-        <div className={`hidden md:flex fixed top-0 right-0 z-30 h-14 items-center px-4 transition-[left] duration-300 ${sidebarCollapsed ? "left-20" : "left-64"}`}>
-          <div className="ml-auto">
+        <div className={`hidden md:flex fixed top-0 right-0 z-30 h-14 items-center gap-2 px-4 transition-[left] duration-300 ${sidebarCollapsed ? "left-20" : "left-64"}`}>
+          <div className="ml-auto flex items-center gap-2">
+            <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
             <NotificationBell />
           </div>
         </div>
         
         {/* Main Content */}
-        <main className={`pb-16 md:pb-0 transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
+        <main className={`pb-16 md:pb-0 transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"} ${chatOpen ? 'md:mr-96' : ''}`}>
           <div className="min-h-screen p-4 md:p-6 md:pt-6">
             {children}
           </div>
         </main>
+
+        {/* Chat Panel */}
+        <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       </div>
     );
   }
@@ -172,6 +184,7 @@ export function MainLayout({
             <span className="text-sm font-bold">Portal Cliente</span>
           </div>
           <div className="flex items-center gap-2">
+            <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
             <NotificationBell />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
@@ -202,18 +215,22 @@ export function MainLayout({
         </nav>
         
         {/* Desktop Header with Notifications */}
-        <div className="hidden md:flex fixed top-0 right-0 z-30 h-14 items-center px-4 left-64">
-          <div className="ml-auto">
+        <div className="hidden md:flex fixed top-0 right-0 z-30 h-14 items-center gap-2 px-4 left-64">
+          <div className="ml-auto flex items-center gap-2">
+            <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
             <NotificationBell />
           </div>
         </div>
         
         {/* Main Content */}
-        <main className="md:ml-64 pb-16 md:pb-0">
+        <main className={`md:ml-64 pb-16 md:pb-0 ${chatOpen ? 'md:mr-96' : ''}`}>
           <div className="min-h-screen p-4 md:p-6 md:pt-6">
             {children}
           </div>
         </main>
+
+        {/* Chat Panel */}
+        <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       </div>
     );
   }
@@ -237,22 +254,29 @@ export function MainLayout({
             <span className="text-sm font-bold">UGC Colombia</span>
           </div>
         </div>
-        <NotificationBell />
+        <div className="flex items-center gap-2">
+          <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
+          <NotificationBell />
+        </div>
       </header>
       
       {/* Desktop Header with Notifications */}
-      <div className={`hidden md:flex fixed top-0 right-0 z-30 h-14 items-center px-4 transition-[left] duration-300 ${sidebarCollapsed ? "left-20" : "left-64"}`}>
-        <div className="ml-auto" data-tour="notification-bell">
+      <div className={`hidden md:flex fixed top-0 right-0 z-30 h-14 items-center gap-2 px-4 transition-[left] duration-300 ${sidebarCollapsed ? "left-20" : "left-64"}`}>
+        <div className="ml-auto flex items-center gap-2" data-tour="notification-bell">
+          <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
           <NotificationBell />
         </div>
       </div>
       
       {/* Main Content */}
-      <main className={`transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
+      <main className={`transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"} ${chatOpen ? 'md:mr-96' : ''}`}>
         <div className="min-h-screen p-4 md:p-6 md:pt-6">
           {children}
         </div>
       </main>
+
+      {/* Chat Panel */}
+      <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
 
       {/* Tour Provider */}
       <TourProvider />
