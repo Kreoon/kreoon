@@ -18,14 +18,14 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Tablero", href: "/board", icon: Video },
-  { name: "Contenido", href: "/content", icon: FileText },
-  { name: "Creadores", href: "/creators", icon: Users },
-  { name: "Guiones IA", href: "/scripts", icon: Sparkles },
-  { name: "Clientes", href: "/clients", icon: Building2 },
-  { name: "Equipo", href: "/team", icon: UsersRound },
-  { name: "Configuración", href: "/settings", icon: Settings },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "Tablero", href: "/board", icon: Video, tourId: "sidebar-board" },
+  { name: "Contenido", href: "/content", icon: FileText, tourId: "sidebar-content" },
+  { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators" },
+  { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+  { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients" },
+  { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team" },
+  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
 interface SidebarProps {
@@ -83,6 +83,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               <NavLink
                 key={item.name}
                 to={item.href}
+                data-tour={item.tourId}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                   isActive 
