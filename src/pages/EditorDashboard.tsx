@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
+import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { 
   LogOut, 
   Scissors, 
@@ -20,7 +21,8 @@ import {
   User,
   DollarSign,
   Calendar,
-  Video
+  Video,
+  CreditCard
 } from 'lucide-react';
 
 const EDITOR_COLUMNS: { status: ContentStatus; title: string; color: string }[] = [
@@ -28,6 +30,7 @@ const EDITOR_COLUMNS: { status: ContentStatus; title: string; color: string }[] 
   { status: 'editing', title: 'En Edición', color: 'bg-purple-500' },
   { status: 'delivered', title: 'Entregado', color: 'bg-emerald-500' },
   { status: 'approved', title: 'Aprobados', color: 'bg-success' },
+  { status: 'paid', title: 'Pagados', color: 'bg-primary' },
 ];
 
 export default function EditorDashboard() {
@@ -35,6 +38,15 @@ export default function EditorDashboard() {
   const { content, loading, updateContentStatus } = useContent(user?.id, 'editor');
   const { toast } = useToast();
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  const [kpiDialog, setKpiDialog] = useState<{
+    open: boolean;
+    title: string;
+    content: Content[];
+  }>({ open: false, title: '', content: [] });
+
+  const openKpiDialog = (title: string, contentList: Content[]) => {
+    setKpiDialog({ open: true, title, content: contentList });
+  };
 
   const handleMoveToNext = async (item: Content) => {
     const statusFlow: Record<string, ContentStatus> = {
@@ -63,8 +75,16 @@ export default function EditorDashboard() {
     return content.filter(c => c.status === status);
   };
 
-  const pendingPayment = content
-    .filter(c => c.status === 'approved' && !c.is_ambassador_content && !c.editor_paid)
+  // Pagos pendientes y pagados
+  const unpaidContent = content.filter(c => c.status === 'approved' && !c.editor_paid);
+  const paidContent = content.filter(c => c.status === 'paid' || c.editor_paid);
+  
+  const pendingPayment = unpaidContent
+    .filter(c => !c.is_ambassador_content)
+    .reduce((sum, c) => sum + (c.editor_payment || 0), 0);
+  
+  const totalPaid = paidContent
+    .filter(c => !c.is_ambassador_content)
     .reduce((sum, c) => sum + (c.editor_payment || 0), 0);
 
   if (loading) {
@@ -111,8 +131,11 @@ export default function EditorDashboard() {
 
       {/* Stats */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => openKpiDialog('Total Asignados', content)}
+          >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-purple-500/10">
                 <Scissors className="w-5 h-5 text-purple-500" />
@@ -124,7 +147,10 @@ export default function EditorDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => openKpiDialog('Por Editar', content.filter(c => c.status === 'recorded'))}
+          >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-info/10">
                 <Clock className="w-5 h-5 text-info" />
@@ -138,7 +164,10 @@ export default function EditorDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => openKpiDialog('En Edición', content.filter(c => c.status === 'editing'))}
+          >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-orange-500/10">
                 <Video className="w-5 h-5 text-orange-500" />
@@ -147,12 +176,15 @@ export default function EditorDashboard() {
                 <p className="text-2xl font-bold">
                   {content.filter(c => c.status === 'editing').length}
                 </p>
-                <p className="text-sm text-muted-foreground">En revisión</p>
+                <p className="text-sm text-muted-foreground">En edición</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
+          >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-success/10">
                 <CheckCircle2 className="w-5 h-5 text-success" />
@@ -162,6 +194,38 @@ export default function EditorDashboard() {
                   {content.filter(c => c.status === 'approved').length}
                 </p>
                 <p className="text-sm text-muted-foreground">Aprobados</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow border-warning/30 bg-warning/5"
+            onClick={() => openKpiDialog('Por Pagar', unpaidContent)}
+          >
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-warning/10">
+                <DollarSign className="w-5 h-5 text-warning" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{unpaidContent.length}</p>
+                <p className="text-sm text-muted-foreground">Por pagar</p>
+                <p className="text-xs text-warning font-medium">${pendingPayment.toLocaleString()}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow border-success/30 bg-success/5"
+            onClick={() => openKpiDialog('Pagados', paidContent)}
+          >
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-success/10">
+                <CreditCard className="w-5 h-5 text-success" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{paidContent.length}</p>
+                <p className="text-sm text-muted-foreground">Pagados</p>
+                <p className="text-xs text-success font-medium">${totalPaid.toLocaleString()}</p>
               </div>
             </CardContent>
           </Card>
@@ -313,6 +377,15 @@ export default function EditorDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* KPI Content Dialog */}
+      <KpiContentDialog
+        title={kpiDialog.title}
+        content={kpiDialog.content}
+        open={kpiDialog.open}
+        onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
+        onSelectContent={setSelectedContent}
+      />
     </div>
   );
 }
