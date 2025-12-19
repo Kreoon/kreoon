@@ -31,7 +31,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       </header>
       
       {/* Main Content */}
-      <main className={`transition-all duration-300 md:pl-64 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
+      <main className={`transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
         <div className="min-h-screen">
           {children}
         </div>
