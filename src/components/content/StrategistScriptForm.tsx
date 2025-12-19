@@ -171,10 +171,12 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
 
       console.log("Sending to n8n webhook:", payload);
 
-      // Send as GET with payload encoded in query params
-      const encodedPayload = encodeURIComponent(JSON.stringify(payload));
-      const response = await fetch(`${N8N_WEBHOOK_URL}?data=${encodedPayload}`, {
-        method: "GET",
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
