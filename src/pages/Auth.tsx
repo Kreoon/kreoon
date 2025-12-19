@@ -24,7 +24,7 @@ interface PublishedContent {
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { user, loading: authLoading, signIn, signUp, roles } = useAuth();
+  const { user, loading: authLoading, rolesLoaded, signIn, signUp, roles } = useAuth();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(false);
@@ -41,10 +41,11 @@ export default function Auth() {
   const [contentLoading, setContentLoading] = useState(true);
 
   useEffect(() => {
-    if (user && !authLoading) {
+    // Wait until roles are resolved before redirecting to avoid mobile redirect loops
+    if (user && !authLoading && rolesLoaded) {
       redirectByRole();
     }
-  }, [user, authLoading, roles]);
+  }, [user, authLoading, rolesLoaded, roles]);
 
   useEffect(() => {
     fetchPublicContent();
@@ -105,7 +106,8 @@ export default function Auth() {
     } else if (roles.includes('client')) {
       navigate('/client-dashboard');
     } else {
-      navigate('/');
+      // If no roles are assigned yet, keep user in a safe place
+      navigate('/settings');
     }
   };
 
