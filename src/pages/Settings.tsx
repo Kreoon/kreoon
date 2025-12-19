@@ -1,50 +1,70 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock } from "lucide-react";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
+import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
+import { useAuth } from "@/hooks/useAuth";
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos';
 
 const settingsSections = [
   { 
     id: 'perfil' as const,
     icon: User, 
     title: "Perfil", 
-    description: "Gestiona tu información personal y preferencias de cuenta" 
+    description: "Gestiona tu información personal y preferencias de cuenta",
+    adminOnly: false
+  },
+  { 
+    id: 'permisos' as const,
+    icon: Lock, 
+    title: "Permisos", 
+    description: "Gestiona los permisos de acceso para cada rol",
+    adminOnly: true
   },
   { 
     id: 'notificaciones' as const,
     icon: Bell, 
     title: "Notificaciones", 
-    description: "Configura cómo y cuándo recibir alertas" 
+    description: "Configura cómo y cuándo recibir alertas",
+    adminOnly: false
   },
   { 
     id: 'seguridad' as const,
     icon: Shield, 
     title: "Seguridad", 
-    description: "Contraseña, autenticación y accesos" 
+    description: "Contraseña, autenticación y accesos",
+    adminOnly: false
   },
   { 
     id: 'apariencia' as const,
     icon: Palette, 
     title: "Apariencia", 
-    description: "Tema, colores y personalización visual" 
+    description: "Tema, colores y personalización visual",
+    adminOnly: false
   },
   { 
     id: 'integraciones' as const,
     icon: Globe, 
     title: "Integraciones", 
-    description: "Conecta con otras plataformas y servicios" 
+    description: "Conecta con otras plataformas y servicios",
+    adminOnly: true
   },
 ];
 
 const Settings = () => {
+  const { isAdmin } = useAuth();
   const [activeSection, setActiveSection] = useState<SettingsSection>('main');
+
+  // Filter sections based on user role
+  const visibleSections = settingsSections.filter(s => !s.adminOnly || isAdmin);
 
   const renderContent = () => {
     switch (activeSection) {
       case 'perfil':
         return <ProfileEditor />;
+      case 'permisos':
+        return <PermissionsEditor />;
       case 'notificaciones':
         return (
           <div className="p-6 text-center text-muted-foreground">
@@ -95,12 +115,12 @@ const Settings = () => {
             )}
             <div>
               <h1 className="text-lg md:text-xl font-bold text-foreground">
-                {activeSection === 'main' ? 'Configuración' : settingsSections.find(s => s.id === activeSection)?.title}
+                {activeSection === 'main' ? 'Configuración' : visibleSections.find(s => s.id === activeSection)?.title}
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">
                 {activeSection === 'main' 
                   ? 'Personaliza tu experiencia en la plataforma'
-                  : settingsSections.find(s => s.id === activeSection)?.description
+                  : visibleSections.find(s => s.id === activeSection)?.description
                 }
               </p>
             </div>
@@ -112,7 +132,7 @@ const Settings = () => {
         {/* Sidebar for desktop */}
         <aside className="hidden md:block w-64 border-r border-border min-h-[calc(100vh-4rem)] p-4">
           <nav className="space-y-1">
-            {settingsSections.map((section) => (
+            {visibleSections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
@@ -134,7 +154,7 @@ const Settings = () => {
           {activeSection === 'main' ? (
             // Mobile menu cards
             <div className="md:hidden space-y-3">
-              {settingsSections.map((section) => (
+              {visibleSections.map((section) => (
                 <button 
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
