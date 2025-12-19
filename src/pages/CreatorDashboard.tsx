@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
+import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { 
   LogOut, 
   Video, 
@@ -23,7 +24,8 @@ import {
   Loader2,
   User,
   DollarSign,
-  Calendar
+  Calendar,
+  CreditCard
 } from 'lucide-react';
 
 const CREATOR_COLUMNS: { status: ContentStatus; title: string; color: string }[] = [
@@ -33,6 +35,7 @@ const CREATOR_COLUMNS: { status: ContentStatus; title: string; color: string }[]
   { status: 'editing', title: 'En Edición', color: 'bg-pink-500' },
   { status: 'delivered', title: 'Entregado', color: 'bg-emerald-500' },
   { status: 'approved', title: 'Aprobados', color: 'bg-success' },
+  { status: 'paid', title: 'Pagados', color: 'bg-primary' },
 ];
 
 export default function CreatorDashboard() {
@@ -41,6 +44,15 @@ export default function CreatorDashboard() {
   const { toast } = useToast();
   const [isAmbassador, setIsAmbassador] = useState(false);
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  const [kpiDialog, setKpiDialog] = useState<{
+    open: boolean;
+    title: string;
+    content: Content[];
+  }>({ open: false, title: '', content: [] });
+
+  const openKpiDialog = (title: string, contentList: Content[]) => {
+    setKpiDialog({ open: true, title, content: contentList });
+  };
 
   useEffect(() => {
     if (profile) {
@@ -112,8 +124,16 @@ export default function CreatorDashboard() {
     return content.filter(c => c.status === status);
   };
 
-  const pendingPayment = content
-    .filter(c => c.status === 'approved' && !c.is_ambassador_content && !c.creator_paid)
+  // Pagos pendientes y pagados
+  const unpaidContent = content.filter(c => c.status === 'approved' && !c.creator_paid);
+  const paidContent = content.filter(c => c.status === 'paid' || c.creator_paid);
+  
+  const pendingPayment = unpaidContent
+    .filter(c => !c.is_ambassador_content)
+    .reduce((sum, c) => sum + (c.creator_payment || 0), 0);
+  
+  const totalPaid = paidContent
+    .filter(c => !c.is_ambassador_content)
     .reduce((sum, c) => sum + (c.creator_payment || 0), 0);
 
   if (loading) {
@@ -172,8 +192,11 @@ export default function CreatorDashboard() {
 
       {/* Stats */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => openKpiDialog('Total Asignados', content)}
+          >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
                 <Video className="w-5 h-5 text-primary" />
@@ -185,7 +208,10 @@ export default function CreatorDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => openKpiDialog('En Progreso', content.filter(c => ['script_approved', 'recording'].includes(c.status)))}
+          >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-info/10">
                 <Clock className="w-5 h-5 text-info" />
@@ -199,7 +225,10 @@ export default function CreatorDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
+          >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-success/10">
                 <CheckCircle2 className="w-5 h-5 text-success" />
@@ -213,7 +242,10 @@ export default function CreatorDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => openKpiDialog('Contenido Embajador', content.filter(c => c.is_ambassador_content))}
+          >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-purple-500/10">
                 <Star className="w-5 h-5 text-purple-500" />
@@ -223,6 +255,38 @@ export default function CreatorDashboard() {
                   {content.filter(c => c.is_ambassador_content).length}
                 </p>
                 <p className="text-sm text-muted-foreground">Embajador</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow border-warning/30 bg-warning/5"
+            onClick={() => openKpiDialog('Por Pagar', unpaidContent)}
+          >
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-warning/10">
+                <DollarSign className="w-5 h-5 text-warning" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{unpaidContent.length}</p>
+                <p className="text-sm text-muted-foreground">Por pagar</p>
+                <p className="text-xs text-warning font-medium">${pendingPayment.toLocaleString()}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow border-success/30 bg-success/5"
+            onClick={() => openKpiDialog('Pagados', paidContent)}
+          >
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-success/10">
+                <CreditCard className="w-5 h-5 text-success" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{paidContent.length}</p>
+                <p className="text-sm text-muted-foreground">Pagados</p>
+                <p className="text-xs text-success font-medium">${totalPaid.toLocaleString()}</p>
               </div>
             </CardContent>
           </Card>
@@ -369,6 +433,15 @@ export default function CreatorDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* KPI Content Dialog */}
+      <KpiContentDialog
+        title={kpiDialog.title}
+        content={kpiDialog.content}
+        open={kpiDialog.open}
+        onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
+        onSelectContent={setSelectedContent}
+      />
     </div>
   );
 }
