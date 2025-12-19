@@ -37,6 +37,14 @@ const editorNavigation = [
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
+const creatorNavigation = [
+  { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+  { name: "Contenido", href: "/portfolio", icon: Video, tourId: "sidebar-content" },
+  { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+];
+
 interface SidebarProps {
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
@@ -45,10 +53,10 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, isAdmin, isEditor } = useAuth();
+  const { signOut, profile, isAdmin, isEditor, isCreator } = useAuth();
 
   // Determinar navegación según rol
-  const navigation = isEditor && !isAdmin ? editorNavigation : adminNavigation;
+  const navigation = isCreator && !isAdmin ? creatorNavigation : isEditor && !isAdmin ? editorNavigation : adminNavigation;
 
   const handleSignOut = async () => {
     await signOut();

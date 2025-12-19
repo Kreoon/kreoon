@@ -28,6 +28,11 @@ const EDITOR_COLUMNS = KANBAN_COLUMNS.filter(col =>
   ['recorded', 'editing', 'delivered', 'issue', 'approved'].includes(col.status)
 );
 
+// Columnas para creadores: solo desde 'assigned' en adelante
+const CREATOR_COLUMNS = KANBAN_COLUMNS.filter(col => 
+  ['assigned', 'recording', 'recorded', 'editing', 'delivered', 'approved', 'paid'].includes(col.status)
+);
+
 // Verificar si un movimiento de estado es válido según el rol
 const canMoveToStatus = (
   role: string,
@@ -503,7 +508,7 @@ export default function ContentBoard() {
           </div>
           
           <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0">
-            {(isEditor && !isAdmin ? EDITOR_COLUMNS : BOARD_COLUMNS).map(column => {
+            {(isCreator && !isAdmin ? CREATOR_COLUMNS : isEditor && !isAdmin ? EDITOR_COLUMNS : BOARD_COLUMNS).map(column => {
               const columnContent = getContentByStatus(column.status);
               const isCurrentDropTarget = dropTarget === column.status;
               const canDropHere = draggingContent 
