@@ -921,7 +921,12 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-bold text-foreground">Metas vs Resultados</h2>
-                <p className="text-sm text-muted-foreground">Comparativa mensual {new Date().getFullYear()}</p>
+                <p className="text-sm text-muted-foreground">
+                  {startDateFilter || endDateFilter 
+                    ? `Filtrado: ${startDateFilter ? format(startDateFilter, "MMM yyyy", { locale: es }) : 'Inicio'} - ${endDateFilter ? format(endDateFilter, "MMM yyyy", { locale: es }) : 'Actual'}`
+                    : `Comparativa mensual ${new Date().getFullYear()}`
+                  }
+                </p>
               </div>
               <Target className="h-8 w-8 text-primary" />
             </div>
@@ -938,7 +943,9 @@ export default function Dashboard() {
                   goals={allGoals} 
                   actuals={monthlyActuals} 
                   metric="revenue" 
-                  title="Ingresos Mensuales" 
+                  title="Ingresos Mensuales"
+                  startMonth={startDateFilter ? startDateFilter.getMonth() + 1 : 1}
+                  endMonth={endDateFilter ? endDateFilter.getMonth() + 1 : 12}
                 />
               </TabsContent>
               
@@ -947,7 +954,9 @@ export default function Dashboard() {
                   goals={allGoals} 
                   actuals={monthlyActuals} 
                   metric="content" 
-                  title="Contenidos Aprobados" 
+                  title="Contenidos Aprobados"
+                  startMonth={startDateFilter ? startDateFilter.getMonth() + 1 : 1}
+                  endMonth={endDateFilter ? endDateFilter.getMonth() + 1 : 12}
                 />
               </TabsContent>
               
@@ -956,7 +965,9 @@ export default function Dashboard() {
                   goals={allGoals} 
                   actuals={monthlyActuals} 
                   metric="clients" 
-                  title="Nuevos Clientes" 
+                  title="Nuevos Clientes"
+                  startMonth={startDateFilter ? startDateFilter.getMonth() + 1 : 1}
+                  endMonth={endDateFilter ? endDateFilter.getMonth() + 1 : 12}
                 />
               </TabsContent>
             </Tabs>
