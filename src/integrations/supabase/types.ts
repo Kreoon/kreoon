@@ -138,6 +138,7 @@ export type Database = {
           description: string | null
           drive_url: string | null
           editor_assigned_at: string | null
+          editor_guidelines: string | null
           editor_id: string | null
           editor_paid: boolean | null
           editor_payment: number | null
@@ -158,13 +159,16 @@ export type Database = {
           script_approved_by: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["content_status"] | null
+          strategist_guidelines: string | null
           strategist_id: string | null
           thumbnail_url: string | null
           title: string
+          trafficker_guidelines: string | null
           updated_at: string | null
           video_processing_started_at: string | null
           video_processing_status: string | null
           video_url: string | null
+          video_urls: string[] | null
           views_count: number | null
         }
         Insert: {
@@ -183,6 +187,7 @@ export type Database = {
           description?: string | null
           drive_url?: string | null
           editor_assigned_at?: string | null
+          editor_guidelines?: string | null
           editor_id?: string | null
           editor_paid?: boolean | null
           editor_payment?: number | null
@@ -203,13 +208,16 @@ export type Database = {
           script_approved_by?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["content_status"] | null
+          strategist_guidelines?: string | null
           strategist_id?: string | null
           thumbnail_url?: string | null
           title: string
+          trafficker_guidelines?: string | null
           updated_at?: string | null
           video_processing_started_at?: string | null
           video_processing_status?: string | null
           video_url?: string | null
+          video_urls?: string[] | null
           views_count?: number | null
         }
         Update: {
@@ -228,6 +236,7 @@ export type Database = {
           description?: string | null
           drive_url?: string | null
           editor_assigned_at?: string | null
+          editor_guidelines?: string | null
           editor_id?: string | null
           editor_paid?: boolean | null
           editor_payment?: number | null
@@ -248,13 +257,16 @@ export type Database = {
           script_approved_by?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["content_status"] | null
+          strategist_guidelines?: string | null
           strategist_id?: string | null
           thumbnail_url?: string | null
           title?: string
+          trafficker_guidelines?: string | null
           updated_at?: string | null
           video_processing_started_at?: string | null
           video_processing_status?: string | null
           video_url?: string | null
+          video_urls?: string[] | null
           views_count?: number | null
         }
         Relationships: [
