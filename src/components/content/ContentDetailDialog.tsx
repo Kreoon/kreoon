@@ -842,83 +842,76 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             </div>
 
             {/* Section 4: Guidelines for different roles - Visible for all, editable by admin/strategist */}
-            <div className="space-y-6 pt-6 border-t">
-              <h4 className="font-medium text-lg">Pautas por Rol</h4>
-              
-              {/* Pautas para el Editor */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-blue-500/10">
-                    <Clipboard className="h-4 w-4 text-blue-500" />
-                  </div>
-                  <Label className="font-medium">Pautas para el Editor</Label>
-                </div>
-                {editMode && canEditVideoTab ? (
-                  <RichTextEditor
-                    content={formData.editor_guidelines || ''}
-                    onChange={(html) => setFormData({ ...formData, editor_guidelines: html })}
-                    placeholder="Instrucciones específicas para el editor: estilo de edición, música, ritmo, efectos, etc."
-                    className="min-h-[150px]"
-                  />
-                ) : formData.editor_guidelines || (content as any).editor_guidelines ? (
-                  <RichTextViewer 
-                    content={formData.editor_guidelines || (content as any).editor_guidelines} 
-                    className="min-h-[50px] max-h-[200px] overflow-y-auto"
-                  />
-                ) : (
+            {/* Pautas para el Editor */}
+            <div className="space-y-3 pt-6 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <Clipboard className="h-4 w-4 text-blue-500" /> Pautas para el Editor
+              </h4>
+              {editMode && canEditVideoTab ? (
+                <RichTextEditor
+                  content={formData.editor_guidelines || ''}
+                  onChange={(html) => setFormData({ ...formData, editor_guidelines: html })}
+                  placeholder="Instrucciones específicas para el editor: estilo de edición, música, ritmo, efectos, etc."
+                  className="min-h-[150px]"
+                />
+              ) : formData.editor_guidelines || (content as any).editor_guidelines ? (
+                <RichTextViewer 
+                  content={formData.editor_guidelines || (content as any).editor_guidelines} 
+                  className="min-h-[100px] max-h-[300px] overflow-y-auto"
+                />
+              ) : (
+                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
                   <p className="text-sm text-muted-foreground italic">Sin pautas para el editor</p>
-                )}
-              </div>
-
-              {/* Pautas para el Estratega */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-purple-500/10">
-                    <Target className="h-4 w-4 text-purple-500" />
-                  </div>
-                  <Label className="font-medium">Pautas para el Estratega</Label>
                 </div>
-                {editMode && canEditVideoTab ? (
-                  <RichTextEditor
-                    content={formData.strategist_guidelines || ''}
-                    onChange={(html) => setFormData({ ...formData, strategist_guidelines: html })}
-                    placeholder="Estrategia de contenido, objetivos, métricas a seguir, ajustes de copy, etc."
-                    className="min-h-[150px]"
-                  />
-                ) : formData.strategist_guidelines || (content as any).strategist_guidelines ? (
-                  <RichTextViewer 
-                    content={formData.strategist_guidelines || (content as any).strategist_guidelines} 
-                    className="min-h-[50px] max-h-[200px] overflow-y-auto"
-                  />
-                ) : (
+              )}
+            </div>
+
+            {/* Pautas para el Estratega */}
+            <div className="space-y-3 pt-6 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <Target className="h-4 w-4 text-purple-500" /> Pautas para el Estratega
+              </h4>
+              {editMode && canEditVideoTab ? (
+                <RichTextEditor
+                  content={formData.strategist_guidelines || ''}
+                  onChange={(html) => setFormData({ ...formData, strategist_guidelines: html })}
+                  placeholder="Estrategia de contenido, objetivos, métricas a seguir, ajustes de copy, etc."
+                  className="min-h-[150px]"
+                />
+              ) : formData.strategist_guidelines || (content as any).strategist_guidelines ? (
+                <RichTextViewer 
+                  content={formData.strategist_guidelines || (content as any).strategist_guidelines} 
+                  className="min-h-[100px] max-h-[300px] overflow-y-auto"
+                />
+              ) : (
+                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
                   <p className="text-sm text-muted-foreground italic">Sin pautas para el estratega</p>
-                )}
-              </div>
-
-              {/* Pautas para el Trafficker */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-green-500/10">
-                    <Megaphone className="h-4 w-4 text-green-500" />
-                  </div>
-                  <Label className="font-medium">Pautas para el Trafficker</Label>
                 </div>
-                {editMode && canEditVideoTab ? (
-                  <RichTextEditor
-                    content={formData.trafficker_guidelines || ''}
-                    onChange={(html) => setFormData({ ...formData, trafficker_guidelines: html })}
-                    placeholder="Indicaciones de pauta: público objetivo, presupuesto sugerido, plataformas, segmentación, etc."
-                    className="min-h-[150px]"
-                  />
-                ) : formData.trafficker_guidelines || (content as any).trafficker_guidelines ? (
-                  <RichTextViewer 
-                    content={formData.trafficker_guidelines || (content as any).trafficker_guidelines} 
-                    className="min-h-[50px] max-h-[200px] overflow-y-auto"
-                  />
-                ) : (
+              )}
+            </div>
+
+            {/* Pautas para el Trafficker */}
+            <div className="space-y-3 pt-6 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <Megaphone className="h-4 w-4 text-green-500" /> Pautas para el Trafficker
+              </h4>
+              {editMode && canEditVideoTab ? (
+                <RichTextEditor
+                  content={formData.trafficker_guidelines || ''}
+                  onChange={(html) => setFormData({ ...formData, trafficker_guidelines: html })}
+                  placeholder="Indicaciones de pauta: público objetivo, presupuesto sugerido, plataformas, segmentación, etc."
+                  className="min-h-[150px]"
+                />
+              ) : formData.trafficker_guidelines || (content as any).trafficker_guidelines ? (
+                <RichTextViewer 
+                  content={formData.trafficker_guidelines || (content as any).trafficker_guidelines} 
+                  className="min-h-[100px] max-h-[300px] overflow-y-auto"
+                />
+              ) : (
+                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
                   <p className="text-sm text-muted-foreground italic">Sin pautas para el trafficker</p>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -1380,56 +1373,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </div>
               </div>
 
-              {/* Video Final Editado - Editable by Editor */}
-              <div className="space-y-3 pt-4 border-t">
-                <h4 className="font-medium flex items-center gap-2">
-                  <Video className="h-4 w-4" /> Video Final Editado
-                </h4>
-                
-                {editMode && canEditVideoUrl ? (
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-lg border bg-muted/30">
-                      <Label className="text-sm font-medium mb-2 block">URL del Video Editado</Label>
-                      <Input
-                        value={formData.video_url}
-                        onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                        placeholder="https://..."
-                        type="url"
-                      />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Pega aquí el link del video final editado (YouTube, Vimeo, Drive, etc.)
-                      </p>
-                    </div>
-                  </div>
-                ) : content.video_url ? (
-                  <div className="space-y-2">
-                    <div 
-                      className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-                      style={{ height: '350px' }}
-                    >
-                      {renderVideoEmbed(content.video_url)}
-                    </div>
-                    <a 
-                      href={content.video_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                    >
-                      Ver video editado <ExternalLink className="h-3 w-3 shrink-0" />
-                    </a>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
-                    <div className="text-center text-muted-foreground">
-                      <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No hay video editado</p>
-                      {canEditVideoUrl && (
-                        <p className="text-xs mt-2">Activa el modo edición para agregar el link</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
             </TabsContent>
           )}
         </Tabs>
