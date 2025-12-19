@@ -9,6 +9,16 @@ interface ProtectedRouteProps {
   allowedRoles?: AppRole[];
 }
 
+// Helper to get the correct dashboard path based on user roles
+function getDashboardPath(roles: AppRole[]): string {
+  if (roles.includes('admin')) return '/';
+  if (roles.includes('ambassador')) return '/';
+  if (roles.includes('creator')) return '/creator-dashboard';
+  if (roles.includes('editor')) return '/editor-dashboard';
+  if (roles.includes('client')) return '/client-dashboard';
+  return '/auth';
+}
+
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, roles, loading, rolesLoaded } = useAuth();
 
@@ -25,10 +35,13 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/auth" replace />;
   }
 
+  // Check if user has the required role
   if (allowedRoles && allowedRoles.length > 0) {
     const hasAllowedRole = allowedRoles.some(role => roles.includes(role));
     if (!hasAllowedRole) {
-      return <Navigate to="/unauthorized" replace />;
+      // Instead of showing unauthorized, redirect to their appropriate dashboard
+      const correctDashboard = getDashboardPath(roles);
+      return <Navigate to={correctDashboard} replace />;
     }
   }
 
