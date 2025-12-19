@@ -13,6 +13,7 @@ interface ProtectedRouteProps {
 function getDashboardPath(roles: AppRole[]): string {
   if (roles.includes('admin')) return '/';
   if (roles.includes('ambassador')) return '/';
+  if (roles.includes('strategist')) return '/strategist-dashboard';
   if (roles.includes('creator')) return '/creator-dashboard';
   if (roles.includes('editor')) return '/editor-dashboard';
   if (roles.includes('client')) return '/client-dashboard';
