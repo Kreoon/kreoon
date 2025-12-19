@@ -700,32 +700,117 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             )}
           </TabsContent>
 
-          <TabsContent value="stats" className="space-y-4 mt-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg border bg-card text-center">
-                <p className="text-2xl font-bold text-primary">{assignedContent.length}</p>
-                <p className="text-xs text-muted-foreground">Total videos</p>
-              </div>
-              <div className="p-4 rounded-lg border bg-card text-center">
-                <p className="text-2xl font-bold text-info">{activeContent.length}</p>
-                <p className="text-xs text-muted-foreground">En progreso</p>
-              </div>
-              <div className="p-4 rounded-lg border bg-card text-center">
-                <p className="text-2xl font-bold text-success">{completedContent.length}</p>
-                <p className="text-xs text-muted-foreground">Completados</p>
-              </div>
-              <div className="p-4 rounded-lg border bg-card text-center">
-                <p className="text-2xl font-bold text-warning flex items-center justify-center gap-1">
-                  <DollarSign className="h-5 w-5" />
-                  {totalValue.toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground">Valor total</p>
+          <TabsContent value="stats" className="space-y-6 mt-4">
+            {/* Content Stats */}
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground mb-3">Contenido</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-primary">{assignedContent.length}</p>
+                  <p className="text-xs text-muted-foreground">Total videos</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-info">{activeContent.length}</p>
+                  <p className="text-xs text-muted-foreground">En progreso</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-success">{completedContent.length}</p>
+                  <p className="text-xs text-muted-foreground">Completados</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-primary">{products.length}</p>
+                  <p className="text-xs text-muted-foreground">Productos</p>
+                </div>
               </div>
             </div>
 
-            <div className="p-4 rounded-lg border bg-card text-center">
-              <p className="text-2xl font-bold text-primary">{products.length}</p>
-              <p className="text-xs text-muted-foreground">Productos registrados</p>
+            {/* Engagement Stats */}
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground mb-3">Engagement</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-primary">
+                    {assignedContent.reduce((sum, c) => sum + (c.views_count || 0), 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Vistas totales</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-pink-500">
+                    {assignedContent.reduce((sum, c) => sum + (c.likes_count || 0), 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Likes totales</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-success">
+                    {assignedContent.filter(c => c.is_published).length}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Publicados</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Financial Stats */}
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground mb-3">Finanzas</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-success flex items-center justify-center gap-1">
+                    <DollarSign className="h-5 w-5" />
+                    {packages.reduce((sum, p) => sum + (p.total_value || 0), 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Valor contratado</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-primary flex items-center justify-center gap-1">
+                    <DollarSign className="h-5 w-5" />
+                    {packages.reduce((sum, p) => sum + (p.paid_amount || 0), 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Pagado</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-warning flex items-center justify-center gap-1">
+                    <DollarSign className="h-5 w-5" />
+                    {packages.reduce((sum, p) => sum + ((p.total_value || 0) - (p.paid_amount || 0)), 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Pendiente</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-muted-foreground flex items-center justify-center gap-1">
+                    <DollarSign className="h-5 w-5" />
+                    {totalValue.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Costo producción</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Packages Stats */}
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground mb-3">Paquetes</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-primary">{packages.length}</p>
+                  <p className="text-xs text-muted-foreground">Total paquetes</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-success">
+                    {packages.filter(p => p.payment_status === 'paid').length}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Pagados</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-info">
+                    {packages.reduce((sum, p) => sum + (p.content_quantity || 0), 0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Videos contratados</p>
+                </div>
+                <div className="p-4 rounded-lg border bg-card text-center">
+                  <p className="text-2xl font-bold text-warning">
+                    {packages.reduce((sum, p) => sum + (p.content_quantity || 0), 0) - completedContent.length}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Videos pendientes</p>
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
