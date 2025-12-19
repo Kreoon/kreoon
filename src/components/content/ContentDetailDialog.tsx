@@ -317,10 +317,39 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
       if (error) throw error;
 
-      toast({
-        title: "Guardado",
-        description: "Los cambios se han guardado exitosamente"
-      });
+      // Si se agregó o cambió el drive_url, notificar a n8n para procesar con Bunny.net
+      const driveUrlChanged = formData.drive_url && formData.drive_url !== content.drive_url;
+      if (driveUrlChanged) {
+        try {
+          const { error: webhookError } = await supabase.functions.invoke('notify-drive-upload', {
+            body: {
+              content_id: content.id,
+              drive_url: formData.drive_url
+            }
+          });
+          
+          if (webhookError) {
+            console.error('Error notifying drive upload:', webhookError);
+            toast({
+              title: "Video guardado",
+              description: "El link se guardó pero hubo un error al iniciar el procesamiento automático",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Procesando video",
+              description: "El video se está procesando y se subirá automáticamente a Bunny.net"
+            });
+          }
+        } catch (webhookErr) {
+          console.error('Error calling webhook:', webhookErr);
+        }
+      } else {
+        toast({
+          title: "Guardado",
+          description: "Los cambios se han guardado exitosamente"
+        });
+      }
       
       setEditMode(false);
       onUpdate?.();
