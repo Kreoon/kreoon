@@ -43,7 +43,7 @@ export function MainLayout({
       
       {/* Main Content */}
       <main className={`transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
-        <div className="min-h-screen md:pt-0">
+        <div className="min-h-screen p-4 md:p-6 md:pt-6">
           {children}
         </div>
       </main>
