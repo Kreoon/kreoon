@@ -46,7 +46,7 @@ interface SelectOption {
 
 export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onDelete }: ContentDetailDialogProps) {
   const { toast } = useToast();
-  const { isAdmin, isClient, user } = useAuth();
+  const { isAdmin, isClient, isCreator, isEditor, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<ContentStatus | null>(null);
@@ -480,139 +480,143 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="general" className="mt-4">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="video">Video</TabsTrigger>
+        <Tabs defaultValue="video" className="mt-4">
+          <TabsList className={`grid w-full ${isClient ? 'grid-cols-2' : isAdmin ? 'grid-cols-6' : 'grid-cols-5'}`}>
+            <TabsTrigger value="video">Video Final</TabsTrigger>
+            {!isClient && <TabsTrigger value="material">Material</TabsTrigger>}
+            {!isClient && <TabsTrigger value="general">General</TabsTrigger>}
             <TabsTrigger value="equipo">Equipo</TabsTrigger>
-            <TabsTrigger value="fechas">Fechas</TabsTrigger>
+            {!isClient && <TabsTrigger value="fechas">Fechas</TabsTrigger>}
             {isAdmin && <TabsTrigger value="pagos">Pagos</TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="general" className="space-y-4 mt-4">
-            {/* Información general */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-xs">Producto</Label>
+          {/* General Tab - Solo para Admin, Creadores y Editores */}
+          {!isClient && (
+            <TabsContent value="general" className="space-y-4 mt-4">
+              {/* Información general */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Producto</Label>
+                  {editMode ? (
+                    <Input
+                      value={formData.product}
+                      onChange={(e) => setFormData({ ...formData, product: e.target.value })}
+                    />
+                  ) : (
+                    <p className="font-medium">{content.product || "—"}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Cliente</Label>
+                  {editMode ? (
+                    <Select 
+                      value={formData.client_id} 
+                      onValueChange={(v) => setFormData({ ...formData, client_id: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="font-medium">{content.client?.name || "—"}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Campaña / Semana</Label>
+                  {editMode ? (
+                    <Input
+                      value={formData.campaign_week}
+                      onChange={(e) => setFormData({ ...formData, campaign_week: e.target.value })}
+                    />
+                  ) : (
+                    <p className="font-medium">{content.campaign_week || "—"}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* URLs */}
+              <div className="space-y-3 pt-4 border-t">
+                <h4 className="font-medium flex items-center gap-2">
+                  <LinkIcon className="h-4 w-4" /> URLs
+                </h4>
+                
+                <div className="grid gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground text-xs">URL Final</Label>
+                    {editMode ? (
+                      <Input
+                        value={formData.video_url}
+                        onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                        type="url"
+                      />
+                    ) : content.video_url ? (
+                      <a href={content.video_url} target="_blank" rel="noopener noreferrer" 
+                         className="text-primary hover:underline flex items-center gap-1">
+                        {content.video_url} <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : <p className="text-muted-foreground">—</p>}
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground text-xs">URL Drive Video Crudo</Label>
+                    {editMode ? (
+                      <Input
+                        value={formData.drive_url}
+                        onChange={(e) => setFormData({ ...formData, drive_url: e.target.value })}
+                        type="url"
+                      />
+                    ) : content.drive_url ? (
+                      <a href={content.drive_url} target="_blank" rel="noopener noreferrer"
+                         className="text-primary hover:underline flex items-center gap-1">
+                        {content.drive_url} <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : <p className="text-muted-foreground">—</p>}
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground text-xs">URL Video Referencia</Label>
+                    {editMode ? (
+                      <Input
+                        value={formData.reference_url}
+                        onChange={(e) => setFormData({ ...formData, reference_url: e.target.value })}
+                        type="url"
+                      />
+                    ) : content.reference_url ? (
+                      <a href={content.reference_url} target="_blank" rel="noopener noreferrer"
+                         className="text-primary hover:underline flex items-center gap-1">
+                        {content.reference_url} <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : <p className="text-muted-foreground">—</p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Notas */}
+              <div className="space-y-2 pt-4 border-t">
+                <h4 className="font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4" /> Notas
+                </h4>
                 {editMode ? (
-                  <Input
-                    value={formData.product}
-                    onChange={(e) => setFormData({ ...formData, product: e.target.value })}
+                  <Textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={4}
                   />
                 ) : (
-                  <p className="font-medium">{content.product || "—"}</p>
+                  <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">
+                    {content.notes || "Sin notas"}
+                  </div>
                 )}
               </div>
-
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-xs">Cliente</Label>
-                {editMode ? (
-                  <Select 
-                    value={formData.client_id} 
-                    onValueChange={(v) => setFormData({ ...formData, client_id: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <p className="font-medium">{content.client?.name || "—"}</p>
-                )}
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-xs">Campaña / Semana</Label>
-                {editMode ? (
-                  <Input
-                    value={formData.campaign_week}
-                    onChange={(e) => setFormData({ ...formData, campaign_week: e.target.value })}
-                  />
-                ) : (
-                  <p className="font-medium">{content.campaign_week || "—"}</p>
-                )}
-              </div>
-            </div>
-
-            {/* URLs */}
-            <div className="space-y-3 pt-4 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <LinkIcon className="h-4 w-4" /> URLs
-              </h4>
-              
-              <div className="grid gap-3">
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs">URL Final</Label>
-                  {editMode ? (
-                    <Input
-                      value={formData.video_url}
-                      onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                      type="url"
-                    />
-                  ) : content.video_url ? (
-                    <a href={content.video_url} target="_blank" rel="noopener noreferrer" 
-                       className="text-primary hover:underline flex items-center gap-1">
-                      {content.video_url} <ExternalLink className="h-3 w-3" />
-                    </a>
-                  ) : <p className="text-muted-foreground">—</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs">URL Drive Video Crudo</Label>
-                  {editMode ? (
-                    <Input
-                      value={formData.drive_url}
-                      onChange={(e) => setFormData({ ...formData, drive_url: e.target.value })}
-                      type="url"
-                    />
-                  ) : content.drive_url ? (
-                    <a href={content.drive_url} target="_blank" rel="noopener noreferrer"
-                       className="text-primary hover:underline flex items-center gap-1">
-                      {content.drive_url} <ExternalLink className="h-3 w-3" />
-                    </a>
-                  ) : <p className="text-muted-foreground">—</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs">URL Video Referencia</Label>
-                  {editMode ? (
-                    <Input
-                      value={formData.reference_url}
-                      onChange={(e) => setFormData({ ...formData, reference_url: e.target.value })}
-                      type="url"
-                    />
-                  ) : content.reference_url ? (
-                    <a href={content.reference_url} target="_blank" rel="noopener noreferrer"
-                       className="text-primary hover:underline flex items-center gap-1">
-                      {content.reference_url} <ExternalLink className="h-3 w-3" />
-                    </a>
-                  ) : <p className="text-muted-foreground">—</p>}
-                </div>
-              </div>
-            </div>
-
-            {/* Guión */}
-            <div className="space-y-2 pt-4 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <FileText className="h-4 w-4" /> Guión / Estrategia
-              </h4>
-              {editMode ? (
-                <Textarea
-                  value={formData.script}
-                  onChange={(e) => setFormData({ ...formData, script: e.target.value })}
-                  rows={8}
-                />
-              ) : (
-                <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap max-h-64 overflow-y-auto">
-                  {content.script || "Sin guión"}
-                </div>
-              )}
-            </div>
-          </TabsContent>
+            </TabsContent>
+          )}
 
           <TabsContent value="equipo" className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -697,59 +701,62 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             </div>
           </TabsContent>
 
-          <TabsContent value="fechas" className="space-y-4 mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-xs flex items-center gap-1">
-                  <Calendar className="h-3 w-3" /> Fecha Inicial
-                </Label>
-                {editMode ? (
-                  <Input
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  />
-                ) : (
-                  <p className="font-medium">{formatDate(content.start_date)}</p>
-                )}
-              </div>
+          {/* Fechas Tab - Solo para Admin, Creadores y Editores */}
+          {!isClient && (
+            <TabsContent value="fechas" className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> Fecha Inicial
+                  </Label>
+                  {editMode ? (
+                    <Input
+                      type="date"
+                      value={formData.start_date}
+                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    />
+                  ) : (
+                    <p className="font-medium">{formatDate(content.start_date)}</p>
+                  )}
+                </div>
 
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-xs flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Fecha Límite de Entrega
-                </Label>
-                {editMode ? (
-                  <Input
-                    type="date"
-                    value={formData.deadline}
-                    onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                  />
-                ) : (
-                  <p className="font-medium">{formatDate(content.deadline)}</p>
-                )}
-              </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> Fecha Límite de Entrega
+                  </Label>
+                  {editMode ? (
+                    <Input
+                      type="date"
+                      value={formData.deadline}
+                      onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                    />
+                  ) : (
+                    <p className="font-medium">{formatDate(content.deadline)}</p>
+                  )}
+                </div>
 
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-xs">Fecha de Grabación</Label>
-                <p className="font-medium">{formatDate(content.recorded_at)}</p>
-              </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Fecha de Grabación</Label>
+                  <p className="font-medium">{formatDate(content.recorded_at)}</p>
+                </div>
 
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-xs">Fecha Entregado</Label>
-                <p className="font-medium">{formatDate(content.delivered_at)}</p>
-              </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Fecha Entregado</Label>
+                  <p className="font-medium">{formatDate(content.delivered_at)}</p>
+                </div>
 
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-xs">Fecha Aprobado</Label>
-                <p className="font-medium">{formatDate(content.approved_at)}</p>
-              </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Fecha Aprobado</Label>
+                  <p className="font-medium">{formatDate(content.approved_at)}</p>
+                </div>
 
-              <div className="space-y-1">
-                <Label className="text-muted-foreground text-xs">Creado</Label>
-                <p className="font-medium">{formatDate(content.created_at)}</p>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Creado</Label>
+                  <p className="font-medium">{formatDate(content.created_at)}</p>
+                </div>
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
+          )}
 
           {isAdmin && (
             <TabsContent value="pagos" className="space-y-4 mt-4">
@@ -840,156 +847,193 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             </TabsContent>
           )}
 
-          {/* Video Tab */}
+          {/* Video Final Tab - Visible para todos */}
           <TabsContent value="video" className="space-y-6 mt-4">
-            {/* Layout en dos columnas para videos verticales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Video Final */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Video Final + Guión */}
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Video className="h-4 w-4" /> Video Final
+                  </h4>
+                  
+                  {content.video_url ? (
+                    <div className="space-y-2">
+                      <div 
+                        className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
+                        style={{ height: '400px' }}
+                      >
+                        {renderVideoEmbed(content.video_url)}
+                      </div>
+                      <a 
+                        href={content.video_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                      >
+                        Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '250px' }}>
+                      <div className="text-center text-muted-foreground">
+                        <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No hay video cargado</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Guión / Estrategia - debajo del video */}
+                <div className="space-y-2 pt-4 border-t">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> Guión / Estrategia
+                  </h4>
+                  {editMode ? (
+                    <Textarea
+                      value={formData.script}
+                      onChange={(e) => setFormData({ ...formData, script: e.target.value })}
+                      rows={6}
+                    />
+                  ) : (
+                    <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap max-h-48 overflow-y-auto">
+                      {content.script || "Sin guión"}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Comentarios - al lado del video */}
               <div className="space-y-3">
                 <h4 className="font-medium flex items-center gap-2">
-                  <Video className="h-4 w-4" /> Video Final
+                  <MessageSquare className="h-4 w-4" /> Comentarios / Novedades
                 </h4>
                 
-                {content.video_url ? (
-                  <div className="space-y-2">
-                    <div 
-                      className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-                      style={{ height: '480px' }}
-                    >
-                      {renderVideoEmbed(content.video_url)}
-                    </div>
-                    <a 
-                      href={content.video_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                    >
-                      Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
-                    </a>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '300px' }}>
-                    <div className="text-center text-muted-foreground">
-                      <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No hay video cargado</p>
-                      <p className="text-xs">Agrega una URL en la pestaña General</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Video de Referencia */}
-              <div className="space-y-3">
-                <h4 className="font-medium flex items-center gap-2">
-                  <LinkIcon className="h-4 w-4" /> Video de Referencia
-                </h4>
+                {/* Lista de comentarios */}
+                <div className="space-y-3 max-h-[350px] overflow-y-auto">
+                  {comments.length > 0 ? (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="p-3 bg-muted rounded-lg">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium">{comment.profile?.full_name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
+                          </span>
+                        </div>
+                        <p className="text-sm">{comment.comment}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      No hay comentarios aún
+                    </p>
+                  )}
+                </div>
                 
-                {content.reference_url ? (
-                  <div className="space-y-2">
-                    <div 
-                      className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-                      style={{ height: '480px' }}
-                    >
-                      {renderVideoEmbed(content.reference_url)}
-                    </div>
-                    <a 
-                      href={content.reference_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                    >
-                      Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
-                    </a>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '300px' }}>
-                    <div className="text-center text-muted-foreground">
-                      <LinkIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No hay video de referencia</p>
-                      <p className="text-xs">Agrega una URL en la pestaña General</p>
-                    </div>
-                  </div>
-                )}
+                {/* Agregar comentario */}
+                <div className="flex gap-2 pt-2">
+                  <Textarea 
+                    placeholder="Agregar un comentario o novedad..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="flex-1 min-h-[60px]"
+                  />
+                  <Button 
+                    onClick={handleAddComment} 
+                    disabled={loadingComment || !newComment.trim()}
+                    size="icon"
+                    className="shrink-0"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-
-            {/* Comentarios del Cliente - Justo debajo de los videos */}
-            <div className="space-y-3 pt-4 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" /> Comentarios / Novedades
-              </h4>
-              
-              {/* Lista de comentarios */}
-              <div className="space-y-3 max-h-48 overflow-y-auto">
-                {comments.length > 0 ? (
-                  comments.map((comment) => (
-                    <div key={comment.id} className="p-3 bg-muted rounded-lg">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">{comment.profile?.full_name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
-                        </span>
-                      </div>
-                      <p className="text-sm">{comment.comment}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No hay comentarios aún
-                  </p>
-                )}
-              </div>
-              
-              {/* Agregar comentario */}
-              <div className="flex gap-2">
-                <Textarea 
-                  placeholder="Agregar un comentario o novedad..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  className="flex-1 min-h-[60px]"
-                />
-                <Button 
-                  onClick={handleAddComment} 
-                  disabled={loadingComment || !newComment.trim()}
-                  size="icon"
-                  className="shrink-0"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Carpeta Drive - Contenido Crudo */}
-            {content.drive_url && (
-              <div className="space-y-3 pt-4 border-t">
-                <h4 className="font-medium flex items-center gap-2">
-                  <FolderOpen className="h-4 w-4" /> Contenido Crudo (Drive)
-                </h4>
-                <a 
-                  href={content.drive_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="block group"
-                >
-                  <div className="rounded-xl border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-8 transition-all hover:border-primary/50 hover:from-primary/10 hover:to-primary/20 hover:shadow-lg">
-                    <div className="flex flex-col items-center justify-center text-center space-y-4">
-                      <div className="p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                        <FolderOpen className="h-12 w-12 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-lg text-foreground">Carpeta de Contenido Crudo</p>
-                        <p className="text-sm text-muted-foreground mt-1">Haz clic para abrir en Google Drive</p>
-                      </div>
-                      <div className="flex items-center gap-2 text-primary font-medium">
-                        <span>Abrir carpeta</span>
-                        <ExternalLink className="h-4 w-4" />
-                      </div>
-                    </div>
-                  </div>
-                </a>
-              </div>
-            )}
           </TabsContent>
+
+          {/* Material Tab - Solo para Admin, Creadores y Editores */}
+          {!isClient && (
+            <TabsContent value="material" className="space-y-6 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Video de Referencia */}
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <LinkIcon className="h-4 w-4" /> Video de Referencia
+                  </h4>
+                  
+                  {content.reference_url ? (
+                    <div className="space-y-2">
+                      <div 
+                        className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
+                        style={{ height: '400px' }}
+                      >
+                        {renderVideoEmbed(content.reference_url)}
+                      </div>
+                      <a 
+                        href={content.reference_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                      >
+                        Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '250px' }}>
+                      <div className="text-center text-muted-foreground">
+                        <LinkIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No hay video de referencia</p>
+                        <p className="text-xs">Agrega una URL en la pestaña General</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Carpeta Drive - Contenido Crudo */}
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <FolderOpen className="h-4 w-4" /> Contenido Crudo (Drive)
+                  </h4>
+                  
+                  {content.drive_url ? (
+                    <a 
+                      href={content.drive_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block group"
+                    >
+                      <div 
+                        className="rounded-xl border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 transition-all hover:border-primary/50 hover:from-primary/10 hover:to-primary/20 hover:shadow-lg flex items-center justify-center"
+                        style={{ height: '400px' }}
+                      >
+                        <div className="flex flex-col items-center justify-center text-center space-y-4">
+                          <div className="p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                            <FolderOpen className="h-12 w-12 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-lg text-foreground">Carpeta de Contenido Crudo</p>
+                            <p className="text-sm text-muted-foreground mt-1">Haz clic para abrir en Google Drive</p>
+                          </div>
+                          <div className="flex items-center gap-2 text-primary font-medium">
+                            <span>Abrir carpeta</span>
+                            <ExternalLink className="h-4 w-4" />
+                          </div>
+                        </div>
+                      </div>
+                    </a>
+                  ) : (
+                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '250px' }}>
+                      <div className="text-center text-muted-foreground">
+                        <FolderOpen className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No hay carpeta de contenido</p>
+                        <p className="text-xs">Agrega una URL en la pestaña General</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
 
         {/* Actions */}
