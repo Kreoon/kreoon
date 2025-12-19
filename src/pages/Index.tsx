@@ -25,14 +25,14 @@ import { cn } from "@/lib/utils";
 
 // Determinar qué columnas son visibles para cada rol
 const getVisibleColumns = (role: string, contentItem?: Content, userId?: string) => {
-  // Admin ve todo
+  // Admin ve todo (incluyendo Pagado)
   if (role === 'admin') {
     return KANBAN_COLUMNS;
   }
 
-  // Cliente ve: Creado, Guión Aprobado, Asignado, En grabación, Grabado, En Edición, Entregado, Novedad, Aprobado
+  // Cliente ve: todo excepto Pagado
   if (role === 'client') {
-    return KANBAN_COLUMNS;
+    return KANBAN_COLUMNS.filter(col => col.status !== 'paid');
   }
 
   // Creador ve: Asignado, En grabación, Grabado (solo su contenido asignado)
@@ -49,7 +49,7 @@ const getVisibleColumns = (role: string, contentItem?: Content, userId?: string)
     );
   }
 
-  return KANBAN_COLUMNS;
+  return KANBAN_COLUMNS.filter(col => col.status !== 'paid');
 };
 
 // Verificar si un movimiento de estado es válido según el rol

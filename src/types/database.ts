@@ -187,7 +187,8 @@ export const STATUS_ORDER: ContentStatus[] = [
   'editing',
   'delivered',
   'issue',
-  'approved'
+  'approved',
+  'paid'
 ];
 
 // Definición de columnas del Kanban
@@ -206,5 +207,6 @@ export const KANBAN_COLUMNS: KanbanColumnDef[] = [
   { status: 'editing', title: 'En Edición', color: 'bg-pink-500' },
   { status: 'delivered', title: 'Entregado', color: 'bg-emerald-500' },
   { status: 'issue', title: 'Novedad', color: 'bg-destructive' },
-  { status: 'approved', title: 'Aprobado', color: 'bg-success' }
+  { status: 'approved', title: 'Aprobado', color: 'bg-success' },
+  { status: 'paid', title: 'Pagado', color: 'bg-primary' }
 ];
