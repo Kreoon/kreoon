@@ -113,7 +113,7 @@ export default function CreatorDashboard() {
   };
 
   const pendingPayment = content
-    .filter(c => c.status === 'approved' && !c.is_ambassador_content)
+    .filter(c => c.status === 'approved' && !c.is_ambassador_content && !c.creator_paid)
     .reduce((sum, c) => sum + (c.creator_payment || 0), 0);
 
   if (loading) {

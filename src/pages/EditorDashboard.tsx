@@ -64,7 +64,7 @@ export default function EditorDashboard() {
   };
 
   const pendingPayment = content
-    .filter(c => c.status === 'approved' && !c.is_ambassador_content)
+    .filter(c => c.status === 'approved' && !c.is_ambassador_content && !c.editor_paid)
     .reduce((sum, c) => sum + (c.editor_payment || 0), 0);
 
   if (loading) {

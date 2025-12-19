@@ -310,6 +310,14 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         updates.editor_assigned_at = new Date().toISOString();
       }
 
+      // Si ambos están pagados y el contenido está aprobado, cambiar a estado "paid"
+      const bothPaid = formData.creator_paid && formData.editor_paid;
+      const wasNotBothPaid = !content.creator_paid || !content.editor_paid;
+      if (bothPaid && wasNotBothPaid && content.status === 'approved') {
+        updates.status = 'paid';
+        updates.paid_at = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from('content')
         .update(updates)
@@ -344,6 +352,11 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         } catch (webhookErr) {
           console.error('Error calling webhook:', webhookErr);
         }
+      } else if (bothPaid && wasNotBothPaid && content.status === 'approved') {
+        toast({
+          title: "Contenido pagado",
+          description: "Se han marcado todos los pagos y el contenido pasó a estado 'Pagado'"
+        });
       } else {
         toast({
           title: "Guardado",
