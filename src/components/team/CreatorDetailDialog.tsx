@@ -32,6 +32,7 @@ interface CreatorProfile {
   editor_rating?: number | null;
   editor_completed_count?: number | null;
   editor_on_time_count?: number | null;
+  is_ambassador?: boolean | null;
 }
 
 interface CreatorDetailDialogProps {
@@ -182,9 +183,17 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
                 )}
                 <div>
                   <DialogTitle className="text-xl">{profile?.full_name}</DialogTitle>
-                  <Badge className={roleLabels[creator.role].className}>
-                    {roleLabels[creator.role].label}
-                  </Badge>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge className={roleLabels[creator.role].className}>
+                      {roleLabels[creator.role].label}
+                    </Badge>
+                    {profile?.is_ambassador && (
+                      <Badge className="bg-primary/10 text-primary gap-1">
+                        <Star className="h-3 w-3 fill-primary" />
+                        Embajador
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
               {isAdmin && (

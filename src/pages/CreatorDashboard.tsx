@@ -4,7 +4,6 @@ import { useContent } from '@/hooks/useContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -129,30 +128,6 @@ export default function CreatorDashboard() {
     }
   }, [profile]);
 
-  const handleAmbassadorToggle = async (checked: boolean) => {
-    if (!user) return;
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_ambassador: checked })
-      .eq('id', user.id);
-
-    if (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo actualizar el estado de embajador',
-        variant: 'destructive'
-      });
-    } else {
-      setIsAmbassador(checked);
-      toast({
-        title: checked ? 'Ahora eres embajador' : 'Ya no eres embajador',
-        description: checked 
-          ? 'Podrás recibir contenido exclusivo de UGC Colombia'
-          : 'Ya no recibirás contenido de embajador'
-      });
-    }
-  };
 
   const handleMoveToNext = async (item: Content) => {
     const statusFlow: Record<ContentStatus, ContentStatus> = {
@@ -235,17 +210,12 @@ export default function CreatorDashboard() {
           <p className="text-sm text-muted-foreground">Bienvenido, {profile?.full_name}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2" data-tour="ambassador-toggle">
-            <Switch
-              id="ambassador"
-              checked={isAmbassador}
-              onCheckedChange={handleAmbassadorToggle}
-            />
-            <Label htmlFor="ambassador" className="flex items-center gap-1 cursor-pointer text-sm">
-              <Star className={`w-4 h-4 ${isAmbassador ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
-              Embajador
-            </Label>
-          </div>
+          {isAmbassador && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg" data-tour="ambassador-badge">
+              <Star className="w-4 h-4 text-primary fill-primary" />
+              <span className="font-medium text-primary text-sm">Embajador</span>
+            </div>
+          )}
 
           <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
             <DollarSign className="w-4 h-4 text-success" />
