@@ -534,6 +534,7 @@ export default function ContentBoard() {
                         onClick={setSelectedContent}
                         isDragging={draggingContent?.id === item.id}
                         onPaymentUpdate={refetch}
+                        canDrag={isAdmin || isClient}
                       />
                     ))}
                     {columnContent.length === 0 && (

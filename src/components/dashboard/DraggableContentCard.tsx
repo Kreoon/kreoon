@@ -14,6 +14,7 @@ interface DraggableContentCardProps {
   onClick?: (content: Content) => void;
   isDragging?: boolean;
   onPaymentUpdate?: () => void;
+  canDrag?: boolean;
 }
 
 export function DraggableContentCard({ 
@@ -21,7 +22,8 @@ export function DraggableContentCard({
   onDragStart,
   onClick,
   isDragging,
-  onPaymentUpdate
+  onPaymentUpdate,
+  canDrag = true
 }: DraggableContentCardProps) {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
@@ -116,11 +118,13 @@ export function DraggableContentCard({
 
   return (
     <div 
-      draggable
-      onDragStart={(e) => onDragStart(e, content)}
+      draggable={canDrag}
+      onDragStart={(e) => canDrag && onDragStart(e, content)}
       onClick={() => onClick?.(content)}
       className={cn(
-        "group relative overflow-hidden rounded-lg border-l-4 bg-card border border-border p-4 transition-all duration-200 hover:shadow-md hover:border-primary/20 cursor-grab active:cursor-grabbing",
+        "group relative overflow-hidden rounded-lg border-l-4 bg-card border border-border p-4 transition-all duration-200 hover:shadow-md hover:border-primary/20",
+        canDrag && "cursor-grab active:cursor-grabbing",
+        !canDrag && "cursor-pointer",
         getPriorityClass(),
         isDragging && "opacity-50 scale-95"
       )}
@@ -208,9 +212,11 @@ export function DraggableContentCard({
         )}
       </div>
 
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <GripVertical className="h-4 w-4 text-muted-foreground" />
-      </div>
+      {canDrag && (
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+      )}
     </div>
   );
 }
