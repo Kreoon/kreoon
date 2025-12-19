@@ -369,8 +369,18 @@ export default function ClientDashboard() {
   const totalValue = packages.reduce((sum, p) => sum + Number(p.total_value || 0), 0);
   const pendingPayment = totalValue - totalInvested;
   const totalContentPromised = packages.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
-  const deliveredContent = approvedContent.length;
-  const contentPending = Math.max(0, totalContentPromised - deliveredContent);
+  const deliveredContentCount = approvedContent.length;
+  const contentPending = Math.max(0, totalContentPromised - deliveredContentCount);
+  
+  // Calcular costo por video del paquete
+  const costPerVideo = totalContentPromised > 0 ? totalValue / totalContentPromised : 0;
+  
+  // Valor de videos aprobados (consumidos)
+  const approvedVideosValue = deliveredContentCount * costPerVideo;
+  
+  // Saldo del cliente: positivo = saldo a favor, negativo = debe
+  // Saldo = Lo que pagó - Valor de videos aprobados
+  const clientBalance = totalInvested - approvedVideosValue;
   
   // Engagement Metrics
   const totalViews = content.reduce((sum, c) => sum + (c.views_count || 0), 0);
@@ -500,7 +510,7 @@ export default function ClientDashboard() {
                 value={content.length}
                 icon={Video}
                 color="primary"
-                subtitle={`${deliveredContent} entregados`}
+                subtitle={`${deliveredContentCount} aprobados`}
               />
               <PremiumStatsCard
                 title="Vistas Totales"
@@ -568,11 +578,11 @@ export default function ClientDashboard() {
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-sm">Progreso del Paquete</h3>
                   <span className="text-xs text-muted-foreground">
-                    {deliveredContent} de {totalContentPromised} videos
+                    {deliveredContentCount} de {totalContentPromised} videos
                   </span>
                 </div>
                 <Progress 
-                  value={totalContentPromised > 0 ? (deliveredContent / totalContentPromised) * 100 : 0} 
+                  value={totalContentPromised > 0 ? (deliveredContentCount / totalContentPromised) * 100 : 0} 
                   className="h-2"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
@@ -624,34 +634,45 @@ export default function ClientDashboard() {
             </div>
 
             {/* Financial KPIs */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
               <PremiumStatsCard
-                title="Total Invertido"
+                title="Total Pagado"
                 value={totalInvested}
                 prefix="$"
                 icon={DollarSign}
                 color="success"
               />
               <PremiumStatsCard
-                title="Valor Paquetes"
-                value={totalValue}
+                title="Videos Aprobados"
+                value={Math.round(approvedVideosValue)}
                 prefix="$"
-                icon={Package}
+                icon={CheckCircle2}
                 color="primary"
+                subtitle={`${deliveredContentCount} videos`}
               />
               <PremiumStatsCard
-                title="Pendiente"
-                value={pendingPayment}
+                title={clientBalance >= 0 ? "Saldo a Favor" : "Saldo Pendiente"}
+                value={Math.abs(Math.round(clientBalance))}
+                prefix={clientBalance >= 0 ? "+$" : "-$"}
+                icon={Wallet}
+                color={clientBalance >= 0 ? "success" : "destructive"}
+                subtitle={clientBalance >= 0 ? "Tienes crédito disponible" : "Monto por regularizar"}
+              />
+              <PremiumStatsCard
+                title="Por Pagar"
+                value={pendingPayment > 0 ? pendingPayment : 0}
                 prefix="$"
                 icon={Clock}
                 color={pendingPayment > 0 ? "warning" : "success"}
+                subtitle={`de $${totalValue.toLocaleString()} total`}
               />
               <PremiumStatsCard
                 title="Costo por Video"
-                value={content.length > 0 ? Math.round(totalInvested / content.length) : 0}
+                value={Math.round(costPerVideo)}
                 prefix="$"
                 icon={BarChart3}
                 color="info"
+                subtitle={`${totalContentPromised} videos en paquete`}
               />
             </div>
 
