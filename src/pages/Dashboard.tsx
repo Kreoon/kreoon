@@ -1,19 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   Video, Users, CheckCircle, Clock, DollarSign, TrendingUp, 
-  Activity, Zap, Target, BarChart3, ArrowUpRight, ArrowDownRight,
-  Play, Eye, UserCheck, Calendar, Banknote, Receipt
+  Activity, Target, BarChart3, ArrowUpRight, ArrowDownRight,
+  Play, UserCheck, Calendar, Banknote, Filter, X, Settings,
+  Building2, Scissors
 } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
-import { Content } from "@/types/database";
+import { Content, Client, Profile, ClientPackage } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
 import { KpiContentDialog } from "@/components/dashboard/KpiContentDialog";
+import { KpiListDialog } from "@/components/dashboard/KpiListDialog";
+import { GoalsDialog } from "@/components/dashboard/GoalsDialog";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Progress } from "@/components/ui/progress";
 
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
@@ -49,7 +58,9 @@ const PremiumStatsCard = ({
   trend, 
   color = "primary",
   onClick,
-  subtitle
+  subtitle,
+  goalValue,
+  goalLabel
 }: { 
   title: string; 
   value: number; 
@@ -58,6 +69,8 @@ const PremiumStatsCard = ({
   color?: "primary" | "success" | "warning" | "info" | "destructive";
   onClick?: () => void;
   subtitle?: string;
+  goalValue?: number;
+  goalLabel?: string;
 }) => {
   const colorClasses = {
     primary: "from-primary/20 to-primary/5 border-primary/30 text-primary",
@@ -66,6 +79,8 @@ const PremiumStatsCard = ({
     info: "from-info/20 to-info/5 border-info/30 text-info",
     destructive: "from-destructive/20 to-destructive/5 border-destructive/30 text-destructive",
   };
+
+  const progressPercent = goalValue && goalValue > 0 ? Math.min((value / goalValue) * 100, 100) : 0;
 
   return (
     <div 
@@ -78,13 +93,11 @@ const PremiumStatsCard = ({
         onClick && "cursor-pointer"
       )}
     >
-      {/* Animated background pulse */}
       <div className={cn(
         "absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-20",
         "bg-current blur-3xl transition-all duration-700 group-hover:scale-150"
       )} />
       
-      {/* Floating icon */}
       <div className={cn(
         "absolute right-4 top-4 p-3 rounded-xl",
         "bg-current/10 backdrop-blur-sm",
@@ -103,6 +116,15 @@ const PremiumStatsCard = ({
         {subtitle && (
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         )}
+        {goalValue && goalValue > 0 && (
+          <div className="mt-3 space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">{goalLabel || 'Meta'}</span>
+              <span className="text-muted-foreground">{Math.round(progressPercent)}%</span>
+            </div>
+            <Progress value={progressPercent} className="h-1.5" />
+          </div>
+        )}
         {trend !== undefined && (
           <div className="flex items-center gap-1 mt-2">
             {trend > 0 ? (
@@ -120,7 +142,6 @@ const PremiumStatsCard = ({
         )}
       </div>
       
-      {/* Bottom accent line */}
       <div className={cn(
         "absolute bottom-0 left-0 right-0 h-1 bg-current opacity-50",
         "transition-all duration-500 group-hover:opacity-100"
@@ -138,7 +159,9 @@ const LargeKpiCard = ({
   icon: Icon, 
   trend,
   description,
-  onClick 
+  onClick,
+  goalValue,
+  goalLabel
 }: { 
   title: string; 
   value: number; 
@@ -148,89 +171,108 @@ const LargeKpiCard = ({
   trend?: number;
   description?: string;
   onClick?: () => void;
-}) => (
-  <div 
-    onClick={onClick}
-    className={cn(
-      "group relative overflow-hidden rounded-3xl border border-border/50 p-8",
-      "bg-gradient-to-br from-card via-card to-muted/20 backdrop-blur-xl",
-      "transition-all duration-500 hover:shadow-[0_0_60px_-10px] hover:shadow-primary/20",
-      onClick && "cursor-pointer"
-    )}
-  >
-    {/* Animated gradient orb */}
-    <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl transition-transform duration-700 group-hover:scale-125" />
-    
-    <div className="relative z-10 flex items-start justify-between">
-      <div>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-3 rounded-2xl bg-primary/10 backdrop-blur-sm">
-            <Icon className="h-8 w-8 text-primary" />
+  goalValue?: number;
+  goalLabel?: string;
+}) => {
+  const progressPercent = goalValue && goalValue > 0 ? Math.min((value / goalValue) * 100, 100) : 0;
+
+  return (
+    <div 
+      onClick={onClick}
+      className={cn(
+        "group relative overflow-hidden rounded-3xl border border-border/50 p-8",
+        "bg-gradient-to-br from-card via-card to-muted/20 backdrop-blur-xl",
+        "transition-all duration-500 hover:shadow-[0_0_60px_-10px] hover:shadow-primary/20",
+        onClick && "cursor-pointer"
+      )}
+    >
+      <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl transition-transform duration-700 group-hover:scale-125" />
+      
+      <div className="relative z-10 flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 rounded-2xl bg-primary/10 backdrop-blur-sm">
+              <Icon className="h-8 w-8 text-primary" />
+            </div>
+            <p className="text-lg font-medium text-muted-foreground">{title}</p>
           </div>
-          <p className="text-lg font-medium text-muted-foreground">{title}</p>
+          
+          <p className="text-6xl font-bold tracking-tight text-foreground mb-2">
+            {prefix}<AnimatedNumber value={value} />{suffix}
+          </p>
+          
+          {description && (
+            <p className="text-sm text-muted-foreground max-w-xs">{description}</p>
+          )}
+
+          {goalValue && goalValue > 0 && (
+            <div className="mt-4 space-y-1 max-w-xs">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{goalLabel || 'Meta'}: {prefix}{goalValue.toLocaleString()}</span>
+                <span className={cn(
+                  "font-medium",
+                  progressPercent >= 100 ? "text-success" : progressPercent >= 75 ? "text-warning" : "text-muted-foreground"
+                )}>
+                  {Math.round(progressPercent)}%
+                </span>
+              </div>
+              <Progress value={progressPercent} className="h-2" />
+            </div>
+          )}
         </div>
         
-        <p className="text-6xl font-bold tracking-tight text-foreground mb-2">
-          {prefix}<AnimatedNumber value={value} />{suffix}
-        </p>
-        
-        {description && (
-          <p className="text-sm text-muted-foreground max-w-xs">{description}</p>
+        {trend !== undefined && (
+          <div className={cn(
+            "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium",
+            trend > 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+          )}>
+            {trend > 0 ? <TrendingUp className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+            {trend > 0 && "+"}{trend}%
+          </div>
         )}
       </div>
-      
-      {trend !== undefined && (
-        <div className={cn(
-          "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium",
-          trend > 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-        )}>
-          {trend > 0 ? <TrendingUp className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-          {trend > 0 && "+"}{trend}%
-        </div>
-      )}
     </div>
-  </div>
-);
-
-// Quick action button for payments
-const QuickPayButton = ({ 
-  label, 
-  count, 
-  icon: Icon,
-  onClick,
-  variant = "default"
-}: { 
-  label: string; 
-  count: number;
-  icon: any;
-  onClick: () => void;
-  variant?: "default" | "success";
-}) => (
-  <Button
-    onClick={onClick}
-    variant="outline"
-    className={cn(
-      "h-auto p-4 flex flex-col items-center gap-2 rounded-xl border-2",
-      "transition-all duration-300 hover:scale-105",
-      variant === "success" 
-        ? "border-success/30 bg-success/5 hover:bg-success/10 hover:border-success/50" 
-        : "border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50"
-    )}
-  >
-    <Icon className={cn("h-6 w-6", variant === "success" ? "text-success" : "text-primary")} />
-    <span className="text-sm font-medium">{label}</span>
-    <span className="text-2xl font-bold">{count}</span>
-  </Button>
-);
+  );
+};
 
 export default function Dashboard() {
-  const { user, profile, isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   
-  const { content, loading, refetch, deleteContent } = useContentWithFilters({
+  // Filters state
+  const [filterClientId, setFilterClientId] = useState<string>('all');
+  const [filterCreatorId, setFilterCreatorId] = useState<string>('all');
+  const [filterEditorId, setFilterEditorId] = useState<string>('all');
+  const [startDateFilter, setStartDateFilter] = useState<Date | undefined>(undefined);
+  const [endDateFilter, setEndDateFilter] = useState<Date | undefined>(undefined);
+  
+  // Filter options
+  const [clients, setClients] = useState<{id: string; name: string}[]>([]);
+  const [creators, setCreators] = useState<{id: string; name: string}[]>([]);
+  const [editors, setEditors] = useState<{id: string; name: string}[]>([]);
+  
+  const { content: allContent, loading, refetch, deleteContent } = useContentWithFilters({
     userId: user?.id,
-    role: 'admin'
+    role: 'admin',
+    clientId: filterClientId !== 'all' ? filterClientId : undefined,
+    creatorId: filterCreatorId !== 'all' ? filterCreatorId : undefined,
+    editorId: filterEditorId !== 'all' ? filterEditorId : undefined
   });
+
+  // Filter content by date range
+  const content = useMemo(() => {
+    return allContent.filter(c => {
+      if (startDateFilter) {
+        const contentDate = c.created_at ? new Date(c.created_at) : null;
+        if (!contentDate || contentDate < startDateFilter) return false;
+      }
+      if (endDateFilter) {
+        const contentDate = c.created_at ? new Date(c.created_at) : null;
+        if (!contentDate || contentDate > endDateFilter) return false;
+      }
+      return true;
+    });
+  }, [allContent, startDateFilter, endDateFilter]);
 
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [kpiDialog, setKpiDialog] = useState<{
@@ -239,7 +281,31 @@ export default function Dashboard() {
     content: Content[];
   }>({ open: false, title: '', content: [] });
 
-  // Fetch clients billing data from packages
+  const [listDialog, setListDialog] = useState<{
+    open: boolean;
+    title: string;
+    type: 'clients' | 'creators' | 'editors' | 'packages-sold' | 'packages-paid' | 'packages-pending';
+    clients: Client[];
+    profiles: (Profile & { content_count?: number; total_payment?: number })[];
+    packages: (ClientPackage & { client?: Client })[];
+  }>({
+    open: false,
+    title: '',
+    type: 'clients',
+    clients: [],
+    profiles: [],
+    packages: []
+  });
+
+  const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
+  const [currentGoal, setCurrentGoal] = useState<{
+    revenue_goal: number;
+    content_goal: number;
+    new_clients_goal: number;
+  } | null>(null);
+
+  // Billing data from packages
+  const [packages, setPackages] = useState<(ClientPackage & { client?: Client })[]>([]);
   const [clientsBilling, setClientsBilling] = useState<{
     totalBilled: number;
     totalPending: number;
@@ -247,154 +313,177 @@ export default function Dashboard() {
     contentOwed: number;
   }>({ totalBilled: 0, totalPending: 0, totalPaid: 0, contentOwed: 0 });
 
+  // Active clients, creators, editors lists
+  const [activeClients, setActiveClients] = useState<Client[]>([]);
+  const [activeCreators, setActiveCreators] = useState<(Profile & { content_count?: number; total_payment?: number })[]>([]);
+  const [activeEditors, setActiveEditors] = useState<(Profile & { content_count?: number; total_payment?: number })[]>([]);
+
+  // Load filters and data
   useEffect(() => {
-    const fetchBillingData = async () => {
-      try {
-        // Fetch packages for revenue data
-        const { data: packages } = await supabase
-          .from('client_packages')
-          .select('*')
-          .eq('is_active', true);
+    const fetchFiltersAndData = async () => {
+      // Fetch filter options
+      const { data: creatorRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'creator');
+      
+      if (creatorRoles?.length) {
+        const { data: creatorProfiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', creatorRoles.map(r => r.user_id));
+        setCreators(creatorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+      }
 
-        if (packages) {
-          const totalBilled = packages.reduce((sum, p) => sum + (p.total_value || 0), 0);
-          const totalPaid = packages.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
-          const totalPending = totalBilled - totalPaid;
-          
-          // Content owed = sum of content_quantity for paid packages - delivered content
-          const paidPackages = packages.filter(p => p.payment_status === 'paid');
-          const totalContentPromised = paidPackages.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
-          const deliveredContent = content.filter(c => ['approved', 'paid'].includes(c.status)).length;
-          const contentOwed = Math.max(0, totalContentPromised - deliveredContent);
+      const { data: editorRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'editor');
+      
+      if (editorRoles?.length) {
+        const { data: editorProfiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', editorRoles.map(r => r.user_id));
+        setEditors(editorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+      }
 
-          setClientsBilling({ totalBilled, totalPending, totalPaid, contentOwed });
-        }
-      } catch (error) {
-        console.error('Error fetching billing data:', error);
+      const { data: clientsList } = await supabase
+        .from('clients')
+        .select('*');
+      setClients(clientsList?.map(c => ({ id: c.id, name: c.name })) || []);
+      setActiveClients(clientsList as Client[] || []);
+
+      // Fetch packages with client info
+      const { data: packagesData } = await supabase
+        .from('client_packages')
+        .select('*, clients(*)')
+        .eq('is_active', true);
+
+      if (packagesData) {
+        const mappedPackages = packagesData.map(p => ({
+          ...p,
+          client: p.clients as Client
+        })) as (ClientPackage & { client?: Client })[];
+        setPackages(mappedPackages);
+
+        // Calculate billing - CORRECTED LOGIC
+        const totalBilled = packagesData.reduce((sum, p) => sum + (p.total_value || 0), 0);
+        const totalPaid = packagesData.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+        const totalPending = totalBilled - totalPaid;
+        
+        // Content owed = total content promised in all active packages - delivered/approved content
+        const totalContentPromised = packagesData.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
+        const deliveredContent = allContent.filter(c => ['approved', 'delivered'].includes(c.status)).length;
+        const contentOwed = Math.max(0, totalContentPromised - deliveredContent);
+
+        setClientsBilling({ totalBilled, totalPending, totalPaid, contentOwed });
+      }
+
+      // Fetch current month/quarter goal
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      const { data: goalData } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('period_type', 'month')
+        .eq('period_value', currentMonth)
+        .eq('year', currentYear)
+        .maybeSingle();
+
+      if (goalData) {
+        setCurrentGoal({
+          revenue_goal: goalData.revenue_goal || 0,
+          content_goal: goalData.content_goal || 0,
+          new_clients_goal: goalData.new_clients_goal || 0
+        });
       }
     };
 
-    fetchBillingData();
+    fetchFiltersAndData();
+  }, [allContent]);
+
+  // Calculate active creators and editors with their stats
+  useEffect(() => {
+    const calculateActiveUsers = async () => {
+      // Get unique creator IDs from content
+      const creatorIds = [...new Set(content.map(c => c.creator_id).filter(Boolean))] as string[];
+      const editorIds = [...new Set(content.map(c => c.editor_id).filter(Boolean))] as string[];
+
+      if (creatorIds.length > 0) {
+        const { data: creatorProfiles } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('id', creatorIds);
+
+        const creatorsWithStats = creatorProfiles?.map(p => {
+          const creatorContent = content.filter(c => c.creator_id === p.id);
+          return {
+            ...p,
+            content_count: creatorContent.length,
+            total_payment: creatorContent.reduce((sum, c) => sum + (c.creator_payment || 0), 0)
+          };
+        }) || [];
+
+        setActiveCreators(creatorsWithStats);
+      }
+
+      if (editorIds.length > 0) {
+        const { data: editorProfiles } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('id', editorIds);
+
+        const editorsWithStats = editorProfiles?.map(p => {
+          const editorContent = content.filter(c => c.editor_id === p.id);
+          return {
+            ...p,
+            content_count: editorContent.length,
+            total_payment: editorContent.reduce((sum, c) => sum + (c.editor_payment || 0), 0)
+          };
+        }) || [];
+
+        setActiveEditors(editorsWithStats);
+      }
+    };
+
+    calculateActiveUsers();
   }, [content]);
 
   // Stats calculations
   const totalContent = content.length;
-  const activeContent = content.filter(c => !['approved', 'paid'].includes(c.status)).length;
+  const activeContent = content.filter(c => !['approved', 'paid', 'delivered'].includes(c.status)).length;
   const inProgress = content.filter(c => ['recording', 'editing'].includes(c.status)).length;
   const completed = content.filter(c => c.status === 'approved').length;
   const pending = content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)).length;
   
-  // Payment stats
+  // Payment stats - CORRECTED LOGIC
+  // Unpaid creator content: approved content where creator hasn't been paid
   const unpaidCreatorContent = content.filter(c => c.status === 'approved' && !c.creator_paid);
+  // Unpaid editor content: approved content where editor hasn't been paid  
   const unpaidEditorContent = content.filter(c => c.status === 'approved' && !c.editor_paid);
-  const paidContent = content.filter(c => c.creator_paid && c.editor_paid);
-
-  // Calculate pending amounts
+  
+  // Calculate pending amounts to pay team
   const pendingCreatorPayment = unpaidCreatorContent.reduce((sum, c) => sum + (c.creator_payment || 0), 0);
   const pendingEditorPayment = unpaidEditorContent.reduce((sum, c) => sum + (c.editor_payment || 0), 0);
 
-  const handleMarkCreatorPaid = async (contentItem: Content) => {
-    try {
-      const updates: any = { creator_paid: true };
-      
-      // If both will be paid, change status to paid
-      if (contentItem.editor_paid) {
-        updates.status = 'paid';
-        updates.paid_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
-        .from('content')
-        .update(updates)
-        .eq('id', contentItem.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Pago registrado",
-        description: `Creador marcado como pagado para "${contentItem.title}"`
-      });
-      
-      refetch();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo registrar el pago",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleMarkEditorPaid = async (contentItem: Content) => {
-    try {
-      const updates: any = { editor_paid: true };
-      
-      // If both will be paid, change status to paid
-      if (contentItem.creator_paid) {
-        updates.status = 'paid';
-        updates.paid_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
-        .from('content')
-        .update(updates)
-        .eq('id', contentItem.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Pago registrado",
-        description: `Editor marcado como pagado para "${contentItem.title}"`
-      });
-      
-      refetch();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo registrar el pago",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleBulkPayCreators = async () => {
-    try {
-      for (const item of unpaidCreatorContent) {
-        await handleMarkCreatorPaid(item);
-      }
-      toast({
-        title: "Pagos procesados",
-        description: `${unpaidCreatorContent.length} creadores marcados como pagados`
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Error al procesar pagos",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleBulkPayEditors = async () => {
-    try {
-      for (const item of unpaidEditorContent) {
-        await handleMarkEditorPaid(item);
-      }
-      toast({
-        title: "Pagos procesados",
-        description: `${unpaidEditorContent.length} editores marcados como pagados`
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Error al procesar pagos",
-        variant: "destructive"
-      });
-    }
-  };
-
   const openKpiDialog = (title: string, contentList: Content[]) => {
     setKpiDialog({ open: true, title, content: contentList });
+  };
+
+  const openListDialog = (
+    title: string, 
+    type: 'clients' | 'creators' | 'editors' | 'packages-sold' | 'packages-paid' | 'packages-pending',
+    data?: { clients?: Client[]; profiles?: (Profile & { content_count?: number; total_payment?: number })[]; packages?: (ClientPackage & { client?: Client })[] }
+  ) => {
+    setListDialog({
+      open: true,
+      title,
+      type,
+      clients: data?.clients || [],
+      profiles: data?.profiles || [],
+      packages: data?.packages || []
+    });
   };
 
   const handleDeleteContent = async (contentId: string) => {
@@ -413,6 +502,16 @@ export default function Dashboard() {
     }
   };
 
+  const clearFilters = () => {
+    setFilterClientId('all');
+    setFilterCreatorId('all');
+    setFilterEditorId('all');
+    setStartDateFilter(undefined);
+    setEndDateFilter(undefined);
+  };
+
+  const hasActiveFilters = filterClientId !== 'all' || filterCreatorId !== 'all' || filterEditorId !== 'all' || startDateFilter || endDateFilter;
+
   if (loading) {
     return (
       <div className="min-h-screen p-6 space-y-6">
@@ -429,7 +528,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       {/* Header with glassmorphism */}
       <header className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="flex h-20 items-center justify-between px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between px-6 lg:px-8">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
               Dashboard Ejecutivo
@@ -445,12 +544,118 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-4">
+            {isAdmin && (
+              <Button variant="outline" size="sm" onClick={() => setGoalsDialogOpen(true)}>
+                <Target className="h-4 w-4 mr-2" />
+                Metas
+              </Button>
+            )}
             <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl bg-success/10 border border-success/20">
               <Activity className="h-4 w-4 text-success animate-pulse" />
               <span className="text-sm font-medium text-success">En vivo</span>
             </div>
           </div>
         </div>
+
+        {/* Filters */}
+        {isAdmin && (
+          <div className="flex flex-wrap items-center gap-2 md:gap-3 px-6 pb-4 overflow-x-auto">
+            <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "w-[130px] justify-start text-left font-normal text-xs",
+                    !startDateFilter && "text-muted-foreground"
+                  )}
+                >
+                  <Calendar className="mr-1 h-3 w-3" />
+                  {startDateFilter ? format(startDateFilter, "dd/MM/yy", { locale: es }) : "Desde"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={startDateFilter}
+                  onSelect={setStartDateFilter}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "w-[130px] justify-start text-left font-normal text-xs",
+                    !endDateFilter && "text-muted-foreground"
+                  )}
+                >
+                  <Calendar className="mr-1 h-3 w-3" />
+                  {endDateFilter ? format(endDateFilter, "dd/MM/yy", { locale: es }) : "Hasta"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={endDateFilter}
+                  onSelect={setEndDateFilter}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Select value={filterClientId} onValueChange={setFilterClientId}>
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue placeholder="Cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los clientes</SelectItem>
+                {clients.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterCreatorId} onValueChange={setFilterCreatorId}>
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue placeholder="Creador" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los creadores</SelectItem>
+                {creators.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterEditorId} onValueChange={setFilterEditorId}>
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue placeholder="Editor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los editores</SelectItem>
+                {editors.map(e => (
+                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
+                <X className="h-3 w-3 mr-1" />
+                Limpiar
+              </Button>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="p-6 lg:p-8 space-y-8">
@@ -460,26 +665,26 @@ export default function Dashboard() {
             title="Total Contenidos"
             value={totalContent}
             icon={Video}
-            trend={12}
             description="Contenidos gestionados en la plataforma"
             onClick={() => openKpiDialog('Todos los Contenidos', content)}
+            goalValue={currentGoal?.content_goal}
+            goalLabel="Meta del mes"
           />
           <LargeKpiCard
             title="Ingresos Totales"
             value={clientsBilling.totalBilled}
             prefix="$"
-            suffix=""
             icon={DollarSign}
-            trend={8}
-            description="Facturación total a clientes"
-            onClick={() => openKpiDialog('Contenidos Facturados', content)}
+            description="Facturación total de paquetes vendidos"
+            onClick={() => openListDialog('Paquetes Vendidos', 'packages-sold', { packages })}
+            goalValue={currentGoal?.revenue_goal}
+            goalLabel="Meta del mes"
           />
           <LargeKpiCard
             title="Tasa de Completados"
             value={totalContent > 0 ? Math.round((completed / totalContent) * 100) : 0}
             suffix="%"
             icon={Target}
-            trend={5}
             description="Porcentaje de contenidos aprobados"
             onClick={() => openKpiDialog('Contenidos Aprobados', content.filter(c => c.status === 'approved'))}
           />
@@ -492,7 +697,7 @@ export default function Dashboard() {
             value={activeContent}
             icon={Play}
             color="info"
-            onClick={() => openKpiDialog('Contenido Activo', content.filter(c => !['approved', 'paid'].includes(c.status)))}
+            onClick={() => openKpiDialog('Contenido Activo', content.filter(c => !['approved', 'paid', 'delivered'].includes(c.status)))}
           />
           <PremiumStatsCard
             title="En Proceso"
@@ -517,31 +722,30 @@ export default function Dashboard() {
           />
           <PremiumStatsCard
             title="Creadores"
-            value={new Set(content.map(c => c.creator_id).filter(Boolean)).size}
+            value={activeCreators.length}
             icon={Users}
             color="info"
-            onClick={() => openKpiDialog('Contenidos por Creador', content.filter(c => c.creator_id))}
+            onClick={() => openListDialog('Creadores Activos', 'creators', { profiles: activeCreators })}
           />
           <PremiumStatsCard
             title="Clientes"
-            value={new Set(content.map(c => c.client_id).filter(Boolean)).size}
-            icon={UserCheck}
+            value={activeClients.length}
+            icon={Building2}
             color="primary"
-            onClick={() => openKpiDialog('Contenidos por Cliente', content.filter(c => c.client_id))}
+            onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
+            goalValue={currentGoal?.new_clients_goal}
+            goalLabel="Meta nuevos"
           />
         </div>
 
         {/* Payment Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Quick Payments Panel */}
-          <div 
-            className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl cursor-pointer hover:shadow-lg transition-all"
-            onClick={() => openKpiDialog('Pagos Pendientes Creadores', unpaidCreatorContent)}
-          >
+          <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-foreground">Pagos Pendientes</h2>
-                <p className="text-sm text-muted-foreground">Resumen de pagos por procesar</p>
+                <h2 className="text-xl font-bold text-foreground">Pagos al Equipo</h2>
+                <p className="text-sm text-muted-foreground">Pagos pendientes a creadores y editores</p>
               </div>
               <Banknote className="h-8 w-8 text-warning" />
             </div>
@@ -549,7 +753,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div 
                 className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
-                onClick={(e) => { e.stopPropagation(); openKpiDialog('Por Pagar a Creadores', unpaidCreatorContent); }}
+                onClick={() => openKpiDialog('Por Pagar a Creadores', unpaidCreatorContent)}
               >
                 <p className="text-sm text-muted-foreground mb-1">Por pagar a Creadores</p>
                 <p className="text-3xl font-bold text-warning">
@@ -561,7 +765,7 @@ export default function Dashboard() {
               </div>
               <div 
                 className="p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
-                onClick={(e) => { e.stopPropagation(); openKpiDialog('Por Pagar a Editores', unpaidEditorContent); }}
+                onClick={() => openKpiDialog('Por Pagar a Editores', unpaidEditorContent)}
               >
                 <p className="text-sm text-muted-foreground mb-1">Por pagar a Editores</p>
                 <p className="text-3xl font-bold text-info">
@@ -573,35 +777,51 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground text-center">
-              Los pagos individuales se realizan desde las tarjetas en el Tablero
-            </p>
+            <div 
+              className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
+              onClick={() => openKpiDialog('Total Por Pagar Equipo', [...unpaidCreatorContent, ...unpaidEditorContent])}
+            >
+              <p className="text-sm text-muted-foreground mb-1">Total por pagar al equipo</p>
+              <p className="text-3xl font-bold text-destructive">
+                ${(pendingCreatorPayment + pendingEditorPayment).toLocaleString()}
+              </p>
+            </div>
           </div>
 
-          {/* Financial Overview */}
+          {/* Financial Overview - Client Billing */}
           <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-foreground">Resumen Financiero</h2>
-                <p className="text-sm text-muted-foreground">Balance general de pagos</p>
+                <h2 className="text-xl font-bold text-foreground">Facturación Clientes</h2>
+                <p className="text-sm text-muted-foreground">Balance de paquetes vendidos</p>
               </div>
               <BarChart3 className="h-8 w-8 text-primary" />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20">
+            <div className="grid grid-cols-2 gap-4">
+              <div 
+                className="p-4 rounded-2xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
+                onClick={() => openListDialog('Total Ventas - Paquetes', 'packages-sold', { packages })}
+              >
                 <p className="text-sm text-muted-foreground mb-1">Total Ventas</p>
                 <p className="text-2xl font-bold text-primary">
                   ${clientsBilling.totalBilled.toLocaleString()}
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">{packages.length} paquetes</p>
               </div>
-              <div className="p-4 rounded-2xl bg-success/10 border border-success/20">
+              <div 
+                className="p-4 rounded-2xl bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
+                onClick={() => openListDialog('Recaudado', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0) })}
+              >
                 <p className="text-sm text-muted-foreground mb-1">Recaudado</p>
                 <p className="text-2xl font-bold text-success">
                   ${clientsBilling.totalPaid.toLocaleString()}
                 </p>
               </div>
-              <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20">
+              <div 
+                className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
+                onClick={() => openListDialog('Por Cobrar', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0) })}
+              >
                 <p className="text-sm text-muted-foreground mb-1">Por Cobrar</p>
                 <p className="text-2xl font-bold text-warning">
                   ${clientsBilling.totalPending.toLocaleString()}
@@ -609,24 +829,41 @@ export default function Dashboard() {
               </div>
               <div 
                 className="p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
-                onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => c.status === 'approved'))}
+                onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
               >
                 <p className="text-sm text-muted-foreground mb-1">Videos Adeudados</p>
                 <p className="text-2xl font-bold text-info">
                   {clientsBilling.contentOwed}
                 </p>
-              </div>
-              <div 
-                className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
-                onClick={() => openKpiDialog('Por Pagar Equipo', [...unpaidCreatorContent, ...unpaidEditorContent])}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Por Pagar Equipo</p>
-                <p className="text-2xl font-bold text-destructive">
-                  ${(pendingCreatorPayment + pendingEditorPayment).toLocaleString()}
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">por entregar</p>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Editors KPI */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <PremiumStatsCard
+            title="Editores Activos"
+            value={activeEditors.length}
+            icon={Scissors}
+            color="info"
+            onClick={() => openListDialog('Editores Activos', 'editors', { profiles: activeEditors })}
+          />
+          <PremiumStatsCard
+            title="Videos en Edición"
+            value={content.filter(c => c.status === 'editing').length}
+            icon={Clock}
+            color="warning"
+            onClick={() => openKpiDialog('Videos en Edición', content.filter(c => c.status === 'editing'))}
+          />
+          <PremiumStatsCard
+            title="Videos Entregados"
+            value={content.filter(c => c.status === 'delivered').length}
+            icon={CheckCircle}
+            color="success"
+            onClick={() => openKpiDialog('Videos Entregados', content.filter(c => c.status === 'delivered'))}
+          />
         </div>
       </div>
 
@@ -645,6 +882,44 @@ export default function Dashboard() {
         open={kpiDialog.open}
         onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
         onSelectContent={setSelectedContent}
+      />
+
+      <KpiListDialog
+        title={listDialog.title}
+        type={listDialog.type}
+        clients={listDialog.clients}
+        profiles={listDialog.profiles}
+        packages={listDialog.packages}
+        open={listDialog.open}
+        onOpenChange={(open) => setListDialog(prev => ({ ...prev, open }))}
+      />
+
+      <GoalsDialog
+        open={goalsDialogOpen}
+        onOpenChange={setGoalsDialogOpen}
+        onSave={() => {
+          refetch();
+          // Refetch goal
+          const fetchGoal = async () => {
+            const currentMonth = new Date().getMonth() + 1;
+            const currentYear = new Date().getFullYear();
+            const { data } = await supabase
+              .from('goals')
+              .select('*')
+              .eq('period_type', 'month')
+              .eq('period_value', currentMonth)
+              .eq('year', currentYear)
+              .maybeSingle();
+            if (data) {
+              setCurrentGoal({
+                revenue_goal: data.revenue_goal || 0,
+                content_goal: data.content_goal || 0,
+                new_clients_goal: data.new_clients_goal || 0
+              });
+            }
+          };
+          fetchGoal();
+        }}
       />
     </div>
   );
