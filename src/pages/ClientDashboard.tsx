@@ -222,64 +222,60 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile Header */}
-      <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            {clientInfo.logo_url ? (
-              <img src={clientInfo.logo_url} alt={clientInfo.name} className="h-9 w-9 rounded-lg object-cover" />
-            ) : (
-              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Package className="h-5 w-5 text-primary" />
-              </div>
-            )}
-            <div>
-              <h1 className="font-semibold text-sm">{clientInfo.name}</h1>
-              <p className="text-xs text-muted-foreground">Portal Cliente</p>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {clientInfo.logo_url ? (
+            <img src={clientInfo.logo_url} alt={clientInfo.name} className="h-12 w-12 rounded-lg object-cover" />
+          ) : (
+            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Package className="h-6 w-6 text-primary" />
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
-              <Settings className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="w-5 h-5" />
-            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold">{clientInfo.name}</h1>
+            <p className="text-muted-foreground">Portal de Cliente</p>
           </div>
         </div>
+        
+        {reviewContent.length > 0 && (
+          <Button onClick={() => setActiveTab('review')} className="gap-2">
+            <Eye className="w-4 h-4" />
+            {reviewContent.length} por revisar
+          </Button>
+        )}
+      </div>
 
-        {/* Bottom Navigation Tabs */}
-        <div className="flex overflow-x-auto border-t">
-          {[
-            { id: 'overview', label: 'Inicio', icon: Home },
-            { id: 'review', label: 'Revisar', icon: Eye, badge: reviewContent.length },
-            { id: 'content', label: 'Contenido', icon: Video },
-            { id: 'packages', label: 'Paquetes', icon: Package },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-xs font-medium transition-colors min-w-max ${
-                activeTab === tab.id 
-                  ? 'text-primary border-b-2 border-primary bg-primary/5' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-              {tab.badge && tab.badge > 0 && (
-                <Badge variant="destructive" className="h-5 min-w-5 text-[10px] px-1.5">
-                  {tab.badge}
-                </Badge>
-              )}
-            </button>
-          ))}
-        </div>
-      </header>
+      {/* Tab Navigation */}
+      <div className="flex overflow-x-auto border-b">
+        {[
+          { id: 'overview', label: 'Inicio', icon: Home },
+          { id: 'review', label: 'Revisar', icon: Eye, badge: reviewContent.length },
+          { id: 'content', label: 'Contenido', icon: Video },
+          { id: 'packages', label: 'Paquetes', icon: Package },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === tab.id 
+                ? 'text-primary border-primary' 
+                : 'text-muted-foreground border-transparent hover:text-foreground hover:border-muted'
+            }`}
+          >
+            <tab.icon className="h-4 w-4" />
+            {tab.label}
+            {tab.badge && tab.badge > 0 && (
+              <Badge variant="destructive" className="h-5 min-w-5 text-xs px-1.5">
+                {tab.badge}
+              </Badge>
+            )}
+          </button>
+        ))}
+      </div>
 
-      <div className="p-4 pb-20">
+      <div>
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
