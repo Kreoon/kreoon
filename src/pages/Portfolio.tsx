@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, ChevronUp, ChevronDown, Filter, X } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PublishedContent {
   id: string;
@@ -26,14 +27,14 @@ interface Client {
 }
 
 export default function Portfolio() {
+  const { roles } = useAuth();
+  const isAdmin = roles.includes('admin');
   const [content, setContent] = useState<PublishedContent[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [viewerId] = useState(() => {
-    // Generate or retrieve a persistent viewer ID for anonymous users
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
     const newId = crypto.randomUUID();
@@ -88,7 +89,6 @@ export default function Portfolio() {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Fetch related data and likes status
         const clientIds = [...new Set(data.filter(d => d.client_id).map(d => d.client_id))] as string[];
         const creatorIds = [...new Set(data.filter(d => d.creator_id).map(d => d.creator_id))] as string[];
         const contentIds = data.map(d => d.id);
@@ -121,7 +121,6 @@ export default function Portfolio() {
         }));
 
         setContent(enrichedData as PublishedContent[]);
-        setCurrentIndex(0);
       } else {
         setContent([]);
       }
@@ -129,18 +128,6 @@ export default function Portfolio() {
       console.error('Error fetching published content:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentIndex < content.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
     }
   };
 
@@ -153,7 +140,6 @@ export default function Portfolio() {
 
       if (error) throw error;
 
-      // Update local state
       setContent(prev => prev.map(item => {
         if (item.id === contentId) {
           return {
@@ -164,6 +150,8 @@ export default function Portfolio() {
         }
         return item;
       }));
+
+      toast.success(data ? '❤️ Me gusta' : 'Ya no te gusta');
     } catch (error) {
       console.error('Error toggling like:', error);
       toast.error('Error al dar like');
@@ -173,7 +161,6 @@ export default function Portfolio() {
   const handleView = useCallback(async (contentId: string) => {
     try {
       await supabase.rpc('increment_content_views', { content_uuid: contentId });
-      // Update local state
       setContent(prev => prev.map(item => {
         if (item.id === contentId) {
           return { ...item, views_count: item.views_count + 1 };
@@ -203,25 +190,33 @@ export default function Portfolio() {
     }
   };
 
-  // Handle keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' || e.key === 'j') {
-        handleNext();
-      } else if (e.key === 'ArrowUp' || e.key === 'k') {
-        handlePrevious();
-      }
-    };
+  const formatCount = (count: number) => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    return count.toString();
+  };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, content.length]);
+  const getThumbnail = (url: string | null, thumbnail: string | null) => {
+    if (thumbnail) return thumbnail;
+    if (!url) return null;
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)?.[1];
+      if (videoId) return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    }
+    
+    return null;
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-full max-w-md aspect-[9/16]">
-          <Skeleton className="w-full h-full rounded-none bg-muted/20" />
+      <div className="min-h-screen bg-black p-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="aspect-[9/16] rounded-xl bg-muted/20" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -251,84 +246,42 @@ export default function Portfolio() {
   }
 
   return (
-    <div className="min-h-screen bg-black overflow-hidden">
-      {/* Mobile-first vertical feed */}
-      <div className="h-screen w-full flex items-center justify-center">
-        <div className="relative w-full max-w-md h-full md:h-[90vh] md:max-h-[800px]">
-          {/* Video Container */}
-          <div className="relative w-full h-full">
-            {content.map((item, index) => (
-              <VideoCard
-                key={item.id}
-                content={item}
-                isActive={index === currentIndex}
-                onLike={() => handleLike(item.id)}
-                onView={() => handleView(item.id)}
-                onShare={() => handleShare(item)}
-                style={{
-                  transform: `translateY(${(index - currentIndex) * 100}%)`,
-                  transition: 'transform 0.3s ease-out',
-                }}
-              />
-            ))}
+    <div className="min-h-screen bg-black">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-black/95 backdrop-blur border-b border-white/10 px-4 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-white font-bold text-xl">Content Studio</h1>
+            <p className="text-white/60 text-sm">Portafolio</p>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowFilters(!showFilters)}
+            className="bg-white/10 hover:bg-white/20 text-white rounded-full h-10 w-10"
+          >
+            <Filter className="h-5 w-5" />
+          </Button>
+        </div>
+      </header>
 
-          {/* Navigation Arrows - Desktop */}
-          <div className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 flex-col gap-2 z-20">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlePrevious}
-              disabled={currentIndex === 0}
-              className="bg-white/10 hover:bg-white/20 text-white rounded-full h-10 w-10"
-            >
-              <ChevronUp className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleNext}
-              disabled={currentIndex === content.length - 1}
-              className="bg-white/10 hover:bg-white/20 text-white rounded-full h-10 w-10"
-            >
-              <ChevronDown className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Progress Indicator */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-1 z-20">
-            {content.slice(0, 10).map((_, index) => (
-              <div
-                key={index}
-                className={`h-1 rounded-full transition-all ${
-                  index === currentIndex 
-                    ? 'w-6 bg-white' 
-                    : 'w-2 bg-white/40'
-                }`}
-              />
-            ))}
-            {content.length > 10 && (
-              <span className="text-white/60 text-xs ml-1">+{content.length - 10}</span>
-            )}
-          </div>
+      {/* Video Grid - 3 columns on desktop, 1 on mobile */}
+      <div className="max-w-7xl mx-auto p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {content.map((item) => (
+            <EmbeddedVideoCard
+              key={item.id}
+              content={item}
+              isAdmin={isAdmin}
+              onLike={() => handleLike(item.id)}
+              onView={() => handleView(item.id)}
+              onShare={() => handleShare(item)}
+              getThumbnail={getThumbnail}
+              formatCount={formatCount}
+            />
+          ))}
         </div>
       </div>
-
-      {/* Branding */}
-      <div className="fixed top-4 left-4 z-30">
-        <h1 className="text-white font-bold text-lg">Content Studio</h1>
-        <p className="text-white/60 text-xs">Portafolio</p>
-      </div>
-
-      {/* Filter Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setShowFilters(!showFilters)}
-        className="fixed top-4 right-4 z-30 bg-white/10 hover:bg-white/20 text-white rounded-full h-10 w-10"
-      >
-        <Filter className="h-5 w-5" />
-      </Button>
 
       {/* Client Filter Sidebar */}
       {showFilters && (
@@ -407,285 +360,266 @@ export default function Portfolio() {
   );
 }
 
-interface VideoCardProps {
+interface EmbeddedVideoCardProps {
   content: PublishedContent;
-  isActive: boolean;
+  isAdmin: boolean;
   onLike: () => void;
   onView: () => void;
   onShare: () => void;
-  style?: React.CSSProperties;
+  getThumbnail: (url: string | null, thumbnail: string | null) => string | null;
+  formatCount: (count: number) => string;
 }
 
-function VideoCard({ content, isActive, onLike, onView, onShare, style }: VideoCardProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+function EmbeddedVideoCard({ 
+  content, 
+  isAdmin,
+  onLike, 
+  onView, 
+  onShare, 
+  getThumbnail, 
+  formatCount 
+}: EmbeddedVideoCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
-  const [showControls, setShowControls] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const viewTracked = useRef(false);
+  const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const thumbnail = getThumbnail(content.video_url, content.thumbnail_url);
 
+  // Track view after 3 seconds
   useEffect(() => {
-    if (videoRef.current) {
-      if (isActive) {
-        videoRef.current.play().catch(() => {});
-        setIsPlaying(true);
-        
-        // Track view after 3 seconds of watching
-        if (!viewTracked.current) {
-          const timer = setTimeout(() => {
-            onView();
-            viewTracked.current = true;
-          }, 3000);
-          return () => clearTimeout(timer);
-        }
-      } else {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-        setIsPlaying(false);
-        viewTracked.current = false;
+    if (isPlaying && !viewTracked.current) {
+      viewTimerRef.current = setTimeout(() => {
+        onView();
+        viewTracked.current = true;
+      }, 3000);
+    }
+
+    return () => {
+      if (viewTimerRef.current) {
+        clearTimeout(viewTimerRef.current);
+      }
+    };
+  }, [isPlaying, onView]);
+
+  // Reset view tracking when video stops
+  useEffect(() => {
+    if (!isPlaying) {
+      viewTracked.current = false;
+      if (viewTimerRef.current) {
+        clearTimeout(viewTimerRef.current);
       }
     }
-  }, [isActive, onView]);
+  }, [isPlaying]);
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const handleTap = () => {
-    setShowControls(!showControls);
-    togglePlay();
-  };
-
-  const formatCount = (count: number) => {
-    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-    return count.toString();
-  };
-
-  const getVideoSrc = () => {
+  // Get embed URL - with restrictions for non-admins
+  const getEmbedContent = () => {
     const url = content.video_url;
+    if (!url) return null;
+
+    // Direct video files
     if (url.match(/\.(mp4|webm|ogg)$/i)) {
-      return url;
+      return { type: 'video', src: url };
     }
-    return null;
+
+    // YouTube - hide branding and controls for non-admins
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      let embedUrl = url;
+      if (url.includes('/shorts/')) {
+        embedUrl = url.replace('/shorts/', '/embed/');
+      } else if (url.includes('watch?v=')) {
+        embedUrl = url.replace('watch?v=', 'embed/');
+      } else if (url.includes('youtu.be/')) {
+        embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
+      }
+      const params = isAdmin 
+        ? '?autoplay=1&mute=1' 
+        : '?autoplay=1&mute=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1';
+      return { type: 'iframe', src: embedUrl + params };
+    }
+
+    // TikTok
+    if (url.includes('tiktok.com')) {
+      const videoId = url.match(/video\/(\d+)/)?.[1];
+      if (videoId) {
+        return { type: 'iframe', src: `https://www.tiktok.com/embed/v2/${videoId}` };
+      }
+    }
+
+    // Instagram
+    if (url.includes('instagram.com')) {
+      let cleanUrl = url.split('?')[0].replace(/\/$/, '');
+      return { type: 'iframe', src: cleanUrl + '/embed/captioned' };
+    }
+
+    // Google Drive
+    if (url.includes('drive.google.com')) {
+      const fileId = url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
+      if (fileId) {
+        return { type: 'iframe', src: `https://drive.google.com/file/d/${fileId}/preview` };
+      }
+    }
+
+    // Fallback - only for admins
+    if (isAdmin) {
+      return { type: 'link', src: url };
+    }
+    return { type: 'unsupported', src: url };
   };
 
-  const videoSrc = getVideoSrc();
+  const embedContent = getEmbedContent();
+
+  const handlePlay = () => {
+    setIsPlaying(true);
+  };
+
+  const handleStop = () => {
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
 
   return (
-    <div 
-      className="absolute inset-0 w-full h-full"
-      style={style}
-    >
-      {videoSrc ? (
-        <div className="relative w-full h-full bg-black" onClick={handleTap}>
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            className="w-full h-full object-cover"
-            loop
-            muted={isMuted}
-            playsInline
-            poster={content.thumbnail_url || undefined}
-          />
-          
-          {showControls && !isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-              <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm">
-                <Play className="h-12 w-12 text-white" fill="white" />
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="relative w-full h-full bg-black">
-          <EmbeddedVideo url={content.video_url} />
-        </div>
-      )}
-
-      {/* Action Buttons - Right Side */}
-      <div className="absolute right-3 bottom-32 flex flex-col items-center gap-5 z-10">
-        {content.creator && (
-          <div className="relative">
-            {content.creator.avatar_url ? (
+    <div className="group relative rounded-xl overflow-hidden bg-gray-900 border border-white/10 hover:border-white/30 transition-all">
+      {/* Video Container - Vertical 9:16 */}
+      <div className="relative aspect-[9/16] bg-black">
+        {!isPlaying ? (
+          <>
+            {/* Thumbnail */}
+            {thumbnail ? (
               <img 
-                src={content.creator.avatar_url} 
-                alt={content.creator.full_name}
-                className="w-12 h-12 rounded-full border-2 border-white object-cover"
+                src={thumbnail} 
+                alt={content.title}
+                className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-12 h-12 rounded-full border-2 border-white bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold">
-                {content.creator.full_name.charAt(0)}
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                <Play className="h-12 w-12 text-white/50" />
               </div>
             )}
-          </div>
-        )}
-
-        {/* Like Button */}
-        <button 
-          onClick={(e) => { e.stopPropagation(); onLike(); }}
-          className="flex flex-col items-center gap-1 text-white"
-        >
-          <div className={`p-2 rounded-full backdrop-blur-sm transition ${
-            content.is_liked 
-              ? 'bg-red-500 hover:bg-red-600' 
-              : 'bg-white/10 hover:bg-white/20'
-          }`}>
-            <Heart className={`h-6 w-6 ${content.is_liked ? 'fill-white' : ''}`} />
-          </div>
-          <span className="text-xs">{formatCount(content.likes_count)}</span>
-        </button>
-
-        {/* Views Count */}
-        <div className="flex flex-col items-center gap-1 text-white">
-          <div className="p-2 rounded-full bg-white/10 backdrop-blur-sm">
-            <Eye className="h-6 w-6" />
-          </div>
-          <span className="text-xs">{formatCount(content.views_count)}</span>
-        </div>
-
-        {/* Share Button */}
-        <button 
-          onClick={(e) => { e.stopPropagation(); onShare(); }}
-          className="flex flex-col items-center gap-1 text-white"
-        >
-          <div className="p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition">
-            <Share2 className="h-6 w-6" />
-          </div>
-          <span className="text-xs">Share</span>
-        </button>
-
-        {/* Mute Button */}
-        {videoSrc && (
-          <button 
-            onClick={(e) => { e.stopPropagation(); toggleMute(); }}
-            className="flex flex-col items-center gap-1 text-white"
-          >
-            <div className="p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition">
-              {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+            
+            {/* Play overlay */}
+            <div 
+              className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/50 transition-colors"
+              onClick={handlePlay}
+            >
+              <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors">
+                <Play className="h-10 w-10 text-white" fill="white" />
+              </div>
             </div>
-            <span className="text-xs">{isMuted ? 'Unmute' : 'Mute'}</span>
-          </button>
+
+            {/* Stats */}
+            <div className="absolute bottom-2 left-2 flex items-center gap-3">
+              <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
+                <Eye className="h-3 w-3" />
+                {formatCount(content.views_count)}
+              </div>
+              <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
+                <Heart className="h-3 w-3" />
+                {formatCount(content.likes_count)}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="absolute bottom-2 right-2 flex flex-col gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLike();
+                }}
+                className={`p-2 rounded-full transition-colors ${
+                  content.is_liked 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-black/50 text-white hover:bg-red-500/80'
+                }`}
+              >
+                <Heart className="h-5 w-5" fill={content.is_liked ? "currentColor" : "none"} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShare();
+                }}
+                className="p-2 rounded-full bg-black/50 text-white hover:bg-white/20 transition-colors"
+              >
+                <Share2 className="h-5 w-5" />
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Embedded Video Player */}
+            {embedContent?.type === 'video' ? (
+              <video
+                ref={videoRef}
+                src={embedContent.src}
+                className="w-full h-full object-cover"
+                autoPlay
+                muted={isMuted}
+                playsInline
+                controlsList={isAdmin ? undefined : "nodownload noplaybackrate"}
+                disablePictureInPicture={!isAdmin}
+                onContextMenu={isAdmin ? undefined : (e) => e.preventDefault()}
+              />
+            ) : embedContent?.type === 'iframe' ? (
+              <div className="relative w-full h-full">
+                <iframe
+                  src={embedContent.src}
+                  className="w-full h-full"
+                  allowFullScreen={isAdmin}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                />
+                {/* Block external links for non-admins */}
+                {!isAdmin && (
+                  <div className="absolute inset-0 pointer-events-none" />
+                )}
+              </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white/60">
+                No se puede reproducir
+              </div>
+            )}
+
+            {/* Controls overlay */}
+            <div className="absolute top-2 right-2 flex gap-2">
+              <button
+                onClick={handleStop}
+                className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              >
+                <Pause className="h-4 w-4" />
+              </button>
+              {embedContent?.type === 'video' && (
+                <button
+                  onClick={() => setIsMuted(!isMuted)}
+                  className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                >
+                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+              )}
+            </div>
+          </>
         )}
       </div>
 
-      {/* Content Info - Bottom */}
-      <div className="absolute bottom-0 left-0 right-16 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10">
-        {content.client && (
-          <button 
-            className="flex items-center gap-2 mb-2 hover:opacity-80 transition"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {content.client.logo_url ? (
-              <img 
-                src={content.client.logo_url} 
-                alt={content.client.name}
-                className="w-6 h-6 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">
-                {content.client.name.charAt(0)}
-              </div>
-            )}
-            <span className="text-white font-medium text-sm">{content.client.name}</span>
-          </button>
-        )}
-
-        <h3 className="text-white font-semibold text-base mb-1 line-clamp-2">
+      {/* Info */}
+      <div className="p-3 bg-gray-900">
+        <h3 className="font-medium text-sm text-white line-clamp-2 mb-1">
           {content.title}
         </h3>
-
-        {content.creator && (
-          <p className="text-white/70 text-sm">
-            Creado por @{content.creator.full_name.toLowerCase().replace(/\s+/g, '')}
-          </p>
-        )}
+        <div className="flex items-center gap-2 text-xs text-white/60">
+          {content.client && (
+            <span>{content.client.name}</span>
+          )}
+          {content.creator && (
+            <>
+              <span>•</span>
+              <span>{content.creator.full_name}</span>
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
-
-function EmbeddedVideo({ url }: { url: string }) {
-  if (url.includes('tiktok.com')) {
-    const videoId = url.match(/video\/(\d+)/)?.[1];
-    if (videoId) {
-      return (
-        <iframe
-          src={`https://www.tiktok.com/embed/v2/${videoId}`}
-          className="w-full h-full"
-          allowFullScreen
-        />
-      );
-    }
-  }
-
-  if (url.includes('instagram.com')) {
-    let cleanUrl = url.split('?')[0].replace(/\/$/, '');
-    const embedUrl = cleanUrl + '/embed/captioned';
-    return (
-      <iframe
-        src={embedUrl}
-        className="w-full h-full"
-        allowFullScreen
-        scrolling="no"
-        frameBorder="0"
-      />
-    );
-  }
-
-  if (url.includes('/shorts/')) {
-    const embedUrl = url.replace('/shorts/', '/embed/');
-    return (
-      <iframe
-        src={embedUrl}
-        className="w-full h-full"
-        allowFullScreen
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      />
-    );
-  }
-
-  if (url.includes('youtube.com') || url.includes('youtu.be')) {
-    let embedUrl = url;
-    if (url.includes('watch?v=')) {
-      embedUrl = url.replace('watch?v=', 'embed/');
-    } else if (url.includes('youtu.be/')) {
-      embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
-    }
-    return (
-      <iframe
-        src={embedUrl}
-        className="w-full h-full"
-        allowFullScreen
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      />
-    );
-  }
-
-  return (
-    <div className="w-full h-full flex items-center justify-center bg-black">
-      <a 
-        href={url} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="text-white hover:underline flex items-center gap-2"
-      >
-        <Play className="h-8 w-8" />
-        Ver video
-      </a>
     </div>
   );
 }
