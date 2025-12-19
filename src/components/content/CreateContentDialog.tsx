@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Video, Package } from "lucide-react";
+import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp } from "lucide-react";
+import { ScriptGenerator } from "./ScriptGenerator";
 
 interface CreateContentDialogProps {
   open: boolean;
@@ -28,13 +30,23 @@ interface ClientPackage {
   is_active: boolean;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  strategy: string | null;
+  market_research: string | null;
+  ideal_avatar: string | null;
+  sales_angles: string[] | null;
+  brief_url: string | null;
+}
+
 export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateContentDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
   // Form state
   const [title, setTitle] = useState("");
-  const [product, setProduct] = useState("");
+  const [productId, setProductId] = useState("");
   const [clientId, setClientId] = useState("");
   const [creatorId, setCreatorId] = useState("");
   const [editorId, setEditorId] = useState("");
@@ -48,6 +60,12 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   const [creatorPayment, setCreatorPayment] = useState("");
   const [editorPayment, setEditorPayment] = useState("");
   const [hooksCount, setHooksCount] = useState(1);
+  const [packageId, setPackageId] = useState("");
+  
+  // Guidelines
+  const [editorGuidelines, setEditorGuidelines] = useState("");
+  const [strategistGuidelines, setStrategistGuidelines] = useState("");
+  const [traffickerGuidelines, setTraffickerGuidelines] = useState("");
   
   // Options lists
   const [clients, setClients] = useState<SelectOption[]>([]);
@@ -55,8 +73,10 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   const [editors, setEditors] = useState<SelectOption[]>([]);
   const [strategists, setStrategists] = useState<SelectOption[]>([]);
   
-  // Client package info
-  const [clientPackage, setClientPackage] = useState<ClientPackage | null>(null);
+  // Client-specific data
+  const [clientPackages, setClientPackages] = useState<ClientPackage[]>([]);
+  const [clientProducts, setClientProducts] = useState<Product[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -64,33 +84,64 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
     }
   }, [open]);
 
-  // Fetch client's active package when client changes
+  // Fetch client's packages and products when client changes
   useEffect(() => {
     if (clientId) {
-      fetchClientPackage(clientId);
+      fetchClientData(clientId);
     } else {
-      setClientPackage(null);
+      setClientPackages([]);
+      setClientProducts([]);
+      setPackageId("");
+      setProductId("");
+      setSelectedProduct(null);
       setHooksCount(1);
     }
   }, [clientId]);
 
-  const fetchClientPackage = async (clientId: string) => {
-    const { data } = await supabase
+  // Update hooks count when package changes
+  useEffect(() => {
+    if (packageId) {
+      const pkg = clientPackages.find(p => p.id === packageId);
+      if (pkg?.hooks_per_video && pkg.hooks_per_video > 0) {
+        setHooksCount(pkg.hooks_per_video);
+      }
+    }
+  }, [packageId, clientPackages]);
+
+  // Update selected product when productId changes
+  useEffect(() => {
+    if (productId) {
+      const product = clientProducts.find(p => p.id === productId);
+      setSelectedProduct(product || null);
+    } else {
+      setSelectedProduct(null);
+    }
+  }, [productId, clientProducts]);
+
+  const fetchClientData = async (clientId: string) => {
+    // Fetch packages
+    const { data: packages } = await supabase
       .from('client_packages')
       .select('id, name, hooks_per_video, is_active')
       .eq('client_id', clientId)
-      .eq('is_active', true)
-      .maybeSingle();
+      .order('created_at', { ascending: false });
     
-    if (data) {
-      setClientPackage(data);
-      // Pre-fill hooks count from package
-      if (data.hooks_per_video && data.hooks_per_video > 0) {
-        setHooksCount(data.hooks_per_video);
-      }
-    } else {
-      setClientPackage(null);
+    setClientPackages(packages || []);
+    
+    // Auto-select active package
+    const activePackage = packages?.find(p => p.is_active);
+    if (activePackage) {
+      setPackageId(activePackage.id);
     }
+
+    // Fetch products
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, name, strategy, market_research, ideal_avatar, sales_angles, brief_url')
+      .eq('client_id', clientId)
+      .order('name');
+    
+    setClientProducts(products || []);
   };
 
   const fetchOptions = async () => {
@@ -146,7 +197,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
   const resetForm = () => {
     setTitle("");
-    setProduct("");
+    setProductId("");
     setClientId("");
     setCreatorId("");
     setEditorId("");
@@ -160,7 +211,13 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
     setCreatorPayment("");
     setEditorPayment("");
     setHooksCount(1);
-    setClientPackage(null);
+    setPackageId("");
+    setClientPackages([]);
+    setClientProducts([]);
+    setSelectedProduct(null);
+    setEditorGuidelines("");
+    setStrategistGuidelines("");
+    setTraffickerGuidelines("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -180,7 +237,8 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
     try {
       const { error } = await supabase.from('content').insert({
         title: title.trim(),
-        product: product.trim() || null,
+        product: selectedProduct?.name || null,
+        product_id: productId || null,
         client_id: clientId || null,
         creator_id: creatorId || null,
         editor_id: editorId || null,
@@ -195,6 +253,9 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
         editor_payment: editorPayment ? parseFloat(editorPayment) : 0,
         hooks_count: hooksCount,
         video_urls: Array(hooksCount).fill(''),
+        editor_guidelines: editorGuidelines.trim() || null,
+        strategist_guidelines: strategistGuidelines.trim() || null,
+        trafficker_guidelines: traffickerGuidelines.trim() || null,
         status: 'draft',
         creator_assigned_at: creatorId ? new Date().toISOString() : null,
         editor_assigned_at: editorId ? new Date().toISOString() : null
@@ -224,73 +285,90 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nuevo Proyecto</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Información básica */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Nombre del Video *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ej: Video testimonial Q1"
-                required
-              />
-            </div>
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Información General</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Nombre del Video *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Ej: Video testimonial Q1"
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="product">Producto</Label>
-              <Input
-                id="product"
-                value={product}
-                onChange={(e) => setProduct(e.target.value)}
-                placeholder="Ej: Producto X"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="campaignWeek">Campaña / Semana</Label>
+                <Input
+                  id="campaignWeek"
+                  value={campaignWeek}
+                  onChange={(e) => setCampaignWeek(e.target.value)}
+                  placeholder="Ej: Semana 1 - Enero"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="client">Cliente</Label>
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {/* Show package info if available */}
-              {clientPackage && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="text-xs">
-                    <Package className="h-3 w-3 mr-1" />
-                    {clientPackage.name}
-                  </Badge>
-                  {clientPackage.hooks_per_video && (
-                    <Badge variant="outline" className="text-xs">
-                      {clientPackage.hooks_per_video} hooks/video
-                    </Badge>
-                  )}
-                </div>
-              )}
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="client">Cliente</Label>
+                <Select value={clientId} onValueChange={setClientId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="campaignWeek">Campaña / Semana</Label>
-              <Input
-                id="campaignWeek"
-                value={campaignWeek}
-                onChange={(e) => setCampaignWeek(e.target.value)}
-                placeholder="Ej: Semana 1 - Enero"
-              />
+              {/* Package selector */}
+              <div className="space-y-2">
+                <Label htmlFor="package">Paquete de Contenido</Label>
+                <Select value={packageId} onValueChange={setPackageId} disabled={!clientId || clientPackages.length === 0}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={clientId ? (clientPackages.length > 0 ? "Seleccionar paquete" : "Sin paquetes") : "Primero selecciona un cliente"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientPackages.map(pkg => (
+                      <SelectItem key={pkg.id} value={pkg.id}>
+                        <div className="flex items-center gap-2">
+                          <Package className="h-3 w-3" />
+                          {pkg.name}
+                          {pkg.is_active && <Badge variant="secondary" className="text-xs ml-1">Activo</Badge>}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Product selector */}
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="product">Producto</Label>
+                <Select value={productId} onValueChange={setProductId} disabled={!clientId || clientProducts.length === 0}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={clientId ? (clientProducts.length > 0 ? "Seleccionar producto" : "Sin productos registrados") : "Primero selecciona un cliente"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientProducts.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
+
+          <Separator />
 
           {/* Hooks count selector */}
           <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
@@ -310,81 +388,93 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                {clientPackage?.hooks_per_video 
-                  ? `Predefinido por paquete "${clientPackage.name}"`
-                  : "Define cuántos videos finales se entregarán para este proyecto"
+                {packageId && clientPackages.find(p => p.id === packageId)?.hooks_per_video 
+                  ? `Predefinido por paquete "${clientPackages.find(p => p.id === packageId)?.name}"`
+                  : "Define cuántos videos finales se entregarán"
                 }
               </p>
             </div>
           </div>
 
+          <Separator />
+
           {/* Equipo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="creator">Creador</Label>
-              <Select value={creatorId} onValueChange={setCreatorId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar creador" />
-                </SelectTrigger>
-                <SelectContent>
-                  {creators.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Equipo Asignado</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="creator">Creador</Label>
+                <Select value={creatorId} onValueChange={setCreatorId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar creador" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {creators.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="editor">Editor</Label>
-              <Select value={editorId} onValueChange={setEditorId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar editor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {editors.map(e => (
-                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="editor">Editor</Label>
+                <Select value={editorId} onValueChange={setEditorId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar editor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {editors.map(e => (
+                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="strategist">Estratega</Label>
-              <Select value={strategistId} onValueChange={setStrategistId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar estratega" />
-                </SelectTrigger>
-                <SelectContent>
-                  {strategists.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label htmlFor="strategist">Estratega</Label>
+                <Select value={strategistId} onValueChange={setStrategistId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estratega" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {strategists.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
+
+          <Separator />
 
           {/* Fechas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">Fecha Inicial</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Fechas</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Fecha Inicial</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="deadline">Fecha Límite de Entrega</Label>
-              <Input
-                id="deadline"
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="deadline">Fecha Límite de Entrega</Label>
+                <Input
+                  id="deadline"
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                />
+              </div>
             </div>
           </div>
+
+          <Separator />
 
           {/* URLs */}
           <div className="space-y-2">
@@ -398,47 +488,118 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
             />
           </div>
 
-          {/* Pagos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="creatorPayment">Pago Creador (COP)</Label>
-              <Input
-                id="creatorPayment"
-                type="number"
-                value={creatorPayment}
-                onChange={(e) => setCreatorPayment(e.target.value)}
-                placeholder="0"
-                min="0"
-              />
-            </div>
+          <Separator />
 
+          {/* Pagos */}
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Pagos</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="creatorPayment">Pago Creador (COP)</Label>
+                <Input
+                  id="creatorPayment"
+                  type="number"
+                  value={creatorPayment}
+                  onChange={(e) => setCreatorPayment(e.target.value)}
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editorPayment">Pago Editor (COP)</Label>
+                <Input
+                  id="editorPayment"
+                  type="number"
+                  value={editorPayment}
+                  onChange={(e) => setEditorPayment(e.target.value)}
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Guión */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Guión</h3>
+            </div>
+            
+            {/* AI Script Generator */}
+            <ScriptGenerator 
+              product={selectedProduct} 
+              onScriptGenerated={(generatedScript) => setScript(generatedScript)} 
+            />
+            
             <div className="space-y-2">
-              <Label htmlFor="editorPayment">Pago Editor (COP)</Label>
-              <Input
-                id="editorPayment"
-                type="number"
-                value={editorPayment}
-                onChange={(e) => setEditorPayment(e.target.value)}
-                placeholder="0"
-                min="0"
+              <Label htmlFor="script">Guión / Estrategia</Label>
+              <Textarea
+                id="script"
+                value={script}
+                onChange={(e) => setScript(e.target.value)}
+                placeholder="Escribe el guión o estrategia del contenido..."
+                rows={6}
               />
             </div>
           </div>
 
-          {/* Guión y estrategia */}
-          <div className="space-y-2">
-            <Label htmlFor="script">Guión / Estrategia</Label>
+          <Separator />
+
+          {/* Pautas para Editor */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Pencil className="h-4 w-4 text-blue-500" />
+              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Pautas para Editor</h3>
+            </div>
             <Textarea
-              id="script"
-              value={script}
-              onChange={(e) => setScript(e.target.value)}
-              placeholder="Escribe el guión o estrategia del contenido..."
-              rows={6}
+              value={editorGuidelines}
+              onChange={(e) => setEditorGuidelines(e.target.value)}
+              placeholder="Instrucciones específicas para el editor: estilo de edición, música, efectos, ritmo del video..."
+              rows={4}
             />
           </div>
 
+          <Separator />
+
+          {/* Pautas para Estratega */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-purple-500" />
+              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Pautas para Estratega</h3>
+            </div>
+            <Textarea
+              value={strategistGuidelines}
+              onChange={(e) => setStrategistGuidelines(e.target.value)}
+              placeholder="Indicaciones estratégicas: objetivos del contenido, mensaje clave, call to action..."
+              rows={4}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Pautas para Trafficker */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-green-500" />
+              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Pautas para Trafficker</h3>
+            </div>
+            <Textarea
+              value={traffickerGuidelines}
+              onChange={(e) => setTraffickerGuidelines(e.target.value)}
+              placeholder="Indicaciones para pauta: audiencia objetivo, plataformas, presupuesto sugerido, objetivos de campaña..."
+              rows={4}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Descripción adicional */}
           <div className="space-y-2">
-            <Label htmlFor="description">Descripción adicional</Label>
+            <Label htmlFor="description">Notas adicionales</Label>
             <Textarea
               id="description"
               value={description}
