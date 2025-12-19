@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.notify-drive-upload]
 verify_jwt = false
+
+[functions.daily-reminders]
+verify_jwt = false
