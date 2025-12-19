@@ -183,32 +183,38 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
         throw new Error(`Error en webhook: ${response.status}`);
       }
 
-      // Get the response from n8n (Respond to Webhook node)
-      const data = await response.json();
-      console.log("n8n response:", data);
-      
-      // Extract script from response - handle different possible response formats
+      // Get the response from n8n - handle both JSON and plain text
+      const contentType = response.headers.get("content-type") || "";
       let script = "";
       
-      if (typeof data === "string") {
-        script = data;
-      } else if (data.script) {
-        script = data.script;
-      } else if (data.guion) {
-        script = data.guion;
-      } else if (data.output) {
-        script = data.output;
-      } else if (data.text) {
-        script = data.text;
-      } else if (data.message) {
-        script = data.message;
-      } else if (data.content) {
-        script = data.content;
-      } else if (data.result) {
-        script = typeof data.result === 'string' ? data.result : JSON.stringify(data.result);
+      if (contentType.includes("application/json")) {
+        // Response is JSON
+        const data = await response.json();
+        console.log("n8n JSON response:", data);
+        
+        if (typeof data === "string") {
+          script = data;
+        } else if (data.script) {
+          script = data.script;
+        } else if (data.guion) {
+          script = data.guion;
+        } else if (data.output) {
+          script = data.output;
+        } else if (data.text) {
+          script = data.text;
+        } else if (data.message) {
+          script = data.message;
+        } else if (data.content) {
+          script = data.content;
+        } else if (data.result) {
+          script = typeof data.result === 'string' ? data.result : JSON.stringify(data.result);
+        } else {
+          script = JSON.stringify(data, null, 2);
+        }
       } else {
-        // If the response is an object without known keys, stringify it
-        script = JSON.stringify(data, null, 2);
+        // Response is plain text
+        script = await response.text();
+        console.log("n8n text response:", script);
       }
 
       if (script) {
