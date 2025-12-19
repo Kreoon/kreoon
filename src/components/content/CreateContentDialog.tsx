@@ -370,11 +370,11 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
           <Separator />
 
-          {/* Hooks count selector */}
+          {/* Variables count selector */}
           <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
             <div className="flex items-center gap-2">
               <Video className="h-4 w-4 text-primary" />
-              <Label className="font-medium">Cantidad de Hooks (Videos Finales)</Label>
+              <Label className="font-medium">Cantidad de Variables (Videos Finales)</Label>
             </div>
             <div className="flex items-center gap-4">
               <Select value={String(hooksCount)} onValueChange={(v) => setHooksCount(parseInt(v))}>
