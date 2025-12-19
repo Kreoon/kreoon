@@ -19,7 +19,8 @@ import { useAuth } from "@/hooks/useAuth";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Contenido", href: "/content", icon: Video },
+  { name: "Tablero", href: "/board", icon: Video },
+  { name: "Contenido", href: "/content", icon: FileText },
   { name: "Creadores", href: "/creators", icon: Users },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Clientes", href: "/clients", icon: Building2 },
