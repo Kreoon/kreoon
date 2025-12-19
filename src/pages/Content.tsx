@@ -244,21 +244,22 @@ const Content = () => {
     <MainLayout>
       <div className="min-h-screen">
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex h-16 items-center justify-between px-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Galería de Videos</h1>
-              <p className="text-sm text-muted-foreground">Videos finales y portafolio público</p>
+          <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
+            <div className="min-w-0">
+              <h1 className="text-lg md:text-xl font-bold text-foreground">Galería de Videos</h1>
+              <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Videos finales y portafolio público</p>
             </div>
             
             {isAdmin && (
               <Dialog open={newVideoOpen} onOpenChange={setNewVideoOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="glow" className="gap-2">
+                  <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0">
                     <Plus className="h-4 w-4" />
-                    Nuevo Video
+                    <span className="hidden sm:inline">Nuevo Video</span>
+                    <span className="sm:hidden">Nuevo</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-[95vw] sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>Agregar Video al Portafolio</DialogTitle>
                   </DialogHeader>
@@ -284,7 +285,7 @@ const Content = () => {
                         Soporta: YouTube, TikTok, Instagram, Google Drive, o URL directa de video (.mp4)
                       </p>
                     </div>
-                    <div className="flex justify-end gap-2 pt-4">
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
                       <Button variant="outline" onClick={() => setNewVideoOpen(false)}>
                         Cancelar
                       </Button>
@@ -301,105 +302,104 @@ const Content = () => {
 
         {/* Admin Metrics Dashboard */}
         {isAdmin && (
-          <div className="px-6 py-4 border-b border-border bg-muted/30">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-card rounded-lg p-4 border border-border">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <Play className="h-4 w-4" />
+          <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted/30">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+              <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
+                <div className="flex items-center gap-1 md:gap-2 text-muted-foreground text-xs md:text-sm mb-1">
+                  <Play className="h-3 w-3 md:h-4 md:w-4" />
                   Total Videos
                 </div>
-                <div className="text-2xl font-bold text-foreground">{content.length}</div>
+                <div className="text-xl md:text-2xl font-bold text-foreground">{content.length}</div>
               </div>
-              <div className="bg-card rounded-lg p-4 border border-border">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <Eye className="h-4 w-4" />
-                  Vistas Totales
+              <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
+                <div className="flex items-center gap-1 md:gap-2 text-muted-foreground text-xs md:text-sm mb-1">
+                  <Eye className="h-3 w-3 md:h-4 md:w-4" />
+                  Vistas
                 </div>
-                <div className="text-2xl font-bold text-foreground">{formatCount(totalViews)}</div>
-                <div className="text-xs text-muted-foreground">3+ segundos</div>
+                <div className="text-xl md:text-2xl font-bold text-foreground">{formatCount(totalViews)}</div>
               </div>
-              <div className="bg-card rounded-lg p-4 border border-border">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <Heart className="h-4 w-4" />
-                  Likes Totales
+              <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
+                <div className="flex items-center gap-1 md:gap-2 text-muted-foreground text-xs md:text-sm mb-1">
+                  <Heart className="h-3 w-3 md:h-4 md:w-4" />
+                  Likes
                 </div>
-                <div className="text-2xl font-bold text-foreground">{formatCount(totalLikes)}</div>
+                <div className="text-xl md:text-2xl font-bold text-foreground">{formatCount(totalLikes)}</div>
               </div>
-              <div className="bg-card rounded-lg p-4 border border-border">
-                <div className="flex items-center gap-2 text-green-500 text-sm mb-1">
+              <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
+                <div className="flex items-center gap-1 md:gap-2 text-green-500 text-xs md:text-sm mb-1">
                   Publicados
                 </div>
-                <div className="text-2xl font-bold text-foreground">{publishedCount}/{content.length}</div>
+                <div className="text-xl md:text-2xl font-bold text-foreground">{publishedCount}/{content.length}</div>
               </div>
             </div>
           </div>
         )}
 
-        <div className="p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input 
-                  type="text"
-                  placeholder="Buscar videos..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-10 w-80 rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-              
-              {isAdmin && (
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant={filterPublished === 'all' ? 'default' : 'outline'} 
-                    size="sm"
-                    onClick={() => setFilterPublished('all')}
-                  >
-                    Todos
-                  </Button>
-                  <Button 
-                    variant={filterPublished === 'published' ? 'default' : 'outline'} 
-                    size="sm"
-                    onClick={() => setFilterPublished('published')}
-                  >
-                    Publicados
-                  </Button>
-                  <Button 
-                    variant={filterPublished === 'unpublished' ? 'default' : 'outline'} 
-                    size="sm"
-                    onClick={() => setFilterPublished('unpublished')}
-                  >
-                    Sin Publicar
-                  </Button>
-                </div>
-              )}
+        <div className="p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 md:mb-6">
+            <div className="relative w-full sm:w-auto">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input 
+                type="text"
+                placeholder="Buscar videos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 md:h-10 w-full sm:w-64 md:w-80 rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
             </div>
-          
+            
+            {isAdmin && (
+              <div className="flex items-center gap-1 md:gap-2 overflow-x-auto">
+                <Button 
+                  variant={filterPublished === 'all' ? 'default' : 'outline'} 
+                  size="sm"
+                  className="text-xs md:text-sm"
+                  onClick={() => setFilterPublished('all')}
+                >
+                  Todos
+                </Button>
+                <Button 
+                  variant={filterPublished === 'published' ? 'default' : 'outline'} 
+                  size="sm"
+                  className="text-xs md:text-sm"
+                  onClick={() => setFilterPublished('published')}
+                >
+                  Publicados
+                </Button>
+                <Button 
+                  variant={filterPublished === 'unpublished' ? 'default' : 'outline'} 
+                  size="sm"
+                  className="text-xs md:text-sm"
+                  onClick={() => setFilterPublished('unpublished')}
+                >
+                  Sin Publicar
+                </Button>
+              </div>
+            )}
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {[...Array(6)].map((_, i) => (
                 <Skeleton key={i} className="aspect-[9/16] rounded-xl" />
               ))}
             </div>
           ) : filteredContent.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-12 text-center">
+            <div className="rounded-xl border border-border bg-card p-8 md:p-12 text-center">
               <div className="mx-auto max-w-md">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <Play className="h-8 w-8 text-primary" />
+                <div className="mx-auto mb-4 flex h-12 w-12 md:h-16 md:w-16 items-center justify-center rounded-full bg-primary/10">
+                  <Play className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold text-card-foreground mb-2">
+                <h3 className="text-base md:text-lg font-semibold text-card-foreground mb-2">
                   No hay videos
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {searchQuery ? 'No se encontraron videos con esa búsqueda' : 'Los videos finales aparecerán aquí'}
                 </p>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {filteredContent.map((item) => (
                 <EmbeddedVideoCard 
                   key={item.id} 
