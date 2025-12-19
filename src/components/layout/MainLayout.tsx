@@ -3,16 +3,149 @@ import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { TourProvider } from "@/components/tour/TourProvider";
+import { useAuth } from "@/hooks/useAuth";
+import { NavLink, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { LayoutDashboard, Kanban, Settings, LogOut, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface MainLayoutProps {
   children: ReactNode;
 }
 
+// Client navigation items
+const clientNavigation = [
+  { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard },
+  { name: "Tablero", href: "/client-board", icon: Kanban },
+  { name: "Configuración", href: "/settings", icon: Settings },
+];
+
 export function MainLayout({
   children
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { isClient, signOut, profile } = useAuth();
+  const location = useLocation();
   
+  // For clients, show a simpler sidebar
+  if (isClient) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Client Desktop Sidebar */}
+        <aside className="fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border w-64 hidden md:block">
+          <div className="flex h-full flex-col">
+            {/* Logo */}
+            <div className="flex h-16 items-center border-b border-sidebar-border px-4 justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+                  <Building2 className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-sm font-bold text-sidebar-foreground">Portal Cliente</h1>
+                  <p className="text-xs text-sidebar-foreground/60">UGC Colombia</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 space-y-1 p-3">
+              {clientNavigation.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <NavLink
+                    key={item.name}
+                    to={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      isActive 
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" 
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-sidebar-primary-foreground")} />
+                    <span>{item.name}</span>
+                  </NavLink>
+                );
+              })}
+            </nav>
+
+            {/* User & Actions */}
+            <div className="border-t border-sidebar-border p-3 space-y-2">
+              {profile && (
+                <div className="px-3 py-2 text-xs text-sidebar-foreground/60 truncate">
+                  {profile.email}
+                </div>
+              )}
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="w-full text-sidebar-foreground/70 hover:bg-destructive/20 hover:text-destructive"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Cerrar sesión
+              </Button>
+            </div>
+          </div>
+        </aside>
+        
+        {/* Client Mobile Header */}
+        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-4 md:hidden">
+          <div className="flex-1 flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
+              <Building2 className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="text-sm font-bold">Portal Cliente</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </header>
+
+        {/* Client Mobile Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
+          <div className="flex justify-around py-2">
+            {clientNavigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    "flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="text-xs">{item.name}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+        </nav>
+        
+        {/* Desktop Header with Notifications */}
+        <div className="hidden md:flex fixed top-0 right-0 z-30 h-14 items-center px-4 left-64">
+          <div className="ml-auto">
+            <NotificationBell />
+          </div>
+        </div>
+        
+        {/* Main Content */}
+        <main className="md:ml-64 pb-16 md:pb-0">
+          <div className="min-h-screen p-4 md:p-6 md:pt-6">
+            {children}
+          </div>
+        </main>
+      </div>
+    );
+  }
+  
+  // Default admin/other layout
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
