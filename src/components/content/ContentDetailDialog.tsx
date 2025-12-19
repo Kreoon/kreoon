@@ -779,14 +779,29 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             <TabsContent value="general" className="space-y-4 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs">Producto</Label>
+                  <Label className="text-muted-foreground text-xs flex items-center gap-2">
+                    <Package className="h-3 w-3" /> Producto
+                  </Label>
                   {editMode ? (
-                    <Input
-                      value={formData.product}
-                      onChange={(e) => setFormData({ ...formData, product: e.target.value })}
+                    <ProductSelector
+                      clientId={formData.client_id || content.client_id || null}
+                      value={formData.product_id}
+                      onChange={(productId) => handleProductChange(productId)}
                     />
                   ) : (
-                    <p className="font-medium">{content.product || "—"}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{selectedProduct?.name || content.product || "—"}</p>
+                      {selectedProduct && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setShowProductDialog(true)}
+                          className="h-6 px-2 text-xs"
+                        >
+                          Ver info
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -795,7 +810,11 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   {editMode ? (
                     <Select 
                       value={formData.client_id} 
-                      onValueChange={(v) => setFormData({ ...formData, client_id: v })}
+                      onValueChange={(v) => {
+                        // Al cambiar cliente, limpiar el producto seleccionado
+                        setFormData({ ...formData, client_id: v, product_id: '', product: '' });
+                        setSelectedProduct(null);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar" />
