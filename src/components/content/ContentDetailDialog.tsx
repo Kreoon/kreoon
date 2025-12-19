@@ -21,7 +21,8 @@ import { es } from "date-fns/locale";
 import { 
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
-  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Package, Lock, Share2
+  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Package, Lock, Share2,
+  Plus, X, Clipboard, Megaphone, Target
 } from "lucide-react";
 import {
   AlertDialog,
@@ -73,6 +74,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     campaign_week: "",
     reference_url: "",
     video_url: "",
+    video_urls: [] as string[],
     drive_url: "",
     script: "",
     description: "",
@@ -82,7 +84,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     creator_paid: false,
     editor_paid: false,
     invoiced: false,
-    is_published: false
+    is_published: false,
+    editor_guidelines: "",
+    strategist_guidelines: "",
+    trafficker_guidelines: ""
   });
 
   // Product data for script generation
@@ -115,6 +120,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         campaign_week: content.campaign_week || "",
         reference_url: content.reference_url || "",
         video_url: content.video_url || "",
+        video_urls: (content as any).video_urls || [],
         drive_url: content.drive_url || "",
         script: content.script || "",
         description: content.description || "",
@@ -124,7 +130,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         creator_paid: content.creator_paid || false,
         editor_paid: content.editor_paid || false,
         invoiced: content.invoiced || false,
-        is_published: (content as any).is_published || false
+        is_published: (content as any).is_published || false,
+        editor_guidelines: (content as any).editor_guidelines || "",
+        strategist_guidelines: (content as any).strategist_guidelines || "",
+        trafficker_guidelines: (content as any).trafficker_guidelines || ""
       });
       setCurrentStatus(content.status);
       fetchOptions();
@@ -291,6 +300,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         campaign_week: formData.campaign_week || null,
         reference_url: formData.reference_url || null,
         video_url: formData.video_url || null,
+        video_urls: formData.video_urls.filter(url => url.trim() !== ''),
         drive_url: formData.drive_url || null,
         script: formData.script || null,
         description: formData.description || null,
@@ -300,7 +310,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         creator_paid: formData.creator_paid,
         editor_paid: formData.editor_paid,
         invoiced: formData.invoiced,
-        is_published: formData.is_published
+        is_published: formData.is_published,
+        editor_guidelines: formData.editor_guidelines || null,
+        strategist_guidelines: formData.strategist_guidelines || null,
+        trafficker_guidelines: formData.trafficker_guidelines || null
       };
 
       if (formData.creator_id && !content.creator_id) {
@@ -619,19 +632,92 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
             )}
 
-            {/* Section 1: Video + Comments side by side */}
+            {/* Section 1: Videos Finales (Hooks) + Comments side by side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Video Final */}
+              {/* Videos Finales (Multiple) */}
               <div className="space-y-3">
                 <h4 className="font-medium flex items-center gap-2">
-                  <Video className="h-4 w-4" /> Video Final
+                  <Video className="h-4 w-4" /> Videos Finales (Hooks)
                 </h4>
                 
-                {content.video_url ? (
+                {/* Display existing videos */}
+                {formData.video_urls.length > 0 ? (
+                  <div className="space-y-4">
+                    {formData.video_urls.map((videoUrl, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Hook {index + 1}</span>
+                          {editMode && canEditVideoTab && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const newUrls = formData.video_urls.filter((_, i) => i !== index);
+                                setFormData({ ...formData, video_urls: newUrls });
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <div 
+                          className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
+                          style={{ height: '250px' }}
+                        >
+                          {renderVideoEmbed(videoUrl)}
+                        </div>
+                        {editMode && canEditVideoTab ? (
+                          <Input
+                            value={videoUrl}
+                            onChange={(e) => {
+                              const newUrls = [...formData.video_urls];
+                              newUrls[index] = e.target.value;
+                              setFormData({ ...formData, video_urls: newUrls });
+                            }}
+                            placeholder="https://..."
+                            type="url"
+                          />
+                        ) : (
+                          <a 
+                            href={videoUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                          >
+                            Ver video <ExternalLink className="h-3 w-3 shrink-0" />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : !editMode && (
+                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
+                    <div className="text-center text-muted-foreground">
+                      <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No hay videos cargados</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Add new video URL in edit mode */}
+                {editMode && canEditVideoTab && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData({ ...formData, video_urls: [...formData.video_urls, ''] })}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Agregar Video (Hook)
+                  </Button>
+                )}
+
+                {/* Legacy single video_url support */}
+                {content.video_url && formData.video_urls.length === 0 && (
                   <div className="space-y-2">
+                    <span className="text-sm font-medium text-muted-foreground">Video Principal</span>
                     <div 
                       className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-                      style={{ height: '350px' }}
+                      style={{ height: '250px' }}
                     >
                       {renderVideoEmbed(content.video_url)}
                     </div>
@@ -643,26 +729,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     >
                       Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
                     </a>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
-                    <div className="text-center text-muted-foreground">
-                      <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No hay video cargado</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Video URL input for edit mode */}
-                {editMode && canEditVideoTab && (
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">URL del Video Final</Label>
-                    <Input
-                      value={formData.video_url}
-                      onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                      placeholder="https://..."
-                      type="url"
-                    />
                   </div>
                 )}
               </div>
@@ -774,6 +840,88 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 />
               )}
             </div>
+
+            {/* Section 4: Guidelines for different roles */}
+            {canEditVideoTab && !isClient && (
+              <div className="space-y-6 pt-6 border-t">
+                <h4 className="font-medium text-lg">Pautas por Rol</h4>
+                
+                {/* Pautas para el Editor */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-blue-500/10">
+                      <Clipboard className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <Label className="font-medium">Pautas para el Editor</Label>
+                  </div>
+                  {editMode ? (
+                    <RichTextEditor
+                      content={formData.editor_guidelines || ''}
+                      onChange={(html) => setFormData({ ...formData, editor_guidelines: html })}
+                      placeholder="Instrucciones específicas para el editor: estilo de edición, música, ritmo, efectos, etc."
+                      className="min-h-[150px]"
+                    />
+                  ) : (content as any).editor_guidelines ? (
+                    <RichTextViewer 
+                      content={(content as any).editor_guidelines} 
+                      className="min-h-[50px] max-h-[200px] overflow-y-auto"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Sin pautas para el editor</p>
+                  )}
+                </div>
+
+                {/* Pautas para el Estratega */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-purple-500/10">
+                      <Target className="h-4 w-4 text-purple-500" />
+                    </div>
+                    <Label className="font-medium">Pautas para el Estratega</Label>
+                  </div>
+                  {editMode ? (
+                    <RichTextEditor
+                      content={formData.strategist_guidelines || ''}
+                      onChange={(html) => setFormData({ ...formData, strategist_guidelines: html })}
+                      placeholder="Estrategia de contenido, objetivos, métricas a seguir, ajustes de copy, etc."
+                      className="min-h-[150px]"
+                    />
+                  ) : (content as any).strategist_guidelines ? (
+                    <RichTextViewer 
+                      content={(content as any).strategist_guidelines} 
+                      className="min-h-[50px] max-h-[200px] overflow-y-auto"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Sin pautas para el estratega</p>
+                  )}
+                </div>
+
+                {/* Pautas para el Trafficker */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-green-500/10">
+                      <Megaphone className="h-4 w-4 text-green-500" />
+                    </div>
+                    <Label className="font-medium">Pautas para el Trafficker</Label>
+                  </div>
+                  {editMode ? (
+                    <RichTextEditor
+                      content={formData.trafficker_guidelines || ''}
+                      onChange={(html) => setFormData({ ...formData, trafficker_guidelines: html })}
+                      placeholder="Indicaciones de pauta: público objetivo, presupuesto sugerido, plataformas, segmentación, etc."
+                      className="min-h-[150px]"
+                    />
+                  ) : (content as any).trafficker_guidelines ? (
+                    <RichTextViewer 
+                      content={(content as any).trafficker_guidelines} 
+                      className="min-h-[50px] max-h-[200px] overflow-y-auto"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Sin pautas para el trafficker</p>
+                  )}
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* General Tab - Creator, Editor, Admin only */}
