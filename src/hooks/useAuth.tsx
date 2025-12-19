@@ -52,8 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (session?.user) {
         setRolesLoaded(false);
-        // Ensure the UI doesn't hang forever even if profile/roles calls fail.
-        fetchUserData(session.user.id);
+        // IMPORTANT: defer any other Supabase calls to avoid auth deadlocks (especially on mobile)
+        window.setTimeout(() => {
+          fetchUserData(session.user.id);
+        }, 0);
       } else {
         setProfile(null);
         setRoles([]);
@@ -71,7 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          fetchUserData(session.user.id);
+          window.setTimeout(() => {
+            fetchUserData(session.user.id);
+          }, 0);
         } else {
           setRolesLoaded(true);
           setLoading(false);
