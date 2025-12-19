@@ -595,7 +595,13 @@ function EmbeddedVideoCard({
     const url = content.video_url;
     if (!url) return null;
 
+    // Direct video files - best for mobile
     if (url.match(/\.(mp4|webm|ogg)$/i)) {
+      return { type: 'video', src: url };
+    }
+
+    // Bunny CDN URLs - direct video playback
+    if (url.includes('b-cdn.net') || url.includes('bunnycdn')) {
       return { type: 'video', src: url };
     }
 
@@ -608,9 +614,10 @@ function EmbeddedVideoCard({
       } else if (url.includes('youtu.be/')) {
         embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
       }
+      // Mobile-friendly params: playsinline is critical for iOS
       const params = isAdmin 
-        ? '?autoplay=1&mute=1' 
-        : '?autoplay=1&mute=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1';
+        ? '?autoplay=1&mute=1&playsinline=1' 
+        : '?autoplay=1&mute=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&playsinline=1';
       return { type: 'iframe', src: embedUrl + params };
     }
 
@@ -737,9 +744,11 @@ function EmbeddedVideoCard({
                 autoPlay
                 muted={isMuted}
                 playsInline
+                webkit-playsinline="true"
                 controlsList={isAdmin ? undefined : "nodownload noplaybackrate"}
                 disablePictureInPicture={!isAdmin}
                 onContextMenu={isAdmin ? undefined : (e) => e.preventDefault()}
+                onError={(e) => console.error('Video error:', e)}
               />
             ) : embedContent?.type === 'iframe' ? (
               <div className="relative w-full h-full">
@@ -747,7 +756,9 @@ function EmbeddedVideoCard({
                   src={embedContent.src}
                   className="w-full h-full"
                   allowFullScreen={isAdmin}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
                 />
                 {!isAdmin && (
                   <div className="absolute inset-0 pointer-events-none" />
