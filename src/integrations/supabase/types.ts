@@ -380,6 +380,48 @@ export type Database = {
           },
         ]
       }
+      goals: {
+        Row: {
+          content_goal: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          new_clients_goal: number | null
+          notes: string | null
+          period_type: string
+          period_value: number
+          revenue_goal: number | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          content_goal?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          new_clients_goal?: number | null
+          notes?: string | null
+          period_type: string
+          period_value: number
+          revenue_goal?: number | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          content_goal?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          new_clients_goal?: number | null
+          notes?: string | null
+          period_type?: string
+          period_value?: number
+          revenue_goal?: number | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
