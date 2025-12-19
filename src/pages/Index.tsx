@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
@@ -350,23 +349,20 @@ const Index = () => {
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="min-h-screen p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => (
-              <Skeleton key={i} className="h-32 rounded-xl" />
-            ))}
-          </div>
-          <Skeleton className="h-96 rounded-xl" />
+      <div className="min-h-screen p-6 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} className="h-32 rounded-xl" />
+          ))}
         </div>
-      </MainLayout>
+        <Skeleton className="h-96 rounded-xl" />
+      </div>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="min-h-screen">
-        {/* Header */}
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
             <div className="min-w-0 flex-shrink">
@@ -637,7 +633,6 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Content Detail Dialog */}
       <ContentDetailDialog
         content={selectedContent}
         open={!!selectedContent}
@@ -646,14 +641,12 @@ const Index = () => {
         onDelete={handleDeleteContent}
       />
 
-      {/* Create Content Dialog */}
       <CreateContentDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onSuccess={refetch}
       />
 
-      {/* KPI Content Dialog */}
       <KpiContentDialog
         title={kpiDialog.title}
         content={kpiDialog.content}
@@ -661,7 +654,7 @@ const Index = () => {
         onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
         onSelectContent={setSelectedContent}
       />
-    </MainLayout>
+    </>
   );
 };
 
