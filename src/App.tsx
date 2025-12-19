@@ -16,6 +16,7 @@ import Team from "./pages/Team";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import EditorDashboard from "./pages/EditorDashboard";
 import ClientDashboard from "./pages/ClientDashboard";
+import Portfolio from "./pages/Portfolio";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import { MainLayout } from "./components/layout/MainLayout";
@@ -30,6 +31,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            {/* Public Route - Portfolio */}
+            <Route path="/portfolio" element={<Portfolio />} />
+            
             <Route path="/auth" element={<Auth />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Index /></MainLayout></ProtectedRoute>} />

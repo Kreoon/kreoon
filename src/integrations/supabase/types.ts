@@ -75,6 +75,7 @@ export type Database = {
           id: string
           invoiced: boolean | null
           is_ambassador_content: boolean | null
+          is_published: boolean | null
           notes: string | null
           paid_at: string | null
           product: string | null
@@ -114,6 +115,7 @@ export type Database = {
           id?: string
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
+          is_published?: boolean | null
           notes?: string | null
           paid_at?: string | null
           product?: string | null
@@ -153,6 +155,7 @@ export type Database = {
           id?: string
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
+          is_published?: boolean | null
           notes?: string | null
           paid_at?: string | null
           product?: string | null

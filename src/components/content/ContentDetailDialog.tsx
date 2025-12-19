@@ -21,7 +21,7 @@ import { es } from "date-fns/locale";
 import { 
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
-  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Package, Lock
+  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Package, Lock, Share2
 } from "lucide-react";
 import {
   AlertDialog,
@@ -81,7 +81,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     editor_payment: 0,
     creator_paid: false,
     editor_paid: false,
-    invoiced: false
+    invoiced: false,
+    is_published: false
   });
 
   // Product data for script generation
@@ -122,7 +123,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         editor_payment: content.editor_payment || 0,
         creator_paid: content.creator_paid || false,
         editor_paid: content.editor_paid || false,
-        invoiced: content.invoiced || false
+        invoiced: content.invoiced || false,
+        is_published: (content as any).is_published || false
       });
       setCurrentStatus(content.status);
       fetchOptions();
@@ -297,7 +299,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         editor_payment: formData.editor_payment,
         creator_paid: formData.creator_paid,
         editor_paid: formData.editor_paid,
-        invoiced: formData.invoiced
+        invoiced: formData.invoiced,
+        is_published: formData.is_published
       };
 
       if (formData.creator_id && !content.creator_id) {
@@ -520,6 +523,38 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
           {/* Video Tab - Reorganized: Video+Comments + Script Generator Form */}
           <TabsContent value="video" className="space-y-6 mt-4">
+            {/* Publish to Portfolio Toggle - Only for Admin */}
+            {isAdmin && (
+              <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-primary/5 to-primary/10">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-primary/10">
+                    <Share2 className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Publicar en Portafolio</p>
+                    <p className="text-xs text-muted-foreground">
+                      Este video será visible públicamente en /portfolio
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {formData.is_published && (
+                    <Badge variant="secondary" className="bg-success/10 text-success">
+                      Publicado
+                    </Badge>
+                  )}
+                  <Checkbox
+                    id="is_published"
+                    checked={formData.is_published}
+                    onCheckedChange={(checked) => {
+                      setFormData({ ...formData, is_published: !!checked });
+                      if (!editMode) setEditMode(true);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Restriction notice for non-strategists */}
             {!canEditVideoTab && editMode && (
               <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
