@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RichTextEditor, RichTextViewer } from "@/components/ui/rich-text-editor";
 import { ProductSelector } from "@/components/products/ProductSelector";
 import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
-import { ScriptGenerator } from "@/components/content/ScriptGenerator";
+import { StrategistScriptForm } from "@/components/content/StrategistScriptForm";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,7 @@ import { es } from "date-fns/locale";
 import { 
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
-  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Upload, File, Package
+  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Package, Lock
 } from "lucide-react";
 import {
   AlertDialog,
@@ -93,6 +93,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   const [creators, setCreators] = useState<SelectOption[]>([]);
   const [editors, setEditors] = useState<SelectOption[]>([]);
   const [strategists, setStrategists] = useState<SelectOption[]>([]);
+
+  // Check if user can edit video tab (only strategist assigned or admin)
+  const isStrategist = content?.strategist_id === user?.id;
+  const canEditVideoTab = isAdmin || isStrategist;
 
   useEffect(() => {
     if (content) {
@@ -296,7 +300,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         invoiced: formData.invoiced
       };
 
-      // Si se asigna creador y no tenía, agregar fecha
       if (formData.creator_id && !content.creator_id) {
         updates.creator_assigned_at = new Date().toISOString();
       }
@@ -330,7 +333,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     }
   };
 
-// Helper function to check if URL is vertical video (social media)
   const isVerticalVideo = (url: string) => {
     return url.includes('instagram.com') || 
            url.includes('tiktok.com') || 
@@ -338,7 +340,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
            url.includes('/reel/');
   };
 
-// Helper function to render embedded video player
   const renderVideoEmbed = (url: string) => {
     if (!url) return null;
     
@@ -350,7 +351,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       ? "w-auto h-full max-w-full"
       : "w-full h-full";
     
-    // TikTok
     if (url.includes('tiktok.com')) {
       const videoId = url.match(/video\/(\d+)/)?.[1];
       if (videoId) {
@@ -367,7 +367,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       }
     }
     
-    // Instagram - Clean URL and create embed
     if (url.includes('instagram.com')) {
       let cleanUrl = url.split('?')[0];
       cleanUrl = cleanUrl.replace(/\/$/, '');
@@ -386,7 +385,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       );
     }
     
-    // YouTube Shorts (vertical)
     if (url.includes('/shorts/')) {
       const embedUrl = url.replace('/shorts/', '/embed/');
       return (
@@ -402,7 +400,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       );
     }
     
-    // YouTube (horizontal)
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       let embedUrl = url;
       if (url.includes('watch?v=')) {
@@ -420,7 +417,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       );
     }
     
-    // Vimeo
     if (url.includes('vimeo.com')) {
       return (
         <iframe
@@ -431,7 +427,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       );
     }
     
-    // Google Drive
     if (url.includes('drive.google.com')) {
       return (
         <iframe
@@ -442,7 +437,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       );
     }
     
-    // Direct video files
     if (url.match(/\.(mp4|webm|ogg)$/i)) {
       return (
         <video
@@ -453,7 +447,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       );
     }
     
-    // Fallback: link to open externally
     return (
       <div className="w-full h-full flex items-center justify-center">
         <a 
@@ -517,7 +510,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
         <Tabs defaultValue="video" className="mt-4">
           <TabsList className={`grid w-full ${isClient ? 'grid-cols-2' : isAdmin ? 'grid-cols-6' : 'grid-cols-5'}`}>
-            <TabsTrigger value="video">Video Final</TabsTrigger>
+            <TabsTrigger value="video">Video</TabsTrigger>
             {!isClient && <TabsTrigger value="material">Material</TabsTrigger>}
             {!isClient && <TabsTrigger value="general">General</TabsTrigger>}
             <TabsTrigger value="equipo">Equipo</TabsTrigger>
@@ -525,10 +518,176 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             {isAdmin && <TabsTrigger value="pagos">Pagos</TabsTrigger>}
           </TabsList>
 
-          {/* General Tab - Solo para Admin, Creadores y Editores */}
+          {/* Video Tab - Reorganized: Video+Comments + Script Generator Form */}
+          <TabsContent value="video" className="space-y-6 mt-4">
+            {/* Restriction notice for non-strategists */}
+            {!canEditVideoTab && editMode && (
+              <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
+                <Lock className="h-4 w-4 text-warning" />
+                <span>Solo el estratega asignado o un admin pueden editar esta sección</span>
+              </div>
+            )}
+
+            {/* Section 1: Video + Comments side by side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Video Final */}
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Video className="h-4 w-4" /> Video Final
+                </h4>
+                
+                {content.video_url ? (
+                  <div className="space-y-2">
+                    <div 
+                      className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
+                      style={{ height: '350px' }}
+                    >
+                      {renderVideoEmbed(content.video_url)}
+                    </div>
+                    <a 
+                      href={content.video_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                    >
+                      Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
+                    <div className="text-center text-muted-foreground">
+                      <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No hay video cargado</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Video URL input for edit mode */}
+                {editMode && canEditVideoTab && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">URL del Video Final</Label>
+                    <Input
+                      value={formData.video_url}
+                      onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                      placeholder="https://..."
+                      type="url"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Comments */}
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" /> Comentarios / Novedades
+                </h4>
+                
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  {comments.length > 0 ? (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="p-3 bg-muted rounded-lg">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium">{comment.profile?.full_name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
+                          </span>
+                        </div>
+                        <p className="text-sm">{comment.comment}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-6">
+                      No hay comentarios aún
+                    </p>
+                  )}
+                </div>
+                
+                <div className="flex gap-2 pt-2">
+                  <Textarea 
+                    placeholder="Agregar un comentario..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="flex-1 min-h-[60px]"
+                  />
+                  <Button 
+                    onClick={handleAddComment} 
+                    disabled={loadingComment || !newComment.trim()}
+                    size="icon"
+                    className="shrink-0"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Strategist Script Form - Full Width (Only for strategist/admin) */}
+            {canEditVideoTab && !isClient && (
+              <div className="space-y-4 pt-6 border-t">
+                {/* Product Selector */}
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Package className="h-4 w-4" /> Producto Asociado
+                  </h4>
+                  {editMode ? (
+                    <div className="max-w-md">
+                      <ProductSelector
+                        clientId={formData.client_id}
+                        value={formData.product_id}
+                        onChange={handleProductChange}
+                        onCreateNew={() => setShowProductDialog(true)}
+                      />
+                    </div>
+                  ) : selectedProduct ? (
+                    <div className="p-3 rounded-lg border bg-muted/50 inline-flex items-center gap-2">
+                      <Package className="h-4 w-4 text-primary" />
+                      <span className="font-medium">{selectedProduct.name}</span>
+                      {formData.sales_angle && (
+                        <Badge variant="secondary">{formData.sales_angle}</Badge>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Sin producto asociado</p>
+                  )}
+                </div>
+
+                {/* Strategist Script Form */}
+                <StrategistScriptForm
+                  product={selectedProduct}
+                  contentId={content.id}
+                  onScriptGenerated={(script) => {
+                    setFormData({ ...formData, script });
+                    setEditMode(true);
+                    toast({ title: "Guión generado", description: "Revisa y edita el guión generado" });
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Section 3: Script Editor/Viewer */}
+            <div className="space-y-3 pt-6 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Guión
+              </h4>
+              {editMode && canEditVideoTab ? (
+                <RichTextEditor
+                  content={formData.script || ''}
+                  onChange={(html) => setFormData({ ...formData, script: html })}
+                  placeholder="Escribe el guión aquí..."
+                  className="min-h-[250px]"
+                />
+              ) : (
+                <RichTextViewer 
+                  content={content.script || ''} 
+                  className="min-h-[100px] max-h-[400px] overflow-y-auto"
+                />
+              )}
+            </div>
+          </TabsContent>
+
+          {/* General Tab */}
           {!isClient && (
             <TabsContent value="general" className="space-y-4 mt-4">
-              {/* Información general */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label className="text-muted-foreground text-xs">Producto</Label>
@@ -576,7 +735,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </div>
               </div>
 
-              {/* URLs */}
               <div className="space-y-3 pt-4 border-t">
                 <h4 className="font-medium flex items-center gap-2">
                   <LinkIcon className="h-4 w-4" /> URLs
@@ -633,7 +791,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </div>
               </div>
 
-              {/* Notas */}
               <div className="space-y-2 pt-4 border-t">
                 <h4 className="font-medium flex items-center gap-2">
                   <FileText className="h-4 w-4" /> Notas
@@ -736,7 +893,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             </div>
           </TabsContent>
 
-          {/* Fechas Tab - Solo para Admin, Creadores y Editores */}
           {!isClient && (
             <TabsContent value="fechas" className="space-y-4 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -757,7 +913,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
                 <div className="space-y-1">
                   <Label className="text-muted-foreground text-xs flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> Fecha Límite de Entrega
+                    <Clock className="h-3 w-3" /> Fecha Límite
                   </Label>
                   {editMode ? (
                     <Input
@@ -882,236 +1038,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             </TabsContent>
           )}
 
-          {/* Video Final Tab - Visible para todos */}
-          <TabsContent value="video" className="space-y-6 mt-4">
-            {/* Sección 1: Video + Comentarios en 2 columnas */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Video Final */}
-              <div className="space-y-3">
-                <h4 className="font-medium flex items-center gap-2">
-                  <Video className="h-4 w-4" /> Video Final
-                </h4>
-                
-                {content.video_url ? (
-                  <div className="space-y-2">
-                    <div 
-                      className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-                      style={{ height: '400px' }}
-                    >
-                      {renderVideoEmbed(content.video_url)}
-                    </div>
-                    <a 
-                      href={content.video_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                    >
-                      Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
-                    </a>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '250px' }}>
-                    <div className="text-center text-muted-foreground">
-                      <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No hay video cargado</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Comentarios - al lado del video */}
-              <div className="space-y-3">
-                <h4 className="font-medium flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" /> Comentarios / Novedades
-                </h4>
-                
-                {/* Lista de comentarios */}
-                <div className="space-y-3 max-h-[350px] overflow-y-auto">
-                  {comments.length > 0 ? (
-                    comments.map((comment) => (
-                      <div key={comment.id} className="p-3 bg-muted rounded-lg">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium">{comment.profile?.full_name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
-                          </span>
-                        </div>
-                        <p className="text-sm">{comment.comment}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      No hay comentarios aún
-                    </p>
-                  )}
-                </div>
-                
-                {/* Agregar comentario */}
-                <div className="flex gap-2 pt-2">
-                  <Textarea 
-                    placeholder="Agregar un comentario o novedad..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="flex-1 min-h-[60px]"
-                  />
-                  <Button 
-                    onClick={handleAddComment} 
-                    disabled={loadingComment || !newComment.trim()}
-                    size="icon"
-                    className="shrink-0"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Sección 2: Producto y Generador de Guión */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6 border-t">
-              {/* Producto Asociado */}
-              <div className="space-y-3">
-                <h4 className="font-medium flex items-center gap-2">
-                  <Package className="h-4 w-4" /> Producto Asociado
-                </h4>
-                {editMode ? (
-                  <div className="space-y-3">
-                    <ProductSelector
-                      clientId={formData.client_id}
-                      value={formData.product_id}
-                      onChange={handleProductChange}
-                      onCreateNew={() => setShowProductDialog(true)}
-                    />
-                    {selectedProduct && (
-                      <div className="p-3 rounded-lg bg-muted/50 space-y-1">
-                        <p className="font-medium text-sm">{selectedProduct.name}</p>
-                        {selectedProduct.sales_angles?.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {selectedProduct.sales_angles.map((angle: string, idx: number) => (
-                              <Badge key={idx} variant="outline" className="text-xs">
-                                {angle}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {selectedProduct?.sales_angles?.length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-muted-foreground text-xs">Ángulo de Venta para este proyecto</Label>
-                        <Select 
-                          value={formData.sales_angle} 
-                          onValueChange={(v) => setFormData({ ...formData, sales_angle: v })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar ángulo..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {selectedProduct.sales_angles.map((angle: string, idx: number) => (
-                              <SelectItem key={idx} value={angle}>{angle}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                  </div>
-                ) : selectedProduct ? (
-                  <div className="p-4 rounded-lg border bg-muted/50">
-                    <p className="font-medium">{selectedProduct.name}</p>
-                    {formData.sales_angle && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Ángulo: <Badge variant="secondary">{formData.sales_angle}</Badge>
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Sin producto asociado</p>
-                )}
-              </div>
-
-              {/* Generador de Guión con n8n */}
-              {!isClient && (
-                <ScriptGenerator
-                  product={selectedProduct}
-                  onScriptGenerated={(script) => {
-                    setFormData({ ...formData, script });
-                    setEditMode(true);
-                    toast({ title: "Guión generado", description: "Revisa y edita el guión generado" });
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Sección 3: Guión / Estrategia - Ancho completo con editor de texto enriquecido */}
-            <div className="space-y-3 pt-6 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <FileText className="h-4 w-4" /> Guión / Estrategia
-              </h4>
-              {editMode ? (
-                <RichTextEditor
-                  content={formData.script || ''}
-                  onChange={(html) => setFormData({ ...formData, script: html })}
-                  placeholder="Escribe el guión o estrategia aquí..."
-                  className="min-h-[250px]"
-                />
-              ) : (
-                <RichTextViewer 
-                  content={content.script || ''} 
-                  className="min-h-[150px] max-h-[400px] overflow-y-auto"
-                />
-              )}
-            </div>
-
-            {/* Sección 3: Archivos adjuntos (Investigación, Brief, Onboarding) */}
-            <div className="space-y-3 pt-6 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <Upload className="h-4 w-4" /> Archivos (Investigación / Brief / Onboarding)
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Aquí puedes agregar enlaces a documentos de investigación, briefs o información de onboarding.
-              </p>
-              
-              {editMode ? (
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <Label className="text-muted-foreground text-xs">URL del documento o carpeta</Label>
-                    <Input
-                      value={formData.description || ''}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="https://drive.google.com/... o URL del documento"
-                      type="url"
-                    />
-                  </div>
-                </div>
-              ) : content.description ? (
-                <a 
-                  href={content.description} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors group"
-                >
-                  <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <File className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">Documentos del proyecto</p>
-                    <p className="text-sm text-muted-foreground truncate">{content.description}</p>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                </a>
-              ) : (
-                <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
-                  <File className="h-10 w-10 mx-auto mb-2 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground">No hay archivos adjuntos</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Material Tab - Solo para Admin, Creadores y Editores */}
+          {/* Material Tab */}
           {!isClient && (
             <TabsContent value="material" className="space-y-6 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Video de Referencia */}
                 <div className="space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
                     <LinkIcon className="h-4 w-4" /> Video de Referencia
@@ -1121,7 +1051,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     <div className="space-y-2">
                       <div 
                         className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-                        style={{ height: '400px' }}
+                        style={{ height: '350px' }}
                       >
                         {renderVideoEmbed(content.reference_url)}
                       </div>
@@ -1135,17 +1065,15 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       </a>
                     </div>
                   ) : (
-                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '250px' }}>
+                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
                       <div className="text-center text-muted-foreground">
                         <LinkIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
                         <p>No hay video de referencia</p>
-                        <p className="text-xs">Agrega una URL en la pestaña General</p>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Carpeta Drive - Contenido Crudo */}
                 <div className="space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
                     <FolderOpen className="h-4 w-4" /> Contenido Crudo (Drive)
@@ -1159,16 +1087,16 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       className="block group"
                     >
                       <div 
-                        className="rounded-xl border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 transition-all hover:border-primary/50 hover:from-primary/10 hover:to-primary/20 hover:shadow-lg flex items-center justify-center"
-                        style={{ height: '400px' }}
+                        className="rounded-xl border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 transition-all hover:border-primary/50 flex items-center justify-center"
+                        style={{ height: '350px' }}
                       >
                         <div className="flex flex-col items-center justify-center text-center space-y-4">
                           <div className="p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
                             <FolderOpen className="h-12 w-12 text-primary" />
                           </div>
                           <div>
-                            <p className="font-semibold text-lg text-foreground">Carpeta de Contenido Crudo</p>
-                            <p className="text-sm text-muted-foreground mt-1">Haz clic para abrir en Google Drive</p>
+                            <p className="font-semibold text-lg text-foreground">Carpeta de Contenido</p>
+                            <p className="text-sm text-muted-foreground mt-1">Clic para abrir en Drive</p>
                           </div>
                           <div className="flex items-center gap-2 text-primary font-medium">
                             <span>Abrir carpeta</span>
@@ -1178,11 +1106,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       </div>
                     </a>
                   ) : (
-                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '250px' }}>
+                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
                       <div className="text-center text-muted-foreground">
                         <FolderOpen className="h-12 w-12 mx-auto mb-2 opacity-50" />
                         <p>No hay carpeta de contenido</p>
-                        <p className="text-xs">Agrega una URL en la pestaña General</p>
                       </div>
                     </div>
                   )}
@@ -1251,9 +1178,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         clientId={formData.client_id}
         open={showProductDialog}
         onOpenChange={setShowProductDialog}
-        onSave={() => {
-          // Refresh products after creating new one
-        }}
+        onSave={() => {}}
       />
     </Dialog>
   );
