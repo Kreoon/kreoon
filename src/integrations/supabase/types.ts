@@ -76,6 +76,7 @@ export type Database = {
           invoiced: boolean | null
           is_ambassador_content: boolean | null
           is_published: boolean | null
+          likes_count: number | null
           notes: string | null
           paid_at: string | null
           product: string | null
@@ -93,6 +94,7 @@ export type Database = {
           title: string
           updated_at: string | null
           video_url: string | null
+          views_count: number | null
         }
         Insert: {
           approved_at?: string | null
@@ -116,6 +118,7 @@ export type Database = {
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
           is_published?: boolean | null
+          likes_count?: number | null
           notes?: string | null
           paid_at?: string | null
           product?: string | null
@@ -133,6 +136,7 @@ export type Database = {
           title: string
           updated_at?: string | null
           video_url?: string | null
+          views_count?: number | null
         }
         Update: {
           approved_at?: string | null
@@ -156,6 +160,7 @@ export type Database = {
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
           is_published?: boolean | null
+          likes_count?: number | null
           notes?: string | null
           paid_at?: string | null
           product?: string | null
@@ -173,6 +178,7 @@ export type Database = {
           title?: string
           updated_at?: string | null
           video_url?: string | null
+          views_count?: number | null
         }
         Relationships: [
           {
@@ -261,6 +267,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "content_history_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_likes: {
+        Row: {
+          content_id: string
+          created_at: string | null
+          id: string
+          viewer_id: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string | null
+          id?: string
+          viewer_id: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string | null
+          id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_likes_content_id_fkey"
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
@@ -463,6 +498,14 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      increment_content_views: {
+        Args: { content_uuid: string }
+        Returns: undefined
+      }
+      toggle_content_like: {
+        Args: { content_uuid: string; viewer: string }
         Returns: boolean
       }
     }
