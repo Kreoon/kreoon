@@ -173,17 +173,46 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
     if (!client) return;
     setLoadingContent(true);
     try {
-      const { data } = await supabase
+      // Primero obtenemos el contenido básico
+      const { data, error } = await supabase
         .from('content')
-        .select(`
-          *,
-          creator:profiles!content_creator_id_fkey(full_name),
-          editor:profiles!content_editor_id_fkey(full_name)
-        `)
+        .select('*')
         .eq('client_id', client.id)
         .order('created_at', { ascending: false });
       
-      setAssignedContent((data || []) as any[]);
+      if (error) {
+        console.error('Error fetching content:', error);
+        setAssignedContent([]);
+        return;
+      }
+
+      // Luego obtenemos los perfiles de creadores y editores
+      const contentWithProfiles = await Promise.all((data || []).map(async (item) => {
+        let creator = null;
+        let editor = null;
+
+        if (item.creator_id) {
+          const { data: creatorData } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', item.creator_id)
+            .maybeSingle();
+          creator = creatorData;
+        }
+
+        if (item.editor_id) {
+          const { data: editorData } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', item.editor_id)
+            .maybeSingle();
+          editor = editorData;
+        }
+
+        return { ...item, creator, editor };
+      }));
+      
+      setAssignedContent(contentWithProfiles as any[]);
     } catch (error) {
       console.error('Error fetching client content:', error);
     } finally {
