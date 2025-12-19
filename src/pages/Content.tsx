@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ interface ContentItem {
   client: { name: string; logo_url: string | null } | null;
   creator: { full_name: string } | null;
   status: string;
+  is_liked?: boolean;
 }
 
 const Content = () => {
@@ -37,6 +38,15 @@ const Content = () => {
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  
+  // Viewer ID for likes tracking
+  const [viewerId] = useState(() => {
+    const stored = localStorage.getItem('content_viewer_id');
+    if (stored) return stored;
+    const newId = crypto.randomUUID();
+    localStorage.setItem('content_viewer_id', newId);
+    return newId;
+  });
 
   useEffect(() => {
     fetchContent();
@@ -67,23 +77,27 @@ const Content = () => {
       if (data && data.length > 0) {
         const clientIds = [...new Set(data.filter(d => d.client_id).map(d => d.client_id))] as string[];
         const creatorIds = [...new Set(data.filter(d => d.creator_id).map(d => d.creator_id))] as string[];
+        const contentIds = data.map(d => d.id);
 
-        const [clientsResult, creatorsResult] = await Promise.all([
+        const [clientsResult, creatorsResult, likesResult] = await Promise.all([
           clientIds.length > 0 
             ? supabase.from('clients').select('id, name, logo_url').in('id', clientIds)
             : Promise.resolve({ data: [] }),
           creatorIds.length > 0 
             ? supabase.from('profiles').select('id, full_name').in('id', creatorIds)
-            : Promise.resolve({ data: [] })
+            : Promise.resolve({ data: [] }),
+          supabase.from('content_likes').select('content_id').eq('viewer_id', viewerId).in('content_id', contentIds)
         ]);
 
         const clientsMap = new Map((clientsResult.data || []).map(c => [c.id, c]));
         const creatorsMap = new Map((creatorsResult.data || []).map(c => [c.id, c]));
+        const likedSet = new Set((likesResult.data || []).map(l => l.content_id));
 
         const enrichedData = data.map(item => ({
           ...item,
           views_count: item.views_count || 0,
           likes_count: item.likes_count || 0,
+          is_liked: likedSet.has(item.id),
           client: item.client_id ? clientsMap.get(item.client_id) || null : null,
           creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null
         }));
@@ -117,6 +131,47 @@ const Content = () => {
       toast.error('Error al cambiar estado de publicación');
     }
   };
+
+  const handleLike = async (contentId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('toggle_content_like', {
+        content_uuid: contentId,
+        viewer: viewerId
+      });
+
+      if (error) throw error;
+
+      setContent(prev => prev.map(item => {
+        if (item.id === contentId) {
+          return {
+            ...item,
+            is_liked: data,
+            likes_count: data ? item.likes_count + 1 : Math.max(0, item.likes_count - 1)
+          };
+        }
+        return item;
+      }));
+
+      toast.success(data ? '❤️ Me gusta' : 'Ya no te gusta');
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error('Error al dar like');
+    }
+  };
+
+  const handleView = useCallback(async (contentId: string) => {
+    try {
+      await supabase.rpc('increment_content_views', { content_uuid: contentId });
+      setContent(prev => prev.map(item => {
+        if (item.id === contentId) {
+          return { ...item, views_count: item.views_count + 1 };
+        }
+        return item;
+      }));
+    } catch (error) {
+      console.error('Error incrementing views:', error);
+    }
+  }, []);
 
   const handleAddVideo = async () => {
     if (!newVideoUrl.trim() || !newVideoTitle.trim()) {
@@ -180,6 +235,11 @@ const Content = () => {
     return null;
   };
 
+  // Calculate real metrics for admins
+  const totalViews = content.reduce((sum, item) => sum + item.views_count, 0);
+  const totalLikes = content.reduce((sum, item) => sum + item.likes_count, 0);
+  const publishedCount = content.filter(item => item.is_published).length;
+
   return (
     <MainLayout>
       <div className="min-h-screen">
@@ -238,6 +298,42 @@ const Content = () => {
             )}
           </div>
         </header>
+
+        {/* Admin Metrics Dashboard */}
+        {isAdmin && (
+          <div className="px-6 py-4 border-b border-border bg-muted/30">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-card rounded-lg p-4 border border-border">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <Play className="h-4 w-4" />
+                  Total Videos
+                </div>
+                <div className="text-2xl font-bold text-foreground">{content.length}</div>
+              </div>
+              <div className="bg-card rounded-lg p-4 border border-border">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <Eye className="h-4 w-4" />
+                  Vistas Totales
+                </div>
+                <div className="text-2xl font-bold text-foreground">{formatCount(totalViews)}</div>
+                <div className="text-xs text-muted-foreground">3+ segundos</div>
+              </div>
+              <div className="bg-card rounded-lg p-4 border border-border">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <Heart className="h-4 w-4" />
+                  Likes Totales
+                </div>
+                <div className="text-2xl font-bold text-foreground">{formatCount(totalLikes)}</div>
+              </div>
+              <div className="bg-card rounded-lg p-4 border border-border">
+                <div className="flex items-center gap-2 text-green-500 text-sm mb-1">
+                  Publicados
+                </div>
+                <div className="text-2xl font-bold text-foreground">{publishedCount}/{content.length}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -310,6 +406,8 @@ const Content = () => {
                   item={item} 
                   isAdmin={isAdmin}
                   onTogglePublish={togglePublish}
+                  onLike={handleLike}
+                  onView={handleView}
                   getThumbnail={getThumbnail}
                   formatCount={formatCount}
                 />
@@ -326,16 +424,47 @@ interface EmbeddedVideoCardProps {
   item: ContentItem;
   isAdmin: boolean;
   onTogglePublish: (id: string, currentStatus: boolean) => void;
+  onLike: (id: string) => void;
+  onView: (id: string) => void;
   getThumbnail: (url: string | null, thumbnail: string | null) => string | null;
   formatCount: (count: number) => string;
 }
 
-function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, formatCount }: EmbeddedVideoCardProps) {
+function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, getThumbnail, formatCount }: EmbeddedVideoCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const viewTracked = useRef(false);
+  const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
   const thumbnail = getThumbnail(item.video_url, item.thumbnail_url);
 
-  // Get embed URL or direct video URL
+  // Track view after 3 seconds
+  useEffect(() => {
+    if (isPlaying && !viewTracked.current) {
+      viewTimerRef.current = setTimeout(() => {
+        onView(item.id);
+        viewTracked.current = true;
+      }, 3000);
+    }
+
+    return () => {
+      if (viewTimerRef.current) {
+        clearTimeout(viewTimerRef.current);
+      }
+    };
+  }, [isPlaying, item.id, onView]);
+
+  // Reset view tracking when video stops
+  useEffect(() => {
+    if (!isPlaying) {
+      viewTracked.current = false;
+      if (viewTimerRef.current) {
+        clearTimeout(viewTimerRef.current);
+      }
+    }
+  }, [isPlaying]);
+
+  // Get embed URL or direct video URL - with restrictions for non-admins
   const getEmbedContent = () => {
     const url = item.video_url;
     if (!url) return null;
@@ -345,7 +474,7 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, forma
       return { type: 'video', src: url };
     }
 
-    // YouTube
+    // YouTube - Add modestbranding and controls restrictions for non-admins
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       let embedUrl = url;
       if (url.includes('/shorts/')) {
@@ -355,7 +484,11 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, forma
       } else if (url.includes('youtu.be/')) {
         embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
       }
-      return { type: 'iframe', src: embedUrl + '?autoplay=1&mute=1' };
+      // For non-admins: hide controls that allow opening in YouTube
+      const params = isAdmin 
+        ? '?autoplay=1&mute=1' 
+        : '?autoplay=1&mute=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1';
+      return { type: 'iframe', src: embedUrl + params };
     }
 
     // TikTok
@@ -380,11 +513,26 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, forma
       }
     }
 
-    // Fallback - try to embed as iframe
-    return { type: 'link', src: url };
+    // Fallback - only show link for admins
+    if (isAdmin) {
+      return { type: 'link', src: url };
+    }
+    return { type: 'unsupported', src: url };
   };
 
   const embedContent = getEmbedContent();
+
+  const handlePlay = () => {
+    setIsPlaying(true);
+  };
+
+  const handleStop = () => {
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
 
   return (
     <div className="group relative rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition-all">
@@ -408,7 +556,7 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, forma
             {/* Play overlay */}
             <div 
               className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/50 transition-colors"
-              onClick={() => setIsPlaying(true)}
+              onClick={handlePlay}
             >
               <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors">
                 <Play className="h-10 w-10 text-white" fill="white" />
@@ -420,21 +568,30 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, forma
             {/* Embedded Video Player */}
             {embedContent?.type === 'video' ? (
               <video
+                ref={videoRef}
                 src={embedContent.src}
                 className="w-full h-full object-cover"
-                controls
                 autoPlay
                 muted={isMuted}
                 playsInline
+                controlsList={isAdmin ? undefined : "nodownload noplaybackrate"}
+                disablePictureInPicture={!isAdmin}
+                onContextMenu={isAdmin ? undefined : (e) => e.preventDefault()}
               />
             ) : embedContent?.type === 'iframe' ? (
-              <iframe
-                src={embedContent.src}
-                className="w-full h-full"
-                allowFullScreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              />
-            ) : embedContent?.type === 'link' ? (
+              <div className="relative w-full h-full">
+                <iframe
+                  src={embedContent.src}
+                  className="w-full h-full"
+                  allowFullScreen={isAdmin}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                />
+                {/* Overlay to block clicks to external site for non-admins */}
+                {!isAdmin && (
+                  <div className="absolute inset-0 pointer-events-none" />
+                )}
+              </div>
+            ) : embedContent?.type === 'link' && isAdmin ? (
               <div className="w-full h-full flex items-center justify-center">
                 <a 
                   href={embedContent.src}
@@ -455,7 +612,7 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, forma
             {/* Controls overlay */}
             <div className="absolute top-2 right-2 flex gap-2">
               <button
-                onClick={() => setIsPlaying(false)}
+                onClick={handleStop}
                 className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
               >
                 <Pause className="h-4 w-4" />
@@ -472,8 +629,8 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, forma
           </>
         )}
 
-        {/* Published Badge */}
-        {!isPlaying && (
+        {/* Published Badge - Only for admins */}
+        {!isPlaying && isAdmin && (
           <div className="absolute top-2 right-2">
             <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
               {item.is_published ? 'Publicado' : 'Privado'}
@@ -481,17 +638,34 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, forma
           </div>
         )}
 
-        {/* Stats */}
+        {/* Stats and Like Button */}
         {!isPlaying && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-3">
-            <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
-              <Eye className="h-3 w-3" />
-              {formatCount(item.views_count)}
+          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
+                <Eye className="h-3 w-3" />
+                {formatCount(item.views_count)}
+              </div>
+              <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
+                <Heart className="h-3 w-3" />
+                {formatCount(item.likes_count)}
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
-              <Heart className="h-3 w-3" />
-              {formatCount(item.likes_count)}
-            </div>
+            
+            {/* Like Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onLike(item.id);
+              }}
+              className={`p-2 rounded-full transition-colors ${
+                item.is_liked 
+                  ? 'bg-red-500 text-white' 
+                  : 'bg-black/50 text-white hover:bg-red-500/80'
+              }`}
+            >
+              <Heart className="h-4 w-4" fill={item.is_liked ? "currentColor" : "none"} />
+            </button>
           </div>
         )}
       </div>
@@ -509,7 +683,14 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, forma
           
           {isAdmin && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Publicar</span>
+              <a 
+                href={item.video_url || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </a>
               <Switch
                 checked={item.is_published}
                 onCheckedChange={() => onTogglePublish(item.id, item.is_published)}
