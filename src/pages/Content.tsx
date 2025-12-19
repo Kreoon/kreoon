@@ -302,11 +302,11 @@ const Content = () => {
 
           {loading ? (
             <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+              ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4"
               : "space-y-4"
             }>
               {[...Array(8)].map((_, i) => (
-                <Skeleton key={i} className={viewMode === 'grid' ? "aspect-video rounded-xl" : "h-24 rounded-xl"} />
+                <Skeleton key={i} className={viewMode === 'grid' ? "aspect-[9/16] rounded-xl" : "h-24 rounded-xl"} />
               ))}
             </div>
           ) : filteredContent.length === 0 ? (
@@ -324,7 +324,7 @@ const Content = () => {
               </div>
             </div>
           ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
               {filteredContent.map((item) => (
                 <VideoCard 
                   key={item.id} 
@@ -383,9 +383,9 @@ function VideoCard({ item, isAdmin, onTogglePublish, onPlay, getThumbnail, forma
 
   return (
     <div className="group relative rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition-all">
-      {/* Thumbnail */}
+      {/* Thumbnail - Vertical 9:16 */}
       <div 
-        className="relative aspect-video bg-muted cursor-pointer"
+        className="relative aspect-[9/16] bg-muted cursor-pointer"
         onClick={onPlay}
       >
         {thumbnail ? (
@@ -458,9 +458,9 @@ function VideoListItem({ item, isAdmin, onTogglePublish, onPlay, getThumbnail, f
 
   return (
     <div className="flex items-center gap-4 p-3 rounded-xl border border-border bg-card hover:border-primary/50 transition-all">
-      {/* Thumbnail */}
+      {/* Thumbnail - Vertical 9:16 */}
       <div 
-        className="relative w-32 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0 cursor-pointer group"
+        className="relative w-16 h-28 rounded-lg overflow-hidden bg-muted flex-shrink-0 cursor-pointer group"
         onClick={onPlay}
       >
         {thumbnail ? (
@@ -599,7 +599,7 @@ function VideoPlayerModal({ video, onClose, isAdmin, onTogglePublish, formatCoun
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-4xl bg-background rounded-xl overflow-hidden shadow-2xl"
+        className="relative w-full max-w-md bg-background rounded-xl overflow-hidden shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -648,8 +648,8 @@ function VideoPlayerModal({ video, onClose, isAdmin, onTogglePublish, formatCoun
           </div>
         </div>
 
-        {/* Video Player */}
-        <div className="relative aspect-video bg-black">
+        {/* Video Player - Vertical 9:16 */}
+        <div className="relative aspect-[9/16] bg-black max-h-[70vh]">
           {embedContent?.type === 'video' ? (
             <video
               src={embedContent.src}
