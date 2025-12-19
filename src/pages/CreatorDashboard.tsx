@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useContent } from '@/hooks/useContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
+import { ContentDetailDialog } from '@/components/content/ContentDetailDialog';
 import { 
   Video, 
   Clock, 
@@ -106,8 +106,9 @@ const StatsCard = ({
 };
 
 export default function CreatorDashboard() {
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { content, loading, updateContentStatus } = useContent(user?.id, 'creator');
+  const { content, loading, updateContentStatus, refetch } = useContent(user?.id, 'creator');
   const { toast } = useToast();
   const [isAmbassador, setIsAmbassador] = useState(false);
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
@@ -323,9 +324,15 @@ export default function CreatorDashboard() {
                       <p className="text-xs text-muted-foreground">Continúa con tus grabaciones</p>
                     </div>
                   </div>
-                  <Button size="sm" onClick={() => setActiveTab('board')}>
-                    Ver tablero
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setActiveTab('board')}>
+                      Mi tablero
+                    </Button>
+                    <Button size="sm" onClick={() => navigate('/board')}>
+                      Tablero general
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -463,64 +470,15 @@ export default function CreatorDashboard() {
       </Tabs>
 
       {/* Content Detail Dialog */}
-      <Dialog open={!!selectedContent} onOpenChange={() => setSelectedContent(null)}>
-        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">{selectedContent?.title}</DialogTitle>
-          </DialogHeader>
-          
-          {selectedContent && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className={STATUS_COLORS[selectedContent.status]}>
-                  {STATUS_LABELS[selectedContent.status]}
-                </Badge>
-                {selectedContent.is_ambassador_content && (
-                  <Badge variant="outline" className="gap-1">
-                    <Star className="w-3 h-3 fill-primary text-primary" />
-                    Embajador
-                  </Badge>
-                )}
-              </div>
-
-              <div>
-                <Label className="text-muted-foreground text-xs">Descripción</Label>
-                <p className="mt-1 text-sm">{selectedContent.description || 'Sin descripción'}</p>
-              </div>
-
-              <div>
-                <Label className="text-muted-foreground text-xs">Cliente</Label>
-                <p className="mt-1 text-sm">{selectedContent.client?.name || 'Sin cliente'}</p>
-              </div>
-
-              {selectedContent.script && (
-                <div>
-                  <Label className="text-muted-foreground text-xs">Guión</Label>
-                  <div className="mt-1 p-3 bg-muted rounded-lg whitespace-pre-wrap text-sm max-h-48 overflow-y-auto">
-                    {selectedContent.script}
-                  </div>
-                </div>
-              )}
-
-              {selectedContent.deadline && (
-                <div>
-                  <Label className="text-muted-foreground text-xs">Fecha límite</Label>
-                  <p className="mt-1 text-sm">{new Date(selectedContent.deadline).toLocaleDateString()}</p>
-                </div>
-              )}
-
-              {!selectedContent.is_ambassador_content && selectedContent.creator_payment > 0 && (
-                <div>
-                  <Label className="text-muted-foreground text-xs">Pago</Label>
-                  <p className="mt-1 text-lg font-semibold text-success">
-                    ${selectedContent.creator_payment.toLocaleString()}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ContentDetailDialog
+        content={selectedContent}
+        open={!!selectedContent}
+        onOpenChange={(open) => !open && setSelectedContent(null)}
+        onUpdate={() => {
+          refetch();
+          setSelectedContent(null);
+        }}
+      />
 
       {/* KPI Content Dialog */}
       <KpiContentDialog
