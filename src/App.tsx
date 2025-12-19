@@ -16,6 +16,7 @@ import Settings from "./pages/Settings";
 import Team from "./pages/Team";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import EditorDashboard from "./pages/EditorDashboard";
+import StrategistDashboard from "./pages/StrategistDashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import ClientContentBoard from "./pages/ClientContentBoard";
 import Portfolio from "./pages/Portfolio";
@@ -55,6 +56,7 @@ function AppContent() {
             <Route path="/settings" element={<ProtectedRoute><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
             <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
             <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
+            <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
             <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
             <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
