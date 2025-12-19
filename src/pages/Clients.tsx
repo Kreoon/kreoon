@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Building2, Video, Calendar, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,7 +131,7 @@ const Clients = () => {
   };
 
   return (
-    <MainLayout>
+    <>
       <div className="min-h-screen">
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
           <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
@@ -270,7 +269,7 @@ const Clients = () => {
         onOpenChange={(open) => !open && setSelectedClient(null)}
         onUpdate={fetchClients}
       />
-    </MainLayout>
+    </>
   );
 };
 

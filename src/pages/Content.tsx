@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -241,10 +240,9 @@ const Content = () => {
   const publishedCount = content.filter(item => item.is_published).length;
 
   return (
-    <MainLayout>
-      <div className="min-h-screen">
-        <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+        <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
             <div className="min-w-0">
               <h1 className="text-lg md:text-xl font-bold text-foreground">Galería de Videos</h1>
               <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Videos finales y portafolio público</p>
@@ -416,7 +414,6 @@ const Content = () => {
           )}
         </div>
       </div>
-    </MainLayout>
   );
 };
 
