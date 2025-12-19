@@ -433,10 +433,44 @@ interface EmbeddedVideoCardProps {
 function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, getThumbnail, formatCount }: EmbeddedVideoCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isInView, setIsInView] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const viewTracked = useRef(false);
   const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
   const thumbnail = getThumbnail(item.video_url, item.thumbnail_url);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  // Intersection Observer for mobile scroll autoplay
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting && entry.intersectionRatio > 0.6);
+      },
+      { threshold: [0, 0.6, 1] }
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Handle play/pause based on hover (desktop) or scroll (mobile)
+  useEffect(() => {
+    const shouldPlay = isMobile ? isInView : isHovering;
+    
+    if (shouldPlay && !isPlaying) {
+      setIsPlaying(true);
+    } else if (!shouldPlay && isPlaying) {
+      setIsPlaying(false);
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+    }
+  }, [isHovering, isInView, isMobile]);
 
   // Track view after 3 seconds
   useEffect(() => {
@@ -464,6 +498,17 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, get
     }
   }, [isPlaying]);
 
+  // Control video playback
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
+
   // Get embed URL or direct video URL - with restrictions for non-admins
   const getEmbedContent = () => {
     const url = item.video_url;
@@ -484,7 +529,6 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, get
       } else if (url.includes('youtu.be/')) {
         embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
       }
-      // For non-admins: hide controls that allow opening in YouTube
       const params = isAdmin 
         ? '?autoplay=1&mute=1' 
         : '?autoplay=1&mute=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1';
@@ -522,12 +566,22 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, get
 
   const embedContent = getEmbedContent();
 
-  const handlePlay = () => {
-    setIsPlaying(true);
+  const handleMouseEnter = () => {
+    if (!isMobile) {
+      setIsHovering(true);
+    }
   };
 
-  const handleStop = () => {
+  const handleMouseLeave = () => {
+    if (!isMobile) {
+      setIsHovering(false);
+    }
+  };
+
+  const handleStop = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsPlaying(false);
+    setIsHovering(false);
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
@@ -535,7 +589,12 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, get
   };
 
   return (
-    <div className="group relative rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition-all">
+    <div 
+      ref={containerRef}
+      className="group relative rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition-all"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* Video Container - Vertical 9:16 */}
       <div className="relative aspect-[9/16] bg-muted">
         {!isPlaying ? (
@@ -553,12 +612,9 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, get
               </div>
             )}
             
-            {/* Play overlay */}
-            <div 
-              className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/50 transition-colors"
-              onClick={handlePlay}
-            >
-              <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors">
+            {/* Play overlay - shows on hover */}
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm">
                 <Play className="h-10 w-10 text-white" fill="white" />
               </div>
             </div>
@@ -574,6 +630,7 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, get
                 autoPlay
                 muted={isMuted}
                 playsInline
+                loop
                 controlsList={isAdmin ? undefined : "nodownload noplaybackrate"}
                 disablePictureInPicture={!isAdmin}
                 onContextMenu={isAdmin ? undefined : (e) => e.preventDefault()}
@@ -586,7 +643,6 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, get
                   allowFullScreen={isAdmin}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 />
-                {/* Overlay to block clicks to external site for non-admins */}
                 {!isAdmin && (
                   <div className="absolute inset-0 pointer-events-none" />
                 )}
@@ -619,7 +675,10 @@ function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, get
               </button>
               {embedContent?.type === 'video' && (
                 <button
-                  onClick={() => setIsMuted(!isMuted)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMuted(!isMuted);
+                  }}
                   className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
                 >
                   {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
