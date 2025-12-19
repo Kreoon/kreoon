@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Plus, Grid, List, Play, Eye, Heart, Share2, ExternalLink, X, Volume2, VolumeX, Pause } from "lucide-react";
+import { Search, Plus, Play, Eye, Heart, ExternalLink, Volume2, VolumeX, Pause } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -32,13 +32,11 @@ const Content = () => {
   const [content, setContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterPublished, setFilterPublished] = useState<'all' | 'published' | 'unpublished'>('all');
   const [newVideoOpen, setNewVideoOpen] = useState(false);
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [selectedVideo, setSelectedVideo] = useState<ContentItem | null>(null);
 
   useEffect(() => {
     fetchContent();
@@ -281,32 +279,13 @@ const Content = () => {
                 </div>
               )}
             </div>
-            
-            <div className="flex items-center gap-2">
-              <Button 
-                variant={viewMode === 'grid' ? 'default' : 'ghost'} 
-                size="icon"
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant={viewMode === 'list' ? 'default' : 'ghost'} 
-                size="icon"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
+          
           </div>
 
           {loading ? (
-            <div className={viewMode === 'grid' 
-              ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4"
-              : "space-y-4"
-            }>
-              {[...Array(8)].map((_, i) => (
-                <Skeleton key={i} className={viewMode === 'grid' ? "aspect-[9/16] rounded-xl" : "h-24 rounded-xl"} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="aspect-[9/16] rounded-xl" />
               ))}
             </div>
           ) : filteredContent.length === 0 ? (
@@ -323,29 +302,14 @@ const Content = () => {
                 </p>
               </div>
             </div>
-          ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-              {filteredContent.map((item) => (
-                <VideoCard 
-                  key={item.id} 
-                  item={item} 
-                  isAdmin={isAdmin}
-                  onTogglePublish={togglePublish}
-                  onPlay={() => setSelectedVideo(item)}
-                  getThumbnail={getThumbnail}
-                  formatCount={formatCount}
-                />
-              ))}
-            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {filteredContent.map((item) => (
-                <VideoListItem 
+                <EmbeddedVideoCard 
                   key={item.id} 
                   item={item} 
                   isAdmin={isAdmin}
                   onTogglePublish={togglePublish}
-                  onPlay={() => setSelectedVideo(item)}
                   getThumbnail={getThumbnail}
                   formatCount={formatCount}
                 />
@@ -353,198 +317,27 @@ const Content = () => {
             </div>
           )}
         </div>
-
-        {/* Video Player Modal */}
-        {selectedVideo && (
-          <VideoPlayerModal 
-            video={selectedVideo} 
-            onClose={() => setSelectedVideo(null)}
-            isAdmin={isAdmin}
-            onTogglePublish={togglePublish}
-            formatCount={formatCount}
-          />
-        )}
       </div>
     </MainLayout>
   );
 };
 
-interface VideoCardProps {
+interface EmbeddedVideoCardProps {
   item: ContentItem;
   isAdmin: boolean;
   onTogglePublish: (id: string, currentStatus: boolean) => void;
-  onPlay: () => void;
   getThumbnail: (url: string | null, thumbnail: string | null) => string | null;
   formatCount: (count: number) => string;
 }
 
-function VideoCard({ item, isAdmin, onTogglePublish, onPlay, getThumbnail, formatCount }: VideoCardProps) {
+function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, getThumbnail, formatCount }: EmbeddedVideoCardProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const thumbnail = getThumbnail(item.video_url, item.thumbnail_url);
-
-  return (
-    <div className="group relative rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition-all">
-      {/* Thumbnail - Vertical 9:16 */}
-      <div 
-        className="relative aspect-[9/16] bg-muted cursor-pointer"
-        onClick={onPlay}
-      >
-        {thumbnail ? (
-          <img 
-            src={thumbnail} 
-            alt={item.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-            <Play className="h-12 w-12 text-primary/50" />
-          </div>
-        )}
-        
-        {/* Play overlay */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm">
-            <Play className="h-8 w-8 text-white" fill="white" />
-          </div>
-        </div>
-
-        {/* Published Badge */}
-        <div className="absolute top-2 right-2">
-          <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
-            {item.is_published ? 'Publicado' : 'Privado'}
-          </Badge>
-        </div>
-
-        {/* Stats */}
-        <div className="absolute bottom-2 left-2 flex items-center gap-3">
-          <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
-            <Eye className="h-3 w-3" />
-            {formatCount(item.views_count)}
-          </div>
-          <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
-            <Heart className="h-3 w-3" />
-            {formatCount(item.likes_count)}
-          </div>
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className="p-3">
-        <h3 className="font-medium text-sm text-card-foreground line-clamp-2 mb-1">
-          {item.title}
-        </h3>
-        
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-muted-foreground">
-            {item.client?.name || 'Sin cliente'}
-          </div>
-          
-          {isAdmin && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Publicar</span>
-              <Switch
-                checked={item.is_published}
-                onCheckedChange={() => onTogglePublish(item.id, item.is_published)}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function VideoListItem({ item, isAdmin, onTogglePublish, onPlay, getThumbnail, formatCount }: VideoCardProps) {
-  const thumbnail = getThumbnail(item.video_url, item.thumbnail_url);
-
-  return (
-    <div className="flex items-center gap-4 p-3 rounded-xl border border-border bg-card hover:border-primary/50 transition-all">
-      {/* Thumbnail - Vertical 9:16 */}
-      <div 
-        className="relative w-16 h-28 rounded-lg overflow-hidden bg-muted flex-shrink-0 cursor-pointer group"
-        onClick={onPlay}
-      >
-        {thumbnail ? (
-          <img 
-            src={thumbnail} 
-            alt={item.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-            <Play className="h-6 w-6 text-primary/50" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Play className="h-6 w-6 text-white" fill="white" />
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-sm text-card-foreground line-clamp-1 mb-1">
-          {item.title}
-        </h3>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span>{item.client?.name || 'Sin cliente'}</span>
-          <span>{item.creator?.full_name || 'Sin creador'}</span>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1 text-muted-foreground text-sm">
-          <Eye className="h-4 w-4" />
-          {formatCount(item.views_count)}
-        </div>
-        <div className="flex items-center gap-1 text-muted-foreground text-sm">
-          <Heart className="h-4 w-4" />
-          {formatCount(item.likes_count)}
-        </div>
-      </div>
-
-      {/* Badge */}
-      <Badge variant={item.is_published ? "default" : "secondary"}>
-        {item.is_published ? 'Publicado' : 'Privado'}
-      </Badge>
-
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={onPlay}>
-          <Play className="h-4 w-4" />
-        </Button>
-        {item.video_url && (
-          <Button variant="ghost" size="icon" asChild>
-            <a href={item.video_url} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          </Button>
-        )}
-        
-        {isAdmin && (
-          <Switch
-            checked={item.is_published}
-            onCheckedChange={() => onTogglePublish(item.id, item.is_published)}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-interface VideoPlayerModalProps {
-  video: ContentItem;
-  onClose: () => void;
-  isAdmin: boolean;
-  onTogglePublish: (id: string, currentStatus: boolean) => void;
-  formatCount: (count: number) => string;
-}
-
-function VideoPlayerModal({ video, onClose, isAdmin, onTogglePublish, formatCount }: VideoPlayerModalProps) {
-  const [isMuted, setIsMuted] = useState(false);
 
   // Get embed URL or direct video URL
   const getEmbedContent = () => {
-    const url = video.video_url;
+    const url = item.video_url;
     if (!url) return null;
 
     // Direct video files
@@ -562,7 +355,7 @@ function VideoPlayerModal({ video, onClose, isAdmin, onTogglePublish, formatCoun
       } else if (url.includes('youtu.be/')) {
         embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
       }
-      return { type: 'iframe', src: embedUrl + '?autoplay=1' };
+      return { type: 'iframe', src: embedUrl + '?autoplay=1&mute=1' };
     }
 
     // TikTok
@@ -594,114 +387,135 @@ function VideoPlayerModal({ video, onClose, isAdmin, onTogglePublish, formatCoun
   const embedContent = getEmbedContent();
 
   return (
-    <div 
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div 
-        className="relative w-full max-w-md bg-background rounded-xl overflow-hidden shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div>
-            <h3 className="font-semibold text-foreground">{video.title}</h3>
-            <p className="text-sm text-muted-foreground">{video.client?.name || 'Sin cliente'}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Stats */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Eye className="h-4 w-4" />
-                {formatCount(video.views_count)}
-              </span>
-              <span className="flex items-center gap-1">
-                <Heart className="h-4 w-4" />
-                {formatCount(video.likes_count)}
-              </span>
-            </div>
+    <div className="group relative rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition-all">
+      {/* Video Container - Vertical 9:16 */}
+      <div className="relative aspect-[9/16] bg-muted">
+        {!isPlaying ? (
+          <>
+            {/* Thumbnail */}
+            {thumbnail ? (
+              <img 
+                src={thumbnail} 
+                alt={item.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                <Play className="h-12 w-12 text-primary/50" />
+              </div>
+            )}
             
-            {/* Publish toggle */}
-            {isAdmin && (
-              <div className="flex items-center gap-2 border-l pl-4 border-border">
-                <span className="text-sm text-muted-foreground">Publicar</span>
-                <Switch
-                  checked={video.is_published}
-                  onCheckedChange={() => onTogglePublish(video.id, video.is_published)}
-                />
+            {/* Play overlay */}
+            <div 
+              className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/50 transition-colors"
+              onClick={() => setIsPlaying(true)}
+            >
+              <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors">
+                <Play className="h-10 w-10 text-white" fill="white" />
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Embedded Video Player */}
+            {embedContent?.type === 'video' ? (
+              <video
+                src={embedContent.src}
+                className="w-full h-full object-cover"
+                controls
+                autoPlay
+                muted={isMuted}
+                playsInline
+              />
+            ) : embedContent?.type === 'iframe' ? (
+              <iframe
+                src={embedContent.src}
+                className="w-full h-full"
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              />
+            ) : embedContent?.type === 'link' ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <a 
+                  href={embedContent.src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-primary hover:underline"
+                >
+                  <ExternalLink className="h-6 w-6" />
+                  Abrir video
+                </a>
+              </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                No se puede reproducir
               </div>
             )}
 
-            {/* External link */}
-            {video.video_url && (
-              <Button variant="ghost" size="icon" asChild>
-                <a href={video.video_url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
-            )}
-            
-            {/* Close button */}
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Video Player - Vertical 9:16 */}
-        <div className="relative aspect-[9/16] bg-black max-h-[70vh]">
-          {embedContent?.type === 'video' ? (
-            <video
-              src={embedContent.src}
-              className="w-full h-full object-contain"
-              controls
-              autoPlay
-              muted={isMuted}
-            />
-          ) : embedContent?.type === 'iframe' ? (
-            <iframe
-              src={embedContent.src}
-              className="w-full h-full"
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            />
-          ) : embedContent?.type === 'link' ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <a 
-                href={embedContent.src}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-primary hover:underline"
+            {/* Controls overlay */}
+            <div className="absolute top-2 right-2 flex gap-2">
+              <button
+                onClick={() => setIsPlaying(false)}
+                className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
               >
-                <ExternalLink className="h-6 w-6" />
-                Abrir video en nueva pestaña
-              </a>
+                <Pause className="h-4 w-4" />
+              </button>
+              {embedContent?.type === 'video' && (
+                <button
+                  onClick={() => setIsMuted(!isMuted)}
+                  className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                >
+                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+              )}
             </div>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              No se puede reproducir este video
+          </>
+        )}
+
+        {/* Published Badge */}
+        {!isPlaying && (
+          <div className="absolute top-2 right-2">
+            <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
+              {item.is_published ? 'Publicado' : 'Privado'}
+            </Badge>
+          </div>
+        )}
+
+        {/* Stats */}
+        {!isPlaying && (
+          <div className="absolute bottom-2 left-2 flex items-center gap-3">
+            <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
+              <Eye className="h-3 w-3" />
+              {formatCount(item.views_count)}
+            </div>
+            <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
+              <Heart className="h-3 w-3" />
+              {formatCount(item.likes_count)}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="p-3">
+        <h3 className="font-medium text-sm text-card-foreground line-clamp-2 mb-1">
+          {item.title}
+        </h3>
+        
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-muted-foreground">
+            {item.client?.name || 'Sin cliente'}
+          </div>
+          
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Publicar</span>
+              <Switch
+                checked={item.is_published}
+                onCheckedChange={() => onTogglePublish(item.id, item.is_published)}
+              />
             </div>
           )}
-        </div>
-
-        {/* Footer with info */}
-        <div className="p-4 border-t border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Badge variant={video.is_published ? "default" : "secondary"}>
-              {video.is_published ? 'Publicado en Portafolio' : 'Privado'}
-            </Badge>
-            {video.creator?.full_name && (
-              <span className="text-sm text-muted-foreground">
-                Creado por {video.creator.full_name}
-              </span>
-            )}
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <a href={`/portfolio?v=${video.id}`} target="_blank">
-              <Share2 className="h-4 w-4 mr-2" />
-              Ver en Portafolio
-            </a>
-          </Button>
         </div>
       </div>
     </div>
