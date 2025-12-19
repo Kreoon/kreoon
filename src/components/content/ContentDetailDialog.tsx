@@ -510,7 +510,9 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   if (!content) return null;
 
   const canEdit = isAdmin;
-
+  const canEditAsCreatorOrEditor = isCreator || isEditor;
+  const canEditDriveUrl = isAdmin || (isCreator && content.creator_id === user?.id);
+  const canEditVideoUrl = isAdmin || (isEditor && content.editor_id === user?.id);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-6">
@@ -850,12 +852,13 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 
                 <div className="grid gap-3">
                   <div className="space-y-1">
-                    <Label className="text-muted-foreground text-xs">URL Final</Label>
-                    {editMode ? (
+                    <Label className="text-muted-foreground text-xs">URL Final (Video Editado)</Label>
+                    {editMode && canEditVideoUrl ? (
                       <Input
                         value={formData.video_url}
                         onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
                         type="url"
+                        placeholder="https://..."
                       />
                     ) : content.video_url ? (
                       <a href={content.video_url} target="_blank" rel="noopener noreferrer" 
@@ -867,11 +870,12 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
                   <div className="space-y-1">
                     <Label className="text-muted-foreground text-xs">URL Drive Video Crudo</Label>
-                    {editMode ? (
+                    {editMode && canEditDriveUrl ? (
                       <Input
                         value={formData.drive_url}
                         onChange={(e) => setFormData({ ...formData, drive_url: e.target.value })}
                         type="url"
+                        placeholder="https://drive.google.com/..."
                       />
                     ) : content.drive_url ? (
                       <a href={content.drive_url} target="_blank" rel="noopener noreferrer"
@@ -883,7 +887,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
                   <div className="space-y-1">
                     <Label className="text-muted-foreground text-xs">URL Video Referencia</Label>
-                    {editMode ? (
+                    {editMode && isAdmin ? (
                       <Input
                         value={formData.reference_url}
                         onChange={(e) => setFormData({ ...formData, reference_url: e.target.value })}
@@ -1152,6 +1156,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
           {(isCreator || isEditor || isAdmin) && (
             <TabsContent value="material" className="space-y-6 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Video de Referencia */}
                 <div className="space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
                     <LinkIcon className="h-4 w-4" /> Video de Referencia
@@ -1184,12 +1189,28 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   )}
                 </div>
 
+                {/* Contenido Crudo - Editable by Creator */}
                 <div className="space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
                     <FolderOpen className="h-4 w-4" /> Contenido Crudo (Drive)
                   </h4>
                   
-                  {content.drive_url ? (
+                  {editMode && canEditDriveUrl ? (
+                    <div className="space-y-3">
+                      <div className="p-4 rounded-lg border bg-muted/30">
+                        <Label className="text-sm font-medium mb-2 block">URL de Carpeta de Drive</Label>
+                        <Input
+                          value={formData.drive_url}
+                          onChange={(e) => setFormData({ ...formData, drive_url: e.target.value })}
+                          placeholder="https://drive.google.com/..."
+                          type="url"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Pega aquí el link de la carpeta de Google Drive con el contenido grabado
+                        </p>
+                      </div>
+                    </div>
+                  ) : content.drive_url ? (
                     <a 
                       href={content.drive_url} 
                       target="_blank" 
@@ -1220,46 +1241,104 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       <div className="text-center text-muted-foreground">
                         <FolderOpen className="h-12 w-12 mx-auto mb-2 opacity-50" />
                         <p>No hay carpeta de contenido</p>
+                        {canEditDriveUrl && (
+                          <p className="text-xs mt-2">Activa el modo edición para agregar el link</p>
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
               </div>
+
+              {/* Video Final Editado - Editable by Editor */}
+              <div className="space-y-3 pt-4 border-t">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Video className="h-4 w-4" /> Video Final Editado
+                </h4>
+                
+                {editMode && canEditVideoUrl ? (
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-lg border bg-muted/30">
+                      <Label className="text-sm font-medium mb-2 block">URL del Video Editado</Label>
+                      <Input
+                        value={formData.video_url}
+                        onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                        placeholder="https://..."
+                        type="url"
+                      />
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Pega aquí el link del video final editado (YouTube, Vimeo, Drive, etc.)
+                      </p>
+                    </div>
+                  </div>
+                ) : content.video_url ? (
+                  <div className="space-y-2">
+                    <div 
+                      className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
+                      style={{ height: '350px' }}
+                    >
+                      {renderVideoEmbed(content.video_url)}
+                    </div>
+                    <a 
+                      href={content.video_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                    >
+                      Ver video editado <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
+                    <div className="text-center text-muted-foreground">
+                      <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No hay video editado</p>
+                      {canEditVideoUrl && (
+                        <p className="text-xs mt-2">Activa el modo edición para agregar el link</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </TabsContent>
           )}
         </Tabs>
 
-        {/* Actions */}
-        {canEdit && (
+        {/* Actions - Creators/Editors can edit, only admins can delete */}
+        {(canEdit || canEditAsCreatorOrEditor) && (
           <div className="flex justify-between pt-4 border-t mt-4">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Eliminar
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Eliminar proyecto?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto "{content.title}".
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      onDelete?.(content.id);
-                      onOpenChange(false);
-                    }}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
+            {canEdit ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="h-4 w-4 mr-2" />
                     Eliminar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar proyecto?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto "{content.title}".
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        onDelete?.(content.id);
+                        onOpenChange(false);
+                      }}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Eliminar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
+              <div />
+            )}
 
             <div className="flex gap-3">
               {editMode ? (
