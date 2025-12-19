@@ -577,132 +577,260 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       {/* Header with glassmorphism */}
       <header className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="flex h-16 items-center justify-between px-6 lg:px-8">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-              Dashboard Ejecutivo
+        <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 lg:px-8">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text truncate">
+              Dashboard
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Métricas en tiempo real • {new Date().toLocaleDateString('es-CO', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
+            <p className="text-xs md:text-sm text-muted-foreground mt-0.5 truncate hidden sm:block">
+              {new Date().toLocaleDateString('es-CO', { 
+                weekday: 'short', 
+                month: 'short', 
                 day: 'numeric' 
               })}
             </p>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
             {isAdmin && (
-              <Button variant="outline" size="sm" onClick={() => setGoalsDialogOpen(true)}>
-                <Target className="h-4 w-4 mr-2" />
-                Metas
+              <Button variant="outline" size="sm" onClick={() => setGoalsDialogOpen(true)} className="h-8 px-2 md:px-3">
+                <Target className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Metas</span>
               </Button>
             )}
-            <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl bg-success/10 border border-success/20">
-              <Activity className="h-4 w-4 text-success animate-pulse" />
-              <span className="text-sm font-medium text-success">En vivo</span>
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-success/10 border border-success/20">
+              <Activity className="h-3 w-3 text-success animate-pulse" />
+              <span className="text-xs font-medium text-success">En vivo</span>
             </div>
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters - Mobile optimized */}
         {isAdmin && (
-          <div className="flex flex-wrap items-center gap-2 md:gap-3 px-6 pb-4 overflow-x-auto">
-            <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            
+          <div className="px-4 md:px-6 pb-3">
+            {/* Mobile: Collapsible filter button */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className={cn(
-                    "w-[130px] justify-start text-left font-normal text-xs",
-                    !startDateFilter && "text-muted-foreground"
-                  )}
+                  className="w-full md:hidden justify-between h-9"
                 >
-                  <Calendar className="mr-1 h-3 w-3" />
-                  {startDateFilter ? format(startDateFilter, "dd/MM/yy", { locale: es }) : "Desde"}
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs">
+                      {hasActiveFilters ? 'Filtros activos' : 'Filtrar resultados'}
+                    </span>
+                  </div>
+                  {hasActiveFilters && (
+                    <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
+                      {[filterClientId !== 'all', filterCreatorId !== 'all', filterEditorId !== 'all', startDateFilter, endDateFilter].filter(Boolean).length}
+                    </span>
+                  )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={startDateFilter}
-                  onSelect={setStartDateFilter}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
+              <PopoverContent className="w-[calc(100vw-2rem)] p-4" align="start">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Filtros</span>
+                    {hasActiveFilters && (
+                      <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-7">
+                        <X className="h-3 w-3 mr-1" />
+                        Limpiar
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left font-normal text-xs h-9",
+                            !startDateFilter && "text-muted-foreground"
+                          )}
+                        >
+                          <Calendar className="mr-1 h-3 w-3" />
+                          {startDateFilter ? format(startDateFilter, "dd/MM/yy", { locale: es }) : "Desde"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={startDateFilter}
+                          onSelect={setStartDateFilter}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left font-normal text-xs h-9",
+                            !endDateFilter && "text-muted-foreground"
+                          )}
+                        >
+                          <Calendar className="mr-1 h-3 w-3" />
+                          {endDateFilter ? format(endDateFilter, "dd/MM/yy", { locale: es }) : "Hasta"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={endDateFilter}
+                          onSelect={setEndDateFilter}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <Select value={filterClientId} onValueChange={setFilterClientId}>
+                    <SelectTrigger className="w-full h-9 text-xs">
+                      <SelectValue placeholder="Cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los clientes</SelectItem>
+                      {clients.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select value={filterCreatorId} onValueChange={setFilterCreatorId}>
+                      <SelectTrigger className="w-full h-9 text-xs">
+                        <SelectValue placeholder="Creador" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        {creators.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={filterEditorId} onValueChange={setFilterEditorId}>
+                      <SelectTrigger className="w-full h-9 text-xs">
+                        <SelectValue placeholder="Editor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        {editors.map(e => (
+                          <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </PopoverContent>
             </Popover>
 
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "w-[130px] justify-start text-left font-normal text-xs",
-                    !endDateFilter && "text-muted-foreground"
-                  )}
-                >
-                  <Calendar className="mr-1 h-3 w-3" />
-                  {endDateFilter ? format(endDateFilter, "dd/MM/yy", { locale: es }) : "Hasta"}
+            {/* Desktop: Inline filters */}
+            <div className="hidden md:flex flex-wrap items-center gap-2 md:gap-3">
+              <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "w-[120px] justify-start text-left font-normal text-xs h-8",
+                      !startDateFilter && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-1 h-3 w-3" />
+                    {startDateFilter ? format(startDateFilter, "dd/MM/yy", { locale: es }) : "Desde"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={startDateFilter}
+                    onSelect={setStartDateFilter}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "w-[120px] justify-start text-left font-normal text-xs h-8",
+                      !endDateFilter && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-1 h-3 w-3" />
+                    {endDateFilter ? format(endDateFilter, "dd/MM/yy", { locale: es }) : "Hasta"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={endDateFilter}
+                    onSelect={setEndDateFilter}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Select value={filterClientId} onValueChange={setFilterClientId}>
+                <SelectTrigger className="w-[130px] h-8 text-xs">
+                  <SelectValue placeholder="Cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los clientes</SelectItem>
+                  {clients.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterCreatorId} onValueChange={setFilterCreatorId}>
+                <SelectTrigger className="w-[130px] h-8 text-xs">
+                  <SelectValue placeholder="Creador" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los creadores</SelectItem>
+                  {creators.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterEditorId} onValueChange={setFilterEditorId}>
+                <SelectTrigger className="w-[130px] h-8 text-xs">
+                  <SelectValue placeholder="Editor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los editores</SelectItem>
+                  {editors.map(e => (
+                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-8">
+                  <X className="h-3 w-3 mr-1" />
+                  Limpiar
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={endDateFilter}
-                  onSelect={setEndDateFilter}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-
-            <Select value={filterClientId} onValueChange={setFilterClientId}>
-              <SelectTrigger className="w-[140px] h-8 text-xs">
-                <SelectValue placeholder="Cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los clientes</SelectItem>
-                {clients.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterCreatorId} onValueChange={setFilterCreatorId}>
-              <SelectTrigger className="w-[140px] h-8 text-xs">
-                <SelectValue placeholder="Creador" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los creadores</SelectItem>
-                {creators.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterEditorId} onValueChange={setFilterEditorId}>
-              <SelectTrigger className="w-[140px] h-8 text-xs">
-                <SelectValue placeholder="Editor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los editores</SelectItem>
-                {editors.map(e => (
-                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
-                <X className="h-3 w-3 mr-1" />
-                Limpiar
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         )}
       </header>
