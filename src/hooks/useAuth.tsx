@@ -11,7 +11,7 @@ interface AuthContextType {
   loading: boolean;
   rolesLoaded: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string, role: AppRole) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, role: AppRole, companyName?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   isAdmin: boolean;
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, role: AppRole) => {
+  const signUp = async (email: string, password: string, fullName: string, role: AppRole, companyName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
@@ -112,6 +112,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user_id: data.user.id,
         role: role
       });
+
+      // If client role and company name provided, create the client record
+      if (role === 'client' && companyName) {
+        await supabase.from('clients').insert({
+          name: companyName,
+          user_id: data.user.id,
+          contact_email: email,
+          created_by: data.user.id
+        });
+      }
     }
 
     return { error };
