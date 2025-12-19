@@ -1,22 +1,31 @@
-import { Calendar, User, GripVertical, DollarSign } from "lucide-react";
+import { Calendar, User, GripVertical, DollarSign, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Content, STATUS_LABELS, STATUS_COLORS } from "@/types/database";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface DraggableContentCardProps {
   content: Content;
   onDragStart: (e: React.DragEvent, content: Content) => void;
   onClick?: (content: Content) => void;
   isDragging?: boolean;
+  onPaymentUpdate?: () => void;
 }
 
 export function DraggableContentCard({ 
   content, 
   onDragStart,
   onClick,
-  isDragging 
+  isDragging,
+  onPaymentUpdate
 }: DraggableContentCardProps) {
+  const { isAdmin } = useAuth();
+  const { toast } = useToast();
+
   const statusInfo = {
     label: STATUS_LABELS[content.status],
     className: STATUS_COLORS[content.status]
@@ -37,6 +46,73 @@ export function DraggableContentCard({
     if (diffDays <= 2) return 'border-l-warning';
     return 'border-l-success';
   };
+
+  const handleMarkCreatorPaid = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const updates: any = { creator_paid: true };
+      
+      if (content.editor_paid) {
+        updates.status = 'paid';
+        updates.paid_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('content')
+        .update(updates)
+        .eq('id', content.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Pago registrado",
+        description: `Creador pagado - $${content.creator_payment}`
+      });
+      
+      onPaymentUpdate?.();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo registrar el pago",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleMarkEditorPaid = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const updates: any = { editor_paid: true };
+      
+      if (content.creator_paid) {
+        updates.status = 'paid';
+        updates.paid_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('content')
+        .update(updates)
+        .eq('id', content.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Pago registrado",
+        description: `Editor pagado - $${content.editor_payment}`
+      });
+      
+      onPaymentUpdate?.();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo registrar el pago",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Show pay buttons only for admin on approved content
+  const showPayButtons = isAdmin && content.status === 'approved' && (!content.creator_paid || !content.editor_paid);
 
   return (
     <div 
@@ -91,6 +167,34 @@ export function DraggableContentCard({
               </div>
             )}
           </div>
+
+          {/* Quick Pay Buttons for Admin */}
+          {showPayButtons && (
+            <div className="flex gap-2 mt-3 pt-3 border-t border-border">
+              {!content.creator_paid && content.creator_payment > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleMarkCreatorPaid}
+                  className="h-7 px-2 text-xs border-warning/50 text-warning hover:bg-warning/10 hover:text-warning"
+                >
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Creador ${content.creator_payment}
+                </Button>
+              )}
+              {!content.editor_paid && content.editor_payment > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleMarkEditorPaid}
+                  className="h-7 px-2 text-xs border-info/50 text-info hover:bg-info/10 hover:text-info"
+                >
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Editor ${content.editor_payment}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {content.thumbnail_url && (
