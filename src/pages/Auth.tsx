@@ -40,12 +40,23 @@ export default function Auth() {
   const [content, setContent] = useState<PublishedContent[]>([]);
   const [contentLoading, setContentLoading] = useState(true);
 
+  const hasRedirectedRef = useRef(false);
+
   useEffect(() => {
     // Wait until roles are resolved before redirecting to avoid mobile redirect loops
-    if (user && !authLoading && rolesLoaded) {
+    // Also ensure we only redirect once to prevent multiple navigations
+    if (user && !authLoading && rolesLoaded && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
       redirectByRole();
     }
   }, [user, authLoading, rolesLoaded, roles]);
+
+  // Reset redirect flag when user logs out
+  useEffect(() => {
+    if (!user) {
+      hasRedirectedRef.current = false;
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchPublicContent();
