@@ -26,9 +26,10 @@ import { cn } from '@/lib/utils';
 interface ChatPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  onActiveConversationChange?: (conversationId: string | null) => void;
 }
 
-export function ChatPanel({ isOpen, onClose }: ChatPanelProps) {
+export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatPanelProps) {
   const { user } = useAuth();
   const {
     conversations,
@@ -41,6 +42,11 @@ export function ChatPanel({ isOpen, onClose }: ChatPanelProps) {
     sendMessage,
     startConversation
   } = useChat();
+
+  // Notify parent when active conversation changes
+  useEffect(() => {
+    onActiveConversationChange?.(activeConversation?.id || null);
+  }, [activeConversation?.id, onActiveConversationChange]);
 
   const [view, setView] = useState<'list' | 'chat' | 'new'>('list');
   const [newMessage, setNewMessage] = useState('');

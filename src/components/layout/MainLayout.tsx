@@ -7,6 +7,7 @@ import { ChatButton } from "@/components/chat/ChatButton";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
+import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors } from "lucide-react";
@@ -37,11 +38,15 @@ export function MainLayout({
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const { isClient, isEditor, isAdmin, isCreator, signOut, profile } = useAuth();
   const location = useLocation();
   
   // Track user presence
   usePresence();
+  
+  // Setup chat notifications
+  useChatNotifications(chatOpen, activeConversationId);
   
   // For editors, show editor-specific layout with bottom nav on mobile
   if (isEditor && !isAdmin) {
@@ -107,7 +112,7 @@ export function MainLayout({
         </main>
 
         {/* Chat Panel */}
-        <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+        <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
       </div>
     );
   }
@@ -230,7 +235,7 @@ export function MainLayout({
         </main>
 
         {/* Chat Panel */}
-        <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+        <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
       </div>
     );
   }
@@ -276,7 +281,7 @@ export function MainLayout({
       </main>
 
       {/* Chat Panel */}
-      <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+      <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
       {/* Tour Provider */}
       <TourProvider />
