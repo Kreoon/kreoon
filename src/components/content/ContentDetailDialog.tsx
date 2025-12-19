@@ -554,12 +554,24 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         </DialogHeader>
 
         <Tabs defaultValue="video" className="mt-4">
-          <TabsList className={`grid w-full ${isClient ? 'grid-cols-2' : isAdmin ? 'grid-cols-6' : 'grid-cols-5'}`}>
+          {/* Tab visibility based on role:
+              - Video: client sees (Cliente asignado, creador asignado, editor asignado)
+              - Material: creator and editor only (not client)
+              - General: creator and editor only (not client)
+              - Equipo: admin only
+              - Fechas: admin only
+              - Pagos: admin only
+          */}
+          <TabsList className={`grid w-full ${
+            isClient ? 'grid-cols-1' : 
+            isAdmin ? 'grid-cols-6' : 
+            (isCreator || isEditor) ? 'grid-cols-3' : 'grid-cols-3'
+          }`}>
             <TabsTrigger value="video">Video</TabsTrigger>
-            {!isClient && <TabsTrigger value="material">Material</TabsTrigger>}
-            {!isClient && <TabsTrigger value="general">General</TabsTrigger>}
-            <TabsTrigger value="equipo">Equipo</TabsTrigger>
-            {!isClient && <TabsTrigger value="fechas">Fechas</TabsTrigger>}
+            {(isCreator || isEditor || isAdmin) && <TabsTrigger value="material">Material</TabsTrigger>}
+            {(isCreator || isEditor || isAdmin) && <TabsTrigger value="general">General</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="equipo">Equipo</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="fechas">Fechas</TabsTrigger>}
             {isAdmin && <TabsTrigger value="pagos">Pagos</TabsTrigger>}
           </TabsList>
 
@@ -762,8 +774,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             </div>
           </TabsContent>
 
-          {/* General Tab */}
-          {!isClient && (
+          {/* General Tab - Creator, Editor, Admin only */}
+          {(isCreator || isEditor || isAdmin) && (
             <TabsContent value="general" className="space-y-4 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -887,7 +899,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             </TabsContent>
           )}
 
-          <TabsContent value="equipo" className="space-y-4 mt-4">
+          {/* Equipo Tab - Admin only */}
+          {isAdmin && <TabsContent value="equipo" className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
                 <Label className="text-muted-foreground text-xs flex items-center gap-1">
@@ -968,9 +981,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 )}
               </div>
             </div>
-          </TabsContent>
+          </TabsContent>}
 
-          {!isClient && (
+          {/* Fechas Tab - Admin only */}
+          {isAdmin && (
             <TabsContent value="fechas" className="space-y-4 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
@@ -1115,8 +1129,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             </TabsContent>
           )}
 
-          {/* Material Tab */}
-          {!isClient && (
+          {/* Material Tab - Creator, Editor, Admin only */}
+          {(isCreator || isEditor || isAdmin) && (
             <TabsContent value="material" className="space-y-6 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">

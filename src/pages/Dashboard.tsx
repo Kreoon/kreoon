@@ -5,7 +5,7 @@ import {
   Play, UserCheck, Calendar, Banknote, Filter, X, Settings,
   Building2, Scissors
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
@@ -18,12 +18,13 @@ import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
 import { KpiContentDialog } from "@/components/dashboard/KpiContentDialog";
 import { KpiListDialog } from "@/components/dashboard/KpiListDialog";
 import { GoalsDialog } from "@/components/dashboard/GoalsDialog";
+import { GoalsChart } from "@/components/dashboard/GoalsChart";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -304,6 +305,10 @@ export default function Dashboard() {
     new_clients_goal: number;
   } | null>(null);
 
+  // All goals for chart
+  const [allGoals, setAllGoals] = useState<any[]>([]);
+  const [monthlyActuals, setMonthlyActuals] = useState<any[]>([]);
+
   // Billing data from packages
   const [packages, setPackages] = useState<(ClientPackage & { client?: Client })[]>([]);
   const [clientsBilling, setClientsBilling] = useState<{
@@ -367,9 +372,10 @@ export default function Dashboard() {
         })) as (ClientPackage & { client?: Client })[];
         setPackages(mappedPackages);
 
-        // Calculate billing - CORRECTED LOGIC
-        const totalBilled = packagesData.reduce((sum, p) => sum + (p.total_value || 0), 0);
-        const totalPaid = packagesData.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+        // Calculate billing - CORRECTED LOGIC (only packages with values > 0)
+        const packagesWithValues = packagesData.filter(p => (p.total_value || 0) > 0);
+        const totalBilled = packagesWithValues.reduce((sum, p) => sum + (p.total_value || 0), 0);
+        const totalPaid = packagesWithValues.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
         const totalPending = totalBilled - totalPaid;
         
         // Content owed = total content promised in all active packages - delivered/approved content
@@ -398,6 +404,49 @@ export default function Dashboard() {
           new_clients_goal: goalData.new_clients_goal || 0
         });
       }
+
+      // Fetch all goals for chart
+      const { data: allGoalsData } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('year', currentYear)
+        .eq('period_type', 'month');
+      
+      setAllGoals(allGoalsData || []);
+
+      // Calculate monthly actuals
+      const monthlyData = [];
+      for (let month = 1; month <= 12; month++) {
+        const monthStart = new Date(currentYear, month - 1, 1);
+        const monthEnd = endOfMonth(monthStart);
+        
+        // Revenue from packages paid in this month
+        const monthRevenue = packagesData?.filter(p => {
+          const paidDate = p.paid_at ? new Date(p.paid_at) : null;
+          return paidDate && paidDate >= monthStart && paidDate <= monthEnd;
+        }).reduce((sum, p) => sum + (p.paid_amount || 0), 0) || 0;
+
+        // Content completed in this month
+        const monthContent = allContent.filter(c => {
+          const approvedDate = c.approved_at ? new Date(c.approved_at) : null;
+          return approvedDate && approvedDate >= monthStart && approvedDate <= monthEnd;
+        }).length;
+
+        // Clients created in this month
+        const monthClients = clientsList?.filter(c => {
+          const createdDate = c.created_at ? new Date(c.created_at) : null;
+          return createdDate && createdDate >= monthStart && createdDate <= monthEnd;
+        }).length || 0;
+
+        monthlyData.push({
+          month,
+          year: currentYear,
+          revenue: monthRevenue,
+          content: monthContent,
+          clients: monthClients
+        });
+      }
+      setMonthlyActuals(monthlyData);
     };
 
     fetchFiltersAndData();
@@ -458,12 +507,12 @@ export default function Dashboard() {
   const pending = content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)).length;
   
   // Payment stats - CORRECTED LOGIC
-  // Unpaid creator content: approved content where creator hasn't been paid
-  const unpaidCreatorContent = content.filter(c => c.status === 'approved' && !c.creator_paid);
-  // Unpaid editor content: approved content where editor hasn't been paid  
-  const unpaidEditorContent = content.filter(c => c.status === 'approved' && !c.editor_paid);
+  // Unpaid creator content: approved content where creator hasn't been paid AND has a payment value assigned
+  const unpaidCreatorContent = content.filter(c => c.status === 'approved' && !c.creator_paid && (c.creator_payment || 0) > 0);
+  // Unpaid editor content: approved content where editor hasn't been paid AND has a payment value assigned
+  const unpaidEditorContent = content.filter(c => c.status === 'approved' && !c.editor_paid && (c.editor_payment || 0) > 0);
   
-  // Calculate pending amounts to pay team
+  // Calculate pending amounts to pay team (only for content with assigned values)
   const pendingCreatorPayment = unpaidCreatorContent.reduce((sum, c) => sum + (c.creator_payment || 0), 0);
   const pendingEditorPayment = unpaidEditorContent.reduce((sum, c) => sum + (c.editor_payment || 0), 0);
 
@@ -865,6 +914,54 @@ export default function Dashboard() {
             onClick={() => openKpiDialog('Videos Entregados', content.filter(c => c.status === 'delivered'))}
           />
         </div>
+
+        {/* Goals vs Actuals Chart */}
+        {isAdmin && allGoals.length > 0 && (
+          <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Metas vs Resultados</h2>
+                <p className="text-sm text-muted-foreground">Comparativa mensual {new Date().getFullYear()}</p>
+              </div>
+              <Target className="h-8 w-8 text-primary" />
+            </div>
+            
+            <Tabs defaultValue="revenue" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="revenue">Ingresos</TabsTrigger>
+                <TabsTrigger value="content">Contenidos</TabsTrigger>
+                <TabsTrigger value="clients">Clientes</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="revenue">
+                <GoalsChart 
+                  goals={allGoals} 
+                  actuals={monthlyActuals} 
+                  metric="revenue" 
+                  title="Ingresos Mensuales" 
+                />
+              </TabsContent>
+              
+              <TabsContent value="content">
+                <GoalsChart 
+                  goals={allGoals} 
+                  actuals={monthlyActuals} 
+                  metric="content" 
+                  title="Contenidos Aprobados" 
+                />
+              </TabsContent>
+              
+              <TabsContent value="clients">
+                <GoalsChart 
+                  goals={allGoals} 
+                  actuals={monthlyActuals} 
+                  metric="clients" 
+                  title="Nuevos Clientes" 
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
       </div>
 
       {/* Dialogs */}
