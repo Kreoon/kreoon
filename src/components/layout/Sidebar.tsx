@@ -9,7 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   UsersRound,
-  LogOut
+  LogOut,
+  Kanban
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -17,14 +18,22 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
-const navigation = [
+const adminNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-  { name: "Tablero", href: "/board", icon: Video, tourId: "sidebar-board" },
+  { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
   { name: "Contenido", href: "/content", icon: FileText, tourId: "sidebar-content" },
   { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
   { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients" },
   { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team" },
+  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+];
+
+const editorNavigation = [
+  { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+  { name: "Contenido", href: "/portfolio", icon: Video, tourId: "sidebar-content" },
+  { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
@@ -36,7 +45,10 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile } = useAuth();
+  const { signOut, profile, isAdmin, isEditor } = useAuth();
+
+  // Determinar navegación según rol
+  const navigation = isEditor && !isAdmin ? editorNavigation : adminNavigation;
 
   const handleSignOut = async () => {
     await signOut();
