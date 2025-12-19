@@ -5,42 +5,23 @@ import { useContent } from '@/hooks/useContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
+import { Content, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { ContentDetailDialog } from '@/components/content/ContentDetailDialog';
 import { 
   Video, 
   Clock, 
   CheckCircle2, 
-  FileText, 
   Star,
   ArrowRight,
   Loader2,
   DollarSign,
-  Calendar,
   CreditCard,
-  LayoutDashboard,
-  Columns,
   TrendingUp,
   Play
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-
-const CREATOR_COLUMNS: { status: ContentStatus; title: string; color: string }[] = [
-  { status: 'assigned', title: 'Asignados', color: 'bg-purple-500' },
-  { status: 'recording', title: 'En Grabación', color: 'bg-orange-500' },
-  { status: 'recorded', title: 'Grabado', color: 'bg-cyan-500' },
-  { status: 'editing', title: 'En Edición', color: 'bg-pink-500' },
-  { status: 'delivered', title: 'Entregado', color: 'bg-emerald-500' },
-  { status: 'approved', title: 'Aprobados', color: 'bg-success' },
-  { status: 'paid', title: 'Pagados', color: 'bg-primary' },
-];
 
 // Premium Stats Card Component
 const StatsCard = ({ 
@@ -108,11 +89,9 @@ const StatsCard = ({
 export default function CreatorDashboard() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { content, loading, updateContentStatus, refetch } = useContent(user?.id, 'creator');
-  const { toast } = useToast();
+  const { content, loading, refetch } = useContent(user?.id, 'creator');
   const [isAmbassador, setIsAmbassador] = useState(false);
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [kpiDialog, setKpiDialog] = useState<{
     open: boolean;
     title: string;
@@ -129,50 +108,6 @@ export default function CreatorDashboard() {
     }
   }, [profile]);
 
-
-  const handleMoveToNext = async (item: Content) => {
-    const statusFlow: Record<ContentStatus, ContentStatus> = {
-      'draft': 'script_approved',
-      'script_pending': 'script_approved',
-      'script_approved': 'assigned',
-      'assigned': 'recording',
-      'recording': 'recorded',
-      'recorded': 'editing',
-      'editing': 'delivered',
-      'delivered': 'approved',
-      'issue': 'editing',
-      'review': 'approved',
-      'approved': 'approved',
-      'rejected': 'draft',
-      'paid': 'paid'
-    };
-
-    const nextStatus = statusFlow[item.status];
-    if (nextStatus && nextStatus !== item.status) {
-      try {
-        await updateContentStatus(item.id, nextStatus);
-        toast({
-          title: 'Estado actualizado',
-          description: `Movido a ${STATUS_LABELS[nextStatus]}`
-        });
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'No se pudo actualizar el estado',
-          variant: 'destructive'
-        });
-      }
-    }
-  };
-
-  const getColumnContent = (status: ContentStatus) => {
-    return content.filter(c => c.status === status);
-  };
-
-  const formatDate = (date: string) => {
-    if (!date) return '';
-    return format(new Date(date), "d MMM", { locale: es });
-  };
 
   // Métricas
   const inProgressContent = content.filter(c => ['assigned', 'recording'].includes(c.status));
@@ -228,246 +163,144 @@ export default function CreatorDashboard() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-xs">
-          <TabsTrigger value="dashboard" className="gap-2">
-            <LayoutDashboard className="w-4 h-4" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </TabsTrigger>
-          <TabsTrigger value="board" className="gap-2">
-            <Columns className="w-4 h-4" />
-            <span className="hidden sm:inline">Tablero</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Dashboard Content */}
+      <div className="space-y-6">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+          <StatsCard
+            title="Total Asignados"
+            value={content.length}
+            icon={Video}
+            color="primary"
+            onClick={() => openKpiDialog('Total Asignados', content)}
+          />
+          <StatsCard
+            title="En Progreso"
+            value={inProgressContent.length}
+            icon={Clock}
+            color="info"
+            onClick={() => openKpiDialog('En Progreso', inProgressContent)}
+          />
+          <StatsCard
+            title="Aprobados"
+            value={approvedContent.length}
+            icon={CheckCircle2}
+            color="success"
+            onClick={() => openKpiDialog('Aprobados', approvedContent)}
+          />
+          <StatsCard
+            title="Embajador"
+            value={ambassadorContent.length}
+            icon={Star}
+            color="purple"
+            onClick={() => openKpiDialog('Contenido Embajador', ambassadorContent)}
+          />
+          <StatsCard
+            title="Por Pagar"
+            value={unpaidContent.length}
+            icon={DollarSign}
+            color="warning"
+            subtitle={`$${pendingPayment.toLocaleString()}`}
+            onClick={() => openKpiDialog('Por Pagar', unpaidContent)}
+          />
+          <StatsCard
+            title="Pagados"
+            value={paidContent.length}
+            icon={CreditCard}
+            color="success"
+            subtitle={`$${totalPaid.toLocaleString()}`}
+            onClick={() => openKpiDialog('Pagados', paidContent)}
+          />
+        </div>
 
-        {/* Dashboard Tab */}
-        <TabsContent value="dashboard" className="space-y-6 mt-4">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-            <StatsCard
-              title="Total Asignados"
-              value={content.length}
-              icon={Video}
-              color="primary"
-              onClick={() => openKpiDialog('Total Asignados', content)}
-            />
-            <StatsCard
-              title="En Progreso"
-              value={inProgressContent.length}
-              icon={Clock}
-              color="info"
-              onClick={() => openKpiDialog('En Progreso', inProgressContent)}
-            />
-            <StatsCard
-              title="Aprobados"
-              value={approvedContent.length}
-              icon={CheckCircle2}
-              color="success"
-              onClick={() => openKpiDialog('Aprobados', approvedContent)}
-            />
-            <StatsCard
-              title="Embajador"
-              value={ambassadorContent.length}
-              icon={Star}
-              color="purple"
-              onClick={() => openKpiDialog('Contenido Embajador', ambassadorContent)}
-            />
-            <StatsCard
-              title="Por Pagar"
-              value={unpaidContent.length}
-              icon={DollarSign}
-              color="warning"
-              subtitle={`$${pendingPayment.toLocaleString()}`}
-              onClick={() => openKpiDialog('Por Pagar', unpaidContent)}
-            />
-            <StatsCard
-              title="Pagados"
-              value={paidContent.length}
-              icon={CreditCard}
-              color="success"
-              subtitle={`$${totalPaid.toLocaleString()}`}
-              onClick={() => openKpiDialog('Pagados', paidContent)}
-            />
-          </div>
-
-          {/* Progress Card */}
-          <Card className="border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-sm">Progreso General</h3>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {completedCount} de {totalAssigned} completados
-                </span>
+        {/* Progress Card */}
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-sm">Progreso General</h3>
               </div>
-              <Progress value={progressPercent} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-2">
-                {progressPercent.toFixed(0)}% de tu contenido ha sido aprobado o entregado
-              </p>
+              <span className="text-xs text-muted-foreground">
+                {completedCount} de {totalAssigned} completados
+              </span>
+            </div>
+            <Progress value={progressPercent} className="h-2" />
+            <p className="text-xs text-muted-foreground mt-2">
+              {progressPercent.toFixed(0)}% de tu contenido ha sido aprobado o entregado
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Pending Work Alert */}
+        {inProgressContent.length > 0 && (
+          <Card className="border-info/30 bg-info/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-info/20">
+                    <Clock className="h-5 w-5 text-info" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Tienes {inProgressContent.length} proyecto(s) en progreso</p>
+                    <p className="text-xs text-muted-foreground">Continúa con tus grabaciones</p>
+                  </div>
+                </div>
+                <Button size="sm" onClick={() => navigate('/board')}>
+                  Ver tablero
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
+        )}
 
-          {/* Pending Work Alert */}
-          {inProgressContent.length > 0 && (
-            <Card className="border-info/30 bg-info/5">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-info/20">
-                      <Clock className="h-5 w-5 text-info" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">Tienes {inProgressContent.length} proyecto(s) en progreso</p>
-                      <p className="text-xs text-muted-foreground">Continúa con tus grabaciones</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setActiveTab('board')}>
-                      Mi tablero
-                    </Button>
-                    <Button size="sm" onClick={() => navigate('/board')}>
-                      Tablero general
-                      <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Recent Content */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">Contenido Reciente</h3>
-              <Button variant="ghost" size="sm" onClick={() => setActiveTab('board')}>
-                Ver todo
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {content.slice(0, 5).map(item => (
-                <Card key={item.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedContent(item)}>
-                  <CardContent className="p-3 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                      {item.thumbnail_url ? (
-                        <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
-                      ) : (
-                        <Play className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">{item.client?.name || 'Sin cliente'}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {item.is_ambassador_content && (
-                        <Star className="w-3 h-3 text-primary fill-primary" />
-                      )}
-                      <Badge className={`text-xs ${STATUS_COLORS[item.status]}`} variant="secondary">
-                        {STATUS_LABELS[item.status]}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {content.length === 0 && (
-                <Card>
-                  <CardContent className="p-8 text-center">
-                    <Video className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <h4 className="font-semibold mb-2">Sin proyectos asignados</h4>
-                    <p className="text-sm text-muted-foreground">Cuando te asignen proyectos aparecerán aquí</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+        {/* Recent Content */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Contenido Reciente</h3>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/board')}>
+              Ver todo
+            </Button>
           </div>
-        </TabsContent>
-
-        {/* Board Tab */}
-        <TabsContent value="board" className="mt-4">
-          <div data-tour="creator-kanban" className="overflow-x-auto pb-4">
-            <div className="flex gap-4 min-w-max">
-              {CREATOR_COLUMNS.map(column => (
-                <div key={column.status} className="w-72 sm:w-80 flex-shrink-0">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className={`w-3 h-3 rounded-full ${column.color}`} />
-                    <h3 className="font-semibold text-sm">{column.title}</h3>
-                    <Badge variant="secondary" className="ml-auto text-xs">
-                      {getColumnContent(column.status).length}
-                    </Badge>
-                  </div>
-
-                  <div className="space-y-3">
-                    {getColumnContent(column.status).map(item => (
-                      <Card 
-                        key={item.id} 
-                        className="cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => setSelectedContent(item)}
-                      >
-                        <CardContent className="p-3 sm:p-4">
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-medium text-sm line-clamp-2">{item.title}</h4>
-                            {item.is_ambassador_content && (
-                              <Star className="w-4 h-4 text-primary fill-primary flex-shrink-0" />
-                            )}
-                          </div>
-                          
-                          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                            {item.description || 'Sin descripción'}
-                          </p>
-
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <FileText className="w-3 h-3" />
-                              <span className="truncate max-w-[100px]">{item.client?.name || 'Sin cliente'}</span>
-                            </div>
-                            
-                            {item.deadline && (
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {formatDate(item.deadline)}
-                              </div>
-                            )}
-                          </div>
-
-                          {!item.is_ambassador_content && item.creator_payment > 0 && (
-                            <div className="mt-2 pt-2 border-t flex items-center gap-1 text-sm text-success">
-                              <DollarSign className="w-3 h-3" />
-                              ${item.creator_payment.toLocaleString()}
-                            </div>
-                          )}
-
-                          {column.status !== 'approved' && column.status !== 'paid' && column.status !== 'delivered' && (
-                            <Button 
-                              size="sm" 
-                              className="w-full mt-3 text-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleMoveToNext(item);
-                              }}
-                            >
-                              Siguiente paso
-                              <ArrowRight className="w-3 h-3 ml-1" />
-                            </Button>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-
-                    {getColumnContent(column.status).length === 0 && (
-                      <div className="border-2 border-dashed rounded-lg p-6 text-center text-muted-foreground text-sm">
-                        Sin contenido
-                      </div>
+          <div className="space-y-2">
+            {content.slice(0, 5).map(item => (
+              <Card key={item.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedContent(item)}>
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                    {item.thumbnail_url ? (
+                      <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
+                    ) : (
+                      <Play className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
-                </div>
-              ))}
-            </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">{item.client?.name || 'Sin cliente'}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {item.is_ambassador_content && (
+                      <Star className="w-3 h-3 text-primary fill-primary" />
+                    )}
+                    <Badge className={`text-xs ${STATUS_COLORS[item.status]}`} variant="secondary">
+                      {STATUS_LABELS[item.status]}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {content.length === 0 && (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Video className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h4 className="font-semibold mb-2">Sin proyectos asignados</h4>
+                  <p className="text-sm text-muted-foreground">Cuando te asignen proyectos aparecerán aquí</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
       {/* Content Detail Dialog */}
       <ContentDetailDialog
