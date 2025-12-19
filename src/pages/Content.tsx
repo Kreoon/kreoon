@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Filter, Plus, Grid, List, Play, Eye, Heart, Share2, ExternalLink } from "lucide-react";
+import { Search, Plus, Grid, List, Play, Eye, Heart, Share2, ExternalLink, X, Volume2, VolumeX, Pause } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -38,6 +38,7 @@ const Content = () => {
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<ContentItem | null>(null);
 
   useEffect(() => {
     fetchContent();
@@ -173,7 +174,6 @@ const Content = () => {
     if (thumbnail) return thumbnail;
     if (!url) return null;
     
-    // YouTube thumbnail
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)?.[1];
       if (videoId) return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
@@ -223,7 +223,7 @@ const Content = () => {
                         onChange={(e) => setNewVideoUrl(e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Soporta: YouTube, TikTok, Instagram, o URL directa de video (.mp4)
+                        Soporta: YouTube, TikTok, Instagram, Google Drive, o URL directa de video (.mp4)
                       </p>
                     </div>
                     <div className="flex justify-end gap-2 pt-4">
@@ -331,6 +331,7 @@ const Content = () => {
                   item={item} 
                   isAdmin={isAdmin}
                   onTogglePublish={togglePublish}
+                  onPlay={() => setSelectedVideo(item)}
                   getThumbnail={getThumbnail}
                   formatCount={formatCount}
                 />
@@ -344,6 +345,7 @@ const Content = () => {
                   item={item} 
                   isAdmin={isAdmin}
                   onTogglePublish={togglePublish}
+                  onPlay={() => setSelectedVideo(item)}
                   getThumbnail={getThumbnail}
                   formatCount={formatCount}
                 />
@@ -351,6 +353,17 @@ const Content = () => {
             </div>
           )}
         </div>
+
+        {/* Video Player Modal */}
+        {selectedVideo && (
+          <VideoPlayerModal 
+            video={selectedVideo} 
+            onClose={() => setSelectedVideo(null)}
+            isAdmin={isAdmin}
+            onTogglePublish={togglePublish}
+            formatCount={formatCount}
+          />
+        )}
       </div>
     </MainLayout>
   );
@@ -360,17 +373,21 @@ interface VideoCardProps {
   item: ContentItem;
   isAdmin: boolean;
   onTogglePublish: (id: string, currentStatus: boolean) => void;
+  onPlay: () => void;
   getThumbnail: (url: string | null, thumbnail: string | null) => string | null;
   formatCount: (count: number) => string;
 }
 
-function VideoCard({ item, isAdmin, onTogglePublish, getThumbnail, formatCount }: VideoCardProps) {
+function VideoCard({ item, isAdmin, onTogglePublish, onPlay, getThumbnail, formatCount }: VideoCardProps) {
   const thumbnail = getThumbnail(item.video_url, item.thumbnail_url);
 
   return (
     <div className="group relative rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition-all">
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-muted">
+      <div 
+        className="relative aspect-video bg-muted cursor-pointer"
+        onClick={onPlay}
+      >
         {thumbnail ? (
           <img 
             src={thumbnail} 
@@ -383,25 +400,11 @@ function VideoCard({ item, isAdmin, onTogglePublish, getThumbnail, formatCount }
           </div>
         )}
         
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-          {item.video_url && (
-            <a 
-              href={item.video_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition"
-            >
-              <ExternalLink className="h-5 w-5 text-white" />
-            </a>
-          )}
-          <a 
-            href={`/portfolio?v=${item.id}`}
-            target="_blank"
-            className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition"
-          >
-            <Share2 className="h-5 w-5 text-white" />
-          </a>
+        {/* Play overlay */}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm">
+            <Play className="h-8 w-8 text-white" fill="white" />
+          </div>
         </div>
 
         {/* Published Badge */}
@@ -450,13 +453,16 @@ function VideoCard({ item, isAdmin, onTogglePublish, getThumbnail, formatCount }
   );
 }
 
-function VideoListItem({ item, isAdmin, onTogglePublish, getThumbnail, formatCount }: VideoCardProps) {
+function VideoListItem({ item, isAdmin, onTogglePublish, onPlay, getThumbnail, formatCount }: VideoCardProps) {
   const thumbnail = getThumbnail(item.video_url, item.thumbnail_url);
 
   return (
     <div className="flex items-center gap-4 p-3 rounded-xl border border-border bg-card hover:border-primary/50 transition-all">
       {/* Thumbnail */}
-      <div className="relative w-32 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+      <div 
+        className="relative w-32 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0 cursor-pointer group"
+        onClick={onPlay}
+      >
         {thumbnail ? (
           <img 
             src={thumbnail} 
@@ -468,6 +474,9 @@ function VideoListItem({ item, isAdmin, onTogglePublish, getThumbnail, formatCou
             <Play className="h-6 w-6 text-primary/50" />
           </div>
         )}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <Play className="h-6 w-6 text-white" fill="white" />
+        </div>
       </div>
 
       {/* Info */}
@@ -500,6 +509,9 @@ function VideoListItem({ item, isAdmin, onTogglePublish, getThumbnail, formatCou
 
       {/* Actions */}
       <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" onClick={onPlay}>
+          <Play className="h-4 w-4" />
+        </Button>
         {item.video_url && (
           <Button variant="ghost" size="icon" asChild>
             <a href={item.video_url} target="_blank" rel="noopener noreferrer">
@@ -514,6 +526,183 @@ function VideoListItem({ item, isAdmin, onTogglePublish, getThumbnail, formatCou
             onCheckedChange={() => onTogglePublish(item.id, item.is_published)}
           />
         )}
+      </div>
+    </div>
+  );
+}
+
+interface VideoPlayerModalProps {
+  video: ContentItem;
+  onClose: () => void;
+  isAdmin: boolean;
+  onTogglePublish: (id: string, currentStatus: boolean) => void;
+  formatCount: (count: number) => string;
+}
+
+function VideoPlayerModal({ video, onClose, isAdmin, onTogglePublish, formatCount }: VideoPlayerModalProps) {
+  const [isMuted, setIsMuted] = useState(false);
+
+  // Get embed URL or direct video URL
+  const getEmbedContent = () => {
+    const url = video.video_url;
+    if (!url) return null;
+
+    // Direct video files
+    if (url.match(/\.(mp4|webm|ogg)$/i)) {
+      return { type: 'video', src: url };
+    }
+
+    // YouTube
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      let embedUrl = url;
+      if (url.includes('/shorts/')) {
+        embedUrl = url.replace('/shorts/', '/embed/');
+      } else if (url.includes('watch?v=')) {
+        embedUrl = url.replace('watch?v=', 'embed/');
+      } else if (url.includes('youtu.be/')) {
+        embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
+      }
+      return { type: 'iframe', src: embedUrl + '?autoplay=1' };
+    }
+
+    // TikTok
+    if (url.includes('tiktok.com')) {
+      const videoId = url.match(/video\/(\d+)/)?.[1];
+      if (videoId) {
+        return { type: 'iframe', src: `https://www.tiktok.com/embed/v2/${videoId}` };
+      }
+    }
+
+    // Instagram
+    if (url.includes('instagram.com')) {
+      let cleanUrl = url.split('?')[0].replace(/\/$/, '');
+      return { type: 'iframe', src: cleanUrl + '/embed/captioned' };
+    }
+
+    // Google Drive
+    if (url.includes('drive.google.com')) {
+      const fileId = url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
+      if (fileId) {
+        return { type: 'iframe', src: `https://drive.google.com/file/d/${fileId}/preview` };
+      }
+    }
+
+    // Fallback - try to embed as iframe
+    return { type: 'link', src: url };
+  };
+
+  const embedContent = getEmbedContent();
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-4xl bg-background rounded-xl overflow-hidden shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <div>
+            <h3 className="font-semibold text-foreground">{video.title}</h3>
+            <p className="text-sm text-muted-foreground">{video.client?.name || 'Sin cliente'}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Stats */}
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Eye className="h-4 w-4" />
+                {formatCount(video.views_count)}
+              </span>
+              <span className="flex items-center gap-1">
+                <Heart className="h-4 w-4" />
+                {formatCount(video.likes_count)}
+              </span>
+            </div>
+            
+            {/* Publish toggle */}
+            {isAdmin && (
+              <div className="flex items-center gap-2 border-l pl-4 border-border">
+                <span className="text-sm text-muted-foreground">Publicar</span>
+                <Switch
+                  checked={video.is_published}
+                  onCheckedChange={() => onTogglePublish(video.id, video.is_published)}
+                />
+              </div>
+            )}
+
+            {/* External link */}
+            {video.video_url && (
+              <Button variant="ghost" size="icon" asChild>
+                <a href={video.video_url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            )}
+            
+            {/* Close button */}
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Video Player */}
+        <div className="relative aspect-video bg-black">
+          {embedContent?.type === 'video' ? (
+            <video
+              src={embedContent.src}
+              className="w-full h-full object-contain"
+              controls
+              autoPlay
+              muted={isMuted}
+            />
+          ) : embedContent?.type === 'iframe' ? (
+            <iframe
+              src={embedContent.src}
+              className="w-full h-full"
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            />
+          ) : embedContent?.type === 'link' ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <a 
+                href={embedContent.src}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-primary hover:underline"
+              >
+                <ExternalLink className="h-6 w-6" />
+                Abrir video en nueva pestaña
+              </a>
+            </div>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              No se puede reproducir este video
+            </div>
+          )}
+        </div>
+
+        {/* Footer with info */}
+        <div className="p-4 border-t border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Badge variant={video.is_published ? "default" : "secondary"}>
+              {video.is_published ? 'Publicado en Portafolio' : 'Privado'}
+            </Badge>
+            {video.creator?.full_name && (
+              <span className="text-sm text-muted-foreground">
+                Creado por {video.creator.full_name}
+              </span>
+            )}
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <a href={`/portfolio?v=${video.id}`} target="_blank">
+              <Share2 className="h-4 w-4 mr-2" />
+              Ver en Portafolio
+            </a>
+          </Button>
+        </div>
       </div>
     </div>
   );
