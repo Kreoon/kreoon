@@ -345,56 +345,73 @@ const Index = () => {
       <div className="min-h-screen">
         {/* Header */}
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex h-16 items-center justify-between px-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Dashboard</h1>
-              <p className="text-sm text-muted-foreground">
+          <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
+            <div className="min-w-0 flex-shrink">
+              <h1 className="text-lg md:text-xl font-bold text-foreground truncate">Dashboard</h1>
+              <p className="text-xs md:text-sm text-muted-foreground truncate hidden sm:block">
                 Bienvenido, {profile?.full_name || 'Usuario'}
               </p>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="relative">
+            <div className="flex items-center gap-2 md:gap-3">
+              {/* Search - hidden on mobile, shown on tablet+ */}
+              <div className="relative hidden sm:block">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input 
                   type="text"
                   placeholder="Buscar contenido..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-10 w-64 rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="h-9 md:h-10 w-40 md:w-64 rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
               
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="relative h-9 w-9">
+                <Bell className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
               
               {isAdmin && (
-                <Button variant="glow" className="gap-2" onClick={() => setShowCreateDialog(true)}>
+                <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm" onClick={() => setShowCreateDialog(true)}>
                   <Plus className="h-4 w-4" />
-                  Nuevo Proyecto
+                  <span className="hidden sm:inline">Nuevo Proyecto</span>
+                  <span className="sm:hidden">Nuevo</span>
                 </Button>
               )}
             </div>
           </div>
 
+          {/* Mobile search */}
+          <div className="px-4 pb-3 sm:hidden">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input 
+                type="text"
+                placeholder="Buscar contenido..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-9 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+
           {/* Filtros para admin */}
           {isAdmin && (
-            <div className="flex flex-wrap items-center gap-3 px-6 pb-4">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 px-4 md:px-6 pb-4 overflow-x-auto">
+              <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               
               {/* Filtro Fecha Inicial */}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
+                    size="sm"
                     className={cn(
-                      "w-[180px] justify-start text-left font-normal",
+                      "w-[140px] md:w-[180px] justify-start text-left font-normal text-xs md:text-sm",
                       !startDateFilter && "text-muted-foreground"
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDateFilter ? format(startDateFilter, "dd/MM/yyyy", { locale: es }) : "Fecha inicial"}
+                    <CalendarIcon className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+                    {startDateFilter ? format(startDateFilter, "dd/MM/yy", { locale: es }) : "Fecha inicial"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -408,8 +425,8 @@ const Index = () => {
                 </PopoverContent>
               </Popover>
               {startDateFilter && (
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setStartDateFilter(undefined)}>
-                  <X className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0" onClick={() => setStartDateFilter(undefined)}>
+                  <X className="h-3 w-3 md:h-4 md:w-4" />
                 </Button>
               )}
 
@@ -418,13 +435,14 @@ const Index = () => {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
+                    size="sm"
                     className={cn(
-                      "w-[180px] justify-start text-left font-normal",
+                      "w-[140px] md:w-[180px] justify-start text-left font-normal text-xs md:text-sm",
                       !deadlineFilter && "text-muted-foreground"
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deadlineFilter ? format(deadlineFilter, "dd/MM/yyyy", { locale: es }) : "Fecha entrega"}
+                    <CalendarIcon className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+                    {deadlineFilter ? format(deadlineFilter, "dd/MM/yy", { locale: es }) : "Fecha entrega"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -438,16 +456,16 @@ const Index = () => {
                 </PopoverContent>
               </Popover>
               {deadlineFilter && (
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeadlineFilter(undefined)}>
-                  <X className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0" onClick={() => setDeadlineFilter(undefined)}>
+                  <X className="h-3 w-3 md:h-4 md:w-4" />
                 </Button>
               )}
 
-              <div className="h-6 w-px bg-border" />
+              <div className="h-6 w-px bg-border hidden md:block" />
 
               <Select value={filterCreatorId} onValueChange={setFilterCreatorId}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Todos los creadores" />
+                <SelectTrigger className="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm">
+                  <SelectValue placeholder="Creadores" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los creadores</SelectItem>
@@ -458,8 +476,8 @@ const Index = () => {
               </Select>
 
               <Select value={filterEditorId} onValueChange={setFilterEditorId}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Todos los editores" />
+                <SelectTrigger className="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm">
+                  <SelectValue placeholder="Editores" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los editores</SelectItem>
@@ -470,8 +488,8 @@ const Index = () => {
               </Select>
 
               <Select value={filterClientId} onValueChange={setFilterClientId}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Todos los clientes" />
+                <SelectTrigger className="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm">
+                  <SelectValue placeholder="Clientes" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los clientes</SelectItem>
@@ -484,42 +502,42 @@ const Index = () => {
           )}
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <StatsCard 
               title="Contenido Activo" 
               value={totalActive} 
-              icon={<Video className="h-6 w-6" />}
+              icon={<Video className="h-5 w-5 md:h-6 md:w-6" />}
             />
             <StatsCard 
               title="En Proceso" 
               value={inProgress} 
-              icon={<Clock className="h-6 w-6" />}
+              icon={<Clock className="h-5 w-5 md:h-6 md:w-6" />}
             />
             <StatsCard 
               title="Pendientes" 
               value={pending} 
-              icon={<Users className="h-6 w-6" />}
+              icon={<Users className="h-5 w-5 md:h-6 md:w-6" />}
             />
             <StatsCard 
               title="Completados" 
               value={completed} 
-              icon={<CheckCircle className="h-6 w-6" />}
+              icon={<CheckCircle className="h-5 w-5 md:h-6 md:w-6" />}
             />
           </div>
 
           {/* Main Content Area */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
             {/* Kanban Board */}
             <div className="xl:col-span-3">
-              <div className="rounded-xl border border-border bg-card p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-card-foreground">Tablero de Contenido</h2>
-                  <Badge variant="outline">{filteredContent.length} items</Badge>
+              <div className="rounded-xl border border-border bg-card p-3 md:p-4">
+                <div className="flex items-center justify-between mb-3 md:mb-4">
+                  <h2 className="text-base md:text-lg font-semibold text-card-foreground">Tablero de Contenido</h2>
+                  <Badge variant="outline" className="text-xs">{filteredContent.length} items</Badge>
                 </div>
                 
-                <div className="flex gap-4 overflow-x-auto pb-2">
+                <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0">
                   {visibleColumns.map(column => {
                     const columnContent = getContentByStatus(column.status);
                     const isCurrentDropTarget = dropTarget === column.status;
@@ -541,7 +559,7 @@ const Index = () => {
                       >
                         <div 
                           onDragEnter={() => handleDragEnter(column.status)}
-                          className="min-h-[150px]"
+                          className="min-h-[120px] md:min-h-[150px]"
                         >
                           {columnContent.map(item => (
                             <DraggableContentCard
@@ -553,7 +571,7 @@ const Index = () => {
                             />
                           ))}
                           {columnContent.length === 0 && (
-                            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
+                            <div className="border-2 border-dashed border-border rounded-lg p-4 md:p-8 text-center text-muted-foreground text-xs md:text-sm">
                               Sin contenido
                             </div>
                           )}
@@ -565,8 +583,8 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Sidebar Widgets */}
-            <div className="space-y-6">
+            {/* Sidebar Widgets - Stack on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4 md:gap-6">
               <TopCreatorsReal />
               <RecentActivityReal />
             </div>

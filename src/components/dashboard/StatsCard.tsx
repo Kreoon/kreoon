@@ -18,20 +18,20 @@ export function StatsCard({ title, value, icon, trend, trendLabel, className }: 
   return (
     <div 
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition-all duration-300 hover:shadow-lg hover:border-primary/20",
+        "group relative overflow-hidden rounded-xl border border-border bg-card p-4 md:p-6 transition-all duration-300 hover:shadow-lg hover:border-primary/20",
         className
       )}
     >
       <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-3xl font-bold tracking-tight text-card-foreground">{value}</p>
+        <div className="space-y-1 md:space-y-2">
+          <p className="text-xs md:text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="text-2xl md:text-3xl font-bold tracking-tight text-card-foreground">{value}</p>
           {trend !== undefined && (
             <div className="flex items-center gap-1">
-              {isPositive && <TrendingUp className="h-4 w-4 text-success" />}
-              {isNegative && <TrendingDown className="h-4 w-4 text-destructive" />}
+              {isPositive && <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-success" />}
+              {isNegative && <TrendingDown className="h-3 w-3 md:h-4 md:w-4 text-destructive" />}
               <span className={cn(
-                "text-sm font-medium",
+                "text-xs md:text-sm font-medium",
                 isPositive && "text-success",
                 isNegative && "text-destructive",
                 !isPositive && !isNegative && "text-muted-foreground"
@@ -39,12 +39,12 @@ export function StatsCard({ title, value, icon, trend, trendLabel, className }: 
                 {isPositive && "+"}{trend}%
               </span>
               {trendLabel && (
-                <span className="text-sm text-muted-foreground">{trendLabel}</span>
+                <span className="text-xs md:text-sm text-muted-foreground">{trendLabel}</span>
               )}
             </div>
           )}
         </div>
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
+        <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
           {icon}
         </div>
       </div>

@@ -148,48 +148,49 @@ const Creators = () => {
     <MainLayout>
       <div className="min-h-screen">
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex h-16 items-center justify-between px-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Creadores & Editores</h1>
-              <p className="text-sm text-muted-foreground">Gestiona tu equipo de contenido</p>
+          <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
+            <div className="min-w-0">
+              <h1 className="text-lg md:text-xl font-bold text-foreground">Creadores & Editores</h1>
+              <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Gestiona tu equipo de contenido</p>
             </div>
             
             {isAdmin && (
-              <Button variant="glow" className="gap-2">
+              <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0">
                 <Plus className="h-4 w-4" />
-                Agregar Miembro
+                <span className="hidden sm:inline">Agregar Miembro</span>
+                <span className="sm:hidden">Agregar</span>
               </Button>
             )}
           </div>
         </header>
 
-        <div className="p-6">
-          <div className="mb-6">
-            <div className="relative max-w-md">
+        <div className="p-4 md:p-6">
+          <div className="mb-4 md:mb-6">
+            <div className="relative w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input 
                 type="text"
                 placeholder="Buscar creadores o editores..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-9 md:h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
               {[1, 2, 3, 4].map(i => (
-                <Skeleton key={i} className="h-48 rounded-xl" />
+                <Skeleton key={i} className="h-40 md:h-48 rounded-xl" />
               ))}
             </div>
           ) : filteredCreators.length === 0 ? (
-            <div className="text-center py-12">
-              <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No hay creadores o editores registrados</p>
+            <div className="text-center py-8 md:py-12">
+              <User className="h-10 w-10 md:h-12 md:w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-sm md:text-base text-muted-foreground">No hay creadores o editores registrados</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
               {filteredCreators.map((creator) => (
                 <div 
                   key={creator.id}

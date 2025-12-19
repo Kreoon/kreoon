@@ -1,5 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
+import { MobileNav } from "./MobileNav";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -10,8 +11,27 @@ export function MainLayout({ children }: MainLayoutProps) {
   
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
-      <main className={`transition-all duration-300 ${sidebarCollapsed ? 'pl-20' : 'pl-64'}`}>
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
+      </div>
+      
+      {/* Mobile Header */}
+      <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-4 md:hidden">
+        <MobileNav />
+        <div className="flex-1 flex justify-center">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
+              <span className="text-sm font-bold text-primary-foreground">U</span>
+            </div>
+            <span className="text-sm font-bold">UGC Colombia</span>
+          </div>
+        </div>
+        <div className="w-10" /> {/* Spacer for symmetry */}
+      </header>
+      
+      {/* Main Content */}
+      <main className={`transition-all duration-300 md:pl-64 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
         <div className="min-h-screen">
           {children}
         </div>
