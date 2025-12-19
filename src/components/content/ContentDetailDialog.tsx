@@ -551,7 +551,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             {/* Top Row: Status & Actions */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                {(isAdmin || isClient || isEditor) ? (
+                {(isAdmin || isClient) ? (
                   <Select 
                     value={currentStatus || content.status} 
                     onValueChange={(v) => handleStatusChange(v as ContentStatus)}
