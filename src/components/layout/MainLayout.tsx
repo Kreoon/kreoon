@@ -29,7 +29,7 @@ export function MainLayout({
       </header>
       
       {/* Main Content */}
-      <main className="">
+      <main className={`transition-all duration-300 ease-in-out ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
         <div className="min-h-screen">
           {children}
         </div>
