@@ -48,6 +48,24 @@ export interface Client {
   updated_at: string;
 }
 
+export interface Product {
+  id: string;
+  client_id: string;
+  name: string;
+  description: string | null;
+  strategy: string | null;
+  market_research: string | null;
+  ideal_avatar: string | null;
+  sales_angles: string[] | null;
+  brief_url: string | null;
+  onboarding_url: string | null;
+  research_url: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  // Relations
+  client?: Client;
+}
+
 export interface Content {
   id: string;
   title: string;
@@ -71,8 +89,10 @@ export interface Content {
   paid_at: string | null;
   created_at: string;
   updated_at: string;
-  // Nuevos campos
+  // Campos adicionales
   product: string | null;
+  product_id: string | null;
+  sales_angle: string | null;
   campaign_week: string | null;
   strategist_id: string | null;
   start_date: string | null;
@@ -86,10 +106,11 @@ export interface Content {
   creator_paid: boolean;
   editor_paid: boolean;
   // Relaciones
-  client?: Client;
-  creator?: Profile;
-  editor?: Profile;
-  strategist?: Profile;
+  client?: Partial<Client>;
+  creator?: Partial<Profile>;
+  editor?: Partial<Profile>;
+  strategist?: Partial<Profile>;
+  product_rel?: Partial<Product>;
 }
 
 export interface ContentComment {

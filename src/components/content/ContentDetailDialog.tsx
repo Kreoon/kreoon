@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RichTextEditor, RichTextViewer } from "@/components/ui/rich-text-editor";
+import { ProductSelector } from "@/components/products/ProductSelector";
+import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
+import { ScriptGenerator } from "@/components/content/ScriptGenerator";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +21,7 @@ import { es } from "date-fns/locale";
 import { 
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
-  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Upload, File, X
+  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Upload, File, Package
 } from "lucide-react";
 import {
   AlertDialog,
@@ -59,6 +62,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   const [formData, setFormData] = useState({
     title: "",
     product: "",
+    product_id: "",
+    sales_angle: "",
     client_id: "",
     creator_id: "",
     editor_id: "",
@@ -79,6 +84,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     invoiced: false
   });
 
+  // Product data for script generation
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [showProductDialog, setShowProductDialog] = useState(false);
+
   // Options lists
   const [clients, setClients] = useState<SelectOption[]>([]);
   const [creators, setCreators] = useState<SelectOption[]>([]);
@@ -90,6 +99,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       setFormData({
         title: content.title || "",
         product: content.product || "",
+        product_id: content.product_id || "",
+        sales_angle: content.sales_angle || "",
         client_id: content.client_id || "",
         creator_id: content.creator_id || "",
         editor_id: content.editor_id || "",
@@ -112,8 +123,29 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       setCurrentStatus(content.status);
       fetchOptions();
       fetchComments();
+      if (content.product_id) {
+        fetchProduct(content.product_id);
+      }
     }
   }, [content]);
+
+  const fetchProduct = async (productId: string) => {
+    const { data } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', productId)
+      .maybeSingle();
+    setSelectedProduct(data);
+  };
+
+  const handleProductChange = async (productId: string) => {
+    setFormData({ ...formData, product_id: productId });
+    if (productId) {
+      await fetchProduct(productId);
+    } else {
+      setSelectedProduct(null);
+    }
+  };
 
   const fetchComments = async () => {
     if (!content) return;
@@ -242,6 +274,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       const updates: any = {
         title: formData.title,
         product: formData.product || null,
+        product_id: formData.product_id || null,
+        sales_angle: formData.sales_angle || null,
         client_id: formData.client_id || null,
         creator_id: formData.creator_id || null,
         editor_id: formData.editor_id || null,
@@ -932,7 +966,82 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
             </div>
 
-            {/* Sección 2: Guión / Estrategia - Ancho completo con editor de texto enriquecido */}
+            {/* Sección 2: Producto y Generador de Guión */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6 border-t">
+              {/* Producto Asociado */}
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Package className="h-4 w-4" /> Producto Asociado
+                </h4>
+                {editMode ? (
+                  <div className="space-y-3">
+                    <ProductSelector
+                      clientId={formData.client_id}
+                      value={formData.product_id}
+                      onChange={handleProductChange}
+                      onCreateNew={() => setShowProductDialog(true)}
+                    />
+                    {selectedProduct && (
+                      <div className="p-3 rounded-lg bg-muted/50 space-y-1">
+                        <p className="font-medium text-sm">{selectedProduct.name}</p>
+                        {selectedProduct.sales_angles?.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {selectedProduct.sales_angles.map((angle: string, idx: number) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {angle}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {selectedProduct?.sales_angles?.length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground text-xs">Ángulo de Venta para este proyecto</Label>
+                        <Select 
+                          value={formData.sales_angle} 
+                          onValueChange={(v) => setFormData({ ...formData, sales_angle: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar ángulo..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {selectedProduct.sales_angles.map((angle: string, idx: number) => (
+                              <SelectItem key={idx} value={angle}>{angle}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                ) : selectedProduct ? (
+                  <div className="p-4 rounded-lg border bg-muted/50">
+                    <p className="font-medium">{selectedProduct.name}</p>
+                    {formData.sales_angle && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Ángulo: <Badge variant="secondary">{formData.sales_angle}</Badge>
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sin producto asociado</p>
+                )}
+              </div>
+
+              {/* Generador de Guión con n8n */}
+              {!isClient && (
+                <ScriptGenerator
+                  product={selectedProduct}
+                  onScriptGenerated={(script) => {
+                    setFormData({ ...formData, script });
+                    setEditMode(true);
+                    toast({ title: "Guión generado", description: "Revisa y edita el guión generado" });
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Sección 3: Guión / Estrategia - Ancho completo con editor de texto enriquecido */}
             <div className="space-y-3 pt-6 border-t">
               <h4 className="font-medium flex items-center gap-2">
                 <FileText className="h-4 w-4" /> Guión / Estrategia
@@ -1135,6 +1244,17 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
           </div>
         )}
       </DialogContent>
+
+      {/* Product Dialog */}
+      <ProductDetailDialog
+        product={null}
+        clientId={formData.client_id}
+        open={showProductDialog}
+        onOpenChange={setShowProductDialog}
+        onSave={() => {
+          // Refresh products after creating new one
+        }}
+      />
     </Dialog>
   );
 }
