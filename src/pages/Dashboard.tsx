@@ -539,7 +539,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-bold text-foreground">Pagos Pendientes</h2>
-                <p className="text-sm text-muted-foreground">Acciones rápidas de pago</p>
+                <p className="text-sm text-muted-foreground">Resumen de pagos por procesar</p>
               </div>
               <Banknote className="h-8 w-8 text-warning" />
             </div>
@@ -565,78 +565,49 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <Button
-                onClick={handleBulkPayCreators}
-                disabled={unpaidCreatorContent.length === 0}
-                className="flex-1 h-12 bg-gradient-to-r from-warning to-warning/80 hover:from-warning/90 hover:to-warning/70 text-warning-foreground font-semibold rounded-xl"
-              >
-                <CheckCircle className="h-5 w-5 mr-2" />
-                Pagar Creadores ({unpaidCreatorContent.length})
-              </Button>
-              <Button
-                onClick={handleBulkPayEditors}
-                disabled={unpaidEditorContent.length === 0}
-                className="flex-1 h-12 bg-gradient-to-r from-info to-info/80 hover:from-info/90 hover:to-info/70 text-info-foreground font-semibold rounded-xl"
-              >
-                <CheckCircle className="h-5 w-5 mr-2" />
-                Pagar Editores ({unpaidEditorContent.length})
-              </Button>
-            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              Los pagos individuales se realizan desde las tarjetas en el Tablero
+            </p>
           </div>
 
-          {/* Individual Payments List */}
+          {/* Financial Overview */}
           <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-foreground">Pagos Individuales</h2>
-                <p className="text-sm text-muted-foreground">Marcar pagos por contenido</p>
+                <h2 className="text-xl font-bold text-foreground">Resumen Financiero</h2>
+                <p className="text-sm text-muted-foreground">Balance general de pagos</p>
               </div>
-              <Receipt className="h-8 w-8 text-success" />
+              <BarChart3 className="h-8 w-8 text-primary" />
             </div>
 
-            <div className="space-y-3 max-h-[300px] overflow-y-auto">
-              {content.filter(c => c.status === 'approved' && (!c.creator_paid || !c.editor_paid)).slice(0, 10).map(item => (
-                <div key={item.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.client?.name || 'Sin cliente'}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    {!item.creator_paid && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleMarkCreatorPaid(item)}
-                        className="h-8 px-3 text-xs border-warning/50 text-warning hover:bg-warning/10"
-                      >
-                        Creador ${item.creator_payment}
-                      </Button>
-                    )}
-                    {!item.editor_paid && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleMarkEditorPaid(item)}
-                        className="h-8 px-3 text-xs border-info/50 text-info hover:bg-info/10"
-                      >
-                        Editor ${item.editor_payment}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {content.filter(c => c.status === 'approved' && (!c.creator_paid || !c.editor_paid)).length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-2 text-success" />
-                  <p>Todos los pagos están al día</p>
-                </div>
-              )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20">
+                <p className="text-sm text-muted-foreground mb-1">Total Facturado</p>
+                <p className="text-2xl font-bold text-primary">
+                  ${clientsBilling.totalBilled.toLocaleString()}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20">
+                <p className="text-sm text-muted-foreground mb-1">Pendiente</p>
+                <p className="text-2xl font-bold text-warning">
+                  ${(pendingCreatorPayment + pendingEditorPayment).toLocaleString()}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-success/10 border border-success/20">
+                <p className="text-sm text-muted-foreground mb-1">Total Pagado</p>
+                <p className="text-2xl font-bold text-success">
+                  ${clientsBilling.totalPaid.toLocaleString()}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-info/10 border border-info/20">
+                <p className="text-sm text-muted-foreground mb-1">Contenidos Pagados</p>
+                <p className="text-2xl font-bold text-info">
+                  {paidContent.length}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Financial Overview */}
         <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-6">
             <div>

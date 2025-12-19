@@ -460,6 +460,7 @@ export default function ContentBoard() {
                         onDragStart={handleDragStart}
                         onClick={setSelectedContent}
                         isDragging={draggingContent?.id === item.id}
+                        onPaymentUpdate={refetch}
                       />
                     ))}
                     {columnContent.length === 0 && (
