@@ -236,31 +236,31 @@ export function useChat() {
         }
       }
 
-      // Create new conversation
-      const { data: newConv, error: convError } = await supabase
+      // Use the security definer function to create conversation atomically
+      const { data: newConvId, error: rpcError } = await supabase
+        .rpc('create_chat_conversation', {
+          participant_ids: participantIds,
+          _name: isGroup ? name : null,
+          _is_group: isGroup
+        });
+
+      if (rpcError) throw rpcError;
+
+      // Fetch the newly created conversation
+      const { data: newConv, error: fetchError } = await supabase
         .from('chat_conversations')
-        .insert({
-          name: isGroup ? name : null,
-          is_group: isGroup,
-          created_by: user.id
-        })
-        .select()
+        .select('*')
+        .eq('id', newConvId)
         .single();
 
-      if (convError) throw convError;
-
-      // Add participants
-      const allParticipants = [user.id, ...participantIds];
-      const { error: partError } = await supabase
-        .from('chat_participants')
-        .insert(allParticipants.map(userId => ({
-          conversation_id: newConv.id,
-          user_id: userId
-        })));
-
-      if (partError) throw partError;
+      if (fetchError) throw fetchError;
 
       await fetchConversations();
+      
+      // Set the new conversation as active
+      const fullConv = conversations.find(c => c.id === newConvId) || newConv;
+      setActiveConversation(fullConv);
+      
       return newConv;
     } catch (error) {
       console.error('Error creating conversation:', error);

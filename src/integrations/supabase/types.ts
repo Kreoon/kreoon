@@ -837,6 +837,10 @@ export type Database = {
         Args: { _user1_id: string; _user2_id: string }
         Returns: boolean
       }
+      create_chat_conversation: {
+        Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
+        Returns: string
+      }
       get_best_available_editor: { Args: never; Returns: string }
       get_user_roles: {
         Args: { _user_id: string }
