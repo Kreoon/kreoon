@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, Filter, X } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, Filter, X, Home, User, MessageSquare, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface PublishedContent {
   id: string;
@@ -27,13 +30,16 @@ interface Client {
 }
 
 export default function Portfolio() {
-  const { roles } = useAuth();
+  const { user, roles, signOut } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = roles.includes('admin');
+  const isLoggedIn = !!user;
   const [content, setContent] = useState<PublishedContent[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -45,7 +51,20 @@ export default function Portfolio() {
   useEffect(() => {
     fetchPublishedContent();
     fetchClients();
-  }, [selectedClientId]);
+    if (user?.id) {
+      fetchUserProfile();
+    }
+  }, [selectedClientId, user?.id]);
+
+  const fetchUserProfile = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (data) setUserProfile(data);
+  };
 
   const fetchClients = async () => {
     try {
@@ -131,7 +150,11 @@ export default function Portfolio() {
     }
   };
 
-  const handleLike = async (contentId: string) => {
+  const handleLike = async (contentId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     try {
       const { data, error } = await supabase.rpc('toggle_content_like', {
         content_uuid: contentId,
@@ -178,7 +201,7 @@ export default function Portfolio() {
       if (navigator.share) {
         await navigator.share({
           title: item.title,
-          text: `Mira este video de ${item.client?.name || 'Content Studio'}`,
+          text: `Mira este video de ${item.client?.name || 'UGC Colombia'}`,
           url
         });
       } else {
@@ -208,13 +231,26 @@ export default function Portfolio() {
     return null;
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/portfolio');
+  };
+
+  const getDashboardRoute = () => {
+    if (roles.includes('admin')) return '/';
+    if (roles.includes('creator')) return '/creator-dashboard';
+    if (roles.includes('editor')) return '/editor-dashboard';
+    if (roles.includes('client')) return '/client-dashboard';
+    return '/portfolio';
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-black p-4">
+      <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black p-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="aspect-[9/16] rounded-xl bg-muted/20" />
+              <Skeleton key={i} className="aspect-[9/16] rounded-xl bg-white/10" />
             ))}
           </div>
         </div>
@@ -224,9 +260,9 @@ export default function Portfolio() {
 
   if (content.length === 0) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white">
+      <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black flex items-center justify-center text-white">
         <div className="text-center">
-          <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
+          <Play className="h-16 w-16 mx-auto mb-4 opacity-50 text-primary" />
           <h2 className="text-xl font-semibold mb-2">
             {selectedClientId ? 'No hay contenido para este cliente' : 'No hay contenido publicado'}
           </h2>
@@ -235,7 +271,7 @@ export default function Portfolio() {
             <Button 
               variant="outline" 
               onClick={() => setSelectedClientId(null)}
-              className="text-white border-white/30 hover:bg-white/10"
+              className="text-white border-primary/50 hover:bg-primary/20 hover:border-primary"
             >
               Ver todo el contenido
             </Button>
@@ -246,34 +282,158 @@ export default function Portfolio() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-black/95 backdrop-blur border-b border-white/10 px-4 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-white font-bold text-xl">Content Studio</h1>
-            <p className="text-white/60 text-sm">Portafolio</p>
+    <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black">
+      {/* Header with navigation */}
+      <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-xl border-b border-primary/20">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg glow-gold">
+              <span className="text-black font-bold text-lg">U</span>
+            </div>
+            <div>
+              <h1 className="text-white font-bold text-lg">UGC Colombia</h1>
+              <p className="text-primary text-xs">Portafolio</p>
+            </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowFilters(!showFilters)}
-            className="bg-white/10 hover:bg-white/20 text-white rounded-full h-10 w-10"
-          >
-            <Filter className="h-5 w-5" />
-          </Button>
+
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-2">
+            {isLoggedIn ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(getDashboardRoute())}
+                  className="text-white/70 hover:text-white hover:bg-white/10"
+                >
+                  <Home className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/settings')}
+                  className="text-white/70 hover:text-white hover:bg-white/10"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Perfil
+                </Button>
+                <div className="h-6 w-px bg-white/20 mx-2" />
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8 border-2 border-primary/50">
+                    <AvatarImage src={userProfile?.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                      {userProfile?.full_name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-white/80 text-sm">{userProfile?.full_name || 'Usuario'}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleLogout}
+                  className="text-white/50 hover:text-white hover:bg-white/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={() => navigate('/auth')}
+                className="bg-gradient-gold text-black font-semibold hover:opacity-90 glow-gold"
+              >
+                Iniciar Sesión
+              </Button>
+            )}
+          </nav>
+
+          {/* Mobile Nav */}
+          <div className="flex md:hidden items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowFilters(!showFilters)}
+              className="text-white hover:bg-white/10"
+            >
+              <Filter className="h-5 w-5" />
+            </Button>
+            
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="bg-black/95 border-primary/20 w-72">
+                <div className="flex flex-col h-full py-6">
+                  {isLoggedIn ? (
+                    <>
+                      <div className="flex items-center gap-3 mb-6 pb-6 border-b border-white/10">
+                        <Avatar className="h-12 w-12 border-2 border-primary/50">
+                          <AvatarImage src={userProfile?.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/20 text-primary">
+                            {userProfile?.full_name?.charAt(0) || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-white font-medium">{userProfile?.full_name || 'Usuario'}</p>
+                          <p className="text-primary text-xs capitalize">{roles[0] || 'Usuario'}</p>
+                        </div>
+                      </div>
+
+                      <nav className="flex-1 space-y-2">
+                        <button
+                          onClick={() => navigate(getDashboardRoute())}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/80 hover:bg-white/10 transition"
+                        >
+                          <Home className="h-5 w-5" />
+                          Dashboard
+                        </button>
+                        <button
+                          onClick={() => navigate('/settings')}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/80 hover:bg-white/10 transition"
+                        >
+                          <User className="h-5 w-5" />
+                          Mi Perfil
+                        </button>
+                      </nav>
+
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition mt-auto"
+                      >
+                        <LogOut className="h-5 w-5" />
+                        Cerrar Sesión
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center flex-1 gap-4">
+                      <p className="text-white/60 text-center">Inicia sesión para acceder a más funciones</p>
+                      <Button
+                        onClick={() => navigate('/auth')}
+                        className="w-full bg-gradient-gold text-black font-semibold"
+                      >
+                        Iniciar Sesión
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </header>
 
-      {/* Video Grid - 3 columns on desktop, 1 on mobile */}
+      {/* Video Grid */}
       <div className="max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {content.map((item) => (
             <EmbeddedVideoCard
               key={item.id}
               content={item}
               isAdmin={isAdmin}
-              onLike={() => handleLike(item.id)}
+              onLike={(e) => handleLike(item.id, e)}
               onView={() => handleView(item.id)}
               onShare={() => handleShare(item)}
               getThumbnail={getThumbnail}
@@ -285,9 +445,9 @@ export default function Portfolio() {
 
       {/* Client Filter Sidebar */}
       {showFilters && (
-        <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm" onClick={() => setShowFilters(false)}>
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" onClick={() => setShowFilters(false)}>
           <div 
-            className="absolute right-0 top-0 h-full w-80 bg-black/95 border-l border-white/10 p-4 overflow-y-auto"
+            className="absolute right-0 top-0 h-full w-80 bg-black/95 border-l border-primary/20 p-4 overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -306,10 +466,10 @@ export default function Portfolio() {
               <button
                 onClick={() => { setSelectedClientId(null); setShowFilters(false); }}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg transition ${
-                  !selectedClientId ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10'
+                  !selectedClientId ? 'bg-primary/20 text-primary border border-primary/30' : 'text-white/70 hover:bg-white/10'
                 }`}
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold">
+                <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center text-black font-bold">
                   ★
                 </div>
                 <span className="font-medium">Todos los clientes</span>
@@ -320,7 +480,7 @@ export default function Portfolio() {
                   key={client.id}
                   onClick={() => { setSelectedClientId(client.id); setShowFilters(false); }}
                   className={`w-full flex items-center gap-3 p-3 rounded-lg transition ${
-                    selectedClientId === client.id ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10'
+                    selectedClientId === client.id ? 'bg-primary/20 text-primary border border-primary/30' : 'text-white/70 hover:bg-white/10'
                   }`}
                 >
                   {client.logo_url ? (
@@ -330,7 +490,7 @@ export default function Portfolio() {
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center text-black font-bold">
                       {client.name.charAt(0)}
                     </div>
                   )}
@@ -346,11 +506,10 @@ export default function Portfolio() {
       {selectedClientId && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30">
           <Badge 
-            variant="secondary" 
-            className="bg-white/20 text-white border-none backdrop-blur-sm px-4 py-2 flex items-center gap-2"
+            className="bg-primary/90 text-black border-none backdrop-blur-sm px-4 py-2 flex items-center gap-2 font-medium shadow-lg glow-gold"
           >
             <span>Filtrando: {clients.find(c => c.id === selectedClientId)?.name}</span>
-            <button onClick={() => setSelectedClientId(null)} className="hover:text-white/80">
+            <button onClick={() => setSelectedClientId(null)} className="hover:opacity-70">
               <X className="h-4 w-4" />
             </button>
           </Badge>
@@ -363,7 +522,7 @@ export default function Portfolio() {
 interface EmbeddedVideoCardProps {
   content: PublishedContent;
   isAdmin: boolean;
-  onLike: () => void;
+  onLike: (e?: React.MouseEvent) => void;
   onView: () => void;
   onShare: () => void;
   getThumbnail: (url: string | null, thumbnail: string | null) => string | null;
@@ -386,7 +545,6 @@ function EmbeddedVideoCard({
   const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
   const thumbnail = getThumbnail(content.video_url, content.thumbnail_url);
 
-  // Track view after 3 seconds
   useEffect(() => {
     if (isPlaying && !viewTracked.current) {
       viewTimerRef.current = setTimeout(() => {
@@ -402,7 +560,6 @@ function EmbeddedVideoCard({
     };
   }, [isPlaying, onView]);
 
-  // Reset view tracking when video stops
   useEffect(() => {
     if (!isPlaying) {
       viewTracked.current = false;
@@ -412,17 +569,14 @@ function EmbeddedVideoCard({
     }
   }, [isPlaying]);
 
-  // Get embed URL - with restrictions for non-admins
   const getEmbedContent = () => {
     const url = content.video_url;
     if (!url) return null;
 
-    // Direct video files
     if (url.match(/\.(mp4|webm|ogg)$/i)) {
       return { type: 'video', src: url };
     }
 
-    // YouTube - hide branding and controls for non-admins
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       let embedUrl = url;
       if (url.includes('/shorts/')) {
@@ -438,7 +592,6 @@ function EmbeddedVideoCard({
       return { type: 'iframe', src: embedUrl + params };
     }
 
-    // TikTok
     if (url.includes('tiktok.com')) {
       const videoId = url.match(/video\/(\d+)/)?.[1];
       if (videoId) {
@@ -446,13 +599,11 @@ function EmbeddedVideoCard({
       }
     }
 
-    // Instagram
     if (url.includes('instagram.com')) {
       let cleanUrl = url.split('?')[0].replace(/\/$/, '');
       return { type: 'iframe', src: cleanUrl + '/embed/captioned' };
     }
 
-    // Google Drive
     if (url.includes('drive.google.com')) {
       const fileId = url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
       if (fileId) {
@@ -460,7 +611,6 @@ function EmbeddedVideoCard({
       }
     }
 
-    // Fallback - only for admins
     if (isAdmin) {
       return { type: 'link', src: url };
     }
@@ -482,8 +632,8 @@ function EmbeddedVideoCard({
   };
 
   return (
-    <div className="group relative rounded-xl overflow-hidden bg-gray-900 border border-white/10 hover:border-white/30 transition-all">
-      {/* Video Container - Vertical 9:16 */}
+    <div className="group relative rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 hover:border-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+      {/* Video Container */}
       <div className="relative aspect-[9/16] bg-black">
         {!isPlaying ? (
           <>
@@ -495,62 +645,59 @@ function EmbeddedVideoCard({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                <Play className="h-12 w-12 text-white/50" />
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-black">
+                <Play className="h-12 w-12 text-primary/50" />
               </div>
             )}
             
             {/* Play overlay */}
             <div 
-              className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/50 transition-colors"
+              className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-center justify-center cursor-pointer"
               onClick={handlePlay}
             >
-              <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors">
-                <Play className="h-10 w-10 text-white" fill="white" />
+              <div className="p-4 rounded-full bg-primary/90 backdrop-blur-sm hover:bg-primary transition-all duration-300 hover:scale-110 shadow-lg glow-gold">
+                <Play className="h-8 w-8 text-black" fill="black" />
               </div>
             </div>
 
-            {/* Stats */}
-            <div className="absolute bottom-2 left-2 flex items-center gap-3">
-              <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
-                <Eye className="h-3 w-3" />
-                {formatCount(content.views_count)}
+            {/* Stats - Always visible, clickable */}
+            <div className="absolute bottom-16 left-3 flex items-center gap-2 z-20">
+              <div className="flex items-center gap-1.5 text-white text-sm bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                <Eye className="h-4 w-4" />
+                <span className="font-medium">{formatCount(content.views_count)}</span>
               </div>
-              <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
-                <Heart className="h-3 w-3" />
-                {formatCount(content.likes_count)}
+              <div className="flex items-center gap-1.5 text-white text-sm bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                <Heart className="h-4 w-4" />
+                <span className="font-medium">{formatCount(content.likes_count)}</span>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="absolute bottom-2 right-2 flex flex-col gap-2">
+            {/* Action Buttons - Always visible */}
+            <div className="absolute bottom-16 right-3 flex flex-col gap-3 z-20">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLike();
-                }}
-                className={`p-2 rounded-full transition-colors ${
+                onClick={(e) => onLike(e)}
+                className={`p-3 rounded-full transition-all duration-200 shadow-lg active:scale-90 ${
                   content.is_liked 
-                    ? 'bg-red-500 text-white' 
-                    : 'bg-black/50 text-white hover:bg-red-500/80'
+                    ? 'bg-red-500 text-white scale-110' 
+                    : 'bg-black/60 backdrop-blur-sm text-white hover:bg-red-500/80 hover:scale-110'
                 }`}
               >
-                <Heart className="h-5 w-5" fill={content.is_liked ? "currentColor" : "none"} />
+                <Heart className="h-6 w-6" fill={content.is_liked ? "currentColor" : "none"} />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onShare();
                 }}
-                className="p-2 rounded-full bg-black/50 text-white hover:bg-white/20 transition-colors"
+                className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-black transition-all duration-200 shadow-lg active:scale-90"
               >
-                <Share2 className="h-5 w-5" />
+                <Share2 className="h-6 w-6" />
               </button>
             </div>
           </>
         ) : (
           <>
-            {/* Embedded Video Player */}
+            {/* Video Player */}
             {embedContent?.type === 'video' ? (
               <video
                 ref={videoRef}
@@ -571,7 +718,6 @@ function EmbeddedVideoCard({
                   allowFullScreen={isAdmin}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 />
-                {/* Block external links for non-admins */}
                 {!isAdmin && (
                   <div className="absolute inset-0 pointer-events-none" />
                 )}
@@ -582,20 +728,20 @@ function EmbeddedVideoCard({
               </div>
             )}
 
-            {/* Controls overlay */}
-            <div className="absolute top-2 right-2 flex gap-2">
+            {/* Controls */}
+            <div className="absolute top-3 right-3 flex gap-2 z-20">
               <button
                 onClick={handleStop}
-                className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                className="p-2.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
               >
-                <Pause className="h-4 w-4" />
+                <Pause className="h-5 w-5" />
               </button>
               {embedContent?.type === 'video' && (
                 <button
                   onClick={() => setIsMuted(!isMuted)}
-                  className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                  className="p-2.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
                 >
-                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </button>
               )}
             </div>
@@ -604,13 +750,13 @@ function EmbeddedVideoCard({
       </div>
 
       {/* Info */}
-      <div className="p-3 bg-gray-900">
-        <h3 className="font-medium text-sm text-white line-clamp-2 mb-1">
+      <div className="p-4 bg-neutral-900">
+        <h3 className="font-semibold text-sm text-white line-clamp-2 mb-2">
           {content.title}
         </h3>
-        <div className="flex items-center gap-2 text-xs text-white/60">
+        <div className="flex items-center gap-2 text-xs text-white/50">
           {content.client && (
-            <span>{content.client.name}</span>
+            <span className="text-primary">{content.client.name}</span>
           )}
           {content.creator && (
             <>

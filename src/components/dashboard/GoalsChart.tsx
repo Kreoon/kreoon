@@ -1,7 +1,5 @@
 import { useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
 interface GoalData {
   period_type: string;
@@ -25,16 +23,19 @@ interface GoalsChartProps {
   actuals: ActualData[];
   metric: 'revenue' | 'content' | 'clients';
   title: string;
+  startMonth?: number;
+  endMonth?: number;
 }
 
 const MONTHS_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-export function GoalsChart({ goals, actuals, metric, title }: GoalsChartProps) {
+export function GoalsChart({ goals, actuals, metric, title, startMonth = 1, endMonth = 12 }: GoalsChartProps) {
   const chartData = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const data = [];
     
-    for (let month = 1; month <= 12; month++) {
+    // Filter by month range
+    for (let month = startMonth; month <= endMonth; month++) {
       const goal = goals.find(g => g.period_type === 'month' && g.period_value === month && g.year === currentYear);
       const actual = actuals.find(a => a.month === month && a.year === currentYear);
       
@@ -61,7 +62,7 @@ export function GoalsChart({ goals, actuals, metric, title }: GoalsChartProps) {
     }
     
     return data;
-  }, [goals, actuals, metric]);
+  }, [goals, actuals, metric, startMonth, endMonth]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
