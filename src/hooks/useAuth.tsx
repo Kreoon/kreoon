@@ -32,57 +32,87 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [rolesLoaded, setRolesLoaded] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Reset rolesLoaded when user changes
-          setRolesLoaded(false);
-          setTimeout(() => {
-            fetchUserData(session.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-          setRoles([]);
-          setRolesLoaded(true);
-          setLoading(false);
-        }
-      }
-    );
+    let isMounted = true;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Mobile browsers can sometimes block storage/cookies and auth bootstrapping never resolves.
+    // This prevents an infinite spinner by timing out to the login screen.
+    const bootTimeout = window.setTimeout(() => {
+      if (!isMounted) return;
+      console.warn('[auth] bootstrap timeout');
+      setRolesLoaded(true);
+      setLoading(false);
+    }, 8000);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+
+      console.log('[auth] state change', event);
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
+        setRolesLoaded(false);
+        // Ensure the UI doesn't hang forever even if profile/roles calls fail.
         fetchUserData(session.user.id);
       } else {
+        setProfile(null);
+        setRoles([]);
         setRolesLoaded(true);
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!isMounted) return;
+        console.log('[auth] getSession resolved', !!session);
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          fetchUserData(session.user.id);
+        } else {
+          setRolesLoaded(true);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('[auth] getSession error', err);
+        if (!isMounted) return;
+        setRolesLoaded(true);
+        setLoading(false);
+      })
+      .finally(() => {
+        window.clearTimeout(bootTimeout);
+      });
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(bootTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserData = async (userId: string) => {
     try {
       const [profileResult, rolesResult] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', userId).single(),
+        // Profile row might not exist (or RLS could block); don't hard-fail auth boot.
+        supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
         supabase.from('user_roles').select('role').eq('user_id', userId)
       ]);
 
-      if (profileResult.data) {
-        setProfile(profileResult.data as Profile);
+      if (profileResult.error) {
+        console.warn('[auth] profile fetch error', profileResult.error);
+      }
+      if (rolesResult.error) {
+        console.warn('[auth] roles fetch error', rolesResult.error);
       }
 
-      if (rolesResult.data) {
-        setRoles(rolesResult.data.map(r => r.role as AppRole));
-      }
+      setProfile((profileResult.data as Profile) ?? null);
+      setRoles((rolesResult.data || []).map(r => r.role as AppRole));
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('[auth] Error fetching user data:', error);
     } finally {
       setRolesLoaded(true);
       setLoading(false);
