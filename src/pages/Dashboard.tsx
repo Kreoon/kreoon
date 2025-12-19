@@ -472,6 +472,7 @@ export default function Dashboard() {
             icon={DollarSign}
             trend={8}
             description="Facturación total a clientes"
+            onClick={() => openKpiDialog('Contenidos Facturados', content)}
           />
           <LargeKpiCard
             title="Tasa de Completados"
@@ -480,6 +481,7 @@ export default function Dashboard() {
             icon={Target}
             trend={5}
             description="Porcentaje de contenidos aprobados"
+            onClick={() => openKpiDialog('Contenidos Aprobados', content.filter(c => c.status === 'approved'))}
           />
         </div>
 
@@ -518,19 +520,24 @@ export default function Dashboard() {
             value={new Set(content.map(c => c.creator_id).filter(Boolean)).size}
             icon={Users}
             color="info"
+            onClick={() => openKpiDialog('Contenidos por Creador', content.filter(c => c.creator_id))}
           />
           <PremiumStatsCard
             title="Clientes"
             value={new Set(content.map(c => c.client_id).filter(Boolean)).size}
             icon={UserCheck}
             color="primary"
+            onClick={() => openKpiDialog('Contenidos por Cliente', content.filter(c => c.client_id))}
           />
         </div>
 
         {/* Payment Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Quick Payments Panel */}
-          <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
+          <div 
+            className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl cursor-pointer hover:shadow-lg transition-all"
+            onClick={() => openKpiDialog('Pagos Pendientes Creadores', unpaidCreatorContent)}
+          >
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-bold text-foreground">Pagos Pendientes</h2>
@@ -540,7 +547,10 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20">
+              <div 
+                className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
+                onClick={(e) => { e.stopPropagation(); openKpiDialog('Por Pagar a Creadores', unpaidCreatorContent); }}
+              >
                 <p className="text-sm text-muted-foreground mb-1">Por pagar a Creadores</p>
                 <p className="text-3xl font-bold text-warning">
                   ${pendingCreatorPayment.toLocaleString()}
@@ -549,7 +559,10 @@ export default function Dashboard() {
                   {unpaidCreatorContent.length} contenidos
                 </p>
               </div>
-              <div className="p-4 rounded-2xl bg-info/10 border border-info/20">
+              <div 
+                className="p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
+                onClick={(e) => { e.stopPropagation(); openKpiDialog('Por Pagar a Editores', unpaidEditorContent); }}
+              >
                 <p className="text-sm text-muted-foreground mb-1">Por pagar a Editores</p>
                 <p className="text-3xl font-bold text-info">
                   ${pendingEditorPayment.toLocaleString()}
@@ -594,54 +607,24 @@ export default function Dashboard() {
                   ${clientsBilling.totalPending.toLocaleString()}
                 </p>
               </div>
-              <div className="p-4 rounded-2xl bg-info/10 border border-info/20">
+              <div 
+                className="p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
+                onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => c.status === 'approved'))}
+              >
                 <p className="text-sm text-muted-foreground mb-1">Videos Adeudados</p>
                 <p className="text-2xl font-bold text-info">
                   {clientsBilling.contentOwed}
                 </p>
               </div>
-              <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20">
+              <div 
+                className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
+                onClick={() => openKpiDialog('Por Pagar Equipo', [...unpaidCreatorContent, ...unpaidEditorContent])}
+              >
                 <p className="text-sm text-muted-foreground mb-1">Por Pagar Equipo</p>
                 <p className="text-2xl font-bold text-destructive">
                   ${(pendingCreatorPayment + pendingEditorPayment).toLocaleString()}
                 </p>
               </div>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Resumen Financiero</h2>
-              <p className="text-sm text-muted-foreground">Balance general de pagos</p>
-            </div>
-            <BarChart3 className="h-8 w-8 text-primary" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-primary/10 border border-primary/20">
-              <p className="text-sm text-muted-foreground mb-2">Total Facturado</p>
-              <p className="text-3xl font-bold text-primary">
-                ${clientsBilling.totalBilled.toLocaleString()}
-              </p>
-            </div>
-            <div className="p-5 rounded-2xl bg-warning/10 border border-warning/20">
-              <p className="text-sm text-muted-foreground mb-2">Pendiente por Pagar</p>
-              <p className="text-3xl font-bold text-warning">
-                ${(pendingCreatorPayment + pendingEditorPayment).toLocaleString()}
-              </p>
-            </div>
-            <div className="p-5 rounded-2xl bg-success/10 border border-success/20">
-              <p className="text-sm text-muted-foreground mb-2">Total Pagado</p>
-              <p className="text-3xl font-bold text-success">
-                ${clientsBilling.totalPaid.toLocaleString()}
-              </p>
-            </div>
-            <div className="p-5 rounded-2xl bg-info/10 border border-info/20">
-              <p className="text-sm text-muted-foreground mb-2">Contenidos Pagados</p>
-              <p className="text-3xl font-bold text-info">
-                {paidContent.length}
-              </p>
             </div>
           </div>
         </div>
