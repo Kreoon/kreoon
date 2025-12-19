@@ -1,51 +1,151 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Loader2, Settings, Wand2 } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { 
+  Sparkles, Loader2, Target, Users, Globe, FileText, 
+  MessageSquare, ListOrdered, Plus, X, Wand2 
+} from "lucide-react";
 
 interface Product {
   id: string;
   name: string;
+  description?: string | null;
   strategy: string | null;
   market_research: string | null;
   ideal_avatar: string | null;
   sales_angles: string[] | null;
-  brief_url: string | null;
+  brief_url?: string | null;
+  onboarding_url?: string | null;
+  research_url?: string | null;
 }
 
 interface ScriptGeneratorProps {
   product: Product | null;
+  contentId?: string;
   onScriptGenerated: (script: string) => void;
 }
 
-export function ScriptGenerator({ product, onScriptGenerated }: ScriptGeneratorProps) {
+interface ScriptFormData {
+  cta: string;
+  sales_angle: string;
+  hooks_count: string;
+  ideal_avatar: string;
+  target_country: string;
+  narrative_structure: string;
+  additional_instructions: string;
+  hooks: string[];
+}
+
+const NARRATIVE_STRUCTURES = [
+  { value: "problema-solucion", label: "Problema → Solución" },
+  { value: "historia-personal", label: "Historia Personal" },
+  { value: "antes-despues", label: "Antes/Después" },
+  { value: "tutorial", label: "Tutorial paso a paso" },
+  { value: "testimonio", label: "Testimonio" },
+  { value: "urgencia", label: "Urgencia/Escasez" },
+  { value: "educativo", label: "Educativo/Informativo" },
+  { value: "entretenimiento", label: "Entretenimiento" },
+];
+
+const COUNTRIES = [
+  "México",
+  "Colombia",
+  "Argentina",
+  "España",
+  "Chile",
+  "Perú",
+  "Estados Unidos (Latino)",
+  "Otro",
+];
+
+// n8n Webhook URL - same as StrategistScriptForm
+const N8N_WEBHOOK_URL = "https://n8n.infinygroup.com/webhook-test/787fcfa6-f590-458f-94b6-7b9f0ecd1be7";
+
+export function ScriptGenerator({ product, contentId, onScriptGenerated }: ScriptGeneratorProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [webhookUrl, setWebhookUrl] = useState("");
-  const [selectedAngle, setSelectedAngle] = useState("");
-  const [additionalContext, setAdditionalContext] = useState("");
-  const [showSettings, setShowSettings] = useState(false);
+  const [newHook, setNewHook] = useState("");
+  
+  const [formData, setFormData] = useState<ScriptFormData>({
+    cta: "",
+    sales_angle: "",
+    hooks_count: "3",
+    ideal_avatar: "",
+    target_country: "",
+    narrative_structure: "",
+    additional_instructions: "",
+    hooks: [],
+  });
+
+  // Pre-fill avatar from product if available
+  useEffect(() => {
+    if (product?.ideal_avatar) {
+      // Strip HTML tags for display
+      const strippedAvatar = product.ideal_avatar.replace(/<[^>]*>/g, '').substring(0, 200);
+      setFormData(prev => ({
+        ...prev,
+        ideal_avatar: strippedAvatar
+      }));
+    }
+  }, [product]);
+
+  const addHook = () => {
+    if (newHook.trim() && formData.hooks.length < parseInt(formData.hooks_count)) {
+      setFormData({
+        ...formData,
+        hooks: [...formData.hooks, newHook.trim()]
+      });
+      setNewHook("");
+    }
+  };
+
+  const removeHook = (index: number) => {
+    setFormData({
+      ...formData,
+      hooks: formData.hooks.filter((_, i) => i !== index)
+    });
+  };
+
+  const buildPrompt = () => {
+    return `Genera un guión de video para el siguiente contexto:
+
+PRODUCTO: ${product?.name}
+DESCRIPCIÓN: ${product?.description || 'No disponible'}
+CTA (Llamado a la acción): ${formData.cta}
+ÁNGULO DE VENTA: ${formData.sales_angle}
+ESTRUCTURA NARRATIVA: ${NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure}
+PAÍS OBJETIVO: ${formData.target_country}
+AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
+
+HOOKS SUGERIDOS (${formData.hooks_count}):
+${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).join('\n') : 'Generar hooks automáticamente'}
+
+INSTRUCCIONES ADICIONALES:
+${formData.additional_instructions || 'Ninguna'}
+
+ESTRATEGIA DEL PRODUCTO:
+${product?.strategy || 'No disponible'}
+
+INVESTIGACIÓN DE MERCADO:
+${product?.market_research || 'No disponible'}
+
+ÁNGULOS DE VENTA DISPONIBLES:
+${product?.sales_angles?.join(', ') || 'No definidos'}
+
+Por favor genera un guión completo con:
+1. ${formData.hooks_count} opciones de hooks de apertura
+2. Desarrollo del contenido siguiendo la estructura ${NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label}
+3. Cierre con el CTA: ${formData.cta}
+
+El guión debe ser natural, conversacional y optimizado para video corto (TikTok/Reels/Shorts).`;
+  };
 
   const handleGenerate = async () => {
-    if (!webhookUrl) {
-      toast({
-        title: "Configura el webhook",
-        description: "Necesitas agregar la URL del webhook de n8n para generar guiones",
-        variant: "destructive",
-      });
-      setShowSettings(true);
-      return;
-    }
-
     if (!product) {
       toast({
         title: "Selecciona un producto",
@@ -55,20 +155,57 @@ export function ScriptGenerator({ product, onScriptGenerated }: ScriptGeneratorP
       return;
     }
 
+    if (!formData.cta || !formData.sales_angle || !formData.narrative_structure) {
+      toast({
+        title: "Campos requeridos",
+        description: "Completa CTA, Ángulo de venta y Estructura narrativa",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
+      // Prepare complete payload for n8n webhook - same format as StrategistScriptForm
       const payload = {
-        product_name: product.name,
-        strategy: product.strategy || "",
-        market_research: product.market_research || "",
-        ideal_avatar: product.ideal_avatar || "",
-        sales_angle: selectedAngle || (product.sales_angles?.[0] || ""),
-        brief_url: product.brief_url || "",
-        additional_context: additionalContext,
+        // Content info
+        content_id: contentId || null,
         timestamp: new Date().toISOString(),
+        
+        // Product information (complete)
+        product: {
+          id: product.id,
+          name: product.name,
+          description: product.description || null,
+          strategy: product.strategy || null,
+          market_research: product.market_research || null,
+          ideal_avatar: product.ideal_avatar || null,
+          sales_angles: product.sales_angles || [],
+          brief_url: product.brief_url || null,
+          onboarding_url: product.onboarding_url || null,
+          research_url: product.research_url || null,
+        },
+        
+        // Script parameters from the form
+        script_params: {
+          cta: formData.cta,
+          sales_angle: formData.sales_angle,
+          hooks_count: parseInt(formData.hooks_count),
+          ideal_avatar: formData.ideal_avatar,
+          target_country: formData.target_country,
+          narrative_structure: formData.narrative_structure,
+          narrative_structure_label: NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure,
+          additional_instructions: formData.additional_instructions,
+          hooks: formData.hooks,
+        },
+        
+        // Pre-built prompt for convenience
+        prompt: buildPrompt(),
       };
 
-      const response = await fetch(webhookUrl, {
+      console.log("Sending to n8n webhook:", payload);
+
+      const response = await fetch(N8N_WEBHOOK_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -77,26 +214,54 @@ export function ScriptGenerator({ product, onScriptGenerated }: ScriptGeneratorP
       });
 
       if (!response.ok) {
-        throw new Error("Error en la respuesta del webhook");
+        throw new Error(`Error en webhook: ${response.status}`);
       }
 
-      const data = await response.json();
+      // Get the response from n8n - handle both JSON and plain text
+      const contentType = response.headers.get("content-type") || "";
+      let script = "";
       
-      // Expect the response to have a "script" field
-      if (data.script) {
-        onScriptGenerated(data.script);
+      if (contentType.includes("application/json")) {
+        // Response is JSON
+        const data = await response.json();
+        console.log("n8n JSON response:", data);
+        
+        if (typeof data === "string") {
+          script = data;
+        } else if (data.script) {
+          script = data.script;
+        } else if (data.guion) {
+          script = data.guion;
+        } else if (data.output) {
+          script = data.output;
+        } else if (data.text) {
+          script = data.text;
+        } else if (data.message) {
+          script = data.message;
+        } else if (data.content) {
+          script = data.content;
+        } else if (data.result) {
+          script = typeof data.result === 'string' ? data.result : JSON.stringify(data.result);
+        } else {
+          script = JSON.stringify(data, null, 2);
+        }
+      } else {
+        // Response is plain text
+        script = await response.text();
+        console.log("n8n text response:", script);
+      }
+
+      if (script) {
+        onScriptGenerated(script);
         toast({ title: "Guión generado exitosamente" });
       } else {
-        toast({
-          title: "Respuesta recibida",
-          description: "El webhook respondió pero no devolvió un guión. Revisa la configuración de n8n.",
-        });
+        throw new Error("No se recibió respuesta del webhook");
       }
     } catch (error) {
       console.error("Error:", error);
       toast({
         title: "Error al generar",
-        description: "No se pudo conectar con n8n. Verifica la URL del webhook.",
+        description: error instanceof Error ? error.message : "No se pudo conectar con n8n. Intenta de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -106,54 +271,52 @@ export function ScriptGenerator({ product, onScriptGenerated }: ScriptGeneratorP
 
   if (!product) {
     return (
-      <div className="p-4 border rounded-lg bg-muted/50 text-center">
-        <Sparkles className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+      <div className="p-6 border rounded-lg bg-muted/50 text-center">
+        <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          Selecciona un producto para poder generar guiones con IA
+          Selecciona un producto para poder crear el brief del guión
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 p-4 border rounded-lg bg-gradient-to-br from-primary/5 to-primary/10">
+    <div className="space-y-6 p-6 border rounded-lg bg-gradient-to-br from-primary/5 to-primary/10">
       <div className="flex items-center justify-between">
-        <h4 className="font-medium flex items-center gap-2">
-          <Wand2 className="h-4 w-4 text-primary" />
-          Generar Guión con IA
+        <h4 className="font-semibold flex items-center gap-2 text-lg">
+          <Wand2 className="h-5 w-5 text-primary" />
+          Formulario de Guión
         </h4>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowSettings(!showSettings)}
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+            n8n
+          </Badge>
+        </div>
       </div>
 
-      <Collapsible open={showSettings} onOpenChange={setShowSettings}>
-        <CollapsibleContent className="space-y-3 pb-4 border-b">
-          <div className="space-y-2">
-            <Label className="text-xs">URL Webhook n8n</Label>
-            <Input
-              value={webhookUrl}
-              onChange={(e) => setWebhookUrl(e.target.value)}
-              placeholder="https://your-n8n-instance.com/webhook/..."
-              type="url"
-              className="text-sm"
-            />
-            <p className="text-xs text-muted-foreground">
-              Configura un workflow en n8n con un trigger de webhook para recibir los datos del producto
-            </p>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* CTA */}
         <div className="space-y-2">
-          <Label className="text-xs">Ángulo de Venta</Label>
-          <Select value={selectedAngle} onValueChange={setSelectedAngle}>
-            <SelectTrigger className="text-sm">
+          <Label className="flex items-center gap-2">
+            <Target className="h-4 w-4" /> CTA (Llamado a la acción) *
+          </Label>
+          <Input
+            value={formData.cta}
+            onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
+            placeholder="Ej: Haz clic en el link de la bio"
+          />
+        </div>
+
+        {/* Ángulo de Venta */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" /> Ángulo de Venta *
+          </Label>
+          <Select 
+            value={formData.sales_angle} 
+            onValueChange={(v) => setFormData({ ...formData, sales_angle: v })}
+          >
+            <SelectTrigger>
               <SelectValue placeholder="Seleccionar ángulo..." />
             </SelectTrigger>
             <SelectContent>
@@ -171,39 +334,162 @@ export function ScriptGenerator({ product, onScriptGenerated }: ScriptGeneratorP
           </Select>
         </div>
 
+        {/* Número de Hooks */}
         <div className="space-y-2">
-          <Label className="text-xs">Contexto adicional (opcional)</Label>
-          <Textarea
-            value={additionalContext}
-            onChange={(e) => setAdditionalContext(e.target.value)}
-            placeholder="Agrega indicaciones específicas para este guión..."
-            rows={2}
-            className="text-sm"
-          />
+          <Label className="flex items-center gap-2">
+            <ListOrdered className="h-4 w-4" /> Cantidad de Hooks
+          </Label>
+          <Select 
+            value={formData.hooks_count} 
+            onValueChange={(v) => setFormData({ ...formData, hooks_count: v })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1 Hook</SelectItem>
+              <SelectItem value="2">2 Hooks</SelectItem>
+              <SelectItem value="3">3 Hooks</SelectItem>
+              <SelectItem value="4">4 Hooks</SelectItem>
+              <SelectItem value="5">5 Hooks</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <Button 
-          onClick={handleGenerate} 
-          disabled={loading || !webhookUrl}
-          className="w-full"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Generando...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-2" />
-              Generar Guión
-            </>
-          )}
-        </Button>
+        {/* País Objetivo */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Globe className="h-4 w-4" /> País Objetivo
+          </Label>
+          <Select 
+            value={formData.target_country} 
+            onValueChange={(v) => setFormData({ ...formData, target_country: v })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar país..." />
+            </SelectTrigger>
+            <SelectContent>
+              {COUNTRIES.map((country) => (
+                <SelectItem key={country} value={country}>
+                  {country}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Estructura Narrativa */}
+        <div className="space-y-2 md:col-span-2">
+          <Label className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" /> Estructura Narrativa *
+          </Label>
+          <Select 
+            value={formData.narrative_structure} 
+            onValueChange={(v) => setFormData({ ...formData, narrative_structure: v })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar estructura..." />
+            </SelectTrigger>
+            <SelectContent>
+              {NARRATIVE_STRUCTURES.map((structure) => (
+                <SelectItem key={structure.value} value={structure.value}>
+                  {structure.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Avatar Ideal */}
+        <div className="space-y-2 md:col-span-2">
+          <Label className="flex items-center gap-2">
+            <Users className="h-4 w-4" /> Avatar / Cliente Ideal
+          </Label>
+          <Textarea
+            value={formData.ideal_avatar}
+            onChange={(e) => setFormData({ ...formData, ideal_avatar: e.target.value })}
+            placeholder="Describe al cliente ideal: edad, género, dolores, deseos..."
+            rows={2}
+          />
+        </div>
       </div>
 
-      <p className="text-xs text-muted-foreground text-center">
-        Se enviará la estrategia, avatar e investigación del producto a n8n
-      </p>
+      {/* Hooks personalizados */}
+      <div className="space-y-3 pt-4 border-t">
+        <Label className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4" /> Hooks Sugeridos (opcional)
+        </Label>
+        <p className="text-xs text-muted-foreground">
+          Agrega ideas de hooks específicos o déjalo vacío para que la IA los genere
+        </p>
+        
+        <div className="flex gap-2">
+          <Input
+            value={newHook}
+            onChange={(e) => setNewHook(e.target.value)}
+            placeholder="Ej: ¿Sabías que el 80% de las personas...?"
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addHook())}
+            disabled={formData.hooks.length >= parseInt(formData.hooks_count)}
+          />
+          <Button 
+            type="button" 
+            onClick={addHook} 
+            variant="outline"
+            disabled={formData.hooks.length >= parseInt(formData.hooks_count)}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {formData.hooks.length > 0 && (
+          <div className="space-y-2">
+            {formData.hooks.map((hook, idx) => (
+              <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                <Badge variant="outline" className="shrink-0">{idx + 1}</Badge>
+                <span className="flex-1 text-sm">{hook}</span>
+                <button
+                  type="button"
+                  onClick={() => removeHook(idx)}
+                  className="p-1 hover:bg-destructive/20 rounded"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Instrucciones adicionales */}
+      <div className="space-y-2">
+        <Label>Instrucciones adicionales</Label>
+        <Textarea
+          value={formData.additional_instructions}
+          onChange={(e) => setFormData({ ...formData, additional_instructions: e.target.value })}
+          placeholder="Agrega cualquier indicación especial para este guión..."
+          rows={2}
+        />
+      </div>
+
+      {/* Botón Generar */}
+      <Button 
+        onClick={handleGenerate} 
+        disabled={loading}
+        className="w-full"
+        size="lg"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Generando guión via n8n...
+          </>
+        ) : (
+          <>
+            <Wand2 className="h-4 w-4 mr-2" />
+            Generar Guión con IA
+          </>
+        )}
+      </Button>
     </div>
   );
 }
