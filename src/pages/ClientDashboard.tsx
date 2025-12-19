@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
+import { useNavigate } from 'react-router-dom';
 import { 
   LogOut, 
   Video, 
@@ -20,37 +22,65 @@ import {
   Loader2,
   User,
   Calendar,
-  MessageSquare,
   ThumbsUp,
   ThumbsDown,
-  Eye
+  Eye,
+  Play,
+  TrendingUp,
+  DollarSign,
+  Package,
+  Settings,
+  Home,
+  Heart
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+interface ClientPackage {
+  id: string;
+  name: string;
+  content_quantity: number;
+  total_value: number;
+  paid_amount: number;
+  payment_status: string;
+  is_active: boolean;
+  created_at: string;
+}
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [content, setContent] = useState<Content[]>([]);
+  const [packages, setPackages] = useState<ClientPackage[]>([]);
+  const [clientInfo, setClientInfo] = useState<{ id: string; name: string; logo_url: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
-    fetchClientContent();
+    if (user) {
+      fetchClientData();
+    }
   }, [user]);
 
-  const fetchClientContent = async () => {
+  const fetchClientData = async () => {
     if (!user) return;
 
     try {
       // Get client associated with user
       const { data: clientData } = await supabase
         .from('clients')
-        .select('id')
+        .select('id, name, logo_url')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (clientData) {
+        setClientInfo(clientData);
+
+        // Fetch content
         const { data: contentData } = await supabase
           .from('content')
           .select(`
@@ -63,9 +93,18 @@ export default function ClientDashboard() {
           .order('created_at', { ascending: false });
 
         setContent((contentData || []) as unknown as Content[]);
+
+        // Fetch packages
+        const { data: packagesData } = await supabase
+          .from('client_packages')
+          .select('*')
+          .eq('client_id', clientData.id)
+          .order('created_at', { ascending: false });
+
+        setPackages(packagesData || []);
       }
     } catch (error) {
-      console.error('Error fetching content:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -95,20 +134,12 @@ export default function ClientDashboard() {
           });
       }
 
-      toast({
-        title: 'Contenido aprobado',
-        description: 'El contenido ha sido aprobado exitosamente'
-      });
-
+      toast({ title: 'Contenido aprobado', description: 'El contenido ha sido aprobado exitosamente' });
       setSelectedContent(null);
       setFeedback('');
-      fetchClientContent();
+      fetchClientData();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo aprobar el contenido',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'No se pudo aprobar el contenido', variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
@@ -116,11 +147,7 @@ export default function ClientDashboard() {
 
   const handleReject = async () => {
     if (!selectedContent || !user || !feedback) {
-      toast({
-        title: 'Feedback requerido',
-        description: 'Por favor indica las correcciones necesarias',
-        variant: 'destructive'
-      });
+      toast({ title: 'Feedback requerido', description: 'Por favor indica las correcciones necesarias', variant: 'destructive' });
       return;
     }
     setSubmitting(true);
@@ -128,46 +155,42 @@ export default function ClientDashboard() {
     try {
       await supabase
         .from('content')
-        .update({ 
-          status: 'editing' as ContentStatus,
-          notes: feedback
-        })
+        .update({ status: 'editing' as ContentStatus, notes: feedback })
         .eq('id', selectedContent.id);
 
-      await supabase
-        .from('content_comments')
-        .insert({
-          content_id: selectedContent.id,
-          user_id: user.id,
-          comment: `Correcciones solicitadas: ${feedback}`
-        });
-
-      toast({
-        title: 'Enviado a corrección',
-        description: 'El editor realizará los cambios solicitados'
+      await supabase.from('content_comments').insert({
+        content_id: selectedContent.id,
+        user_id: user.id,
+        comment: `Correcciones solicitadas: ${feedback}`
       });
 
+      toast({ title: 'Enviado a corrección', description: 'El editor realizará los cambios solicitados' });
       setSelectedContent(null);
       setFeedback('');
-      fetchClientContent();
+      fetchClientData();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo enviar a corrección',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'No se pudo enviar a corrección', variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const getContentByStatus = (statuses: ContentStatus[]) => {
-    return content.filter(c => statuses.includes(c.status));
-  };
+  const getContentByStatus = (statuses: ContentStatus[]) => content.filter(c => statuses.includes(c.status));
 
   const inProgressContent = getContentByStatus(['draft', 'script_pending', 'script_approved', 'recording', 'editing']);
   const reviewContent = getContentByStatus(['review']);
-  const approvedContent = getContentByStatus(['approved', 'paid']);
+  const approvedContent = getContentByStatus(['approved', 'paid', 'delivered']);
+  const publishedContent = content.filter(c => c.is_published);
+
+  // Calculate metrics
+  const totalViews = content.reduce((sum, c) => sum + (c.views_count || 0), 0);
+  const totalLikes = content.reduce((sum, c) => sum + (c.likes_count || 0), 0);
+  const totalInvested = packages.reduce((sum, p) => sum + Number(p.paid_amount || 0), 0);
+
+  const formatDate = (date: string) => {
+    if (!date) return '';
+    return format(new Date(date), "d MMM yyyy", { locale: es });
+  };
 
   if (loading) {
     return (
@@ -177,361 +200,489 @@ export default function ClientDashboard() {
     );
   }
 
+  if (!clientInfo) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <Package className="w-16 h-16 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Sin empresa vinculada</h2>
+        <p className="text-muted-foreground text-center max-w-md mb-6">
+          Tu cuenta aún no está vinculada a una empresa. Contacta al administrador para completar la configuración.
+        </p>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => navigate('/portfolio')}>
+            Ver Portafolio
+          </Button>
+          <Button variant="ghost" onClick={signOut}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Cerrar Sesión
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={profile?.avatar_url || ''} />
-              <AvatarFallback>
-                <User className="w-5 h-5" />
-              </AvatarFallback>
-            </Avatar>
+      {/* Mobile Header */}
+      <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            {clientInfo.logo_url ? (
+              <img src={clientInfo.logo_url} alt={clientInfo.name} className="h-9 w-9 rounded-lg object-cover" />
+            ) : (
+              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Package className="h-5 w-5 text-primary" />
+              </div>
+            )}
             <div>
-              <h1 className="font-semibold">{profile?.full_name || 'Cliente'}</h1>
-              <p className="text-sm text-muted-foreground">Portal de Cliente</p>
+              <h1 className="font-semibold text-sm">{clientInfo.name}</h1>
+              <p className="text-xs text-muted-foreground">Portal Cliente</p>
             </div>
           </div>
           
-          <Button variant="ghost" size="icon" onClick={signOut}>
-            <LogOut className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
+              <Settings className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Bottom Navigation Tabs */}
+        <div className="flex overflow-x-auto border-t">
+          {[
+            { id: 'overview', label: 'Inicio', icon: Home },
+            { id: 'review', label: 'Revisar', icon: Eye, badge: reviewContent.length },
+            { id: 'content', label: 'Contenido', icon: Video },
+            { id: 'packages', label: 'Paquetes', icon: Package },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-xs font-medium transition-colors min-w-max ${
+                activeTab === tab.id 
+                  ? 'text-primary border-b-2 border-primary bg-primary/5' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <tab.icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{tab.label}</span>
+              {tab.badge && tab.badge > 0 && (
+                <Badge variant="destructive" className="h-5 min-w-5 text-[10px] px-1.5">
+                  {tab.badge}
+                </Badge>
+              )}
+            </button>
+          ))}
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Video className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{content.length}</p>
-                <p className="text-sm text-muted-foreground">Total contenidos</p>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="p-4 pb-20">
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            {/* Welcome */}
+            <div>
+              <h2 className="text-xl font-bold mb-1">Hola, {profile?.full_name?.split(' ')[0] || 'Cliente'} 👋</h2>
+              <p className="text-sm text-muted-foreground">Aquí está el resumen de tu cuenta</p>
+            </div>
 
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-info/10">
-                <Clock className="w-5 h-5 text-info" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{inProgressContent.length}</p>
-                <p className="text-sm text-muted-foreground">En progreso</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10">
-                <Eye className="w-5 h-5 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{reviewContent.length}</p>
-                <p className="text-sm text-muted-foreground">Por revisar</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-success/10">
-                <CheckCircle2 className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{approvedContent.length}</p>
-                <p className="text-sm text-muted-foreground">Aprobados</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Content Tabs */}
-        <Tabs defaultValue="review" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="review" className="gap-2">
-              <Eye className="w-4 h-4" />
-              Por Revisar
-              {reviewContent.length > 0 && (
-                <Badge variant="destructive" className="ml-1">
-                  {reviewContent.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="progress" className="gap-2">
-              <Clock className="w-4 h-4" />
-              En Progreso
-            </TabsTrigger>
-            <TabsTrigger value="approved" className="gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              Aprobados
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="review">
-            {reviewContent.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Eye className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-semibold text-lg mb-2">No hay contenido por revisar</h3>
-                  <p className="text-muted-foreground">
-                    Cuando tu contenido esté listo para revisión, aparecerá aquí
-                  </p>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                <CardContent className="p-4">
+                  <Video className="h-5 w-5 text-primary mb-2" />
+                  <p className="text-2xl font-bold">{content.length}</p>
+                  <p className="text-xs text-muted-foreground">Videos totales</p>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {reviewContent.map(item => (
-                  <Card key={item.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold line-clamp-2">{item.title}</h4>
-                        <Badge className="bg-orange-500/20 text-orange-500">
-                          Por revisar
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                        {item.description || 'Sin descripción'}
-                      </p>
+              <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
+                <CardContent className="p-4">
+                  <Eye className="h-5 w-5 text-orange-500 mb-2" />
+                  <p className="text-2xl font-bold">{reviewContent.length}</p>
+                  <p className="text-xs text-muted-foreground">Por revisar</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+                <CardContent className="p-4">
+                  <TrendingUp className="h-5 w-5 text-blue-500 mb-2" />
+                  <p className="text-2xl font-bold">{totalViews.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Vistas totales</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-pink-500/10 to-pink-500/5 border-pink-500/20">
+                <CardContent className="p-4">
+                  <Heart className="h-5 w-5 text-pink-500 mb-2" />
+                  <p className="text-2xl font-bold">{totalLikes.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Likes totales</p>
+                </CardContent>
+              </Card>
+            </div>
 
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                        <User className="w-3 h-3" />
-                        Creador: {item.creator?.full_name || 'Sin asignar'}
+            {/* Pending Reviews Alert */}
+            {reviewContent.length > 0 && (
+              <Card className="border-orange-500/30 bg-orange-500/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-orange-500/20">
+                        <Eye className="h-5 w-5 text-orange-500" />
                       </div>
-
-                      <Button 
-                        className="w-full" 
-                        onClick={() => setSelectedContent(item)}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Revisar contenido
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      <div>
+                        <p className="font-medium text-sm">Tienes {reviewContent.length} contenido(s) por revisar</p>
+                        <p className="text-xs text-muted-foreground">Revisa y aprueba tu contenido</p>
+                      </div>
+                    </div>
+                    <Button size="sm" onClick={() => setActiveTab('review')}>
+                      Ver
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
-          </TabsContent>
 
-          <TabsContent value="progress">
-            {inProgressContent.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-semibold text-lg mb-2">No hay contenido en progreso</h3>
-                  <p className="text-muted-foreground">
-                    El contenido en producción aparecerá aquí
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {inProgressContent.map(item => (
-                  <Card key={item.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold line-clamp-2">{item.title}</h4>
-                        <Badge className={STATUS_COLORS[item.status]}>
-                          {STATUS_LABELS[item.status]}
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                        {item.description || 'Sin descripción'}
-                      </p>
-
-                      <div className="space-y-2 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <User className="w-3 h-3" />
-                          Creador: {item.creator?.full_name || 'Por asignar'}
-                        </div>
-                        {item.deadline && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-3 h-3" />
-                            Entrega: {new Date(item.deadline).toLocaleDateString()}
-                          </div>
+            {/* Recent Content */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">Contenido Reciente</h3>
+                <Button variant="ghost" size="sm" onClick={() => setActiveTab('content')}>
+                  Ver todo
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {content.slice(0, 5).map(item => (
+                  <Card key={item.id} className="hover:bg-muted/50 transition-colors">
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                        {item.thumbnail_url ? (
+                          <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
+                        ) : (
+                          <Play className="h-5 w-5 text-muted-foreground" />
                         )}
                       </div>
-
-                      {item.script && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="w-full mt-4"
-                          onClick={() => setSelectedContent(item)}
-                        >
-                          <FileText className="w-4 h-4 mr-2" />
-                          Ver guión
-                        </Button>
-                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(item.created_at || '')}</p>
+                      </div>
+                      <Badge className={STATUS_COLORS[item.status]} variant="secondary">
+                        {STATUS_LABELS[item.status]}
+                      </Badge>
                     </CardContent>
                   </Card>
                 ))}
               </div>
-            )}
-          </TabsContent>
+            </div>
 
-          <TabsContent value="approved">
-            {approvedContent.length === 0 ? (
+            {/* Quick Links */}
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/portfolio')}>
+                <Play className="h-5 w-5" />
+                <span className="text-xs">Ver Portafolio</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/settings')}>
+                <Settings className="h-5 w-5" />
+                <span className="text-xs">Configuración</span>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Review Tab */}
+        {activeTab === 'review' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold mb-1">Contenido por Revisar</h2>
+              <p className="text-sm text-muted-foreground">Revisa y aprueba tu contenido</p>
+            </div>
+
+            {reviewContent.length === 0 ? (
               <Card>
-                <CardContent className="p-12 text-center">
-                  <CheckCircle2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-semibold text-lg mb-2">No hay contenido aprobado</h3>
-                  <p className="text-muted-foreground">
-                    El contenido aprobado aparecerá aquí
-                  </p>
+                <CardContent className="p-8 text-center">
+                  <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-4" />
+                  <h3 className="font-semibold mb-2">Todo al día</h3>
+                  <p className="text-sm text-muted-foreground">No hay contenido pendiente de revisión</p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {approvedContent.map(item => (
-                  <Card key={item.id}>
+              <div className="space-y-3">
+                {reviewContent.map(item => (
+                  <Card key={item.id} className="overflow-hidden">
                     <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold line-clamp-2">{item.title}</h4>
-                        <Badge className="bg-success/20 text-success">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          Aprobado
-                        </Badge>
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                          {item.thumbnail_url ? (
+                            <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
+                          ) : (
+                            <Video className="h-6 w-6 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-sm line-clamp-2">{item.title}</h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Creador: {item.creator?.full_name || 'Sin asignar'}
+                          </p>
+                        </div>
                       </div>
-                      
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                        {item.description || 'Sin descripción'}
-                      </p>
-
-                      {item.approved_at && (
-                        <p className="text-xs text-muted-foreground">
-                          Aprobado el {new Date(item.approved_at).toLocaleDateString()}
-                        </p>
-                      )}
-
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="w-full mt-4"
-                        onClick={() => setSelectedContent(item)}
-                      >
+                      <Button className="w-full" onClick={() => setSelectedContent(item)}>
                         <Eye className="w-4 h-4 mr-2" />
-                        Ver detalles
+                        Revisar y Aprobar
                       </Button>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
+
+        {/* Content Tab */}
+        {activeTab === 'content' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold mb-1">Todo el Contenido</h2>
+              <p className="text-sm text-muted-foreground">{content.length} videos en total</p>
+            </div>
+
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-4">
+                <TabsTrigger value="all" className="text-xs">Todos</TabsTrigger>
+                <TabsTrigger value="progress" className="text-xs">Progreso</TabsTrigger>
+                <TabsTrigger value="approved" className="text-xs">Aprobados</TabsTrigger>
+                <TabsTrigger value="published" className="text-xs">Publicados</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="all">
+                <ContentList items={content} onSelect={setSelectedContent} />
+              </TabsContent>
+              <TabsContent value="progress">
+                <ContentList items={inProgressContent} onSelect={setSelectedContent} />
+              </TabsContent>
+              <TabsContent value="approved">
+                <ContentList items={approvedContent} onSelect={setSelectedContent} />
+              </TabsContent>
+              <TabsContent value="published">
+                <ContentList items={publishedContent} onSelect={setSelectedContent} />
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
+
+        {/* Packages Tab */}
+        {activeTab === 'packages' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold mb-1">Mis Paquetes</h2>
+              <p className="text-sm text-muted-foreground">{packages.length} paquetes contratados</p>
+            </div>
+
+            {packages.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="font-semibold mb-2">Sin paquetes</h3>
+                  <p className="text-sm text-muted-foreground">Contacta al equipo para contratar un paquete</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {packages.map(pkg => (
+                  <Card key={pkg.id} className={pkg.is_active ? 'border-primary/30' : ''}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold">{pkg.name}</h4>
+                          <p className="text-xs text-muted-foreground">{formatDate(pkg.created_at)}</p>
+                        </div>
+                        <Badge variant={pkg.is_active ? 'default' : 'secondary'}>
+                          {pkg.is_active ? 'Activo' : 'Completado'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-muted-foreground text-xs">Videos</p>
+                          <p className="font-semibold">{pkg.content_quantity}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">Valor Total</p>
+                          <p className="font-semibold">${Number(pkg.total_value).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">Pagado</p>
+                          <p className="font-semibold text-green-600">${Number(pkg.paid_amount).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">Estado Pago</p>
+                          <Badge variant={pkg.payment_status === 'paid' ? 'default' : 'outline'} className="text-xs">
+                            {pkg.payment_status === 'paid' ? 'Pagado' : pkg.payment_status === 'partial' ? 'Parcial' : 'Pendiente'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Investment Summary */}
+            {totalInvested > 0 && (
+              <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-primary/20">
+                      <DollarSign className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Inversión Total</p>
+                      <p className="text-xl font-bold">${totalInvested.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Review Dialog */}
-      <Dialog open={!!selectedContent} onOpenChange={() => {
-        setSelectedContent(null);
-        setFeedback('');
-      }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{selectedContent?.title}</DialogTitle>
+      <Dialog open={!!selectedContent} onOpenChange={() => { setSelectedContent(null); setFeedback(''); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] p-0">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="text-lg">{selectedContent?.title}</DialogTitle>
           </DialogHeader>
           
           {selectedContent && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
+            <ScrollArea className="max-h-[calc(90vh-80px)]">
+              <div className="p-4 space-y-4">
                 <Badge className={STATUS_COLORS[selectedContent.status]}>
                   {STATUS_LABELS[selectedContent.status]}
                 </Badge>
-              </div>
 
-              <div>
-                <Label className="text-muted-foreground">Descripción</Label>
-                <p className="mt-1">{selectedContent.description || 'Sin descripción'}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Creador</Label>
-                  <p className="mt-1">{selectedContent.creator?.full_name || 'Sin asignar'}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Editor</Label>
-                  <p className="mt-1">{selectedContent.editor?.full_name || 'Sin asignar'}</p>
-                </div>
-              </div>
-
-              {selectedContent.script && (
-                <div>
-                  <Label className="text-muted-foreground">Guión</Label>
-                  <div className="mt-1 p-3 bg-muted rounded-lg whitespace-pre-wrap text-sm max-h-48 overflow-y-auto">
-                    {selectedContent.script}
-                  </div>
-                </div>
-              )}
-
-              {selectedContent.video_url && (
-                <div>
-                  <Label className="text-muted-foreground">Video</Label>
-                  <a 
-                    href={selectedContent.video_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="mt-1 text-primary hover:underline flex items-center gap-2"
-                  >
-                    <Video className="w-4 h-4" />
-                    Ver video
-                  </a>
-                </div>
-              )}
-
-              {selectedContent.status === 'review' && (
-                <>
+                {selectedContent.description && (
                   <div>
-                    <Label htmlFor="feedback">Comentarios / Feedback</Label>
-                    <Textarea
-                      id="feedback"
-                      placeholder="Escribe tus comentarios aquí..."
-                      value={feedback}
-                      onChange={(e) => setFeedback(e.target.value)}
-                      className="mt-1"
-                      rows={4}
-                    />
+                    <Label className="text-xs text-muted-foreground">Descripción</Label>
+                    <p className="text-sm mt-1">{selectedContent.description}</p>
                   </div>
+                )}
 
-                  <DialogFooter className="gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={handleReject}
-                      disabled={submitting}
-                      className="gap-2"
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Creador</Label>
+                    <p>{selectedContent.creator?.full_name || 'Sin asignar'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Editor</Label>
+                    <p>{selectedContent.editor?.full_name || 'Sin asignar'}</p>
+                  </div>
+                </div>
+
+                {selectedContent.script && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Guión</Label>
+                    <div className="mt-1 p-3 bg-muted rounded-lg whitespace-pre-wrap text-sm max-h-40 overflow-y-auto">
+                      {selectedContent.script}
+                    </div>
+                  </div>
+                )}
+
+                {selectedContent.video_url && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Video</Label>
+                    <a 
+                      href={selectedContent.video_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="mt-1 block p-3 bg-primary/10 rounded-lg text-primary text-sm hover:bg-primary/20 transition-colors"
                     >
-                      <ThumbsDown className="w-4 h-4" />
-                      Solicitar correcciones
-                    </Button>
-                    <Button
-                      onClick={handleApprove}
-                      disabled={submitting}
-                      className="gap-2"
-                    >
-                      {submitting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <ThumbsUp className="w-4 h-4" />
-                      )}
-                      Aprobar contenido
-                    </Button>
-                  </DialogFooter>
-                </>
-              )}
-            </div>
+                      <Play className="w-4 h-4 inline mr-2" />
+                      Ver video
+                    </a>
+                  </div>
+                )}
+
+                {selectedContent.status === 'review' && (
+                  <>
+                    <div>
+                      <Label htmlFor="feedback" className="text-xs text-muted-foreground">
+                        Comentarios (opcional para aprobar, requerido para rechazar)
+                      </Label>
+                      <Textarea
+                        id="feedback"
+                        placeholder="Escribe tus comentarios o correcciones..."
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        className="mt-1"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        className="flex-1 bg-green-600 hover:bg-green-700" 
+                        onClick={handleApprove}
+                        disabled={submitting}
+                      >
+                        <ThumbsUp className="w-4 h-4 mr-2" />
+                        Aprobar
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        className="flex-1"
+                        onClick={handleReject}
+                        disabled={submitting || !feedback}
+                      >
+                        <ThumbsDown className="w-4 h-4 mr-2" />
+                        Correcciones
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </ScrollArea>
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// Content List Component
+function ContentList({ items, onSelect }: { items: Content[]; onSelect: (c: Content) => void }) {
+  if (items.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <Video className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">No hay contenido en esta categoría</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {items.map(item => (
+        <Card key={item.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => onSelect(item)}>
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+              {item.thumbnail_url ? (
+                <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
+              ) : (
+                <Play className="h-5 w-5 text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">{item.title}</p>
+              <p className="text-xs text-muted-foreground">{item.creator?.full_name || 'Sin creador'}</p>
+            </div>
+            <Badge className={STATUS_COLORS[item.status]} variant="secondary">
+              {STATUS_LABELS[item.status]}
+            </Badge>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

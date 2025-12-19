@@ -105,6 +105,9 @@ export interface Content {
   creator_payment: number;
   editor_payment: number;
   is_ambassador_content: boolean;
+  is_published: boolean;
+  views_count: number;
+  likes_count: number;
   deadline: string | null;
   notes: string | null;
   script_approved_at: string | null;

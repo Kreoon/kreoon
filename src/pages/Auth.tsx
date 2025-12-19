@@ -31,6 +31,7 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [role, setRole] = useState<AppRole>('creator');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
@@ -141,7 +142,17 @@ export default function Auth() {
       return;
     }
 
-    const { error } = await signUp(email, password, fullName, role);
+    if (role === 'client' && !companyName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Por favor ingresa el nombre de tu empresa',
+        variant: 'destructive'
+      });
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await signUp(email, password, fullName, role, role === 'client' ? companyName : undefined);
 
     if (error) {
       toast({
@@ -154,7 +165,9 @@ export default function Auth() {
     } else {
       toast({
         title: 'Cuenta creada',
-        description: 'Tu cuenta ha sido creada exitosamente',
+        description: role === 'client' 
+          ? 'Tu cuenta y empresa han sido creadas exitosamente'
+          : 'Tu cuenta ha sido creada exitosamente',
       });
       setShowAuthModal(false);
     }
@@ -446,12 +459,29 @@ export default function Auth() {
                         <SelectContent>
                           <SelectItem value="creator">Creador de contenido</SelectItem>
                           <SelectItem value="editor">Editor de video</SelectItem>
+                          <SelectItem value="client">Cliente / Empresa</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">
-                        Los clientes son agregados por el equipo de UGC Colombia
+                        {role === 'client' 
+                          ? 'Ingresa también el nombre de tu empresa'
+                          : 'Selecciona tu rol en la plataforma'}
                       </p>
                     </div>
+                    
+                    {role === 'client' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="register-company">Nombre de la Empresa</Label>
+                        <Input
+                          id="register-company"
+                          type="text"
+                          placeholder="Mi Empresa S.A.S"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? (
                         <>
