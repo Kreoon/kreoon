@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Video, Package } from "lucide-react";
 
 interface CreateContentDialogProps {
   open: boolean;
@@ -18,6 +19,13 @@ interface CreateContentDialogProps {
 interface SelectOption {
   id: string;
   name: string;
+}
+
+interface ClientPackage {
+  id: string;
+  name: string;
+  hooks_per_video: number | null;
+  is_active: boolean;
 }
 
 export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateContentDialogProps) {
@@ -39,18 +47,51 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   const [description, setDescription] = useState("");
   const [creatorPayment, setCreatorPayment] = useState("");
   const [editorPayment, setEditorPayment] = useState("");
+  const [hooksCount, setHooksCount] = useState(1);
   
   // Options lists
   const [clients, setClients] = useState<SelectOption[]>([]);
   const [creators, setCreators] = useState<SelectOption[]>([]);
   const [editors, setEditors] = useState<SelectOption[]>([]);
   const [strategists, setStrategists] = useState<SelectOption[]>([]);
+  
+  // Client package info
+  const [clientPackage, setClientPackage] = useState<ClientPackage | null>(null);
 
   useEffect(() => {
     if (open) {
       fetchOptions();
     }
   }, [open]);
+
+  // Fetch client's active package when client changes
+  useEffect(() => {
+    if (clientId) {
+      fetchClientPackage(clientId);
+    } else {
+      setClientPackage(null);
+      setHooksCount(1);
+    }
+  }, [clientId]);
+
+  const fetchClientPackage = async (clientId: string) => {
+    const { data } = await supabase
+      .from('client_packages')
+      .select('id, name, hooks_per_video, is_active')
+      .eq('client_id', clientId)
+      .eq('is_active', true)
+      .maybeSingle();
+    
+    if (data) {
+      setClientPackage(data);
+      // Pre-fill hooks count from package
+      if (data.hooks_per_video && data.hooks_per_video > 0) {
+        setHooksCount(data.hooks_per_video);
+      }
+    } else {
+      setClientPackage(null);
+    }
+  };
 
   const fetchOptions = async () => {
     // Fetch clients
@@ -118,6 +159,8 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
     setDescription("");
     setCreatorPayment("");
     setEditorPayment("");
+    setHooksCount(1);
+    setClientPackage(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -150,6 +193,8 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
         description: description.trim() || null,
         creator_payment: creatorPayment ? parseFloat(creatorPayment) : 0,
         editor_payment: editorPayment ? parseFloat(editorPayment) : 0,
+        hooks_count: hooksCount,
+        video_urls: Array(hooksCount).fill(''),
         status: 'draft',
         creator_assigned_at: creatorId ? new Date().toISOString() : null,
         editor_assigned_at: editorId ? new Date().toISOString() : null
@@ -220,6 +265,20 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
                   ))}
                 </SelectContent>
               </Select>
+              {/* Show package info if available */}
+              {clientPackage && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="secondary" className="text-xs">
+                    <Package className="h-3 w-3 mr-1" />
+                    {clientPackage.name}
+                  </Badge>
+                  {clientPackage.hooks_per_video && (
+                    <Badge variant="outline" className="text-xs">
+                      {clientPackage.hooks_per_video} hooks/video
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -230,6 +289,32 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
                 onChange={(e) => setCampaignWeek(e.target.value)}
                 placeholder="Ej: Semana 1 - Enero"
               />
+            </div>
+          </div>
+
+          {/* Hooks count selector */}
+          <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+            <div className="flex items-center gap-2">
+              <Video className="h-4 w-4 text-primary" />
+              <Label className="font-medium">Cantidad de Hooks (Videos Finales)</Label>
+            </div>
+            <div className="flex items-center gap-4">
+              <Select value={String(hooksCount)} onValueChange={(v) => setHooksCount(parseInt(v))}>
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                    <SelectItem key={num} value={String(num)}>{num}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                {clientPackage?.hooks_per_video 
+                  ? `Predefinido por paquete "${clientPackage.name}"`
+                  : "Define cuántos videos finales se entregarán para este proyecto"
+                }
+              </p>
             </div>
           </div>
 
