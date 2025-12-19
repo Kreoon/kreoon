@@ -31,14 +31,16 @@ const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Administrador',
   creator: 'Creador',
   editor: 'Editor',
-  client: 'Cliente'
+  client: 'Cliente',
+  ambassador: 'Embajador'
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
   admin: 'bg-destructive/20 text-destructive',
   creator: 'bg-primary/20 text-primary',
   editor: 'bg-purple-500/20 text-purple-500',
-  client: 'bg-info/20 text-info'
+  client: 'bg-info/20 text-info',
+  ambassador: 'bg-success/20 text-success'
 };
 
 export default function Team() {

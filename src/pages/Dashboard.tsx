@@ -239,47 +239,42 @@ export default function Dashboard() {
     content: Content[];
   }>({ open: false, title: '', content: [] });
 
-  // Fetch clients billing data
+  // Fetch clients billing data from packages
   const [clientsBilling, setClientsBilling] = useState<{
     totalBilled: number;
     totalPending: number;
     totalPaid: number;
-  }>({ totalBilled: 0, totalPending: 0, totalPaid: 0 });
+    contentOwed: number;
+  }>({ totalBilled: 0, totalPending: 0, totalPaid: 0, contentOwed: 0 });
 
   useEffect(() => {
     const fetchBillingData = async () => {
-      // Calculate from content - sum of creator_payment + editor_payment for billed
-      const totalBilled = content.reduce((sum, c) => {
-        // Only count invoiced content
-        if (c.invoiced) {
-          return sum + (c.creator_payment || 0) + (c.editor_payment || 0);
+      try {
+        // Fetch packages for revenue data
+        const { data: packages } = await supabase
+          .from('client_packages')
+          .select('*')
+          .eq('is_active', true);
+
+        if (packages) {
+          const totalBilled = packages.reduce((sum, p) => sum + (p.total_value || 0), 0);
+          const totalPaid = packages.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+          const totalPending = totalBilled - totalPaid;
+          
+          // Content owed = sum of content_quantity for paid packages - delivered content
+          const paidPackages = packages.filter(p => p.payment_status === 'paid');
+          const totalContentPromised = paidPackages.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
+          const deliveredContent = content.filter(c => ['approved', 'paid'].includes(c.status)).length;
+          const contentOwed = Math.max(0, totalContentPromised - deliveredContent);
+
+          setClientsBilling({ totalBilled, totalPending, totalPaid, contentOwed });
         }
-        return sum;
-      }, 0);
-
-      // Pending = not paid content that's approved
-      const pendingPayments = content.filter(c => 
-        c.status === 'approved' && (!c.creator_paid || !c.editor_paid)
-      );
-      const totalPending = pendingPayments.reduce((sum, c) => {
-        let pending = 0;
-        if (!c.creator_paid) pending += c.creator_payment || 0;
-        if (!c.editor_paid) pending += c.editor_payment || 0;
-        return sum + pending;
-      }, 0);
-
-      // Paid = content with both paid
-      const paidPayments = content.filter(c => c.creator_paid && c.editor_paid);
-      const totalPaid = paidPayments.reduce((sum, c) => 
-        sum + (c.creator_payment || 0) + (c.editor_payment || 0), 0
-      );
-
-      setClientsBilling({ totalBilled, totalPending, totalPaid });
+      } catch (error) {
+        console.error('Error fetching billing data:', error);
+      }
     };
 
-    if (content.length > 0) {
-      fetchBillingData();
-    }
+    fetchBillingData();
   }, [content]);
 
   // Stats calculations
@@ -580,29 +575,35 @@ export default function Dashboard() {
               <BarChart3 className="h-8 w-8 text-primary" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20">
-                <p className="text-sm text-muted-foreground mb-1">Total Facturado</p>
+                <p className="text-sm text-muted-foreground mb-1">Total Ventas</p>
                 <p className="text-2xl font-bold text-primary">
                   ${clientsBilling.totalBilled.toLocaleString()}
                 </p>
               </div>
-              <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20">
-                <p className="text-sm text-muted-foreground mb-1">Pendiente</p>
-                <p className="text-2xl font-bold text-warning">
-                  ${(pendingCreatorPayment + pendingEditorPayment).toLocaleString()}
-                </p>
-              </div>
               <div className="p-4 rounded-2xl bg-success/10 border border-success/20">
-                <p className="text-sm text-muted-foreground mb-1">Total Pagado</p>
+                <p className="text-sm text-muted-foreground mb-1">Recaudado</p>
                 <p className="text-2xl font-bold text-success">
                   ${clientsBilling.totalPaid.toLocaleString()}
                 </p>
               </div>
+              <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20">
+                <p className="text-sm text-muted-foreground mb-1">Por Cobrar</p>
+                <p className="text-2xl font-bold text-warning">
+                  ${clientsBilling.totalPending.toLocaleString()}
+                </p>
+              </div>
               <div className="p-4 rounded-2xl bg-info/10 border border-info/20">
-                <p className="text-sm text-muted-foreground mb-1">Contenidos Pagados</p>
+                <p className="text-sm text-muted-foreground mb-1">Videos Adeudados</p>
                 <p className="text-2xl font-bold text-info">
-                  {paidContent.length}
+                  {clientsBilling.contentOwed}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-muted-foreground mb-1">Por Pagar Equipo</p>
+                <p className="text-2xl font-bold text-destructive">
+                  ${(pendingCreatorPayment + pendingEditorPayment).toLocaleString()}
                 </p>
               </div>
             </div>

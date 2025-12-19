@@ -1,4 +1,4 @@
-export type AppRole = 'admin' | 'creator' | 'editor' | 'client';
+export type AppRole = 'admin' | 'creator' | 'editor' | 'client' | 'ambassador';
 
 export type ContentStatus = 
   | 'draft'           // Creado
@@ -14,6 +14,8 @@ export type ContentStatus =
   | 'approved'        // Aprobado
   | 'rejected'        // Rechazado (legacy)
   | 'paid';           // Pagado (legacy)
+
+export type PaymentStatus = 'pending' | 'partial' | 'paid';
 
 export interface Profile {
   id: string;
@@ -64,6 +66,29 @@ export interface Product {
   updated_at: string | null;
   // Relations
   client?: Client;
+}
+
+export interface ClientPackage {
+  id: string;
+  client_id: string;
+  name: string;
+  description: string | null;
+  total_value: number;
+  content_quantity: number;
+  hooks_per_video: number;
+  creators_count: number;
+  products_count: number;
+  product_ids: string[];
+  payment_status: PaymentStatus;
+  paid_amount: number;
+  paid_at: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  client?: Client;
+  products?: Product[];
 }
 
 export interface Content {
@@ -174,6 +199,18 @@ export const STATUS_COLORS: Record<ContentStatus, string> = {
   review: 'bg-yellow-500/10 text-yellow-500',
   approved: 'bg-success/10 text-success',
   rejected: 'bg-destructive/10 text-destructive',
+  paid: 'bg-success/10 text-success'
+};
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  pending: 'Pendiente',
+  partial: 'Parcial',
+  paid: 'Pagado'
+};
+
+export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
+  pending: 'bg-warning/10 text-warning',
+  partial: 'bg-info/10 text-info',
   paid: 'bg-success/10 text-success'
 };
 

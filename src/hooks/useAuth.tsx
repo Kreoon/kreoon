@@ -18,6 +18,7 @@ interface AuthContextType {
   isCreator: boolean;
   isEditor: boolean;
   isClient: boolean;
+  isAmbassador: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -125,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCreator = hasRole('creator');
   const isEditor = hasRole('editor');
   const isClient = hasRole('client');
+  const isAmbassador = hasRole('ambassador');
 
   return (
     <AuthContext.Provider value={{
@@ -141,7 +143,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       isCreator,
       isEditor,
-      isClient
+      isClient,
+      isAmbassador
     }}>
       {children}
     </AuthContext.Provider>
