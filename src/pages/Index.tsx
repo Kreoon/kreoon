@@ -9,7 +9,8 @@ import { RecentActivityReal } from "@/components/dashboard/RecentActivityReal";
 import { TopCreatorsReal } from "@/components/dashboard/TopCreatorsReal";
 import { CreateContentDialog } from "@/components/content/CreateContentDialog";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
-import { Video, Users, CheckCircle, Clock, Search, Bell, Plus, Filter, CalendarIcon, X } from "lucide-react";
+import { KpiContentDialog } from "@/components/dashboard/KpiContentDialog";
+import { Video, Users, CheckCircle, Clock, Search, Bell, Plus, Filter, CalendarIcon, X, DollarSign, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
@@ -30,23 +31,23 @@ const getVisibleColumns = (role: string, contentItem?: Content, userId?: string)
     return KANBAN_COLUMNS;
   }
 
-  // Cliente ve: todo excepto Pagado
-  if (role === 'client') {
-    return KANBAN_COLUMNS.filter(col => col.status !== 'paid');
-  }
-
-  // Creador ve: Asignado, En grabación, Grabado (solo su contenido asignado)
+  // Creador ve: Asignado, En grabación, Grabado, En Edición, Entregado, Novedad, Aprobado, Pagado
   if (role === 'creator') {
     return KANBAN_COLUMNS.filter(col => 
-      ['assigned', 'recording', 'recorded', 'editing', 'delivered', 'issue', 'approved'].includes(col.status)
+      ['assigned', 'recording', 'recorded', 'editing', 'delivered', 'issue', 'approved', 'paid'].includes(col.status)
     );
   }
 
-  // Editor ve: Grabado, En Edición, Entregado, Novedad, Aprobado
+  // Editor ve: Grabado, En Edición, Entregado, Novedad, Aprobado, Pagado
   if (role === 'editor') {
     return KANBAN_COLUMNS.filter(col => 
-      ['recorded', 'editing', 'delivered', 'issue', 'approved'].includes(col.status)
+      ['recorded', 'editing', 'delivered', 'issue', 'approved', 'paid'].includes(col.status)
     );
+  }
+
+  // Cliente NO ve Pagado - solo hasta Aprobado
+  if (role === 'client') {
+    return KANBAN_COLUMNS.filter(col => col.status !== 'paid');
   }
 
   return KANBAN_COLUMNS.filter(col => col.status !== 'paid');
@@ -85,10 +86,12 @@ const canMoveToStatus = (
     return false;
   }
 
-  // Creadores solo pueden mover hacia adelante
+  // Creadores solo pueden mover hacia adelante (NO pueden mover a paid)
   if (role === 'creator') {
     // Solo su contenido asignado
     if (content.creator_id !== userId) return false;
+    // No puede mover a paid (eso lo hace el admin)
+    if (targetStatus === 'paid') return false;
     // Solo hacia adelante
     if (targetIndex <= currentIndex) return false;
     // No puede aprobar (eso lo hace el cliente)
@@ -99,10 +102,12 @@ const canMoveToStatus = (
     return false;
   }
 
-  // Editores solo pueden mover hacia adelante
+  // Editores solo pueden mover hacia adelante (NO pueden mover a paid)
   if (role === 'editor') {
     // Solo su contenido asignado
     if (content.editor_id !== userId) return false;
+    // No puede mover a paid (eso lo hace el admin)
+    if (targetStatus === 'paid') return false;
     // Solo hacia adelante
     if (targetIndex <= currentIndex) return false;
     // No puede aprobar (eso lo hace el cliente)
@@ -142,6 +147,13 @@ const Index = () => {
   
   // Dialog para crear contenido
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  // KPI Dialog state
+  const [kpiDialog, setKpiDialog] = useState<{
+    open: boolean;
+    title: string;
+    content: Content[];
+  }>({ open: false, title: '', content: [] });
 
   // Determinar el rol principal del usuario
   const primaryRole = isAdmin ? 'admin' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'admin';
@@ -324,6 +336,17 @@ const Index = () => {
   const inProgress = content.filter(c => ['recording', 'editing'].includes(c.status)).length;
   const completed = content.filter(c => c.status === 'approved').length;
   const pending = content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)).length;
+  
+  // Payment stats (solo para admin)
+  const unpaidContent = content.filter(c => 
+    c.status === 'approved' && (!c.creator_paid || !c.editor_paid)
+  );
+  const paidContent = content.filter(c => c.status === 'paid');
+  
+  // Handlers para abrir KPI dialogs
+  const openKpiDialog = (title: string, contentList: Content[]) => {
+    setKpiDialog({ open: true, title, content: contentList });
+  };
 
   if (loading) {
     return (
@@ -504,27 +527,49 @@ const Index = () => {
 
         <div className="p-4 md:p-6 space-y-4 md:space-y-6">
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
             <StatsCard 
               title="Contenido Activo" 
               value={totalActive} 
               icon={<Video className="h-5 w-5 md:h-6 md:w-6" />}
+              onClick={() => openKpiDialog('Contenido Activo', content.filter(c => !['approved', 'paid'].includes(c.status)))}
             />
             <StatsCard 
               title="En Proceso" 
               value={inProgress} 
               icon={<Clock className="h-5 w-5 md:h-6 md:w-6" />}
+              onClick={() => openKpiDialog('En Proceso', content.filter(c => ['recording', 'editing'].includes(c.status)))}
             />
             <StatsCard 
               title="Pendientes" 
               value={pending} 
               icon={<Users className="h-5 w-5 md:h-6 md:w-6" />}
+              onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
             />
             <StatsCard 
               title="Completados" 
               value={completed} 
               icon={<CheckCircle className="h-5 w-5 md:h-6 md:w-6" />}
+              onClick={() => openKpiDialog('Completados', content.filter(c => c.status === 'approved'))}
             />
+            {isAdmin && (
+              <>
+                <StatsCard 
+                  title="Por Pagar" 
+                  value={unpaidContent.length} 
+                  icon={<DollarSign className="h-5 w-5 md:h-6 md:w-6" />}
+                  onClick={() => openKpiDialog('Videos Por Pagar', unpaidContent)}
+                  className="border-warning/30 bg-warning/5"
+                />
+                <StatsCard 
+                  title="Pagados" 
+                  value={paidContent.length} 
+                  icon={<CreditCard className="h-5 w-5 md:h-6 md:w-6" />}
+                  onClick={() => openKpiDialog('Videos Pagados', paidContent)}
+                  className="border-success/30 bg-success/5"
+                />
+              </>
+            )}
           </div>
 
           {/* Main Content Area */}
@@ -606,6 +651,15 @@ const Index = () => {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onSuccess={refetch}
+      />
+
+      {/* KPI Content Dialog */}
+      <KpiContentDialog
+        title={kpiDialog.title}
+        content={kpiDialog.content}
+        open={kpiDialog.open}
+        onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
+        onSelectContent={setSelectedContent}
       />
     </MainLayout>
   );
