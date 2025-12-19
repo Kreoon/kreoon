@@ -53,6 +53,7 @@ interface ClientPackage {
   id: string;
   name: string;
   content_quantity: number;
+  hooks_per_video: number;
   total_value: number;
   paid_amount: number;
   payment_status: string;
@@ -401,15 +402,28 @@ export default function ClientDashboard() {
   const totalInvested = packages.reduce((sum, p) => sum + Number(p.paid_amount || 0), 0);
   const totalValue = packages.reduce((sum, p) => sum + Number(p.total_value || 0), 0);
   const pendingPayment = totalValue - totalInvested;
+  
+  // Calcular total de videos finales (cantidad de contenidos × hooks por video)
+  // Cada contenido puede generar múltiples videos finales según los hooks
+  const totalFinalVideos = packages.reduce((sum, p) => {
+    const hooksPerVideo = p.hooks_per_video || 1;
+    return sum + ((p.content_quantity || 0) * hooksPerVideo);
+  }, 0);
+  
+  // Contenidos prometidos (sin multiplicar por hooks, es la cantidad base)
   const totalContentPromised = packages.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
   const deliveredContentCount = approvedContent.length;
   const contentPending = Math.max(0, totalContentPromised - deliveredContentCount);
   
-  // Calcular costo por video del paquete
-  const costPerVideo = totalContentPromised > 0 ? totalValue / totalContentPromised : 0;
+  // Calcular costo por video final del paquete
+  // El valor del paquete se divide entre el total de videos finales (contenidos × hooks)
+  const costPerFinalVideo = totalFinalVideos > 0 ? totalValue / totalFinalVideos : 0;
   
-  // Valor de videos aprobados (consumidos)
-  const approvedVideosValue = deliveredContentCount * costPerVideo;
+  // Calcular hooks promedio por video
+  const avgHooksPerVideo = totalContentPromised > 0 ? totalFinalVideos / totalContentPromised : 1;
+  
+  // Valor de videos aprobados (consumidos) - cada contenido aprobado genera X videos finales
+  const approvedVideosValue = deliveredContentCount * avgHooksPerVideo * costPerFinalVideo;
   
   // Saldo del cliente: positivo = saldo a favor, negativo = debe
   // Saldo = Lo que pagó - Valor de videos aprobados
@@ -701,11 +715,11 @@ export default function ClientDashboard() {
               />
               <PremiumStatsCard
                 title="Costo por Video"
-                value={Math.round(costPerVideo)}
+                value={Math.round(costPerFinalVideo)}
                 prefix="$"
                 icon={BarChart3}
                 color="info"
-                subtitle={`${totalContentPromised} videos en paquete`}
+                subtitle={`${totalFinalVideos} videos finales`}
               />
             </div>
 
