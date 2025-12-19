@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -73,19 +73,38 @@ export function CreatorEditorForm({ open, onOpenChange, profile, onSuccess }: Cr
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      full_name: profile?.full_name || "",
-      document_type: profile?.document_type || "",
-      document_number: profile?.document_number || "",
-      city: profile?.city || "",
-      phone: profile?.phone || "",
-      email: profile?.email || "",
-      address: profile?.address || "",
-      instagram: profile?.instagram || "",
-      facebook: profile?.facebook || "",
-      tiktok: profile?.tiktok || "",
-      is_ambassador: profile?.is_ambassador || false,
+      full_name: "",
+      document_type: "",
+      document_number: "",
+      city: "",
+      phone: "",
+      email: "",
+      address: "",
+      instagram: "",
+      facebook: "",
+      tiktok: "",
+      is_ambassador: false,
     },
   });
+
+  // Reset form when profile changes
+  useEffect(() => {
+    if (profile) {
+      form.reset({
+        full_name: profile.full_name || "",
+        document_type: profile.document_type || "",
+        document_number: profile.document_number || "",
+        city: profile.city || "",
+        phone: profile.phone || "",
+        email: profile.email || "",
+        address: profile.address || "",
+        instagram: profile.instagram || "",
+        facebook: profile.facebook || "",
+        tiktok: profile.tiktok || "",
+        is_ambassador: profile.is_ambassador ?? false,
+      });
+    }
+  }, [profile, form]);
 
   const onSubmit = async (data: FormData) => {
     if (!profile?.id) {
