@@ -142,6 +142,7 @@ export type Database = {
           editor_id: string | null
           editor_paid: boolean | null
           editor_payment: number | null
+          hooks_count: number | null
           id: string
           invoiced: boolean | null
           is_ambassador_content: boolean | null
@@ -191,6 +192,7 @@ export type Database = {
           editor_id?: string | null
           editor_paid?: boolean | null
           editor_payment?: number | null
+          hooks_count?: number | null
           id?: string
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
@@ -240,6 +242,7 @@ export type Database = {
           editor_id?: string | null
           editor_paid?: boolean | null
           editor_payment?: number | null
+          hooks_count?: number | null
           id?: string
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
