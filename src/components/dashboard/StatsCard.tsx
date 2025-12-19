@@ -9,16 +9,19 @@ interface StatsCardProps {
   trend?: number;
   trendLabel?: string;
   className?: string;
+  onClick?: () => void;
 }
 
-export function StatsCard({ title, value, icon, trend, trendLabel, className }: StatsCardProps) {
+export function StatsCard({ title, value, icon, trend, trendLabel, className, onClick }: StatsCardProps) {
   const isPositive = trend && trend > 0;
   const isNegative = trend && trend < 0;
 
   return (
     <div 
+      onClick={onClick}
       className={cn(
         "group relative overflow-hidden rounded-xl border border-border bg-card p-4 md:p-6 transition-all duration-300 hover:shadow-lg hover:border-primary/20",
+        onClick && "cursor-pointer",
         className
       )}
     >
