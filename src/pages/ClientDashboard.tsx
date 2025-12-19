@@ -359,9 +359,9 @@ export default function ClientDashboard() {
 
   const getContentByStatus = (statuses: ContentStatus[]) => content.filter(c => statuses.includes(c.status));
 
-  const inProgressContent = getContentByStatus(['draft', 'script_pending', 'script_approved', 'recording', 'editing']);
-  const reviewContent = getContentByStatus(['review']);
-  const approvedContent = getContentByStatus(['approved', 'paid', 'delivered']);
+  const inProgressContent = getContentByStatus(['draft', 'script_pending', 'script_approved', 'recording', 'editing', 'review']);
+  const reviewContent = getContentByStatus(['delivered', 'issue']); // Entregado y novedades para revisar
+  const approvedContent = getContentByStatus(['approved', 'paid']);
   const publishedContent = content.filter(c => c.is_published);
 
   // Financial Metrics
