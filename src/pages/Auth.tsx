@@ -126,19 +126,32 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    try {
+      const { error } = await signIn(email, password);
 
-    if (error) {
+      if (error) {
+        console.error('[Auth] Sign in error:', error);
+        toast({
+          title: 'Error al iniciar sesión',
+          description: error.message === 'Invalid login credentials' 
+            ? 'Credenciales inválidas' 
+            : error.message,
+          variant: 'destructive'
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // Success - loading will be set to false when redirect happens
+    } catch (err) {
+      console.error('[Auth] Unexpected error:', err);
       toast({
-        title: 'Error al iniciar sesión',
-        description: error.message === 'Invalid login credentials' 
-          ? 'Credenciales inválidas' 
-          : error.message,
+        title: 'Error',
+        description: 'Ocurrió un error inesperado. Por favor intenta de nuevo.',
         variant: 'destructive'
       });
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
