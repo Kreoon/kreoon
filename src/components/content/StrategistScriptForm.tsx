@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   MessageSquare, ListOrdered, Plus, X, Wand2 
@@ -15,10 +14,14 @@ import {
 interface Product {
   id: string;
   name: string;
+  description?: string | null;
   strategy: string | null;
   market_research: string | null;
   ideal_avatar: string | null;
   sales_angles: string[] | null;
+  brief_url?: string | null;
+  onboarding_url?: string | null;
+  research_url?: string | null;
 }
 
 interface StrategistScriptFormProps {
@@ -59,6 +62,9 @@ const COUNTRIES = [
   "Estados Unidos (Latino)",
   "Otro",
 ];
+
+// n8n Webhook URL
+const N8N_WEBHOOK_URL = "https://n8n.infinygroup.com/webhook-test/787fcfa6-f590-458f-94b6-7b9f0ecd1be7";
 
 export function StrategistScriptForm({ product, contentId, onScriptGenerated }: StrategistScriptFormProps) {
   const { toast } = useToast();
@@ -126,35 +132,96 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
 
     setLoading(true);
     try {
-      const prompt = buildPrompt();
-      
-      const { data, error } = await supabase.functions.invoke('content-ai', {
-        body: {
-          action: 'generate_script',
-          prompt,
-          product: {
-            name: product.name,
-            strategy: product.strategy,
-            market_research: product.market_research,
-            ideal_avatar: product.ideal_avatar,
-          },
-          script_params: formData,
-        }
+      // Prepare complete payload for n8n webhook
+      const payload = {
+        // Content info
+        content_id: contentId,
+        timestamp: new Date().toISOString(),
+        
+        // Product information (complete)
+        product: {
+          id: product.id,
+          name: product.name,
+          description: product.description || null,
+          strategy: product.strategy || null,
+          market_research: product.market_research || null,
+          ideal_avatar: product.ideal_avatar || null,
+          sales_angles: product.sales_angles || [],
+          brief_url: product.brief_url || null,
+          onboarding_url: product.onboarding_url || null,
+          research_url: product.research_url || null,
+        },
+        
+        // Script parameters from the form
+        script_params: {
+          cta: formData.cta,
+          sales_angle: formData.sales_angle,
+          hooks_count: parseInt(formData.hooks_count),
+          ideal_avatar: formData.ideal_avatar,
+          target_country: formData.target_country,
+          narrative_structure: formData.narrative_structure,
+          narrative_structure_label: NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure,
+          additional_instructions: formData.additional_instructions,
+          hooks: formData.hooks,
+        },
+        
+        // Pre-built prompt for convenience
+        prompt: buildPrompt(),
+      };
+
+      console.log("Sending to n8n webhook:", payload);
+
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`Error en webhook: ${response.status}`);
+      }
+
+      // Get the response from n8n (Respond to Webhook node)
+      const data = await response.json();
+      console.log("n8n response:", data);
       
-      if (data?.script) {
-        onScriptGenerated(data.script);
+      // Extract script from response - handle different possible response formats
+      let script = "";
+      
+      if (typeof data === "string") {
+        script = data;
+      } else if (data.script) {
+        script = data.script;
+      } else if (data.guion) {
+        script = data.guion;
+      } else if (data.output) {
+        script = data.output;
+      } else if (data.text) {
+        script = data.text;
+      } else if (data.message) {
+        script = data.message;
+      } else if (data.content) {
+        script = data.content;
+      } else if (data.result) {
+        script = typeof data.result === 'string' ? data.result : JSON.stringify(data.result);
+      } else {
+        // If the response is an object without known keys, stringify it
+        script = JSON.stringify(data, null, 2);
+      }
+
+      if (script) {
+        onScriptGenerated(script);
         toast({ title: "Guión generado exitosamente" });
       } else {
-        throw new Error("No se generó el guión");
+        throw new Error("No se recibió respuesta del webhook");
       }
     } catch (error) {
       console.error("Error:", error);
       toast({
         title: "Error al generar",
-        description: "No se pudo generar el guión. Intenta de nuevo.",
+        description: error instanceof Error ? error.message : "No se pudo conectar con n8n. Intenta de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -166,9 +233,10 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
     return `Genera un guión de video para el siguiente contexto:
 
 PRODUCTO: ${product?.name}
+DESCRIPCIÓN: ${product?.description || 'No disponible'}
 CTA (Llamado a la acción): ${formData.cta}
 ÁNGULO DE VENTA: ${formData.sales_angle}
-ESTRUCTURA NARRATIVA: ${formData.narrative_structure}
+ESTRUCTURA NARRATIVA: ${NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure}
 PAÍS OBJETIVO: ${formData.target_country}
 AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
 
@@ -184,9 +252,12 @@ ${product?.strategy || 'No disponible'}
 INVESTIGACIÓN DE MERCADO:
 ${product?.market_research || 'No disponible'}
 
+ÁNGULOS DE VENTA DISPONIBLES:
+${product?.sales_angles?.join(', ') || 'No definidos'}
+
 Por favor genera un guión completo con:
 1. ${formData.hooks_count} opciones de hooks de apertura
-2. Desarrollo del contenido siguiendo la estructura ${formData.narrative_structure}
+2. Desarrollo del contenido siguiendo la estructura ${NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label}
 3. Cierre con el CTA: ${formData.cta}
 
 El guión debe ser natural, conversacional y optimizado para video corto (TikTok/Reels/Shorts).`;
@@ -210,9 +281,14 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
           <Wand2 className="h-5 w-5 text-primary" />
           Formulario de Guión
         </h4>
-        <Badge variant="outline" className="text-xs">
-          Estratega
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+            n8n
+          </Badge>
+          <Badge variant="outline" className="text-xs">
+            Estratega
+          </Badge>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -402,7 +478,7 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Generando guión...
+            Generando guión via n8n...
           </>
         ) : (
           <>
