@@ -841,87 +841,85 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               )}
             </div>
 
-            {/* Section 4: Guidelines for different roles */}
-            {canEditVideoTab && !isClient && (
-              <div className="space-y-6 pt-6 border-t">
-                <h4 className="font-medium text-lg">Pautas por Rol</h4>
-                
-                {/* Pautas para el Editor */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-blue-500/10">
-                      <Clipboard className="h-4 w-4 text-blue-500" />
-                    </div>
-                    <Label className="font-medium">Pautas para el Editor</Label>
+            {/* Section 4: Guidelines for different roles - Visible for all, editable by admin/strategist */}
+            <div className="space-y-6 pt-6 border-t">
+              <h4 className="font-medium text-lg">Pautas por Rol</h4>
+              
+              {/* Pautas para el Editor */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-blue-500/10">
+                    <Clipboard className="h-4 w-4 text-blue-500" />
                   </div>
-                  {editMode ? (
-                    <RichTextEditor
-                      content={formData.editor_guidelines || ''}
-                      onChange={(html) => setFormData({ ...formData, editor_guidelines: html })}
-                      placeholder="Instrucciones específicas para el editor: estilo de edición, música, ritmo, efectos, etc."
-                      className="min-h-[150px]"
-                    />
-                  ) : (content as any).editor_guidelines ? (
-                    <RichTextViewer 
-                      content={(content as any).editor_guidelines} 
-                      className="min-h-[50px] max-h-[200px] overflow-y-auto"
-                    />
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">Sin pautas para el editor</p>
-                  )}
+                  <Label className="font-medium">Pautas para el Editor</Label>
                 </div>
-
-                {/* Pautas para el Estratega */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-purple-500/10">
-                      <Target className="h-4 w-4 text-purple-500" />
-                    </div>
-                    <Label className="font-medium">Pautas para el Estratega</Label>
-                  </div>
-                  {editMode ? (
-                    <RichTextEditor
-                      content={formData.strategist_guidelines || ''}
-                      onChange={(html) => setFormData({ ...formData, strategist_guidelines: html })}
-                      placeholder="Estrategia de contenido, objetivos, métricas a seguir, ajustes de copy, etc."
-                      className="min-h-[150px]"
-                    />
-                  ) : (content as any).strategist_guidelines ? (
-                    <RichTextViewer 
-                      content={(content as any).strategist_guidelines} 
-                      className="min-h-[50px] max-h-[200px] overflow-y-auto"
-                    />
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">Sin pautas para el estratega</p>
-                  )}
-                </div>
-
-                {/* Pautas para el Trafficker */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-green-500/10">
-                      <Megaphone className="h-4 w-4 text-green-500" />
-                    </div>
-                    <Label className="font-medium">Pautas para el Trafficker</Label>
-                  </div>
-                  {editMode ? (
-                    <RichTextEditor
-                      content={formData.trafficker_guidelines || ''}
-                      onChange={(html) => setFormData({ ...formData, trafficker_guidelines: html })}
-                      placeholder="Indicaciones de pauta: público objetivo, presupuesto sugerido, plataformas, segmentación, etc."
-                      className="min-h-[150px]"
-                    />
-                  ) : (content as any).trafficker_guidelines ? (
-                    <RichTextViewer 
-                      content={(content as any).trafficker_guidelines} 
-                      className="min-h-[50px] max-h-[200px] overflow-y-auto"
-                    />
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">Sin pautas para el trafficker</p>
-                  )}
-                </div>
+                {editMode && canEditVideoTab ? (
+                  <RichTextEditor
+                    content={formData.editor_guidelines || ''}
+                    onChange={(html) => setFormData({ ...formData, editor_guidelines: html })}
+                    placeholder="Instrucciones específicas para el editor: estilo de edición, música, ritmo, efectos, etc."
+                    className="min-h-[150px]"
+                  />
+                ) : formData.editor_guidelines || (content as any).editor_guidelines ? (
+                  <RichTextViewer 
+                    content={formData.editor_guidelines || (content as any).editor_guidelines} 
+                    className="min-h-[50px] max-h-[200px] overflow-y-auto"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">Sin pautas para el editor</p>
+                )}
               </div>
-            )}
+
+              {/* Pautas para el Estratega */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-purple-500/10">
+                    <Target className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <Label className="font-medium">Pautas para el Estratega</Label>
+                </div>
+                {editMode && canEditVideoTab ? (
+                  <RichTextEditor
+                    content={formData.strategist_guidelines || ''}
+                    onChange={(html) => setFormData({ ...formData, strategist_guidelines: html })}
+                    placeholder="Estrategia de contenido, objetivos, métricas a seguir, ajustes de copy, etc."
+                    className="min-h-[150px]"
+                  />
+                ) : formData.strategist_guidelines || (content as any).strategist_guidelines ? (
+                  <RichTextViewer 
+                    content={formData.strategist_guidelines || (content as any).strategist_guidelines} 
+                    className="min-h-[50px] max-h-[200px] overflow-y-auto"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">Sin pautas para el estratega</p>
+                )}
+              </div>
+
+              {/* Pautas para el Trafficker */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <Megaphone className="h-4 w-4 text-green-500" />
+                  </div>
+                  <Label className="font-medium">Pautas para el Trafficker</Label>
+                </div>
+                {editMode && canEditVideoTab ? (
+                  <RichTextEditor
+                    content={formData.trafficker_guidelines || ''}
+                    onChange={(html) => setFormData({ ...formData, trafficker_guidelines: html })}
+                    placeholder="Indicaciones de pauta: público objetivo, presupuesto sugerido, plataformas, segmentación, etc."
+                    className="min-h-[150px]"
+                  />
+                ) : formData.trafficker_guidelines || (content as any).trafficker_guidelines ? (
+                  <RichTextViewer 
+                    content={formData.trafficker_guidelines || (content as any).trafficker_guidelines} 
+                    className="min-h-[50px] max-h-[200px] overflow-y-auto"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">Sin pautas para el trafficker</p>
+                )}
+              </div>
+            </div>
           </TabsContent>
 
           {/* General Tab - Creator, Editor, Admin only */}
