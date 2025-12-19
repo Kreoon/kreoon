@@ -9,6 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CommentsSection } from "@/components/content/CommentsSection";
 
 interface PublishedContent {
   id: string;
@@ -40,6 +42,8 @@ export default function Portfolio() {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -436,6 +440,10 @@ export default function Portfolio() {
               onLike={(e) => handleLike(item.id, e)}
               onView={() => handleView(item.id)}
               onShare={() => handleShare(item)}
+              onComment={() => {
+                setSelectedContentId(item.id);
+                setCommentDialogOpen(true);
+              }}
               getThumbnail={getThumbnail}
               formatCount={formatCount}
             />
@@ -515,6 +523,18 @@ export default function Portfolio() {
           </Badge>
         </div>
       )}
+
+      {/* Comments Dialog */}
+      <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
+        <DialogContent className="max-w-lg bg-neutral-900 border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-white">Comentarios</DialogTitle>
+          </DialogHeader>
+          {selectedContentId && (
+            <CommentsSection contentId={selectedContentId} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -525,6 +545,7 @@ interface EmbeddedVideoCardProps {
   onLike: (e?: React.MouseEvent) => void;
   onView: () => void;
   onShare: () => void;
+  onComment: () => void;
   getThumbnail: (url: string | null, thumbnail: string | null) => string | null;
   formatCount: (count: number) => string;
 }
@@ -534,7 +555,8 @@ function EmbeddedVideoCard({
   isAdmin,
   onLike, 
   onView, 
-  onShare, 
+  onShare,
+  onComment,
   getThumbnail, 
   formatCount 
 }: EmbeddedVideoCardProps) {
@@ -683,6 +705,15 @@ function EmbeddedVideoCard({
                 }`}
               >
                 <Heart className="h-6 w-6" fill={content.is_liked ? "currentColor" : "none"} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onComment();
+                }}
+                className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-black transition-all duration-200 shadow-lg active:scale-90"
+              >
+                <MessageSquare className="h-6 w-6" />
               </button>
               <button
                 onClick={(e) => {

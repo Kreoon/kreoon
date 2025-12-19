@@ -1,14 +1,19 @@
 import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+
 interface MainLayoutProps {
   children: ReactNode;
 }
+
 export function MainLayout({
   children
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  return <div className="min-h-screen bg-background">
+  
+  return (
+    <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
@@ -25,14 +30,22 @@ export function MainLayout({
             <span className="text-sm font-bold">UGC Colombia</span>
           </div>
         </div>
-        <div className="w-10" /> {/* Spacer for symmetry */}
+        <NotificationBell />
       </header>
+      
+      {/* Desktop Header with Notifications */}
+      <div className={`hidden md:flex fixed top-0 right-0 z-30 h-14 items-center px-4 transition-[left] duration-300 ${sidebarCollapsed ? "left-20" : "left-64"}`}>
+        <div className="ml-auto">
+          <NotificationBell />
+        </div>
+      </div>
       
       {/* Main Content */}
       <main className={`transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
-        <div className="min-h-screen">
+        <div className="min-h-screen md:pt-0">
           {children}
         </div>
       </main>
-    </div>;
+    </div>
+  );
 }
