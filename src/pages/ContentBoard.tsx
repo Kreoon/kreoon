@@ -20,8 +20,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
-// Usamos directamente KANBAN_COLUMNS ya que no incluye 'paid'
+// Columnas base del Kanban
 const BOARD_COLUMNS = KANBAN_COLUMNS;
+
+// Columnas para editores: solo desde 'recorded' en adelante
+const EDITOR_COLUMNS = KANBAN_COLUMNS.filter(col => 
+  ['recorded', 'editing', 'delivered', 'issue', 'approved'].includes(col.status)
+);
 
 // Verificar si un movimiento de estado es válido según el rol
 const canMoveToStatus = (
@@ -498,7 +503,7 @@ export default function ContentBoard() {
           </div>
           
           <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0">
-            {BOARD_COLUMNS.map(column => {
+            {(isEditor && !isAdmin ? EDITOR_COLUMNS : BOARD_COLUMNS).map(column => {
               const columnContent = getContentByStatus(column.status);
               const isCurrentDropTarget = dropTarget === column.status;
               const canDropHere = draggingContent 
