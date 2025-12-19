@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RichTextEditor, RichTextViewer } from "@/components/ui/rich-text-editor";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +18,7 @@ import { es } from "date-fns/locale";
 import { 
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
-  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen
+  Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Upload, File, X
 } from "lucide-react";
 import {
   AlertDialog,
@@ -849,58 +850,39 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
           {/* Video Final Tab - Visible para todos */}
           <TabsContent value="video" className="space-y-6 mt-4">
+            {/* Sección 1: Video + Comentarios en 2 columnas */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Video Final + Guión */}
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <h4 className="font-medium flex items-center gap-2">
-                    <Video className="h-4 w-4" /> Video Final
-                  </h4>
-                  
-                  {content.video_url ? (
-                    <div className="space-y-2">
-                      <div 
-                        className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-                        style={{ height: '400px' }}
-                      >
-                        {renderVideoEmbed(content.video_url)}
-                      </div>
-                      <a 
-                        href={content.video_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                      >
-                        Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
-                      </a>
+              {/* Video Final */}
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Video className="h-4 w-4" /> Video Final
+                </h4>
+                
+                {content.video_url ? (
+                  <div className="space-y-2">
+                    <div 
+                      className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
+                      style={{ height: '400px' }}
+                    >
+                      {renderVideoEmbed(content.video_url)}
                     </div>
-                  ) : (
-                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '250px' }}>
-                      <div className="text-center text-muted-foreground">
-                        <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>No hay video cargado</p>
-                      </div>
+                    <a 
+                      href={content.video_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                    >
+                      Ver video original <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '250px' }}>
+                    <div className="text-center text-muted-foreground">
+                      <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No hay video cargado</p>
                     </div>
-                  )}
-                </div>
-
-                {/* Guión / Estrategia - debajo del video */}
-                <div className="space-y-2 pt-4 border-t">
-                  <h4 className="font-medium flex items-center gap-2">
-                    <FileText className="h-4 w-4" /> Guión / Estrategia
-                  </h4>
-                  {editMode ? (
-                    <Textarea
-                      value={formData.script}
-                      onChange={(e) => setFormData({ ...formData, script: e.target.value })}
-                      rows={6}
-                    />
-                  ) : (
-                    <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap max-h-48 overflow-y-auto">
-                      {content.script || "Sin guión"}
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* Comentarios - al lado del video */}
@@ -948,6 +930,71 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   </Button>
                 </div>
               </div>
+            </div>
+
+            {/* Sección 2: Guión / Estrategia - Ancho completo con editor de texto enriquecido */}
+            <div className="space-y-3 pt-6 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Guión / Estrategia
+              </h4>
+              {editMode ? (
+                <RichTextEditor
+                  content={formData.script || ''}
+                  onChange={(html) => setFormData({ ...formData, script: html })}
+                  placeholder="Escribe el guión o estrategia aquí..."
+                  className="min-h-[250px]"
+                />
+              ) : (
+                <RichTextViewer 
+                  content={content.script || ''} 
+                  className="min-h-[150px] max-h-[400px] overflow-y-auto"
+                />
+              )}
+            </div>
+
+            {/* Sección 3: Archivos adjuntos (Investigación, Brief, Onboarding) */}
+            <div className="space-y-3 pt-6 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <Upload className="h-4 w-4" /> Archivos (Investigación / Brief / Onboarding)
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Aquí puedes agregar enlaces a documentos de investigación, briefs o información de onboarding.
+              </p>
+              
+              {editMode ? (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground text-xs">URL del documento o carpeta</Label>
+                    <Input
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="https://drive.google.com/... o URL del documento"
+                      type="url"
+                    />
+                  </div>
+                </div>
+              ) : content.description ? (
+                <a 
+                  href={content.description} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors group"
+                >
+                  <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <File className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">Documentos del proyecto</p>
+                    <p className="text-sm text-muted-foreground truncate">{content.description}</p>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                </a>
+              ) : (
+                <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
+                  <File className="h-10 w-10 mx-auto mb-2 text-muted-foreground/50" />
+                  <p className="text-sm text-muted-foreground">No hay archivos adjuntos</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 
