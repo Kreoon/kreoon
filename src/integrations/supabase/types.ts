@@ -564,6 +564,9 @@ export type Database = {
           created_at: string | null
           document_number: string | null
           document_type: string | null
+          editor_completed_count: number | null
+          editor_on_time_count: number | null
+          editor_rating: number | null
           email: string
           facebook: string | null
           full_name: string
@@ -584,6 +587,9 @@ export type Database = {
           created_at?: string | null
           document_number?: string | null
           document_type?: string | null
+          editor_completed_count?: number | null
+          editor_on_time_count?: number | null
+          editor_rating?: number | null
           email: string
           facebook?: string | null
           full_name: string
@@ -604,6 +610,9 @@ export type Database = {
           created_at?: string | null
           document_number?: string | null
           document_type?: string | null
+          editor_completed_count?: number | null
+          editor_on_time_count?: number | null
+          editor_rating?: number | null
           email?: string
           facebook?: string | null
           full_name?: string
@@ -644,6 +653,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_best_available_editor: { Args: never; Returns: string }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]

@@ -9,8 +9,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Content, STATUS_LABELS, STATUS_COLORS } from "@/types/database";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { User, Video, Mail, Phone, Calendar, DollarSign, MapPin, Instagram, Facebook, Edit } from "lucide-react";
+import { User, Video, Mail, Phone, Calendar, DollarSign, MapPin, Instagram, Facebook, Edit, Star, TrendingUp, Clock } from "lucide-react";
 import { CreatorEditorForm } from "./CreatorEditorForm";
+import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreatorProfile {
   id: string;
@@ -27,6 +29,9 @@ interface CreatorProfile {
   facebook?: string | null;
   tiktok?: string | null;
   role: 'creator' | 'editor';
+  editor_rating?: number | null;
+  editor_completed_count?: number | null;
+  editor_on_time_count?: number | null;
 }
 
 interface CreatorDetailDialogProps {
@@ -45,10 +50,13 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
 
 export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: CreatorDetailDialogProps) {
   const { isAdmin } = useAuth();
+  const { toast } = useToast();
   const [assignedContent, setAssignedContent] = useState<Content[]>([]);
   const [loadingContent, setLoadingContent] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [fullProfile, setFullProfile] = useState<CreatorProfile | null>(null);
+  const [editorRating, setEditorRating] = useState<number>(5);
+  const [savingRating, setSavingRating] = useState(false);
 
   useEffect(() => {
     if (creator && open) {
@@ -68,9 +76,41 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
       
       if (data) {
         setFullProfile({ ...data, role: creator.role } as CreatorProfile);
+        if (creator.role === 'editor') {
+          setEditorRating(data.editor_rating ?? 5);
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+    }
+  };
+
+  const handleSaveRating = async (newRating: number) => {
+    if (!creator || creator.role !== 'editor') return;
+    setSavingRating(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ editor_rating: newRating })
+        .eq('id', creator.id);
+
+      if (error) throw error;
+
+      setEditorRating(newRating);
+      toast({
+        title: "Calificación actualizada",
+        description: `La calificación del editor se actualizó a ${newRating.toFixed(1)}`
+      });
+      onUpdate?.();
+    } catch (error) {
+      console.error('Error updating rating:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la calificación",
+        variant: "destructive"
+      });
+    } finally {
+      setSavingRating(false);
     }
   };
 
@@ -333,7 +373,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
               )}
             </TabsContent>
 
-            <TabsContent value="stats" className="space-y-4 mt-4">
+            <TabsContent value="stats" className="space-y-6 mt-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 rounded-lg border bg-card text-center">
                   <p className="text-2xl font-bold text-primary">{assignedContent.length}</p>
@@ -355,6 +395,80 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
                   <p className="text-xs text-muted-foreground">Total ganado</p>
                 </div>
               </div>
+
+              {/* Editor-specific stats */}
+              {creator?.role === 'editor' && (
+                <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    Métricas de Editor (para asignación automática)
+                  </h4>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="p-3 rounded-lg bg-card border">
+                      <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                        <Clock className="h-3 w-3" />
+                        Entregas a tiempo
+                      </div>
+                      <p className="text-lg font-bold">
+                        {fullProfile?.editor_on_time_count ?? 0} / {fullProfile?.editor_completed_count ?? 0}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {fullProfile?.editor_completed_count 
+                          ? `${Math.round(((fullProfile.editor_on_time_count ?? 0) / fullProfile.editor_completed_count) * 100)}% cumplimiento`
+                          : 'Sin datos'}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-card border">
+                      <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                        <Video className="h-3 w-3" />
+                        Carga actual
+                      </div>
+                      <p className="text-lg font-bold text-info">{activeContent.length}</p>
+                      <p className="text-xs text-muted-foreground">proyectos pendientes</p>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-card border col-span-2 md:col-span-1">
+                      <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                        <Star className="h-3 w-3 fill-warning text-warning" />
+                        Calificación interna
+                      </div>
+                      <p className="text-lg font-bold text-warning">{editorRating.toFixed(1)} / 10</p>
+                    </div>
+                  </div>
+
+                  {/* Rating slider for admins */}
+                  {isAdmin && (
+                    <div className="space-y-3 pt-4 border-t">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">Ajustar calificación</Label>
+                        <span className="text-sm font-bold text-warning">{editorRating.toFixed(1)}</span>
+                      </div>
+                      <Slider
+                        value={[editorRating]}
+                        onValueChange={([val]) => setEditorRating(val)}
+                        min={1}
+                        max={10}
+                        step={0.5}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>1 (Bajo)</span>
+                        <span>10 (Excelente)</span>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleSaveRating(editorRating)}
+                        disabled={savingRating}
+                        className="w-full"
+                      >
+                        {savingRating ? "Guardando..." : "Guardar calificación"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </DialogContent>
