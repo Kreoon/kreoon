@@ -513,19 +513,19 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between gap-4">
-            <DialogTitle className="flex items-center gap-3 flex-1 min-w-0">
-              <Video className="h-5 w-5 text-primary shrink-0" />
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-6">
+        <DialogHeader className="pr-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+            <DialogTitle className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <Video className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
               {editMode ? (
                 <Input
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="text-xl font-bold"
+                  className="text-base sm:text-xl font-bold"
                 />
               ) : (
-                <span className="truncate">{content.title}</span>
+                <span className="truncate text-sm sm:text-base">{content.title}</span>
               )}
             </DialogTitle>
             {(isAdmin || isClient) ? (
@@ -534,7 +534,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 onValueChange={(v) => handleStatusChange(v as ContentStatus)}
                 disabled={loading}
               >
-                <SelectTrigger className={`w-auto min-w-[140px] ${STATUS_COLORS[currentStatus || content.status]}`}>
+                <SelectTrigger className={`w-full sm:w-auto sm:min-w-[140px] text-xs sm:text-sm ${STATUS_COLORS[currentStatus || content.status]}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -546,14 +546,14 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </SelectContent>
               </Select>
             ) : (
-              <Badge className={STATUS_COLORS[content.status]}>
+              <Badge className={`text-xs ${STATUS_COLORS[content.status]}`}>
                 {STATUS_LABELS[content.status]}
               </Badge>
             )}
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="video" className="mt-4">
+        <Tabs defaultValue="video" className="mt-2 sm:mt-4">
           {/* Tab visibility based on role:
               - Video: client sees (Cliente asignado, creador asignado, editor asignado)
               - Material: creator and editor only (not client)
@@ -562,17 +562,17 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               - Fechas: admin only
               - Pagos: admin only
           */}
-          <TabsList className={`grid w-full ${
+          <TabsList className={`grid w-full h-auto gap-1 ${
             isClient ? 'grid-cols-1' : 
-            isAdmin ? 'grid-cols-6' : 
+            isAdmin ? 'grid-cols-3 sm:grid-cols-6' : 
             (isCreator || isEditor) ? 'grid-cols-3' : 'grid-cols-3'
           }`}>
-            <TabsTrigger value="video">Video</TabsTrigger>
-            {(isCreator || isEditor || isAdmin) && <TabsTrigger value="material">Material</TabsTrigger>}
-            {(isCreator || isEditor || isAdmin) && <TabsTrigger value="general">General</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="equipo">Equipo</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="fechas">Fechas</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="pagos">Pagos</TabsTrigger>}
+            <TabsTrigger value="video" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Video</TabsTrigger>
+            {(isCreator || isEditor || isAdmin) && <TabsTrigger value="material" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Material</TabsTrigger>}
+            {(isCreator || isEditor || isAdmin) && <TabsTrigger value="general" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">General</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="equipo" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Equipo</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="fechas" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Fechas</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="pagos" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Pagos</TabsTrigger>}
           </TabsList>
 
           {/* Video Tab - Reorganized: Video+Comments + Script Generator Form */}
