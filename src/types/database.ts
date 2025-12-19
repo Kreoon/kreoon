@@ -1,4 +1,4 @@
-export type AppRole = 'admin' | 'creator' | 'editor' | 'client' | 'ambassador';
+export type AppRole = 'admin' | 'creator' | 'editor' | 'client' | 'ambassador' | 'strategist';
 
 export type ContentStatus = 
   | 'draft'           // Creado
