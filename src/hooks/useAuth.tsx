@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, useRef, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole, Profile } from '@/types/database';
@@ -31,6 +31,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [rolesLoaded, setRolesLoaded] = useState(false);
 
+  // Keep latest values accessible inside auth listeners (effect has [] deps).
+  const userIdRef = useRef<string | null>(null);
+  const rolesLoadedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    userIdRef.current = user?.id ?? null;
+  }, [user]);
+
+  useEffect(() => {
+    rolesLoadedRef.current = rolesLoaded;
+  }, [rolesLoaded]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -43,19 +55,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }, 8000);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!isMounted) return;
 
       console.log('[auth] state change', event);
-      setSession(session);
-      setUser(session?.user ?? null);
 
-      if (session?.user) {
-        setRolesLoaded(false);
-        // IMPORTANT: defer any other Supabase calls to avoid auth deadlocks (especially on mobile)
-        window.setTimeout(() => {
-          fetchUserData(session.user.id);
-        }, 0);
+      // If the user hasn't actually changed, don't force ProtectedRoute back into spinner.
+      // (The auth client can emit events again on tab focus / token refresh.)
+      const nextUserId = nextSession?.user?.id ?? null;
+      const currentUserId = userIdRef.current;
+      const userChanged = nextUserId !== currentUserId;
+
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (nextSession?.user) {
+        if (userChanged || !rolesLoadedRef.current) {
+          setLoading(true);
+          setRolesLoaded(false);
+          // IMPORTANT: defer any other Supabase calls to avoid auth deadlocks (especially on mobile)
+          window.setTimeout(() => {
+            fetchUserData(nextSession.user.id);
+          }, 0);
+        }
       } else {
         setProfile(null);
         setRoles([]);
