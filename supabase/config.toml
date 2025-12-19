@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.api]
 verify_jwt = false
+
+[functions.bunny-webhook]
+verify_jwt = false
+
+[functions.notify-drive-upload]
+verify_jwt = false
