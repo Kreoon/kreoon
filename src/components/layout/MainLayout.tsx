@@ -1,16 +1,14 @@
 import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
-
 interface MainLayoutProps {
   children: ReactNode;
 }
-
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout({
+  children
+}: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
@@ -31,11 +29,10 @@ export function MainLayout({ children }: MainLayoutProps) {
       </header>
       
       {/* Main Content */}
-      <main className={`transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
+      <main className="">
         <div className="min-h-screen">
           {children}
         </div>
       </main>
-    </div>
-  );
+    </div>;
 }
