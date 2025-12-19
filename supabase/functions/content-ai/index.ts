@@ -116,42 +116,70 @@ serve(async (req) => {
   }
 
   try {
-    const { action, data }: ContentAIRequest = await req.json();
+    const body = await req.json();
+    const { action, data, prompt, product, script_params } = body;
 
-    console.log("Content AI Request:", { action, data });
+    console.log("Content AI Request:", { action });
 
     let result: string;
 
     switch (action) {
       case "generate_script": {
-        const prompt = `Genera un guion de video para:
+        // New strategist form script generation
+        if (prompt && product) {
+          const systemPrompt = `Eres un experto copywriter especializado en crear guiones de video para redes sociales (TikTok, Instagram Reels, YouTube Shorts).
 
-CLIENTE: ${data.client_name || "Cliente"}
-PRODUCTO/SERVICIO: ${data.product || "Producto"}
-OBJETIVO: ${data.objective || "Generar awareness"}
-DURACIÓN: ${data.duration || "60 segundos"}
-TONO: ${data.tone || "Profesional y dinámico"}
+Tu trabajo es crear guiones que:
+- Sean naturales y conversacionales
+- Tengan hooks de apertura potentes
+- Sigan la estructura narrativa indicada
+- Incluyan el CTA de forma natural
+- Estén optimizados para el país objetivo (usa expresiones locales cuando sea apropiado)
+- Sean fáciles de memorizar y grabar
+
+Formato de respuesta:
+- Usa formato Markdown
+- Separa claramente las secciones: HOOKS, DESARROLLO, CIERRE/CTA
+- Incluye indicaciones de tono/emoción entre corchetes [emocionado], [serio], etc.
+- Indica pausas cuando sean necesarias`;
+
+          result = await callAI(systemPrompt, prompt);
+          
+          return new Response(
+            JSON.stringify({ success: true, script: result }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Legacy format
+        const legacyPrompt = `Genera un guion de video para:
+
+CLIENTE: ${data?.client_name || "Cliente"}
+PRODUCTO/SERVICIO: ${data?.product || "Producto"}
+OBJETIVO: ${data?.objective || "Generar awareness"}
+DURACIÓN: ${data?.duration || "60 segundos"}
+TONO: ${data?.tone || "Profesional y dinámico"}
 
 Genera un guion completo con timestamps, descripciones visuales y sugerencias de audio.`;
 
-        result = await callAI(SYSTEM_PROMPTS.generate_script, prompt);
+        result = await callAI(SYSTEM_PROMPTS.generate_script, legacyPrompt);
         break;
       }
 
       case "analyze_content": {
-        const prompt = `Analiza el siguiente contenido y proporciona feedback detallado:
+        const analyzePrompt = `Analiza el siguiente contenido y proporciona feedback detallado:
 
-${data.script ? `GUION:\n${data.script}` : ""}
-${data.video_url ? `VIDEO URL: ${data.video_url}` : ""}
+${data?.script ? `GUION:\n${data.script}` : ""}
+${data?.video_url ? `VIDEO URL: ${data.video_url}` : ""}
 
 Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y sugerencias específicas de mejora.`;
 
-        result = await callAI(SYSTEM_PROMPTS.analyze_content, prompt);
+        result = await callAI(SYSTEM_PROMPTS.analyze_content, analyzePrompt);
         break;
       }
 
       case "chat": {
-        if (!data.messages || data.messages.length === 0) {
+        if (!data?.messages || data.messages.length === 0) {
           throw new Error("Messages are required for chat");
         }
 
@@ -185,17 +213,17 @@ Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y s
       }
 
       case "improve_script": {
-        const prompt = `Mejora el siguiente guion basándote en el feedback proporcionado:
+        const improvePrompt = `Mejora el siguiente guion basándote en el feedback proporcionado:
 
 GUION ORIGINAL:
-${data.original_script || ""}
+${data?.original_script || ""}
 
 FEEDBACK:
-${data.feedback || "Hazlo más dinámico y atractivo"}
+${data?.feedback || "Hazlo más dinámico y atractivo"}
 
 Devuelve el guion mejorado manteniendo el mismo formato.`;
 
-        result = await callAI(SYSTEM_PROMPTS.improve_script, prompt);
+        result = await callAI(SYSTEM_PROMPTS.improve_script, improvePrompt);
         break;
       }
 

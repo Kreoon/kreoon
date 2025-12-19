@@ -6,13 +6,39 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Content, STATUS_LABELS, STATUS_COLORS } from "@/types/database";
+import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Building2, Video, Save, Mail, Phone, Calendar, DollarSign } from "lucide-react";
+import { 
+  Building2, Video, Save, Mail, Phone, Calendar, DollarSign, 
+  Package, Plus, Trash2, Edit2, ExternalLink
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  strategy: string | null;
+  sales_angles: string[] | null;
+  brief_url: string | null;
+  created_at: string;
+}
 
 interface ClientDetailDialogProps {
   client: {
@@ -35,6 +61,10 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
   const [editMode, setEditMode] = useState(false);
   const [assignedContent, setAssignedContent] = useState<Content[]>([]);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showProductDialog, setShowProductDialog] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -52,8 +82,47 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         notes: client.notes || ""
       });
       fetchClientContent();
+      fetchProducts();
     }
   }, [client]);
+
+  const fetchProducts = async () => {
+    if (!client) return;
+    setLoadingProducts(true);
+    try {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .eq('client_id', client.id)
+        .order('name');
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+      
+      if (error) throw error;
+      
+      toast({ title: "Producto eliminado" });
+      fetchProducts();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({ 
+        title: "Error al eliminar", 
+        description: "El producto puede tener videos asociados",
+        variant: "destructive" 
+      });
+    }
+  };
 
   const fetchClientContent = async () => {
     if (!client) return;
@@ -129,7 +198,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-4">
             {client.logo_url ? (
@@ -151,9 +220,10 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         </DialogHeader>
 
         <Tabs defaultValue="info" className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="info">Información</TabsTrigger>
-            <TabsTrigger value="content">Proyectos ({assignedContent.length})</TabsTrigger>
+            <TabsTrigger value="products">Productos ({products.length})</TabsTrigger>
+            <TabsTrigger value="content">Videos ({assignedContent.length})</TabsTrigger>
             <TabsTrigger value="stats">Estadísticas</TabsTrigger>
           </TabsList>
 
@@ -236,6 +306,129 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             )}
           </TabsContent>
 
+          {/* Products Tab - NEW */}
+          <TabsContent value="products" className="space-y-4 mt-4">
+            {isAdmin && (
+              <div className="flex justify-end">
+                <Button onClick={() => { setSelectedProduct(null); setShowProductDialog(true); }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuevo Producto
+                </Button>
+              </div>
+            )}
+
+            {loadingProducts ? (
+              <div className="space-y-3">
+                {[1, 2].map(i => (
+                  <Skeleton key={i} className="h-24 rounded-lg" />
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground mb-3">No hay productos registrados</p>
+                {isAdmin && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => { setSelectedProduct(null); setShowProductDialog(true); }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear primer producto
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {products.map((product) => (
+                  <div 
+                    key={product.id}
+                    className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Package className="h-4 w-4 text-primary shrink-0" />
+                          <h4 className="font-semibold truncate">{product.name}</h4>
+                        </div>
+                        
+                        {product.sales_angles && product.sales_angles.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {product.sales_angles.slice(0, 3).map((angle, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {angle}
+                              </Badge>
+                            ))}
+                            {product.sales_angles.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{product.sales_angles.length - 3} más
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>Creado: {formatDate(product.created_at)}</span>
+                          {product.brief_url && (
+                            <a 
+                              href={product.brief_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-primary hover:underline"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Brief
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {isAdmin && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => { setSelectedProduct(product); setShowProductDialog(true); }}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción eliminará permanentemente "{product.name}".
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteProduct(product.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Eliminar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="content" className="space-y-4 mt-4">
             {loadingContent ? (
               <div className="text-center py-8 text-muted-foreground">Cargando...</div>
@@ -306,7 +499,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-4 rounded-lg border bg-card text-center">
                 <p className="text-2xl font-bold text-primary">{assignedContent.length}</p>
-                <p className="text-xs text-muted-foreground">Total proyectos</p>
+                <p className="text-xs text-muted-foreground">Total videos</p>
               </div>
               <div className="p-4 rounded-lg border bg-card text-center">
                 <p className="text-2xl font-bold text-info">{activeContent.length}</p>
@@ -324,9 +517,26 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                 <p className="text-xs text-muted-foreground">Valor total</p>
               </div>
             </div>
+
+            <div className="p-4 rounded-lg border bg-card text-center">
+              <p className="text-2xl font-bold text-primary">{products.length}</p>
+              <p className="text-xs text-muted-foreground">Productos registrados</p>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      {/* Product Dialog */}
+      <ProductDetailDialog
+        product={selectedProduct as any}
+        clientId={client.id}
+        open={showProductDialog}
+        onOpenChange={setShowProductDialog}
+        onSave={() => {
+          fetchProducts();
+          setShowProductDialog(false);
+        }}
+      />
     </Dialog>
   );
 }
