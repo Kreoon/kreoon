@@ -47,7 +47,7 @@ function AppContent() {
             <Route path="/auth" element={<Auth />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'ambassador']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-            <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
+            <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'creator']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
             <Route path="/content" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
             <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Creators /></MainLayout></ProtectedRoute>} />
             <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
