@@ -27,7 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, Phone, Mail, MapPin, Instagram, Facebook } from "lucide-react";
+import { User, Phone, Mail, MapPin, Instagram, Facebook, Star } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const formSchema = z.object({
   full_name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").max(100),
@@ -40,6 +41,7 @@ const formSchema = z.object({
   instagram: z.string().optional(),
   facebook: z.string().optional(),
   tiktok: z.string().optional(),
+  is_ambassador: z.boolean().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -59,6 +61,7 @@ interface CreatorEditorFormProps {
     instagram?: string | null;
     facebook?: string | null;
     tiktok?: string | null;
+    is_ambassador?: boolean | null;
   } | null;
   onSuccess?: () => void;
 }
@@ -80,6 +83,7 @@ export function CreatorEditorForm({ open, onOpenChange, profile, onSuccess }: Cr
       instagram: profile?.instagram || "",
       facebook: profile?.facebook || "",
       tiktok: profile?.tiktok || "",
+      is_ambassador: profile?.is_ambassador || false,
     },
   });
 
@@ -107,6 +111,7 @@ export function CreatorEditorForm({ open, onOpenChange, profile, onSuccess }: Cr
           instagram: data.instagram || null,
           facebook: data.facebook || null,
           tiktok: data.tiktok || null,
+          is_ambassador: data.is_ambassador || false,
         })
         .eq("id", profile.id);
 
@@ -267,6 +272,33 @@ export function CreatorEditorForm({ open, onOpenChange, profile, onSuccess }: Cr
                 </FormItem>
               )}
             />
+
+            {/* Estado de Embajador */}
+            <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+              <FormField
+                control={form.control}
+                name="is_ambassador"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between">
+                    <div className="space-y-0.5">
+                      <FormLabel className="flex items-center gap-2 text-base">
+                        <Star className="h-4 w-4 text-primary" />
+                        Embajador UGC Colombia
+                      </FormLabel>
+                      <p className="text-xs text-muted-foreground">
+                        Los embajadores reciben contenido exclusivo de la marca
+                      </p>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Redes Sociales */}
             <div className="space-y-4">
