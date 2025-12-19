@@ -4,14 +4,12 @@ import { useContent } from '@/hooks/useContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { 
-  LogOut, 
   Scissors, 
   Clock, 
   CheckCircle2, 
@@ -96,42 +94,24 @@ export default function EditorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={profile?.avatar_url || ''} />
-              <AvatarFallback>
-                <User className="w-5 h-5" />
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="font-semibold">{profile?.full_name || 'Editor'}</h1>
-              <p className="text-sm text-muted-foreground">Panel de Editor</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-              <DollarSign className="w-4 h-4 text-success" />
-              <span className="font-semibold text-success">
-                ${pendingPayment.toLocaleString()}
-              </span>
-              <span className="text-xs text-muted-foreground">pendiente</span>
-            </div>
-
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="w-5 h-5" />
-            </Button>
-          </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Panel de Editor</h1>
+          <p className="text-muted-foreground">Gestiona tu contenido por editar</p>
         </div>
-      </header>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
+          <DollarSign className="w-4 h-4 text-success" />
+          <span className="font-semibold text-success">
+            ${pendingPayment.toLocaleString()}
+          </span>
+          <span className="text-xs text-muted-foreground">pendiente</span>
+        </div>
+      </div>
 
       {/* Stats */}
-      <div className="container mx-auto px-4 py-6">
-        <div data-tour="editor-stats" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div data-tour="editor-stats" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card 
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => openKpiDialog('Total Asignados', content)}
@@ -311,7 +291,6 @@ export default function EditorDashboard() {
             ))}
           </div>
         </div>
-      </div>
 
       {/* Content Detail Dialog */}
       <Dialog open={!!selectedContent} onOpenChange={() => setSelectedContent(null)}>

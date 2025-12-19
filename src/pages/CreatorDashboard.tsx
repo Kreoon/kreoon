@@ -2,20 +2,16 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useContent } from '@/hooks/useContent';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
-import { TourProvider } from '@/components/tour/TourProvider';
 import { 
-  LogOut, 
   Video, 
   Clock, 
   CheckCircle2, 
@@ -23,7 +19,6 @@ import {
   Star,
   ArrowRight,
   Loader2,
-  User,
   DollarSign,
   Calendar,
   CreditCard
@@ -146,54 +141,38 @@ export default function CreatorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={profile?.avatar_url || ''} />
-              <AvatarFallback>
-                <User className="w-5 h-5" />
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="font-semibold">{profile?.full_name || 'Creador'}</h1>
-              <p className="text-sm text-muted-foreground">Panel de Creador</p>
-            </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Panel de Creador</h1>
+          <p className="text-muted-foreground">Gestiona tu contenido asignado</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2" data-tour="ambassador-toggle">
+            <Switch
+              id="ambassador"
+              checked={isAmbassador}
+              onCheckedChange={handleAmbassadorToggle}
+            />
+            <Label htmlFor="ambassador" className="flex items-center gap-1 cursor-pointer">
+              <Star className={`w-4 h-4 ${isAmbassador ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
+              Embajador UGC
+            </Label>
           </div>
-          
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2" data-tour="ambassador-toggle">
-              <Switch
-                id="ambassador"
-                checked={isAmbassador}
-                onCheckedChange={handleAmbassadorToggle}
-              />
-              <Label htmlFor="ambassador" className="flex items-center gap-1 cursor-pointer">
-                <Star className={`w-4 h-4 ${isAmbassador ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
-                Embajador UGC
-              </Label>
-            </div>
 
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-              <DollarSign className="w-4 h-4 text-success" />
-              <span className="font-semibold text-success">
-                ${pendingPayment.toLocaleString()}
-              </span>
-              <span className="text-xs text-muted-foreground">pendiente</span>
-            </div>
-
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="w-5 h-5" />
-            </Button>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
+            <DollarSign className="w-4 h-4 text-success" />
+            <span className="font-semibold text-success">
+              ${pendingPayment.toLocaleString()}
+            </span>
+            <span className="text-xs text-muted-foreground">pendiente</span>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Stats */}
-      <div className="container mx-auto px-4 py-6">
-        <div data-tour="creator-stats" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div data-tour="creator-stats" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card 
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => openKpiDialog('Total Asignados', content)}
@@ -373,7 +352,6 @@ export default function CreatorDashboard() {
             ))}
           </div>
         </div>
-      </div>
 
       {/* Content Detail Dialog */}
       <Dialog open={!!selectedContent} onOpenChange={() => setSelectedContent(null)}>
