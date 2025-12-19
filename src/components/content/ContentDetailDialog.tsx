@@ -293,50 +293,71 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     setLoading(true);
 
     try {
-      const updates: any = {
-        title: formData.title,
-        product: formData.product || null,
-        product_id: formData.product_id || null,
-        sales_angle: formData.sales_angle || null,
-        client_id: formData.client_id || null,
-        creator_id: formData.creator_id || null,
-        editor_id: formData.editor_id || null,
-        strategist_id: formData.strategist_id || null,
-        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
-        start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
-        campaign_week: formData.campaign_week || null,
-        reference_url: formData.reference_url || null,
-        video_url: formData.video_url || null,
-        video_urls: formData.video_urls.filter(url => url.trim() !== ''),
-        hooks_count: formData.hooks_count,
-        drive_url: formData.drive_url || null,
-        script: formData.script || null,
-        description: formData.description || null,
-        notes: formData.notes || null,
-        creator_payment: formData.creator_payment,
-        editor_payment: formData.editor_payment,
-        creator_paid: formData.creator_paid,
-        editor_paid: formData.editor_paid,
-        invoiced: formData.invoiced,
-        is_published: formData.is_published,
-        editor_guidelines: formData.editor_guidelines || null,
-        strategist_guidelines: formData.strategist_guidelines || null,
-        trafficker_guidelines: formData.trafficker_guidelines || null
-      };
+      let updates: any = {};
 
-      if (formData.creator_id && !content.creator_id) {
-        updates.creator_assigned_at = new Date().toISOString();
-      }
-      if (formData.editor_id && !content.editor_id) {
-        updates.editor_assigned_at = new Date().toISOString();
-      }
+      // Los creadores asignados solo pueden editar drive_url y notes
+      const isAssignedCreatorCheck = isCreator && content.creator_id === user?.id && !isAdmin;
+      const isAssignedEditorCheck = isEditor && content.editor_id === user?.id && !isAdmin;
 
-      // Si ambos están pagados y el contenido está aprobado, cambiar a estado "paid"
-      const bothPaid = formData.creator_paid && formData.editor_paid;
-      const wasNotBothPaid = !content.creator_paid || !content.editor_paid;
-      if (bothPaid && wasNotBothPaid && content.status === 'approved') {
-        updates.status = 'paid';
-        updates.paid_at = new Date().toISOString();
+      if (isAssignedCreatorCheck) {
+        // Creadores solo pueden editar drive_url y notes
+        updates = {
+          drive_url: formData.drive_url || null,
+          notes: formData.notes || null
+        };
+      } else if (isAssignedEditorCheck) {
+        // Editores solo pueden editar video_url y notes
+        updates = {
+          video_url: formData.video_url || null,
+          notes: formData.notes || null
+        };
+      } else if (isAdmin) {
+        // Admin puede editar todo
+        updates = {
+          title: formData.title,
+          product: formData.product || null,
+          product_id: formData.product_id || null,
+          sales_angle: formData.sales_angle || null,
+          client_id: formData.client_id || null,
+          creator_id: formData.creator_id || null,
+          editor_id: formData.editor_id || null,
+          strategist_id: formData.strategist_id || null,
+          deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
+          start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
+          campaign_week: formData.campaign_week || null,
+          reference_url: formData.reference_url || null,
+          video_url: formData.video_url || null,
+          video_urls: formData.video_urls.filter(url => url.trim() !== ''),
+          hooks_count: formData.hooks_count,
+          drive_url: formData.drive_url || null,
+          script: formData.script || null,
+          description: formData.description || null,
+          notes: formData.notes || null,
+          creator_payment: formData.creator_payment,
+          editor_payment: formData.editor_payment,
+          creator_paid: formData.creator_paid,
+          editor_paid: formData.editor_paid,
+          invoiced: formData.invoiced,
+          is_published: formData.is_published,
+          editor_guidelines: formData.editor_guidelines || null,
+          strategist_guidelines: formData.strategist_guidelines || null,
+          trafficker_guidelines: formData.trafficker_guidelines || null
+        };
+
+        if (formData.creator_id && !content.creator_id) {
+          updates.creator_assigned_at = new Date().toISOString();
+        }
+        if (formData.editor_id && !content.editor_id) {
+          updates.editor_assigned_at = new Date().toISOString();
+        }
+
+        // Si ambos están pagados y el contenido está aprobado, cambiar a estado "paid"
+        const bothPaid = formData.creator_paid && formData.editor_paid;
+        const wasNotBothPaid = !content.creator_paid || !content.editor_paid;
+        if (bothPaid && wasNotBothPaid && content.status === 'approved') {
+          updates.status = 'paid';
+          updates.paid_at = new Date().toISOString();
+        }
       }
 
       const { error } = await supabase
@@ -373,11 +394,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         } catch (webhookErr) {
           console.error('Error calling webhook:', webhookErr);
         }
-      } else if (bothPaid && wasNotBothPaid && content.status === 'approved') {
-        toast({
-          title: "Contenido pagado",
-          description: "Se han marcado todos los pagos y el contenido pasó a estado 'Pagado'"
-        });
       } else {
         toast({
           title: "Guardado",
@@ -532,8 +548,12 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
   const canEdit = isAdmin;
   const canEditAsCreatorOrEditor = isCreator || isEditor;
-  const canEditDriveUrl = isAdmin || (isCreator && content.creator_id === user?.id);
-  const canEditVideoUrl = isAdmin || (isEditor && content.editor_id === user?.id);
+  const isAssignedCreator = isCreator && content.creator_id === user?.id;
+  const isAssignedEditor = isEditor && content.editor_id === user?.id;
+  const canEditDriveUrl = isAdmin || isAssignedCreator;
+  const canEditVideoUrl = isAdmin || isAssignedEditor;
+  const canEditNotes = isAdmin || isAssignedCreator || isAssignedEditor;
+  const canEnterEditMode = isAdmin || isAssignedCreator || isAssignedEditor;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0">
@@ -583,13 +603,19 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
               
               <div className="flex items-center gap-2">
-                {canEdit && (
+                {canEnterEditMode && (
                   <Button
                     variant={editMode ? "default" : "outline"}
                     size="sm"
                     onClick={() => setEditMode(!editMode)}
                   >
                     {editMode ? "Cancelar" : "Editar"}
+                  </Button>
+                )}
+                {editMode && (
+                  <Button onClick={handleSave} disabled={loading} size="sm">
+                    <Save className="h-4 w-4 mr-1" />
+                    Guardar
                   </Button>
                 )}
                 {editMode && (
@@ -1094,12 +1120,17 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 <h4 className="font-medium flex items-center gap-2">
                   <FileText className="h-4 w-4" /> Notas
                 </h4>
-                {editMode ? (
+                {editMode && canEditNotes ? (
                   <Textarea
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={4}
+                    placeholder="Agrega notas sobre el contenido..."
                   />
+                ) : editMode ? (
+                  <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">
+                    {content.notes || "Sin notas"}
+                  </div>
                 ) : (
                   <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">
                     {content.notes || "Sin notas"}
