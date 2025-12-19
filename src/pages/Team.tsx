@@ -32,7 +32,8 @@ const ROLE_LABELS: Record<AppRole, string> = {
   creator: 'Creador',
   editor: 'Editor',
   client: 'Cliente',
-  ambassador: 'Embajador'
+  ambassador: 'Embajador',
+  strategist: 'Estratega'
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
@@ -40,7 +41,8 @@ const ROLE_COLORS: Record<AppRole, string> = {
   creator: 'bg-primary/20 text-primary',
   editor: 'bg-purple-500/20 text-purple-500',
   client: 'bg-info/20 text-info',
-  ambassador: 'bg-success/20 text-success'
+  ambassador: 'bg-success/20 text-success',
+  strategist: 'bg-orange-500/20 text-orange-500'
 };
 
 export default function Team() {
@@ -352,6 +354,7 @@ export default function Team() {
                     <SelectItem value="creator">Creador</SelectItem>
                     <SelectItem value="editor">Editor</SelectItem>
                     <SelectItem value="client">Cliente</SelectItem>
+                    <SelectItem value="strategist">Estratega</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
