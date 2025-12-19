@@ -39,7 +39,10 @@ const creatorNavigation = [
 ];
 
 const editorNavigation = [
-  { name: "Mi Panel", href: "/editor-dashboard", icon: Scissors },
+  { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard },
+  { name: "Tablero", href: "/board", icon: Kanban },
+  { name: "Contenido", href: "/portfolio", icon: Video },
+  { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 

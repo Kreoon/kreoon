@@ -530,7 +530,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 <span className="truncate text-sm sm:text-base">{content.title}</span>
               )}
             </DialogTitle>
-            {(isAdmin || isClient) ? (
+            {(isAdmin || isClient || isEditor) ? (
               <Select 
                 value={currentStatus || content.status} 
                 onValueChange={(v) => handleStatusChange(v as ContentStatus)}
