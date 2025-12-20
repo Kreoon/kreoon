@@ -1211,6 +1211,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                           if (!editMode) setEditMode(true);
                         }}
                         disabled={!editMode && !isEditor && !isAdmin}
+                        showPreview={false}
                       />
                     </div>
                   )}
