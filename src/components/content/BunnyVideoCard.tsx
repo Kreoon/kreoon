@@ -71,6 +71,7 @@ export function BunnyVideoCard({
   const [isMuted, setIsMuted] = useState(true);
   const [isInView, setIsInView] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [thumbnailLoading, setThumbnailLoading] = useState(true);
   const [thumbnailError, setThumbnailError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -83,6 +84,13 @@ export function BunnyVideoCard({
   // Generate thumbnail - prioritize provided, then try to extract from current Bunny URL
   const generatedThumbnail = getBunnyThumbnail(currentVideoUrl);
   const thumbnail = thumbnailError ? null : (thumbnailUrl || generatedThumbnail);
+
+  // Reset loading state when thumbnail changes
+  useEffect(() => {
+    if (thumbnail) {
+      setThumbnailLoading(true);
+    }
+  }, [thumbnail]);
 
   // Intersection Observer for scroll-based autoplay
   useEffect(() => {
@@ -174,12 +182,14 @@ export function BunnyVideoCard({
     e.stopPropagation();
     setCurrentIndex(prev => (prev > 0 ? prev - 1 : videoUrls.length - 1));
     setThumbnailError(false);
+    setThumbnailLoading(true);
   };
 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
     setCurrentIndex(prev => (prev < videoUrls.length - 1 ? prev + 1 : 0));
     setThumbnailError(false);
+    setThumbnailLoading(true);
   };
 
   return (
@@ -195,15 +205,26 @@ export function BunnyVideoCard({
       <div className="relative aspect-[9/16] bg-muted">
         {!isPlaying ? (
           <>
-            {/* Thumbnail */}
+            {/* Thumbnail with loading state */}
             {thumbnail ? (
-              <img 
-                src={thumbnail} 
-                alt={title}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onError={() => setThumbnailError(true)}
-              />
+              <>
+                {thumbnailLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-muted z-10">
+                    <div className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  </div>
+                )}
+                <img 
+                  src={thumbnail} 
+                  alt={title}
+                  className={cn(
+                    "w-full h-full object-cover transition-opacity duration-300",
+                    thumbnailLoading ? "opacity-0" : "opacity-100"
+                  )}
+                  loading="lazy"
+                  onLoad={() => setThumbnailLoading(false)}
+                  onError={() => { setThumbnailError(true); setThumbnailLoading(false); }}
+                />
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-muted">
                 <Play className="h-12 w-12 text-primary/50" />
