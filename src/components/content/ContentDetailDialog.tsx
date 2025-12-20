@@ -14,6 +14,7 @@ import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
 import { StrategistScriptForm } from "@/components/content/StrategistScriptForm";
 import { BunnyVideoUploader } from "@/components/content/BunnyVideoUploader";
 import { BunnyMultiVideoUploader } from "@/components/content/BunnyMultiVideoUploader";
+import { AutoPauseVideo } from "@/components/content/AutoPauseVideo";
 import { BunnyStorageUploader } from "@/components/content/BunnyStorageUploader";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
@@ -873,24 +874,12 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       </div>
                       
                       {videoUrl ? (
-                        <div 
+                        <AutoPauseVideo
+                          src={videoUrl}
+                          index={index}
                           className="rounded-lg overflow-hidden bg-black flex items-center justify-center mx-auto"
                           style={{ aspectRatio: '9/16', maxHeight: '350px', width: 'auto' }}
-                        >
-                          {/* Bunny Stream Embed - Vertical Format */}
-                          {videoUrl.includes('iframe.mediadelivery.net') || videoUrl.includes('bunny') ? (
-                            <iframe
-                              src={videoUrl}
-                              loading="lazy"
-                              className="w-full h-full border-0"
-                              style={{ aspectRatio: '9/16' }}
-                              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-                              allowFullScreen
-                            />
-                          ) : (
-                            renderVideoEmbed(videoUrl)
-                          )}
-                        </div>
+                        />
                       ) : (
                         <div 
                           className="rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/50 mx-auto"
