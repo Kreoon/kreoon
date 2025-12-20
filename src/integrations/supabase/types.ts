@@ -881,6 +881,92 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_commissions: {
+        Row: {
+          amount: number
+          commission_percentage: number
+          created_at: string
+          description: string | null
+          id: string
+          paid_at: string | null
+          referral_id: string
+          referrer_id: string
+          source_amount: number
+          status: string
+        }
+        Insert: {
+          amount: number
+          commission_percentage: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          referral_id: string
+          referrer_id: string
+          source_amount: number
+          status?: string
+        }
+        Update: {
+          amount?: number
+          commission_percentage?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          referral_id?: string
+          referrer_id?: string
+          source_amount?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_commissions_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          commission_percentage: number
+          created_at: string
+          id: string
+          referral_code: string
+          referred_email: string
+          referred_user_id: string | null
+          referrer_id: string
+          registered_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commission_percentage?: number
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_email: string
+          referred_user_id?: string | null
+          referrer_id: string
+          registered_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commission_percentage?: number
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          referrer_id?: string
+          registered_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           can_create: boolean
@@ -965,6 +1051,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          notes: string | null
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          price: number
+          started_at: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          price?: number
+          started_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          price?: number
+          started_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -983,6 +1111,7 @@ export type Database = {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
         Returns: string
       }
+      generate_referral_code: { Args: never; Returns: string }
       get_best_available_editor: { Args: never; Returns: string }
       get_follow_counts: {
         Args: { _user_id: string }
@@ -991,6 +1120,7 @@ export type Database = {
           following_count: number
         }[]
       }
+      get_user_referral_code: { Args: { _user_id: string }; Returns: string }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
@@ -1041,6 +1171,8 @@ export type Database = {
         | "recorded"
         | "delivered"
         | "issue"
+      subscription_plan: "free" | "basic" | "pro"
+      subscription_status: "active" | "cancelled" | "expired" | "pending"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1191,6 +1323,8 @@ export const Constants = {
         "delivered",
         "issue",
       ],
+      subscription_plan: ["free", "basic", "pro"],
+      subscription_status: ["active", "cancelled", "expired", "pending"],
     },
   },
 } as const
