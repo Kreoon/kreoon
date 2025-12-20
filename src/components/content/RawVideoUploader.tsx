@@ -126,15 +126,35 @@ export function RawVideoUploader({
             throw new Error(payload?.error || payload?.message || `Error ${res.status}`);
           }
 
-          // Update upload as completed
+          // Backend returns full list of URLs - use that as source of truth
+          const serverAllUrls: string[] = payload.all_urls || [];
+
+          // Update upload as completed and sync with server state
           setUploads(prev => {
-            const updated = prev.map(u => 
+            // Mark current upload as completed
+            let updated = prev.map(u => 
               u.id === uploadId 
                 ? { ...u, status: 'completed' as const, progress: 100, embedUrl: payload.url } 
                 : u
             );
-            // Notify parent
-            const allUrls = updated.filter(u => u.embedUrl).map(u => u.embedUrl);
+
+            // Use server URLs as source of truth if available
+            if (serverAllUrls.length > 0) {
+              // Merge: keep any local uploads in progress, but completed ones come from server
+              const inProgressUploads = updated.filter(u => u.status !== 'completed');
+              const serverUploads: VideoUpload[] = serverAllUrls.map((url, idx) => ({
+                id: `server-${idx}-${Date.now()}`,
+                status: 'completed' as const,
+                progress: 100,
+                embedUrl: url,
+                videoId: null,
+                originalName: url.split('/').pop() || `Video ${idx + 1}`
+              }));
+              updated = [...serverUploads, ...inProgressUploads];
+            }
+
+            // Notify parent with all completed URLs
+            const allUrls = updated.filter(u => u.embedUrl && u.status === 'completed').map(u => u.embedUrl);
             onUploadComplete?.(allUrls);
             return updated;
           });

@@ -1520,7 +1520,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     }}
                     disabled={!editMode && !canEditDriveUrl && !isCreator}
                     showDownload={isEditor || isAdmin || isCreator}
-                    showPreview={true}
+                    showPreview={false}
                   />
                 </div>
               </div>
