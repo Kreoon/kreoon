@@ -24,7 +24,8 @@ interface PublishedContent {
   video_urls: string[] | null;
   thumbnail_url: string | null;
   client: { name: string } | null;
-  creator: { full_name: string } | null;
+  creator: { id: string; full_name: string } | null;
+  creator_id: string | null;
   views_count: number;
   likes_count: number;
   is_liked: boolean;
@@ -140,7 +141,8 @@ export default function Auth() {
           likes_count: item.likes_count || 0,
           is_liked: likedSet.has(item.id),
           client: item.client_id ? clientsMap.get(item.client_id) || null : null,
-          creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null
+          creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null,
+          creator_id: item.creator_id
         }));
 
         setContent(enrichedData as PublishedContent[]);
@@ -318,7 +320,7 @@ export default function Auth() {
       viewsCount: item.views_count,
       likesCount: item.likes_count,
       isLiked: item.is_liked,
-      clientName: item.client?.name,
+      creatorId: item.creator_id,
       creatorName: item.creator?.full_name
     }));
   }, [contentWithVideos]);
@@ -560,7 +562,7 @@ export default function Auth() {
                       viewsCount={item.views_count}
                       likesCount={item.likes_count}
                       isLiked={item.is_liked}
-                      clientName={item.client?.name}
+                      creatorId={item.creator_id || undefined}
                       creatorName={item.creator?.full_name}
                       isAdmin={false}
                       onLike={(e) => handleLike(item.id, e)}

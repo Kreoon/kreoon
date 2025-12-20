@@ -10,7 +10,7 @@ interface VideoItem {
   viewsCount: number;
   likesCount: number;
   isLiked: boolean;
-  clientName?: string;
+  creatorId?: string;
   creatorName?: string;
 }
 
@@ -320,15 +320,11 @@ export function FullscreenVideoViewer({
           <h2 className="text-white font-bold text-lg mb-1 line-clamp-2 drop-shadow-lg">
             {currentVideo.title}
           </h2>
-          <div className="flex items-center gap-2 text-white/80 text-sm">
-            {currentVideo.clientName && (
-              <span className="text-primary font-medium">{currentVideo.clientName}</span>
-            )}
-            {currentVideo.clientName && currentVideo.creatorName && <span>•</span>}
-            {currentVideo.creatorName && (
+          {currentVideo.creatorName && (
+            <div className="flex items-center gap-2 text-white/80 text-sm">
               <span>@{currentVideo.creatorName}</span>
-            )}
-          </div>
+            </div>
+          )}
           <div className="flex items-center gap-3 text-white/60 text-xs mt-2">
             <span>{formatCount(currentVideo.viewsCount)} vistas</span>
             {hasMultipleVariations && (
