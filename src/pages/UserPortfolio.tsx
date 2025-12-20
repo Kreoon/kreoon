@@ -145,15 +145,46 @@ export default function UserPortfolio() {
 
         const roles = rolesData?.map(r => r.role) || [];
         
-        // IMPORTANT: Personal profile always shows content where this user is the creator
-        // Regardless of role (admin, strategist, editor, etc.), the profile shows their own created content
-        const { data: contentData } = await supabase
+        // Fetch content where user is creator
+        const { data: creatorContent } = await supabase
           .from('content')
           .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
           .eq('is_published', true)
           .eq('creator_id', id)
           .or('video_url.not.is.null,video_urls.not.is.null')
           .order('created_at', { ascending: false });
+
+        // Fetch content where user is a collaborator
+        const { data: collabData } = await supabase
+          .from('content_collaborators')
+          .select('content_id')
+          .eq('user_id', id);
+        
+        const collabContentIds = collabData?.map(c => c.content_id) || [];
+        
+        let collabContent: any[] = [];
+        if (collabContentIds.length > 0) {
+          const { data: collabContentData } = await supabase
+            .from('content')
+            .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
+            .eq('is_published', true)
+            .in('id', collabContentIds)
+            .or('video_url.not.is.null,video_urls.not.is.null')
+            .order('created_at', { ascending: false });
+          collabContent = collabContentData || [];
+        }
+
+        // Merge and dedupe content (creator + collaborations)
+        const allContentMap = new Map<string, any>();
+        (creatorContent || []).forEach(c => allContentMap.set(c.id, c));
+        collabContent.forEach(c => {
+          if (!allContentMap.has(c.id)) {
+            allContentMap.set(c.id, c);
+          }
+        });
+        const contentData = Array.from(allContentMap.values()).sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
         
         // Get liked content IDs
         const contentIds = contentData?.map(c => c.id) || [];

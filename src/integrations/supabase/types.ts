@@ -404,6 +404,38 @@ export type Database = {
           },
         ]
       }
+      content_collaborators: {
+        Row: {
+          content_id: string
+          created_at: string
+          id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          id?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_collaborators_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_comments: {
         Row: {
           comment: string
