@@ -133,11 +133,11 @@ export default function UserPortfolio() {
 
         const roles = rolesData?.map(r => r.role) || [];
         
-        // Fetch work content based on role
+        // Fetch work content based on role - use is_published like Portfolio
         let query = supabase
           .from('content')
-          .select('id, title, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at')
-          .in('status', ['approved', 'paid', 'delivered'])
+          .select('id, title, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
+          .eq('is_published', true)
           .or('video_url.not.is.null,video_urls.not.is.null');
 
         if (roles.includes('creator')) {
@@ -191,11 +191,11 @@ export default function UserPortfolio() {
           setClientInfo(clientData);
           setProfileType('client');
 
-          const { data: contentData } = await supabase
+        const { data: contentData } = await supabase
             .from('content')
-            .select('id, title, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at')
+            .select('id, title, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
             .eq('client_id', id)
-            .in('status', ['approved', 'paid', 'delivered'])
+            .eq('is_published', true)
             .or('video_url.not.is.null,video_urls.not.is.null')
             .order('created_at', { ascending: false });
 
