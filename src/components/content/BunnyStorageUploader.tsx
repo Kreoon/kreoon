@@ -74,34 +74,55 @@ export function BunnyStorageUploader({
     const newUploadedFiles: UploadedFile[] = [...uploadedFiles];
 
     try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("No autenticado");
+
+      const supabaseUrl = (supabase as any).supabaseUrl as string;
+      const supabaseKey = (supabase as any).supabaseKey as string;
+      if (!supabaseUrl || !supabaseKey) throw new Error("Configuración de backend no disponible");
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         setCurrentFileIndex(i + 1);
         setProgress(0);
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('content_id', contentId);
-        formData.append('file_type', fileType);
-        formData.append('file_index', String(i));
 
         // Simulate per-file upload progress
         const progressInterval = setInterval(() => {
           setProgress(prev => Math.min(prev + 10, 90));
         }, 200);
 
-        const { data, error } = await supabase.functions.invoke('bunny-storage', {
-          body: formData
+        const url = new URL(`${supabaseUrl}/functions/v1/bunny-storage`);
+        url.searchParams.set('content_id', contentId);
+        url.searchParams.set('file_type', fileType);
+        url.searchParams.set('file_name', file.name);
+
+        const res = await fetch(url.toString(), {
+          method: 'PUT',
+          headers: {
+            apikey: supabaseKey,
+            authorization: `Bearer ${accessToken}`,
+            'content-type': file.type || 'application/octet-stream',
+            'x-file-name': file.name,
+            'x-file-type': fileType,
+            'x-content-id': contentId,
+          },
+          body: file,
         });
 
         clearInterval(progressInterval);
-        setProgress(100);
 
-        if (error) throw error;
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(payload?.error || payload?.message || `Error ${res.status} al subir`);
+        }
+
+        setProgress(100);
 
         newUploadedFiles.push({
           name: file.name,
-          url: data.url,
+          url: payload.url,
           size: file.size
         });
       }
