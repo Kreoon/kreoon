@@ -139,6 +139,7 @@ export interface Content {
   video_processing_started_at: string | null;
   hooks_count: number | null;
   video_urls: string[] | null;
+  raw_video_urls: string[] | null;
   // Guidelines
   editor_guidelines: string | null;
   strategist_guidelines: string | null;

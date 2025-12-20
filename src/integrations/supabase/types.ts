@@ -254,6 +254,7 @@ export type Database = {
           paid_at: string | null
           product: string | null
           product_id: string | null
+          raw_video_urls: string[] | null
           recorded_at: string | null
           reference_url: string | null
           sales_angle: string | null
@@ -304,6 +305,7 @@ export type Database = {
           paid_at?: string | null
           product?: string | null
           product_id?: string | null
+          raw_video_urls?: string[] | null
           recorded_at?: string | null
           reference_url?: string | null
           sales_angle?: string | null
@@ -354,6 +356,7 @@ export type Database = {
           paid_at?: string | null
           product?: string | null
           product_id?: string | null
+          raw_video_urls?: string[] | null
           recorded_at?: string | null
           reference_url?: string | null
           sales_angle?: string | null

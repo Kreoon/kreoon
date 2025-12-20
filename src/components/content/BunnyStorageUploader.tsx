@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +52,16 @@ export function BunnyStorageUploader({
   const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
   const [downloadingAll, setDownloadingAll] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Sync uploadedFiles when currentUrls changes (e.g., on dialog open/data reload)
+  useEffect(() => {
+    const newFiles = (currentUrls || []).filter(Boolean).map(url => ({
+      name: url.split('/').pop() || 'archivo',
+      url,
+      size: 0
+    }));
+    setUploadedFiles(newFiles);
+  }, [currentUrls]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
