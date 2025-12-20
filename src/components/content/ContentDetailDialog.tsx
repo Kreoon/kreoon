@@ -13,6 +13,7 @@ import { ProductSelector } from "@/components/products/ProductSelector";
 import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
 import { StrategistScriptForm } from "@/components/content/StrategistScriptForm";
 import { BunnyVideoUploader } from "@/components/content/BunnyVideoUploader";
+import { BunnyStorageUploader } from "@/components/content/BunnyStorageUploader";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -1080,13 +1081,40 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   <LinkIcon className="h-4 w-4" /> URLs
                 </h4>
                 
-                <div className="grid gap-3">
-                  {/* Bunny Video Uploader - Direct upload */}
+                <div className="grid gap-4">
+                  {/* Video Crudo - Raw video uploader for creators */}
                   {(isCreator || isEditor || isAdmin) && (
-                    <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
-                      <Label className="text-muted-foreground text-xs flex items-center gap-2">
-                        <Upload className="h-3 w-3" /> Subir Video Directo a Bunny.net
+                    <div className="space-y-2 p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
+                      <Label className="font-medium flex items-center gap-2">
+                        <Upload className="h-4 w-4" /> Video Crudo (Material Original)
                       </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Sube el video sin editar. Los editores podrán descargarlo para trabajar.
+                      </p>
+                      <BunnyStorageUploader
+                        contentId={content.id}
+                        fileType="raw_video"
+                        currentUrl={content.drive_url}
+                        onUploadComplete={(url) => {
+                          setFormData({ ...formData, drive_url: url });
+                          onUpdate?.();
+                        }}
+                        disabled={!editMode && !canEditDriveUrl && !isCreator}
+                        label="Subir Video Crudo"
+                        showDownload={isEditor || isAdmin}
+                      />
+                    </div>
+                  )}
+
+                  {/* Video Final - Bunny Stream uploader for editors */}
+                  {(isEditor || isAdmin) && (
+                    <div className="space-y-2 p-4 rounded-lg border-2 border-dashed border-green-500/30 bg-green-500/5">
+                      <Label className="font-medium flex items-center gap-2 text-green-700 dark:text-green-400">
+                        <Video className="h-4 w-4" /> Video Editado (Final)
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Sube el video ya editado. Se procesará automáticamente en Bunny Stream.
+                      </p>
                       <BunnyVideoUploader
                         contentId={content.id}
                         title={content.title}
@@ -1095,7 +1123,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                           setFormData({ ...formData, video_urls: [embedUrl, ...formData.video_urls.slice(1)] });
                           onUpdate?.();
                         }}
-                        disabled={!editMode && !canEditDriveUrl}
+                        disabled={!editMode && !isEditor && !isAdmin}
                       />
                       {content.bunny_embed_url && (
                         <p className="text-xs text-green-600 flex items-center gap-1">
@@ -1106,23 +1134,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     </div>
                   )}
 
-                  <div className="space-y-1">
-                    <Label className="text-muted-foreground text-xs">URL Drive Video Crudo (alternativo)</Label>
-                    {editMode && canEditDriveUrl ? (
-                      <Input
-                        value={formData.drive_url}
-                        onChange={(e) => setFormData({ ...formData, drive_url: e.target.value })}
-                        type="url"
-                        placeholder="https://drive.google.com/..."
-                      />
-                    ) : content.drive_url ? (
-                      <a href={content.drive_url} target="_blank" rel="noopener noreferrer"
-                         className="text-primary hover:underline flex items-center gap-1">
-                        {content.drive_url} <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ) : <p className="text-muted-foreground">—</p>}
-                  </div>
-
+                  {/* URL Video Referencia - Admin only */}
                   <div className="space-y-1">
                     <Label className="text-muted-foreground text-xs">URL Video Referencia</Label>
                     {editMode && isAdmin ? (
@@ -1130,6 +1142,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                         value={formData.reference_url}
                         onChange={(e) => setFormData({ ...formData, reference_url: e.target.value })}
                         type="url"
+                        placeholder="https://..."
                       />
                     ) : content.reference_url ? (
                       <a href={content.reference_url} target="_blank" rel="noopener noreferrer"
