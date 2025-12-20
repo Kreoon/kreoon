@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,9 @@ import {
   Plus,
   Briefcase,
   Image as ImageIcon,
-  Pencil
+  Pencil,
+  Home,
+  ArrowLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -83,6 +85,7 @@ type TabType = 'work' | 'posts';
 
 export default function UserPortfolio() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const isOwner = user?.id === id;
@@ -408,6 +411,24 @@ export default function UserPortfolio() {
   return (
     <div className="min-h-screen bg-black">
       <div className="max-w-4xl mx-auto">
+        {/* Navigation Header */}
+        <div className="flex items-center justify-between px-4 pt-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span className="text-sm">Volver</span>
+          </button>
+          <button
+            onClick={() => navigate('/portfolio')}
+            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+          >
+            <Home className="h-5 w-5" />
+            <span className="text-sm">Portfolio</span>
+          </button>
+        </div>
+
         {/* Stories Row */}
         {(stories.length > 0 || isOwner) && profileType === 'user' && (
           <div className="px-4 pt-4 pb-2 overflow-x-auto">
