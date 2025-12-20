@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, CheckCircle, Download, FileVideo, X, Plus } from "lucide-react";
+import { Upload, Loader2, CheckCircle, Download, FileVideo, X, Plus, Stethoscope, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface UploadedFile {
@@ -48,6 +48,43 @@ export function BunnyStorageUploader({
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [totalFiles, setTotalFiles] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handleTestConnection = async () => {
+    setTestingConnection(true);
+    setConnectionStatus('idle');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('bunny-storage-test');
+      
+      if (error) throw error;
+      
+      if (data.success) {
+        setConnectionStatus('success');
+        toast({
+          title: "Conexión exitosa",
+          description: `Conectado a ${data.details.storageZone}. CDN: ${data.details.cdnHostname}`,
+        });
+      } else {
+        setConnectionStatus('error');
+        toast({
+          title: "Error de conexión",
+          description: data.message,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      setConnectionStatus('error');
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo verificar la conexión",
+        variant: "destructive"
+      });
+    } finally {
+      setTestingConnection(false);
+    }
+  };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -205,6 +242,27 @@ export function BunnyStorageUploader({
               ? 'Agregar más archivos' 
               : label
           }
+        </Button>
+
+        {/* Diagnostic Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleTestConnection}
+          disabled={testingConnection || uploading}
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+          title="Verificar conexión con Bunny Storage"
+        >
+          {testingConnection ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : connectionStatus === 'success' ? (
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+          ) : connectionStatus === 'error' ? (
+            <XCircle className="h-4 w-4 text-destructive" />
+          ) : (
+            <Stethoscope className="h-4 w-4" />
+          )}
+          {testingConnection ? 'Verificando...' : 'Diagnóstico'}
         </Button>
 
         {uploadedFiles.length > 0 && (
