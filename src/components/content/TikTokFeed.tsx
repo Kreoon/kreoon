@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Heart, MessageSquare, Share2, Play, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, MessageSquare, Share2, Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -48,15 +48,15 @@ function getEmbedUrl(url: string, muted: boolean): string {
   if (!url) return '';
   if (url.includes('iframe.mediadelivery.net')) {
     const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}autoplay=true&muted=${muted}&loop=true&preload=true`;
+    return `${url}${separator}autoplay=true&muted=${muted}&loop=true&preload=true&controls=false`;
   }
   const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
   if (cdnMatch) {
     const [, libraryId, videoId] = cdnMatch;
-    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=${muted}&loop=true&preload=true`;
+    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=${muted}&loop=true&preload=true&controls=false`;
   }
   const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}autoplay=true&muted=${muted}&loop=true`;
+  return `${url}${separator}autoplay=true&muted=${muted}&loop=true&controls=false`;
 }
 
 function TikTokVideoCard({
@@ -75,11 +75,12 @@ function TikTokVideoCard({
   onComment?: () => void;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [showPauseIcon, setShowPauseIcon] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const viewTrackedRef = useRef(false);
   const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pauseIconTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentVideoUrl = video.videoUrls[currentIndex] || video.videoUrls[0];
   const hasMultiple = video.videoUrls.length > 1;
@@ -124,11 +125,35 @@ function TikTokVideoCard({
     };
   }, [isPlaying, onView]);
 
-  const togglePlay = () => setIsPlaying(!isPlaying);
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMuted(!isMuted);
-  };
+  // Toggle play/pause on tap
+  const handleTap = useCallback((e: React.MouseEvent) => {
+    // Check for double tap (like)
+    const now = Date.now();
+    const lastTap = (handleTap as any).lastTap || 0;
+    (handleTap as any).lastTap = now;
+    
+    if (now - lastTap < 300) {
+      // Double tap - like
+      if (!video.isLiked) {
+        onLike(e);
+      }
+      return;
+    }
+
+    // Single tap - toggle play/pause
+    setTimeout(() => {
+      if (Date.now() - (handleTap as any).lastTap >= 280) {
+        setIsPlaying(prev => {
+          const newState = !prev;
+          // Show pause/play icon briefly
+          setShowPauseIcon(true);
+          if (pauseIconTimerRef.current) clearTimeout(pauseIconTimerRef.current);
+          pauseIconTimerRef.current = setTimeout(() => setShowPauseIcon(false), 600);
+          return newState;
+        });
+      }
+    }, 300);
+  }, [video.isLiked, onLike]);
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -140,28 +165,16 @@ function TikTokVideoCard({
     setCurrentIndex(prev => (prev < video.videoUrls.length - 1 ? prev + 1 : 0));
   };
 
-  // Double tap to like
-  const lastTapRef = useRef(0);
-  const handleDoubleTap = (e: React.MouseEvent) => {
-    const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      if (!video.isLiked) {
-        onLike(e);
-      }
-    }
-    lastTapRef.current = now;
-  };
-
   return (
     <div 
       className="relative w-full h-full bg-black snap-start snap-always"
-      onClick={handleDoubleTap}
+      onClick={handleTap}
     >
-      {/* Video or Thumbnail */}
+      {/* Video - always try to show iframe for seamless experience */}
       {isPlaying ? (
         <iframe
-          src={getEmbedUrl(currentVideoUrl, isMuted)}
-          className="absolute inset-0 w-full h-full border-0"
+          src={getEmbedUrl(currentVideoUrl, true)}
+          className="absolute inset-0 w-full h-full border-0 pointer-events-none"
           allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
           allowFullScreen={false}
         />
@@ -176,69 +189,62 @@ function TikTokVideoCard({
             />
           ) : (
             <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-black">
-              <Play className="h-16 w-16 text-white/50" />
+              <Play className="h-20 w-20 text-white/30" />
             </div>
           )}
-          {/* Play button overlay */}
-          <div 
-            className="absolute inset-0 flex items-center justify-center cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); setIsPlaying(true); }}
-          >
-            <div className="p-5 rounded-full bg-white/20 backdrop-blur-sm">
-              <Play className="h-12 w-12 text-white" fill="white" />
-            </div>
-          </div>
         </>
       )}
 
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+      {/* Play/Pause indicator (shows briefly on tap) */}
+      {showPauseIcon && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+          <div className="p-6 rounded-full bg-black/50 backdrop-blur-sm animate-scale-in">
+            {isPlaying ? (
+              <Play className="h-16 w-16 text-white" fill="white" />
+            ) : (
+              <Pause className="h-16 w-16 text-white" />
+            )}
+          </div>
+        </div>
+      )}
 
-      {/* Top controls */}
-      <div className="absolute top-4 right-4 z-20 flex gap-2">
-        {isPlaying && (
-          <>
-            <button
-              onClick={(e) => { e.stopPropagation(); togglePlay(); }}
-              className="p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white"
-            >
-              <Pause className="h-5 w-5" />
-            </button>
-            <button
-              onClick={toggleMute}
-              className="p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white"
-            >
-              {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-            </button>
-          </>
-        )}
-      </div>
+      {/* Gradient overlays */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none" />
 
       {/* Carousel navigation for multiple videos */}
       {hasMultiple && (
         <>
           <button
             onClick={handlePrev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white active:scale-90 transition-transform"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
           <button
             onClick={handleNext}
-            className="absolute right-16 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white"
+            className="absolute right-14 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white active:scale-90 transition-transform"
           >
             <ChevronRight className="h-6 w-6" />
           </button>
           
-          {/* Variation indicator */}
-          <div className="absolute top-4 left-4 z-20 bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium">
-            {currentIndex + 1}/{video.videoUrls.length}
+          {/* Dot indicators */}
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+            {video.videoUrls.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  idx === currentIndex ? "bg-white w-6" : "bg-white/40 w-1.5"
+                )}
+              />
+            ))}
           </div>
         </>
       )}
 
       {/* Right side actions - TikTok style */}
-      <div className="absolute right-3 bottom-32 z-20 flex flex-col items-center gap-5">
+      <div className="absolute right-3 bottom-28 z-20 flex flex-col items-center gap-4">
         {/* Like */}
         <button
           onClick={(e) => { e.stopPropagation(); onLike(e); }}
@@ -252,7 +258,7 @@ function TikTokVideoCard({
           )}>
             <Heart className="h-7 w-7" fill={video.isLiked ? "currentColor" : "none"} />
           </div>
-          <span className="text-white text-xs font-semibold">{formatCount(video.likesCount)}</span>
+          <span className="text-white text-xs font-semibold drop-shadow-lg">{formatCount(video.likesCount)}</span>
         </button>
 
         {/* Comment */}
@@ -264,7 +270,6 @@ function TikTokVideoCard({
             <div className="p-3 rounded-full bg-black/40 backdrop-blur-sm text-white active:scale-90 transition-transform">
               <MessageSquare className="h-7 w-7" />
             </div>
-            <span className="text-white text-xs font-semibold">Comentar</span>
           </button>
         )}
 
@@ -276,24 +281,20 @@ function TikTokVideoCard({
           <div className="p-3 rounded-full bg-black/40 backdrop-blur-sm text-white active:scale-90 transition-transform">
             <Share2 className="h-7 w-7" />
           </div>
-          <span className="text-white text-xs font-semibold">Compartir</span>
         </button>
       </div>
 
-      {/* Bottom info - TikTok style */}
-      <div className="absolute bottom-6 left-4 right-20 z-20">
-        <div className="flex items-center gap-2 mb-2">
+      {/* Bottom info */}
+      <div className="absolute bottom-8 left-4 right-16 z-20">
+        <div className="flex items-center gap-2 mb-1">
           {video.creatorName && (
-            <span className="text-white font-bold text-base">@{video.creatorName.replace(/\s+/g, '').toLowerCase()}</span>
+            <span className="text-white font-bold text-sm drop-shadow-lg">@{video.creatorName.replace(/\s+/g, '').toLowerCase()}</span>
           )}
         </div>
-        <p className="text-white text-sm font-medium line-clamp-2 mb-1">{video.title}</p>
+        <p className="text-white text-sm line-clamp-2 drop-shadow-lg">{video.title}</p>
         {video.clientName && (
-          <p className="text-white/70 text-xs">🏢 {video.clientName}</p>
+          <p className="text-white/80 text-xs mt-1 drop-shadow-lg">🏢 {video.clientName}</p>
         )}
-        <div className="flex items-center gap-3 mt-2 text-white/60 text-xs">
-          <span>👁 {formatCount(video.viewsCount)} vistas</span>
-        </div>
       </div>
     </div>
   );
@@ -342,7 +343,6 @@ export function TikTokFeed({ videos, onLike, onView, onShare, onComment, classNa
         "h-screen w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide",
         className
       )}
-      style={{ scrollBehavior: 'smooth' }}
     >
       {videos.map((video, index) => (
         <div 
