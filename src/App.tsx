@@ -21,6 +21,7 @@ import ClientDashboard from "./pages/ClientDashboard";
 import ClientContentBoard from "./pages/ClientContentBoard";
 import Portfolio from "./pages/Portfolio";
 import ClientPortfolio from "./pages/ClientPortfolio";
+import UserPortfolio from "./pages/UserPortfolio";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import { MainLayout } from "./components/layout/MainLayout";
@@ -45,6 +46,7 @@ function AppContent() {
           <Routes>
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/portfolio/:clientId" element={<ClientPortfolio />} />
+            <Route path="/p/:id" element={<UserPortfolio />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'ambassador']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
