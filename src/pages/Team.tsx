@@ -306,9 +306,66 @@ export default function Team() {
     );
   }
 
+  const noRole = profiles.filter(p => p.roles.length === 0);
+  const admins = profiles.filter(p => p.roles.includes('admin'));
+  const strategists = profiles.filter(p => p.roles.includes('strategist'));
   const creators = profiles.filter(p => p.roles.includes('creator'));
   const editors = profiles.filter(p => p.roles.includes('editor'));
-  const admins = profiles.filter(p => p.roles.includes('admin'));
+  const ambassadors = profiles.filter(p => p.roles.includes('ambassador'));
+  const clientUsers = profiles.filter(p => p.roles.includes('client'));
+
+  // Reusable user card component
+  const UserCard = ({ profile, showAddRole = true }: { profile: Profile & { roles: AppRole[] }, showAddRole?: boolean }) => (
+    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={profile.avatar_url || ''} />
+          <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
+        </Avatar>
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="font-medium">{profile.full_name}</p>
+            {profile.is_ambassador && (
+              <Star className="w-4 h-4 text-primary fill-primary" />
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">{profile.email}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 flex-wrap justify-end">
+        {profile.roles.length === 0 ? (
+          <Badge variant="outline" className="text-muted-foreground">
+            Sin rol
+          </Badge>
+        ) : (
+          profile.roles.map(role => (
+            <Badge 
+              key={role} 
+              className={`${ROLE_COLORS[role]} cursor-pointer hover:opacity-75`}
+              onClick={() => handleRemoveRole(profile.id, role)}
+              title="Clic para eliminar rol"
+            >
+              {ROLE_LABELS[role]} ×
+            </Badge>
+          ))
+        )}
+        {showAddRole && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => {
+              setSelectedUser(profile);
+              setAddRoleDialog(true);
+            }}
+          >
+            <Plus className="w-3 h-3" />
+            Rol
+          </Button>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -373,126 +430,117 @@ export default function Team() {
         </Dialog>
       </div>
 
-      <Tabs defaultValue="all-users" className="w-full">
-        <TabsList>
-          <TabsTrigger value="all-users" className="gap-2">
-            <Users className="w-4 h-4" />
-            Todos los Usuarios
+      <Tabs defaultValue="no-role" className="w-full">
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="no-role" className="gap-2">
+            <User className="w-4 h-4" />
+            Sin Rol ({noRole.length})
           </TabsTrigger>
-          <TabsTrigger value="team" className="gap-2">
+          <TabsTrigger value="admins" className="gap-2">
             <Shield className="w-4 h-4" />
-            Equipo
+            Admins ({admins.length})
+          </TabsTrigger>
+          <TabsTrigger value="strategists" className="gap-2">
+            <Users className="w-4 h-4" />
+            Estrategas ({strategists.length})
+          </TabsTrigger>
+          <TabsTrigger value="creators" className="gap-2">
+            <User className="w-4 h-4" />
+            Creadores ({creators.length})
+          </TabsTrigger>
+          <TabsTrigger value="editors" className="gap-2">
+            <User className="w-4 h-4" />
+            Editores ({editors.length})
+          </TabsTrigger>
+          <TabsTrigger value="ambassadors" className="gap-2">
+            <Star className="w-4 h-4" />
+            Embajadores ({ambassadors.length})
           </TabsTrigger>
           <TabsTrigger value="clients" className="gap-2">
             <Building2 className="w-4 h-4" />
-            Clientes
+            Clientes ({clients.length})
           </TabsTrigger>
         </TabsList>
 
-        {/* All Users Tab */}
-        <TabsContent value="all-users" className="mt-6">
+        {/* Sin Rol Tab */}
+        <TabsContent value="no-role" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Usuarios Registrados ({profiles.length})
+                <User className="w-5 h-5 text-muted-foreground" />
+                Usuarios Sin Rol ({noRole.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {profiles.map(profile => (
-                  <div key={profile.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={profile.avatar_url || ''} />
-                        <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{profile.full_name}</p>
-                          {profile.is_ambassador && (
-                            <Star className="w-4 h-4 text-primary fill-primary" />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{profile.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                      {profile.roles.length === 0 ? (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Sin rol
-                        </Badge>
-                      ) : (
-                        profile.roles.map(role => (
-                          <Badge 
-                            key={role} 
-                            className={`${ROLE_COLORS[role]} cursor-pointer hover:opacity-75`}
-                            onClick={() => handleRemoveRole(profile.id, role)}
-                            title="Clic para eliminar rol"
-                          >
-                            {ROLE_LABELS[role]} ×
-                          </Badge>
-                        ))
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => {
-                          setSelectedUser(profile);
-                          setAddRoleDialog(true);
-                        }}
-                      >
-                        <Plus className="w-3 h-3" />
-                        Rol
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {noRole.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Todos los usuarios tienen al menos un rol asignado
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {noRole.map(profile => (
+                    <UserCard key={profile.id} profile={profile} />
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="team" className="mt-6 space-y-6">
-          {/* Admins */}
+        {/* Admins Tab */}
+        <TabsContent value="admins" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-destructive" />
-                Administradores
+                Administradores ({admins.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {admins.map(admin => (
-                  <div key={admin.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={admin.avatar_url || ''} />
-                        <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{admin.full_name}</p>
-                        <p className="text-sm text-muted-foreground">{admin.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {admin.roles.map(role => (
-                        <Badge key={role} className={ROLE_COLORS[role]}>
-                          {ROLE_LABELS[role]}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {admins.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  No hay administradores registrados
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {admins.map(profile => (
+                    <UserCard key={profile.id} profile={profile} />
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Creators */}
+        {/* Strategists Tab */}
+        <TabsContent value="strategists" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-orange-500" />
+                Estrategas ({strategists.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {strategists.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  No hay estrategas registrados
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {strategists.map(profile => (
+                    <UserCard key={profile.id} profile={profile} />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Creators Tab */}
+        <TabsContent value="creators" className="mt-6">
+          <Card>
+            <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="w-5 h-5 text-primary" />
                 Creadores ({creators.length})
@@ -505,50 +553,19 @@ export default function Team() {
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {creators.map(creator => (
-                    <div key={creator.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={creator.avatar_url || ''} />
-                          <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{creator.full_name}</p>
-                            {creator.is_ambassador && (
-                              <Star className="w-4 h-4 text-primary fill-primary" />
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{creator.email}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {creator.roles.map(role => (
-                          <Badge key={role} className={ROLE_COLORS[role]}>
-                            {ROLE_LABELS[role]}
-                          </Badge>
-                        ))}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedUser(creator);
-                            setAddRoleDialog(true);
-                          }}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                  {creators.map(profile => (
+                    <UserCard key={profile.id} profile={profile} />
                   ))}
                 </div>
               )}
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Editors */}
+        {/* Editors Tab */}
+        <TabsContent value="editors" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="w-5 h-5 text-purple-500" />
                 Editores ({editors.length})
@@ -561,41 +578,33 @@ export default function Team() {
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {editors.map(editor => (
-                    <div key={editor.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={editor.avatar_url || ''} />
-                          <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{editor.full_name}</p>
-                            {editor.is_ambassador && (
-                              <Star className="w-4 h-4 text-primary fill-primary" />
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{editor.email}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {editor.roles.map(role => (
-                          <Badge key={role} className={ROLE_COLORS[role]}>
-                            {ROLE_LABELS[role]}
-                          </Badge>
-                        ))}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedUser(editor);
-                            setAddRoleDialog(true);
-                          }}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                  {editors.map(profile => (
+                    <UserCard key={profile.id} profile={profile} />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Ambassadors Tab */}
+        <TabsContent value="ambassadors" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-success" />
+                Embajadores ({ambassadors.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {ambassadors.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  No hay embajadores registrados
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {ambassadors.map(profile => (
+                    <UserCard key={profile.id} profile={profile} />
                   ))}
                 </div>
               )}
