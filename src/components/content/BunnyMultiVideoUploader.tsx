@@ -1,0 +1,375 @@
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Upload, Loader2, CheckCircle, XCircle, Video, RefreshCw, Plus, Trash2 } from "lucide-react";
+
+interface VideoUpload {
+  id: string;
+  status: 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  embedUrl: string;
+  videoId: string | null;
+}
+
+interface BunnyMultiVideoUploaderProps {
+  contentId: string;
+  title: string;
+  currentUrls?: string[];
+  hooksCount: number;
+  onUploadComplete?: (urls: string[]) => void;
+  disabled?: boolean;
+}
+
+export function BunnyMultiVideoUploader({ 
+  contentId, 
+  title, 
+  currentUrls = [],
+  hooksCount,
+  onUploadComplete,
+  disabled 
+}: BunnyMultiVideoUploaderProps) {
+  const { toast } = useToast();
+  const [uploads, setUploads] = useState<VideoUpload[]>([]);
+  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+  const pollIntervals = useRef<{ [key: string]: NodeJS.Timeout }>({});
+
+  // Initialize uploads array based on hooksCount and currentUrls
+  useEffect(() => {
+    const initialUploads: VideoUpload[] = Array.from({ length: hooksCount }, (_, index) => ({
+      id: `video-${index}`,
+      status: currentUrls[index] ? 'completed' : 'idle',
+      progress: currentUrls[index] ? 100 : 0,
+      embedUrl: currentUrls[index] || '',
+      videoId: null
+    }));
+    setUploads(initialUploads);
+  }, [hooksCount]);
+
+  // Update uploads when currentUrls change
+  useEffect(() => {
+    setUploads(prev => prev.map((upload, index) => ({
+      ...upload,
+      embedUrl: currentUrls[index] || upload.embedUrl,
+      status: currentUrls[index] ? 'completed' : upload.status
+    })));
+  }, [currentUrls]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(pollIntervals.current).forEach(interval => clearInterval(interval));
+    };
+  }, []);
+
+  const pollVideoStatus = async (uploadId: string, videoGuid: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('bunny-status', {
+        body: { content_id: contentId, video_id: videoGuid }
+      });
+
+      if (error) {
+        console.error('Status check error:', error);
+        return;
+      }
+
+      if (data.status === 'completed') {
+        setUploads(prev => prev.map(u => 
+          u.id === uploadId ? { ...u, status: 'completed' } : u
+        ));
+        if (pollIntervals.current[uploadId]) {
+          clearInterval(pollIntervals.current[uploadId]);
+          delete pollIntervals.current[uploadId];
+        }
+        toast({
+          title: "¡Video listo!",
+          description: "El video se ha procesado correctamente"
+        });
+      } else if (data.status === 'failed') {
+        setUploads(prev => prev.map(u => 
+          u.id === uploadId ? { ...u, status: 'failed' } : u
+        ));
+        if (pollIntervals.current[uploadId]) {
+          clearInterval(pollIntervals.current[uploadId]);
+          delete pollIntervals.current[uploadId];
+        }
+        toast({
+          title: "Error de procesamiento",
+          description: "Hubo un error al procesar el video",
+          variant: "destructive"
+        });
+      } else {
+        setUploads(prev => prev.map(u => 
+          u.id === uploadId ? { ...u, progress: data.encode_progress || 50 } : u
+        ));
+      }
+    } catch (err) {
+      console.error('Polling error:', err);
+    }
+  };
+
+  const handleFileSelect = async (uploadId: string, index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Formato no válido",
+        description: "Por favor sube un archivo MP4, WebM, MOV o AVI",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 5GB)
+    const maxSize = 5 * 1024 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({
+        title: "Archivo muy grande",
+        description: "El archivo no puede superar los 5GB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Update upload state
+    setUploads(prev => prev.map(u => 
+      u.id === uploadId ? { ...u, status: 'uploading', progress: 0 } : u
+    ));
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('content_id', contentId);
+      formData.append('title', `${title} - Variable ${index + 1}`);
+      formData.append('variant_index', String(index));
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploads(prev => prev.map(u => 
+          u.id === uploadId ? { ...u, progress: Math.min(u.progress + 10, 90) } : u
+        ));
+      }, 500);
+
+      const { data, error } = await supabase.functions.invoke('bunny-upload', {
+        body: formData
+      });
+
+      clearInterval(progressInterval);
+
+      if (error) throw error;
+
+      // Update with embed URL
+      const newEmbedUrl = data.embed_url || '';
+      setUploads(prev => {
+        const newUploads = prev.map(u => 
+          u.id === uploadId ? { 
+            ...u, 
+            progress: 100, 
+            videoId: data.video_id,
+            embedUrl: newEmbedUrl,
+            status: 'processing' as const
+          } : u
+        );
+        
+        // Notify parent with all URLs
+        const allUrls = newUploads.map(u => u.embedUrl);
+        onUploadComplete?.(allUrls);
+        
+        return newUploads;
+      });
+
+      // Start polling for processing status
+      pollIntervals.current[uploadId] = setInterval(() => {
+        pollVideoStatus(uploadId, data.video_id);
+      }, 5000);
+
+      toast({
+        title: "Video subido",
+        description: `Variable ${index + 1} se está procesando en Bunny.net`
+      });
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploads(prev => prev.map(u => 
+        u.id === uploadId ? { ...u, status: 'failed' } : u
+      ));
+      toast({
+        title: "Error al subir",
+        description: error instanceof Error ? error.message : "No se pudo subir el video",
+        variant: "destructive"
+      });
+    } finally {
+      // Reset file input
+      if (fileInputRefs.current[uploadId]) {
+        fileInputRefs.current[uploadId]!.value = '';
+      }
+    }
+  };
+
+  const handleRetry = (uploadId: string) => {
+    setUploads(prev => prev.map(u => 
+      u.id === uploadId ? { ...u, status: 'idle', progress: 0, videoId: null } : u
+    ));
+  };
+
+  const handleRemove = (uploadId: string, index: number) => {
+    setUploads(prev => {
+      const newUploads = prev.map(u => 
+        u.id === uploadId ? { ...u, embedUrl: '', status: 'idle' as const, progress: 0 } : u
+      );
+      const allUrls = newUploads.map(u => u.embedUrl);
+      onUploadComplete?.(allUrls);
+      return newUploads;
+    });
+  };
+
+  const getStatusIcon = (status: VideoUpload['status']) => {
+    switch (status) {
+      case 'uploading':
+        return <Upload className="h-4 w-4 animate-pulse" />;
+      case 'processing':
+        return <Loader2 className="h-4 w-4 animate-spin" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4 text-destructive" />;
+      default:
+        return <Plus className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusText = (status: VideoUpload['status']) => {
+    switch (status) {
+      case 'uploading':
+        return 'Subiendo...';
+      case 'processing':
+        return 'Procesando...';
+      case 'completed':
+        return 'Listo';
+      case 'failed':
+        return 'Error';
+      default:
+        return 'Subir';
+    }
+  };
+
+  const renderBunnyEmbed = (embedUrl: string) => {
+    if (!embedUrl) return null;
+    
+    // Extract video ID from Bunny embed URL
+    // Format: https://iframe.mediadelivery.net/embed/{library_id}/{video_id}
+    if (embedUrl.includes('iframe.mediadelivery.net') || embedUrl.includes('bunny')) {
+      return (
+        <iframe
+          src={embedUrl}
+          loading="lazy"
+          className="w-full h-full border-0"
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+          allowFullScreen
+        />
+      );
+    }
+    
+    // Fallback for other video URLs
+    if (embedUrl.match(/\.(mp4|webm|ogg)$/i)) {
+      return (
+        <video
+          src={embedUrl}
+          className="w-full h-full object-contain"
+          controls
+        />
+      );
+    }
+    
+    return (
+      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+        <a href={embedUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+          Ver video
+        </a>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      {uploads.map((upload, index) => (
+        <div key={upload.id} className="space-y-2 p-3 rounded-lg border bg-muted/30">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Variable {index + 1}</span>
+            <div className="flex items-center gap-2">
+              {upload.status === 'failed' && (
+                <Button variant="ghost" size="icon" onClick={() => handleRetry(upload.id)} className="h-7 w-7">
+                  <RefreshCw className="h-3 w-3" />
+                </Button>
+              )}
+              {upload.embedUrl && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleRemove(upload.id, index)}
+                  className="h-7 w-7 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          </div>
+          
+          {/* Video Preview */}
+          {upload.embedUrl && upload.status === 'completed' && (
+            <div 
+              className="rounded-lg overflow-hidden bg-black flex items-center justify-center"
+              style={{ height: '200px' }}
+            >
+              {renderBunnyEmbed(upload.embedUrl)}
+            </div>
+          )}
+          
+          {/* Upload Button & Progress */}
+          <div className="flex items-center gap-2">
+            <input
+              ref={(el) => { fileInputRefs.current[upload.id] = el; }}
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+              onChange={(e) => handleFileSelect(upload.id, index, e)}
+              className="hidden"
+              disabled={disabled || upload.status === 'uploading' || upload.status === 'processing'}
+            />
+            
+            <Button
+              variant={upload.status === 'completed' ? 'outline' : 'default'}
+              size="sm"
+              onClick={() => fileInputRefs.current[upload.id]?.click()}
+              disabled={disabled || upload.status === 'uploading' || upload.status === 'processing'}
+              className="flex items-center gap-2"
+            >
+              {getStatusIcon(upload.status)}
+              {upload.status === 'completed' ? 'Reemplazar' : getStatusText(upload.status)}
+            </Button>
+            
+            {upload.status === 'completed' && (
+              <span className="text-xs text-green-600 flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                Video listo
+              </span>
+            )}
+          </div>
+          
+          {/* Progress Bar */}
+          {(upload.status === 'uploading' || upload.status === 'processing') && (
+            <div className="space-y-1">
+              <Progress value={upload.progress} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                {upload.status === 'uploading' ? `Subiendo... ${upload.progress}%` : `Procesando... ${upload.progress}%`}
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}

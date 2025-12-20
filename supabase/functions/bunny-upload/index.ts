@@ -33,6 +33,7 @@ Deno.serve(async (req) => {
       const file = formData.get('file') as File
       const contentId = formData.get('content_id') as string
       const title = formData.get('title') as string || 'Video'
+      const variantIndex = parseInt(formData.get('variant_index') as string || '0', 10)
 
       if (!file || !contentId) {
         return new Response(
@@ -95,12 +96,27 @@ Deno.serve(async (req) => {
       // Generate embed URL
       const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
 
-      // Update content with Bunny embed URL
+      // Fetch current video_urls array
+      const { data: currentContent } = await supabase
+        .from('content')
+        .select('video_urls, hooks_count')
+        .eq('id', contentId)
+        .single()
+
+      // Update video_urls array at the specific variant index
+      const currentUrls = currentContent?.video_urls || []
+      const hooksCount = currentContent?.hooks_count || 1
+      const newUrls = Array.from({ length: Math.max(hooksCount, variantIndex + 1) }, (_, i) => 
+        i === variantIndex ? embedUrl : (currentUrls[i] || '')
+      )
+
+      // Update content with Bunny embed URL in video_urls array
       const { error: updateError } = await supabase
         .from('content')
         .update({
           bunny_embed_url: embedUrl,
-          video_url: embedUrl,
+          video_url: newUrls[0] || embedUrl, // Keep video_url as first video for backward compatibility
+          video_urls: newUrls,
           video_processing_status: 'completed',
         })
         .eq('id', contentId)
@@ -109,7 +125,7 @@ Deno.serve(async (req) => {
         console.error('Error updating content:', updateError)
       }
 
-      console.log(`Video uploaded successfully: ${embedUrl}`)
+      console.log(`Video uploaded successfully: ${embedUrl} at index ${variantIndex}`)
 
       return new Response(
         JSON.stringify({
