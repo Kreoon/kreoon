@@ -22,6 +22,8 @@ export interface BunnyVideoCardProps {
   showActions?: boolean;
   onOpenFullscreen?: () => void;
   className?: string;
+  hideControls?: boolean; // Hide play/pause/mute controls (for portfolio/auth pages)
+  alwaysShowActions?: boolean; // Always show social actions without hover
 }
 
 function extractVideoId(url: string): string | null {
@@ -70,7 +72,9 @@ export function BunnyVideoCard({
   onComment,
   showActions = true,
   onOpenFullscreen,
-  className
+  className,
+  hideControls = false,
+  alwaysShowActions = false
 }: BunnyVideoCardProps) {
   const { isPlaying, play, stop } = useVideoPlayback(id);
   const [isMuted, setIsMuted] = useState(true);
@@ -301,9 +305,12 @@ export function BunnyVideoCard({
               </div>
             </div>
 
-            {/* Action buttons */}
+            {/* Action buttons - always visible when alwaysShowActions is true */}
             {showActions && (
-              <div className="absolute bottom-16 right-3 flex flex-col gap-3 z-10">
+              <div className={cn(
+                "absolute bottom-16 right-3 flex flex-col gap-3 z-10 transition-opacity duration-200",
+                alwaysShowActions ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}>
                 {onOpenFullscreen && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onOpenFullscreen(); }}
@@ -356,21 +363,66 @@ export function BunnyVideoCard({
               loading="lazy"
             />
 
-            {/* Controls overlay */}
-            <div className="absolute top-3 right-3 flex gap-2 z-20">
-              <button
-                onClick={handleStop}
-                className="p-2.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
-              >
-                <Pause className="h-5 w-5" />
-              </button>
-              <button
-                onClick={toggleMute}
-                className="p-2.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
-              >
-                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-              </button>
-            </div>
+            {/* Controls overlay - hidden when hideControls is true */}
+            {!hideControls && (
+              <div className="absolute top-3 right-3 flex gap-2 z-20">
+                <button
+                  onClick={handleStop}
+                  className="p-2.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
+                >
+                  <Pause className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={toggleMute}
+                  className="p-2.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
+                >
+                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                </button>
+              </div>
+            )}
+
+            {/* Social actions while playing - always visible when alwaysShowActions */}
+            {showActions && alwaysShowActions && (
+              <div className="absolute bottom-16 right-3 flex flex-col gap-3 z-20">
+                {onOpenFullscreen && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onOpenFullscreen(); }}
+                    className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200 shadow-lg active:scale-90"
+                  >
+                    <Maximize2 className="h-6 w-6" />
+                  </button>
+                )}
+                {onLike && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onLike(e); }}
+                    className={cn(
+                      "p-3 rounded-full transition-all duration-200 shadow-lg active:scale-90",
+                      isLiked 
+                        ? "bg-red-500 text-white scale-110" 
+                        : "bg-black/60 backdrop-blur-sm text-white hover:bg-red-500/80 hover:scale-110"
+                    )}
+                  >
+                    <Heart className="h-6 w-6" fill={isLiked ? "currentColor" : "none"} />
+                  </button>
+                )}
+                {onComment && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onComment(); }}
+                    className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200 shadow-lg active:scale-90"
+                  >
+                    <MessageSquare className="h-6 w-6" />
+                  </button>
+                )}
+                {onShare && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onShare(); }}
+                    className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200 shadow-lg active:scale-90"
+                  >
+                    <Share2 className="h-6 w-6" />
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Carousel navigation while playing */}
             {hasMultiple && (

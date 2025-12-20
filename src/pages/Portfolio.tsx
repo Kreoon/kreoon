@@ -470,6 +470,8 @@ export default function Portfolio() {
                   }}
                   onOpenFullscreen={() => setFullscreenIndex(index)}
                   showActions={true}
+                  hideControls={true}
+                  alwaysShowActions={true}
                   className="bg-neutral-900 border-white/10 hover:border-primary/40"
                 />
               );
