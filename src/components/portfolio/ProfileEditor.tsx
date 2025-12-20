@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -12,13 +13,14 @@ import {
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Camera, Loader2, Save, X } from 'lucide-react';
+import { Camera, Loader2, Save, X, Globe, Lock } from 'lucide-react';
 
 interface ProfileEditorProps {
   userId: string;
   currentName: string;
   currentBio: string | null;
   currentAvatar: string | null;
+  currentIsPublic?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: () => void;
@@ -29,6 +31,7 @@ export function ProfileEditor({
   currentName,
   currentBio,
   currentAvatar,
+  currentIsPublic = true,
   open,
   onOpenChange,
   onSave,
@@ -39,9 +42,17 @@ export function ProfileEditor({
   const [uploading, setUploading] = useState(false);
   const [name, setName] = useState(currentName);
   const [bio, setBio] = useState(currentBio || '');
+  const [isPublic, setIsPublic] = useState(currentIsPublic);
   const [avatarUrl, setAvatarUrl] = useState(currentAvatar);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    setName(currentName);
+    setBio(currentBio || '');
+    setIsPublic(currentIsPublic);
+    setAvatarUrl(currentAvatar);
+  }, [currentName, currentBio, currentIsPublic, currentAvatar]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -127,6 +138,7 @@ export function ProfileEditor({
           full_name: name.trim(),
           bio: bio.trim() || null,
           avatar_url: newAvatarUrl,
+          is_public: isPublic,
         })
         .eq('id', userId);
 
@@ -218,6 +230,29 @@ export function ProfileEditor({
               maxLength={300}
             />
             <p className="text-xs text-white/40 text-right">{bio.length}/300</p>
+          </div>
+
+          {/* Privacy */}
+          <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              {isPublic ? (
+                <Globe className="h-5 w-5 text-green-400" />
+              ) : (
+                <Lock className="h-5 w-5 text-yellow-400" />
+              )}
+              <div>
+                <Label className="text-white">Perfil {isPublic ? 'Público' : 'Privado'}</Label>
+                <p className="text-xs text-white/50">
+                  {isPublic 
+                    ? 'Cualquiera puede ver tu perfil' 
+                    : 'Solo tú puedes ver tu perfil'}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={isPublic}
+              onCheckedChange={setIsPublic}
+            />
           </div>
         </div>
 
