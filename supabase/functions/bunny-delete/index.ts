@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json()
-    const { content_id, video_url } = body
+    const { content_id, video_url, field = 'raw_video_urls' } = body
 
     if (!content_id || !video_url) {
       return new Response(
@@ -46,7 +46,11 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log(`Deleting video from content ${content_id}: ${video_url}`)
+    // Validate field parameter
+    const validFields = ['raw_video_urls', 'video_urls']
+    const targetField = validFields.includes(field) ? field : 'raw_video_urls'
+
+    console.log(`Deleting video from content ${content_id} (field: ${targetField}): ${video_url}`)
 
     // Check permissions
     const { data: userRoles } = await supabase
@@ -107,10 +111,10 @@ Deno.serve(async (req) => {
       console.log(`Video ${videoId} deleted from Bunny`)
     }
 
-    // Get current raw_video_urls
+    // Get current URLs from the target field
     const { data: content, error: fetchError } = await supabase
       .from('content')
-      .select('raw_video_urls')
+      .select('raw_video_urls, video_urls')
       .eq('id', content_id)
       .single()
 
@@ -122,19 +126,21 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Remove the URL from the array
-    const currentUrls = content.raw_video_urls || []
+    // Remove the URL from the appropriate array
+    const currentUrls = (targetField === 'video_urls' ? content.video_urls : content.raw_video_urls) || []
     const updatedUrls = currentUrls.filter((url: string) => url !== video_url)
 
-    console.log(`Updating raw_video_urls: ${currentUrls.length} -> ${updatedUrls.length}`)
+    console.log(`Updating ${targetField}: ${currentUrls.length} -> ${updatedUrls.length}`)
 
-    // Update the database
+    // Update the database with the appropriate field
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString()
+    }
+    updateData[targetField] = updatedUrls
+
     const { error: updateError } = await supabase
       .from('content')
-      .update({ 
-        raw_video_urls: updatedUrls,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', content_id)
 
     if (updateError) {

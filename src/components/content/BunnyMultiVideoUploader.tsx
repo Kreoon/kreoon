@@ -218,15 +218,38 @@ export function BunnyMultiVideoUploader({
     ));
   };
 
-  const handleRemove = (uploadId: string, index: number) => {
-    setUploads(prev => {
-      const newUploads = prev.map(u => 
+  const handleRemove = async (uploadId: string, index: number, embedUrl: string) => {
+    if (!embedUrl) {
+      // If no URL, just reset local state
+      setUploads(prev => prev.map(u => 
         u.id === uploadId ? { ...u, embedUrl: '', status: 'idle' as const, progress: 0 } : u
-      );
-      const allUrls = newUploads.map(u => u.embedUrl);
-      onUploadComplete?.(allUrls);
-      return newUploads;
-    });
+      ));
+      return;
+    }
+
+    // Update UI immediately
+    setUploads(prev => prev.map(u => 
+      u.id === uploadId ? { ...u, embedUrl: '', status: 'idle' as const, progress: 0 } : u
+    ));
+
+    try {
+      // Delete from Bunny and database
+      await supabase.functions.invoke('bunny-delete', {
+        body: { content_id: contentId, video_url: embedUrl, field: 'video_urls' }
+      });
+
+      toast({
+        title: "Video eliminado",
+        description: "El video se eliminó correctamente"
+      });
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Error al eliminar",
+        description: "No se pudo eliminar completamente el video",
+        variant: "destructive"
+      });
+    }
   };
 
   const getStatusIcon = (status: VideoUpload['status']) => {
@@ -314,7 +337,7 @@ export function BunnyMultiVideoUploader({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={() => handleRemove(upload.id, index)}
+                  onClick={() => handleRemove(upload.id, index, upload.embedUrl)}
                   className="h-7 w-7 text-destructive hover:text-destructive"
                 >
                   <Trash2 className="h-3 w-3" />
