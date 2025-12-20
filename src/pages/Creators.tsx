@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CreatorDetailDialog } from "@/components/team/CreatorDetailDialog";
 import {
   AlertDialog,
@@ -17,6 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface Creator {
   id: string;
@@ -135,6 +137,42 @@ const Creators = () => {
     }
   };
 
+  const toggleAmbassador = async (creator: Creator, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newStatus = !creator.is_ambassador;
+    
+    // Optimistic update
+    setCreators(prev => prev.map(c => 
+      c.id === creator.id ? { ...c, is_ambassador: newStatus } : c
+    ));
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_ambassador: newStatus })
+        .eq('id', creator.id);
+
+      if (error) throw error;
+
+      toast({
+        description: newStatus 
+          ? `${creator.full_name} es ahora embajador ⭐` 
+          : `${creator.full_name} ya no es embajador`
+      });
+    } catch (error) {
+      console.error('Error toggling ambassador:', error);
+      // Revert on error
+      setCreators(prev => prev.map(c => 
+        c.id === creator.id ? { ...c, is_ambassador: !newStatus } : c
+      ));
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado de embajador",
+        variant: "destructive"
+      });
+    }
+  };
+
   const filteredCreators = creators.filter(c => 
     c.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -230,6 +268,36 @@ const Creators = () => {
                   </div>
                   <p className="text-xs text-muted-foreground mb-4 truncate">{creator.email}</p>
 
+                  {/* Ambassador toggle for admins */}
+                  {isAdmin && (
+                    <div 
+                      onClick={(e) => toggleAmbassador(creator, e)}
+                      className={cn(
+                        "flex items-center gap-2 mb-4 p-2 rounded-lg border cursor-pointer transition-all",
+                        creator.is_ambassador 
+                          ? "bg-primary/10 border-primary/30 hover:bg-primary/20" 
+                          : "bg-muted/50 border-border hover:bg-muted"
+                      )}
+                    >
+                      <Checkbox 
+                        checked={creator.is_ambassador}
+                        className="pointer-events-none"
+                      />
+                      <div className="flex items-center gap-1.5">
+                        <Star className={cn(
+                          "h-4 w-4 transition-colors",
+                          creator.is_ambassador ? "text-primary fill-primary" : "text-muted-foreground"
+                        )} />
+                        <span className={cn(
+                          "text-xs font-medium",
+                          creator.is_ambassador ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          Embajador
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between pt-4 border-t border-border">
                     <div className="flex items-center gap-1">
                       <Video className="h-4 w-4 text-muted-foreground" />
@@ -244,6 +312,7 @@ const Creators = () => {
                             variant="ghost" 
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
