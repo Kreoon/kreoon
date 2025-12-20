@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown } from "lucide-react";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
 import { UserManagement } from "@/components/settings/UserManagement";
+import { ReferralManagement } from "@/components/settings/ReferralManagement";
+import { SubscriptionManagement } from "@/components/settings/SubscriptionManagement";
 import { useAuth } from "@/hooks/useAuth";
 
 const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes';
 
 const settingsSections = [
   { 
@@ -19,10 +21,24 @@ const settingsSections = [
     adminOnly: false
   },
   { 
+    id: 'referidos' as const,
+    icon: Share2, 
+    title: "Referidos", 
+    description: "Refiere usuarios y gana comisiones",
+    adminOnly: false
+  },
+  { 
     id: 'permisos' as const,
     icon: Lock, 
     title: "Permisos", 
     description: "Gestiona los permisos de acceso para cada rol",
+    adminOnly: true
+  },
+  { 
+    id: 'planes' as const,
+    icon: Crown, 
+    title: "Planes y Comisiones", 
+    description: "Gestiona planes de usuarios y comisiones de referidos",
     adminOnly: true
   },
   { 
@@ -82,6 +98,10 @@ const Settings = () => {
         return <ProfileEditor />;
       case 'permisos':
         return <PermissionsEditor />;
+      case 'referidos':
+        return <ReferralManagement />;
+      case 'planes':
+        return <SubscriptionManagement />;
       case 'notificaciones':
         return (
           <div className="p-6 text-center text-muted-foreground">
