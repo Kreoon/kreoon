@@ -36,6 +36,7 @@ export function RawVideoUploader({
   const [uploads, setUploads] = useState<VideoUpload[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Initialize uploads from currentUrls
   useEffect(() => {
@@ -189,13 +190,51 @@ export function RawVideoUploader({
     }
   };
 
-  const handleRemove = (uploadId: string) => {
-    setUploads(prev => {
-      const updated = prev.filter(u => u.id !== uploadId);
-      const allUrls = updated.filter(u => u.embedUrl).map(u => u.embedUrl);
-      onUploadComplete?.(allUrls);
-      return updated;
-    });
+  const handleRemove = async (uploadId: string, embedUrl: string) => {
+    if (!embedUrl) {
+      // If no URL, just remove from local state
+      setUploads(prev => {
+        const updated = prev.filter(u => u.id !== uploadId);
+        const allUrls = updated.filter(u => u.embedUrl).map(u => u.embedUrl);
+        onUploadComplete?.(allUrls);
+        return updated;
+      });
+      return;
+    }
+
+    setDeletingId(uploadId);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('bunny-delete', {
+        body: { content_id: contentId, video_url: embedUrl }
+      });
+
+      if (error) throw error;
+
+      // Update local state with remaining URLs from server
+      const remainingUrls: string[] = data?.remaining_urls || [];
+      
+      setUploads(prev => {
+        const updated = prev.filter(u => u.id !== uploadId);
+        onUploadComplete?.(remainingUrls);
+        return updated;
+      });
+
+      toast({
+        title: "Video eliminado",
+        description: "El video se eliminó correctamente"
+      });
+
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Error al eliminar",
+        description: error instanceof Error ? error.message : "No se pudo eliminar el video",
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleRetry = (uploadId: string) => {
@@ -344,15 +383,18 @@ export function RawVideoUploader({
                     )}
                   </Button>
                 )}
-                {!disabled && upload.status !== 'uploading' && (
+                {!disabled && upload.status !== 'uploading' && deletingId !== upload.id && (
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    onClick={() => handleRemove(upload.id)}
+                    onClick={() => handleRemove(upload.id, upload.embedUrl)}
                     className="h-7 w-7 text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
+                )}
+                {deletingId === upload.id && (
+                  <Loader2 className="h-4 w-4 animate-spin text-destructive" />
                 )}
               </div>
             </div>
