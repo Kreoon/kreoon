@@ -21,6 +21,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { TikTokFeed } from '@/components/content/TikTokFeed';
+import { BunnyVideoCard } from '@/components/content/BunnyVideoCard';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { StoryViewer } from '@/components/portfolio/StoryViewer';
 import { StoryRing } from '@/components/portfolio/StoryRing';
@@ -466,8 +467,8 @@ export default function UserPortfolio() {
           </div>
         </div>
 
-        {/* Content Grid */}
-        <div className="px-1 pb-8">
+        {/* Content Grid - Using BunnyVideoCard like Portfolio */}
+        <div className="px-4 pb-8">
           {currentItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-white/40">
               {activeTab === 'work' ? (
@@ -493,101 +494,56 @@ export default function UserPortfolio() {
                 </>
               )}
             </div>
+          ) : isMobile ? (
+            // Mobile: TikTok feed
+            <VideoPlayerProvider>
+              <TikTokFeed
+                videos={tikTokVideos}
+                onLike={() => {}}
+                onView={() => {}}
+                onShare={() => {}}
+              />
+            </VideoPlayerProvider>
           ) : (
-            <div className="grid grid-cols-3 gap-0.5 md:gap-1">
-              {activeTab === 'work' ? (
-                content.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="group relative aspect-[9/16] bg-zinc-900 cursor-pointer overflow-hidden"
-                    onClick={() => {
-                      if (isMobile) {
-                        setInitialVideoIndex(index);
-                        setShowTikTokView(true);
-                      } else {
-                        setSelectedContent(item);
-                      }
-                    }}
-                  >
-                    {item.thumbnail_url ? (
-                      <img
-                        src={item.thumbnail_url}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
+            // Desktop: Grid with BunnyVideoCard
+            <VideoPlayerProvider>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                {activeTab === 'work' ? (
+                  content.map((item) => {
+                    const videoUrls = item.video_urls?.length ? item.video_urls : (item.video_url ? [item.video_url] : []);
+                    return (
+                      <BunnyVideoCard
+                        key={item.id}
+                        id={item.id}
+                        title={item.title}
+                        videoUrls={videoUrls}
+                        thumbnailUrl={item.thumbnail_url}
+                        viewsCount={item.views_count || 0}
+                        likesCount={item.likes_count || 0}
+                        isLiked={false}
+                        creatorName={displayName || undefined}
+                        showActions={true}
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-zinc-800">
-                        <VideoIcon className="h-8 w-8 text-white/20" />
-                      </div>
-                    )}
-
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
-                      <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
-                    </div>
-
-                    <div className="absolute inset-0 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                      <div className="flex items-center gap-1 text-white">
-                        <Eye className="h-4 w-4" />
-                        <span className="text-sm font-medium">{(item.views_count || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-white">
-                        <Heart className="h-4 w-4" fill="white" />
-                        <span className="text-sm font-medium">{(item.likes_count || 0).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                posts.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="group relative aspect-[9/16] bg-zinc-900 cursor-pointer overflow-hidden"
-                    onClick={() => {
-                      if (item.media_type === 'video' && isMobile) {
-                        const videoIndex = posts.filter(p => p.media_type === 'video').findIndex(p => p.id === item.id);
-                        setInitialVideoIndex(videoIndex);
-                        setShowTikTokView(true);
-                      } else {
-                        setSelectedPost(item);
-                      }
-                    }}
-                  >
-                    {item.media_type === 'image' ? (
-                      <img
-                        src={item.media_url}
-                        alt={item.caption || ''}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : item.thumbnail_url ? (
-                      <img
-                        src={item.thumbnail_url}
-                        alt={item.caption || ''}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <video
-                        src={item.media_url}
-                        className="w-full h-full object-cover"
-                        muted
-                      />
-                    )}
-
-                    {item.media_type === 'video' && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
-                        <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
-                      </div>
-                    )}
-
-                    <div className="absolute inset-0 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                      <div className="flex items-center gap-1 text-white">
-                        <Heart className="h-4 w-4" fill="white" />
-                        <span className="text-sm font-medium">{(item.likes_count || 0).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                    );
+                  })
+                ) : (
+                  posts.filter(p => p.media_type === 'video').map((item) => (
+                    <BunnyVideoCard
+                      key={item.id}
+                      id={item.id}
+                      title={item.caption || ''}
+                      videoUrls={[item.media_url]}
+                      thumbnailUrl={item.thumbnail_url}
+                      viewsCount={item.views_count || 0}
+                      likesCount={item.likes_count || 0}
+                      isLiked={false}
+                      creatorName={displayName || undefined}
+                      showActions={true}
+                    />
+                  ))
+                )}
+              </div>
+            </VideoPlayerProvider>
           )}
         </div>
       </div>
