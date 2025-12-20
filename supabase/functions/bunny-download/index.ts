@@ -1,0 +1,161 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+Deno.serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const bunnyApiKey = Deno.env.get('BUNNY_API_KEY')!
+    const bunnyLibraryId = Deno.env.get('BUNNY_LIBRARY_ID')!
+    const bunnyCdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME') || 'vz-f0f0f0f0-f0f.b-cdn.net'
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    
+    // Get authorization header to verify user
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Verify the user
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const body = await req.json()
+    const { content_id, video_url } = body
+
+    if (!content_id || !video_url) {
+      return new Response(
+        JSON.stringify({ error: 'Missing content_id or video_url' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Fetch content to check permissions
+    const { data: content, error: contentError } = await supabase
+      .from('content')
+      .select('id, status, client_id')
+      .eq('id', content_id)
+      .single()
+
+    if (contentError || !content) {
+      return new Response(
+        JSON.stringify({ error: 'Content not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Check user roles
+    const { data: userRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+
+    const roles = userRoles?.map(r => r.role) || []
+    const isAdmin = roles.includes('admin')
+    const isClient = roles.includes('client')
+
+    // Check if user is the client associated with this content
+    let isContentClient = false
+    if (isClient && content.client_id) {
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('user_id')
+        .eq('id', content.client_id)
+        .single()
+      
+      isContentClient = clientData?.user_id === user.id
+    }
+
+    // Permission check:
+    // - Admins can download anytime
+    // - Clients can only download when status is approved, paid, or delivered
+    const approvedStatuses = ['approved', 'paid', 'delivered']
+    const canDownload = isAdmin || (isContentClient && approvedStatuses.includes(content.status))
+
+    if (!canDownload) {
+      return new Response(
+        JSON.stringify({ error: 'No tiene permiso para descargar este video' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Extract video ID from Bunny embed URL
+    // Format: https://iframe.mediadelivery.net/embed/{library_id}/{video_id}
+    const videoIdMatch = video_url.match(/\/embed\/[^/]+\/([^/?]+)/)
+    if (!videoIdMatch) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid video URL format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const videoId = videoIdMatch[1]
+
+    // Get video details from Bunny API
+    const videoResponse = await fetch(
+      `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoId}`,
+      {
+        headers: {
+          'AccessKey': bunnyApiKey,
+        },
+      }
+    )
+
+    if (!videoResponse.ok) {
+      console.error('Bunny API error:', await videoResponse.text())
+      return new Response(
+        JSON.stringify({ error: 'Error fetching video info' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const videoData = await videoResponse.json()
+    
+    // Construct the direct download URL
+    // Bunny Stream provides a direct play URL that can be used for download
+    const downloadUrl = `https://${bunnyCdnHostname}/${videoId}/play_720p.mp4`
+    
+    // Alternative: Use original file if available
+    const originalUrl = videoData.originalUrl || downloadUrl
+
+    console.log(`Download URL generated for video ${videoId}: ${downloadUrl}`)
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        download_url: downloadUrl,
+        title: videoData.title || 'video',
+        size: videoData.storageSize || 0,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+
+  } catch (error) {
+    console.error('Download error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+})
