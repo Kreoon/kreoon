@@ -40,6 +40,7 @@ interface UserProfile {
 interface ContentItem {
   id: string;
   title: string;
+  caption: string | null;
   thumbnail_url: string | null;
   video_url: string | null;
   video_urls: string[] | null;
@@ -49,6 +50,7 @@ interface ContentItem {
   created_at: string;
   creator_id: string | null;
   is_liked: boolean;
+  is_pinned?: boolean;
 }
 
 interface PortfolioPost {
@@ -60,6 +62,8 @@ interface PortfolioPost {
   views_count: number;
   likes_count: number;
   created_at: string;
+  is_pinned: boolean;
+  pinned_at: string | null;
 }
 
 interface Story {
@@ -144,7 +148,7 @@ export default function UserPortfolio() {
         // Fetch work content based on role - use is_published like Portfolio
         let query = supabase
           .from('content')
-          .select('id, title, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
+          .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
           .eq('is_published', true)
           .or('video_url.not.is.null,video_urls.not.is.null');
 
@@ -166,9 +170,11 @@ export default function UserPortfolio() {
           : { data: [] };
         const likedSet = new Set((likedData || []).map(l => l.content_id));
         
-        const enrichedContent = (contentData || []).map(item => ({
+        const enrichedContent: ContentItem[] = (contentData || []).map(item => ({
           ...item,
-          is_liked: likedSet.has(item.id)
+          caption: item.caption || null,
+          is_liked: likedSet.has(item.id),
+          is_pinned: item.caption?.includes('[PINNED]') || false
         }));
         setContent(enrichedContent);
 
@@ -214,7 +220,7 @@ export default function UserPortfolio() {
 
           const { data: clientContentData } = await supabase
             .from('content')
-            .select('id, title, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
+            .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
             .eq('client_id', id)
             .eq('is_published', true)
             .or('video_url.not.is.null,video_urls.not.is.null')
@@ -226,9 +232,11 @@ export default function UserPortfolio() {
             : { data: [] };
           const clientLikedSet = new Set((clientLikedData || []).map(l => l.content_id));
           
-          const enrichedClientContent = (clientContentData || []).map(item => ({
+          const enrichedClientContent: ContentItem[] = (clientContentData || []).map(item => ({
             ...item,
-            is_liked: clientLikedSet.has(item.id)
+            caption: item.caption || null,
+            is_liked: clientLikedSet.has(item.id),
+            is_pinned: item.caption?.includes('[PINNED]') || false
           }));
           setContent(enrichedClientContent);
         }
@@ -303,6 +311,35 @@ export default function UserPortfolio() {
     }
   };
 
+  const handlePin = async (itemId: string, type: 'work' | 'post') => {
+    try {
+      if (type === 'post') {
+        const { data, error } = await supabase.rpc('toggle_post_pin', { post_id: itemId });
+        if (error) throw error;
+        
+        setPosts(prev => prev.map(p => 
+          p.id === itemId ? { ...p, is_pinned: data, pinned_at: data ? new Date().toISOString() : null } : p
+        ));
+        toast.success(data ? '📌 Post fijado' : 'Post desanclado');
+      } else {
+        const { data, error } = await supabase.rpc('toggle_content_pin', { content_id: itemId });
+        if (error) throw error;
+        
+        setContent(prev => prev.map(c => 
+          c.id === itemId ? { ...c, is_pinned: data } : c
+        ));
+        toast.success(data ? '📌 Contenido fijado' : 'Contenido desanclado');
+      }
+    } catch (error: any) {
+      console.error('Error toggling pin:', error);
+      if (error.message?.includes('Maximum 3')) {
+        toast.error('Solo puedes fijar máximo 3 publicaciones');
+      } else {
+        toast.error('Error al fijar publicación');
+      }
+    }
+  };
+
   const getVideoUrl = (item: ContentItem | PortfolioPost): string | null => {
     if ('video_urls' in item && item.video_urls && item.video_urls.length > 0) return item.video_urls[0];
     if ('video_url' in item && item.video_url) return item.video_url;
@@ -314,7 +351,7 @@ export default function UserPortfolio() {
   const allVideos = useMemo(() => {
     const workVideos = content.map(item => ({
       id: item.id,
-      title: item.title,
+      title: item.caption?.replace('[PINNED]', '').trim() || item.title,
       videoUrls: item.video_urls?.length ? item.video_urls : (item.video_url ? [item.video_url] : []),
       thumbnailUrl: item.thumbnail_url,
       viewsCount: item.views_count || 0,
@@ -322,6 +359,7 @@ export default function UserPortfolio() {
       isLiked: item.is_liked,
       createdAt: item.created_at,
       type: 'work' as const,
+      isPinned: item.is_pinned || false,
     }));
     
     const postVideos = posts.filter(p => p.media_type === 'video').map(item => ({
@@ -334,12 +372,18 @@ export default function UserPortfolio() {
       isLiked: false,
       createdAt: item.created_at,
       type: 'post' as const,
+      isPinned: item.is_pinned || false,
     }));
     
-    // Combine and sort by date
-    return [...workVideos, ...postVideos].sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    // Combine, sort pinned first, then by date
+    const combined = [...workVideos, ...postVideos];
+    return combined.sort((a, b) => {
+      // Pinned items first
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      // Then by date
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }, [content, posts]);
 
   const displayName = profileType === 'user' ? profile?.full_name : clientInfo?.name;
@@ -600,11 +644,14 @@ export default function UserPortfolio() {
                     key={item.id}
                     id={item.id}
                     title={item.title}
+                    caption={item.title}
                     videoUrls={item.videoUrls}
                     thumbnailUrl={item.thumbnailUrl}
                     viewsCount={item.viewsCount}
                     likesCount={item.likesCount}
                     isLiked={item.isLiked}
+                    isPinned={item.isPinned}
+                    isOwner={isOwner}
                     showActions={true}
                     onLike={(e) => handleLike(item.id, e)}
                     onView={() => handleView(item.id)}
@@ -612,6 +659,7 @@ export default function UserPortfolio() {
                       const contentItem = content.find(c => c.id === item.id);
                       if (contentItem) handleShare(contentItem);
                     }}
+                    onPin={isOwner ? () => handlePin(item.id, item.type) : undefined}
                   />
                 ))}
               </div>

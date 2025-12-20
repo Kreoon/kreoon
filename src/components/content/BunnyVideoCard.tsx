@@ -1,25 +1,30 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Pause, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Pin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { ParsedText } from '@/components/ui/parsed-text';
 
 export interface BunnyVideoCardProps {
   id: string;
   title: string;
+  caption?: string | null;
   videoUrls: string[]; // Array of video URLs for variations
   thumbnailUrl?: string | null;
   viewsCount: number;
   likesCount: number;
   isLiked: boolean;
+  isPinned?: boolean;
   creatorId?: string;
   creatorName?: string;
   isAdmin?: boolean;
+  isOwner?: boolean;
   onLike?: (e?: React.MouseEvent) => void;
   onView?: () => void;
   onShare?: () => void;
   onComment?: () => void;
+  onPin?: () => void;
   showActions?: boolean;
   onOpenFullscreen?: () => void;
   className?: string;
@@ -59,18 +64,22 @@ function formatCount(count: number): string {
 export function BunnyVideoCard({
   id,
   title,
+  caption,
   videoUrls,
   thumbnailUrl,
   viewsCount,
   likesCount,
   isLiked,
+  isPinned = false,
   creatorId,
   creatorName,
   isAdmin = false,
+  isOwner = false,
   onLike,
   onView,
   onShare,
   onComment,
+  onPin,
   showActions = true,
   onOpenFullscreen,
   className,
@@ -234,9 +243,18 @@ export function BunnyVideoCard({
       className={cn(
         "group relative rounded-2xl overflow-hidden bg-card border border-border",
         "hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10",
+        isPinned && "ring-2 ring-primary/50",
         className
       )}
     >
+      {/* Pinned Badge */}
+      {isPinned && (
+        <div className="absolute top-2 left-2 z-30 bg-primary text-primary-foreground px-2 py-0.5 rounded-full flex items-center gap-1 text-xs font-medium">
+          <Pin className="h-3 w-3" />
+          <span>Fijado</span>
+        </div>
+      )}
+
       {/* Video Container - TikTok style */}
       <div className="relative aspect-[9/16] bg-muted" onDoubleClick={handleDoubleClick}>
         {/* Floating Heart Animation */}
@@ -464,20 +482,43 @@ export function BunnyVideoCard({
         )}
       </div>
 
-      {/* Info - Creator only */}
-      {creatorName && (
-        <div className="p-3 bg-card">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (creatorId) {
-                navigate(`/p/${creatorId}`);
-              }
-            }}
-            className="font-medium text-sm text-card-foreground hover:text-primary transition-colors truncate text-left"
-          >
-            @{creatorName}
-          </button>
+      {/* Info section */}
+      {(creatorName || caption || title) && (
+        <div className="p-3 bg-card space-y-1">
+          {creatorName && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (creatorId) {
+                  navigate(`/p/${creatorId}`);
+                }
+              }}
+              className="font-medium text-sm text-card-foreground hover:text-primary transition-colors truncate text-left block"
+            >
+              @{creatorName}
+            </button>
+          )}
+          {(caption || title) && (
+            <ParsedText 
+              text={caption || title} 
+              className="text-xs text-muted-foreground line-clamp-2" 
+            />
+          )}
+          {isOwner && onPin && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPin();
+              }}
+              className={cn(
+                "flex items-center gap-1 text-xs mt-2 transition-colors",
+                isPinned ? "text-primary" : "text-muted-foreground hover:text-primary"
+              )}
+            >
+              <Pin className="h-3 w-3" />
+              <span>{isPinned ? 'Quitar fijado' : 'Fijar en perfil'}</span>
+            </button>
+          )}
         </div>
       )}
     </div>

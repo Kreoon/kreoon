@@ -229,6 +229,7 @@ export type Database = {
           approved_by: string | null
           bunny_embed_url: string | null
           campaign_week: string | null
+          caption: string | null
           client_id: string | null
           created_at: string | null
           creator_assigned_at: string | null
@@ -280,6 +281,7 @@ export type Database = {
           approved_by?: string | null
           bunny_embed_url?: string | null
           campaign_week?: string | null
+          caption?: string | null
           client_id?: string | null
           created_at?: string | null
           creator_assigned_at?: string | null
@@ -331,6 +333,7 @@ export type Database = {
           approved_by?: string | null
           bunny_embed_url?: string | null
           campaign_week?: string | null
+          caption?: string | null
           client_id?: string | null
           created_at?: string | null
           creator_assigned_at?: string | null
@@ -645,9 +648,11 @@ export type Database = {
           caption: string | null
           created_at: string
           id: string
+          is_pinned: boolean | null
           likes_count: number | null
           media_type: string
           media_url: string
+          pinned_at: string | null
           thumbnail_url: string | null
           updated_at: string
           user_id: string
@@ -657,9 +662,11 @@ export type Database = {
           caption?: string | null
           created_at?: string
           id?: string
+          is_pinned?: boolean | null
           likes_count?: number | null
           media_type?: string
           media_url: string
+          pinned_at?: string | null
           thumbnail_url?: string | null
           updated_at?: string
           user_id: string
@@ -669,9 +676,11 @@ export type Database = {
           caption?: string | null
           created_at?: string
           id?: string
+          is_pinned?: boolean | null
           likes_count?: number | null
           media_type?: string
           media_url?: string
+          pinned_at?: string | null
           thumbnail_url?: string | null
           updated_at?: string
           user_id?: string
@@ -971,7 +980,9 @@ export type Database = {
         Args: { content_uuid: string; viewer: string }
         Returns: boolean
       }
+      toggle_content_pin: { Args: { content_id: string }; Returns: boolean }
       toggle_follow: { Args: { _following_id: string }; Returns: boolean }
+      toggle_post_pin: { Args: { post_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
