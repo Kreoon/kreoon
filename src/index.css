@@ -244,3 +244,33 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Floating heart animation for TikTok double-tap */
+@keyframes floating-heart {
+  0% {
+    opacity: 1;
+    transform: scale(0) translateY(0);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-10px);
+  }
+  30% {
+    transform: scale(1) translateY(-30px) rotate(-5deg);
+  }
+  50% {
+    transform: scale(1.1) translateY(-60px) rotate(5deg);
+  }
+  70% {
+    opacity: 0.8;
+    transform: scale(0.9) translateY(-100px) rotate(-3deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.6) translateY(-150px) rotate(0deg);
+  }
+}
+
+.animate-floating-heart {
+  animation: floating-heart 1s ease-out forwards;
+}
