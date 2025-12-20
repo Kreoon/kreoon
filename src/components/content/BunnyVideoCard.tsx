@@ -23,6 +23,29 @@ export interface BunnyVideoCardProps {
   className?: string;
 }
 
+// Thumbnail cache - persists across component instances
+const thumbnailCache = new Map<string, { loaded: boolean; error: boolean }>();
+
+// Preload and cache a thumbnail image
+function preloadThumbnail(url: string): Promise<boolean> {
+  if (thumbnailCache.has(url)) {
+    return Promise.resolve(thumbnailCache.get(url)!.loaded);
+  }
+  
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      thumbnailCache.set(url, { loaded: true, error: false });
+      resolve(true);
+    };
+    img.onerror = () => {
+      thumbnailCache.set(url, { loaded: false, error: true });
+      resolve(false);
+    };
+    img.src = url;
+  });
+}
+
 // Extract Bunny video ID and generate thumbnail
 function getBunnyThumbnail(url: string): string | null {
   if (!url) return null;
@@ -87,10 +110,27 @@ export function BunnyVideoCard({
   const generatedThumbnail = getBunnyThumbnail(currentVideoUrl);
   const thumbnail = thumbnailError ? null : (thumbnailUrl || generatedThumbnail);
 
-  // Reset loading state when thumbnail changes
+  // Preload all variation thumbnails on mount
+  useEffect(() => {
+    if (hasMultiple) {
+      videoUrls.forEach(url => {
+        const thumbUrl = getBunnyThumbnail(url);
+        if (thumbUrl) preloadThumbnail(thumbUrl);
+      });
+    }
+  }, [videoUrls, hasMultiple]);
+
+  // Check cache and set loading state when thumbnail changes
   useEffect(() => {
     if (thumbnail) {
-      setThumbnailLoading(true);
+      const cached = thumbnailCache.get(thumbnail);
+      if (cached) {
+        setThumbnailLoading(false);
+        setThumbnailError(cached.error);
+      } else {
+        setThumbnailLoading(true);
+        setThumbnailError(false);
+      }
     }
   }, [thumbnail]);
 
@@ -182,16 +222,26 @@ export function BunnyVideoCard({
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentIndex(prev => (prev > 0 ? prev - 1 : videoUrls.length - 1));
-    setThumbnailError(false);
-    setThumbnailLoading(true);
+    const newIndex = currentIndex > 0 ? currentIndex - 1 : videoUrls.length - 1;
+    const newUrl = videoUrls[newIndex];
+    const thumbUrl = getBunnyThumbnail(newUrl);
+    const cached = thumbUrl ? thumbnailCache.get(thumbUrl) : null;
+    
+    setCurrentIndex(newIndex);
+    setThumbnailError(cached?.error || false);
+    setThumbnailLoading(!cached?.loaded);
   };
 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentIndex(prev => (prev < videoUrls.length - 1 ? prev + 1 : 0));
-    setThumbnailError(false);
-    setThumbnailLoading(true);
+    const newIndex = currentIndex < videoUrls.length - 1 ? currentIndex + 1 : 0;
+    const newUrl = videoUrls[newIndex];
+    const thumbUrl = getBunnyThumbnail(newUrl);
+    const cached = thumbUrl ? thumbnailCache.get(thumbUrl) : null;
+    
+    setCurrentIndex(newIndex);
+    setThumbnailError(cached?.error || false);
+    setThumbnailLoading(!cached?.loaded);
   };
 
   return (
@@ -261,18 +311,27 @@ export function BunnyVideoCard({
                 
                 {/* Dot indicators */}
                 <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
-                  {videoUrls.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); setThumbnailError(false); }}
-                      className={cn(
-                        "w-2 h-2 rounded-full transition-all",
-                        idx === currentIndex 
-                          ? "bg-white w-4" 
-                          : "bg-white/50 hover:bg-white/80"
-                      )}
-                    />
-                  ))}
+                  {videoUrls.map((url, idx) => {
+                    const thumbUrl = getBunnyThumbnail(url);
+                    const cached = thumbUrl ? thumbnailCache.get(thumbUrl) : null;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setCurrentIndex(idx); 
+                          setThumbnailError(cached?.error || false);
+                          setThumbnailLoading(!cached?.loaded);
+                        }}
+                        className={cn(
+                          "w-2 h-2 rounded-full transition-all",
+                          idx === currentIndex 
+                            ? "bg-white w-4" 
+                            : "bg-white/50 hover:bg-white/80"
+                        )}
+                      />
+                    );
+                  })}
                 </div>
               </>
             )}
