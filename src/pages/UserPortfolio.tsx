@@ -35,6 +35,7 @@ interface UserProfile {
   full_name: string;
   avatar_url: string | null;
   bio: string | null;
+  is_public: boolean;
 }
 
 interface ContentItem {
@@ -129,12 +130,15 @@ export default function UserPortfolio() {
       // First, try to find as a user profile
       const { data: userData } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, bio')
+        .select('id, full_name, avatar_url, bio, is_public')
         .eq('id', id)
         .maybeSingle();
 
       if (userData) {
-        setProfile(userData);
+        setProfile({
+          ...userData,
+          is_public: userData.is_public ?? true
+        });
         setProfileType('user');
         
         // Get user roles to determine what content to show
@@ -242,11 +246,12 @@ export default function UserPortfolio() {
           setClientInfo(clientData);
           setProfileType('client');
 
+          // For clients, show approved/delivered content (not just is_published)
           const { data: clientContentData } = await supabase
             .from('content')
-            .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
+            .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id, status')
             .eq('client_id', id)
-            .eq('is_published', true)
+            .in('status', ['approved', 'delivered', 'paid'])
             .or('video_url.not.is.null,video_urls.not.is.null')
             .order('created_at', { ascending: false });
 
@@ -440,6 +445,28 @@ export default function UserPortfolio() {
         <User className="h-16 w-16 text-white/30 mb-4" />
         <h2 className="text-xl font-semibold mb-2">Perfil no encontrado</h2>
         <p className="text-white/50">El perfil que buscas no existe o no está disponible.</p>
+      </div>
+    );
+  }
+
+  // Private profile check - only show to owner
+  if (profile && !profile.is_public && !isOwner) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
+        <div className="text-center p-6">
+          <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+            <User className="h-12 w-12 text-white/50" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Perfil privado</h2>
+          <p className="text-white/50 mb-4">Este usuario ha configurado su perfil como privado.</p>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/portfolio')}
+            className="border-white/20 text-white hover:bg-white/10"
+          >
+            Volver al portfolio
+          </Button>
+        </div>
       </div>
     );
   }
@@ -780,6 +807,7 @@ export default function UserPortfolio() {
           currentName={profile.full_name}
           currentBio={profile.bio}
           currentAvatar={profile.avatar_url}
+          currentIsPublic={profile.is_public}
           open={showProfileEditor}
           onOpenChange={setShowProfileEditor}
           onSave={fetchData}

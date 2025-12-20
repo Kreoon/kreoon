@@ -825,6 +825,7 @@ export type Database = {
           id: string
           instagram: string | null
           is_ambassador: boolean | null
+          is_public: boolean | null
           phone: string | null
           portfolio_url: string | null
           tiktok: string | null
@@ -848,6 +849,7 @@ export type Database = {
           id: string
           instagram?: string | null
           is_ambassador?: boolean | null
+          is_public?: boolean | null
           phone?: string | null
           portfolio_url?: string | null
           tiktok?: string | null
@@ -871,6 +873,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_ambassador?: boolean | null
+          is_public?: boolean | null
           phone?: string | null
           portfolio_url?: string | null
           tiktok?: string | null
