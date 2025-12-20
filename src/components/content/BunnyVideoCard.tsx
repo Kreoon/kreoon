@@ -471,7 +471,7 @@ export function BunnyVideoCard({
             onClick={(e) => {
               e.stopPropagation();
               if (creatorId) {
-                navigate(`/u/${creatorId}`);
+                navigate(`/p/${creatorId}`);
               }
             }}
             className="font-medium text-sm text-card-foreground hover:text-primary transition-colors truncate text-left"
