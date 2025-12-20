@@ -282,10 +282,10 @@ export default function Portfolio() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-            {[...Array(10)].map((_, i) => (
-              <Skeleton key={i} className="aspect-[9/16] rounded-xl bg-white/10" />
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="aspect-[9/16] rounded-2xl bg-white/10" />
             ))}
           </div>
         </div>
@@ -523,9 +523,9 @@ export default function Portfolio() {
           </div>
         </header>
 
-        {/* Video Grid */}
-        <div className="max-w-7xl mx-auto p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+        {/* Video Grid - 3 columns centered minimalist */}
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {contentWithVideos.map((item, index) => {
               const videoUrls = getVideoUrls(item);
               return (
