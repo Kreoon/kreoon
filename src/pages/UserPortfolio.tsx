@@ -145,22 +145,15 @@ export default function UserPortfolio() {
 
         const roles = rolesData?.map(r => r.role) || [];
         
-        // Fetch work content based on role - use is_published like Portfolio
-        let query = supabase
+        // IMPORTANT: Personal profile always shows content where this user is the creator
+        // Regardless of role (admin, strategist, editor, etc.), the profile shows their own created content
+        const { data: contentData } = await supabase
           .from('content')
           .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
           .eq('is_published', true)
-          .or('video_url.not.is.null,video_urls.not.is.null');
-
-        if (roles.includes('creator')) {
-          query = query.eq('creator_id', id);
-        } else if (roles.includes('editor')) {
-          query = query.eq('editor_id', id);
-        } else if (roles.includes('strategist')) {
-          query = query.eq('strategist_id', id);
-        }
-
-        const { data: contentData } = await query.order('created_at', { ascending: false });
+          .eq('creator_id', id)
+          .or('video_url.not.is.null,video_urls.not.is.null')
+          .order('created_at', { ascending: false });
         
         // Get liked content IDs
         const contentIds = contentData?.map(c => c.id) || [];
