@@ -133,6 +133,16 @@ export interface Content {
   reference_url: string | null;
   creator_paid: boolean;
   editor_paid: boolean;
+  // Bunny.net fields
+  bunny_embed_url: string | null;
+  video_processing_status: string | null;
+  video_processing_started_at: string | null;
+  hooks_count: number | null;
+  video_urls: string[] | null;
+  // Guidelines
+  editor_guidelines: string | null;
+  strategist_guidelines: string | null;
+  trafficker_guidelines: string | null;
   // Relaciones
   client?: Partial<Client>;
   creator?: Partial<Profile>;

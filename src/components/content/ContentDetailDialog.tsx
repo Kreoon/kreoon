@@ -12,6 +12,7 @@ import { RichTextEditor, RichTextViewer } from "@/components/ui/rich-text-editor
 import { ProductSelector } from "@/components/products/ProductSelector";
 import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
 import { StrategistScriptForm } from "@/components/content/StrategistScriptForm";
+import { BunnyVideoUploader } from "@/components/content/BunnyVideoUploader";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +23,7 @@ import {
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
   Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Package, Lock, Share2,
-  Plus, X, Clipboard, Megaphone, Target
+  Plus, X, Clipboard, Megaphone, Target, Upload
 } from "lucide-react";
 import {
   AlertDialog,
@@ -1080,9 +1081,33 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </h4>
                 
                 <div className="grid gap-3">
+                  {/* Bunny Video Uploader - Direct upload */}
+                  {(isCreator || isEditor || isAdmin) && (
+                    <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                      <Label className="text-muted-foreground text-xs flex items-center gap-2">
+                        <Upload className="h-3 w-3" /> Subir Video Directo a Bunny.net
+                      </Label>
+                      <BunnyVideoUploader
+                        contentId={content.id}
+                        title={content.title}
+                        currentStatus={content.video_processing_status || 'idle'}
+                        onUploadComplete={(embedUrl) => {
+                          setFormData({ ...formData, video_urls: [embedUrl, ...formData.video_urls.slice(1)] });
+                          onUpdate?.();
+                        }}
+                        disabled={!editMode && !canEditDriveUrl}
+                      />
+                      {content.bunny_embed_url && (
+                        <p className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Video procesado en Bunny.net
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   <div className="space-y-1">
-                    <Label className="text-muted-foreground text-xs">URL Drive Video Crudo</Label>
+                    <Label className="text-muted-foreground text-xs">URL Drive Video Crudo (alternativo)</Label>
                     {editMode && canEditDriveUrl ? (
                       <Input
                         value={formData.drive_url}
