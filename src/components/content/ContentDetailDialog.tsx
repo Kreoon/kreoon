@@ -792,15 +792,16 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       
                       {videoUrl ? (
                         <div 
-                          className="rounded-lg overflow-hidden bg-black flex items-center justify-center"
-                          style={{ height: '220px' }}
+                          className="rounded-lg overflow-hidden bg-black flex items-center justify-center mx-auto"
+                          style={{ aspectRatio: '9/16', maxHeight: '350px', width: 'auto' }}
                         >
-                          {/* Bunny Stream Embed */}
+                          {/* Bunny Stream Embed - Vertical Format */}
                           {videoUrl.includes('iframe.mediadelivery.net') || videoUrl.includes('bunny') ? (
                             <iframe
                               src={videoUrl}
                               loading="lazy"
                               className="w-full h-full border-0"
+                              style={{ aspectRatio: '9/16' }}
                               allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
                               allowFullScreen
                             />
@@ -810,8 +811,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                         </div>
                       ) : (
                         <div 
-                          className="rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/50"
-                          style={{ height: '120px' }}
+                          className="rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/50 mx-auto"
+                          style={{ aspectRatio: '9/16', maxHeight: '200px', width: 'auto' }}
                         >
                           <div className="text-center text-muted-foreground">
                             <Video className="h-8 w-8 mx-auto mb-1 opacity-50" />

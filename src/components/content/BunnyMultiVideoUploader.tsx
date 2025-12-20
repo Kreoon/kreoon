@@ -268,6 +268,7 @@ export function BunnyMultiVideoUploader({
           src={embedUrl}
           loading="lazy"
           className="w-full h-full border-0"
+          style={{ aspectRatio: '9/16' }}
           allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
           allowFullScreen
         />
@@ -280,6 +281,7 @@ export function BunnyMultiVideoUploader({
         <video
           src={embedUrl}
           className="w-full h-full object-contain"
+          style={{ aspectRatio: '9/16' }}
           controls
         />
       );
@@ -319,11 +321,11 @@ export function BunnyMultiVideoUploader({
             </div>
           </div>
           
-          {/* Video Preview */}
+          {/* Video Preview - Vertical Format */}
           {upload.embedUrl && upload.status === 'completed' && (
             <div 
-              className="rounded-lg overflow-hidden bg-black flex items-center justify-center"
-              style={{ height: '200px' }}
+              className="rounded-lg overflow-hidden bg-black flex items-center justify-center mx-auto"
+              style={{ aspectRatio: '9/16', maxHeight: '300px', width: 'auto' }}
             >
               {renderBunnyEmbed(upload.embedUrl)}
             </div>
