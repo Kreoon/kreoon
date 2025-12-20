@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, MessageSquare } from 'lucide-react';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
 
 interface BunnyVideoCardProps {
   id: string;
   title: string;
-  videoUrls: string[]; // Array of video variations
+  videoUrl: string; // Single video URL
   thumbnailUrl?: string | null;
   viewsCount: number;
   likesCount: number;
@@ -50,7 +50,7 @@ function formatCount(count: number): string {
 export function BunnyVideoCard({
   id,
   title,
-  videoUrls,
+  videoUrl,
   thumbnailUrl,
   viewsCount,
   likesCount,
@@ -66,7 +66,6 @@ export function BunnyVideoCard({
   className
 }: BunnyVideoCardProps) {
   const { isPlaying, play, stop } = useVideoPlayback(id);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [isInView, setIsInView] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -74,12 +73,8 @@ export function BunnyVideoCard({
   const viewTracked = useRef(false);
   const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const validUrls = videoUrls.filter(url => url && url.trim());
-  const currentUrl = validUrls[currentIndex] || validUrls[0];
-  const hasMultiple = validUrls.length > 1;
-
   // Generate thumbnail - prioritize provided, then try to extract from Bunny URL
-  const thumbnail = thumbnailUrl || (currentUrl ? getBunnyThumbnail(currentUrl) : null);
+  const thumbnail = thumbnailUrl || (videoUrl ? getBunnyThumbnail(videoUrl) : null);
 
   // Intersection Observer for scroll-based autoplay
   useEffect(() => {
@@ -162,16 +157,6 @@ export function BunnyVideoCard({
     stop();
   };
 
-  const handlePrev = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentIndex(prev => (prev > 0 ? prev - 1 : validUrls.length - 1));
-  };
-
-  const handleNext = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentIndex(prev => (prev < validUrls.length - 1 ? prev + 1 : 0));
-  };
-
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsMuted(!isMuted);
@@ -213,42 +198,6 @@ export function BunnyVideoCard({
                 <Play className="h-8 w-8 text-primary-foreground" fill="currentColor" />
               </div>
             </div>
-
-            {/* Variation indicators */}
-            {hasMultiple && (
-              <div className="absolute top-3 right-3 flex gap-1 z-10">
-                {validUrls.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
-                    className={cn(
-                      "w-2 h-2 rounded-full transition-all",
-                      idx === currentIndex 
-                        ? "bg-primary w-4" 
-                        : "bg-white/50 hover:bg-white/80"
-                    )}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Navigation arrows for multiple variations */}
-            {hasMultiple && (
-              <>
-                <button
-                  onClick={handlePrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 z-10"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 z-10"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </>
-            )}
 
             {/* Stats */}
             <div className="absolute bottom-16 left-3 flex items-center gap-2 z-10">
@@ -302,7 +251,7 @@ export function BunnyVideoCard({
             {/* Bunny iframe player */}
             <iframe
               ref={iframeRef}
-              src={getEmbedUrl(currentUrl)}
+              src={getEmbedUrl(videoUrl)}
               className="w-full h-full border-0"
               allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
               allowFullScreen={isAdmin}
@@ -324,38 +273,6 @@ export function BunnyVideoCard({
                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
               </button>
             </div>
-
-            {/* Variation navigation when playing */}
-            {hasMultiple && (
-              <>
-                <div className="absolute top-3 left-3 flex gap-1 z-20">
-                  {validUrls.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
-                      className={cn(
-                        "w-2 h-2 rounded-full transition-all",
-                        idx === currentIndex 
-                          ? "bg-primary w-4" 
-                          : "bg-white/50 hover:bg-white/80"
-                      )}
-                    />
-                  ))}
-                </div>
-                <button
-                  onClick={handlePrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 z-20"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 z-20"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </>
-            )}
           </>
         )}
       </div>
@@ -372,12 +289,6 @@ export function BunnyVideoCard({
           {clientName && creatorName && <span>•</span>}
           {creatorName && (
             <span>{creatorName}</span>
-          )}
-          {hasMultiple && (
-            <>
-              <span>•</span>
-              <span className="text-primary">{validUrls.length} variaciones</span>
-            </>
           )}
         </div>
       </div>

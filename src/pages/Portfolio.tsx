@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Play, Filter, X, Home, User, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,14 @@ interface PublishedContent {
   views_count: number;
   likes_count: number;
   is_liked: boolean;
+}
+
+// Flattened item for display - each video variation becomes its own card
+interface DisplayItem extends PublishedContent {
+  displayId: string;
+  currentVideoUrl: string;
+  variationIndex: number;
+  totalVariations: number;
 }
 
 interface Client {
@@ -222,22 +230,37 @@ export default function Portfolio() {
     }
   };
 
-  // Get all video URLs for a content item
-  const getVideoUrls = (item: PublishedContent): string[] => {
-    const urls: string[] = [];
+  // Flatten content into display items - each video URL becomes its own card
+  const displayItems: DisplayItem[] = useMemo(() => {
+    const items: DisplayItem[] = [];
     
-    // Add video_urls array first (variations)
-    if (item.video_urls && item.video_urls.length > 0) {
-      urls.push(...item.video_urls.filter(u => u && u.trim()));
-    }
+    content.forEach(item => {
+      const urls: string[] = [];
+      
+      if (item.video_urls && item.video_urls.length > 0) {
+        urls.push(...item.video_urls.filter(u => u && u.trim()));
+      }
+      
+      if (item.video_url && !urls.includes(item.video_url)) {
+        urls.unshift(item.video_url);
+      }
+      
+      // Skip content without any videos
+      if (urls.length === 0) return;
+      
+      urls.forEach((url, index) => {
+        items.push({
+          ...item,
+          displayId: `${item.id}-${index}`,
+          currentVideoUrl: url,
+          variationIndex: index,
+          totalVariations: urls.length
+        });
+      });
+    });
     
-    // Add single video_url if not already included
-    if (item.video_url && !urls.includes(item.video_url)) {
-      urls.unshift(item.video_url);
-    }
-    
-    return urls;
-  };
+    return items;
+  }, [content]);
 
   const handleLogout = async () => {
     await signOut();
@@ -266,7 +289,7 @@ export default function Portfolio() {
     );
   }
 
-  if (content.length === 0) {
+  if (displayItems.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black flex items-center justify-center text-white">
         <div className="text-center">
@@ -437,12 +460,15 @@ export default function Portfolio() {
         {/* Video Grid - Instagram style */}
         <div className="max-w-7xl mx-auto p-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-            {content.map((item) => (
+            {displayItems.map((item) => (
               <BunnyVideoCard
-                key={item.id}
-                id={item.id}
-                title={item.title}
-                videoUrls={getVideoUrls(item)}
+                key={item.displayId}
+                id={item.displayId}
+                title={item.totalVariations > 1 
+                  ? `${item.title} (${item.variationIndex + 1}/${item.totalVariations})`
+                  : item.title
+                }
+                videoUrl={item.currentVideoUrl}
                 thumbnailUrl={item.thumbnail_url}
                 viewsCount={item.views_count}
                 likesCount={item.likes_count}
