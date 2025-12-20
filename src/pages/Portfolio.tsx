@@ -28,12 +28,20 @@ interface PublishedContent {
   is_liked: boolean;
 }
 
-// Flattened item for display - each video variation becomes its own card
-interface DisplayItem extends PublishedContent {
-  displayId: string;
-  currentVideoUrl: string;
-  variationIndex: number;
-  totalVariations: number;
+// Helper to get all video URLs for a content item
+function getVideoUrls(item: PublishedContent): string[] {
+  const urls: string[] = [];
+  
+  if (item.video_urls && item.video_urls.length > 0) {
+    urls.push(...item.video_urls.filter(u => u && u.trim()));
+  }
+  
+  // Only add video_url if not already in video_urls
+  if (item.video_url && !urls.includes(item.video_url)) {
+    urls.unshift(item.video_url);
+  }
+  
+  return urls;
 }
 
 interface Client {
@@ -230,36 +238,12 @@ export default function Portfolio() {
     }
   };
 
-  // Flatten content into display items - each video URL becomes its own card
-  const displayItems: DisplayItem[] = useMemo(() => {
-    const items: DisplayItem[] = [];
-    
-    content.forEach(item => {
-      const urls: string[] = [];
-      
-      if (item.video_urls && item.video_urls.length > 0) {
-        urls.push(...item.video_urls.filter(u => u && u.trim()));
-      }
-      
-      if (item.video_url && !urls.includes(item.video_url)) {
-        urls.unshift(item.video_url);
-      }
-      
-      // Skip content without any videos
-      if (urls.length === 0) return;
-      
-      urls.forEach((url, index) => {
-        items.push({
-          ...item,
-          displayId: `${item.id}-${index}`,
-          currentVideoUrl: url,
-          variationIndex: index,
-          totalVariations: urls.length
-        });
-      });
+  // Filter content that has videos
+  const contentWithVideos = useMemo(() => {
+    return content.filter(item => {
+      const urls = getVideoUrls(item);
+      return urls.length > 0;
     });
-    
-    return items;
   }, [content]);
 
   const handleLogout = async () => {
@@ -289,7 +273,7 @@ export default function Portfolio() {
     );
   }
 
-  if (displayItems.length === 0) {
+  if (contentWithVideos.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black flex items-center justify-center text-white">
         <div className="text-center">
@@ -460,33 +444,33 @@ export default function Portfolio() {
         {/* Video Grid - Instagram style */}
         <div className="max-w-7xl mx-auto p-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-            {displayItems.map((item) => (
-              <BunnyVideoCard
-                key={item.displayId}
-                id={item.displayId}
-                title={item.totalVariations > 1 
-                  ? `${item.title} (${item.variationIndex + 1}/${item.totalVariations})`
-                  : item.title
-                }
-                videoUrl={item.currentVideoUrl}
-                thumbnailUrl={item.thumbnail_url}
-                viewsCount={item.views_count}
-                likesCount={item.likes_count}
-                isLiked={item.is_liked}
-                clientName={item.client?.name}
-                creatorName={item.creator?.full_name}
-                isAdmin={isAdmin}
-                onLike={(e) => handleLike(item.id, e)}
-                onView={() => handleView(item.id)}
-                onShare={() => handleShare(item)}
-                onComment={() => {
-                  setSelectedContentId(item.id);
-                  setCommentDialogOpen(true);
-                }}
-                showActions={true}
-                className="bg-neutral-900 border-white/10 hover:border-primary/40"
-              />
-            ))}
+            {contentWithVideos.map((item) => {
+              const videoUrls = getVideoUrls(item);
+              return (
+                <BunnyVideoCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  videoUrls={videoUrls}
+                  thumbnailUrl={item.thumbnail_url}
+                  viewsCount={item.views_count}
+                  likesCount={item.likes_count}
+                  isLiked={item.is_liked}
+                  clientName={item.client?.name}
+                  creatorName={item.creator?.full_name}
+                  isAdmin={isAdmin}
+                  onLike={(e) => handleLike(item.id, e)}
+                  onView={() => handleView(item.id)}
+                  onShare={() => handleShare(item)}
+                  onComment={() => {
+                    setSelectedContentId(item.id);
+                    setCommentDialogOpen(true);
+                  }}
+                  showActions={true}
+                  className="bg-neutral-900 border-white/10 hover:border-primary/40"
+                />
+              );
+            })}
           </div>
         </div>
 
