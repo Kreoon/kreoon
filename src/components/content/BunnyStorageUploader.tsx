@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, Download, FileVideo, X, Plus } from "lucide-react";
+import { Loader2, CheckCircle, Download, FileVideo, X, Plus, FolderDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface UploadedFile {
@@ -49,6 +49,7 @@ export function BunnyStorageUploader({
   const [totalFiles, setTotalFiles] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
+  const [downloadingAll, setDownloadingAll] = useState(false);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -173,10 +174,6 @@ export function BunnyStorageUploader({
       if (data?.download_url) {
         // Open download URL in new tab
         window.open(data.download_url, '_blank');
-        toast({
-          title: "Descarga iniciada",
-          description: data.title ? `Descargando: ${data.title}` : "El video se abrirá en una nueva pestaña"
-        });
       } else {
         // Fallback: open the URL directly
         window.open(url, '_blank');
@@ -187,6 +184,55 @@ export function BunnyStorageUploader({
       window.open(url, '_blank');
     } finally {
       setDownloadingIndex(null);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    if (uploadedFiles.length === 0) return;
+    
+    setDownloadingAll(true);
+    toast({
+      title: "Descargando archivos",
+      description: `Iniciando descarga de ${uploadedFiles.length} archivo(s)...`
+    });
+
+    try {
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const file = uploadedFiles[i];
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('bunny-download', {
+            body: { content_id: contentId, video_url: file.url }
+          });
+
+          if (!error && data?.download_url) {
+            window.open(data.download_url, '_blank');
+          } else {
+            window.open(file.url, '_blank');
+          }
+        } catch {
+          window.open(file.url, '_blank');
+        }
+
+        // Small delay between downloads to avoid popup blocker
+        if (i < uploadedFiles.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      toast({
+        title: "Descargas iniciadas",
+        description: `${uploadedFiles.length} archivo(s) abiertos en nuevas pestañas`
+      });
+    } catch (error) {
+      console.error('Download all error:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron descargar todos los archivos",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingAll(false);
     }
   };
 
@@ -252,63 +298,80 @@ export function BunnyStorageUploader({
         </div>
       )}
 
-      {/* Uploaded Files List */}
+      {/* Uploaded Files Notification Style */}
       {uploadedFiles.length > 0 && !uploading && (
-        <div className="space-y-2 max-h-[200px] overflow-y-auto">
-          {uploadedFiles.map((file, index) => (
-            <div 
-              key={index}
-              className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/50 border text-sm"
-            >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <FileVideo className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate" title={file.name}>{file.name}</span>
-                {file.size > 0 && (
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    ({formatFileSize(file.size)})
-                  </span>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-1 shrink-0">
-                {showDownload && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => handleDownload(file.url, index)}
-                    disabled={downloadingIndex === index}
-                    title="Descargar"
-                  >
-                    {downloadingIndex === index ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Download className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                )}
-                {!disabled && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={() => handleRemoveFile(index)}
-                    title="Eliminar"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
+        <div className="rounded-lg border bg-green-500/10 border-green-500/30 p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                {uploadedFiles.length} video(s) crudo(s) subido(s)
+              </span>
             </div>
-          ))}
+            
+            {showDownload && uploadedFiles.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadAll}
+                disabled={downloadingAll}
+                className="flex items-center gap-2 border-green-500/30 text-green-700 hover:bg-green-500/10"
+              >
+                {downloadingAll ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FolderDown className="h-4 w-4" />
+                )}
+                Descargar todo
+              </Button>
+            )}
+          </div>
+          
+          {/* Compact file list */}
+          <div className="space-y-1">
+            {uploadedFiles.map((file, index) => (
+              <div 
+                key={index}
+                className="flex items-center justify-between gap-2 p-1.5 rounded bg-background/50 text-xs"
+              >
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <FileVideo className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="truncate" title={file.name}>{file.name}</span>
+                </div>
+                
+                <div className="flex items-center gap-0.5 shrink-0">
+                  {showDownload && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleDownload(file.url, index)}
+                      disabled={downloadingIndex === index}
+                      title="Descargar"
+                    >
+                      {downloadingIndex === index ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Download className="h-3 w-3" />
+                      )}
+                    </Button>
+                  )}
+                  {!disabled && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-destructive hover:text-destructive"
+                      onClick={() => handleRemoveFile(index)}
+                      title="Eliminar"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      )}
-
-      {uploadedFiles.length > 0 && (
-        <p className="text-xs text-green-600 flex items-center gap-1">
-          <CheckCircle className="h-3 w-3" />
-          {uploadedFiles.length} archivo(s) listo(s)
-        </p>
       )}
     </div>
   );
