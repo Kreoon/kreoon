@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface BunnyVideoCardProps {
   id: string;
@@ -23,56 +24,27 @@ export interface BunnyVideoCardProps {
   className?: string;
 }
 
-// Get the poster/thumbnail from Bunny embed iframe
-function getBunnyPosterUrl(url: string): string | null {
+function extractVideoId(url: string): string | null {
   if (!url) return null;
-  
-  let libraryId: string | null = null;
-  let videoId: string | null = null;
-  
-  // Bunny embed URL format: https://iframe.mediadelivery.net/embed/{libraryId}/{videoId}
-  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
-  if (embedMatch) {
-    [, libraryId, videoId] = embedMatch;
-  }
-  
-  // Direct Bunny CDN URL: https://vz-{libraryId}.b-cdn.net/{videoId}/...
-  if (!libraryId || !videoId) {
-    const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
-    if (cdnMatch) {
-      [, libraryId, videoId] = cdnMatch;
-    }
-  }
-  
-  if (!libraryId || !videoId) return null;
-  
-  // Use Bunny's thumbnail endpoint which works with their CDN authentication
-  return `https://vz-${libraryId}.b-cdn.net/${videoId}/thumbnail.jpg`;
+  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/\d+\/([a-f0-9-]+)/i);
+  if (embedMatch) return embedMatch[1];
+
+  const cdnMatch = url.match(/b-cdn\.net\/([a-f0-9-]+)/i);
+  if (cdnMatch) return cdnMatch[1];
+
+  return null;
 }
 
-// Get preview GIF URL as fallback
-function getBunnyPreviewUrl(url: string): string | null {
-  if (!url) return null;
-  
-  let libraryId: string | null = null;
-  let videoId: string | null = null;
-  
-  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
-  if (embedMatch) {
-    [, libraryId, videoId] = embedMatch;
-  }
-  
-  if (!libraryId || !videoId) {
-    const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
-    if (cdnMatch) {
-      [, libraryId, videoId] = cdnMatch;
-    }
-  }
-  
-  if (!libraryId || !videoId) return null;
-  
-  // Use animated preview as fallback
-  return `https://vz-${libraryId}.b-cdn.net/${videoId}/preview.webp`;
+function isValidImageUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  // Sometimes we stored an embed URL by mistake; that's not an image.
+  if (url.includes('iframe.mediadelivery.net/embed')) return false;
+  return true;
+}
+
+function getProxiedThumbnailUrl(params: { contentId: string; videoId: string }): string {
+  const supabaseUrl = (supabase as any).supabaseUrl as string;
+  return `${supabaseUrl}/functions/v1/bunny-thumbnail?content_id=${encodeURIComponent(params.contentId)}&video_id=${encodeURIComponent(params.videoId)}`;
 }
 
 function formatCount(count: number): string {
@@ -117,21 +89,27 @@ export function BunnyVideoCard({
 
   // Load thumbnail for current video
   useEffect(() => {
-    if (thumbnailUrl) {
-      setResolvedThumbnail(thumbnailUrl);
+    // Prefer a real image URL stored in DB
+    if (isValidImageUrl(thumbnailUrl)) {
+      setResolvedThumbnail(thumbnailUrl as string);
       setThumbnailLoading(false);
+      setThumbnailError(false);
       return;
     }
-    
-    // Generate thumbnail URL from Bunny video URL
-    const posterUrl = getBunnyPosterUrl(currentVideoUrl);
-    if (posterUrl) {
-      setResolvedThumbnail(posterUrl);
-    } else {
+
+    const videoId = extractVideoId(currentVideoUrl);
+    if (!videoId) {
       setResolvedThumbnail(null);
+      setThumbnailLoading(false);
+      setThumbnailError(true);
+      return;
     }
+
+    // Use backend proxy so the thumbnail is always accessible in the browser
+    setResolvedThumbnail(getProxiedThumbnailUrl({ contentId: id, videoId }));
     setThumbnailLoading(false);
-  }, [currentVideoUrl, thumbnailUrl]);
+    setThumbnailError(false);
+  }, [currentVideoUrl, thumbnailUrl, id]);
 
   // Intersection Observer for scroll-based autoplay
   useEffect(() => {
@@ -249,6 +227,10 @@ export function BunnyVideoCard({
                 alt={title}
                 className="w-full h-full object-cover"
                 loading="eager"
+                onError={() => {
+                  setThumbnailError(true);
+                  setResolvedThumbnail(null);
+                }}
               />
             ) : thumbnailLoading ? (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-muted">
