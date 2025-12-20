@@ -16,6 +16,7 @@ import { BunnyVideoUploader } from "@/components/content/BunnyVideoUploader";
 import { BunnyMultiVideoUploader } from "@/components/content/BunnyMultiVideoUploader";
 import { AutoPauseVideo } from "@/components/content/AutoPauseVideo";
 import { BunnyStorageUploader } from "@/components/content/BunnyStorageUploader";
+import { CollaboratorSelector } from "@/components/content/CollaboratorSelector";
 import { RawVideoUploader } from "@/components/content/RawVideoUploader";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
@@ -1320,6 +1321,18 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 )}
               </div>
             </div>
+
+            {/* Collaborators Section */}
+            {content && (
+              <div className="pt-4 border-t border-border">
+                <CollaboratorSelector 
+                  contentId={content.id} 
+                  creatorId={content.creator_id}
+                  disabled={!editMode}
+                  onChange={onUpdate}
+                />
+              </div>
+            )}
           </TabsContent>}
 
           {/* Fechas Tab - Admin only */}
