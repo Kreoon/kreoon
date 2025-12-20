@@ -8,12 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Play, Heart, X } from 'lucide-react';
+import { Loader2, Sparkles, Play, Heart, X, LogIn, UserPlus } from 'lucide-react';
 import { AppRole } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { BunnyVideoCard } from '@/components/content/BunnyVideoCard';
 import { FullscreenVideoViewer } from '@/components/content/FullscreenVideoViewer';
+import { TikTokFeed } from '@/components/content/TikTokFeed';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PublishedContent {
   id: string;
@@ -43,6 +45,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const { user, loading: authLoading, rolesLoaded, signIn, signUp, roles } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -306,6 +309,20 @@ export default function Auth() {
     return content.filter(item => getVideoUrls(item).length > 0);
   }, [content]);
 
+  const tikTokVideos = useMemo(() => {
+    return contentWithVideos.map(item => ({
+      id: item.id,
+      title: item.title,
+      videoUrls: getVideoUrls(item),
+      thumbnailUrl: item.thumbnail_url,
+      viewsCount: item.views_count,
+      likesCount: item.likes_count,
+      isLiked: item.is_liked,
+      clientName: item.client?.name,
+      creatorName: item.creator?.full_name
+    }));
+  }, [contentWithVideos]);
+
   const openLogin = () => {
     setAuthTab('login');
     setShowAuthModal(true);
@@ -321,6 +338,141 @@ export default function Auth() {
       <div className="min-h-screen flex items-center justify-center bg-black">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  // Mobile TikTok-style view
+  if (isMobile && contentWithVideos.length > 0) {
+    return (
+      <VideoPlayerProvider>
+        <div className="h-screen bg-black overflow-hidden">
+          {/* Floating header */}
+          <div className="absolute top-0 left-0 right-0 z-50 p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+            <div className="flex items-center justify-between pointer-events-auto">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg">
+                  <span className="text-black font-bold text-sm">U</span>
+                </div>
+                <span className="text-white font-bold text-sm">UGC Colombia</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={openLogin}
+                  className="text-white hover:bg-white/20 h-8 px-3 text-xs"
+                >
+                  <LogIn className="h-4 w-4 mr-1" />
+                  Entrar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={openRegister}
+                  className="bg-gradient-gold text-black font-semibold text-xs px-3 h-8"
+                >
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  Registro
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* TikTok Feed */}
+          <TikTokFeed
+            videos={tikTokVideos}
+            onLike={(id, e) => handleLike(id, e)}
+            onView={(id) => handleView(id)}
+            onShare={(video) => handleShare({ id: video.id, title: video.title } as PublishedContent)}
+          />
+
+          {/* Auth Modal */}
+          {showAuthModal && (
+            <div 
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+              onClick={() => setShowAuthModal(false)}
+            >
+              <Card 
+                className="w-full max-w-md relative bg-card border-border"
+                onClick={e => e.stopPropagation()}
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowAuthModal(false)}
+                  className="absolute right-2 top-2 z-10"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                <CardHeader className="text-center">
+                  <CardTitle>UGC Colombia</CardTitle>
+                  <CardDescription>Red de creadores de contenido</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'register')}>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+                      <TabsTrigger value="register">Registrarse</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="login" className="space-y-4 mt-4">
+                      <form onSubmit={handleSignIn} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="password">Contraseña</Label>
+                          <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={loading}>
+                          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                          Iniciar Sesión
+                        </Button>
+                      </form>
+                    </TabsContent>
+                    <TabsContent value="register" className="space-y-4 mt-4">
+                      <form onSubmit={handleSignUp} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Nombre completo</Label>
+                          <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Email</Label>
+                          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Contraseña</Label>
+                          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>¿Cómo quieres unirte?</Label>
+                          <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="creator">Creador</SelectItem>
+                              <SelectItem value="editor">Editor</SelectItem>
+                              <SelectItem value="client">Cliente</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {role === 'client' && (
+                          <div className="space-y-2">
+                            <Label>Empresa</Label>
+                            <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
+                          </div>
+                        )}
+                        <Button type="submit" className="w-full" disabled={loading}>
+                          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                          Crear Cuenta
+                        </Button>
+                      </form>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+      </VideoPlayerProvider>
     );
   }
 

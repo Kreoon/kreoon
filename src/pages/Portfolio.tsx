@@ -14,6 +14,8 @@ import { CommentsSection } from "@/components/content/CommentsSection";
 import { VideoPlayerProvider } from "@/contexts/VideoPlayerContext";
 import { BunnyVideoCard } from "@/components/content/BunnyVideoCard";
 import { FullscreenVideoViewer } from "@/components/content/FullscreenVideoViewer";
+import { TikTokFeed } from "@/components/content/TikTokFeed";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PublishedContent {
   id: string;
@@ -54,6 +56,7 @@ interface Client {
 export default function Portfolio() {
   const { user, roles, signOut } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const isAdmin = roles.includes('admin');
   const isLoggedIn = !!user;
   const [content, setContent] = useState<PublishedContent[]>([]);
@@ -298,6 +301,148 @@ export default function Portfolio() {
     );
   }
 
+  // Prepare videos for TikTok feed
+  const tikTokVideos = useMemo(() => {
+    return contentWithVideos.map(item => ({
+      id: item.id,
+      title: item.title,
+      videoUrls: getVideoUrls(item),
+      thumbnailUrl: item.thumbnail_url,
+      viewsCount: item.views_count,
+      likesCount: item.likes_count,
+      isLiked: item.is_liked,
+      clientName: item.client?.name,
+      creatorName: item.creator?.full_name
+    }));
+  }, [contentWithVideos]);
+
+  // Mobile TikTok-style view
+  if (isMobile) {
+    return (
+      <VideoPlayerProvider>
+        <div className="h-screen bg-black overflow-hidden">
+          {/* Floating header for mobile */}
+          <div className="absolute top-0 left-0 right-0 z-50 p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+            <div className="flex items-center justify-between pointer-events-auto">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg">
+                  <span className="text-black font-bold text-sm">U</span>
+                </div>
+                <span className="text-white font-bold text-sm">UGC Colombia</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="text-white hover:bg-white/20 h-8 w-8"
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+                {isLoggedIn ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate(getDashboardRoute())}
+                    className="text-white hover:bg-white/20 h-8 w-8"
+                  >
+                    <Home className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => navigate('/auth')}
+                    className="bg-gradient-gold text-black font-semibold text-xs px-3 h-8"
+                  >
+                    Entrar
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* TikTok Feed */}
+          <TikTokFeed
+            videos={tikTokVideos}
+            onLike={(id, e) => handleLike(id, e)}
+            onView={(id) => handleView(id)}
+            onShare={(video) => handleShare({ id: video.id, title: video.title } as PublishedContent)}
+            onComment={(id) => {
+              setSelectedContentId(id);
+              setCommentDialogOpen(true);
+            }}
+          />
+
+          {/* Client Filter Sidebar */}
+          {showFilters && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" onClick={() => setShowFilters(false)}>
+              <div 
+                className="absolute right-0 top-0 h-full w-72 bg-black/95 border-l border-primary/20 p-4 overflow-y-auto"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-white font-semibold">Filtrar</h2>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowFilters(false)}
+                    className="text-white hover:bg-white/10 rounded-full h-8 w-8"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => { setSelectedClientId(null); setShowFilters(false); }}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition ${
+                      !selectedClientId ? 'bg-primary/20 text-primary border border-primary/30' : 'text-white/70 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center text-black font-bold text-sm">
+                      ★
+                    </div>
+                    <span className="text-sm font-medium">Todos</span>
+                  </button>
+                  {clients.map(client => (
+                    <button
+                      key={client.id}
+                      onClick={() => { setSelectedClientId(client.id); setShowFilters(false); }}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition ${
+                        selectedClientId === client.id ? 'bg-primary/20 text-primary border border-primary/30' : 'text-white/70 hover:bg-white/10'
+                      }`}
+                    >
+                      {client.logo_url ? (
+                        <img src={client.logo_url} alt={client.name} className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center text-black font-bold text-sm">
+                          {client.name.charAt(0)}
+                        </div>
+                      )}
+                      <span className="text-sm font-medium">{client.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Comments Dialog */}
+          <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
+            <DialogContent className="max-w-lg bg-neutral-900 border-white/10">
+              <DialogHeader>
+                <DialogTitle className="text-white">Comentarios</DialogTitle>
+              </DialogHeader>
+              {selectedContentId && (
+                <CommentsSection contentId={selectedContentId} />
+              )}
+            </DialogContent>
+          </Dialog>
+        </div>
+      </VideoPlayerProvider>
+    );
+  }
+
+  // Desktop view
   return (
     <VideoPlayerProvider>
       <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black">
@@ -366,84 +511,19 @@ export default function Portfolio() {
               )}
             </nav>
 
-            {/* Mobile Nav */}
-            <div className="flex md:hidden items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowFilters(!showFilters)}
-                className="text-white hover:bg-white/10"
-              >
-                <Filter className="h-5 w-5" />
-              </Button>
-              
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="bg-black/95 border-primary/20 w-72">
-                  <div className="flex flex-col h-full py-6">
-                    {isLoggedIn ? (
-                      <>
-                        <div className="flex items-center gap-3 mb-6 pb-6 border-b border-white/10">
-                          <Avatar className="h-12 w-12 border-2 border-primary/50">
-                            <AvatarImage src={userProfile?.avatar_url || undefined} />
-                            <AvatarFallback className="bg-primary/20 text-primary">
-                              {userProfile?.full_name?.charAt(0) || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-white font-medium">{userProfile?.full_name || 'Usuario'}</p>
-                            <p className="text-primary text-xs capitalize">{roles[0] || 'Usuario'}</p>
-                          </div>
-                        </div>
-
-                        <nav className="flex-1 space-y-2">
-                          <button
-                            onClick={() => navigate(getDashboardRoute())}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/80 hover:bg-white/10 transition"
-                          >
-                            <Home className="h-5 w-5" />
-                            Dashboard
-                          </button>
-                          <button
-                            onClick={() => navigate('/settings')}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/80 hover:bg-white/10 transition"
-                          >
-                            <User className="h-5 w-5" />
-                            Mi Perfil
-                          </button>
-                        </nav>
-
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition mt-auto"
-                        >
-                          <LogOut className="h-5 w-5" />
-                          Cerrar Sesión
-                        </button>
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center flex-1 gap-4">
-                        <p className="text-white/60 text-center">Inicia sesión para acceder a más funciones</p>
-                        <Button
-                          onClick={() => navigate('/auth')}
-                          className="w-full bg-gradient-gold text-black font-semibold"
-                        >
-                          Iniciar Sesión
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+            {/* Filter button for desktop */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowFilters(!showFilters)}
+              className="text-white hover:bg-white/10 md:hidden"
+            >
+              <Filter className="h-5 w-5" />
+            </Button>
           </div>
         </header>
 
-        {/* Video Grid - Instagram style */}
+        {/* Video Grid */}
         <div className="max-w-7xl mx-auto p-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
             {contentWithVideos.map((item, index) => {
@@ -482,17 +562,7 @@ export default function Portfolio() {
         {/* Fullscreen Video Viewer */}
         {fullscreenIndex !== null && (
           <FullscreenVideoViewer
-            videos={contentWithVideos.map(item => ({
-              id: item.id,
-              title: item.title,
-              videoUrls: getVideoUrls(item),
-              thumbnailUrl: item.thumbnail_url,
-              viewsCount: item.views_count,
-              likesCount: item.likes_count,
-              isLiked: item.is_liked,
-              clientName: item.client?.name,
-              creatorName: item.creator?.full_name
-            }))}
+            videos={tikTokVideos}
             initialIndex={fullscreenIndex}
             onClose={() => setFullscreenIndex(null)}
             onLike={(id) => handleLike(id)}
