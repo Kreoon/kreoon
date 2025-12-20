@@ -16,6 +16,7 @@ import { BunnyVideoUploader } from "@/components/content/BunnyVideoUploader";
 import { BunnyMultiVideoUploader } from "@/components/content/BunnyMultiVideoUploader";
 import { AutoPauseVideo } from "@/components/content/AutoPauseVideo";
 import { BunnyStorageUploader } from "@/components/content/BunnyStorageUploader";
+import { RawVideoUploader } from "@/components/content/RawVideoUploader";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -1510,34 +1511,17 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     <Upload className="h-4 w-4" /> Videos Crudos (Material Original)
                   </h4>
                   
-                  <div className="space-y-3">
-                    <BunnyStorageUploader
-                      contentId={content.id}
-                      fileType="raw_video"
-                      currentUrls={formData.raw_video_urls}
-                      onUploadComplete={(urls) => {
-                        setFormData((prev) => ({ ...prev, raw_video_urls: urls, drive_url: urls[0] || '' }));
-                        // Refresca el contenido para que quede persistido y visible al reabrir
-                        onUpdate?.();
-                      }}
-                      disabled={!editMode && !canEditDriveUrl && !isCreator}
-                      label="Subir videos crudos"
-                      showDownload={isEditor || isAdmin || isCreator}
-                      multiple={true}
-                    />
-                    
-                    {formData.raw_video_urls.length === 0 && (
-                      <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '150px' }}>
-                        <div className="text-center text-muted-foreground">
-                          <Upload className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">No hay videos crudos subidos</p>
-                          {(isCreator || isAdmin) && (
-                            <p className="text-xs mt-1">Sube los videos sin editar para que el editor los descargue</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <RawVideoUploader
+                    contentId={content.id}
+                    currentUrls={formData.raw_video_urls}
+                    onUploadComplete={(urls) => {
+                      setFormData((prev) => ({ ...prev, raw_video_urls: urls, drive_url: urls[0] || '' }));
+                      onUpdate?.();
+                    }}
+                    disabled={!editMode && !canEditDriveUrl && !isCreator}
+                    showDownload={isEditor || isAdmin || isCreator}
+                    showPreview={true}
+                  />
                 </div>
               </div>
 
