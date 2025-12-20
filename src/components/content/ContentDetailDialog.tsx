@@ -199,7 +199,9 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         reference_url: content.reference_url || "",
         video_url: content.video_url || "",
         video_urls: videoUrls,
-        raw_video_urls: content.drive_url ? [content.drive_url] : [],
+        raw_video_urls: content.raw_video_urls?.length > 0 
+          ? content.raw_video_urls 
+          : (content.drive_url ? [content.drive_url] : []),
         hooks_count: hooksCount,
         drive_url: content.drive_url || "",
         script: content.script || "",

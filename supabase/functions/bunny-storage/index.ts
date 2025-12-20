@@ -103,8 +103,19 @@ Deno.serve(async (req) => {
       let updateData: Record<string, any> = {}
 
       if (fileType === 'raw_video') {
+        // Append to raw_video_urls array instead of overwriting drive_url
+        const { data: currentContent } = await supabase
+          .from('content')
+          .select('raw_video_urls')
+          .eq('id', contentId)
+          .single()
+        
+        const currentUrls = currentContent?.raw_video_urls || []
+        const newUrls = [...currentUrls, embedUrl]
+        
         updateData = {
-          drive_url: embedUrl,
+          raw_video_urls: newUrls,
+          drive_url: embedUrl, // Keep drive_url for backward compatibility
           video_processing_status: 'uploaded',
         }
       } else if (fileType === 'thumbnail') {
@@ -206,8 +217,19 @@ Deno.serve(async (req) => {
     let updateData: Record<string, any> = {}
 
     if (fileType === 'raw_video') {
+      // Append to raw_video_urls array instead of overwriting drive_url
+      const { data: currentContent } = await supabase
+        .from('content')
+        .select('raw_video_urls')
+        .eq('id', contentId)
+        .single()
+      
+      const currentUrls = currentContent?.raw_video_urls || []
+      const newUrls = [...currentUrls, embedUrl]
+      
       updateData = {
-        drive_url: embedUrl,
+        raw_video_urls: newUrls,
+        drive_url: embedUrl, // Keep drive_url for backward compatibility
         video_processing_status: 'uploaded',
       }
     } else if (fileType === 'thumbnail') {
