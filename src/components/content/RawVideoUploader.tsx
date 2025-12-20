@@ -231,40 +231,54 @@ export function RawVideoUploader({
 
     setDownloadingAll(true);
     toast({
-      title: "Descargando archivos",
-      description: `Iniciando descarga de ${completedUploads.length} archivo(s)...`
+      title: "Creando archivo ZIP",
+      description: `Comprimiendo ${completedUploads.length} video(s)... Esto puede tardar un momento.`
     });
 
     try {
-      for (let i = 0; i < completedUploads.length; i++) {
-        const upload = completedUploads[i];
-        try {
-          const { data, error } = await supabase.functions.invoke('bunny-download', {
-            body: { content_id: contentId, video_url: upload.embedUrl }
-          });
-
-          if (!error && data?.download_url) {
-            window.open(data.download_url, '_blank');
-          } else {
-            window.open(upload.embedUrl, '_blank');
-          }
-        } catch {
-          window.open(upload.embedUrl, '_blank');
-        }
-
-        if (i < completedUploads.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-
-      toast({
-        title: "Descargas iniciadas",
-        description: `${completedUploads.length} archivo(s) abiertos en nuevas pestañas`
+      const videoUrls = completedUploads.map(u => u.embedUrl);
+      
+      const { data, error } = await supabase.functions.invoke('bunny-download-zip', {
+        body: { content_id: contentId, video_urls: videoUrls }
       });
+
+      if (error) throw error;
+
+      if (data?.zip_data) {
+        // Convert base64 to blob and download
+        const byteCharacters = atob(data.zip_data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/zip' });
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = data.filename || 'videos_raw.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: "Descarga completada",
+          description: `${data.videos_included}/${data.total_videos} videos descargados en ZIP`
+        });
+
+        if (data.errors && data.errors.length > 0) {
+          console.warn('Some videos had errors:', data.errors);
+        }
+      } else {
+        throw new Error('No se recibió el archivo ZIP');
+      }
     } catch (error) {
+      console.error('ZIP download error:', error);
       toast({
         title: "Error",
-        description: "No se pudieron descargar todos los archivos",
+        description: error instanceof Error ? error.message : "No se pudo crear el archivo ZIP",
         variant: "destructive"
       });
     } finally {
