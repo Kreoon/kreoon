@@ -28,6 +28,7 @@ import { ProfileEditor } from '@/components/portfolio/ProfileEditor';
 import { FollowButton } from '@/components/portfolio/FollowButton';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { ParsedText } from '@/components/ui/parsed-text';
 
 interface UserProfile {
   id: string;
@@ -680,7 +681,7 @@ export default function UserPortfolio() {
               </div>
               {selectedPost.caption && (
                 <div className="p-4 border-t border-white/10">
-                  <p className="text-white text-sm">{selectedPost.caption}</p>
+                  <ParsedText text={selectedPost.caption} className="text-white text-sm" />
                 </div>
               )}
             </div>

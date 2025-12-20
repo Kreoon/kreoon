@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Heart, MessageSquare, Share2, Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { ParsedText } from '@/components/ui/parsed-text';
 
 interface VideoItem {
   id: string;
@@ -354,7 +355,7 @@ function TikTokVideoCard({
             <span className="text-white font-bold text-sm drop-shadow-lg">@{video.creatorName.replace(/\s+/g, '').toLowerCase()}</span>
           )}
         </div>
-        <p className="text-white text-sm line-clamp-2 drop-shadow-lg">{video.title}</p>
+        <ParsedText text={video.title} className="text-white text-sm line-clamp-2 drop-shadow-lg" />
         {video.clientName && (
           <p className="text-white/80 text-xs mt-1 drop-shadow-lg">🏢 {video.clientName}</p>
         )}
