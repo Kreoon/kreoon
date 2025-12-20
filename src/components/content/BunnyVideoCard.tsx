@@ -450,24 +450,18 @@ export function BunnyVideoCard({
         )}
       </div>
 
-      {/* Info */}
-      <div className="p-4 bg-card">
-        <h3 className="font-semibold text-sm text-card-foreground line-clamp-2 mb-2">
-          {title}
-        </h3>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {clientName && (
-            <span className="text-primary">{clientName}</span>
-          )}
-          {clientName && creatorName && <span>•</span>}
+      {/* Info - Simplified */}
+      <div className="p-3 bg-card">
+        <div className="flex items-center justify-between gap-2">
           {creatorName && (
-            <span>{creatorName}</span>
+            <span className="font-medium text-sm text-card-foreground truncate">
+              {creatorName}
+            </span>
           )}
-          {hasMultiple && (
-            <>
-              <span>•</span>
-              <span className="text-primary">{videoUrls.length} variaciones</span>
-            </>
+          {clientName && (
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full truncate max-w-[50%]">
+              {clientName}
+            </span>
           )}
         </div>
       </div>
