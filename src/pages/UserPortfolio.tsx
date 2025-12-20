@@ -52,6 +52,7 @@ interface ContentItem {
   creator_id: string | null;
   is_liked: boolean;
   is_pinned?: boolean;
+  status?: string; // Content status for client approval
 }
 
 interface PortfolioPost {
@@ -265,7 +266,8 @@ export default function UserPortfolio() {
             ...item,
             caption: item.caption || null,
             is_liked: clientLikedSet.has(item.id),
-            is_pinned: item.caption?.includes('[PINNED]') || false
+            is_pinned: item.caption?.includes('[PINNED]') || false,
+            status: item.status || undefined
           }));
           setContent(enrichedClientContent);
         }
@@ -389,6 +391,7 @@ export default function UserPortfolio() {
       createdAt: item.created_at,
       type: 'work' as const,
       isPinned: item.is_pinned || false,
+      status: item.status,
     }));
     
     const postVideos = posts.filter(p => p.media_type === 'video').map(item => ({
@@ -402,6 +405,7 @@ export default function UserPortfolio() {
       createdAt: item.created_at,
       type: 'post' as const,
       isPinned: item.is_pinned || false,
+      status: undefined,
     }));
     
     // Combine, sort pinned first, then by date
@@ -414,6 +418,34 @@ export default function UserPortfolio() {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [content, posts]);
+
+  // Check if current user is a client viewing their own content
+  const isClientOwner = profileType === 'client' && isOwner;
+
+  const handleApproveContent = async (contentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('content')
+        .update({ 
+          status: 'approved', 
+          approved_at: new Date().toISOString(),
+          approved_by: user?.id
+        })
+        .eq('id', contentId);
+
+      if (error) throw error;
+
+      // Update local state
+      setContent(prev => prev.map(item =>
+        item.id === contentId ? { ...item, status: 'approved' } : item
+      ));
+      
+      toast.success('Contenido aprobado exitosamente');
+    } catch (error) {
+      console.error('Error approving content:', error);
+      toast.error('Error al aprobar contenido');
+    }
+  };
 
   const displayName = profileType === 'user' ? profile?.full_name : clientInfo?.name;
   const displayAvatar = profileType === 'user' ? profile?.avatar_url : clientInfo?.logo_url;
@@ -702,7 +734,8 @@ export default function UserPortfolio() {
                     likesCount={item.likesCount}
                     isLiked={item.isLiked}
                     isPinned={item.isPinned}
-                    isOwner={isOwner}
+                    isOwner={isOwner && profileType === 'user'}
+                    status={item.status}
                     showActions={true}
                     onLike={(e) => handleLike(item.id, e)}
                     onView={() => handleView(item.id)}
@@ -710,7 +743,8 @@ export default function UserPortfolio() {
                       const contentItem = content.find(c => c.id === item.id);
                       if (contentItem) handleShare(contentItem);
                     }}
-                    onPin={isOwner ? () => handlePin(item.id, item.type) : undefined}
+                    onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
+                    onApprove={isClientOwner && item.status === 'delivered' ? () => handleApproveContent(item.id) : undefined}
                     onSettingsUpdate={() => fetchData()}
                   />
                 ))}
