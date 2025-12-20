@@ -10,6 +10,7 @@ import { Content, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { ContentDetailDialog } from '@/components/content/ContentDetailDialog';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
+import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { 
   Video, 
   Clock, 
@@ -148,10 +149,7 @@ export default function CreatorDashboard() {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {isAmbassador && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg" data-tour="ambassador-badge">
-              <Star className="w-4 h-4 text-primary fill-primary" />
-              <span className="font-medium text-primary text-sm">Embajador</span>
-            </div>
+            <AmbassadorBadge size="md" variant="glow" />
           )}
 
           <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
