@@ -10,16 +10,25 @@ import {
   ChevronRight,
   UsersRound,
   LogOut,
-  Kanban
+  Kanban,
+  User
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
-const adminNavigation = [
+interface NavItem {
+  name: string;
+  href: string | ((userId: string) => string);
+  icon: React.ComponentType<{ className?: string }>;
+  tourId: string;
+  isDynamic?: boolean;
+}
+
+const adminNavigation: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "Mi Perfil", href: (id) => `/p/${id}`, icon: User, tourId: "sidebar-profile", isDynamic: true },
   { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
   { name: "Contenido", href: "/content", icon: FileText, tourId: "sidebar-content" },
   { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators" },
@@ -29,19 +38,37 @@ const adminNavigation = [
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
-const editorNavigation = [
+const strategistNavigation: NavItem[] = [
+  { name: "Dashboard", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "Mi Perfil", href: (id) => `/p/${id}`, icon: User, tourId: "sidebar-profile", isDynamic: true },
+  { name: "Contenido", href: "/portfolio", icon: Video, tourId: "sidebar-content" },
+  { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+];
+
+const editorNavigation: NavItem[] = [
   { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "Mi Perfil", href: (id) => `/p/${id}`, icon: User, tourId: "sidebar-profile", isDynamic: true },
   { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
   { name: "Contenido", href: "/portfolio", icon: Video, tourId: "sidebar-content" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
-const creatorNavigation = [
+const creatorNavigation: NavItem[] = [
   { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "Mi Perfil", href: (id) => `/p/${id}`, icon: User, tourId: "sidebar-profile", isDynamic: true },
   { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
   { name: "Contenido", href: "/portfolio", icon: Video, tourId: "sidebar-content" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+];
+
+const clientNavigation: NavItem[] = [
+  { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "Mi Perfil", href: (id) => `/p/${id}`, icon: User, tourId: "sidebar-profile", isDynamic: true },
+  { name: "Tablero", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
+  { name: "Contenido", href: "/portfolio", icon: Video, tourId: "sidebar-content" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
@@ -53,10 +80,22 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, isAdmin, isEditor, isCreator } = useAuth();
+  const { signOut, profile, user, isAdmin, isEditor, isCreator, isStrategist, isClient } = useAuth();
 
-  // Determinar navegación según rol
-  const navigation = isCreator && !isAdmin ? creatorNavigation : isEditor && !isAdmin ? editorNavigation : adminNavigation;
+  // Determinar navegación según rol (prioridad: admin > strategist > editor > creator > client)
+  const navigation = isAdmin 
+    ? adminNavigation 
+    : isStrategist 
+    ? strategistNavigation 
+    : isEditor 
+    ? editorNavigation 
+    : isCreator 
+    ? creatorNavigation 
+    : isClient 
+    ? clientNavigation 
+    : adminNavigation;
+
+  const userId = user?.id || '';
 
   const handleSignOut = async () => {
     await signOut();
@@ -98,11 +137,14 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-3">
           {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
+            const href = item.isDynamic && typeof item.href === 'function' 
+              ? item.href(userId) 
+              : item.href as string;
+            const isActive = location.pathname === href;
             return (
               <NavLink
                 key={item.name}
-                to={item.href}
+                to={href}
                 data-tour={item.tourId}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
