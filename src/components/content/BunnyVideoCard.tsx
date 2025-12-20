@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +13,7 @@ export interface BunnyVideoCardProps {
   viewsCount: number;
   likesCount: number;
   isLiked: boolean;
-  clientName?: string;
+  creatorId?: string;
   creatorName?: string;
   isAdmin?: boolean;
   onLike?: (e?: React.MouseEvent) => void;
@@ -63,7 +64,7 @@ export function BunnyVideoCard({
   viewsCount,
   likesCount,
   isLiked,
-  clientName,
+  creatorId,
   creatorName,
   isAdmin = false,
   onLike,
@@ -76,6 +77,7 @@ export function BunnyVideoCard({
   hideControls = false,
   alwaysShowActions = false
 }: BunnyVideoCardProps) {
+  const navigate = useNavigate();
   const { isPlaying, play, stop } = useVideoPlayback(id);
   const [isMuted, setIsMuted] = useState(true);
   const [isInView, setIsInView] = useState(false);
@@ -450,21 +452,22 @@ export function BunnyVideoCard({
         )}
       </div>
 
-      {/* Info - Simplified */}
-      <div className="p-3 bg-card">
-        <div className="flex items-center justify-between gap-2">
-          {creatorName && (
-            <span className="font-medium text-sm text-card-foreground truncate">
-              {creatorName}
-            </span>
-          )}
-          {clientName && (
-            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full truncate max-w-[50%]">
-              {clientName}
-            </span>
-          )}
+      {/* Info - Creator only */}
+      {creatorName && (
+        <div className="p-3 bg-card">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (creatorId) {
+                navigate(`/u/${creatorId}`);
+              }
+            }}
+            className="font-medium text-sm text-card-foreground hover:text-primary transition-colors truncate text-left"
+          >
+            @{creatorName}
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

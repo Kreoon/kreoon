@@ -353,7 +353,6 @@ export default function Portfolio() {
       viewsCount: item.views_count,
       likesCount: item.likes_count,
       isLiked: item.is_liked,
-      clientName: item.client?.name,
       creatorName: item.creator?.full_name,
       creatorId: item.creator_id,
       creatorAvatar: item.creator?.avatar_url
@@ -694,7 +693,7 @@ export default function Portfolio() {
                   viewsCount={item.views_count}
                   likesCount={item.likes_count}
                   isLiked={item.is_liked}
-                  clientName={item.client?.name}
+                  creatorId={item.creator_id || undefined}
                   creatorName={item.creator?.full_name}
                   isAdmin={isAdmin}
                   onLike={(e) => handleLike(item.id, e)}

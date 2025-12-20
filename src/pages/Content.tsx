@@ -440,7 +440,6 @@ const Content = () => {
                       viewsCount={item.views_count}
                       likesCount={item.likes_count}
                       isLiked={item.is_liked || false}
-                      clientName={item.client?.name}
                       creatorName={item.creator?.full_name}
                       isAdmin={isAdmin}
                       onLike={() => handleLike(item.id)}
@@ -492,7 +491,6 @@ const Content = () => {
                 viewsCount: item.views_count,
                 likesCount: item.likes_count,
                 isLiked: item.is_liked || false,
-                clientName: item.client?.name,
                 creatorName: item.creator?.full_name
               }))}
               initialIndex={fullscreenIndex}
