@@ -23,6 +23,3 @@ verify_jwt = false
 
 [functions.generate-script]
 verify_jwt = false
-
-[functions.bunny-storage-test]
-verify_jwt = true
