@@ -1516,7 +1516,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       fileType="raw_video"
                       currentUrls={formData.raw_video_urls}
                       onUploadComplete={(urls) => {
-                        setFormData({ ...formData, raw_video_urls: urls, drive_url: urls[0] || '' });
+                        setFormData((prev) => ({ ...prev, raw_video_urls: urls, drive_url: urls[0] || '' }));
+                        // Refresca el contenido para que quede persistido y visible al reabrir
                         onUpdate?.();
                       }}
                       disabled={!editMode && !canEditDriveUrl && !isCreator}
