@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Content, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { ContentDetailDialog } from '@/components/content/ContentDetailDialog';
+import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { 
   Video, 
   Clock, 
@@ -160,6 +161,8 @@ export default function CreatorDashboard() {
             </span>
             <span className="text-xs text-muted-foreground hidden sm:inline">pendiente</span>
           </div>
+
+          {user && <PortfolioButton userId={user.id} />}
         </div>
       </div>
 

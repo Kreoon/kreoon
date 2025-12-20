@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { useNavigate } from 'react-router-dom';
 import { ClientFinanceChart } from '@/components/dashboard/ClientFinanceChart';
+import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { 
   LogOut, 
   Video, 
@@ -43,10 +44,7 @@ import {
   X,
   Wallet,
   BarChart3,
-  Activity,
-  Share2,
-  Copy,
-  Check
+  Activity
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -204,7 +202,6 @@ export default function ClientDashboard() {
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [linkCopied, setLinkCopied] = useState(false);
   
   // Edit company state
   const [isEditingCompany, setIsEditingCompany] = useState(false);
@@ -215,16 +212,6 @@ export default function ClientDashboard() {
     notes: ''
   });
   const [savingCompany, setSavingCompany] = useState(false);
-
-  // Copy portfolio link
-  const copyPortfolioLink = () => {
-    if (!clientInfo) return;
-    const link = `${window.location.origin}/portfolio/${clientInfo.id}`;
-    navigator.clipboard.writeText(link);
-    setLinkCopied(true);
-    toast({ title: 'Link copiado', description: 'El enlace del portafolio ha sido copiado al portapapeles' });
-    setTimeout(() => setLinkCopied(false), 2000);
-  };
 
   useEffect(() => {
     if (user) {
@@ -502,20 +489,8 @@ export default function ClientDashboard() {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Share Portfolio Link */}
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={copyPortfolioLink}
-              className="gap-1"
-            >
-              {linkCopied ? (
-                <Check className="w-4 h-4 text-success" />
-              ) : (
-                <Share2 className="w-4 h-4" />
-              )}
-              <span className="hidden sm:inline">{linkCopied ? 'Copiado' : 'Compartir Portafolio'}</span>
-            </Button>
+            {/* Portfolio Button */}
+            <PortfolioButton userId={clientInfo.id} />
 
             {reviewContent.length > 0 && (
               <Button size="sm" onClick={() => setActiveTab('review')} className="gap-1">
