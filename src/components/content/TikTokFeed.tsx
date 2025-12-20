@@ -24,6 +24,12 @@ interface TikTokFeedProps {
   className?: string;
 }
 
+interface FloatingHeart {
+  id: number;
+  x: number;
+  y: number;
+}
+
 function extractVideoId(url: string): string | null {
   if (!url) return null;
   const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/\d+\/([a-f0-9-]+)/i);
@@ -59,6 +65,29 @@ function getEmbedUrl(url: string, muted: boolean): string {
   return `${url}${separator}autoplay=true&muted=${muted}&loop=true&controls=false`;
 }
 
+// Floating heart component
+function FloatingHeartAnimation({ x, y, onComplete }: { x: number; y: number; onComplete: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 1000);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <div
+      className="absolute pointer-events-none z-50"
+      style={{ left: x, top: y }}
+    >
+      <Heart 
+        className="h-20 w-20 text-red-500 animate-floating-heart" 
+        fill="currentColor"
+        style={{
+          filter: 'drop-shadow(0 0 10px rgba(239, 68, 68, 0.5))'
+        }}
+      />
+    </div>
+  );
+}
+
 function TikTokVideoCard({
   video,
   isActive,
@@ -78,9 +107,12 @@ function TikTokVideoCard({
   const [showPauseIcon, setShowPauseIcon] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [floatingHearts, setFloatingHearts] = useState<FloatingHeart[]>([]);
   const viewTrackedRef = useRef(false);
   const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pauseIconTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const heartIdRef = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const currentVideoUrl = video.videoUrls[currentIndex] || video.videoUrls[0];
   const hasMultiple = video.videoUrls.length > 1;
@@ -125,6 +157,25 @@ function TikTokVideoCard({
     };
   }, [isPlaying, onView]);
 
+  // Spawn floating heart at tap position
+  const spawnFloatingHeart = useCallback((clientX: number, clientY: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = clientX - rect.left - 40; // Center the heart
+    const y = clientY - rect.top - 40;
+    
+    const newHeart: FloatingHeart = {
+      id: heartIdRef.current++,
+      x,
+      y
+    };
+    setFloatingHearts(prev => [...prev, newHeart]);
+  }, []);
+
+  const removeHeart = useCallback((id: number) => {
+    setFloatingHearts(prev => prev.filter(h => h.id !== id));
+  }, []);
+
   // Toggle play/pause on tap
   const handleTap = useCallback((e: React.MouseEvent) => {
     // Check for double tap (like)
@@ -133,7 +184,8 @@ function TikTokVideoCard({
     (handleTap as any).lastTap = now;
     
     if (now - lastTap < 300) {
-      // Double tap - like
+      // Double tap - like and show floating heart
+      spawnFloatingHeart(e.clientX, e.clientY);
       if (!video.isLiked) {
         onLike(e);
       }
@@ -153,7 +205,7 @@ function TikTokVideoCard({
         });
       }
     }, 300);
-  }, [video.isLiked, onLike]);
+  }, [video.isLiked, onLike, spawnFloatingHeart]);
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -167,9 +219,20 @@ function TikTokVideoCard({
 
   return (
     <div 
-      className="relative w-full h-full bg-black snap-start snap-always"
+      ref={containerRef}
+      className="relative w-full h-full bg-black snap-start snap-always overflow-hidden"
       onClick={handleTap}
     >
+      {/* Floating hearts */}
+      {floatingHearts.map(heart => (
+        <FloatingHeartAnimation
+          key={heart.id}
+          x={heart.x}
+          y={heart.y}
+          onComplete={() => removeHeart(heart.id)}
+        />
+      ))}
+
       {/* Video - always try to show iframe for seamless experience */}
       {isPlaying ? (
         <iframe
