@@ -13,6 +13,7 @@ import { ProductSelector } from "@/components/products/ProductSelector";
 import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
 import { StrategistScriptForm } from "@/components/content/StrategistScriptForm";
 import { BunnyVideoUploader } from "@/components/content/BunnyVideoUploader";
+import { BunnyMultiVideoUploader } from "@/components/content/BunnyMultiVideoUploader";
 import { BunnyStorageUploader } from "@/components/content/BunnyStorageUploader";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
@@ -736,7 +737,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
             {/* Section 1: Videos Finales (Hooks) + Comments side by side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Videos Finales (Multiple) */}
+              {/* Videos Finales (Multiple) - Embedded Bunny Videos */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium flex items-center gap-2">
@@ -775,43 +776,48 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   </Badge>
                 )}
                 
-                {/* Video URL inputs based on hooks_count */}
-                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                {/* Embedded Bunny Videos based on hooks_count */}
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                   {formData.video_urls.map((videoUrl, index) => (
                     <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
-                      <span className="text-sm font-medium">Variable {index + 1}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Variable {index + 1}</span>
+                        {videoUrl && (
+                          <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Video listo
+                          </Badge>
+                        )}
+                      </div>
                       
-                      {videoUrl && (
+                      {videoUrl ? (
                         <div 
-                          className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-                          style={{ height: '200px' }}
+                          className="rounded-lg overflow-hidden bg-black flex items-center justify-center"
+                          style={{ height: '220px' }}
                         >
-                          {renderVideoEmbed(videoUrl)}
+                          {/* Bunny Stream Embed */}
+                          {videoUrl.includes('iframe.mediadelivery.net') || videoUrl.includes('bunny') ? (
+                            <iframe
+                              src={videoUrl}
+                              loading="lazy"
+                              className="w-full h-full border-0"
+                              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                              allowFullScreen
+                            />
+                          ) : (
+                            renderVideoEmbed(videoUrl)
+                          )}
                         </div>
-                      )}
-                      
-                      {editMode && canEditVideoTab ? (
-                        <Input
-                          value={videoUrl}
-                          onChange={(e) => {
-                            const newUrls = [...formData.video_urls];
-                            newUrls[index] = e.target.value;
-                            setFormData({ ...formData, video_urls: newUrls });
-                          }}
-                          placeholder="https://... (URL del video editado)"
-                          type="url"
-                        />
-                      ) : videoUrl ? (
-                        <a 
-                          href={videoUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                        >
-                          Ver video <ExternalLink className="h-3 w-3 shrink-0" />
-                        </a>
                       ) : (
-                        <p className="text-sm text-muted-foreground italic">Sin video cargado</p>
+                        <div 
+                          className="rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/50"
+                          style={{ height: '120px' }}
+                        >
+                          <div className="text-center text-muted-foreground">
+                            <Video className="h-8 w-8 mx-auto mb-1 opacity-50" />
+                            <p className="text-xs">Pendiente de subir</p>
+                          </div>
+                        </div>
                       )}
                     </div>
                   ))}
@@ -1109,31 +1115,31 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     </div>
                   )}
 
-                  {/* Video Final - Bunny Stream uploader for editors */}
+                  {/* Video Final - Bunny Stream uploader for editors (Multiple Variables) */}
                   {(isEditor || isAdmin) && (
-                    <div className="space-y-2 p-4 rounded-lg border-2 border-dashed border-green-500/30 bg-green-500/5">
-                      <Label className="font-medium flex items-center gap-2 text-green-700 dark:text-green-400">
-                        <Video className="h-4 w-4" /> Video Editado (Final)
-                      </Label>
+                    <div className="space-y-3 p-4 rounded-lg border-2 border-dashed border-green-500/30 bg-green-500/5">
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium flex items-center gap-2 text-green-700 dark:text-green-400">
+                          <Video className="h-4 w-4" /> Videos Editados (Finales)
+                        </Label>
+                        <Badge variant="secondary" className="text-xs">
+                          {formData.hooks_count} variable{formData.hooks_count > 1 ? 's' : ''}
+                        </Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        Sube el video ya editado. Se procesará automáticamente en Bunny Stream.
+                        Sube los videos editados. Se procesarán automáticamente en Bunny Stream y aparecerán incrustados en la pestaña Video.
                       </p>
-                      <BunnyVideoUploader
+                      <BunnyMultiVideoUploader
                         contentId={content.id}
                         title={content.title}
-                        currentStatus={content.video_processing_status || 'idle'}
-                        onUploadComplete={(embedUrl) => {
-                          setFormData({ ...formData, video_urls: [embedUrl, ...formData.video_urls.slice(1)] });
-                          onUpdate?.();
+                        currentUrls={formData.video_urls}
+                        hooksCount={formData.hooks_count}
+                        onUploadComplete={(urls) => {
+                          setFormData({ ...formData, video_urls: urls });
+                          if (!editMode) setEditMode(true);
                         }}
                         disabled={!editMode && !isEditor && !isAdmin}
                       />
-                      {content.bunny_embed_url && (
-                        <p className="text-xs text-green-600 flex items-center gap-1">
-                          <CheckCircle className="h-3 w-3" />
-                          Video procesado en Bunny.net
-                        </p>
-                      )}
                     </div>
                   )}
 
