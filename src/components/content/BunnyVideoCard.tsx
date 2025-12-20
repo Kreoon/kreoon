@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Pin, Settings } from 'lucide-react';
+import { Play, Pause, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Pin, Settings, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
@@ -21,11 +21,13 @@ export interface BunnyVideoCardProps {
   creatorName?: string;
   isAdmin?: boolean;
   isOwner?: boolean;
+  status?: string; // Content status for client approval
   onLike?: (e?: React.MouseEvent) => void;
   onView?: () => void;
   onShare?: () => void;
   onComment?: () => void;
   onPin?: () => void;
+  onApprove?: () => void; // Client approval action
   onSettingsUpdate?: () => void;
   showActions?: boolean;
   onOpenFullscreen?: () => void;
@@ -77,11 +79,13 @@ export function BunnyVideoCard({
   creatorName,
   isAdmin = false,
   isOwner = false,
+  status,
   onLike,
   onView,
   onShare,
   onComment,
   onPin,
+  onApprove,
   onSettingsUpdate,
   showActions = true,
   onOpenFullscreen,
@@ -533,6 +537,25 @@ export function BunnyVideoCard({
                 <Settings className="h-3 w-3" />
                 <span>Configuración</span>
               </button>
+            </div>
+          )}
+          {/* Client approval button */}
+          {onApprove && status === 'delivered' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onApprove();
+              }}
+              className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors"
+            >
+              <Check className="h-3.5 w-3.5" />
+              <span>Aprobar contenido</span>
+            </button>
+          )}
+          {status === 'approved' && (
+            <div className="flex items-center gap-1.5 mt-2 text-green-400 text-xs">
+              <Check className="h-3.5 w-3.5" />
+              <span>Aprobado</span>
             </div>
           )}
         </div>
