@@ -20,6 +20,7 @@ interface BunnyMultiVideoUploaderProps {
   hooksCount: number;
   onUploadComplete?: (urls: string[]) => void;
   disabled?: boolean;
+  showPreview?: boolean;
 }
 
 export function BunnyMultiVideoUploader({ 
@@ -28,7 +29,8 @@ export function BunnyMultiVideoUploader({
   currentUrls = [],
   hooksCount,
   onUploadComplete,
-  disabled 
+  disabled,
+  showPreview = true
 }: BunnyMultiVideoUploaderProps) {
   const { toast } = useToast();
   const [uploads, setUploads] = useState<VideoUpload[]>([]);
@@ -322,7 +324,7 @@ export function BunnyMultiVideoUploader({
           </div>
           
           {/* Video Preview - Vertical Format */}
-          {upload.embedUrl && upload.status === 'completed' && (
+          {showPreview && upload.embedUrl && upload.status === 'completed' && (
             <div 
               className="rounded-lg overflow-hidden bg-black flex items-center justify-center mx-auto"
               style={{ aspectRatio: '9/16', maxHeight: '300px', width: 'auto' }}
