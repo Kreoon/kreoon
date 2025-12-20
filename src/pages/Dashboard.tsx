@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AmbassadorBadge } from "@/components/ui/ambassador-badge";
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -237,7 +238,7 @@ const LargeKpiCard = ({
 };
 
 export default function Dashboard() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, profile, isAmbassador } = useAuth();
   const { toast } = useToast();
   
   // Filters state
@@ -592,6 +593,9 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+            {(isAmbassador || profile?.is_ambassador) && (
+              <AmbassadorBadge size="sm" variant="glow" />
+            )}
             {isAdmin && (
               <Button variant="outline" size="sm" onClick={() => setGoalsDialogOpen(true)} className="h-8 px-2 md:px-3">
                 <Target className="h-4 w-4 md:mr-2" />

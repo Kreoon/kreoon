@@ -13,6 +13,7 @@ import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/da
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { ContentDetailDialog } from '@/components/content/ContentDetailDialog';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
+import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { 
   Scissors, 
   Clock, 
@@ -93,7 +94,7 @@ const StatsCard = ({
 
 export default function EditorDashboard() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, isAmbassador } = useAuth();
   const { content, loading, refetch } = useContent(user?.id, 'editor');
   const { toast } = useToast();
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
@@ -144,11 +145,8 @@ export default function EditorDashboard() {
           <p className="text-sm text-muted-foreground">Bienvenido, {profile?.full_name}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {profile?.is_ambassador && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
-              <Star className="w-4 h-4 text-primary fill-primary" />
-              <span className="font-medium text-primary text-sm">Embajador</span>
-            </div>
+          {(isAmbassador || profile?.is_ambassador) && (
+            <AmbassadorBadge size="md" variant="glow" />
           )}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
             <DollarSign className="w-4 h-4 text-success" />

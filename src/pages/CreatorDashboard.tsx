@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useContent } from '@/hooks/useContent';
@@ -90,9 +90,8 @@ const StatsCard = ({
 
 export default function CreatorDashboard() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, isAmbassador } = useAuth();
   const { content, loading, refetch } = useContent(user?.id, 'creator');
-  const [isAmbassador, setIsAmbassador] = useState(false);
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [kpiDialog, setKpiDialog] = useState<{
     open: boolean;
@@ -104,14 +103,7 @@ export default function CreatorDashboard() {
     setKpiDialog({ open: true, title, content: contentList });
   };
 
-  useEffect(() => {
-    if (profile) {
-      setIsAmbassador(profile.is_ambassador);
-    }
-  }, [profile]);
-
-
-  // Métricas
+  const showAmbassadorBadge = isAmbassador || !!profile?.is_ambassador;
   const inProgressContent = content.filter(c => ['assigned', 'recording'].includes(c.status));
   const approvedContent = content.filter(c => c.status === 'approved');
   const ambassadorContent = content.filter(c => c.is_ambassador_content);
@@ -148,7 +140,7 @@ export default function CreatorDashboard() {
           <p className="text-sm text-muted-foreground">Bienvenido, {profile?.full_name}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {isAmbassador && (
+          {showAmbassadorBadge && (
             <AmbassadorBadge size="md" variant="glow" />
           )}
 
