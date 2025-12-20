@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Grid3X3, 
   Play, 
@@ -11,20 +12,25 @@ import {
   User,
   Video as VideoIcon,
   Eye,
-  Heart
+  Heart,
+  Plus,
+  Briefcase,
+  Image as ImageIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { TikTokFeed } from '@/components/content/TikTokFeed';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
+import { StoryViewer } from '@/components/portfolio/StoryViewer';
+import { StoryRing } from '@/components/portfolio/StoryRing';
+import { MediaUploader } from '@/components/portfolio/MediaUploader';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserProfile {
   id: string;
   full_name: string;
   avatar_url: string | null;
   bio: string | null;
-  instagram: string | null;
-  tiktok: string | null;
 }
 
 interface ContentItem {
@@ -39,6 +45,25 @@ interface ContentItem {
   created_at: string;
 }
 
+interface PortfolioPost {
+  id: string;
+  media_url: string;
+  media_type: string;
+  thumbnail_url: string | null;
+  caption: string | null;
+  views_count: number;
+  likes_count: number;
+  created_at: string;
+}
+
+interface Story {
+  id: string;
+  media_url: string;
+  media_type: string;
+  created_at: string;
+  expires_at: string;
+}
+
 interface ClientInfo {
   id: string;
   name: string;
@@ -47,18 +72,29 @@ interface ClientInfo {
 }
 
 type ProfileType = 'user' | 'client';
+type TabType = 'work' | 'posts';
 
 export default function UserPortfolio() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
+  const isOwner = user?.id === id;
+  
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
   const [profileType, setProfileType] = useState<ProfileType>('user');
   const [content, setContent] = useState<ContentItem[]>([]);
+  const [posts, setPosts] = useState<PortfolioPost[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
+  const [selectedPost, setSelectedPost] = useState<PortfolioPost | null>(null);
   const [showTikTokView, setShowTikTokView] = useState(false);
   const [initialVideoIndex, setInitialVideoIndex] = useState(0);
+  const [showStoryViewer, setShowStoryViewer] = useState(false);
+  const [showMediaUploader, setShowMediaUploader] = useState(false);
+  const [uploaderType, setUploaderType] = useState<'post' | 'story'>('post');
+  const [activeTab, setActiveTab] = useState<TabType>('work');
 
   useEffect(() => {
     if (id) {
@@ -74,7 +110,7 @@ export default function UserPortfolio() {
       // First, try to find as a user profile
       const { data: userData } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, bio, instagram, tiktok')
+        .select('id, full_name, avatar_url, bio')
         .eq('id', id)
         .maybeSingle();
 
@@ -90,7 +126,7 @@ export default function UserPortfolio() {
 
         const roles = rolesData?.map(r => r.role) || [];
         
-        // Fetch content based on role
+        // Fetch work content based on role
         let query = supabase
           .from('content')
           .select('id, title, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at')
@@ -107,6 +143,24 @@ export default function UserPortfolio() {
 
         const { data: contentData } = await query.order('created_at', { ascending: false });
         setContent(contentData || []);
+
+        // Fetch portfolio posts
+        const { data: postsData } = await supabase
+          .from('portfolio_posts')
+          .select('*')
+          .eq('user_id', id)
+          .order('created_at', { ascending: false });
+        setPosts(postsData || []);
+
+        // Fetch active stories
+        const { data: storiesData } = await supabase
+          .from('portfolio_stories')
+          .select('*')
+          .eq('user_id', id)
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: true });
+        setStories(storiesData || []);
+
       } else {
         // Try as a client
         const { data: clientData } = await supabase
@@ -137,30 +191,51 @@ export default function UserPortfolio() {
     }
   };
 
-  const getVideoUrl = (item: ContentItem): string | null => {
-    if (item.video_urls && item.video_urls.length > 0) return item.video_urls[0];
-    if (item.video_url) return item.video_url;
+  const getVideoUrl = (item: ContentItem | PortfolioPost): string | null => {
+    if ('video_urls' in item && item.video_urls && item.video_urls.length > 0) return item.video_urls[0];
+    if ('video_url' in item && item.video_url) return item.video_url;
+    if ('media_url' in item) return item.media_url;
     return null;
   };
 
   const tikTokVideos = useMemo(() => {
-    return content.map(item => ({
-      id: item.id,
-      title: item.title,
-      videoUrls: item.video_urls?.length ? item.video_urls : (item.video_url ? [item.video_url] : []),
-      thumbnailUrl: item.thumbnail_url,
-      viewsCount: item.views_count || 0,
-      likesCount: item.likes_count || 0,
-      isLiked: false,
-    }));
-  }, [content]);
+    const allItems = activeTab === 'work' 
+      ? content.map(item => ({
+          id: item.id,
+          title: item.title,
+          videoUrls: item.video_urls?.length ? item.video_urls : (item.video_url ? [item.video_url] : []),
+          thumbnailUrl: item.thumbnail_url,
+          viewsCount: item.views_count || 0,
+          likesCount: item.likes_count || 0,
+          isLiked: false,
+        }))
+      : posts.filter(p => p.media_type === 'video').map(item => ({
+          id: item.id,
+          title: item.caption || '',
+          videoUrls: [item.media_url],
+          thumbnailUrl: item.thumbnail_url,
+          viewsCount: item.views_count || 0,
+          likesCount: item.likes_count || 0,
+          isLiked: false,
+        }));
+    return allItems;
+  }, [content, posts, activeTab]);
 
   const displayName = profileType === 'user' ? profile?.full_name : clientInfo?.name;
   const displayAvatar = profileType === 'user' ? profile?.avatar_url : clientInfo?.logo_url;
   const displayBio = profileType === 'user' ? profile?.bio : clientInfo?.notes;
+  const userId = profileType === 'user' ? profile?.id : clientInfo?.id;
 
-  const totalViews = content.reduce((sum, c) => sum + (c.views_count || 0), 0);
-  const totalLikes = content.reduce((sum, c) => sum + (c.likes_count || 0), 0);
+  const totalViews = content.reduce((sum, c) => sum + (c.views_count || 0), 0) + 
+                     posts.reduce((sum, p) => sum + (p.views_count || 0), 0);
+  const totalLikes = content.reduce((sum, c) => sum + (c.likes_count || 0), 0) +
+                     posts.reduce((sum, p) => sum + (p.likes_count || 0), 0);
+  const totalContent = content.length + posts.length;
+
+  const openUploader = (type: 'post' | 'story') => {
+    setUploaderType(type);
+    setShowMediaUploader(true);
+  };
 
   if (loading) {
     return (
@@ -202,12 +277,42 @@ export default function UserPortfolio() {
     );
   }
 
+  // Story viewer
+  if (showStoryViewer && stories.length > 0) {
+    return (
+      <StoryViewer
+        stories={stories}
+        userName={displayName || ''}
+        userAvatar={displayAvatar}
+        onClose={() => setShowStoryViewer(false)}
+      />
+    );
+  }
+
+  const currentItems = activeTab === 'work' ? content : posts;
+
   return (
     <div className="min-h-screen bg-black">
-      {/* Profile Header - Instagram/TikTok style */}
       <div className="max-w-4xl mx-auto">
+        {/* Stories Row */}
+        {(stories.length > 0 || isOwner) && profileType === 'user' && (
+          <div className="px-4 pt-4 pb-2 overflow-x-auto">
+            <div className="flex gap-4">
+              <StoryRing
+                avatarUrl={displayAvatar}
+                name={displayName || ''}
+                hasStories={stories.length > 0}
+                hasUnseenStories={stories.length > 0}
+                isOwn={isOwner}
+                onClick={() => stories.length > 0 && setShowStoryViewer(true)}
+                onAddClick={() => openUploader('story')}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Profile Section */}
-        <div className="px-4 py-8 md:py-12">
+        <div className="px-4 py-6 md:py-10">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10">
             {/* Avatar */}
             <Avatar className="h-24 w-24 md:h-36 md:w-36 ring-2 ring-white/20">
@@ -219,17 +324,29 @@ export default function UserPortfolio() {
 
             {/* Info */}
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-xl md:text-2xl font-bold text-white mb-3">
-                {displayName}
-              </h1>
+              <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
+                <h1 className="text-xl md:text-2xl font-bold text-white">
+                  {displayName}
+                </h1>
+                {isOwner && (
+                  <Button
+                    size="sm"
+                    onClick={() => openUploader('post')}
+                    className="gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Publicar</span>
+                  </Button>
+                )}
+              </div>
 
               {/* Stats Row */}
               <div className="flex items-center justify-center md:justify-start gap-6 mb-4">
                 <div className="text-center">
                   <span className="block text-lg md:text-xl font-bold text-white">
-                    {content.length}
+                    {totalContent}
                   </span>
-                  <span className="text-xs text-white/50">videos</span>
+                  <span className="text-xs text-white/50">publicaciones</span>
                 </div>
                 <div className="text-center">
                   <span className="block text-lg md:text-xl font-bold text-white">
@@ -258,66 +375,152 @@ export default function UserPortfolio() {
         {/* Tabs */}
         <div className="border-t border-white/10">
           <div className="flex justify-center">
-            <button className="flex items-center gap-2 px-6 py-3 text-white border-t-2 border-white -mt-px">
-              <Grid3X3 className="h-4 w-4" />
-              <span className="text-xs font-medium uppercase tracking-wider">Videos</span>
+            <button 
+              onClick={() => setActiveTab('work')}
+              className={cn(
+                "flex items-center gap-2 px-6 py-3 border-t-2 -mt-px transition-colors",
+                activeTab === 'work' ? "text-white border-white" : "text-white/50 border-transparent hover:text-white/70"
+              )}
+            >
+              <Briefcase className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Trabajo</span>
             </button>
+            {profileType === 'user' && (
+              <button 
+                onClick={() => setActiveTab('posts')}
+                className={cn(
+                  "flex items-center gap-2 px-6 py-3 border-t-2 -mt-px transition-colors",
+                  activeTab === 'posts' ? "text-white border-white" : "text-white/50 border-transparent hover:text-white/70"
+                )}
+              >
+                <Grid3X3 className="h-4 w-4" />
+                <span className="text-xs font-medium uppercase tracking-wider">Posts</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Content Grid */}
         <div className="px-1 pb-8">
-          {content.length === 0 ? (
+          {currentItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-white/40">
-              <VideoIcon className="h-12 w-12 mb-3" />
-              <p className="text-sm">Aún no hay videos</p>
+              {activeTab === 'work' ? (
+                <>
+                  <VideoIcon className="h-12 w-12 mb-3" />
+                  <p className="text-sm">Aún no hay trabajo publicado</p>
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="h-12 w-12 mb-3" />
+                  <p className="text-sm">Aún no hay posts</p>
+                  {isOwner && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openUploader('post')}
+                      className="mt-4 border-white/20 text-white hover:bg-white/10"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Crear primer post
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-0.5 md:gap-1">
-              {content.map((item, index) => (
-                <div
-                  key={item.id}
-                  className="group relative aspect-[9/16] bg-zinc-900 cursor-pointer overflow-hidden"
-                  onClick={() => {
-                    if (isMobile) {
-                      setInitialVideoIndex(index);
-                      setShowTikTokView(true);
-                    } else {
-                      setSelectedContent(item);
-                    }
-                  }}
-                >
-                  {/* Thumbnail */}
-                  {item.thumbnail_url ? (
-                    <img
-                      src={item.thumbnail_url}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-zinc-800">
-                      <VideoIcon className="h-8 w-8 text-white/20" />
-                    </div>
-                  )}
+              {activeTab === 'work' ? (
+                content.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="group relative aspect-[9/16] bg-zinc-900 cursor-pointer overflow-hidden"
+                    onClick={() => {
+                      if (isMobile) {
+                        setInitialVideoIndex(index);
+                        setShowTikTokView(true);
+                      } else {
+                        setSelectedContent(item);
+                      }
+                    }}
+                  >
+                    {item.thumbnail_url ? (
+                      <img
+                        src={item.thumbnail_url}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+                        <VideoIcon className="h-8 w-8 text-white/20" />
+                      </div>
+                    )}
 
-                  {/* Play icon */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
-                    <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
-                  </div>
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+                      <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
+                    </div>
 
-                  {/* Stats overlay on hover */}
-                  <div className="absolute inset-0 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                    <div className="flex items-center gap-1 text-white">
-                      <Eye className="h-4 w-4" />
-                      <span className="text-sm font-medium">{(item.views_count || 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-white">
-                      <Heart className="h-4 w-4" fill="white" />
-                      <span className="text-sm font-medium">{(item.likes_count || 0).toLocaleString()}</span>
+                    <div className="absolute inset-0 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                      <div className="flex items-center gap-1 text-white">
+                        <Eye className="h-4 w-4" />
+                        <span className="text-sm font-medium">{(item.views_count || 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-white">
+                        <Heart className="h-4 w-4" fill="white" />
+                        <span className="text-sm font-medium">{(item.likes_count || 0).toLocaleString()}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                posts.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="group relative aspect-[9/16] bg-zinc-900 cursor-pointer overflow-hidden"
+                    onClick={() => {
+                      if (item.media_type === 'video' && isMobile) {
+                        const videoIndex = posts.filter(p => p.media_type === 'video').findIndex(p => p.id === item.id);
+                        setInitialVideoIndex(videoIndex);
+                        setShowTikTokView(true);
+                      } else {
+                        setSelectedPost(item);
+                      }
+                    }}
+                  >
+                    {item.media_type === 'image' ? (
+                      <img
+                        src={item.media_url}
+                        alt={item.caption || ''}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : item.thumbnail_url ? (
+                      <img
+                        src={item.thumbnail_url}
+                        alt={item.caption || ''}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <video
+                        src={item.media_url}
+                        className="w-full h-full object-cover"
+                        muted
+                      />
+                    )}
+
+                    {item.media_type === 'video' && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+                        <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="white" />
+                      </div>
+                    )}
+
+                    <div className="absolute inset-0 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                      <div className="flex items-center gap-1 text-white">
+                        <Heart className="h-4 w-4" fill="white" />
+                        <span className="text-sm font-medium">{(item.likes_count || 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>
@@ -343,11 +546,7 @@ export default function UserPortfolio() {
                     autoPlay
                     className="w-full h-full object-contain"
                   />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white/50">
-                    No hay video disponible
-                  </div>
-                )}
+                ) : null}
               </div>
               <div className="p-4 border-t border-white/10">
                 <h3 className="text-white font-medium text-sm">{selectedContent.title}</h3>
@@ -364,6 +563,48 @@ export default function UserPortfolio() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Post Preview Dialog */}
+      <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
+        <DialogContent className="max-w-lg bg-black border-white/10 p-0 overflow-hidden">
+          {selectedPost && (
+            <div className="flex flex-col">
+              <div className="relative aspect-[9/16] bg-black max-h-[80vh]">
+                {selectedPost.media_type === 'video' ? (
+                  <video
+                    src={selectedPost.media_url}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <img
+                    src={selectedPost.media_url}
+                    alt={selectedPost.caption || ''}
+                    className="w-full h-full object-contain"
+                  />
+                )}
+              </div>
+              {selectedPost.caption && (
+                <div className="p-4 border-t border-white/10">
+                  <p className="text-white text-sm">{selectedPost.caption}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Media Uploader */}
+      {userId && (
+        <MediaUploader
+          userId={userId}
+          type={uploaderType}
+          isOpen={showMediaUploader}
+          onClose={() => setShowMediaUploader(false)}
+          onSuccess={fetchData}
+        />
+      )}
     </div>
   );
 }
