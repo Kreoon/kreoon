@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, CheckCircle, XCircle, RefreshCw, Plus, Trash2, Download, FolderDown } from "lucide-react";
+import { Upload, Loader2, CheckCircle, XCircle, RefreshCw, Plus, Trash2, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface VideoUpload {
@@ -36,7 +36,6 @@ export function RawVideoUploader({
   const [uploads, setUploads] = useState<VideoUpload[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
-  const [downloadingAll, setDownloadingAll] = useState(false);
 
   // Initialize uploads from currentUrls
   useEffect(() => {
@@ -225,66 +224,6 @@ export function RawVideoUploader({
     }
   };
 
-  const handleDownloadAll = async () => {
-    const completedUploads = uploads.filter(u => u.status === 'completed' && u.embedUrl);
-    if (completedUploads.length === 0) return;
-
-    setDownloadingAll(true);
-    toast({
-      title: "Creando archivo ZIP",
-      description: `Comprimiendo ${completedUploads.length} video(s)... Esto puede tardar un momento.`
-    });
-
-    try {
-      const videoUrls = completedUploads.map(u => u.embedUrl);
-      
-      const { data, error } = await supabase.functions.invoke('bunny-download-zip', {
-        body: { content_id: contentId, video_urls: videoUrls }
-      });
-
-      if (error) throw error;
-
-      if (data?.zip_data) {
-        // Convert base64 to blob and download
-        const byteCharacters = atob(data.zip_data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/zip' });
-        
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = data.filename || 'videos_raw.zip';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        toast({
-          title: "Descarga completada",
-          description: `${data.videos_included}/${data.total_videos} videos descargados en ZIP`
-        });
-
-        if (data.errors && data.errors.length > 0) {
-          console.warn('Some videos had errors:', data.errors);
-        }
-      } else {
-        throw new Error('No se recibió el archivo ZIP');
-      }
-    } catch (error) {
-      console.error('ZIP download error:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo crear el archivo ZIP",
-        variant: "destructive"
-      });
-    } finally {
-      setDownloadingAll(false);
-    }
-  };
 
   const getStatusIcon = (status: VideoUpload['status']) => {
     switch (status) {
@@ -371,22 +310,6 @@ export function RawVideoUploader({
           )}
         </div>
 
-        {showDownload && completedCount > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadAll}
-            disabled={downloadingAll}
-            className="flex items-center gap-2"
-          >
-            {downloadingAll ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FolderDown className="h-4 w-4" />
-            )}
-            Descargar todo
-          </Button>
-        )}
       </div>
 
       {/* Video list */}
