@@ -100,32 +100,26 @@ Deno.serve(async (req) => {
       console.log(`Raw video uploaded successfully: ${embedUrl}`)
 
       // Update content based on file type
-      let updateData: Record<string, any> = {}
+      let allUrls: string[] = []
 
       if (fileType === 'raw_video') {
-        // Append to raw_video_urls array instead of overwriting drive_url
-        const { data: currentContent } = await supabase
-          .from('content')
-          .select('raw_video_urls')
-          .eq('id', contentId)
-          .single()
-        
-        const currentUrls = currentContent?.raw_video_urls || []
-        const newUrls = [...currentUrls, embedUrl]
-        
-        updateData = {
-          raw_video_urls: newUrls,
-          drive_url: embedUrl, // Keep drive_url for backward compatibility
-          video_processing_status: 'completed',
-        }
-      } else if (fileType === 'thumbnail') {
-        updateData = { thumbnail_url: embedUrl }
-      }
+        // Use atomic append function to avoid race conditions
+        const { data: appendResult, error: appendError } = await supabase.rpc('append_raw_video_url', {
+          _content_id: contentId,
+          _url: embedUrl
+        })
 
-      if (Object.keys(updateData).length > 0) {
+        if (appendError) {
+          console.error('Error appending raw video url:', appendError)
+          throw new Error(`Error updating content: ${appendError.message}`)
+        }
+
+        allUrls = appendResult || [embedUrl]
+        console.log(`All raw_video_urls after append: ${JSON.stringify(allUrls)}`)
+      } else if (fileType === 'thumbnail') {
         const { error: updateError } = await supabase
           .from('content')
-          .update(updateData)
+          .update({ thumbnail_url: embedUrl })
           .eq('id', contentId)
 
         if (updateError) {
@@ -140,6 +134,7 @@ Deno.serve(async (req) => {
           url: embedUrl,
           video_id: videoData.guid,
           file_type: fileType,
+          all_urls: allUrls,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
@@ -215,32 +210,26 @@ Deno.serve(async (req) => {
     console.log(`Raw video uploaded successfully: ${embedUrl}`)
 
     // Update content based on file type
-    let updateData: Record<string, any> = {}
+    let allUrls: string[] = []
 
     if (fileType === 'raw_video') {
-      // Append to raw_video_urls array instead of overwriting drive_url
-      const { data: currentContent } = await supabase
-        .from('content')
-        .select('raw_video_urls')
-        .eq('id', contentId)
-        .single()
-      
-      const currentUrls = currentContent?.raw_video_urls || []
-      const newUrls = [...currentUrls, embedUrl]
-      
-      updateData = {
-        raw_video_urls: newUrls,
-        drive_url: embedUrl, // Keep drive_url for backward compatibility
-        video_processing_status: 'completed',
-      }
-    } else if (fileType === 'thumbnail') {
-      updateData = { thumbnail_url: embedUrl }
-    }
+      // Use atomic append function to avoid race conditions
+      const { data: appendResult, error: appendError } = await supabase.rpc('append_raw_video_url', {
+        _content_id: contentId,
+        _url: embedUrl
+      })
 
-    if (Object.keys(updateData).length > 0) {
+      if (appendError) {
+        console.error('Error appending raw video url:', appendError)
+        throw new Error(`Error updating content: ${appendError.message}`)
+      }
+
+      allUrls = appendResult || [embedUrl]
+      console.log(`All raw_video_urls after append: ${JSON.stringify(allUrls)}`)
+    } else if (fileType === 'thumbnail') {
       const { error: updateError } = await supabase
         .from('content')
-        .update(updateData)
+        .update({ thumbnail_url: embedUrl })
         .eq('id', contentId)
 
       if (updateError) {
@@ -255,6 +244,7 @@ Deno.serve(async (req) => {
         url: embedUrl,
         video_id: videoData.guid,
         file_type: fileType,
+        all_urls: allUrls,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )

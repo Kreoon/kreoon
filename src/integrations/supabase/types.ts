@@ -836,6 +836,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      append_raw_video_url: {
+        Args: { _content_id: string; _url: string }
+        Returns: string[]
+      }
       can_users_chat: {
         Args: { _user1_id: string; _user2_id: string }
         Returns: boolean
