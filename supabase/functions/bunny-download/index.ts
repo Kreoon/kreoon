@@ -72,6 +72,8 @@ Deno.serve(async (req) => {
 
     const roles = userRoles?.map(r => r.role) || []
     const isAdmin = roles.includes('admin')
+    const isEditor = roles.includes('editor')
+    const isCreator = roles.includes('creator')
     const isClient = roles.includes('client')
 
     // Check if user is the client associated with this content
@@ -88,9 +90,11 @@ Deno.serve(async (req) => {
 
     // Permission check:
     // - Admins can download anytime
+    // - Editors can download anytime (to work on raw videos)
+    // - Creators can download anytime (their own content)
     // - Clients can only download when status is approved, paid, or delivered
     const approvedStatuses = ['approved', 'paid', 'delivered']
-    const canDownload = isAdmin || (isContentClient && approvedStatuses.includes(content.status))
+    const canDownload = isAdmin || isEditor || isCreator || (isContentClient && approvedStatuses.includes(content.status))
 
     if (!canDownload) {
       return new Response(

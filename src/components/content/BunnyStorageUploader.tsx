@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, CheckCircle, Download, FileVideo, X, Plus, Stethoscope, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, Download, FileVideo, X, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface UploadedFile {
@@ -48,43 +48,7 @@ export function BunnyStorageUploader({
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [totalFiles, setTotalFiles] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [testingConnection, setTestingConnection] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
-
-  const handleTestConnection = async () => {
-    setTestingConnection(true);
-    setConnectionStatus('idle');
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('bunny-storage-test');
-      
-      if (error) throw error;
-      
-      if (data.success) {
-        setConnectionStatus('success');
-        toast({
-          title: "Conexión exitosa",
-          description: `Conectado a ${data.details.storageZone}. CDN: ${data.details.cdnHostname}`,
-        });
-      } else {
-        setConnectionStatus('error');
-        toast({
-          title: "Error de conexión",
-          description: data.message,
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      setConnectionStatus('error');
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo verificar la conexión",
-        variant: "destructive"
-      });
-    } finally {
-      setTestingConnection(false);
-    }
-  };
+  const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -195,8 +159,35 @@ export function BunnyStorageUploader({
     onUploadComplete?.(newFiles.map(f => f.url));
   };
 
-  const handleDownload = (url: string) => {
-    window.open(url, '_blank');
+  const handleDownload = async (url: string, index: number) => {
+    setDownloadingIndex(index);
+    
+    try {
+      // Use bunny-download edge function to get proper download URL
+      const { data, error } = await supabase.functions.invoke('bunny-download', {
+        body: { content_id: contentId, video_url: url }
+      });
+
+      if (error) throw error;
+
+      if (data?.download_url) {
+        // Open download URL in new tab
+        window.open(data.download_url, '_blank');
+        toast({
+          title: "Descarga iniciada",
+          description: data.title ? `Descargando: ${data.title}` : "El video se abrirá en una nueva pestaña"
+        });
+      } else {
+        // Fallback: open the URL directly
+        window.open(url, '_blank');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback: open URL directly
+      window.open(url, '_blank');
+    } finally {
+      setDownloadingIndex(null);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -208,7 +199,7 @@ export function BunnyStorageUploader({
     return `${mb.toFixed(1)} MB`;
   };
 
-  const allowMultiple = multiple ?? fileType !== 'raw_video';
+  const allowMultiple = multiple ?? true;
 
   return (
     <div className="space-y-3">
@@ -242,27 +233,6 @@ export function BunnyStorageUploader({
               ? 'Agregar más archivos' 
               : label
           }
-        </Button>
-
-        {/* Diagnostic Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleTestConnection}
-          disabled={testingConnection || uploading}
-          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
-          title="Verificar conexión con Bunny Storage"
-        >
-          {testingConnection ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : connectionStatus === 'success' ? (
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          ) : connectionStatus === 'error' ? (
-            <XCircle className="h-4 w-4 text-destructive" />
-          ) : (
-            <Stethoscope className="h-4 w-4" />
-          )}
-          {testingConnection ? 'Verificando...' : 'Diagnóstico'}
         </Button>
 
         {uploadedFiles.length > 0 && (
@@ -306,10 +276,15 @@ export function BunnyStorageUploader({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7"
-                    onClick={() => handleDownload(file.url)}
+                    onClick={() => handleDownload(file.url, index)}
+                    disabled={downloadingIndex === index}
                     title="Descargar"
                   >
-                    <Download className="h-3.5 w-3.5" />
+                    {downloadingIndex === index ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Download className="h-3.5 w-3.5" />
+                    )}
                   </Button>
                 )}
                 {!disabled && (
