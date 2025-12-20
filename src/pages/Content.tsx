@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,14 @@ interface ContentItem {
   creator: { full_name: string } | null;
   status: string;
   is_liked?: boolean;
+}
+
+// Flattened item for display - each video variation becomes its own card
+interface DisplayItem extends ContentItem {
+  displayId: string; // Unique ID for the display item (contentId-index)
+  currentVideoUrl: string; // The specific video URL for this card
+  variationIndex: number; // Which variation this is (0-based)
+  totalVariations: number; // Total number of variations for this content
 }
 
 const Content = () => {
@@ -209,27 +217,46 @@ const Content = () => {
     }
   };
 
-  // Get all video URLs for a content item
-  const getVideoUrls = (item: ContentItem): string[] => {
-    const urls: string[] = [];
+  // Flatten content into display items - each video URL becomes its own card
+  const displayItems: DisplayItem[] = useMemo(() => {
+    const items: DisplayItem[] = [];
     
-    // Add video_urls array first (variations)
-    if (item.video_urls && item.video_urls.length > 0) {
-      urls.push(...item.video_urls.filter(u => u && u.trim()));
-    }
+    content.forEach(item => {
+      // Collect all video URLs for this content
+      const urls: string[] = [];
+      
+      if (item.video_urls && item.video_urls.length > 0) {
+        urls.push(...item.video_urls.filter(u => u && u.trim()));
+      }
+      
+      // Only add video_url if not already in video_urls
+      if (item.video_url && !urls.includes(item.video_url)) {
+        urls.unshift(item.video_url);
+      }
+      
+      // Skip content without any videos
+      if (urls.length === 0) return;
+      
+      // Create a display item for each video URL
+      urls.forEach((url, index) => {
+        items.push({
+          ...item,
+          displayId: `${item.id}-${index}`,
+          currentVideoUrl: url,
+          variationIndex: index,
+          totalVariations: urls.length
+        });
+      });
+    });
     
-    // Add single video_url if not already included
-    if (item.video_url && !urls.includes(item.video_url)) {
-      urls.unshift(item.video_url);
-    }
-    
-    return urls;
-  };
+    return items;
+  }, [content]);
 
-  const filteredContent = content.filter(item => {
+  // Filter display items
+  const filteredDisplayItems = displayItems.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.client?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.creator?.full_name.toLowerCase().includes(searchQuery.toLowerCase());
+      item.client?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.creator?.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesFilter = filterPublished === 'all' ||
       (filterPublished === 'published' && item.is_published) ||
@@ -248,6 +275,7 @@ const Content = () => {
   const totalViews = content.reduce((sum, item) => sum + item.views_count, 0);
   const totalLikes = content.reduce((sum, item) => sum + item.likes_count, 0);
   const publishedCount = content.filter(item => item.is_published).length;
+  const totalVariations = displayItems.length;
 
   return (
     <VideoPlayerProvider>
@@ -312,13 +340,19 @@ const Content = () => {
         {/* Admin Metrics Dashboard */}
         {isAdmin && (
           <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted/30">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
               <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
                 <div className="flex items-center gap-1 md:gap-2 text-muted-foreground text-xs md:text-sm mb-1">
                   <Play className="h-3 w-3 md:h-4 md:w-4" />
-                  Total Videos
+                  Proyectos
                 </div>
                 <div className="text-xl md:text-2xl font-bold text-foreground">{content.length}</div>
+              </div>
+              <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
+                <div className="flex items-center gap-1 md:gap-2 text-primary text-xs md:text-sm mb-1">
+                  Variaciones
+                </div>
+                <div className="text-xl md:text-2xl font-bold text-foreground">{totalVariations}</div>
               </div>
               <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
                 <div className="flex items-center gap-1 md:gap-2 text-muted-foreground text-xs md:text-sm mb-1">
@@ -393,7 +427,7 @@ const Content = () => {
                 <Skeleton key={i} className="aspect-[9/16] rounded-xl" />
               ))}
             </div>
-          ) : filteredContent.length === 0 ? (
+          ) : filteredDisplayItems.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 md:p-12 text-center">
               <div className="mx-auto max-w-md">
                 <div className="mx-auto mb-4 flex h-12 w-12 md:h-16 md:w-16 items-center justify-center rounded-full bg-primary/10">
@@ -409,12 +443,15 @@ const Content = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-              {filteredContent.map((item) => (
-                <div key={item.id} className="relative">
+              {filteredDisplayItems.map((item) => (
+                <div key={item.displayId} className="relative">
                   <BunnyVideoCard
-                    id={item.id}
-                    title={item.title}
-                    videoUrls={getVideoUrls(item)}
+                    id={item.displayId}
+                    title={item.totalVariations > 1 
+                      ? `${item.title} (${item.variationIndex + 1}/${item.totalVariations})`
+                      : item.title
+                    }
+                    videoUrl={item.currentVideoUrl}
                     thumbnailUrl={item.thumbnail_url}
                     viewsCount={item.views_count}
                     likesCount={item.likes_count}
@@ -433,6 +470,11 @@ const Content = () => {
                       <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
                         {item.is_published ? 'Publicado' : 'Privado'}
                       </Badge>
+                      {item.totalVariations > 1 && (
+                        <Badge variant="outline" className="text-xs bg-black/50 text-white border-white/20">
+                          {item.variationIndex + 1}/{item.totalVariations}
+                        </Badge>
+                      )}
                     </div>
                   )}
                   
@@ -443,16 +485,14 @@ const Content = () => {
                         onCheckedChange={() => togglePublish(item.id, item.is_published)}
                         className="data-[state=checked]:bg-primary"
                       />
-                      {item.video_url && (
-                        <a 
-                          href={item.video_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      )}
+                      <a 
+                        href={item.currentVideoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
                     </div>
                   )}
                 </div>
