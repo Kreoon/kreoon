@@ -1164,31 +1164,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </h4>
                 
                 <div className="grid gap-4">
-                  {/* Video Crudo - Raw video uploader for creators */}
-                  {(isCreator || isEditor || isAdmin) && (
-                    <div className="space-y-2 p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
-                      <Label className="font-medium flex items-center gap-2">
-                        <Upload className="h-4 w-4" /> Video Crudo (Material Original)
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        Sube el video sin editar. Los editores podrán descargarlo para trabajar.
-                      </p>
-                      <BunnyStorageUploader
-                        contentId={content.id}
-                        fileType="raw_video"
-                        currentUrls={formData.raw_video_urls}
-                        onUploadComplete={(urls) => {
-                          setFormData({ ...formData, raw_video_urls: urls, drive_url: urls[0] || '' });
-                          onUpdate?.();
-                        }}
-                        disabled={!editMode && !canEditDriveUrl && !isCreator}
-                        label="Subir videos crudos"
-                        showDownload={isEditor || isAdmin}
-                        multiple={true}
-                      />
-                    </div>
-                  )}
-
                   {/* Video Final - Bunny Stream uploader for editors (Multiple Variables) */}
                   {(isEditor || isAdmin) && (
                     <div className="space-y-3 p-4 rounded-lg border-2 border-dashed border-green-500/30 bg-green-500/5">
@@ -1529,64 +1504,39 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   )}
                 </div>
 
-                {/* Contenido Crudo - Editable by Creator */}
+                {/* Videos Crudos - Raw video uploader with download option */}
                 <div className="space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
-                    <FolderOpen className="h-4 w-4" /> Contenido Crudo (Drive)
+                    <Upload className="h-4 w-4" /> Videos Crudos (Material Original)
                   </h4>
                   
-                  {editMode && canEditDriveUrl ? (
-                    <div className="space-y-3">
-                      <div className="p-4 rounded-lg border bg-muted/30">
-                        <Label className="text-sm font-medium mb-2 block">URL de Carpeta de Drive</Label>
-                        <Input
-                          value={formData.drive_url}
-                          onChange={(e) => setFormData({ ...formData, drive_url: e.target.value })}
-                          placeholder="https://drive.google.com/..."
-                          type="url"
-                        />
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Pega aquí el link de la carpeta de Google Drive con el contenido grabado
-                        </p>
-                      </div>
-                    </div>
-                  ) : content.drive_url ? (
-                    <a 
-                      href={content.drive_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block group"
-                    >
-                      <div 
-                        className="rounded-xl border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 transition-all hover:border-primary/50 flex items-center justify-center"
-                        style={{ height: '350px' }}
-                      >
-                        <div className="flex flex-col items-center justify-center text-center space-y-4">
-                          <div className="p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                            <FolderOpen className="h-12 w-12 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-lg text-foreground">Carpeta de Contenido</p>
-                            <p className="text-sm text-muted-foreground mt-1">Clic para abrir en Drive</p>
-                          </div>
-                          <div className="flex items-center gap-2 text-primary font-medium">
-                            <span>Abrir carpeta</span>
-                            <ExternalLink className="h-4 w-4" />
-                          </div>
+                  <div className="space-y-3">
+                    <BunnyStorageUploader
+                      contentId={content.id}
+                      fileType="raw_video"
+                      currentUrls={formData.raw_video_urls}
+                      onUploadComplete={(urls) => {
+                        setFormData({ ...formData, raw_video_urls: urls, drive_url: urls[0] || '' });
+                        onUpdate?.();
+                      }}
+                      disabled={!editMode && !canEditDriveUrl && !isCreator}
+                      label="Subir videos crudos"
+                      showDownload={isEditor || isAdmin || isCreator}
+                      multiple={true}
+                    />
+                    
+                    {formData.raw_video_urls.length === 0 && (
+                      <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '150px' }}>
+                        <div className="text-center text-muted-foreground">
+                          <Upload className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No hay videos crudos subidos</p>
+                          {(isCreator || isAdmin) && (
+                            <p className="text-xs mt-1">Sube los videos sin editar para que el editor los descargue</p>
+                          )}
                         </div>
                       </div>
-                    </a>
-                  ) : (
-                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
-                      <div className="text-center text-muted-foreground">
-                        <FolderOpen className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>No hay carpeta de contenido</p>
-                        {canEditDriveUrl && (
-                          <p className="text-xs mt-2">Activa el modo edición para agregar el link</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 
