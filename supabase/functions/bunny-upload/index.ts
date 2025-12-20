@@ -96,33 +96,66 @@ Deno.serve(async (req) => {
       // Generate embed URL
       const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
 
-      // Fetch current video_urls array
-      const { data: currentContent } = await supabase
-        .from('content')
-        .select('video_urls, hooks_count')
-        .eq('id', contentId)
-        .single()
+      // Use a retry mechanism to handle race conditions when multiple videos upload simultaneously
+      let retryCount = 0;
+      const maxRetries = 5;
+      let updateSuccess = false;
 
-      // Update video_urls array at the specific variant index
-      const currentUrls = currentContent?.video_urls || []
-      const hooksCount = currentContent?.hooks_count || 1
-      const newUrls = Array.from({ length: Math.max(hooksCount, variantIndex + 1) }, (_, i) => 
-        i === variantIndex ? embedUrl : (currentUrls[i] || '')
-      )
+      while (!updateSuccess && retryCount < maxRetries) {
+        // Fetch current video_urls array
+        const { data: currentContent, error: fetchError } = await supabase
+          .from('content')
+          .select('video_urls, hooks_count')
+          .eq('id', contentId)
+          .single()
 
-      // Update content with Bunny embed URL in video_urls array
-      const { error: updateError } = await supabase
-        .from('content')
-        .update({
-          bunny_embed_url: embedUrl,
-          video_url: newUrls[0] || embedUrl, // Keep video_url as first video for backward compatibility
-          video_urls: newUrls,
-          video_processing_status: 'completed',
-        })
-        .eq('id', contentId)
+        if (fetchError) {
+          console.error('Error fetching current content:', fetchError)
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 200 * retryCount)); // Exponential backoff
+          continue;
+        }
 
-      if (updateError) {
-        console.error('Error updating content:', updateError)
+        // Update video_urls array at the specific variant index
+        const currentUrls = currentContent?.video_urls || []
+        const hooksCount = currentContent?.hooks_count || 1
+        const arrayLength = Math.max(hooksCount, variantIndex + 1, currentUrls.length)
+        
+        // Create new array preserving existing URLs
+        const newUrls = Array.from({ length: arrayLength }, (_, i) => {
+          if (i === variantIndex) return embedUrl;
+          return currentUrls[i] || '';
+        });
+
+        console.log(`Updating video_urls for content ${contentId}, index ${variantIndex}:`, {
+          currentUrls,
+          newUrls,
+          embedUrl
+        });
+
+        // Update content with Bunny embed URL in video_urls array
+        const { error: updateError } = await supabase
+          .from('content')
+          .update({
+            bunny_embed_url: variantIndex === 0 ? embedUrl : currentContent?.video_urls?.[0] || embedUrl,
+            video_url: newUrls[0] || embedUrl, // Keep video_url as first video for backward compatibility
+            video_urls: newUrls,
+            video_processing_status: 'completed',
+          })
+          .eq('id', contentId)
+
+        if (updateError) {
+          console.error('Error updating content (attempt', retryCount + 1, '):', updateError)
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 200 * retryCount)); // Exponential backoff
+        } else {
+          updateSuccess = true;
+          console.log(`Successfully updated video_urls at index ${variantIndex}`);
+        }
+      }
+
+      if (!updateSuccess) {
+        console.error('Failed to update content after', maxRetries, 'attempts');
       }
 
       console.log(`Video uploaded successfully: ${embedUrl} at index ${variantIndex}`)
