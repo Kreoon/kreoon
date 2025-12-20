@@ -26,6 +26,7 @@ import { StoryViewer } from '@/components/portfolio/StoryViewer';
 import { StoryRing } from '@/components/portfolio/StoryRing';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
 import { ProfileEditor } from '@/components/portfolio/ProfileEditor';
+import { FollowButton } from '@/components/portfolio/FollowButton';
 import { useAuth } from '@/hooks/useAuth';
 
 interface UserProfile {
@@ -98,6 +99,8 @@ export default function UserPortfolio() {
   const [uploaderType, setUploaderType] = useState<'post' | 'story'>('post');
   const [activeTab, setActiveTab] = useState<TabType>('work');
   const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
+  const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -164,7 +167,18 @@ export default function UserPortfolio() {
           .order('created_at', { ascending: true });
         setStories(storiesData || []);
 
-      } else {
+        // Fetch follow counts
+        const { data: countsData } = await supabase.rpc('get_follow_counts', { _user_id: id });
+        if (countsData && countsData.length > 0) {
+          setFollowCounts({
+            followers: Number(countsData[0].followers_count) || 0,
+            following: Number(countsData[0].following_count) || 0,
+          });
+        }
+
+        // Check if current user follows this profile
+        const { data: followingData } = await supabase.rpc('is_following', { _following_id: id });
+        setIsFollowing(followingData === true);
         // Try as a client
         const { data: clientData } = await supabase
           .from('clients')
@@ -361,6 +375,19 @@ export default function UserPortfolio() {
                     <span className="hidden sm:inline">Publicar</span>
                   </Button>
                 )}
+                {!isOwner && profileType === 'user' && profile && (
+                  <FollowButton
+                    userId={profile.id}
+                    initialIsFollowing={isFollowing}
+                    onFollowChange={(following) => {
+                      setIsFollowing(following);
+                      setFollowCounts(prev => ({
+                        ...prev,
+                        followers: prev.followers + (following ? 1 : -1),
+                      }));
+                    }}
+                  />
+                )}
               </div>
 
               {/* Stats Row */}
@@ -371,6 +398,22 @@ export default function UserPortfolio() {
                   </span>
                   <span className="text-xs text-white/50">publicaciones</span>
                 </div>
+                {profileType === 'user' && (
+                  <>
+                    <div className="text-center">
+                      <span className="block text-lg md:text-xl font-bold text-white">
+                        {followCounts.followers.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-white/50">seguidores</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-lg md:text-xl font-bold text-white">
+                        {followCounts.following.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-white/50">siguiendo</span>
+                    </div>
+                  </>
+                )}
                 <div className="text-center">
                   <span className="block text-lg md:text-xl font-bold text-white">
                     {totalViews.toLocaleString()}

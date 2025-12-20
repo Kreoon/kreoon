@@ -500,6 +500,27 @@ export type Database = {
           },
         ]
       }
+      followers: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           content_goal: number | null
@@ -919,6 +940,13 @@ export type Database = {
         Returns: string
       }
       get_best_available_editor: { Args: never; Returns: string }
+      get_follow_counts: {
+        Args: { _user_id: string }
+        Returns: {
+          followers_count: number
+          following_count: number
+        }[]
+      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
@@ -938,10 +966,12 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_following: { Args: { _following_id: string }; Returns: boolean }
       toggle_content_like: {
         Args: { content_uuid: string; viewer: string }
         Returns: boolean
       }
+      toggle_follow: { Args: { _following_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
