@@ -1515,7 +1515,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     contentId={content.id}
                     currentUrls={formData.raw_video_urls}
                     onUploadComplete={(urls) => {
-                      setFormData((prev) => ({ ...prev, raw_video_urls: urls, drive_url: urls[0] || '' }));
+                      setFormData((prev) => ({ ...prev, raw_video_urls: urls, drive_url: urls[0] || prev.drive_url }));
                       onUpdate?.();
                     }}
                     disabled={!editMode && !canEditDriveUrl && !isCreator}
@@ -1523,6 +1523,48 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     showPreview={false}
                   />
                 </div>
+              </div>
+
+              {/* Separador con "O" */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    O usa un enlace de Drive
+                  </span>
+                </div>
+              </div>
+
+              {/* Link de Google Drive */}
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4" /> Carpeta de Google Drive
+                </h4>
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.drive_url || ''}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, drive_url: e.target.value }))}
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    disabled={!editMode && !canEditDriveUrl && !isCreator}
+                    className="flex-1"
+                  />
+                  {formData.drive_url && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      asChild
+                    >
+                      <a href={formData.drive_url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Pega el enlace de la carpeta de Drive con los videos crudos. Al guardar, se procesarán automáticamente.
+                </p>
               </div>
 
             </TabsContent>
