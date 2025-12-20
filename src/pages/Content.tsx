@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -6,15 +6,18 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Plus, Play, Eye, Heart, ExternalLink, Volume2, VolumeX, Pause } from "lucide-react";
+import { Search, Plus, Play, Eye, Heart, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { VideoPlayerProvider } from "@/contexts/VideoPlayerContext";
+import { BunnyVideoCard } from "@/components/content/BunnyVideoCard";
 
 interface ContentItem {
   id: string;
   title: string;
   video_url: string | null;
+  video_urls: string[] | null;
   thumbnail_url: string | null;
   is_published: boolean;
   views_count: number;
@@ -59,6 +62,7 @@ const Content = () => {
           id,
           title,
           video_url,
+          video_urls,
           thumbnail_url,
           is_published,
           views_count,
@@ -68,7 +72,7 @@ const Content = () => {
           client_id,
           creator_id
         `)
-        .not('video_url', 'is', null)
+        .or('video_url.not.is.null,video_urls.not.is.null')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -185,6 +189,7 @@ const Content = () => {
         .insert({
           title: newVideoTitle,
           video_url: newVideoUrl,
+          video_urls: [newVideoUrl],
           is_published: true,
           status: 'delivered'
         });
@@ -202,6 +207,23 @@ const Content = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Get all video URLs for a content item
+  const getVideoUrls = (item: ContentItem): string[] => {
+    const urls: string[] = [];
+    
+    // Add video_urls array first (variations)
+    if (item.video_urls && item.video_urls.length > 0) {
+      urls.push(...item.video_urls.filter(u => u && u.trim()));
+    }
+    
+    // Add single video_url if not already included
+    if (item.video_url && !urls.includes(item.video_url)) {
+      urls.unshift(item.video_url);
+    }
+    
+    return urls;
   };
 
   const filteredContent = content.filter(item => {
@@ -222,27 +244,16 @@ const Content = () => {
     return count.toString();
   };
 
-  const getThumbnail = (url: string | null, thumbnail: string | null) => {
-    if (thumbnail) return thumbnail;
-    if (!url) return null;
-    
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)?.[1];
-      if (videoId) return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-    }
-    
-    return null;
-  };
-
   // Calculate real metrics for admins
   const totalViews = content.reduce((sum, item) => sum + item.views_count, 0);
   const totalLikes = content.reduce((sum, item) => sum + item.likes_count, 0);
   const publishedCount = content.filter(item => item.is_published).length;
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
+    <VideoPlayerProvider>
+      <div className="min-h-screen">
+        <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+          <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
             <div className="min-w-0">
               <h1 className="text-lg md:text-xl font-bold text-foreground">Galería de Videos</h1>
               <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Videos finales y portafolio público</p>
@@ -272,15 +283,15 @@ const Content = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="url">URL del video</Label>
+                      <Label htmlFor="url">URL del video (Bunny)</Label>
                       <Input
                         id="url"
-                        placeholder="https://youtube.com/... o URL directa"
+                        placeholder="https://iframe.mediadelivery.net/embed/..."
                         value={newVideoUrl}
                         onChange={(e) => setNewVideoUrl(e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Soporta: YouTube, TikTok, Instagram, Google Drive, o URL directa de video (.mp4)
+                        Soporta URLs de Bunny Stream embed o CDN directo
                       </p>
                     </div>
                     <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
@@ -377,8 +388,8 @@ const Content = () => {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-              {[...Array(6)].map((_, i) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+              {[...Array(10)].map((_, i) => (
                 <Skeleton key={i} className="aspect-[9/16] rounded-xl" />
               ))}
             </div>
@@ -397,364 +408,61 @@ const Content = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
               {filteredContent.map((item) => (
-                <EmbeddedVideoCard 
-                  key={item.id} 
-                  item={item} 
-                  isAdmin={isAdmin}
-                  onTogglePublish={togglePublish}
-                  onLike={handleLike}
-                  onView={handleView}
-                  getThumbnail={getThumbnail}
-                  formatCount={formatCount}
-                />
+                <div key={item.id} className="relative">
+                  <BunnyVideoCard
+                    id={item.id}
+                    title={item.title}
+                    videoUrls={getVideoUrls(item)}
+                    thumbnailUrl={item.thumbnail_url}
+                    viewsCount={item.views_count}
+                    likesCount={item.likes_count}
+                    isLiked={item.is_liked || false}
+                    clientName={item.client?.name}
+                    creatorName={item.creator?.full_name}
+                    isAdmin={isAdmin}
+                    onLike={() => handleLike(item.id)}
+                    onView={() => handleView(item.id)}
+                    showActions={true}
+                  />
+                  
+                  {/* Admin controls overlay */}
+                  {isAdmin && (
+                    <div className="absolute top-2 left-2 z-20 flex items-center gap-2">
+                      <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
+                        {item.is_published ? 'Publicado' : 'Privado'}
+                      </Badge>
+                    </div>
+                  )}
+                  
+                  {isAdmin && (
+                    <div className="absolute bottom-20 left-2 z-20 flex items-center gap-2">
+                      <Switch
+                        checked={item.is_published}
+                        onCheckedChange={() => togglePublish(item.id, item.is_published)}
+                        className="data-[state=checked]:bg-primary"
+                      />
+                      {item.video_url && (
+                        <a 
+                          href={item.video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
         </div>
       </div>
+    </VideoPlayerProvider>
   );
 };
-
-interface EmbeddedVideoCardProps {
-  item: ContentItem;
-  isAdmin: boolean;
-  onTogglePublish: (id: string, currentStatus: boolean) => void;
-  onLike: (id: string) => void;
-  onView: (id: string) => void;
-  getThumbnail: (url: string | null, thumbnail: string | null) => string | null;
-  formatCount: (count: number) => string;
-}
-
-function EmbeddedVideoCard({ item, isAdmin, onTogglePublish, onLike, onView, getThumbnail, formatCount }: EmbeddedVideoCardProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isHovering, setIsHovering] = useState(false);
-  const [isInView, setIsInView] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const viewTracked = useRef(false);
-  const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const thumbnail = getThumbnail(item.video_url, item.thumbnail_url);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
-  // Intersection Observer for mobile scroll autoplay
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsInView(entry.isIntersecting && entry.intersectionRatio > 0.6);
-      },
-      { threshold: [0, 0.6, 1] }
-    );
-
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  // Handle play/pause based on hover (desktop) or scroll (mobile)
-  useEffect(() => {
-    const shouldPlay = isMobile ? isInView : isHovering;
-    
-    if (shouldPlay && !isPlaying) {
-      setIsPlaying(true);
-    } else if (!shouldPlay && isPlaying) {
-      setIsPlaying(false);
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-      }
-    }
-  }, [isHovering, isInView, isMobile]);
-
-  // Track view after 3 seconds
-  useEffect(() => {
-    if (isPlaying && !viewTracked.current) {
-      viewTimerRef.current = setTimeout(() => {
-        onView(item.id);
-        viewTracked.current = true;
-      }, 3000);
-    }
-
-    return () => {
-      if (viewTimerRef.current) {
-        clearTimeout(viewTimerRef.current);
-      }
-    };
-  }, [isPlaying, item.id, onView]);
-
-  // Reset view tracking when video stops
-  useEffect(() => {
-    if (!isPlaying) {
-      viewTracked.current = false;
-      if (viewTimerRef.current) {
-        clearTimeout(viewTimerRef.current);
-      }
-    }
-  }, [isPlaying]);
-
-  // Control video playback
-  useEffect(() => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.play().catch(() => {});
-      } else {
-        videoRef.current.pause();
-      }
-    }
-  }, [isPlaying]);
-
-  // Get embed URL or direct video URL - with restrictions for non-admins
-  const getEmbedContent = () => {
-    const url = item.video_url;
-    if (!url) return null;
-
-    // Direct video files
-    if (url.match(/\.(mp4|webm|ogg)$/i)) {
-      return { type: 'video', src: url };
-    }
-
-    // YouTube - Add modestbranding and controls restrictions for non-admins
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      let embedUrl = url;
-      if (url.includes('/shorts/')) {
-        embedUrl = url.replace('/shorts/', '/embed/');
-      } else if (url.includes('watch?v=')) {
-        embedUrl = url.replace('watch?v=', 'embed/');
-      } else if (url.includes('youtu.be/')) {
-        embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
-      }
-      const params = isAdmin 
-        ? '?autoplay=1&mute=1' 
-        : '?autoplay=1&mute=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1';
-      return { type: 'iframe', src: embedUrl + params };
-    }
-
-    // TikTok
-    if (url.includes('tiktok.com')) {
-      const videoId = url.match(/video\/(\d+)/)?.[1];
-      if (videoId) {
-        return { type: 'iframe', src: `https://www.tiktok.com/embed/v2/${videoId}` };
-      }
-    }
-
-    // Instagram
-    if (url.includes('instagram.com')) {
-      let cleanUrl = url.split('?')[0].replace(/\/$/, '');
-      return { type: 'iframe', src: cleanUrl + '/embed/captioned' };
-    }
-
-    // Google Drive
-    if (url.includes('drive.google.com')) {
-      const fileId = url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
-      if (fileId) {
-        return { type: 'iframe', src: `https://drive.google.com/file/d/${fileId}/preview` };
-      }
-    }
-
-    // Fallback - only show link for admins
-    if (isAdmin) {
-      return { type: 'link', src: url };
-    }
-    return { type: 'unsupported', src: url };
-  };
-
-  const embedContent = getEmbedContent();
-
-  const handleMouseEnter = () => {
-    if (!isMobile) {
-      setIsHovering(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isMobile) {
-      setIsHovering(false);
-    }
-  };
-
-  const handleStop = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsPlaying(false);
-    setIsHovering(false);
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    }
-  };
-
-  return (
-    <div 
-      ref={containerRef}
-      className="group relative rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition-all"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Video Container - Vertical 9:16 */}
-      <div className="relative aspect-[9/16] bg-muted">
-        {!isPlaying ? (
-          <>
-            {/* Thumbnail */}
-            {thumbnail ? (
-              <img 
-                src={thumbnail} 
-                alt={item.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                <Play className="h-12 w-12 text-primary/50" />
-              </div>
-            )}
-            
-            {/* Play overlay - shows on hover */}
-            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm">
-                <Play className="h-10 w-10 text-white" fill="white" />
-              </div>
-            </div>
-
-            {/* Published Badge - Only for admins */}
-            {isAdmin && (
-              <div className="absolute top-2 right-2">
-                <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
-                  {item.is_published ? 'Publicado' : 'Privado'}
-                </Badge>
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            {/* Embedded Video Player */}
-            {embedContent?.type === 'video' ? (
-              <video
-                ref={videoRef}
-                src={embedContent.src}
-                className="w-full h-full object-cover"
-                autoPlay
-                muted={isMuted}
-                playsInline
-                loop
-                controlsList={isAdmin ? undefined : "nodownload noplaybackrate"}
-                disablePictureInPicture={!isAdmin}
-                onContextMenu={isAdmin ? undefined : (e) => e.preventDefault()}
-              />
-            ) : embedContent?.type === 'iframe' ? (
-              <div className="relative w-full h-full">
-                <iframe
-                  src={embedContent.src}
-                  className="w-full h-full"
-                  allowFullScreen={isAdmin}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                />
-                {!isAdmin && (
-                  <div className="absolute inset-0 pointer-events-none" />
-                )}
-              </div>
-            ) : embedContent?.type === 'link' && isAdmin ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <a 
-                  href={embedContent.src}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-primary hover:underline"
-                >
-                  <ExternalLink className="h-6 w-6" />
-                  Abrir video
-                </a>
-              </div>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                No se puede reproducir
-              </div>
-            )}
-
-            {/* Controls overlay */}
-            <div className="absolute top-2 right-2 flex gap-2">
-              <button
-                onClick={handleStop}
-                className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-              >
-                <Pause className="h-4 w-4" />
-              </button>
-              {embedContent?.type === 'video' && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsMuted(!isMuted);
-                  }}
-                  className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-                >
-                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                </button>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Stats Bar - Between video and info */}
-      <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-t border-border">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 text-muted-foreground text-xs">
-            <Eye className="h-3.5 w-3.5" />
-            <span>{formatCount(item.views_count)}</span>
-          </div>
-          <div className="flex items-center gap-1 text-muted-foreground text-xs">
-            <Heart className="h-3.5 w-3.5" />
-            <span>{formatCount(item.likes_count)}</span>
-          </div>
-        </div>
-        
-        {/* Like Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onLike(item.id);
-          }}
-          className={`p-1.5 rounded-full transition-colors ${
-            item.is_liked 
-              ? 'bg-red-500 text-white' 
-              : 'bg-muted text-muted-foreground hover:bg-red-500/20 hover:text-red-500'
-          }`}
-        >
-          <Heart className="h-4 w-4" fill={item.is_liked ? "currentColor" : "none"} />
-        </button>
-      </div>
-
-      {/* Info */}
-      <div className="p-3">
-        <h3 className="font-medium text-sm text-card-foreground line-clamp-2 mb-1">
-          {item.title}
-        </h3>
-        
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-muted-foreground">
-            {item.client?.name || 'Sin cliente'}
-          </div>
-          
-          {isAdmin && (
-            <div className="flex items-center gap-2">
-              <a 
-                href={item.video_url || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </a>
-              <Switch
-                checked={item.is_published}
-                onCheckedChange={() => onTogglePublish(item.id, item.is_published)}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default Content;
