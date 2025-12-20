@@ -43,7 +43,10 @@ import {
   X,
   Wallet,
   BarChart3,
-  Activity
+  Activity,
+  Share2,
+  Copy,
+  Check
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -201,6 +204,7 @@ export default function ClientDashboard() {
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [linkCopied, setLinkCopied] = useState(false);
   
   // Edit company state
   const [isEditingCompany, setIsEditingCompany] = useState(false);
@@ -211,6 +215,16 @@ export default function ClientDashboard() {
     notes: ''
   });
   const [savingCompany, setSavingCompany] = useState(false);
+
+  // Copy portfolio link
+  const copyPortfolioLink = () => {
+    if (!clientInfo) return;
+    const link = `${window.location.origin}/portfolio/${clientInfo.id}`;
+    navigator.clipboard.writeText(link);
+    setLinkCopied(true);
+    toast({ title: 'Link copiado', description: 'El enlace del portafolio ha sido copiado al portapapeles' });
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
 
   useEffect(() => {
     if (user) {
@@ -488,6 +502,21 @@ export default function ClientDashboard() {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Share Portfolio Link */}
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={copyPortfolioLink}
+              className="gap-1"
+            >
+              {linkCopied ? (
+                <Check className="w-4 h-4 text-success" />
+              ) : (
+                <Share2 className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">{linkCopied ? 'Copiado' : 'Compartir Portafolio'}</span>
+            </Button>
+
             {reviewContent.length > 0 && (
               <Button size="sm" onClick={() => setActiveTab('review')} className="gap-1">
                 <Eye className="w-4 h-4" />

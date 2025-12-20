@@ -20,6 +20,7 @@ import StrategistDashboard from "./pages/StrategistDashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import ClientContentBoard from "./pages/ClientContentBoard";
 import Portfolio from "./pages/Portfolio";
+import ClientPortfolio from "./pages/ClientPortfolio";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import { MainLayout } from "./components/layout/MainLayout";
@@ -27,7 +28,6 @@ import { MainLayout } from "./components/layout/MainLayout";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Avoid "page reload" feeling when switching tabs/minimizing (auto-refetch on focus).
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
       staleTime: 30_000,
@@ -44,6 +44,7 @@ function AppContent() {
           <Sonner />
           <Routes>
             <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/portfolio/:clientId" element={<ClientPortfolio />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'ambassador']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
