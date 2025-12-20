@@ -23,48 +23,56 @@ export interface BunnyVideoCardProps {
   className?: string;
 }
 
-// Thumbnail cache - persists across component instances
-const thumbnailCache = new Map<string, { loaded: boolean; error: boolean }>();
-
-// Preload and cache a thumbnail image
-function preloadThumbnail(url: string): Promise<boolean> {
-  if (thumbnailCache.has(url)) {
-    return Promise.resolve(thumbnailCache.get(url)!.loaded);
-  }
-  
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      thumbnailCache.set(url, { loaded: true, error: false });
-      resolve(true);
-    };
-    img.onerror = () => {
-      thumbnailCache.set(url, { loaded: false, error: true });
-      resolve(false);
-    };
-    img.src = url;
-  });
-}
-
-// Extract Bunny video ID and generate thumbnail
-function getBunnyThumbnail(url: string): string | null {
+// Get the poster/thumbnail from Bunny embed iframe
+function getBunnyPosterUrl(url: string): string | null {
   if (!url) return null;
+  
+  let libraryId: string | null = null;
+  let videoId: string | null = null;
   
   // Bunny embed URL format: https://iframe.mediadelivery.net/embed/{libraryId}/{videoId}
   const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
   if (embedMatch) {
-    const [, libraryId, videoId] = embedMatch;
-    return `https://vz-${libraryId}.b-cdn.net/${videoId}/thumbnail.jpg`;
+    [, libraryId, videoId] = embedMatch;
   }
   
   // Direct Bunny CDN URL: https://vz-{libraryId}.b-cdn.net/{videoId}/...
-  const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
-  if (cdnMatch) {
-    const [, libraryId, videoId] = cdnMatch;
-    return `https://vz-${libraryId}.b-cdn.net/${videoId}/thumbnail.jpg`;
+  if (!libraryId || !videoId) {
+    const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
+    if (cdnMatch) {
+      [, libraryId, videoId] = cdnMatch;
+    }
   }
   
-  return null;
+  if (!libraryId || !videoId) return null;
+  
+  // Use Bunny's thumbnail endpoint which works with their CDN authentication
+  return `https://vz-${libraryId}.b-cdn.net/${videoId}/thumbnail.jpg`;
+}
+
+// Get preview GIF URL as fallback
+function getBunnyPreviewUrl(url: string): string | null {
+  if (!url) return null;
+  
+  let libraryId: string | null = null;
+  let videoId: string | null = null;
+  
+  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
+  if (embedMatch) {
+    [, libraryId, videoId] = embedMatch;
+  }
+  
+  if (!libraryId || !videoId) {
+    const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
+    if (cdnMatch) {
+      [, libraryId, videoId] = cdnMatch;
+    }
+  }
+  
+  if (!libraryId || !videoId) return null;
+  
+  // Use animated preview as fallback
+  return `https://vz-${libraryId}.b-cdn.net/${videoId}/preview.webp`;
 }
 
 function formatCount(count: number): string {
@@ -96,8 +104,9 @@ export function BunnyVideoCard({
   const [isMuted, setIsMuted] = useState(true);
   const [isInView, setIsInView] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [thumbnailLoading, setThumbnailLoading] = useState(true);
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const [thumbnailError, setThumbnailError] = useState(false);
+  const [resolvedThumbnail, setResolvedThumbnail] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const viewTracked = useRef(false);
@@ -106,33 +115,23 @@ export function BunnyVideoCard({
   const currentVideoUrl = videoUrls[currentIndex] || videoUrls[0];
   const hasMultiple = videoUrls.length > 1;
 
-  // Generate thumbnail - prioritize provided, then try to extract from current Bunny URL
-  const generatedThumbnail = getBunnyThumbnail(currentVideoUrl);
-  const thumbnail = thumbnailError ? null : (thumbnailUrl || generatedThumbnail);
-
-  // Preload all variation thumbnails on mount
+  // Load thumbnail for current video
   useEffect(() => {
-    if (hasMultiple) {
-      videoUrls.forEach(url => {
-        const thumbUrl = getBunnyThumbnail(url);
-        if (thumbUrl) preloadThumbnail(thumbUrl);
-      });
+    if (thumbnailUrl) {
+      setResolvedThumbnail(thumbnailUrl);
+      setThumbnailLoading(false);
+      return;
     }
-  }, [videoUrls, hasMultiple]);
-
-  // Check cache and set loading state when thumbnail changes
-  useEffect(() => {
-    if (thumbnail) {
-      const cached = thumbnailCache.get(thumbnail);
-      if (cached) {
-        setThumbnailLoading(false);
-        setThumbnailError(cached.error);
-      } else {
-        setThumbnailLoading(true);
-        setThumbnailError(false);
-      }
+    
+    // Generate thumbnail URL from Bunny video URL
+    const posterUrl = getBunnyPosterUrl(currentVideoUrl);
+    if (posterUrl) {
+      setResolvedThumbnail(posterUrl);
+    } else {
+      setResolvedThumbnail(null);
     }
-  }, [thumbnail]);
+    setThumbnailLoading(false);
+  }, [currentVideoUrl, thumbnailUrl]);
 
   // Intersection Observer for scroll-based autoplay
   useEffect(() => {
@@ -222,26 +221,12 @@ export function BunnyVideoCard({
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newIndex = currentIndex > 0 ? currentIndex - 1 : videoUrls.length - 1;
-    const newUrl = videoUrls[newIndex];
-    const thumbUrl = getBunnyThumbnail(newUrl);
-    const cached = thumbUrl ? thumbnailCache.get(thumbUrl) : null;
-    
-    setCurrentIndex(newIndex);
-    setThumbnailError(cached?.error || false);
-    setThumbnailLoading(!cached?.loaded);
+    setCurrentIndex(prev => (prev > 0 ? prev - 1 : videoUrls.length - 1));
   };
 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newIndex = currentIndex < videoUrls.length - 1 ? currentIndex + 1 : 0;
-    const newUrl = videoUrls[newIndex];
-    const thumbUrl = getBunnyThumbnail(newUrl);
-    const cached = thumbUrl ? thumbnailCache.get(thumbUrl) : null;
-    
-    setCurrentIndex(newIndex);
-    setThumbnailError(cached?.error || false);
-    setThumbnailLoading(!cached?.loaded);
+    setCurrentIndex(prev => (prev < videoUrls.length - 1 ? prev + 1 : 0));
   };
 
   return (
@@ -258,25 +243,17 @@ export function BunnyVideoCard({
         {!isPlaying ? (
           <>
             {/* Thumbnail with loading state */}
-            {thumbnail ? (
-              <>
-                {thumbnailLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-muted z-10">
-                    <div className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
-                  </div>
-                )}
-                <img 
-                  src={thumbnail} 
-                  alt={title}
-                  className={cn(
-                    "w-full h-full object-cover transition-opacity duration-300",
-                    thumbnailLoading ? "opacity-0" : "opacity-100"
-                  )}
-                  loading="lazy"
-                  onLoad={() => setThumbnailLoading(false)}
-                  onError={() => { setThumbnailError(true); setThumbnailLoading(false); }}
-                />
-              </>
+            {resolvedThumbnail ? (
+              <img 
+                src={resolvedThumbnail} 
+                alt={title}
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+            ) : thumbnailLoading ? (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-muted">
+                <div className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+              </div>
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-muted">
                 <Play className="h-12 w-12 text-primary/50" />
@@ -311,27 +288,21 @@ export function BunnyVideoCard({
                 
                 {/* Dot indicators */}
                 <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
-                  {videoUrls.map((url, idx) => {
-                    const thumbUrl = getBunnyThumbnail(url);
-                    const cached = thumbUrl ? thumbnailCache.get(thumbUrl) : null;
-                    return (
-                      <button
-                        key={idx}
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          setCurrentIndex(idx); 
-                          setThumbnailError(cached?.error || false);
-                          setThumbnailLoading(!cached?.loaded);
-                        }}
-                        className={cn(
-                          "w-2 h-2 rounded-full transition-all",
-                          idx === currentIndex 
-                            ? "bg-white w-4" 
-                            : "bg-white/50 hover:bg-white/80"
-                        )}
-                      />
-                    );
-                  })}
+                  {videoUrls.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setCurrentIndex(idx);
+                      }}
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-all",
+                        idx === currentIndex 
+                          ? "bg-white w-4" 
+                          : "bg-white/50 hover:bg-white/80"
+                      )}
+                    />
+                  ))}
                 </div>
               </>
             )}
