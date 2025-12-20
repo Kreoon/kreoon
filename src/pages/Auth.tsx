@@ -597,11 +597,21 @@ function PublicVideoCard({ content, formatCount, onAuthRequired }: PublicVideoCa
     if (url.match(/\.(mp4|webm|ogg)$/i)) {
       return url;
     }
+    // Bunny CDN direct video files
+    if (url.includes('b-cdn.net') || url.includes('bunnycdn')) {
+      return url;
+    }
     return null;
   };
 
   const getEmbedUrl = () => {
     const url = content.video_url;
+
+    // Bunny Stream embeds - add autoplay params
+    if (url.includes('iframe.mediadelivery.net') || url.includes('bunny')) {
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}autoplay=true&muted=true&loop=true`;
+    }
     
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       let embedUrl = url;

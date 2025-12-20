@@ -605,6 +605,12 @@ function EmbeddedVideoCard({
       return { type: 'video', src: url };
     }
 
+    // Bunny Stream embeds - use iframe with autoplay
+    if (url.includes('iframe.mediadelivery.net') || url.includes('bunny')) {
+      const separator = url.includes('?') ? '&' : '?';
+      return { type: 'iframe', src: `${url}${separator}autoplay=true&muted=true&loop=true` };
+    }
+
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       let embedUrl = url;
       if (url.includes('/shorts/')) {
