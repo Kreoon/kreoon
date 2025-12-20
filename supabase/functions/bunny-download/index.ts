@@ -131,14 +131,25 @@ Deno.serve(async (req) => {
 
     const videoData = await videoResponse.json()
     
-    // Construct the direct download URL
-    // Bunny Stream provides a direct play URL that can be used for download
-    const downloadUrl = `https://${bunnyCdnHostname}/${videoId}/play_720p.mp4`
+    // For Bunny Stream, we need to use the pull zone CDN URL
+    // Format: https://vz-{hash}.b-cdn.net/{video_id}/play_720p.mp4
+    // Or use the direct video URL from Bunny API if available
     
-    // Alternative: Use original file if available
-    const originalUrl = videoData.originalUrl || downloadUrl
+    // Try to get the direct download URL from Bunny's CDN
+    // The CDN hostname should be in format: vz-xxxxxxxx-xxx.b-cdn.net
+    let downloadUrl = ''
+    
+    // Check if we have a configured CDN hostname
+    if (bunnyCdnHostname && bunnyCdnHostname !== 'vz-f0f0f0f0-f0f.b-cdn.net') {
+      downloadUrl = `https://${bunnyCdnHostname}/${videoId}/play_720p.mp4`
+    } else {
+      // Fallback: construct from library ID pattern
+      // Bunny Stream CDN format: https://vz-{library_id_hash}.b-cdn.net/{video_id}/play_720p.mp4
+      downloadUrl = `https://vz-${bunnyLibraryId}.b-cdn.net/${videoId}/play_720p.mp4`
+    }
 
     console.log(`Download URL generated for video ${videoId}: ${downloadUrl}`)
+    console.log(`Video data from Bunny:`, JSON.stringify(videoData))
 
     return new Response(
       JSON.stringify({
