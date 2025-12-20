@@ -4,9 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Grid3X3, 
   Play, 
   Loader2, 
   User,
@@ -14,8 +12,6 @@ import {
   Eye,
   Heart,
   Plus,
-  Briefcase,
-  Image as ImageIcon,
   Pencil,
   Home,
   ArrowLeft
@@ -81,7 +77,6 @@ interface ClientInfo {
 }
 
 type ProfileType = 'user' | 'client';
-type TabType = 'work' | 'posts';
 
 export default function UserPortfolio() {
   const { id } = useParams<{ id: string }>();
@@ -104,7 +99,6 @@ export default function UserPortfolio() {
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [showMediaUploader, setShowMediaUploader] = useState(false);
   const [uploaderType, setUploaderType] = useState<'post' | 'story'>('post');
-  const [activeTab, setActiveTab] = useState<TabType>('work');
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
@@ -315,28 +309,37 @@ export default function UserPortfolio() {
     return null;
   };
 
-  const tikTokVideos = useMemo(() => {
-    const allItems = activeTab === 'work' 
-      ? content.map(item => ({
-          id: item.id,
-          title: item.title,
-          videoUrls: item.video_urls?.length ? item.video_urls : (item.video_url ? [item.video_url] : []),
-          thumbnailUrl: item.thumbnail_url,
-          viewsCount: item.views_count || 0,
-          likesCount: item.likes_count || 0,
-          isLiked: false,
-        }))
-      : posts.filter(p => p.media_type === 'video').map(item => ({
-          id: item.id,
-          title: item.caption || '',
-          videoUrls: [item.media_url],
-          thumbnailUrl: item.thumbnail_url,
-          viewsCount: item.views_count || 0,
-          likesCount: item.likes_count || 0,
-          isLiked: false,
-        }));
-    return allItems;
-  }, [content, posts, activeTab]);
+  // Unified content: work + video posts
+  const allVideos = useMemo(() => {
+    const workVideos = content.map(item => ({
+      id: item.id,
+      title: item.title,
+      videoUrls: item.video_urls?.length ? item.video_urls : (item.video_url ? [item.video_url] : []),
+      thumbnailUrl: item.thumbnail_url,
+      viewsCount: item.views_count || 0,
+      likesCount: item.likes_count || 0,
+      isLiked: item.is_liked,
+      createdAt: item.created_at,
+      type: 'work' as const,
+    }));
+    
+    const postVideos = posts.filter(p => p.media_type === 'video').map(item => ({
+      id: item.id,
+      title: item.caption || '',
+      videoUrls: [item.media_url],
+      thumbnailUrl: item.thumbnail_url,
+      viewsCount: item.views_count || 0,
+      likesCount: item.likes_count || 0,
+      isLiked: false,
+      createdAt: item.created_at,
+      type: 'post' as const,
+    }));
+    
+    // Combine and sort by date
+    return [...workVideos, ...postVideos].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [content, posts]);
 
   const displayName = profileType === 'user' ? profile?.full_name : clientInfo?.name;
   const displayAvatar = profileType === 'user' ? profile?.avatar_url : clientInfo?.logo_url;
@@ -384,7 +387,7 @@ export default function UserPortfolio() {
             ← Volver
           </button>
           <TikTokFeed
-            videos={tikTokVideos.slice(initialVideoIndex).concat(tikTokVideos.slice(0, initialVideoIndex))}
+            videos={allVideos.slice(initialVideoIndex).concat(allVideos.slice(0, initialVideoIndex))}
             onLike={() => {}}
             onView={() => {}}
             onShare={() => {}}
@@ -406,7 +409,7 @@ export default function UserPortfolio() {
     );
   }
 
-  const currentItems = activeTab === 'work' ? content : posts;
+  
 
   return (
     <div className="min-h-screen bg-black">
@@ -556,66 +559,32 @@ export default function UserPortfolio() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="border-t border-white/10">
-          <div className="flex justify-center">
-            <button 
-              onClick={() => setActiveTab('work')}
-              className={cn(
-                "flex items-center gap-2 px-6 py-3 border-t-2 -mt-px transition-colors",
-                activeTab === 'work' ? "text-white border-white" : "text-white/50 border-transparent hover:text-white/70"
-              )}
-            >
-              <Briefcase className="h-4 w-4" />
-              <span className="text-xs font-medium uppercase tracking-wider">Trabajo</span>
-            </button>
-            {profileType === 'user' && (
-              <button 
-                onClick={() => setActiveTab('posts')}
-                className={cn(
-                  "flex items-center gap-2 px-6 py-3 border-t-2 -mt-px transition-colors",
-                  activeTab === 'posts' ? "text-white border-white" : "text-white/50 border-transparent hover:text-white/70"
-                )}
-              >
-                <Grid3X3 className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wider">Posts</span>
-              </button>
-            )}
-          </div>
-        </div>
+        {/* Content Divider */}
+        <div className="border-t border-white/10 mt-4" />
 
-        {/* Content Grid - Using BunnyVideoCard like Portfolio */}
-        <div className="px-4 pb-8">
-          {currentItems.length === 0 ? (
+        {/* Unified Content Grid */}
+        <div className="px-4 py-6">
+          {allVideos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-white/40">
-              {activeTab === 'work' ? (
-                <>
-                  <VideoIcon className="h-12 w-12 mb-3" />
-                  <p className="text-sm">Aún no hay trabajo publicado</p>
-                </>
-              ) : (
-                <>
-                  <ImageIcon className="h-12 w-12 mb-3" />
-                  <p className="text-sm">Aún no hay posts</p>
-                  {isOwner && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openUploader('post')}
-                      className="mt-4 border-white/20 text-white hover:bg-white/10"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Crear primer post
-                    </Button>
-                  )}
-                </>
+              <VideoIcon className="h-12 w-12 mb-3" />
+              <p className="text-sm">Aún no hay contenido publicado</p>
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openUploader('post')}
+                  className="mt-4 border-white/20 text-white hover:bg-white/10"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Crear primer post
+                </Button>
               )}
             </div>
           ) : isMobile ? (
             // Mobile: TikTok feed
             <VideoPlayerProvider>
               <TikTokFeed
-                videos={tikTokVideos}
+                videos={allVideos}
                 onLike={(contentId) => handleLike(contentId)}
                 onView={(contentId) => handleView(contentId)}
                 onShare={(item) => handleShare(content.find(c => c.id === item.id) || content[0])}
@@ -625,41 +594,25 @@ export default function UserPortfolio() {
             // Desktop: Grid with BunnyVideoCard
             <VideoPlayerProvider>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                {activeTab === 'work' ? (
-                  content.map((item) => {
-                    const videoUrls = item.video_urls?.length ? item.video_urls : (item.video_url ? [item.video_url] : []);
-                    return (
-                      <BunnyVideoCard
-                        key={item.id}
-                        id={item.id}
-                        title={item.title}
-                        videoUrls={videoUrls}
-                        thumbnailUrl={item.thumbnail_url}
-                        viewsCount={item.views_count || 0}
-                        likesCount={item.likes_count || 0}
-                        isLiked={item.is_liked}
-                        showActions={true}
-                        onLike={(e) => handleLike(item.id, e)}
-                        onView={() => handleView(item.id)}
-                        onShare={() => handleShare(item)}
-                      />
-                    );
-                  })
-                ) : (
-                  posts.filter(p => p.media_type === 'video').map((item) => (
-                    <BunnyVideoCard
-                      key={item.id}
-                      id={item.id}
-                      title={item.caption || ''}
-                      videoUrls={[item.media_url]}
-                      thumbnailUrl={item.thumbnail_url}
-                      viewsCount={item.views_count || 0}
-                      likesCount={item.likes_count || 0}
-                      isLiked={false}
-                      showActions={true}
-                    />
-                  ))
-                )}
+                {allVideos.map((item) => (
+                  <BunnyVideoCard
+                    key={item.id}
+                    id={item.id}
+                    title={item.title}
+                    videoUrls={item.videoUrls}
+                    thumbnailUrl={item.thumbnailUrl}
+                    viewsCount={item.viewsCount}
+                    likesCount={item.likesCount}
+                    isLiked={item.isLiked}
+                    showActions={true}
+                    onLike={(e) => handleLike(item.id, e)}
+                    onView={() => handleView(item.id)}
+                    onShare={() => {
+                      const contentItem = content.find(c => c.id === item.id);
+                      if (contentItem) handleShare(contentItem);
+                    }}
+                  />
+                ))}
               </div>
             </VideoPlayerProvider>
           )}
