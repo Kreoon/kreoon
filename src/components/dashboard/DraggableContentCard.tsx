@@ -1,4 +1,4 @@
-import { Calendar, User, GripVertical, DollarSign, CheckCircle } from "lucide-react";
+import { Calendar, User, GripVertical, DollarSign, CheckCircle, Video, FileVideo } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Content, STATUS_LABELS, STATUS_COLORS } from "@/types/database";
 import { format } from "date-fns";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface DraggableContentCardProps {
   content: Content;
@@ -165,6 +166,50 @@ export function DraggableContentCard({
                 <DollarSign className="h-3 w-3" />
                 <span>${(content.creator_payment || 0) + (content.editor_payment || 0)}</span>
               </div>
+            )}
+          </div>
+
+          {/* Video Variants Info */}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {/* Show hooks/variables count */}
+            {(content as any).hooks_count > 1 && (
+              <Badge variant="outline" className="text-xs gap-1">
+                <Video className="h-3 w-3" />
+                {(content as any).hooks_count} variables
+              </Badge>
+            )}
+            
+            {/* Show uploaded videos count */}
+            {(() => {
+              const videoUrls = (content as any).video_urls || [];
+              const uploadedCount = videoUrls.filter((url: string) => url && url.trim() !== '').length;
+              const totalCount = (content as any).hooks_count || 1;
+              
+              if (uploadedCount > 0) {
+                return (
+                  <Badge 
+                    variant={uploadedCount === totalCount ? "default" : "secondary"} 
+                    className={cn(
+                      "text-xs gap-1",
+                      uploadedCount === totalCount 
+                        ? "bg-green-500/10 text-green-600 border-green-500/20" 
+                        : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                    )}
+                  >
+                    <FileVideo className="h-3 w-3" />
+                    {uploadedCount}/{totalCount} videos
+                  </Badge>
+                );
+              }
+              return null;
+            })()}
+            
+            {/* Show raw material status */}
+            {(content as any).drive_url && (
+              <Badge variant="outline" className="text-xs gap-1 bg-blue-500/10 text-blue-600 border-blue-500/20">
+                <FileVideo className="h-3 w-3" />
+                Material crudo
+              </Badge>
             )}
           </div>
 
