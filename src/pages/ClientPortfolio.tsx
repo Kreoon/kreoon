@@ -311,8 +311,8 @@ export default function ClientPortfolio() {
         </div>
       </header>
 
-      {/* Content Grid */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      {/* Content Grid - 3 columns centered minimalist */}
+      <main className="max-w-4xl mx-auto px-4 py-8">
         {filteredContent.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-white/50">
             <VideoIcon className="h-16 w-16 mb-4" />
@@ -328,7 +328,7 @@ export default function ClientPortfolio() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {filteredContent.map((item) => (
               <div
                 key={item.id}
