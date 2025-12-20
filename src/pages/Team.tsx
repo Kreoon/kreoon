@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Profile, UserRole, Client, AppRole } from '@/types/database';
+import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { 
   Plus, 
   User, 
@@ -24,7 +25,8 @@ import {
   Star,
   Loader2,
   Send,
-  UserPlus
+  UserPlus,
+  Crown
 } from 'lucide-react';
 
 const ROLE_LABELS: Record<AppRole, string> = {
@@ -323,10 +325,10 @@ export default function Team() {
           <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
         </Avatar>
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium">{profile.full_name}</p>
-            {profile.is_ambassador && (
-              <Star className="w-4 h-4 text-primary fill-primary" />
+            {(profile.is_ambassador || profile.roles.includes('ambassador')) && (
+              <AmbassadorBadge size="sm" variant="default" />
             )}
           </div>
           <p className="text-sm text-muted-foreground">{profile.email}</p>

@@ -29,6 +29,7 @@ import { FollowButton } from '@/components/portfolio/FollowButton';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { ParsedText } from '@/components/ui/parsed-text';
+import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 
 interface UserProfile {
   id: string;
@@ -36,6 +37,7 @@ interface UserProfile {
   avatar_url: string | null;
   bio: string | null;
   is_public: boolean;
+  is_ambassador: boolean;
 }
 
 interface ContentItem {
@@ -131,14 +133,15 @@ export default function UserPortfolio() {
       // First, try to find as a user profile
       const { data: userData } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, bio, is_public')
+        .select('id, full_name, avatar_url, bio, is_public, is_ambassador')
         .eq('id', id)
         .maybeSingle();
 
       if (userData) {
         setProfile({
           ...userData,
-          is_public: userData.is_public ?? true
+          is_public: userData.is_public ?? true,
+          is_ambassador: userData.is_ambassador ?? false
         });
         setProfileType('user');
         
@@ -600,10 +603,13 @@ export default function UserPortfolio() {
 
             {/* Info */}
             <div className="flex-1 text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
+              <div className="flex items-center justify-center md:justify-start gap-3 mb-3 flex-wrap">
                 <h1 className="text-xl md:text-2xl font-bold text-white">
                   {displayName}
                 </h1>
+                {profile?.is_ambassador && (
+                  <AmbassadorBadge size="sm" variant="glow" />
+                )}
                 {isOwner && profileType === 'user' && (
                   <Button
                     size="sm"
