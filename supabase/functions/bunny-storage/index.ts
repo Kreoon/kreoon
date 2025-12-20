@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
         updateData = {
           raw_video_urls: newUrls,
           drive_url: embedUrl, // Keep drive_url for backward compatibility
-          video_processing_status: 'uploaded',
+          video_processing_status: 'completed',
         }
       } else if (fileType === 'thumbnail') {
         updateData = { thumbnail_url: embedUrl }
@@ -130,6 +130,7 @@ Deno.serve(async (req) => {
 
         if (updateError) {
           console.error('Error updating content:', updateError)
+          throw new Error(`Error updating content: ${updateError.message}`)
         }
       }
 
@@ -230,7 +231,7 @@ Deno.serve(async (req) => {
       updateData = {
         raw_video_urls: newUrls,
         drive_url: embedUrl, // Keep drive_url for backward compatibility
-        video_processing_status: 'uploaded',
+        video_processing_status: 'completed',
       }
     } else if (fileType === 'thumbnail') {
       updateData = { thumbnail_url: embedUrl }
@@ -244,6 +245,7 @@ Deno.serve(async (req) => {
 
       if (updateError) {
         console.error('Error updating content:', updateError)
+        throw new Error(`Error updating content: ${updateError.message}`)
       }
     }
 
