@@ -103,17 +103,33 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Extract video ID from Bunny embed URL
-    // Format: https://iframe.mediadelivery.net/embed/{library_id}/{video_id}
-    const videoIdMatch = video_url.match(/\/embed\/[^/]+\/([^/?]+)/)
-    if (!videoIdMatch) {
+    // Extract video ID from Bunny URL
+    // Formats:
+    // - Embed: https://iframe.mediadelivery.net/embed/{library_id}/{video_id}
+    // - CDN: https://vz-{hash}.b-cdn.net/{video_id}/...
+    let videoId = ''
+    
+    // Try embed format first
+    const embedMatch = video_url.match(/\/embed\/[^/]+\/([^/?]+)/)
+    if (embedMatch) {
+      videoId = embedMatch[1]
+    } else {
+      // Try CDN format: https://vz-xxxxx.b-cdn.net/{video_id}/...
+      const cdnMatch = video_url.match(/b-cdn\.net\/([a-f0-9-]+)/i)
+      if (cdnMatch) {
+        videoId = cdnMatch[1]
+      }
+    }
+    
+    if (!videoId) {
+      console.error('Could not extract video ID from URL:', video_url)
       return new Response(
-        JSON.stringify({ error: 'Invalid video URL format' }),
+        JSON.stringify({ error: 'Invalid video URL format', url: video_url }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
-    const videoId = videoIdMatch[1]
+    
+    console.log(`Extracted video ID: ${videoId} from URL: ${video_url}`)
 
     // Get video details from Bunny API
     const videoResponse = await fetch(
