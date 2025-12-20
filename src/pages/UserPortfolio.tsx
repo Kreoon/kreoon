@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,6 +29,7 @@ import { MediaUploader } from '@/components/portfolio/MediaUploader';
 import { ProfileEditor } from '@/components/portfolio/ProfileEditor';
 import { FollowButton } from '@/components/portfolio/FollowButton';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface UserProfile {
   id: string;
@@ -47,6 +48,8 @@ interface ContentItem {
   views_count: number;
   likes_count: number;
   created_at: string;
+  creator_id: string | null;
+  is_liked: boolean;
 }
 
 interface PortfolioPost {
@@ -102,6 +105,13 @@ export default function UserPortfolio() {
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
+  const [viewerId] = useState(() => {
+    const stored = localStorage.getItem('portfolio_viewer_id');
+    if (stored) return stored;
+    const newId = crypto.randomUUID();
+    localStorage.setItem('portfolio_viewer_id', newId);
+    return newId;
+  });
 
   useEffect(() => {
     if (id) {
@@ -149,7 +159,20 @@ export default function UserPortfolio() {
         }
 
         const { data: contentData } = await query.order('created_at', { ascending: false });
-        setContent(contentData || []);
+        
+        // Get liked content IDs
+        const contentIds = contentData?.map(c => c.id) || [];
+        const storedViewerId = localStorage.getItem('portfolio_viewer_id') || '';
+        const { data: likedData } = contentIds.length > 0 
+          ? await supabase.from('content_likes').select('content_id').eq('viewer_id', storedViewerId).in('content_id', contentIds)
+          : { data: [] };
+        const likedSet = new Set((likedData || []).map(l => l.content_id));
+        
+        const enrichedContent = (contentData || []).map(item => ({
+          ...item,
+          is_liked: likedSet.has(item.id)
+        }));
+        setContent(enrichedContent);
 
         // Fetch portfolio posts
         const { data: postsData } = await supabase
@@ -191,7 +214,7 @@ export default function UserPortfolio() {
           setClientInfo(clientData);
           setProfileType('client');
 
-        const { data: contentData } = await supabase
+          const { data: clientContentData } = await supabase
             .from('content')
             .select('id, title, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
             .eq('client_id', id)
@@ -199,13 +222,86 @@ export default function UserPortfolio() {
             .or('video_url.not.is.null,video_urls.not.is.null')
             .order('created_at', { ascending: false });
 
-          setContent(contentData || []);
+          const clientContentIds = clientContentData?.map(c => c.id) || [];
+          const { data: clientLikedData } = clientContentIds.length > 0 
+            ? await supabase.from('content_likes').select('content_id').eq('viewer_id', storedViewerId).in('content_id', clientContentIds)
+            : { data: [] };
+          const clientLikedSet = new Set((clientLikedData || []).map(l => l.content_id));
+          
+          const enrichedClientContent = (clientContentData || []).map(item => ({
+            ...item,
+            is_liked: clientLikedSet.has(item.id)
+          }));
+          setContent(enrichedClientContent);
         }
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLike = async (contentId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      const { data, error } = await supabase.rpc('toggle_content_like', {
+        content_uuid: contentId,
+        viewer: viewerId
+      });
+
+      if (error) throw error;
+
+      setContent(prev => prev.map(item => {
+        if (item.id === contentId) {
+          return {
+            ...item,
+            is_liked: data,
+            likes_count: data ? item.likes_count + 1 : Math.max(0, item.likes_count - 1)
+          };
+        }
+        return item;
+      }));
+
+      toast.success(data ? '❤️ Me gusta' : 'Ya no te gusta');
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error('Error al dar like');
+    }
+  };
+
+  const handleView = useCallback(async (contentId: string) => {
+    try {
+      await supabase.rpc('increment_content_views', { content_uuid: contentId });
+      setContent(prev => prev.map(item => {
+        if (item.id === contentId) {
+          return { ...item, views_count: item.views_count + 1 };
+        }
+        return item;
+      }));
+    } catch (error) {
+      console.error('Error incrementing views:', error);
+    }
+  }, []);
+
+  const handleShare = async (item: ContentItem) => {
+    const url = `${window.location.origin}/portfolio?v=${item.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: item.title,
+          text: `Mira este video`,
+          url
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success('Link copiado al portapapeles');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
     }
   };
 
@@ -499,9 +595,9 @@ export default function UserPortfolio() {
             <VideoPlayerProvider>
               <TikTokFeed
                 videos={tikTokVideos}
-                onLike={() => {}}
-                onView={() => {}}
-                onShare={() => {}}
+                onLike={(contentId) => handleLike(contentId)}
+                onView={(contentId) => handleView(contentId)}
+                onShare={(item) => handleShare(content.find(c => c.id === item.id) || content[0])}
               />
             </VideoPlayerProvider>
           ) : (
@@ -520,9 +616,13 @@ export default function UserPortfolio() {
                         thumbnailUrl={item.thumbnail_url}
                         viewsCount={item.views_count || 0}
                         likesCount={item.likes_count || 0}
-                        isLiked={false}
+                        isLiked={item.is_liked}
+                        creatorId={item.creator_id || undefined}
                         creatorName={displayName || undefined}
                         showActions={true}
+                        onLike={(e) => handleLike(item.id, e)}
+                        onView={() => handleView(item.id)}
+                        onShare={() => handleShare(item)}
                       />
                     );
                   })
