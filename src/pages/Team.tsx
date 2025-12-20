@@ -355,6 +355,7 @@ export default function Team() {
                     <SelectItem value="editor">Editor</SelectItem>
                     <SelectItem value="client">Cliente</SelectItem>
                     <SelectItem value="strategist">Estratega</SelectItem>
+                    <SelectItem value="ambassador">Embajador</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
