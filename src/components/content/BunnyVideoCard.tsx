@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, MessageSquare } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
 
 interface BunnyVideoCardProps {
   id: string;
   title: string;
-  videoUrl: string; // Single video URL
+  videoUrls: string[]; // Array of video URLs for variations
   thumbnailUrl?: string | null;
   viewsCount: number;
   likesCount: number;
@@ -24,6 +24,8 @@ interface BunnyVideoCardProps {
 
 // Extract Bunny video ID and generate thumbnail
 function getBunnyThumbnail(url: string): string | null {
+  if (!url) return null;
+  
   // Bunny embed URL format: https://iframe.mediadelivery.net/embed/{libraryId}/{videoId}
   const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
   if (embedMatch) {
@@ -31,7 +33,7 @@ function getBunnyThumbnail(url: string): string | null {
     return `https://vz-${libraryId}.b-cdn.net/${videoId}/thumbnail.jpg`;
   }
   
-  // Direct Bunny CDN URL
+  // Direct Bunny CDN URL: https://vz-{libraryId}.b-cdn.net/{videoId}/...
   const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
   if (cdnMatch) {
     const [, libraryId, videoId] = cdnMatch;
@@ -50,7 +52,7 @@ function formatCount(count: number): string {
 export function BunnyVideoCard({
   id,
   title,
-  videoUrl,
+  videoUrls,
   thumbnailUrl,
   viewsCount,
   likesCount,
@@ -68,13 +70,19 @@ export function BunnyVideoCard({
   const { isPlaying, play, stop } = useVideoPlayback(id);
   const [isMuted, setIsMuted] = useState(true);
   const [isInView, setIsInView] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [thumbnailError, setThumbnailError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const viewTracked = useRef(false);
   const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Generate thumbnail - prioritize provided, then try to extract from Bunny URL
-  const thumbnail = thumbnailUrl || (videoUrl ? getBunnyThumbnail(videoUrl) : null);
+  const currentVideoUrl = videoUrls[currentIndex] || videoUrls[0];
+  const hasMultiple = videoUrls.length > 1;
+
+  // Generate thumbnail - prioritize provided, then try to extract from current Bunny URL
+  const generatedThumbnail = getBunnyThumbnail(currentVideoUrl);
+  const thumbnail = thumbnailError ? null : (thumbnailUrl || generatedThumbnail);
 
   // Intersection Observer for scroll-based autoplay
   useEffect(() => {
@@ -162,6 +170,18 @@ export function BunnyVideoCard({
     setIsMuted(!isMuted);
   };
 
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex(prev => (prev > 0 ? prev - 1 : videoUrls.length - 1));
+    setThumbnailError(false);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex(prev => (prev < videoUrls.length - 1 ? prev + 1 : 0));
+    setThumbnailError(false);
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -182,6 +202,7 @@ export function BunnyVideoCard({
                 alt={title}
                 className="w-full h-full object-cover"
                 loading="lazy"
+                onError={() => setThumbnailError(true)}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-muted">
@@ -198,6 +219,40 @@ export function BunnyVideoCard({
                 <Play className="h-8 w-8 text-primary-foreground" fill="currentColor" />
               </div>
             </div>
+
+            {/* Carousel navigation */}
+            {hasMultiple && (
+              <>
+                <button
+                  onClick={handlePrev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                
+                {/* Dot indicators */}
+                <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+                  {videoUrls.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); setThumbnailError(false); }}
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-all",
+                        idx === currentIndex 
+                          ? "bg-white w-4" 
+                          : "bg-white/50 hover:bg-white/80"
+                      )}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* Stats */}
             <div className="absolute bottom-16 left-3 flex items-center gap-2 z-10">
@@ -251,7 +306,7 @@ export function BunnyVideoCard({
             {/* Bunny iframe player */}
             <iframe
               ref={iframeRef}
-              src={getEmbedUrl(videoUrl)}
+              src={getEmbedUrl(currentVideoUrl)}
               className="w-full h-full border-0"
               allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
               allowFullScreen={isAdmin}
@@ -273,6 +328,29 @@ export function BunnyVideoCard({
                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
               </button>
             </div>
+
+            {/* Carousel navigation while playing */}
+            {hasMultiple && (
+              <>
+                <button
+                  onClick={handlePrev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                
+                {/* Variation indicator while playing */}
+                <div className="absolute top-3 left-3 z-20 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+                  {currentIndex + 1}/{videoUrls.length}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
@@ -289,6 +367,12 @@ export function BunnyVideoCard({
           {clientName && creatorName && <span>•</span>}
           {creatorName && (
             <span>{creatorName}</span>
+          )}
+          {hasMultiple && (
+            <>
+              <span>•</span>
+              <span className="text-primary">{videoUrls.length} variaciones</span>
+            </>
           )}
         </div>
       </div>

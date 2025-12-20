@@ -29,12 +29,20 @@ interface ContentItem {
   is_liked?: boolean;
 }
 
-// Flattened item for display - each video variation becomes its own card
-interface DisplayItem extends ContentItem {
-  displayId: string; // Unique ID for the display item (contentId-index)
-  currentVideoUrl: string; // The specific video URL for this card
-  variationIndex: number; // Which variation this is (0-based)
-  totalVariations: number; // Total number of variations for this content
+// Helper to get all video URLs for a content item
+function getVideoUrls(item: ContentItem): string[] {
+  const urls: string[] = [];
+  
+  if (item.video_urls && item.video_urls.length > 0) {
+    urls.push(...item.video_urls.filter(u => u && u.trim()));
+  }
+  
+  // Only add video_url if not already in video_urls
+  if (item.video_url && !urls.includes(item.video_url)) {
+    urls.unshift(item.video_url);
+  }
+  
+  return urls;
 }
 
 const Content = () => {
@@ -217,43 +225,16 @@ const Content = () => {
     }
   };
 
-  // Flatten content into display items - each video URL becomes its own card
-  const displayItems: DisplayItem[] = useMemo(() => {
-    const items: DisplayItem[] = [];
-    
-    content.forEach(item => {
-      // Collect all video URLs for this content
-      const urls: string[] = [];
-      
-      if (item.video_urls && item.video_urls.length > 0) {
-        urls.push(...item.video_urls.filter(u => u && u.trim()));
-      }
-      
-      // Only add video_url if not already in video_urls
-      if (item.video_url && !urls.includes(item.video_url)) {
-        urls.unshift(item.video_url);
-      }
-      
-      // Skip content without any videos
-      if (urls.length === 0) return;
-      
-      // Create a display item for each video URL
-      urls.forEach((url, index) => {
-        items.push({
-          ...item,
-          displayId: `${item.id}-${index}`,
-          currentVideoUrl: url,
-          variationIndex: index,
-          totalVariations: urls.length
-        });
-      });
+  // Filter content that has videos
+  const contentWithVideos = useMemo(() => {
+    return content.filter(item => {
+      const urls = getVideoUrls(item);
+      return urls.length > 0;
     });
-    
-    return items;
   }, [content]);
 
-  // Filter display items
-  const filteredDisplayItems = displayItems.filter(item => {
+  // Filter by search and publish status
+  const filteredContent = contentWithVideos.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.client?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.creator?.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -265,6 +246,9 @@ const Content = () => {
     return matchesSearch && matchesFilter;
   });
 
+  // Count total variations for metrics
+  const totalVariations = contentWithVideos.reduce((sum, item) => sum + getVideoUrls(item).length, 0);
+
   const formatCount = (count: number) => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
     if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
@@ -275,7 +259,6 @@ const Content = () => {
   const totalViews = content.reduce((sum, item) => sum + item.views_count, 0);
   const totalLikes = content.reduce((sum, item) => sum + item.likes_count, 0);
   const publishedCount = content.filter(item => item.is_published).length;
-  const totalVariations = displayItems.length;
 
   return (
     <VideoPlayerProvider>
@@ -427,7 +410,7 @@ const Content = () => {
                 <Skeleton key={i} className="aspect-[9/16] rounded-xl" />
               ))}
             </div>
-          ) : filteredDisplayItems.length === 0 ? (
+          ) : filteredContent.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 md:p-12 text-center">
               <div className="mx-auto max-w-md">
                 <div className="mx-auto mb-4 flex h-12 w-12 md:h-16 md:w-16 items-center justify-center rounded-full bg-primary/10">
@@ -443,60 +426,55 @@ const Content = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-              {filteredDisplayItems.map((item) => (
-                <div key={item.displayId} className="relative">
-                  <BunnyVideoCard
-                    id={item.displayId}
-                    title={item.totalVariations > 1 
-                      ? `${item.title} (${item.variationIndex + 1}/${item.totalVariations})`
-                      : item.title
-                    }
-                    videoUrl={item.currentVideoUrl}
-                    thumbnailUrl={item.thumbnail_url}
-                    viewsCount={item.views_count}
-                    likesCount={item.likes_count}
-                    isLiked={item.is_liked || false}
-                    clientName={item.client?.name}
-                    creatorName={item.creator?.full_name}
-                    isAdmin={isAdmin}
-                    onLike={() => handleLike(item.id)}
-                    onView={() => handleView(item.id)}
-                    showActions={true}
-                  />
-                  
-                  {/* Admin controls overlay */}
-                  {isAdmin && (
-                    <div className="absolute top-2 left-2 z-20 flex items-center gap-2">
-                      <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
-                        {item.is_published ? 'Publicado' : 'Privado'}
-                      </Badge>
-                      {item.totalVariations > 1 && (
-                        <Badge variant="outline" className="text-xs bg-black/50 text-white border-white/20">
-                          {item.variationIndex + 1}/{item.totalVariations}
+              {filteredContent.map((item) => {
+                const videoUrls = getVideoUrls(item);
+                return (
+                  <div key={item.id} className="relative">
+                    <BunnyVideoCard
+                      id={item.id}
+                      title={item.title}
+                      videoUrls={videoUrls}
+                      thumbnailUrl={item.thumbnail_url}
+                      viewsCount={item.views_count}
+                      likesCount={item.likes_count}
+                      isLiked={item.is_liked || false}
+                      clientName={item.client?.name}
+                      creatorName={item.creator?.full_name}
+                      isAdmin={isAdmin}
+                      onLike={() => handleLike(item.id)}
+                      onView={() => handleView(item.id)}
+                      showActions={true}
+                    />
+                    
+                    {/* Admin controls overlay */}
+                    {isAdmin && (
+                      <div className="absolute top-2 left-2 z-20 flex items-center gap-2">
+                        <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
+                          {item.is_published ? 'Publicado' : 'Privado'}
                         </Badge>
-                      )}
-                    </div>
-                  )}
-                  
-                  {isAdmin && (
-                    <div className="absolute bottom-20 left-2 z-20 flex items-center gap-2">
-                      <Switch
-                        checked={item.is_published}
-                        onCheckedChange={() => togglePublish(item.id, item.is_published)}
-                        className="data-[state=checked]:bg-primary"
-                      />
-                      <a 
-                        href={item.currentVideoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-              ))}
+                      </div>
+                    )}
+                    
+                    {isAdmin && (
+                      <div className="absolute bottom-20 left-2 z-20 flex items-center gap-2">
+                        <Switch
+                          checked={item.is_published}
+                          onCheckedChange={() => togglePublish(item.id, item.is_published)}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                        <a 
+                          href={videoUrls[0]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
