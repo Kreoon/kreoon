@@ -251,6 +251,21 @@ export default function Portfolio() {
     });
   }, [content]);
 
+  // Prepare videos for TikTok feed - MUST be before any early returns
+  const tikTokVideos = useMemo(() => {
+    return contentWithVideos.map(item => ({
+      id: item.id,
+      title: item.title,
+      videoUrls: getVideoUrls(item),
+      thumbnailUrl: item.thumbnail_url,
+      viewsCount: item.views_count,
+      likesCount: item.likes_count,
+      isLiked: item.is_liked,
+      clientName: item.client?.name,
+      creatorName: item.creator?.full_name
+    }));
+  }, [contentWithVideos]);
+
   const handleLogout = async () => {
     await signOut();
     navigate('/portfolio');
@@ -300,21 +315,6 @@ export default function Portfolio() {
       </div>
     );
   }
-
-  // Prepare videos for TikTok feed
-  const tikTokVideos = useMemo(() => {
-    return contentWithVideos.map(item => ({
-      id: item.id,
-      title: item.title,
-      videoUrls: getVideoUrls(item),
-      thumbnailUrl: item.thumbnail_url,
-      viewsCount: item.views_count,
-      likesCount: item.likes_count,
-      isLiked: item.is_liked,
-      clientName: item.client?.name,
-      creatorName: item.creator?.full_name
-    }));
-  }, [contentWithVideos]);
 
   // Mobile TikTok-style view
   if (isMobile) {
