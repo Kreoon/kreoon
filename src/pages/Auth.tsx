@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -8,18 +8,35 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Play, Eye, Heart, X, Volume2, VolumeX, Pause, LogIn } from 'lucide-react';
+import { Loader2, Sparkles, Play, Heart, X } from 'lucide-react';
 import { AppRole } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
+import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
+import { BunnyVideoCard } from '@/components/content/BunnyVideoCard';
+import { FullscreenVideoViewer } from '@/components/content/FullscreenVideoViewer';
 
 interface PublishedContent {
   id: string;
   title: string;
-  video_url: string;
+  video_url: string | null;
+  video_urls: string[] | null;
   thumbnail_url: string | null;
   client: { name: string } | null;
+  creator: { full_name: string } | null;
   views_count: number;
   likes_count: number;
+  is_liked: boolean;
+}
+
+function getVideoUrls(item: PublishedContent): string[] {
+  const urls: string[] = [];
+  if (item.video_urls && item.video_urls.length > 0) {
+    urls.push(...item.video_urls.filter(u => u && u.trim()));
+  }
+  if (item.video_url && !urls.includes(item.video_url)) {
+    urls.unshift(item.video_url);
+  }
+  return urls;
 }
 
 export default function Auth() {
@@ -39,19 +56,26 @@ export default function Auth() {
   // Content state
   const [content, setContent] = useState<PublishedContent[]>([]);
   const [contentLoading, setContentLoading] = useState(true);
+  const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
+
+  // Viewer ID for likes
+  const [viewerId] = useState(() => {
+    const stored = localStorage.getItem('auth_viewer_id');
+    if (stored) return stored;
+    const newId = crypto.randomUUID();
+    localStorage.setItem('auth_viewer_id', newId);
+    return newId;
+  });
 
   const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
-    // Wait until roles are resolved before redirecting to avoid mobile redirect loops
-    // Also ensure we only redirect once to prevent multiple navigations
     if (user && !authLoading && rolesLoaded && !hasRedirectedRef.current) {
       hasRedirectedRef.current = true;
       redirectByRole();
     }
   }, [user, authLoading, rolesLoaded, roles]);
 
-  // Reset redirect flag when user logs out
   useEffect(() => {
     if (!user) {
       hasRedirectedRef.current = false;
@@ -70,13 +94,15 @@ export default function Auth() {
           id,
           title,
           video_url,
+          video_urls,
           thumbnail_url,
           views_count,
           likes_count,
-          client_id
+          client_id,
+          creator_id
         `)
         .eq('is_published', true)
-        .not('video_url', 'is', null)
+        .or('video_url.not.is.null,video_urls.not.is.null')
         .order('created_at', { ascending: false })
         .limit(12);
 
@@ -84,18 +110,34 @@ export default function Auth() {
 
       if (data && data.length > 0) {
         const clientIds = [...new Set(data.filter(d => d.client_id).map(d => d.client_id))] as string[];
+        const creatorIds = [...new Set(data.filter(d => d.creator_id).map(d => d.creator_id))] as string[];
+        const contentIds = data.map(d => d.id);
         
-        const clientsResult = clientIds.length > 0 
-          ? await supabase.from('clients').select('id, name').in('id', clientIds)
-          : { data: [] };
+        const [clientsResult, creatorsResult, likesResult] = await Promise.all([
+          clientIds.length > 0 
+            ? supabase.from('clients').select('id, name').in('id', clientIds)
+            : Promise.resolve({ data: [] }),
+          creatorIds.length > 0 
+            ? supabase.from('profiles').select('id, full_name').in('id', creatorIds)
+            : Promise.resolve({ data: [] }),
+          supabase.from('content_likes').select('content_id').eq('viewer_id', viewerId).in('content_id', contentIds)
+        ]);
 
         const clientsMap = new Map((clientsResult.data || []).map(c => [c.id, c]));
+        const creatorsMap = new Map((creatorsResult.data || []).map(c => [c.id, c]));
+        const likedSet = new Set((likesResult.data || []).map(l => l.content_id));
 
         const enrichedData = data.map(item => ({
-          ...item,
+          id: item.id,
+          title: item.title,
+          video_url: item.video_url,
+          video_urls: item.video_urls,
+          thumbnail_url: item.thumbnail_url,
           views_count: item.views_count || 0,
           likes_count: item.likes_count || 0,
-          client: item.client_id ? clientsMap.get(item.client_id) || null : null
+          is_liked: likedSet.has(item.id),
+          client: item.client_id ? clientsMap.get(item.client_id) || null : null,
+          creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null
         }));
 
         setContent(enrichedData as PublishedContent[]);
@@ -117,7 +159,6 @@ export default function Auth() {
     } else if (roles.includes('client')) {
       navigate('/client-dashboard');
     } else {
-      // If no roles are assigned yet, keep user in a safe place
       navigate('/settings');
     }
   };
@@ -141,8 +182,6 @@ export default function Auth() {
         setLoading(false);
         return;
       }
-      
-      // Success - loading will be set to false when redirect happens
     } catch (err) {
       console.error('[Auth] Unexpected error:', err);
       toast({
@@ -201,11 +240,71 @@ export default function Auth() {
     setLoading(false);
   };
 
-  const formatCount = (count: number) => {
-    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-    return count.toString();
+  const handleLike = async (contentId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      const { data, error } = await supabase.rpc('toggle_content_like', {
+        content_uuid: contentId,
+        viewer: viewerId
+      });
+
+      if (error) throw error;
+
+      setContent(prev => prev.map(item => {
+        if (item.id === contentId) {
+          return {
+            ...item,
+            is_liked: data,
+            likes_count: data ? item.likes_count + 1 : Math.max(0, item.likes_count - 1)
+          };
+        }
+        return item;
+      }));
+
+      toast({ description: data ? '❤️ Me gusta' : 'Ya no te gusta' });
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
   };
+
+  const handleView = useCallback(async (contentId: string) => {
+    try {
+      await supabase.rpc('increment_content_views', { content_uuid: contentId });
+      setContent(prev => prev.map(item => {
+        if (item.id === contentId) {
+          return { ...item, views_count: item.views_count + 1 };
+        }
+        return item;
+      }));
+    } catch (error) {
+      console.error('Error incrementing views:', error);
+    }
+  }, []);
+
+  const handleShare = async (item: PublishedContent) => {
+    const url = `${window.location.origin}/portfolio?v=${item.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: item.title,
+          text: `Mira este video de ${item.client?.name || 'UGC Colombia'}`,
+          url
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast({ description: 'Link copiado al portapapeles' });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+  const contentWithVideos = useMemo(() => {
+    return content.filter(item => getVideoUrls(item).length > 0);
+  }, [content]);
 
   const openLogin = () => {
     setAuthTab('login');
@@ -226,563 +325,350 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-black/95 backdrop-blur border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary" />
-            <h1 className="text-white font-bold text-xl">UGC Colombia</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              onClick={openLogin}
-              className="text-white hover:bg-white/10"
-            >
-              Iniciar Sesión
-            </Button>
-            <Button onClick={openRegister} className="bg-primary hover:bg-primary/90">
-              Registrarse
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Contenido UGC de <span className="text-primary">Alta Calidad</span>
-          </h2>
-          <p className="text-lg text-white/60 mb-8 max-w-2xl mx-auto">
-            Descubre nuestro portafolio de videos creados por los mejores creadores de Colombia. 
-            Únete como creador, editor o cliente.
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <Button size="lg" onClick={openRegister} className="bg-primary hover:bg-primary/90">
-              Comenzar Ahora
-            </Button>
-            <Button size="lg" variant="outline" onClick={openLogin} className="border-white/30 text-white hover:bg-white/10">
-              Ya tengo cuenta
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Video Gallery */}
-      <section className="px-4 pb-16">
-        <div className="max-w-7xl mx-auto">
-          <h3 className="text-2xl font-bold text-white mb-6">Nuestro Portafolio</h3>
-          
-          {contentLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="aspect-[9/16] rounded-xl bg-white/10 animate-pulse" />
-              ))}
-            </div>
-          ) : content.length === 0 ? (
-            <div className="text-center py-16">
-              <Play className="w-16 h-16 text-white/30 mx-auto mb-4" />
-              <p className="text-white/60">Próximamente más contenido</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {content.map((item) => (
-                <PublicVideoCard
-                  key={item.id}
-                  content={item}
-                  formatCount={formatCount}
-                  onAuthRequired={openLogin}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="px-4 py-16 border-t border-white/10">
-        <div className="max-w-5xl mx-auto">
-          <h3 className="text-2xl font-bold text-white text-center mb-12">¿Cómo funciona?</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                <Play className="w-8 h-8 text-primary" />
+    <VideoPlayerProvider>
+      <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-xl border-b border-primary/20">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg glow-gold">
+                <span className="text-black font-bold text-lg">U</span>
               </div>
-              <h4 className="text-white font-semibold mb-2">Creadores</h4>
-              <p className="text-white/60 text-sm">
-                Graba contenido UGC auténtico y recibe pago por cada video aprobado
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-8 h-8 text-purple-400" />
+              <div>
+                <h1 className="text-white font-bold text-xl">UGC Colombia</h1>
+                <p className="text-primary text-xs">Red de Creadores</p>
               </div>
-              <h4 className="text-white font-semibold mb-2">Editores</h4>
-              <p className="text-white/60 text-sm">
-                Edita y produce videos de alta calidad para marcas reconocidas
-              </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
-                <Heart className="w-8 h-8 text-blue-400" />
-              </div>
-              <h4 className="text-white font-semibold mb-2">Marcas</h4>
-              <p className="text-white/60 text-sm">
-                Obtén contenido auténtico que conecta con tu audiencia
-              </p>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                onClick={openLogin}
+                className="text-white/70 hover:text-white hover:bg-white/10"
+              >
+                Iniciar Sesión
+              </Button>
+              <Button onClick={openRegister} className="bg-gradient-gold text-black font-semibold hover:opacity-90 glow-gold">
+                Registrarse
+              </Button>
             </div>
           </div>
-        </div>
-      </section>
+        </header>
 
-      {/* CTA Section */}
-      <section className="px-4 py-16 bg-gradient-to-r from-primary/20 to-purple-500/20">
-        <div className="max-w-3xl mx-auto text-center">
-          <h3 className="text-3xl font-bold text-white mb-4">
-            ¿Listo para empezar?
-          </h3>
-          <p className="text-white/60 mb-8">
-            Únete a nuestra comunidad de creadores y marcas
-          </p>
-          <Button size="lg" onClick={openRegister} className="bg-white text-black hover:bg-white/90">
-            Crear Cuenta Gratis
-          </Button>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="px-4 py-8 border-t border-white/10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <span className="text-white/60 text-sm">UGC Colombia</span>
+        {/* Hero Section */}
+        <section className="py-12 md:py-20 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              Contenido UGC de <span className="text-transparent bg-clip-text bg-gradient-gold">Alta Calidad</span>
+            </h2>
+            <p className="text-lg md:text-xl text-white/60 mb-8 max-w-2xl mx-auto">
+              Descubre nuestro portafolio de videos creados por los mejores creadores de Colombia. 
+              Únete como creador, editor o cliente.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button size="lg" onClick={openRegister} className="w-full sm:w-auto bg-gradient-gold text-black font-semibold hover:opacity-90 glow-gold">
+                Comenzar Ahora
+              </Button>
+              <Button size="lg" variant="outline" onClick={openLogin} className="w-full sm:w-auto border-primary/50 text-white hover:bg-primary/20 hover:border-primary">
+                Ya tengo cuenta
+              </Button>
+            </div>
           </div>
-          <p className="text-white/40 text-sm">© 2024 Todos los derechos reservados</p>
-        </div>
-      </footer>
+        </section>
 
-      {/* Auth Modal */}
-      {showAuthModal && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setShowAuthModal(false)}
-        >
-          <Card 
-            className="w-full max-w-md relative"
-            onClick={e => e.stopPropagation()}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-2"
-              onClick={() => setShowAuthModal(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        {/* Video Gallery */}
+        <section className="px-4 pb-16">
+          <div className="max-w-7xl mx-auto">
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-primary" />
+              Nuestro Portafolio
+            </h3>
             
-            <CardHeader className="text-center pt-8">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Sparkles className="w-6 h-6 text-primary" />
-                <span className="font-bold text-lg">UGC Colombia</span>
+            {contentLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="aspect-[9/16] rounded-xl bg-white/10 animate-pulse" />
+                ))}
               </div>
-              <CardTitle className="text-2xl">
-                {authTab === 'login' ? 'Bienvenido de vuelta' : 'Crear cuenta'}
-              </CardTitle>
-              <CardDescription>
-                {authTab === 'login' 
-                  ? 'Ingresa tus credenciales para continuar' 
-                  : 'Completa tus datos para registrarte'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'register')} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-                  <TabsTrigger value="register">Registrarse</TabsTrigger>
-                </TabsList>
+            ) : contentWithVideos.length === 0 ? (
+              <div className="text-center py-16">
+                <Play className="w-16 h-16 text-primary/30 mx-auto mb-4" />
+                <p className="text-white/60">Próximamente más contenido</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+                {contentWithVideos.map((item, index) => {
+                  const videoUrls = getVideoUrls(item);
+                  return (
+                    <BunnyVideoCard
+                      key={item.id}
+                      id={item.id}
+                      title={item.title}
+                      videoUrls={videoUrls}
+                      thumbnailUrl={item.thumbnail_url}
+                      viewsCount={item.views_count}
+                      likesCount={item.likes_count}
+                      isLiked={item.is_liked}
+                      clientName={item.client?.name}
+                      creatorName={item.creator?.full_name}
+                      isAdmin={false}
+                      onLike={(e) => handleLike(item.id, e)}
+                      onView={() => handleView(item.id)}
+                      onShare={() => handleShare(item)}
+                      onOpenFullscreen={() => setFullscreenIndex(index)}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
 
-                <TabsContent value="login">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">Correo electrónico</Label>
-                      <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="tu@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">Contraseña</Label>
-                      <Input
-                        id="login-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Iniciando...
-                        </>
-                      ) : (
-                        'Iniciar Sesión'
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
+        {/* Features Section */}
+        <section className="px-4 py-16 border-t border-primary/20">
+          <div className="max-w-5xl mx-auto">
+            <h3 className="text-2xl font-bold text-white text-center mb-12">¿Cómo funciona?</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all">
+                <div className="w-16 h-16 rounded-full bg-gradient-gold/20 flex items-center justify-center mx-auto mb-4">
+                  <Play className="w-8 h-8 text-primary" />
+                </div>
+                <h4 className="text-white font-semibold mb-2">Creadores</h4>
+                <p className="text-white/60 text-sm">
+                  Graba contenido UGC auténtico y recibe pago por cada video aprobado
+                </p>
+              </div>
+              <div className="text-center p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all">
+                <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-purple-400" />
+                </div>
+                <h4 className="text-white font-semibold mb-2">Editores</h4>
+                <p className="text-white/60 text-sm">
+                  Edita y produce videos de alta calidad para marcas reconocidas
+                </p>
+              </div>
+              <div className="text-center p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-blue-500/50 transition-all">
+                <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Heart className="w-8 h-8 text-blue-400" />
+                </div>
+                <h4 className="text-white font-semibold mb-2">Marcas</h4>
+                <p className="text-white/60 text-sm">
+                  Obtén contenido auténtico que conecta con tu audiencia
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-                <TabsContent value="register">
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="register-name">Nombre completo</Label>
-                      <Input
-                        id="register-name"
-                        type="text"
-                        placeholder="Tu nombre"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-email">Correo electrónico</Label>
-                      <Input
-                        id="register-email"
-                        type="email"
-                        placeholder="tu@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-password">Contraseña</Label>
-                      <Input
-                        id="register-password"
-                        type="password"
-                        placeholder="Mínimo 6 caracteres"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        minLength={6}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-role">¿Qué eres?</Label>
-                      <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona tu rol" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="creator">Creador de contenido</SelectItem>
-                          <SelectItem value="editor">Editor de video</SelectItem>
-                          <SelectItem value="client">Cliente / Empresa</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        {role === 'client' 
-                          ? 'Ingresa también el nombre de tu empresa'
-                          : 'Selecciona tu rol en la plataforma'}
-                      </p>
-                    </div>
-                    
-                    {role === 'client' && (
+        {/* CTA Section */}
+        <section className="px-4 py-16 bg-gradient-to-r from-primary/20 via-purple-500/10 to-primary/20">
+          <div className="max-w-3xl mx-auto text-center">
+            <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              ¿Listo para empezar?
+            </h3>
+            <p className="text-white/60 mb-8">
+              Únete a nuestra comunidad de creadores y marcas
+            </p>
+            <Button size="lg" onClick={openRegister} className="bg-white text-black hover:bg-white/90 font-semibold shadow-xl">
+              Crear Cuenta Gratis
+            </Button>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="px-4 py-8 border-t border-primary/20">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-lg bg-gradient-gold flex items-center justify-center">
+                <span className="text-black font-bold text-sm">U</span>
+              </div>
+              <span className="text-white/60 text-sm">UGC Colombia</span>
+            </div>
+            <p className="text-white/40 text-sm">© 2024 Todos los derechos reservados</p>
+          </div>
+        </footer>
+
+        {/* Auth Modal */}
+        {showAuthModal && (
+          <div 
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowAuthModal(false)}
+          >
+            <Card 
+              className="w-full max-w-md relative bg-card border-border"
+              onClick={e => e.stopPropagation()}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-2"
+                onClick={() => setShowAuthModal(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              
+              <CardHeader className="text-center pt-8">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center">
+                    <span className="text-black font-bold">U</span>
+                  </div>
+                  <span className="font-bold text-lg">UGC Colombia</span>
+                </div>
+                <CardTitle className="text-2xl">
+                  {authTab === 'login' ? 'Bienvenido de vuelta' : 'Crear cuenta'}
+                </CardTitle>
+                <CardDescription>
+                  {authTab === 'login' 
+                    ? 'Ingresa tus credenciales para continuar' 
+                    : 'Completa tus datos para registrarte'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'register')} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+                    <TabsTrigger value="register">Registrarse</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="login">
+                    <form onSubmit={handleSignIn} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="register-company">Nombre de la Empresa</Label>
+                        <Label htmlFor="login-email">Correo electrónico</Label>
                         <Input
-                          id="register-company"
-                          type="text"
-                          placeholder="Mi Empresa S.A.S"
-                          value={companyName}
-                          onChange={(e) => setCompanyName(e.target.value)}
+                          id="login-email"
+                          type="email"
+                          placeholder="tu@email.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                           required
                         />
                       </div>
-                    )}
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creando cuenta...
-                        </>
-                      ) : (
-                        'Crear Cuenta'
+                      <div className="space-y-2">
+                        <Label htmlFor="login-password">Contraseña</Label>
+                        <Input
+                          id="login-password"
+                          type="password"
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={loading}>
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Iniciando...
+                          </>
+                        ) : (
+                          'Iniciar Sesión'
+                        )}
+                      </Button>
+                    </form>
+                  </TabsContent>
+
+                  <TabsContent value="register">
+                    <form onSubmit={handleSignUp} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="register-name">Nombre completo</Label>
+                        <Input
+                          id="register-name"
+                          type="text"
+                          placeholder="Tu nombre"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="register-email">Correo electrónico</Label>
+                        <Input
+                          id="register-email"
+                          type="email"
+                          placeholder="tu@email.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="register-password">Contraseña</Label>
+                        <Input
+                          id="register-password"
+                          type="password"
+                          placeholder="Mínimo 6 caracteres"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          minLength={6}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="register-role">¿Cómo quieres unirte?</Label>
+                        <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="creator">Creador de Contenido</SelectItem>
+                            <SelectItem value="editor">Editor de Video</SelectItem>
+                            <SelectItem value="client">Marca / Cliente</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {role === 'client' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="register-company">Nombre de tu empresa</Label>
+                          <Input
+                            id="register-company"
+                            type="text"
+                            placeholder="Tu empresa"
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            required
+                          />
+                        </div>
                       )}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-}
+                      
+                      <Button type="submit" className="w-full" disabled={loading}>
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Registrando...
+                          </>
+                        ) : (
+                          'Crear Cuenta'
+                        )}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-// Public Video Card with hover/scroll autoplay
-interface PublicVideoCardProps {
-  content: PublishedContent;
-  formatCount: (count: number) => string;
-  onAuthRequired: () => void;
-}
-
-function PublicVideoCard({ content, formatCount, onAuthRequired }: PublicVideoCardProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isHovering, setIsHovering] = useState(false);
-  const [isInView, setIsInView] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
-  // Intersection Observer for mobile scroll autoplay
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsInView(entry.isIntersecting && entry.intersectionRatio > 0.6);
-      },
-      { threshold: [0, 0.6, 1] }
-    );
-
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  // Handle play/pause based on hover (desktop) or scroll (mobile)
-  useEffect(() => {
-    const shouldPlay = isMobile ? isInView : isHovering;
-    
-    if (shouldPlay && !isPlaying) {
-      setIsPlaying(true);
-    } else if (!shouldPlay && isPlaying && !isHovering) {
-      // Don't auto-pause if user clicked to play
-    }
-  }, [isHovering, isInView, isMobile]);
-
-  // Control video playback
-  useEffect(() => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.play().catch(() => {});
-      } else {
-        videoRef.current.pause();
-      }
-    }
-  }, [isPlaying]);
-
-  const getThumbnail = () => {
-    if (content.thumbnail_url) return content.thumbnail_url;
-    const url = content.video_url;
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)?.[1];
-      if (videoId) return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-    }
-    return null;
-  };
-
-  const getVideoSrc = () => {
-    const url = content.video_url;
-    if (url.match(/\.(mp4|webm|ogg)$/i)) {
-      return url;
-    }
-    // Bunny CDN direct video files
-    if (url.includes('b-cdn.net') || url.includes('bunnycdn')) {
-      return url;
-    }
-    return null;
-  };
-
-  const getEmbedUrl = () => {
-    const url = content.video_url;
-
-    // Bunny Stream embeds - add autoplay params
-    if (url.includes('iframe.mediadelivery.net') || url.includes('bunny')) {
-      const separator = url.includes('?') ? '&' : '?';
-      return `${url}${separator}autoplay=true&muted=true&loop=true`;
-    }
-    
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      let embedUrl = url;
-      if (url.includes('/shorts/')) {
-        embedUrl = url.replace('/shorts/', '/embed/');
-      } else if (url.includes('watch?v=')) {
-        embedUrl = url.replace('watch?v=', 'embed/');
-      } else if (url.includes('youtu.be/')) {
-        embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
-      }
-      return embedUrl + '?autoplay=1&mute=1&modestbranding=1&rel=0&showinfo=0';
-    }
-
-    if (url.includes('drive.google.com')) {
-      const fileId = url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
-      if (fileId) {
-        return `https://drive.google.com/file/d/${fileId}/preview`;
-      }
-    }
-
-    return null;
-  };
-
-  const thumbnail = getThumbnail();
-  const videoSrc = getVideoSrc();
-  const embedUrl = getEmbedUrl();
-
-  const handleMouseEnter = () => {
-    if (!isMobile) {
-      setIsHovering(true);
-      setIsPlaying(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isMobile) {
-      setIsHovering(false);
-      setIsPlaying(false);
-      if (videoRef.current) {
-        videoRef.current.currentTime = 0;
-      }
-    }
-  };
-
-  const handleClick = () => {
-    if (!isPlaying) {
-      setIsPlaying(true);
-    }
-  };
-
-  const handleStop = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsPlaying(false);
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    }
-  };
-
-  return (
-    <div 
-      ref={containerRef}
-      className="group relative rounded-xl overflow-hidden bg-gray-900 border border-white/10 hover:border-white/30 transition-all cursor-pointer"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-    >
-      <div className="relative aspect-[9/16] bg-black">
-        {!isPlaying ? (
-          <>
-            {/* Thumbnail */}
-            {thumbnail ? (
-              <img 
-                src={thumbnail} 
-                alt={content.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                <Play className="h-12 w-12 text-white/50" />
-              </div>
-            )}
-            
-            {/* Play overlay */}
-            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm">
-                <Play className="h-10 w-10 text-white" fill="white" />
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div className="absolute bottom-2 left-2 flex items-center gap-3">
-              <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
-                <Eye className="h-3 w-3" />
-                {formatCount(content.views_count)}
-              </div>
-              <div className="flex items-center gap-1 text-white text-xs bg-black/50 px-2 py-1 rounded-full">
-                <Heart className="h-3 w-3" />
-                {formatCount(content.likes_count)}
-              </div>
-            </div>
-
-            {/* Like button - requires auth */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onAuthRequired();
-              }}
-              className="absolute bottom-2 right-2 p-2 rounded-full bg-black/50 text-white hover:bg-red-500/80 transition-colors"
-            >
-              <Heart className="h-5 w-5" />
-            </button>
-          </>
-        ) : (
-          <>
-            {/* Video Player */}
-            {videoSrc ? (
-              <video
-                ref={videoRef}
-                src={videoSrc}
-                className="w-full h-full object-cover"
-                muted={isMuted}
-                playsInline
-                loop
-                autoPlay
-              />
-            ) : embedUrl ? (
-              <iframe
-                src={embedUrl}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-white/60">
-                <Play className="h-12 w-12" />
-              </div>
-            )}
-
-            {/* Controls overlay */}
-            <div className="absolute top-2 right-2 flex gap-2">
-              <button
-                onClick={handleStop}
-                className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-              >
-                <Pause className="h-4 w-4" />
-              </button>
-              {videoSrc && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsMuted(!isMuted);
-                  }}
-                  className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-                >
-                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                </button>
-              )}
-            </div>
-          </>
+        {/* Fullscreen Video Viewer */}
+        {fullscreenIndex !== null && contentWithVideos.length > 0 && (
+          <FullscreenVideoViewer
+            videos={contentWithVideos.map(item => ({
+              id: item.id,
+              title: item.title,
+              videoUrls: getVideoUrls(item),
+              thumbnailUrl: item.thumbnail_url,
+              viewsCount: item.views_count,
+              likesCount: item.likes_count,
+              isLiked: item.is_liked,
+              clientName: item.client?.name,
+              creatorName: item.creator?.full_name
+            }))}
+            initialIndex={fullscreenIndex}
+            onClose={() => setFullscreenIndex(null)}
+            onLike={(id) => handleLike(id)}
+            onView={(id) => handleView(id)}
+          />
         )}
       </div>
-
-      {/* Info */}
-      <div className="p-3 bg-gray-900">
-        <h3 className="font-medium text-sm text-white line-clamp-2 mb-1">
-          {content.title}
-        </h3>
-        {content.client && (
-          <p className="text-xs text-white/60">{content.client.name}</p>
-        )}
-      </div>
-    </div>
+    </VideoPlayerProvider>
   );
 }
