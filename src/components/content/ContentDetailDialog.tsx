@@ -1180,9 +1180,9 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                           onUpdate?.();
                         }}
                         disabled={!editMode && !canEditDriveUrl && !isCreator}
-                        label="Subir Videos Crudos"
+                        label="Subir video crudo"
                         showDownload={isEditor || isAdmin}
-                        multiple={true}
+                        multiple={false}
                       />
                     </div>
                   )}

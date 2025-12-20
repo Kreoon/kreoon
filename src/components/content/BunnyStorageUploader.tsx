@@ -33,7 +33,7 @@ export function BunnyStorageUploader({
   accept = "video/mp4,video/webm,video/quicktime,video/x-msvideo",
   label = "Subir archivo",
   showDownload = false,
-  multiple = true
+  multiple,
 }: BunnyStorageUploaderProps) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
@@ -171,6 +171,8 @@ export function BunnyStorageUploader({
     return `${mb.toFixed(1)} MB`;
   };
 
+  const allowMultiple = multiple ?? fileType !== 'raw_video';
+
   return (
     <div className="space-y-3">
       <input
@@ -180,7 +182,7 @@ export function BunnyStorageUploader({
         onChange={handleFileSelect}
         className="hidden"
         disabled={disabled || uploading}
-        multiple={multiple}
+        multiple={allowMultiple}
       />
 
       {/* Upload Button */}
