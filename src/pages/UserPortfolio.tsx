@@ -111,6 +111,7 @@ export default function UserPortfolio() {
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -152,6 +153,7 @@ export default function UserPortfolio() {
           .eq('user_id', id);
 
         const roles = rolesData?.map(r => r.role) || [];
+        setUserRoles(roles);
         
         // Fetch content where user is creator
         const { data: creatorContent } = await supabase
@@ -607,7 +609,7 @@ export default function UserPortfolio() {
                 <h1 className="text-xl md:text-2xl font-bold text-white">
                   {displayName}
                 </h1>
-                {profile?.is_ambassador && (
+                {(profile?.is_ambassador || userRoles.includes('ambassador')) && (
                   <AmbassadorBadge size="sm" variant="glow" />
                 )}
                 {isOwner && profileType === 'user' && (
