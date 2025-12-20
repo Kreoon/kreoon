@@ -192,13 +192,8 @@ export function RawVideoUploader({
 
   const handleRemove = async (uploadId: string, embedUrl: string) => {
     if (!embedUrl) {
-      // If no URL, just remove from local state
-      setUploads(prev => {
-        const updated = prev.filter(u => u.id !== uploadId);
-        const allUrls = updated.filter(u => u.embedUrl).map(u => u.embedUrl);
-        onUploadComplete?.(allUrls);
-        return updated;
-      });
+      // If no URL, just remove from local state (failed uploads, etc.)
+      setUploads(prev => prev.filter(u => u.id !== uploadId));
       return;
     }
 
@@ -211,14 +206,9 @@ export function RawVideoUploader({
 
       if (error) throw error;
 
-      // Update local state with remaining URLs from server
-      const remainingUrls: string[] = data?.remaining_urls || [];
-      
-      setUploads(prev => {
-        const updated = prev.filter(u => u.id !== uploadId);
-        onUploadComplete?.(remainingUrls);
-        return updated;
-      });
+      // Only update local state - the server already updated the database
+      // Don't call onUploadComplete to avoid triggering a full refetch/reload
+      setUploads(prev => prev.filter(u => u.id !== uploadId));
 
       toast({
         title: "Video eliminado",
