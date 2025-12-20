@@ -684,6 +684,7 @@ export default function UserPortfolio() {
                       if (contentItem) handleShare(contentItem);
                     }}
                     onPin={isOwner ? () => handlePin(item.id, item.type) : undefined}
+                    onSettingsUpdate={() => fetchData()}
                   />
                 ))}
               </div>

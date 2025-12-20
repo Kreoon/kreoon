@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Pin } from 'lucide-react';
+import { Play, Pause, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Pin, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { ParsedText } from '@/components/ui/parsed-text';
+import { ContentSettingsDialog } from '@/components/content/ContentSettingsDialog';
 
 export interface BunnyVideoCardProps {
   id: string;
@@ -25,6 +26,7 @@ export interface BunnyVideoCardProps {
   onShare?: () => void;
   onComment?: () => void;
   onPin?: () => void;
+  onSettingsUpdate?: () => void;
   showActions?: boolean;
   onOpenFullscreen?: () => void;
   className?: string;
@@ -80,6 +82,7 @@ export function BunnyVideoCard({
   onShare,
   onComment,
   onPin,
+  onSettingsUpdate,
   showActions = true,
   onOpenFullscreen,
   className,
@@ -95,6 +98,7 @@ export function BunnyVideoCard({
   const [thumbnailError, setThumbnailError] = useState(false);
   const [resolvedThumbnail, setResolvedThumbnail] = useState<string | null>(null);
   const [showFloatingHeart, setShowFloatingHeart] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const viewTracked = useRef(false);
@@ -505,21 +509,45 @@ export function BunnyVideoCard({
             />
           )}
           {isOwner && onPin && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onPin();
-              }}
-              className={cn(
-                "flex items-center gap-1 text-xs mt-2 transition-colors",
-                isPinned ? "text-primary" : "text-muted-foreground hover:text-primary"
-              )}
-            >
-              <Pin className="h-3 w-3" />
-              <span>{isPinned ? 'Quitar fijado' : 'Fijar en perfil'}</span>
-            </button>
+            <div className="flex items-center gap-3 mt-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPin();
+                }}
+                className={cn(
+                  "flex items-center gap-1 text-xs transition-colors",
+                  isPinned ? "text-primary" : "text-muted-foreground hover:text-primary"
+                )}
+              >
+                <Pin className="h-3 w-3" />
+                <span>{isPinned ? 'Quitar fijado' : 'Fijar'}</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSettings(true);
+                }}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Settings className="h-3 w-3" />
+                <span>Configuración</span>
+              </button>
+            </div>
           )}
         </div>
+      )}
+
+      {/* Settings Dialog */}
+      {isOwner && (
+        <ContentSettingsDialog
+          open={showSettings}
+          onOpenChange={setShowSettings}
+          contentId={id}
+          onSuccess={() => {
+            onSettingsUpdate?.();
+          }}
+        />
       )}
     </div>
   );
