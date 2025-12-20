@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { Play, Pause, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
@@ -85,6 +85,7 @@ export function BunnyVideoCard({
   const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const [thumbnailError, setThumbnailError] = useState(false);
   const [resolvedThumbnail, setResolvedThumbnail] = useState<string | null>(null);
+  const [showFloatingHeart, setShowFloatingHeart] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const viewTracked = useRef(false);
@@ -213,6 +214,20 @@ export function BunnyVideoCard({
     setCurrentIndex(prev => (prev < videoUrls.length - 1 ? prev + 1 : 0));
   };
 
+  const handleLikeWithAnimation = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setShowFloatingHeart(true);
+    setTimeout(() => setShowFloatingHeart(false), 1000);
+    onLike?.(e);
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isLiked && onLike) {
+      handleLikeWithAnimation(e);
+    }
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -222,8 +237,18 @@ export function BunnyVideoCard({
         className
       )}
     >
-      {/* Video Container - Instagram-like vertical */}
-      <div className="relative aspect-[9/16] bg-muted">
+      {/* Video Container - TikTok style */}
+      <div className="relative aspect-[9/16] bg-muted" onDoubleClick={handleDoubleClick}>
+        {/* Floating Heart Animation */}
+        {showFloatingHeart && (
+          <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
+            <Heart 
+              className="h-24 w-24 text-red-500 animate-ping" 
+              fill="currentColor" 
+            />
+          </div>
+        )}
+
         {!isPlaying ? (
           <>
             {/* Thumbnail with loading state */}
@@ -248,13 +273,13 @@ export function BunnyVideoCard({
               </div>
             )}
             
-            {/* Play overlay */}
+            {/* Play overlay - click to play */}
             <div 
               className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-center justify-center cursor-pointer"
               onClick={handlePlay}
             >
-              <div className="p-4 rounded-full bg-primary/90 backdrop-blur-sm hover:bg-primary transition-all duration-300 hover:scale-110 shadow-lg">
-                <Play className="h-8 w-8 text-primary-foreground" fill="currentColor" />
+              <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 hover:scale-110">
+                <Play className="h-10 w-10 text-white" fill="currentColor" />
               </div>
             </div>
 
@@ -295,59 +320,51 @@ export function BunnyVideoCard({
               </>
             )}
 
-            {/* Stats */}
-            <div className="absolute bottom-16 left-3 flex items-center gap-2 z-10">
-              <div className="flex items-center gap-1.5 text-white text-sm bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <Eye className="h-4 w-4" />
-                <span className="font-medium">{formatCount(viewsCount)}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-white text-sm bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <Heart className="h-4 w-4" />
-                <span className="font-medium">{formatCount(likesCount)}</span>
+            {/* Stats - bottom left */}
+            <div className="absolute bottom-4 left-3 z-10">
+              <div className="flex items-center gap-1.5 text-white text-xs">
+                <Eye className="h-3.5 w-3.5" />
+                <span>{formatCount(viewsCount)}</span>
               </div>
             </div>
 
-            {/* Action buttons - always visible when alwaysShowActions is true */}
+            {/* Action buttons - TikTok style, always visible */}
             {showActions && (
-              <div className={cn(
-                "absolute bottom-16 right-3 flex flex-col gap-3 z-10 transition-opacity duration-200",
-                alwaysShowActions ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-              )}>
-                {onOpenFullscreen && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onOpenFullscreen(); }}
-                    className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200 shadow-lg active:scale-90"
-                  >
-                    <Maximize2 className="h-6 w-6" />
-                  </button>
-                )}
+              <div className="absolute bottom-4 right-3 flex flex-col gap-4 z-10">
                 {onLike && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); onLike(e); }}
-                    className={cn(
-                      "p-3 rounded-full transition-all duration-200 shadow-lg active:scale-90",
-                      isLiked 
-                        ? "bg-red-500 text-white scale-110" 
-                        : "bg-black/60 backdrop-blur-sm text-white hover:bg-red-500/80 hover:scale-110"
-                    )}
+                    onClick={(e) => handleLikeWithAnimation(e)}
+                    className="flex flex-col items-center gap-1"
                   >
-                    <Heart className="h-6 w-6" fill={isLiked ? "currentColor" : "none"} />
+                    <div className={cn(
+                      "p-2.5 rounded-full transition-all duration-200 active:scale-90",
+                      isLiked 
+                        ? "text-red-500" 
+                        : "text-white hover:text-red-400"
+                    )}>
+                      <Heart className="h-7 w-7" fill={isLiked ? "currentColor" : "none"} />
+                    </div>
+                    <span className="text-white text-xs font-medium">{formatCount(likesCount)}</span>
                   </button>
                 )}
                 {onComment && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onComment(); }}
-                    className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200 shadow-lg active:scale-90"
+                    className="flex flex-col items-center gap-1"
                   >
-                    <MessageSquare className="h-6 w-6" />
+                    <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
+                      <MessageSquare className="h-7 w-7" />
+                    </div>
                   </button>
                 )}
                 {onShare && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onShare(); }}
-                    className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200 shadow-lg active:scale-90"
+                    className="flex flex-col items-center gap-1"
                   >
-                    <Share2 className="h-6 w-6" />
+                    <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
+                      <Share2 className="h-7 w-7" />
+                    </div>
                   </button>
                 )}
               </div>
@@ -365,62 +382,57 @@ export function BunnyVideoCard({
               loading="lazy"
             />
 
-            {/* Controls overlay - hidden when hideControls is true */}
-            {!hideControls && (
-              <div className="absolute top-3 right-3 flex gap-2 z-20">
-                <button
-                  onClick={handleStop}
-                  className="p-2.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
-                >
-                  <Pause className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={toggleMute}
-                  className="p-2.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
-                >
-                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                </button>
-              </div>
-            )}
+            {/* Pause button - only show pause, no volume control */}
+            <div 
+              className="absolute inset-0 cursor-pointer" 
+              onClick={handleStop}
+            />
+            <div className="absolute top-3 left-3 z-20">
+              <button
+                onClick={handleStop}
+                className="p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+              >
+                <Pause className="h-5 w-5" />
+              </button>
+            </div>
 
-            {/* Social actions while playing - always visible when alwaysShowActions */}
-            {showActions && alwaysShowActions && (
-              <div className="absolute bottom-16 right-3 flex flex-col gap-3 z-20">
-                {onOpenFullscreen && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onOpenFullscreen(); }}
-                    className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200 shadow-lg active:scale-90"
-                  >
-                    <Maximize2 className="h-6 w-6" />
-                  </button>
-                )}
+            {/* Action buttons while playing - TikTok style, always visible */}
+            {showActions && (
+              <div className="absolute bottom-4 right-3 flex flex-col gap-4 z-20">
                 {onLike && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); onLike(e); }}
-                    className={cn(
-                      "p-3 rounded-full transition-all duration-200 shadow-lg active:scale-90",
-                      isLiked 
-                        ? "bg-red-500 text-white scale-110" 
-                        : "bg-black/60 backdrop-blur-sm text-white hover:bg-red-500/80 hover:scale-110"
-                    )}
+                    onClick={(e) => handleLikeWithAnimation(e)}
+                    className="flex flex-col items-center gap-1"
                   >
-                    <Heart className="h-6 w-6" fill={isLiked ? "currentColor" : "none"} />
+                    <div className={cn(
+                      "p-2.5 rounded-full transition-all duration-200 active:scale-90",
+                      isLiked 
+                        ? "text-red-500" 
+                        : "text-white hover:text-red-400"
+                    )}>
+                      <Heart className="h-7 w-7" fill={isLiked ? "currentColor" : "none"} />
+                    </div>
+                    <span className="text-white text-xs font-medium">{formatCount(likesCount)}</span>
                   </button>
                 )}
                 {onComment && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onComment(); }}
-                    className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200 shadow-lg active:scale-90"
+                    className="flex flex-col items-center gap-1"
                   >
-                    <MessageSquare className="h-6 w-6" />
+                    <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
+                      <MessageSquare className="h-7 w-7" />
+                    </div>
                   </button>
                 )}
                 {onShare && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onShare(); }}
-                    className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200 shadow-lg active:scale-90"
+                    className="flex flex-col items-center gap-1"
                   >
-                    <Share2 className="h-6 w-6" />
+                    <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
+                      <Share2 className="h-7 w-7" />
+                    </div>
                   </button>
                 )}
               </div>
