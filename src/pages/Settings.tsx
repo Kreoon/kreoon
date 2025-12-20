@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users } from "lucide-react";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
+import { UserManagement } from "@/components/settings/UserManagement";
 import { useAuth } from "@/hooks/useAuth";
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos';
+const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
+
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios';
 
 const settingsSections = [
   { 
@@ -53,11 +56,25 @@ const settingsSections = [
 ];
 
 const Settings = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile } = useAuth();
   const [activeSection, setActiveSection] = useState<SettingsSection>('main');
 
+  const isRoot = profile?.email === ROOT_EMAIL;
+
+  // Build sections dynamically - add user management only for root
+  const allSections = [
+    ...settingsSections,
+    ...(isRoot ? [{
+      id: 'usuarios' as const,
+      icon: Users,
+      title: "Usuarios",
+      description: "Gestiona usuarios, contraseñas y accesos",
+      adminOnly: false // We handle access in the component
+    }] : [])
+  ];
+
   // Filter sections based on user role
-  const visibleSections = settingsSections.filter(s => !s.adminOnly || isAdmin);
+  const visibleSections = allSections.filter(s => !s.adminOnly || isAdmin);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -93,6 +110,8 @@ const Settings = () => {
             <p>Integraciones próximamente</p>
           </div>
         );
+      case 'usuarios':
+        return <UserManagement />;
       default:
         return null;
     }
