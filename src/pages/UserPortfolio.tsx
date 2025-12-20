@@ -15,7 +15,8 @@ import {
   Heart,
   Plus,
   Briefcase,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Pencil
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -24,6 +25,7 @@ import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { StoryViewer } from '@/components/portfolio/StoryViewer';
 import { StoryRing } from '@/components/portfolio/StoryRing';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
+import { ProfileEditor } from '@/components/portfolio/ProfileEditor';
 import { useAuth } from '@/hooks/useAuth';
 
 interface UserProfile {
@@ -95,6 +97,7 @@ export default function UserPortfolio() {
   const [showMediaUploader, setShowMediaUploader] = useState(false);
   const [uploaderType, setUploaderType] = useState<'post' | 'story'>('post');
   const [activeTab, setActiveTab] = useState<TabType>('work');
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -315,12 +318,22 @@ export default function UserPortfolio() {
         <div className="px-4 py-6 md:py-10">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10">
             {/* Avatar */}
-            <Avatar className="h-24 w-24 md:h-36 md:w-36 ring-2 ring-white/20">
-              <AvatarImage src={displayAvatar || undefined} className="object-cover" />
-              <AvatarFallback className="bg-zinc-800 text-white text-2xl md:text-4xl">
-                {displayName?.charAt(0) || '?'}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative group">
+              <Avatar className="h-24 w-24 md:h-36 md:w-36 ring-2 ring-white/20">
+                <AvatarImage src={displayAvatar || undefined} className="object-cover" />
+                <AvatarFallback className="bg-zinc-800 text-white text-2xl md:text-4xl">
+                  {displayName?.charAt(0) || '?'}
+                </AvatarFallback>
+              </Avatar>
+              {isOwner && profileType === 'user' && (
+                <button
+                  onClick={() => setShowProfileEditor(true)}
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Pencil className="h-6 w-6 text-white" />
+                </button>
+              )}
+            </div>
 
             {/* Info */}
             <div className="flex-1 text-center md:text-left">
@@ -328,6 +341,16 @@ export default function UserPortfolio() {
                 <h1 className="text-xl md:text-2xl font-bold text-white">
                   {displayName}
                 </h1>
+                {isOwner && profileType === 'user' && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowProfileEditor(true)}
+                    className="text-white/60 hover:text-white hover:bg-white/10"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
                 {isOwner && (
                   <Button
                     size="sm"
@@ -603,6 +626,19 @@ export default function UserPortfolio() {
           isOpen={showMediaUploader}
           onClose={() => setShowMediaUploader(false)}
           onSuccess={fetchData}
+        />
+      )}
+
+      {/* Profile Editor */}
+      {profile && (
+        <ProfileEditor
+          userId={profile.id}
+          currentName={profile.full_name}
+          currentBio={profile.bio}
+          currentAvatar={profile.avatar_url}
+          open={showProfileEditor}
+          onOpenChange={setShowProfileEditor}
+          onSave={fetchData}
         />
       )}
     </div>
