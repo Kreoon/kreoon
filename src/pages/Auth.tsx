@@ -415,6 +415,8 @@ export default function Auth() {
                       onView={() => handleView(item.id)}
                       onShare={() => handleShare(item)}
                       onOpenFullscreen={() => setFullscreenIndex(index)}
+                      hideControls={true}
+                      alwaysShowActions={true}
                     />
                   );
                 })}
