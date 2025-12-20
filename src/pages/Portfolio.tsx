@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CommentsSection } from "@/components/content/CommentsSection";
 import { VideoPlayerProvider } from "@/contexts/VideoPlayerContext";
 import { BunnyVideoCard } from "@/components/content/BunnyVideoCard";
+import { FullscreenVideoViewer } from "@/components/content/FullscreenVideoViewer";
 
 interface PublishedContent {
   id: string;
@@ -63,6 +64,7 @@ export default function Portfolio() {
   const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
+  const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -444,7 +446,7 @@ export default function Portfolio() {
         {/* Video Grid - Instagram style */}
         <div className="max-w-7xl mx-auto p-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-            {contentWithVideos.map((item) => {
+            {contentWithVideos.map((item, index) => {
               const videoUrls = getVideoUrls(item);
               return (
                 <BunnyVideoCard
@@ -466,6 +468,7 @@ export default function Portfolio() {
                     setSelectedContentId(item.id);
                     setCommentDialogOpen(true);
                   }}
+                  onOpenFullscreen={() => setFullscreenIndex(index)}
                   showActions={true}
                   className="bg-neutral-900 border-white/10 hover:border-primary/40"
                 />
@@ -473,6 +476,32 @@ export default function Portfolio() {
             })}
           </div>
         </div>
+
+        {/* Fullscreen Video Viewer */}
+        {fullscreenIndex !== null && (
+          <FullscreenVideoViewer
+            videos={contentWithVideos.map(item => ({
+              id: item.id,
+              title: item.title,
+              videoUrls: getVideoUrls(item),
+              thumbnailUrl: item.thumbnail_url,
+              viewsCount: item.views_count,
+              likesCount: item.likes_count,
+              isLiked: item.is_liked,
+              clientName: item.client?.name,
+              creatorName: item.creator?.full_name
+            }))}
+            initialIndex={fullscreenIndex}
+            onClose={() => setFullscreenIndex(null)}
+            onLike={(id) => handleLike(id)}
+            onView={(id) => handleView(id)}
+            onShare={(video) => handleShare({ id: video.id, title: video.title } as PublishedContent)}
+            onComment={(id) => {
+              setSelectedContentId(id);
+              setCommentDialogOpen(true);
+            }}
+          />
+        )}
 
         {/* Client Filter Sidebar */}
         {showFilters && (

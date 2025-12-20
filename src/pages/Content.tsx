@@ -10,8 +10,9 @@ import { Search, Plus, Play, Eye, Heart, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { VideoPlayerProvider } from "@/contexts/VideoPlayerContext";
+import { VideoPlayerProvider, useVideoPlayer } from "@/contexts/VideoPlayerContext";
 import { BunnyVideoCard } from "@/components/content/BunnyVideoCard";
+import { FullscreenVideoViewer } from "@/components/content/FullscreenVideoViewer";
 
 interface ContentItem {
   id: string;
@@ -56,6 +57,7 @@ const Content = () => {
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
   
   // Viewer ID for likes tracking
   const [viewerId] = useState(() => {
@@ -426,7 +428,7 @@ const Content = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-              {filteredContent.map((item) => {
+              {filteredContent.map((item, index) => {
                 const videoUrls = getVideoUrls(item);
                 return (
                   <div key={item.id} className="relative">
@@ -443,6 +445,7 @@ const Content = () => {
                       isAdmin={isAdmin}
                       onLike={() => handleLike(item.id)}
                       onView={() => handleView(item.id)}
+                      onOpenFullscreen={() => setFullscreenIndex(index)}
                       showActions={true}
                     />
                     
@@ -476,6 +479,27 @@ const Content = () => {
                 );
               })}
             </div>
+          )}
+
+          {/* Fullscreen Video Viewer */}
+          {fullscreenIndex !== null && (
+            <FullscreenVideoViewer
+              videos={filteredContent.map(item => ({
+                id: item.id,
+                title: item.title,
+                videoUrls: getVideoUrls(item),
+                thumbnailUrl: item.thumbnail_url,
+                viewsCount: item.views_count,
+                likesCount: item.likes_count,
+                isLiked: item.is_liked || false,
+                clientName: item.client?.name,
+                creatorName: item.creator?.full_name
+              }))}
+              initialIndex={fullscreenIndex}
+              onClose={() => setFullscreenIndex(null)}
+              onLike={(id) => handleLike(id)}
+              onView={(id) => handleView(id)}
+            />
           )}
         </div>
       </div>

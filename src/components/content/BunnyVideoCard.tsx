@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
 
-interface BunnyVideoCardProps {
+export interface BunnyVideoCardProps {
   id: string;
   title: string;
   videoUrls: string[]; // Array of video URLs for variations
@@ -19,6 +19,7 @@ interface BunnyVideoCardProps {
   onShare?: () => void;
   onComment?: () => void;
   showActions?: boolean;
+  onOpenFullscreen?: () => void;
   className?: string;
 }
 
@@ -65,6 +66,7 @@ export function BunnyVideoCard({
   onShare,
   onComment,
   showActions = true,
+  onOpenFullscreen,
   className
 }: BunnyVideoCardProps) {
   const { isPlaying, play, stop } = useVideoPlayback(id);
@@ -290,6 +292,14 @@ export function BunnyVideoCard({
             {/* Action buttons */}
             {showActions && (
               <div className="absolute bottom-16 right-3 flex flex-col gap-3 z-10">
+                {onOpenFullscreen && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onOpenFullscreen(); }}
+                    className="p-3 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200 shadow-lg active:scale-90"
+                  >
+                    <Maximize2 className="h-6 w-6" />
+                  </button>
+                )}
                 {onLike && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onLike(e); }}
