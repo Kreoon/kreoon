@@ -1,21 +1,20 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Filter, X, Home, User, LogOut, Menu } from "lucide-react";
+import { Play, Filter, X, Home, User, LogOut, Users, Sparkles, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CommentsSection } from "@/components/content/CommentsSection";
 import { VideoPlayerProvider } from "@/contexts/VideoPlayerContext";
 import { BunnyVideoCard } from "@/components/content/BunnyVideoCard";
-import { FullscreenVideoViewer } from "@/components/content/FullscreenVideoViewer";
 import { TikTokFeed } from "@/components/content/TikTokFeed";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StoryRing } from "@/components/portfolio/StoryRing";
 
 interface PublishedContent {
   id: string;
@@ -23,12 +22,20 @@ interface PublishedContent {
   video_url: string | null;
   video_urls: string[] | null;
   thumbnail_url: string | null;
+  creator_id: string | null;
   client: { id: string; name: string; logo_url: string | null } | null;
-  creator: { full_name: string; avatar_url: string | null } | null;
+  creator: { id: string; full_name: string; avatar_url: string | null } | null;
   created_at: string;
   views_count: number;
   likes_count: number;
   is_liked: boolean;
+}
+
+interface FollowingUser {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+  has_stories: boolean;
 }
 
 // Helper to get all video URLs for a content item
@@ -39,7 +46,6 @@ function getVideoUrls(item: PublishedContent): string[] {
     urls.push(...item.video_urls.filter(u => u && u.trim()));
   }
   
-  // Only add video_url if not already in video_urls
   if (item.video_url && !urls.includes(item.video_url)) {
     urls.unshift(item.video_url);
   }
@@ -47,11 +53,28 @@ function getVideoUrls(item: PublishedContent): string[] {
   return urls;
 }
 
-interface Client {
-  id: string;
-  name: string;
-  logo_url: string | null;
+// Shuffle array with seed based on current date + hour (changes hourly)
+function shuffleArray<T>(array: T[]): T[] {
+  const seed = new Date().toISOString().slice(0, 13); // YYYY-MM-DDTHH
+  const shuffled = [...array];
+  
+  // Simple seeded random based on string hash
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    hash = ((hash << 5) - hash) + i;
+    const j = Math.abs(hash) % (i + 1);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  
+  return shuffled;
 }
+
+type FeedTab = 'for-you' | 'following';
 
 export default function Portfolio() {
   const { user, roles, signOut } = useAuth();
@@ -60,14 +83,13 @@ export default function Portfolio() {
   const isAdmin = roles.includes('admin');
   const isLoggedIn = !!user;
   const [content, setContent] = useState<PublishedContent[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  const [followingContent, setFollowingContent] = useState<PublishedContent[]>([]);
+  const [followingUsers, setFollowingUsers] = useState<FollowingUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState<FeedTab>('for-you');
   const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
-  const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -78,11 +100,11 @@ export default function Portfolio() {
 
   useEffect(() => {
     fetchPublishedContent();
-    fetchClients();
     if (user?.id) {
       fetchUserProfile();
+      fetchFollowingData();
     }
-  }, [selectedClientId, user?.id]);
+  }, [user?.id]);
 
   const fetchUserProfile = async () => {
     if (!user?.id) return;
@@ -94,23 +116,116 @@ export default function Portfolio() {
     if (data) setUserProfile(data);
   };
 
-  const fetchClients = async () => {
+  const fetchFollowingData = async () => {
+    if (!user?.id) return;
+
     try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('id, name, logo_url')
-        .order('name');
-      
-      if (error) throw error;
-      setClients(data || []);
+      // Get users I follow
+      const { data: followingData } = await supabase
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', user.id);
+
+      const followingIds = followingData?.map(f => f.following_id) || [];
+
+      if (followingIds.length > 0) {
+        // Get profiles of users I follow
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', followingIds);
+
+        // Check which ones have active stories
+        const { data: storiesData } = await supabase
+          .from('portfolio_stories')
+          .select('user_id')
+          .in('user_id', followingIds)
+          .gt('expires_at', new Date().toISOString());
+
+        const usersWithStories = new Set(storiesData?.map(s => s.user_id) || []);
+
+        const usersWithStoryFlag = (profiles || []).map(p => ({
+          ...p,
+          has_stories: usersWithStories.has(p.id)
+        }));
+
+        // Sort: users with stories first
+        usersWithStoryFlag.sort((a, b) => {
+          if (a.has_stories && !b.has_stories) return -1;
+          if (!a.has_stories && b.has_stories) return 1;
+          return 0;
+        });
+
+        setFollowingUsers(usersWithStoryFlag);
+
+        // Fetch content from followed users (creators)
+        const { data: contentData } = await supabase
+          .from('content')
+          .select(`
+            id,
+            title,
+            video_url,
+            video_urls,
+            thumbnail_url,
+            created_at,
+            creator_id,
+            client_id,
+            views_count,
+            likes_count
+          `)
+          .eq('is_published', true)
+          .in('creator_id', followingIds)
+          .or('video_url.not.is.null,video_urls.not.is.null')
+          .order('created_at', { ascending: false });
+
+        if (contentData && contentData.length > 0) {
+          const enrichedContent = await enrichContent(contentData);
+          setFollowingContent(enrichedContent);
+        }
+      }
     } catch (error) {
-      console.error('Error fetching clients:', error);
+      console.error('Error fetching following data:', error);
     }
+  };
+
+  const enrichContent = async (data: any[]): Promise<PublishedContent[]> => {
+    const clientIds = [...new Set(data.filter(d => d.client_id).map(d => d.client_id))] as string[];
+    const creatorIds = [...new Set(data.filter(d => d.creator_id).map(d => d.creator_id))] as string[];
+    const contentIds = data.map(d => d.id);
+
+    const [clientsResult, creatorsResult, likesResult] = await Promise.all([
+      clientIds.length > 0 
+        ? supabase.from('clients').select('id, name, logo_url').in('id', clientIds)
+        : Promise.resolve({ data: [] }),
+      creatorIds.length > 0 
+        ? supabase.from('profiles').select('id, full_name, avatar_url').in('id', creatorIds)
+        : Promise.resolve({ data: [] }),
+      supabase.from('content_likes').select('content_id').eq('viewer_id', viewerId).in('content_id', contentIds)
+    ]);
+
+    const clientsMap = new Map((clientsResult.data || []).map(c => [c.id, c]));
+    const creatorsMap = new Map((creatorsResult.data || []).map(c => [c.id, c]));
+    const likedSet = new Set((likesResult.data || []).map(l => l.content_id));
+
+    return data.map(item => ({
+      id: item.id,
+      title: item.title,
+      video_url: item.video_url,
+      video_urls: item.video_urls,
+      thumbnail_url: item.thumbnail_url,
+      created_at: item.created_at,
+      creator_id: item.creator_id,
+      views_count: item.views_count || 0,
+      likes_count: item.likes_count || 0,
+      is_liked: likedSet.has(item.id),
+      client: item.client_id ? clientsMap.get(item.client_id) || null : null,
+      creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null
+    }));
   };
 
   const fetchPublishedContent = async () => {
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('content')
         .select(`
           id,
@@ -128,48 +243,11 @@ export default function Portfolio() {
         .or('video_url.not.is.null,video_urls.not.is.null')
         .order('created_at', { ascending: false });
 
-      if (selectedClientId) {
-        query = query.eq('client_id', selectedClientId);
-      }
-
-      const { data, error } = await query;
-
       if (error) throw error;
       
       if (data && data.length > 0) {
-        const clientIds = [...new Set(data.filter(d => d.client_id).map(d => d.client_id))] as string[];
-        const creatorIds = [...new Set(data.filter(d => d.creator_id).map(d => d.creator_id))] as string[];
-        const contentIds = data.map(d => d.id);
-
-        const [clientsResult, creatorsResult, likesResult] = await Promise.all([
-          clientIds.length > 0 
-            ? supabase.from('clients').select('id, name, logo_url').in('id', clientIds)
-            : Promise.resolve({ data: [] }),
-          creatorIds.length > 0 
-            ? supabase.from('profiles').select('id, full_name, avatar_url').in('id', creatorIds)
-            : Promise.resolve({ data: [] }),
-          supabase.from('content_likes').select('content_id').eq('viewer_id', viewerId).in('content_id', contentIds)
-        ]);
-
-        const clientsMap = new Map((clientsResult.data || []).map(c => [c.id, c]));
-        const creatorsMap = new Map((creatorsResult.data || []).map(c => [c.id, c]));
-        const likedSet = new Set((likesResult.data || []).map(l => l.content_id));
-
-        const enrichedData = data.map(item => ({
-          id: item.id,
-          title: item.title,
-          video_url: item.video_url,
-          video_urls: item.video_urls,
-          thumbnail_url: item.thumbnail_url,
-          created_at: item.created_at,
-          views_count: item.views_count || 0,
-          likes_count: item.likes_count || 0,
-          is_liked: likedSet.has(item.id),
-          client: item.client_id ? clientsMap.get(item.client_id) || null : null,
-          creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null
-        }));
-
-        setContent(enrichedData as PublishedContent[]);
+        const enrichedData = await enrichContent(data);
+        setContent(enrichedData);
       } else {
         setContent([]);
       }
@@ -193,16 +271,20 @@ export default function Portfolio() {
 
       if (error) throw error;
 
-      setContent(prev => prev.map(item => {
-        if (item.id === contentId) {
-          return {
-            ...item,
-            is_liked: data,
-            likes_count: data ? item.likes_count + 1 : Math.max(0, item.likes_count - 1)
-          };
-        }
-        return item;
-      }));
+      const updateContent = (items: PublishedContent[]) => 
+        items.map(item => {
+          if (item.id === contentId) {
+            return {
+              ...item,
+              is_liked: data,
+              likes_count: data ? item.likes_count + 1 : Math.max(0, item.likes_count - 1)
+            };
+          }
+          return item;
+        });
+
+      setContent(updateContent);
+      setFollowingContent(updateContent);
 
       toast.success(data ? '❤️ Me gusta' : 'Ya no te gusta');
     } catch (error) {
@@ -214,12 +296,17 @@ export default function Portfolio() {
   const handleView = useCallback(async (contentId: string) => {
     try {
       await supabase.rpc('increment_content_views', { content_uuid: contentId });
-      setContent(prev => prev.map(item => {
-        if (item.id === contentId) {
-          return { ...item, views_count: item.views_count + 1 };
-        }
-        return item;
-      }));
+      
+      const updateContent = (items: PublishedContent[]) => 
+        items.map(item => {
+          if (item.id === contentId) {
+            return { ...item, views_count: item.views_count + 1 };
+          }
+          return item;
+        });
+
+      setContent(updateContent);
+      setFollowingContent(updateContent);
     } catch (error) {
       console.error('Error incrementing views:', error);
     }
@@ -243,17 +330,22 @@ export default function Portfolio() {
     }
   };
 
-  // Filter content that has videos
-  const contentWithVideos = useMemo(() => {
-    return content.filter(item => {
-      const urls = getVideoUrls(item);
-      return urls.length > 0;
-    });
-  }, [content]);
+  // Get current content based on tab and shuffle for "for-you"
+  const currentContent = useMemo(() => {
+    const items = activeTab === 'following' ? followingContent : content;
+    const filtered = items.filter(item => getVideoUrls(item).length > 0);
+    
+    // Shuffle for "for-you" tab
+    if (activeTab === 'for-you') {
+      return shuffleArray(filtered);
+    }
+    
+    return filtered;
+  }, [content, followingContent, activeTab]);
 
-  // Prepare videos for TikTok feed - MUST be before any early returns
+  // Prepare videos for TikTok feed
   const tikTokVideos = useMemo(() => {
-    return contentWithVideos.map(item => ({
+    return currentContent.map(item => ({
       id: item.id,
       title: item.title,
       videoUrls: getVideoUrls(item),
@@ -262,9 +354,11 @@ export default function Portfolio() {
       likesCount: item.likes_count,
       isLiked: item.is_liked,
       clientName: item.client?.name,
-      creatorName: item.creator?.full_name
+      creatorName: item.creator?.full_name,
+      creatorId: item.creator_id,
+      creatorAvatar: item.creator?.avatar_url
     }));
-  }, [contentWithVideos]);
+  }, [currentContent]);
 
   const handleLogout = async () => {
     await signOut();
@@ -281,7 +375,7 @@ export default function Portfolio() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black p-4">
+      <div className="min-h-screen bg-black p-4">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[...Array(6)].map((_, i) => (
@@ -293,24 +387,59 @@ export default function Portfolio() {
     );
   }
 
-  if (contentWithVideos.length === 0) {
+  if (currentContent.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black flex items-center justify-center text-white">
-        <div className="text-center">
-          <Play className="h-16 w-16 mx-auto mb-4 opacity-50 text-primary" />
-          <h2 className="text-xl font-semibold mb-2">
-            {selectedClientId ? 'No hay contenido para este cliente' : 'No hay contenido publicado'}
-          </h2>
-          <p className="text-white/60 mb-4">Próximamente verás aquí nuestro portafolio</p>
-          {selectedClientId && (
-            <Button 
-              variant="outline" 
-              onClick={() => setSelectedClientId(null)}
-              className="text-white border-primary/50 hover:bg-primary/20 hover:border-primary"
-            >
-              Ver todo el contenido
-            </Button>
-          )}
+      <div className="min-h-screen bg-black flex flex-col">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-xl border-b border-white/10">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-gradient-gold flex items-center justify-center">
+                <span className="text-black font-bold text-lg">U</span>
+              </div>
+              <span className="text-white font-bold">UGC Colombia</span>
+            </div>
+            {isLoggedIn ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(getDashboardRoute())}
+                className="text-white/70 hover:text-white"
+              >
+                <Home className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => navigate('/auth')}
+                className="bg-gradient-gold text-black font-semibold"
+              >
+                Entrar
+              </Button>
+            )}
+          </div>
+        </header>
+
+        <div className="flex-1 flex items-center justify-center text-white">
+          <div className="text-center p-6">
+            {activeTab === 'following' ? (
+              <>
+                <Users className="h-16 w-16 mx-auto mb-4 opacity-50 text-primary" />
+                <h2 className="text-xl font-semibold mb-2">Sin contenido de seguidos</h2>
+                <p className="text-white/60 mb-4">Sigue a creadores para ver su contenido aquí</p>
+                <Button onClick={() => setActiveTab('for-you')} className="bg-gradient-gold text-black">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Explorar Para Ti
+                </Button>
+              </>
+            ) : (
+              <>
+                <Play className="h-16 w-16 mx-auto mb-4 opacity-50 text-primary" />
+                <h2 className="text-xl font-semibold mb-2">No hay contenido publicado</h2>
+                <p className="text-white/60">Próximamente verás aquí nuestro portafolio</p>
+              </>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -328,26 +457,50 @@ export default function Portfolio() {
                 <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg">
                   <span className="text-black font-bold text-sm">U</span>
                 </div>
-                <span className="text-white font-bold text-sm">UGC Colombia</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="text-white hover:bg-white/20 h-8 w-8"
-                >
-                  <Filter className="h-4 w-4" />
-                </Button>
-                {isLoggedIn ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(getDashboardRoute())}
-                    className="text-white hover:bg-white/20 h-8 w-8"
+              
+              {/* Feed Tabs */}
+              {isLoggedIn && (
+                <div className="flex items-center bg-black/40 rounded-full p-1">
+                  <button
+                    onClick={() => setActiveTab('following')}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                      activeTab === 'following' ? 'bg-white text-black' : 'text-white/70'
+                    }`}
                   >
-                    <Home className="h-4 w-4" />
-                  </Button>
+                    Siguiendo
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('for-you')}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                      activeTab === 'for-you' ? 'bg-white text-black' : 'text-white/70'
+                    }`}
+                  >
+                    Para ti
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                {isLoggedIn ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => user && navigate(`/p/${user.id}`)}
+                      className="text-white hover:bg-white/20 h-8 w-8"
+                    >
+                      <User className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => navigate(getDashboardRoute())}
+                      className="text-white hover:bg-white/20 h-8 w-8"
+                    >
+                      <Home className="h-4 w-4" />
+                    </Button>
+                  </>
                 ) : (
                   <Button
                     size="sm"
@@ -361,6 +514,26 @@ export default function Portfolio() {
             </div>
           </div>
 
+          {/* Stories Row */}
+          {isLoggedIn && followingUsers.length > 0 && activeTab === 'following' && (
+            <div className="absolute top-16 left-0 right-0 z-40 px-4 py-2 overflow-x-auto bg-gradient-to-b from-black/60 to-transparent">
+              <div className="flex gap-3">
+                {followingUsers.map(u => (
+                  <StoryRing
+                    key={u.id}
+                    avatarUrl={u.avatar_url}
+                    name={u.full_name}
+                    hasStories={u.has_stories}
+                    hasUnseenStories={u.has_stories}
+                    isOwn={false}
+                    onClick={() => navigate(`/p/${u.id}`)}
+                    size="sm"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* TikTok Feed */}
           <TikTokFeed
             videos={tikTokVideos}
@@ -373,62 +546,9 @@ export default function Portfolio() {
             }}
           />
 
-          {/* Client Filter Sidebar */}
-          {showFilters && (
-            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" onClick={() => setShowFilters(false)}>
-              <div 
-                className="absolute right-0 top-0 h-full w-72 bg-black/95 border-l border-primary/20 p-4 overflow-y-auto"
-                onClick={e => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-white font-semibold">Filtrar</h2>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowFilters(false)}
-                    className="text-white hover:bg-white/10 rounded-full h-8 w-8"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => { setSelectedClientId(null); setShowFilters(false); }}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition ${
-                      !selectedClientId ? 'bg-primary/20 text-primary border border-primary/30' : 'text-white/70 hover:bg-white/10'
-                    }`}
-                  >
-                    <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center text-black font-bold text-sm">
-                      ★
-                    </div>
-                    <span className="text-sm font-medium">Todos</span>
-                  </button>
-                  {clients.map(client => (
-                    <button
-                      key={client.id}
-                      onClick={() => { setSelectedClientId(client.id); setShowFilters(false); }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition ${
-                        selectedClientId === client.id ? 'bg-primary/20 text-primary border border-primary/30' : 'text-white/70 hover:bg-white/10'
-                      }`}
-                    >
-                      {client.logo_url ? (
-                        <img src={client.logo_url} alt={client.name} className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-gradient-gold flex items-center justify-center text-black font-bold text-sm">
-                          {client.name.charAt(0)}
-                        </div>
-                      )}
-                      <span className="text-sm font-medium">{client.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Comments Dialog */}
           <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
-            <DialogContent className="max-w-lg bg-neutral-900 border-white/10">
+            <DialogContent className="max-w-lg bg-zinc-900 border-white/10">
               <DialogHeader>
                 <DialogTitle className="text-white">Comentarios</DialogTitle>
               </DialogHeader>
@@ -445,25 +565,58 @@ export default function Portfolio() {
   // Desktop view
   return (
     <VideoPlayerProvider>
-      <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black">
+      <div className="min-h-screen bg-black">
         {/* Header with navigation */}
-        <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-xl border-b border-primary/20">
+        <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-xl border-b border-white/10">
           <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg glow-gold">
+              <div className="h-9 w-9 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg">
                 <span className="text-black font-bold text-lg">U</span>
               </div>
               <div>
                 <h1 className="text-white font-bold text-lg">UGC Colombia</h1>
-                <p className="text-primary text-xs">Portafolio</p>
+                <p className="text-primary text-xs">Feed</p>
               </div>
             </div>
+
+            {/* Feed Tabs */}
+            {isLoggedIn && (
+              <div className="flex items-center bg-white/5 rounded-full p-1">
+                <button
+                  onClick={() => setActiveTab('for-you')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
+                    activeTab === 'for-you' ? 'bg-white text-black' : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Para ti
+                </button>
+                <button
+                  onClick={() => setActiveTab('following')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
+                    activeTab === 'following' ? 'bg-white text-black' : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <Users className="h-4 w-4" />
+                  Siguiendo
+                </button>
+              </div>
+            )}
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-2">
               {isLoggedIn ? (
                 <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => user && navigate(`/p/${user.id}`)}
+                    className="text-white/70 hover:text-white hover:bg-white/10"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Mi Perfil
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -473,17 +626,11 @@ export default function Portfolio() {
                     <Home className="h-4 w-4 mr-2" />
                     Dashboard
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/settings')}
-                    className="text-white/70 hover:text-white hover:bg-white/10"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Perfil
-                  </Button>
                   <div className="h-6 w-px bg-white/20 mx-2" />
-                  <div className="flex items-center gap-2">
+                  <div 
+                    className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
+                    onClick={() => user && navigate(`/p/${user.id}`)}
+                  >
                     <Avatar className="h-8 w-8 border-2 border-primary/50">
                       <AvatarImage src={userProfile?.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary/20 text-primary text-xs">
@@ -504,29 +651,38 @@ export default function Portfolio() {
               ) : (
                 <Button
                   onClick={() => navigate('/auth')}
-                  className="bg-gradient-gold text-black font-semibold hover:opacity-90 glow-gold"
+                  className="bg-gradient-gold text-black font-semibold hover:opacity-90"
                 >
                   Iniciar Sesión
                 </Button>
               )}
             </nav>
-
-            {/* Filter button for desktop */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowFilters(!showFilters)}
-              className="text-white hover:bg-white/10 md:hidden"
-            >
-              <Filter className="h-5 w-5" />
-            </Button>
           </div>
         </header>
 
-        {/* Video Grid - 3 columns centered minimalist */}
+        {/* Stories Row for Following tab */}
+        {isLoggedIn && followingUsers.length > 0 && activeTab === 'following' && (
+          <div className="max-w-4xl mx-auto px-4 py-4 overflow-x-auto border-b border-white/5">
+            <div className="flex gap-4">
+              {followingUsers.map(u => (
+                <StoryRing
+                  key={u.id}
+                  avatarUrl={u.avatar_url}
+                  name={u.full_name}
+                  hasStories={u.has_stories}
+                  hasUnseenStories={u.has_stories}
+                  isOwn={false}
+                  onClick={() => navigate(`/p/${u.id}`)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Video Grid */}
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            {contentWithVideos.map((item, index) => {
+            {currentContent.map((item) => {
               const videoUrls = getVideoUrls(item);
               return (
                 <BunnyVideoCard
@@ -548,109 +704,15 @@ export default function Portfolio() {
                     setSelectedContentId(item.id);
                     setCommentDialogOpen(true);
                   }}
-                  onOpenFullscreen={() => setFullscreenIndex(index)}
-                  showActions={true}
-                  hideControls={true}
-                  alwaysShowActions={true}
-                  className="bg-neutral-900 border-white/10 hover:border-primary/40"
                 />
               );
             })}
           </div>
         </div>
 
-        {/* Fullscreen Video Viewer */}
-        {fullscreenIndex !== null && (
-          <FullscreenVideoViewer
-            videos={tikTokVideos}
-            initialIndex={fullscreenIndex}
-            onClose={() => setFullscreenIndex(null)}
-            onLike={(id) => handleLike(id)}
-            onView={(id) => handleView(id)}
-            onShare={(video) => handleShare({ id: video.id, title: video.title } as PublishedContent)}
-            onComment={(id) => {
-              setSelectedContentId(id);
-              setCommentDialogOpen(true);
-            }}
-          />
-        )}
-
-        {/* Client Filter Sidebar */}
-        {showFilters && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" onClick={() => setShowFilters(false)}>
-            <div 
-              className="absolute right-0 top-0 h-full w-80 bg-black/95 border-l border-primary/20 p-4 overflow-y-auto"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-white font-semibold text-lg">Filtrar por Cliente</h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowFilters(false)}
-                  className="text-white hover:bg-white/10 rounded-full"
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                <button
-                  onClick={() => { setSelectedClientId(null); setShowFilters(false); }}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition ${
-                    !selectedClientId ? 'bg-primary/20 text-primary border border-primary/30' : 'text-white/70 hover:bg-white/10'
-                  }`}
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center text-black font-bold">
-                    ★
-                  </div>
-                  <span className="font-medium">Todos los clientes</span>
-                </button>
-
-                {clients.map(client => (
-                  <button
-                    key={client.id}
-                    onClick={() => { setSelectedClientId(client.id); setShowFilters(false); }}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition ${
-                      selectedClientId === client.id ? 'bg-primary/20 text-primary border border-primary/30' : 'text-white/70 hover:bg-white/10'
-                    }`}
-                  >
-                    {client.logo_url ? (
-                      <img 
-                        src={client.logo_url} 
-                        alt={client.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center text-black font-bold">
-                        {client.name.charAt(0)}
-                      </div>
-                    )}
-                    <span className="font-medium">{client.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Active Filter Badge */}
-        {selectedClientId && (
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30">
-            <Badge 
-              className="bg-primary/90 text-black border-none backdrop-blur-sm px-4 py-2 flex items-center gap-2 font-medium shadow-lg glow-gold"
-            >
-              <span>Filtrando: {clients.find(c => c.id === selectedClientId)?.name}</span>
-              <button onClick={() => setSelectedClientId(null)} className="hover:opacity-70">
-                <X className="h-4 w-4" />
-              </button>
-            </Badge>
-          </div>
-        )}
-
         {/* Comments Dialog */}
         <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
-          <DialogContent className="max-w-lg bg-neutral-900 border-white/10">
+          <DialogContent className="max-w-lg bg-zinc-900 border-white/10">
             <DialogHeader>
               <DialogTitle className="text-white">Comentarios</DialogTitle>
             </DialogHeader>
