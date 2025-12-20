@@ -77,6 +77,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     reference_url: "",
     video_url: "",
     video_urls: [] as string[],
+    raw_video_urls: [] as string[],
     hooks_count: 1,
     drive_url: "",
     script: "",
@@ -129,6 +130,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         reference_url: content.reference_url || "",
         video_url: content.video_url || "",
         video_urls: videoUrls,
+        raw_video_urls: content.drive_url ? [content.drive_url] : [],
         hooks_count: hooksCount,
         drive_url: content.drive_url || "",
         script: content.script || "",
@@ -1094,14 +1096,15 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       <BunnyStorageUploader
                         contentId={content.id}
                         fileType="raw_video"
-                        currentUrl={content.drive_url}
-                        onUploadComplete={(url) => {
-                          setFormData({ ...formData, drive_url: url });
+                        currentUrls={formData.raw_video_urls}
+                        onUploadComplete={(urls) => {
+                          setFormData({ ...formData, raw_video_urls: urls, drive_url: urls[0] || '' });
                           onUpdate?.();
                         }}
                         disabled={!editMode && !canEditDriveUrl && !isCreator}
-                        label="Subir Video Crudo"
+                        label="Subir Videos Crudos"
                         showDownload={isEditor || isAdmin}
+                        multiple={true}
                       />
                     </div>
                   )}

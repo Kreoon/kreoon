@@ -3,79 +3,115 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, CheckCircle, XCircle, Download, FileVideo, RefreshCw } from "lucide-react";
+import { Upload, Loader2, CheckCircle, Download, FileVideo, X, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+interface UploadedFile {
+  name: string;
+  url: string;
+  size: number;
+}
 
 interface BunnyStorageUploaderProps {
   contentId: string;
   fileType: 'raw_video' | 'thumbnail';
-  currentUrl?: string | null;
-  onUploadComplete?: (url: string) => void;
+  currentUrls?: string[] | null;
+  onUploadComplete?: (urls: string[]) => void;
   disabled?: boolean;
   accept?: string;
   label?: string;
   showDownload?: boolean;
+  multiple?: boolean;
 }
 
 export function BunnyStorageUploader({ 
   contentId, 
   fileType,
-  currentUrl,
+  currentUrls = [],
   onUploadComplete,
   disabled,
   accept = "video/mp4,video/webm,video/quicktime,video/x-msvideo",
   label = "Subir archivo",
-  showDownload = false
+  showDownload = false,
+  multiple = true
 }: BunnyStorageUploaderProps) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [uploadedUrl, setUploadedUrl] = useState<string | null>(currentUrl || null);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(
+    (currentUrls || []).filter(Boolean).map(url => ({
+      name: url.split('/').pop() || 'archivo',
+      url,
+      size: 0
+    }))
+  );
+  const [currentFileIndex, setCurrentFileIndex] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    // Validate file size (max 5GB)
+    // Validate file sizes (max 5GB each)
     const maxSize = 5 * 1024 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast({
-        title: "Archivo muy grande",
-        description: "El archivo no puede superar los 5GB",
-        variant: "destructive"
-      });
-      return;
+    for (const file of Array.from(files)) {
+      if (file.size > maxSize) {
+        toast({
+          title: "Archivo muy grande",
+          description: `${file.name} supera los 5GB permitidos`,
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     setUploading(true);
     setProgress(0);
+    setTotalFiles(files.length);
+    setCurrentFileIndex(0);
+
+    const newUploadedFiles: UploadedFile[] = [...uploadedFiles];
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('content_id', contentId);
-      formData.append('file_type', fileType);
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setCurrentFileIndex(i + 1);
+        setProgress(0);
 
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 5, 90));
-      }, 300);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('content_id', contentId);
+        formData.append('file_type', fileType);
+        formData.append('file_index', String(i));
 
-      const { data, error } = await supabase.functions.invoke('bunny-storage', {
-        body: formData
-      });
+        // Simulate per-file upload progress
+        const progressInterval = setInterval(() => {
+          setProgress(prev => Math.min(prev + 10, 90));
+        }, 200);
 
-      clearInterval(progressInterval);
+        const { data, error } = await supabase.functions.invoke('bunny-storage', {
+          body: formData
+        });
 
-      if (error) throw error;
+        clearInterval(progressInterval);
+        setProgress(100);
 
-      setProgress(100);
-      setUploadedUrl(data.url);
-      onUploadComplete?.(data.url);
+        if (error) throw error;
+
+        newUploadedFiles.push({
+          name: file.name,
+          url: data.url,
+          size: file.size
+        });
+      }
+
+      setUploadedFiles(newUploadedFiles);
+      onUploadComplete?.(newUploadedFiles.map(f => f.url));
 
       toast({
-        title: "Archivo subido",
-        description: "El archivo se ha subido correctamente a Bunny.net"
+        title: "Archivos subidos",
+        description: `${files.length} archivo(s) subido(s) correctamente`
       });
 
     } catch (error) {
@@ -87,20 +123,32 @@ export function BunnyStorageUploader({
       });
     } finally {
       setUploading(false);
+      setCurrentFileIndex(0);
+      setTotalFiles(0);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
 
-  const handleDownload = () => {
-    const url = uploadedUrl || currentUrl;
-    if (url) {
-      window.open(url, '_blank');
-    }
+  const handleRemoveFile = (index: number) => {
+    const newFiles = uploadedFiles.filter((_, i) => i !== index);
+    setUploadedFiles(newFiles);
+    onUploadComplete?.(newFiles.map(f => f.url));
   };
 
-  const displayUrl = uploadedUrl || currentUrl;
+  const handleDownload = (url: string) => {
+    window.open(url, '_blank');
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '';
+    const mb = bytes / (1024 * 1024);
+    if (mb >= 1000) {
+      return `${(mb / 1024).toFixed(1)} GB`;
+    }
+    return `${mb.toFixed(1)} MB`;
+  };
 
   return (
     <div className="space-y-3">
@@ -111,11 +159,13 @@ export function BunnyStorageUploader({
         onChange={handleFileSelect}
         className="hidden"
         disabled={disabled || uploading}
+        multiple={multiple}
       />
 
+      {/* Upload Button */}
       <div className="flex items-center gap-2 flex-wrap">
         <Button
-          variant={displayUrl ? 'outline' : 'default'}
+          variant={uploadedFiles.length > 0 ? 'outline' : 'default'}
           size="sm"
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || uploading}
@@ -123,41 +173,86 @@ export function BunnyStorageUploader({
         >
           {uploading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
-          ) : displayUrl ? (
-            <CheckCircle className="h-4 w-4 text-green-500" />
           ) : (
-            <Upload className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
           )}
-          {uploading ? 'Subiendo...' : displayUrl ? 'Reemplazar' : label}
+          {uploading 
+            ? `Subiendo ${currentFileIndex}/${totalFiles}...` 
+            : uploadedFiles.length > 0 
+              ? 'Agregar más archivos' 
+              : label
+          }
         </Button>
 
-        {showDownload && displayUrl && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleDownload}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Descargar
-          </Button>
+        {uploadedFiles.length > 0 && (
+          <Badge variant="secondary" className="text-xs">
+            {uploadedFiles.length} archivo(s)
+          </Badge>
         )}
       </div>
 
+      {/* Upload Progress */}
       {uploading && (
         <div className="space-y-1">
           <Progress value={progress} className="h-2" />
-          <p className="text-xs text-muted-foreground">Subiendo... {progress}%</p>
+          <p className="text-xs text-muted-foreground">
+            Subiendo archivo {currentFileIndex} de {totalFiles}... {progress}%
+          </p>
         </div>
       )}
 
-      {displayUrl && !uploading && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <FileVideo className="h-3 w-3" />
-          <span className="truncate max-w-[200px]" title={displayUrl}>
-            {displayUrl.split('/').pop()}
-          </span>
+      {/* Uploaded Files List */}
+      {uploadedFiles.length > 0 && !uploading && (
+        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+          {uploadedFiles.map((file, index) => (
+            <div 
+              key={index}
+              className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/50 border text-sm"
+            >
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <FileVideo className="h-4 w-4 shrink-0 text-primary" />
+                <span className="truncate" title={file.name}>{file.name}</span>
+                {file.size > 0 && (
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    ({formatFileSize(file.size)})
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-1 shrink-0">
+                {showDownload && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => handleDownload(file.url)}
+                    title="Descargar"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                {!disabled && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={() => handleRemoveFile(index)}
+                    title="Eliminar"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
+      )}
+
+      {uploadedFiles.length > 0 && (
+        <p className="text-xs text-green-600 flex items-center gap-1">
+          <CheckCircle className="h-3 w-3" />
+          {uploadedFiles.length} archivo(s) listo(s)
+        </p>
       )}
     </div>
   );
