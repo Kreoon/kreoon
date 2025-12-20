@@ -1,5 +1,3 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -12,15 +10,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const storageZone = Deno.env.get('BUNNY_STORAGE_ZONE')
-    const storagePassword = Deno.env.get('BUNNY_STORAGE_PASSWORD')
-    const cdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME')
+    const bunnyApiKey = Deno.env.get('BUNNY_API_KEY')
+    const bunnyLibraryId = Deno.env.get('BUNNY_LIBRARY_ID')
 
     // Check if secrets are configured
     const missingSecrets: string[] = []
-    if (!storageZone) missingSecrets.push('BUNNY_STORAGE_ZONE')
-    if (!storagePassword) missingSecrets.push('BUNNY_STORAGE_PASSWORD')
-    if (!cdnHostname) missingSecrets.push('BUNNY_CDN_HOSTNAME')
+    if (!bunnyApiKey) missingSecrets.push('BUNNY_API_KEY')
+    if (!bunnyLibraryId) missingSecrets.push('BUNNY_LIBRARY_ID')
 
     if (missingSecrets.length > 0) {
       return new Response(
@@ -34,15 +30,15 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log(`Testing Bunny Storage connection to zone: ${storageZone}`)
+    console.log(`Testing Bunny Stream connection to library: ${bunnyLibraryId}`)
 
-    // Test connection by listing root directory
+    // Test connection by listing videos in the library
     const testResponse = await fetch(
-      `https://storage.bunnycdn.com/${storageZone}/`,
+      `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos?page=1&itemsPerPage=1`,
       {
         method: 'GET',
         headers: {
-          'AccessKey': storagePassword!,
+          'AccessKey': bunnyApiKey!,
           'Accept': 'application/json'
         }
       }
@@ -50,13 +46,13 @@ Deno.serve(async (req) => {
 
     if (!testResponse.ok) {
       const errorText = await testResponse.text()
-      console.error('Bunny Storage test failed:', testResponse.status, errorText)
+      console.error('Bunny Stream test failed:', testResponse.status, errorText)
       
-      let errorMessage = 'Error de conexión con Bunny Storage'
+      let errorMessage = 'Error de conexión con Bunny Stream'
       if (testResponse.status === 401) {
-        errorMessage = 'Credenciales inválidas. Verifica BUNNY_STORAGE_ZONE y BUNNY_STORAGE_PASSWORD'
+        errorMessage = 'Credenciales inválidas. Verifica BUNNY_API_KEY y BUNNY_LIBRARY_ID'
       } else if (testResponse.status === 404) {
-        errorMessage = 'Zona de storage no encontrada. Verifica BUNNY_STORAGE_ZONE'
+        errorMessage = 'Librería no encontrada. Verifica BUNNY_LIBRARY_ID'
       }
 
       return new Response(
@@ -66,33 +62,31 @@ Deno.serve(async (req) => {
           message: errorMessage,
           details: {
             status: testResponse.status,
-            storageZone: storageZone,
-            cdnHostname: cdnHostname
+            libraryId: bunnyLibraryId
           }
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Parse response to get file count
-    let fileCount = 0
+    // Parse response to get video count
+    let videoCount = 0
     try {
-      const files = await testResponse.json()
-      fileCount = Array.isArray(files) ? files.length : 0
+      const data = await testResponse.json()
+      videoCount = data.totalItems || 0
     } catch {
       // If not JSON, that's okay - connection still works
     }
 
-    console.log('Bunny Storage connection successful')
+    console.log('Bunny Stream connection successful')
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: '¡Conexión exitosa con Bunny Storage!',
+        message: '¡Conexión exitosa con Bunny Stream!',
         details: {
-          storageZone: storageZone,
-          cdnHostname: cdnHostname,
-          filesInRoot: fileCount
+          libraryId: bunnyLibraryId,
+          totalVideos: videoCount
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

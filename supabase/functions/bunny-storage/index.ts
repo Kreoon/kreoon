@@ -6,6 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET,POST,PUT,OPTIONS',
 }
 
+interface BunnyVideoResponse {
+  guid: string;
+  title: string;
+  status: number;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -14,25 +20,19 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const storageZone = Deno.env.get('BUNNY_STORAGE_ZONE')!
-    const storagePassword = Deno.env.get('BUNNY_STORAGE_PASSWORD')!
-    const cdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME')!
+    const bunnyApiKey = Deno.env.get('BUNNY_API_KEY')!
+    const bunnyLibraryId = Deno.env.get('BUNNY_LIBRARY_ID')!
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     const contentType = req.headers.get('content-type') || ''
 
-    // ========== Path A: streaming upload (recommended for large files) ==========
-    // Client sends PUT with the file as the raw request body.
-    // Params via query string or headers:
-    // - content_id: ?content_id=... OR x-content-id
-    // - file_type: ?file_type=raw_video|thumbnail OR x-file-type
-    // - file name: ?file_name=... OR x-file-name
+    // ========== Path A: streaming upload (for large files) ==========
     if (req.method === 'PUT' && !contentType.includes('multipart/form-data')) {
       const url = new URL(req.url)
       const contentId = url.searchParams.get('content_id') || req.headers.get('x-content-id')
       const fileType = url.searchParams.get('file_type') || req.headers.get('x-file-type') || 'raw_video'
-      const originalFileName = url.searchParams.get('file_name') || req.headers.get('x-file-name') || 'upload.bin'
+      const originalFileName = url.searchParams.get('file_name') || req.headers.get('x-file-name') || 'upload.mp4'
 
       if (!contentId) {
         return new Response(
@@ -50,17 +50,36 @@ Deno.serve(async (req) => {
 
       console.log(`Streaming upload ${fileType} for content ${contentId}: ${originalFileName}`)
 
-      const timestamp = Date.now()
-      const extension = (originalFileName.split('.').pop() || 'bin').replace(/[^a-zA-Z0-9]/g, '')
-      const safeType = String(fileType).replace(/[^a-zA-Z0-9_\-]/g, '')
-      const fileName = `${contentId}/${safeType}_${timestamp}.${extension}`
+      // Step 1: Create video in Bunny Stream
+      const videoTitle = `raw_${contentId}_${Date.now()}`
+      const createResponse = await fetch(
+        `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos`,
+        {
+          method: 'POST',
+          headers: {
+            'AccessKey': bunnyApiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title: videoTitle }),
+        }
+      )
 
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text()
+        console.error('Bunny create video error:', errorText)
+        throw new Error(`Failed to create video in Bunny: ${errorText}`)
+      }
+
+      const videoData: BunnyVideoResponse = await createResponse.json()
+      console.log('Created Bunny video for raw upload:', videoData.guid)
+
+      // Step 2: Upload the video file (streaming)
       const uploadResponse = await fetch(
-        `https://storage.bunnycdn.com/${storageZone}/${fileName}`,
+        `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`,
         {
           method: 'PUT',
           headers: {
-            'AccessKey': storagePassword,
+            'AccessKey': bunnyApiKey,
             'Content-Type': contentType || 'application/octet-stream',
             ...(req.headers.get('content-length')
               ? { 'Content-Length': req.headers.get('content-length') as string }
@@ -72,23 +91,24 @@ Deno.serve(async (req) => {
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text()
-        console.error('Bunny Storage upload error:', errorText)
-        throw new Error(`Failed to upload to Bunny Storage: ${errorText}`)
+        console.error('Bunny Stream upload error:', errorText)
+        throw new Error(`Failed to upload to Bunny Stream: ${errorText}`)
       }
 
-      const cdnUrl = `https://${cdnHostname}/${fileName}`
-      console.log(`File uploaded successfully: ${cdnUrl}`)
+      // Generate embed URL (same format as final videos)
+      const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
+      console.log(`Raw video uploaded successfully: ${embedUrl}`)
 
       // Update content based on file type
       let updateData: Record<string, any> = {}
 
       if (fileType === 'raw_video') {
         updateData = {
-          drive_url: cdnUrl,
+          drive_url: embedUrl,
           video_processing_status: 'uploaded',
         }
       } else if (fileType === 'thumbnail') {
-        updateData = { thumbnail_url: cdnUrl }
+        updateData = { thumbnail_url: embedUrl }
       }
 
       if (Object.keys(updateData).length > 0) {
@@ -105,15 +125,15 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: true,
-          url: cdnUrl,
-          file_name: fileName,
+          url: embedUrl,
+          video_id: videoData.guid,
           file_type: fileType,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
-    // ========== Path B: multipart/form-data (OK for small files) ==========
+    // ========== Path B: multipart/form-data (for smaller files) ==========
     if (!contentType.includes('multipart/form-data')) {
       return new Response(
         JSON.stringify({ error: 'Expected multipart/form-data or PUT streaming upload' }),
@@ -124,7 +144,7 @@ Deno.serve(async (req) => {
     const formData = await req.formData()
     const file = formData.get('file') as File
     const contentId = formData.get('content_id') as string
-    const fileType = (formData.get('file_type') as string) || 'raw_video' // raw_video, thumbnail, etc.
+    const fileType = (formData.get('file_type') as string) || 'raw_video'
 
     if (!file || !contentId) {
       return new Response(
@@ -135,20 +155,38 @@ Deno.serve(async (req) => {
 
     console.log(`Uploading ${fileType} for content ${contentId}: ${file.name}`)
 
-    // Generate unique filename with timestamp
-    const timestamp = Date.now()
-    const extension = file.name.split('.').pop() || 'mp4'
-    const fileName = `${contentId}/${fileType}_${timestamp}.${extension}`
+    // Step 1: Create video in Bunny Stream
+    const videoTitle = `raw_${contentId}_${Date.now()}`
+    const createResponse = await fetch(
+      `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos`,
+      {
+        method: 'POST',
+        headers: {
+          'AccessKey': bunnyApiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title: videoTitle }),
+      }
+    )
 
-    // Upload to Bunny Storage (buffered; can hit memory limits for large files)
+    if (!createResponse.ok) {
+      const errorText = await createResponse.text()
+      console.error('Bunny create video error:', errorText)
+      throw new Error(`Failed to create video in Bunny: ${errorText}`)
+    }
+
+    const videoData: BunnyVideoResponse = await createResponse.json()
+    console.log('Created Bunny video for raw upload:', videoData.guid)
+
+    // Step 2: Upload the video file
     const fileBuffer = await file.arrayBuffer()
     const uploadResponse = await fetch(
-      `https://storage.bunnycdn.com/${storageZone}/${fileName}`,
+      `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`,
       {
         method: 'PUT',
         headers: {
-          'AccessKey': storagePassword,
-          'Content-Type': file.type || 'application/octet-stream',
+          'AccessKey': bunnyApiKey,
+          'Content-Type': 'application/octet-stream',
         },
         body: fileBuffer,
       },
@@ -156,24 +194,24 @@ Deno.serve(async (req) => {
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text()
-      console.error('Bunny Storage upload error:', errorText)
-      throw new Error(`Failed to upload to Bunny Storage: ${errorText}`)
+      console.error('Bunny Stream upload error:', errorText)
+      throw new Error(`Failed to upload to Bunny Stream: ${errorText}`)
     }
 
-    // Generate CDN URL for the file
-    const cdnUrl = `https://${cdnHostname}/${fileName}`
-    console.log(`File uploaded successfully: ${cdnUrl}`)
+    // Generate embed URL
+    const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
+    console.log(`Raw video uploaded successfully: ${embedUrl}`)
 
     // Update content based on file type
     let updateData: Record<string, any> = {}
 
     if (fileType === 'raw_video') {
       updateData = {
-        drive_url: cdnUrl, // Reuse drive_url field for raw video
+        drive_url: embedUrl,
         video_processing_status: 'uploaded',
       }
     } else if (fileType === 'thumbnail') {
-      updateData = { thumbnail_url: cdnUrl }
+      updateData = { thumbnail_url: embedUrl }
     }
 
     if (Object.keys(updateData).length > 0) {
@@ -190,8 +228,8 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        url: cdnUrl,
-        file_name: fileName,
+        url: embedUrl,
+        video_id: videoData.guid,
         file_type: fileType,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
