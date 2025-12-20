@@ -617,8 +617,6 @@ export default function UserPortfolio() {
                         viewsCount={item.views_count || 0}
                         likesCount={item.likes_count || 0}
                         isLiked={item.is_liked}
-                        creatorId={item.creator_id || undefined}
-                        creatorName={displayName || undefined}
                         showActions={true}
                         onLike={(e) => handleLike(item.id, e)}
                         onView={() => handleView(item.id)}
@@ -637,7 +635,6 @@ export default function UserPortfolio() {
                       viewsCount={item.views_count || 0}
                       likesCount={item.likes_count || 0}
                       isLiked={false}
-                      creatorName={displayName || undefined}
                       showActions={true}
                     />
                   ))
