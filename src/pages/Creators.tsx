@@ -58,6 +58,15 @@ const Creators = () => {
       const userIds = roles.map(r => r.user_id);
       const roleMap = new Map(roles.map(r => [r.user_id, r.role]));
 
+      // Get ambassador roles separately to check if user has ambassador role
+      const { data: ambassadorRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'ambassador')
+        .in('user_id', userIds);
+
+      const ambassadorSet = new Set(ambassadorRoles?.map(r => r.user_id) || []);
+
       // Get profiles
       const { data: profiles } = await supabase
         .from('profiles')
@@ -87,6 +96,7 @@ const Creators = () => {
         }
       });
 
+      // Use ambassador role OR is_ambassador flag from profiles
       const creatorsData: Creator[] = (profiles || []).map(p => ({
         id: p.id,
         full_name: p.full_name,
@@ -96,7 +106,7 @@ const Creators = () => {
         bio: p.bio,
         role: roleMap.get(p.id) as 'creator' | 'editor',
         content_count: countMap.get(p.id) || 0,
-        is_ambassador: p.is_ambassador || false
+        is_ambassador: ambassadorSet.has(p.id) || p.is_ambassador || false
       }));
 
       setCreators(creatorsData);
@@ -147,12 +157,35 @@ const Creators = () => {
     ));
 
     try {
-      const { error } = await supabase
+      // Update profiles table
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({ is_ambassador: newStatus })
         .eq('id', creator.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update user_roles table - add or remove ambassador role
+      if (newStatus) {
+        // Add ambassador role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .upsert({ 
+            user_id: creator.id, 
+            role: 'ambassador' as const 
+          }, { 
+            onConflict: 'user_id,role' 
+          });
+        if (roleError) throw roleError;
+      } else {
+        // Remove ambassador role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', creator.id)
+          .eq('role', 'ambassador');
+        if (roleError) throw roleError;
+      }
 
       toast({
         description: newStatus 
@@ -234,7 +267,12 @@ const Creators = () => {
                 <div 
                   key={creator.id}
                   onClick={() => setSelectedCreator(creator)}
-                  className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-lg hover:border-primary/20 cursor-pointer"
+                  className={cn(
+                    "group rounded-xl border bg-card p-5 transition-all duration-300 hover:shadow-lg cursor-pointer relative",
+                    creator.is_ambassador 
+                      ? "border-amber-500/50 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)] hover:shadow-[0_0_25px_-3px_rgba(245,158,11,0.5)] hover:border-amber-500 bg-gradient-to-br from-card via-card to-amber-500/5" 
+                      : "border-border hover:border-primary/20"
+                  )}
                 >
                   <div className="flex items-start justify-between mb-4">
                     {creator.avatar_url ? (
