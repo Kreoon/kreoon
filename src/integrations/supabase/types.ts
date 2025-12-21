@@ -809,6 +809,7 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          ambassador_celebration_pending: boolean | null
           avatar_url: string | null
           bio: string | null
           city: string | null
@@ -833,6 +834,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          ambassador_celebration_pending?: boolean | null
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
@@ -857,6 +859,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          ambassador_celebration_pending?: boolean | null
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
