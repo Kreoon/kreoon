@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Play, Filter, X, Home, User, LogOut, Users, Sparkles, UserPlus, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { SmartSearch } from "@/components/portfolio/SmartSearch";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -91,10 +91,6 @@ export default function Portfolio() {
   const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{ id: string; full_name: string; avatar_url: string | null }[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showSearchResults, setShowSearchResults] = useState(false);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -102,37 +98,6 @@ export default function Portfolio() {
     localStorage.setItem('portfolio_viewer_id', newId);
     return newId;
   });
-
-  // Search for users
-  useEffect(() => {
-    const searchUsers = async () => {
-      if (searchQuery.trim().length < 2) {
-        setSearchResults([]);
-        setShowSearchResults(false);
-        return;
-      }
-      
-      setIsSearching(true);
-      try {
-        const { data } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .or(`full_name.ilike.%${searchQuery}%`)
-          .eq('is_public', true)
-          .limit(10);
-        
-        setSearchResults(data || []);
-        setShowSearchResults(true);
-      } catch (error) {
-        console.error('Error searching users:', error);
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    const debounce = setTimeout(searchUsers, 300);
-    return () => clearTimeout(debounce);
-  }, [searchQuery]);
 
   useEffect(() => {
     fetchPublishedContent();
@@ -616,52 +581,10 @@ export default function Portfolio() {
             </div>
 
             {/* Search Bar */}
-            <div className="relative flex-1 max-w-xs mx-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
-              <Input
-                type="text"
-                placeholder="Buscar usuarios..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => searchQuery.length >= 2 && setShowSearchResults(true)}
-                onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
-                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:bg-white/15"
-              />
-              {/* Search Results Dropdown */}
-              {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden">
-                  {searchResults.map((result) => (
-                    <button
-                      key={result.id}
-                      onClick={() => {
-                        navigate(`/p/${result.id}`);
-                        setSearchQuery('');
-                        setShowSearchResults(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition text-left"
-                    >
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={result.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary/20 text-primary text-sm">
-                          {result.full_name?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-white text-sm">{result.full_name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {showSearchResults && isSearching && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 rounded-lg shadow-xl z-50 p-4 text-center text-white/50">
-                  Buscando...
-                </div>
-              )}
-              {showSearchResults && !isSearching && searchQuery.length >= 2 && searchResults.length === 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 rounded-lg shadow-xl z-50 p-4 text-center text-white/50">
-                  No se encontraron usuarios
-                </div>
-              )}
-            </div>
+            <SmartSearch 
+              className="flex-1 max-w-md mx-4"
+              placeholder="Buscar usuarios, videos, marcas..."
+            />
 
             {/* Feed Tabs */}
             {isLoggedIn && (
