@@ -1,7 +1,22 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, FileText, Search, Plus, Wand2 } from "lucide-react";
 
 const Scripts = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Mock data for scripts
+  const scripts = [
+    { title: "Guión Video Skincare Routine", client: "BeautyBrand Co", date: "Hace 2 días" },
+    { title: "Script Unboxing Tech", client: "GadgetWorld", date: "Hace 5 días" },
+    { title: "Guión Tutorial Maquillaje", client: "Cosmetics Plus", date: "Hace 1 semana" },
+  ];
+
+  const filteredScripts = scripts.filter(script =>
+    script.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    script.client.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
@@ -20,6 +35,20 @@ const Scripts = () => {
       </header>
 
       <div className="p-4 md:p-6">
+        {/* Search bar */}
+        <div className="mb-6">
+          <div className="relative w-full md:max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input 
+              type="text"
+              placeholder="Buscar guiones..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-9 md:h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
           {/* AI Script Generator Card */}
           <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-4 md:p-6">
@@ -69,27 +98,27 @@ const Scripts = () => {
           <h3 className="text-base md:text-lg font-semibold text-card-foreground mb-4">Guiones Recientes</h3>
           
           <div className="space-y-2 md:space-y-3">
-            {[
-              { title: "Guión Video Skincare Routine", client: "BeautyBrand Co", date: "Hace 2 días" },
-              { title: "Script Unboxing Tech", client: "GadgetWorld", date: "Hace 5 días" },
-              { title: "Guión Tutorial Maquillaje", client: "Cosmetics Plus", date: "Hace 1 semana" },
-            ].map((script, index) => (
-              <div 
-                key={index}
-                className="flex items-center justify-between p-3 md:p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-                  <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg bg-muted flex-shrink-0">
-                    <FileText className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+            {filteredScripts.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">No se encontraron guiones</p>
+            ) : (
+              filteredScripts.map((script, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center justify-between p-3 md:p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                    <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg bg-muted flex-shrink-0">
+                      <FileText className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm md:text-base font-medium text-card-foreground truncate">{script.title}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">{script.client}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm md:text-base font-medium text-card-foreground truncate">{script.title}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground">{script.client}</p>
-                  </div>
+                  <span className="text-xs md:text-sm text-muted-foreground flex-shrink-0 ml-2">{script.date}</span>
                 </div>
-                <span className="text-xs md:text-sm text-muted-foreground flex-shrink-0 ml-2">{script.date}</span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

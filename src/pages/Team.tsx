@@ -26,7 +26,8 @@ import {
   Loader2,
   Send,
   UserPlus,
-  Crown
+  Crown,
+  Search
 } from 'lucide-react';
 
 const ROLE_LABELS: Record<AppRole, string> = {
@@ -74,6 +75,7 @@ export default function Team() {
     role: 'creator' as AppRole
   });
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -372,12 +374,23 @@ export default function Team() {
   return (
     <div className="space-y-6">
       {/* Header with invite button */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Gestión de Equipo</h1>
           <p className="text-muted-foreground">Administra usuarios, roles y clientes</p>
         </div>
-        <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          {/* Search bar */}
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar usuarios..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <UserPlus className="w-4 h-4" />
@@ -430,6 +443,7 @@ export default function Team() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Tabs defaultValue="no-role" className="w-full">
