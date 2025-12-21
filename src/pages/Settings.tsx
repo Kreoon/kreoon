@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
@@ -8,11 +8,12 @@ import { UserManagement } from "@/components/settings/UserManagement";
 import { ReferralManagement } from "@/components/settings/ReferralManagement";
 import { SubscriptionManagement } from "@/components/settings/SubscriptionManagement";
 import { UserPlansManagement } from "@/components/settings/UserPlansManagement";
+import { RootAdminPanel } from "@/components/settings/RootAdminPanel";
 import { useAuth } from "@/hooks/useAuth";
 
 const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin';
 
 const settingsSections = [
   { 
@@ -98,14 +99,24 @@ const Settings = () => {
   // Build sections dynamically - add user management only for root
   const allSections = [
     ...settingsSections,
-    ...(isRoot ? [{
-      id: 'usuarios' as const,
-      icon: Users,
-      title: "Usuarios",
-      description: "Gestiona usuarios, contraseñas y accesos",
-      adminOnly: false,
-      rootOnly: true
-    }] : [])
+    ...(isRoot ? [
+      {
+        id: 'usuarios' as const,
+        icon: Users,
+        title: "Usuarios",
+        description: "Gestiona usuarios, contraseñas y accesos",
+        adminOnly: false,
+        rootOnly: true
+      },
+      {
+        id: 'root-admin' as const,
+        icon: Trash2,
+        title: "Eliminar Entidades",
+        description: "Elimina cualquier cosa de la plataforma",
+        adminOnly: false,
+        rootOnly: true
+      }
+    ] : [])
   ];
 
   // Filter sections based on user role
@@ -157,6 +168,8 @@ const Settings = () => {
         );
       case 'usuarios':
         return <UserManagement />;
+      case 'root-admin':
+        return <RootAdminPanel />;
       default:
         return null;
     }
