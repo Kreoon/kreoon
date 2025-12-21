@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Crown, Sparkles, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,9 +8,96 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
+// Confetti particle component
+const ConfettiParticle = ({ delay, color, left }: { delay: number; color: string; left: number }) => (
+  <div
+    className="absolute w-3 h-3 animate-[confetti-fall_3s_ease-out_forwards]"
+    style={{
+      left: `${left}%`,
+      top: '-10px',
+      animationDelay: `${delay}s`,
+      backgroundColor: color,
+      borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+      transform: `rotate(${Math.random() * 360}deg)`,
+    }}
+  />
+);
+
+// Play celebration sound using Web Audio API
+const playCelebrationSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Create a cheerful arpeggio
+    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
+    
+    notes.forEach((freq, i) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = freq;
+      oscillator.type = 'sine';
+      
+      const startTime = audioContext.currentTime + i * 0.1;
+      const duration = 0.3;
+      
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration);
+    });
+
+    // Add a little chime at the end
+    setTimeout(() => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 1567.98; // G6
+      oscillator.type = 'triangle';
+      
+      const startTime = audioContext.currentTime;
+      gainNode.gain.setValueAtTime(0.2, startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.5);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + 0.5);
+    }, 500);
+  } catch (e) {
+    console.log('Audio not supported');
+  }
+};
+
+const confettiColors = [
+  '#F59E0B', // amber-500
+  '#FBBF24', // amber-400
+  '#FCD34D', // amber-300
+  '#EAB308', // yellow-500
+  '#FACC15', // yellow-400
+  '#FEF08A', // yellow-200
+  '#F97316', // orange-500
+];
+
 export function AmbassadorCelebration() {
   const { user } = useAuth();
   const [showCelebration, setShowCelebration] = useState(false);
+
+  // Generate confetti particles only once
+  const confettiParticles = useMemo(() => 
+    Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      delay: Math.random() * 0.5,
+      color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+      left: Math.random() * 100,
+    })), []
+  );
 
   useEffect(() => {
     if (!user?.id) return;
@@ -24,6 +111,8 @@ export function AmbassadorCelebration() {
 
       if (profile?.ambassador_celebration_pending) {
         setShowCelebration(true);
+        // Play sound after a short delay
+        setTimeout(playCelebrationSound, 300);
         // Clear the flag
         await supabase
           .from('profiles')
@@ -35,20 +124,32 @@ export function AmbassadorCelebration() {
     checkCelebration();
   }, [user?.id]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setShowCelebration(false);
-  };
+  }, []);
 
   if (!showCelebration) return null;
 
   return (
     <Dialog open={showCelebration} onOpenChange={setShowCelebration}>
       <DialogContent className="sm:max-w-md border-amber-500/50 bg-gradient-to-br from-card via-card to-amber-500/10 overflow-hidden">
-        {/* Background particles */}
+        {/* Confetti */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {[...Array(20)].map((_, i) => (
+          {confettiParticles.map((particle) => (
+            <ConfettiParticle
+              key={particle.id}
+              delay={particle.delay}
+              color={particle.color}
+              left={particle.left}
+            />
+          ))}
+        </div>
+
+        {/* Background sparkles */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {[...Array(15)].map((_, i) => (
             <div
-              key={i}
+              key={`sparkle-${i}`}
               className="absolute animate-[float_3s_ease-in-out_infinite]"
               style={{
                 left: `${Math.random() * 100}%`,
