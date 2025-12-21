@@ -220,6 +220,179 @@ serve(async (req) => {
         });
       }
 
+      // ============ ROOT DELETE ANY ENTITY ============
+      
+      case "delete_client": {
+        const { clientId } = await req.json().catch(() => ({}));
+        if (!clientId) {
+          return new Response(JSON.stringify({ error: "Client ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Delete related data first
+        await supabaseAdmin.from("products").delete().eq("client_id", clientId);
+        await supabaseAdmin.from("client_packages").delete().eq("client_id", clientId);
+        await supabaseAdmin.from("content").update({ client_id: null }).eq("client_id", clientId);
+        
+        const { error } = await supabaseAdmin.from("clients").delete().eq("id", clientId);
+        if (error) throw error;
+        
+        console.log(`Client ${clientId} deleted by root`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "delete_content": {
+        const { contentId } = await req.json().catch(() => ({}));
+        if (!contentId) {
+          return new Response(JSON.stringify({ error: "Content ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Delete related data
+        await supabaseAdmin.from("content_comments").delete().eq("content_id", contentId);
+        await supabaseAdmin.from("content_history").delete().eq("content_id", contentId);
+        await supabaseAdmin.from("content_likes").delete().eq("content_id", contentId);
+        await supabaseAdmin.from("content_collaborators").delete().eq("content_id", contentId);
+        await supabaseAdmin.from("chat_conversations").update({ content_id: null }).eq("content_id", contentId);
+        
+        const { error } = await supabaseAdmin.from("content").delete().eq("id", contentId);
+        if (error) throw error;
+        
+        console.log(`Content ${contentId} deleted by root`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "delete_conversation": {
+        const { conversationId } = await req.json().catch(() => ({}));
+        if (!conversationId) {
+          return new Response(JSON.stringify({ error: "Conversation ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Delete messages and participants first
+        await supabaseAdmin.from("chat_messages").delete().eq("conversation_id", conversationId);
+        await supabaseAdmin.from("chat_participants").delete().eq("conversation_id", conversationId);
+        
+        const { error } = await supabaseAdmin.from("chat_conversations").delete().eq("id", conversationId);
+        if (error) throw error;
+        
+        console.log(`Conversation ${conversationId} deleted by root`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "delete_product": {
+        const { productId } = await req.json().catch(() => ({}));
+        if (!productId) {
+          return new Response(JSON.stringify({ error: "Product ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        await supabaseAdmin.from("content").update({ product_id: null }).eq("product_id", productId);
+        
+        const { error } = await supabaseAdmin.from("products").delete().eq("id", productId);
+        if (error) throw error;
+        
+        console.log(`Product ${productId} deleted by root`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "delete_notification": {
+        const { notificationId } = await req.json().catch(() => ({}));
+        if (!notificationId) {
+          return new Response(JSON.stringify({ error: "Notification ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        const { error } = await supabaseAdmin.from("notifications").delete().eq("id", notificationId);
+        if (error) throw error;
+        
+        console.log(`Notification ${notificationId} deleted by root`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "delete_portfolio_post": {
+        const { postId } = await req.json().catch(() => ({}));
+        if (!postId) {
+          return new Response(JSON.stringify({ error: "Post ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        const { error } = await supabaseAdmin.from("portfolio_posts").delete().eq("id", postId);
+        if (error) throw error;
+        
+        console.log(`Portfolio post ${postId} deleted by root`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "delete_referral": {
+        const { referralId } = await req.json().catch(() => ({}));
+        if (!referralId) {
+          return new Response(JSON.stringify({ error: "Referral ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        await supabaseAdmin.from("referral_commissions").delete().eq("referral_id", referralId);
+        
+        const { error } = await supabaseAdmin.from("referrals").delete().eq("id", referralId);
+        if (error) throw error;
+        
+        console.log(`Referral ${referralId} deleted by root`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "list_all_entities": {
+        // Get counts of all entities for the admin dashboard
+        const [clients, content, conversations, products, notifications, portfolioPosts, referrals] = await Promise.all([
+          supabaseAdmin.from("clients").select("id, name, user_id, created_at").order("created_at", { ascending: false }),
+          supabaseAdmin.from("content").select("id, title, client_id, creator_id, status, created_at").order("created_at", { ascending: false }),
+          supabaseAdmin.from("chat_conversations").select("id, name, is_group, created_at, created_by").order("created_at", { ascending: false }),
+          supabaseAdmin.from("products").select("id, name, client_id, created_at").order("created_at", { ascending: false }),
+          supabaseAdmin.from("notifications").select("id, title, user_id, type, created_at").order("created_at", { ascending: false }).limit(100),
+          supabaseAdmin.from("portfolio_posts").select("id, user_id, media_type, created_at").order("created_at", { ascending: false }),
+          supabaseAdmin.from("referrals").select("id, referrer_id, referred_email, status, created_at").order("created_at", { ascending: false }),
+        ]);
+
+        return new Response(JSON.stringify({
+          clients: clients.data || [],
+          content: content.data || [],
+          conversations: conversations.data || [],
+          products: products.data || [],
+          notifications: notifications.data || [],
+          portfolioPosts: portfolioPosts.data || [],
+          referrals: referrals.data || [],
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
       default:
         return new Response(JSON.stringify({ error: "Unknown action" }), {
           status: 400,
