@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
 import { UserManagement } from "@/components/settings/UserManagement";
 import { ReferralManagement } from "@/components/settings/ReferralManagement";
 import { SubscriptionManagement } from "@/components/settings/SubscriptionManagement";
+import { UserPlansManagement } from "@/components/settings/UserPlansManagement";
 import { useAuth } from "@/hooks/useAuth";
 
 const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios';
 
 const settingsSections = [
   { 
@@ -18,56 +20,72 @@ const settingsSections = [
     icon: User, 
     title: "Perfil", 
     description: "Gestiona tu información personal y preferencias de cuenta",
-    adminOnly: false
+    adminOnly: false,
+    rootOnly: false
   },
   { 
     id: 'referidos' as const,
     icon: Share2, 
     title: "Referidos", 
     description: "Refiere usuarios y gana comisiones",
-    adminOnly: false
+    adminOnly: false,
+    rootOnly: false
   },
   { 
     id: 'permisos' as const,
     icon: Lock, 
     title: "Permisos", 
     description: "Gestiona los permisos de acceso para cada rol",
-    adminOnly: true
+    adminOnly: true,
+    rootOnly: false
   },
   { 
     id: 'planes' as const,
     icon: Crown, 
     title: "Planes y Comisiones", 
-    description: "Gestiona planes de usuarios y comisiones de referidos",
-    adminOnly: true
+    description: "Gestiona comisiones de referidos",
+    adminOnly: true,
+    rootOnly: false
+  },
+  { 
+    id: 'gestion-usuarios' as const,
+    icon: CreditCard, 
+    title: "Gestión de Usuarios y Planes", 
+    description: "Asigna planes y cobra a usuarios",
+    adminOnly: false,
+    rootOnly: true
   },
   { 
     id: 'notificaciones' as const,
     icon: Bell, 
     title: "Notificaciones", 
     description: "Configura cómo y cuándo recibir alertas",
-    adminOnly: false
+    adminOnly: false,
+    rootOnly: false
   },
   { 
     id: 'seguridad' as const,
     icon: Shield, 
     title: "Seguridad", 
     description: "Contraseña, autenticación y accesos",
-    adminOnly: false
+    adminOnly: false,
+    rootOnly: false
   },
   { 
     id: 'apariencia' as const,
     icon: Palette, 
     title: "Apariencia", 
     description: "Tema, colores y personalización visual",
-    adminOnly: false
+    adminOnly: false,
+    rootOnly: false
   },
   { 
     id: 'integraciones' as const,
     icon: Globe, 
     title: "Integraciones", 
     description: "Conecta con otras plataformas y servicios",
-    adminOnly: true
+    adminOnly: true,
+    rootOnly: false
   },
 ];
 
@@ -85,12 +103,17 @@ const Settings = () => {
       icon: Users,
       title: "Usuarios",
       description: "Gestiona usuarios, contraseñas y accesos",
-      adminOnly: false // We handle access in the component
+      adminOnly: false,
+      rootOnly: true
     }] : [])
   ];
 
   // Filter sections based on user role
-  const visibleSections = allSections.filter(s => !s.adminOnly || isAdmin);
+  const visibleSections = allSections.filter(s => {
+    if (s.rootOnly && !isRoot) return false;
+    if (s.adminOnly && !isAdmin) return false;
+    return true;
+  });
 
   const renderContent = () => {
     switch (activeSection) {
@@ -102,6 +125,8 @@ const Settings = () => {
         return <ReferralManagement />;
       case 'planes':
         return <SubscriptionManagement />;
+      case 'gestion-usuarios':
+        return <UserPlansManagement />;
       case 'notificaciones':
         return (
           <div className="p-6 text-center text-muted-foreground">
@@ -214,7 +239,7 @@ const Settings = () => {
             </div>
           ) : (
             // Render active section content
-            <div className="max-w-3xl">
+            <div className={cn(activeSection === 'gestion-usuarios' ? 'max-w-6xl' : 'max-w-3xl')}>
               {/* Desktop: Show back button at top */}
               <div className="hidden md:block mb-4">
                 <Button 
