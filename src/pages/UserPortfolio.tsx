@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { 
   Play, 
   Loader2, 
@@ -14,7 +15,8 @@ import {
   Plus,
   Pencil,
   Home,
-  ArrowLeft
+  ArrowLeft,
+  Search
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -112,6 +114,7 @@ export default function UserPortfolio() {
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [contentSearchQuery, setContentSearchQuery] = useState('');
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -414,7 +417,16 @@ export default function UserPortfolio() {
     }));
     
     // Combine, sort pinned first, then by date
-    const combined = [...workVideos, ...postVideos];
+    let combined = [...workVideos, ...postVideos];
+    
+    // Filter by search query
+    if (contentSearchQuery.trim()) {
+      const query = contentSearchQuery.toLowerCase();
+      combined = combined.filter(item => 
+        item.title.toLowerCase().includes(query)
+      );
+    }
+    
     return combined.sort((a, b) => {
       // Pinned items first
       if (a.isPinned && !b.isPinned) return -1;
@@ -422,7 +434,7 @@ export default function UserPortfolio() {
       // Then by date
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [content, posts]);
+  }, [content, posts, contentSearchQuery]);
 
   // Check if current user is a client viewing their own content
   const isClientOwner = profileType === 'client' && isOwner;
@@ -697,6 +709,22 @@ export default function UserPortfolio() {
 
         {/* Content Divider */}
         <div className="border-t border-white/10 mt-4" />
+
+        {/* Search Bar for Content */}
+        {(content.length > 0 || posts.length > 0) && (
+          <div className="px-4 pt-4">
+            <div className="relative max-w-md mx-auto md:mx-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+              <Input
+                type="text"
+                placeholder="Buscar contenido..."
+                value={contentSearchQuery}
+                onChange={(e) => setContentSearchQuery(e.target.value)}
+                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:bg-white/15"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Unified Content Grid */}
         <div className="px-4 py-6">
