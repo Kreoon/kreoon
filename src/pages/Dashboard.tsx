@@ -26,6 +26,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AmbassadorBadge } from "@/components/ui/ambassador-badge";
+import { ReferralStats } from "@/components/dashboard/ReferralStats";
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -1103,6 +1104,22 @@ export default function Dashboard() {
                 />
               </TabsContent>
             </Tabs>
+          </div>
+        )}
+
+        {/* Referral Stats Section - Admin Only */}
+        {isAdmin && (
+          <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Sistema de Referidos</h2>
+                <p className="text-sm text-muted-foreground">
+                  Gestión de referidos, comisiones y suscripciones
+                </p>
+              </div>
+              <Users className="h-8 w-8 text-primary" />
+            </div>
+            <ReferralStats />
           </div>
         )}
       </div>
