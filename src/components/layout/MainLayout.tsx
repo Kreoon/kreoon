@@ -5,6 +5,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ChatButton } from "@/components/chat/ChatButton";
 import { TourProvider } from "@/components/tour/TourProvider";
+import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
@@ -113,6 +114,9 @@ export function MainLayout({
 
         {/* Chat Panel */}
         <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
+
+        {/* Ambassador Celebration */}
+        <AmbassadorCelebration />
       </div>
     );
   }
@@ -236,6 +240,9 @@ export function MainLayout({
 
         {/* Chat Panel */}
         <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
+
+        {/* Ambassador Celebration */}
+        <AmbassadorCelebration />
       </div>
     );
   }
@@ -285,6 +292,9 @@ export function MainLayout({
 
       {/* Tour Provider */}
       <TourProvider />
+
+      {/* Ambassador Celebration */}
+      <AmbassadorCelebration />
     </div>
   );
 }

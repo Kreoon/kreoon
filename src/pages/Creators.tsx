@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Star, Video, Trash2, User, Sparkles } from "lucide-react";
+import { Search, Plus, Star, Video, Trash2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -39,41 +39,6 @@ const Creators = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
-  const [celebratingId, setCelebratingId] = useState<string | null>(null);
-
-  // Celebration animation component
-  const CelebrationEffect = ({ isActive }: { isActive: boolean }) => {
-    if (!isActive) return null;
-    
-    return (
-      <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
-        {/* Sparkles */}
-        {[...Array(12)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute animate-[celebration-particle_1s_ease-out_forwards]"
-            style={{
-              left: `${50 + (Math.random() - 0.5) * 80}%`,
-              top: `${50 + (Math.random() - 0.5) * 80}%`,
-              animationDelay: `${i * 0.05}s`,
-            }}
-          >
-            <Sparkles 
-              className="h-4 w-4 text-amber-400" 
-              style={{ 
-                transform: `rotate(${Math.random() * 360}deg)`,
-                opacity: 0.8 + Math.random() * 0.2 
-              }} 
-            />
-          </div>
-        ))}
-        {/* Golden ring effect */}
-        <div className="absolute inset-0 rounded-xl animate-[celebration-ring_0.6s_ease-out_forwards] border-4 border-amber-400/60" />
-        {/* Flash effect */}
-        <div className="absolute inset-0 rounded-xl animate-[celebration-flash_0.4s_ease-out_forwards] bg-amber-400/30" />
-      </div>
-    );
-  };
 
   const fetchCreators = async () => {
     setLoading(true);
@@ -191,17 +156,14 @@ const Creators = () => {
       c.id === creator.id ? { ...c, is_ambassador: newStatus } : c
     ));
 
-    // Trigger celebration animation if activating
-    if (newStatus) {
-      setCelebratingId(creator.id);
-      setTimeout(() => setCelebratingId(null), 1200);
-    }
-
     try {
-      // Update profiles table
+      // Update profiles table - set celebration pending flag when activating
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ is_ambassador: newStatus })
+        .update({ 
+          is_ambassador: newStatus,
+          ambassador_celebration_pending: newStatus // Set flag for celebration on next login
+        })
         .eq('id', creator.id);
 
       if (profileError) throw profileError;
@@ -230,7 +192,7 @@ const Creators = () => {
 
       toast({
         description: newStatus 
-          ? `🎉 ¡${creator.full_name} es ahora embajador!` 
+          ? `🎉 ¡${creator.full_name} es ahora embajador! Verá la celebración cuando inicie sesión.` 
           : `${creator.full_name} ya no es embajador`
       });
     } catch (error) {
@@ -239,7 +201,6 @@ const Creators = () => {
       setCreators(prev => prev.map(c => 
         c.id === creator.id ? { ...c, is_ambassador: !newStatus } : c
       ));
-      setCelebratingId(null);
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado de embajador",
@@ -316,9 +277,6 @@ const Creators = () => {
                       : "border-border hover:border-primary/20"
                   )}
                 >
-                  {/* Celebration animation */}
-                  <CelebrationEffect isActive={celebratingId === creator.id} />
-                  
                   <div className="flex items-start justify-between mb-4">
                     {creator.avatar_url ? (
                       <img 
