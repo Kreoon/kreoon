@@ -84,12 +84,14 @@ serve(async (req) => {
       artist: track.artists?.map((a: any) => a.name).join(', ') || 'Unknown',
       album: track.album?.name || '',
       albumArt: track.album?.images?.[0]?.url || null,
-      previewUrl: track.preview_url, // 30-second preview
+      previewUrl: track.preview_url, // 30-second preview (may be null)
       duration: track.duration_ms,
       spotifyUrl: track.external_urls?.spotify,
     })) || [];
 
-    console.log(`Found ${tracks.length} tracks for query: ${query}`);
+    // Log how many tracks have previews
+    const tracksWithPreview = tracks.filter((t: any) => t.previewUrl !== null);
+    console.log(`Found ${tracks.length} tracks for query: ${query}, ${tracksWithPreview.length} with previews`);
 
     return new Response(
       JSON.stringify({ tracks }),
