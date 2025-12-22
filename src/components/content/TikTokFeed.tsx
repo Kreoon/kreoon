@@ -16,12 +16,17 @@ interface VideoItem {
   creatorName?: string;
   status?: string;
   isCreatorOwner?: boolean;
+  /**
+   * When false, hides Like button and disables double-tap likes / view tracking.
+   * Useful for videos that are not part of the main content system.
+   */
+  canInteract?: boolean;
 }
 
 interface TikTokFeedProps {
   videos: VideoItem[];
-  onLike: (id: string, e?: React.MouseEvent) => void;
-  onView: (id: string) => void;
+  onLike?: (id: string, e?: React.MouseEvent) => void;
+  onView?: (id: string) => void;
   onShare: (video: VideoItem) => void;
   onComment?: (id: string) => void;
   onCreatorStatusChange?: (id: string, newStatus: 'recording' | 'recorded') => void;
@@ -103,8 +108,8 @@ function TikTokVideoCard({
 }: {
   video: VideoItem;
   isActive: boolean;
-  onLike: (e?: React.MouseEvent) => void;
-  onView: () => void;
+  onLike?: (e?: React.MouseEvent) => void;
+  onView?: () => void;
   onShare: () => void;
   onComment?: () => void;
   onCreatorStatusChange?: (newStatus: 'recording' | 'recorded') => void;
@@ -148,8 +153,11 @@ function TikTokVideoCard({
     }
   }, [isActive]);
 
-  // Track view after 3 seconds
+  // Track view after 3 seconds (only when enabled)
   useEffect(() => {
+    const canInteract = video.canInteract !== false;
+    if (!canInteract || !onView) return;
+
     if (isPlaying && !viewTrackedRef.current) {
       viewTimerRef.current = setTimeout(() => {
         onView();
@@ -161,7 +169,7 @@ function TikTokVideoCard({
         clearTimeout(viewTimerRef.current);
       }
     };
-  }, [isPlaying, onView]);
+  }, [isPlaying, onView, video.canInteract]);
 
   // Spawn floating heart at tap position
   const spawnFloatingHeart = useCallback((clientX: number, clientY: number) => {
@@ -183,16 +191,18 @@ function TikTokVideoCard({
   }, []);
 
   // Toggle play/pause on tap
+  const canInteract = video.canInteract !== false;
+
   const handleTap = useCallback((e: React.MouseEvent) => {
     // Check for double tap (like)
     const now = Date.now();
     const lastTap = (handleTap as any).lastTap || 0;
     (handleTap as any).lastTap = now;
-    
+
     if (now - lastTap < 300) {
       // Double tap - like and show floating heart
       spawnFloatingHeart(e.clientX, e.clientY);
-      if (!video.isLiked) {
+      if (canInteract && !video.isLiked && onLike) {
         onLike(e);
       }
       return;
@@ -211,7 +221,7 @@ function TikTokVideoCard({
         });
       }
     }, 300);
-  }, [video.isLiked, onLike, spawnFloatingHeart]);
+  }, [video.isLiked, onLike, spawnFloatingHeart, canInteract]);
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -315,20 +325,22 @@ function TikTokVideoCard({
       {/* Right side actions - TikTok style */}
       <div className="absolute right-3 bottom-28 z-20 flex flex-col items-center gap-4">
         {/* Like */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onLike(e); }}
-          className="flex flex-col items-center gap-1"
-        >
-          <div className={cn(
-            "p-3 rounded-full transition-all duration-200 active:scale-90",
-            video.isLiked 
-              ? "bg-red-500 text-white" 
-              : "bg-black/40 backdrop-blur-sm text-white"
-          )}>
-            <Heart className="h-7 w-7" fill={video.isLiked ? "currentColor" : "none"} />
-          </div>
-          <span className="text-white text-xs font-semibold drop-shadow-lg">{formatCount(video.likesCount)}</span>
-        </button>
+        {video.canInteract !== false && onLike && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onLike(e); }}
+            className="flex flex-col items-center gap-1"
+          >
+            <div className={cn(
+              "p-3 rounded-full transition-all duration-200 active:scale-90",
+              video.isLiked 
+                ? "bg-red-500 text-white" 
+                : "bg-black/40 backdrop-blur-sm text-white"
+            )}>
+              <Heart className="h-7 w-7" fill={video.isLiked ? "currentColor" : "none"} />
+            </div>
+            <span className="text-white text-xs font-semibold drop-shadow-lg">{formatCount(video.likesCount)}</span>
+          </button>
+        )}
 
         {/* Comment */}
         {onComment && (
@@ -464,8 +476,8 @@ export function TikTokFeed({ videos, onLike, onView, onShare, onComment, onCreat
           <TikTokVideoCard
             video={video}
             isActive={index === activeIndex}
-            onLike={(e) => onLike(video.id, e)}
-            onView={() => onView(video.id)}
+            onLike={onLike ? (e) => onLike(video.id, e) : undefined}
+            onView={onView ? () => onView(video.id) : undefined}
             onShare={() => onShare(video)}
             onComment={onComment ? () => onComment(video.id) : undefined}
             onCreatorStatusChange={video.isCreatorOwner && onCreatorStatusChange ? (newStatus) => onCreatorStatusChange(video.id, newStatus) : undefined}
