@@ -1,20 +1,44 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageCircle, Clock, LogOut, Sparkles } from 'lucide-react';
+import { MessageCircle, Clock, LogOut, Sparkles, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-// WhatsApp number for access requests - update this to your company number
-const WHATSAPP_NUMBER = '573001234567'; // Replace with actual company WhatsApp
 
 export default function PendingAccess() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchWhatsappNumber = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'whatsapp_access_request')
+          .single();
+
+        if (error) throw error;
+        setWhatsappNumber(data?.value || '573113842399');
+      } catch (error) {
+        console.error('Error fetching WhatsApp number:', error);
+        setWhatsappNumber('573113842399'); // Fallback
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWhatsappNumber();
+  }, []);
 
   const handleRequestAccess = () => {
+    if (!whatsappNumber) return;
+    
     const message = encodeURIComponent(
       `¡Hola! 👋\n\nMe acabo de registrar en UGC Colombia y quiero solicitar acceso.\n\n` +
       `📧 Mi correo: ${user?.email}\n` +
@@ -26,7 +50,7 @@ export default function PendingAccess() {
       `¡Gracias!`
     );
     
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
   };
 
   const handleSignOut = async () => {

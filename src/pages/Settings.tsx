@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
@@ -11,6 +11,7 @@ import { UserPlansManagement } from "@/components/settings/UserPlansManagement";
 import { RootAdminPanel } from "@/components/settings/RootAdminPanel";
 import { CurrencyManagement } from "@/components/settings/CurrencyManagement";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
+import { AppSettingsManagement } from "@/components/settings/AppSettingsManagement";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { Sparkles, Play } from "lucide-react";
@@ -52,7 +53,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings';
 
 const settingsSections = [
   { 
@@ -96,6 +97,14 @@ const settingsSections = [
     rootOnly: false
   },
   { 
+    id: 'app-settings' as const,
+    icon: Settings2, 
+    title: "Configuración General", 
+    description: "WhatsApp de empresa y otras configuraciones",
+    adminOnly: true,
+    rootOnly: false
+  },
+  {
     id: 'historial' as const,
     icon: History, 
     title: "Historial de Actividad", 
@@ -204,6 +213,8 @@ const Settings = () => {
         return <CurrencyManagement />;
       case 'historial':
         return <AuditLogPanel />;
+      case 'app-settings':
+        return <AppSettingsManagement />;
       case 'gestion-usuarios':
         return <UserPlansManagement />;
       case 'notificaciones':
