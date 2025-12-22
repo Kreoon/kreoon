@@ -978,6 +978,7 @@ export type Database = {
           portfolio_url: string | null
           tiktok: string | null
           updated_at: string | null
+          username: string | null
         }
         Insert: {
           address?: string | null
@@ -1003,6 +1004,7 @@ export type Database = {
           portfolio_url?: string | null
           tiktok?: string | null
           updated_at?: string | null
+          username?: string | null
         }
         Update: {
           address?: string | null
@@ -1028,6 +1030,7 @@ export type Database = {
           portfolio_url?: string | null
           tiktok?: string | null
           updated_at?: string | null
+          username?: string | null
         }
         Relationships: []
       }
@@ -1265,6 +1268,10 @@ export type Database = {
         Returns: string
       }
       generate_referral_code: { Args: never; Returns: string }
+      generate_username_from_name: {
+        Args: { full_name: string }
+        Returns: string
+      }
       get_best_available_editor: { Args: never; Returns: string }
       get_exchange_rate: {
         Args: {
