@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, MessageCircle, X } from "lucide-react";
+import { Bell, MessageCircle, X, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,6 +15,7 @@ import { es } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
+import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
@@ -39,12 +40,14 @@ export function FloatingNotificationBar({
 }: FloatingNotificationBarProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { playNotificationSound, playChatSound, playUrgentSound } = useNotificationSound();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isChatAnimating, setIsChatAnimating] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
   const prevUnreadRef = useRef(0);
   const prevChatRef = useRef(0);
 
@@ -69,16 +72,27 @@ export function FloatingNotificationBar({
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
           
-          // Play sound and animate
+          // Play sound, animate, and show flash
           if (newNotification.type === 'payment' || newNotification.type === 'assignment') {
             playUrgentSound();
           } else {
             playNotificationSound();
           }
           
+          // Trigger flash effect
+          setShowFlash(true);
+          setTimeout(() => setShowFlash(false), 500);
+          
           // Trigger animation
           setIsAnimating(true);
-          setTimeout(() => setIsAnimating(false), 1000);
+          setTimeout(() => setIsAnimating(false), 1500);
+
+          // Show prominent toast for important notifications
+          toast({
+            title: `${getNotificationIcon(newNotification.type)} ${newNotification.title}`,
+            description: newNotification.message,
+            duration: 8000,
+          });
         }
       )
       .subscribe();
@@ -86,14 +100,29 @@ export function FloatingNotificationBar({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, playNotificationSound, playUrgentSound]);
+  }, [user?.id, playNotificationSound, playUrgentSound, toast]);
 
-  // Handle chat notification animation and sound
+  // Helper function for notification icons
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'like': return '❤️';
+      case 'comment': return '💬';
+      case 'content': return '🎬';
+      case 'assignment': return '📋';
+      case 'payment': return '💰';
+      case 'chat': return '💬';
+      default: return '🔔';
+    }
+  };
+
+  // Handle chat notification animation, sound, and flash
   useEffect(() => {
     if (unreadChatCount > prevChatRef.current && unreadChatCount > 0) {
       playChatSound();
       setIsChatAnimating(true);
-      setTimeout(() => setIsChatAnimating(false), 1000);
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 500);
+      setTimeout(() => setIsChatAnimating(false), 1500);
     }
     prevChatRef.current = unreadChatCount;
   }, [unreadChatCount, playChatSound]);
@@ -154,86 +183,97 @@ export function FloatingNotificationBar({
     }
   };
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'like': return '❤️';
-      case 'comment': return '💬';
-      case 'content': return '🎬';
-      case 'assignment': return '📋';
-      case 'payment': return '💰';
-      default: return '🔔';
-    }
-  };
 
   if (!user) return null;
 
   const totalUnread = unreadCount + unreadChatCount;
 
   return (
-    <div 
-      className={cn(
-        "fixed top-4 right-4 z-[100] flex items-center gap-2 p-2 rounded-2xl",
-        "bg-card/95 backdrop-blur-md border border-border shadow-2xl",
-        "transition-all duration-300",
-        totalUnread > 0 && "ring-2 ring-primary/50 shadow-primary/20"
+    <>
+      {/* Full screen flash effect for urgent notifications */}
+      {showFlash && (
+        <div className="fixed inset-0 z-[99] pointer-events-none bg-primary/20 animate-pulse" />
       )}
-      data-tour="notification-bell"
-    >
-      {/* Chat Button */}
-      <Button
-        variant={isChatOpen ? "default" : "ghost"}
-        size="icon"
-        onClick={onChatClick}
+      
+      <div 
         className={cn(
-          "relative h-11 w-11 rounded-xl transition-all duration-300",
-          isChatOpen && "bg-primary text-primary-foreground shadow-lg",
-          isChatAnimating && "animate-bounce",
-          !isChatOpen && unreadChatCount > 0 && "bg-blue-500/20 hover:bg-blue-500/30"
+          "fixed top-4 right-4 z-[100] flex items-center gap-2 p-2 rounded-2xl",
+          "bg-card/95 backdrop-blur-md border border-border shadow-2xl",
+          "transition-all duration-300",
+          totalUnread > 0 && "ring-2 ring-primary/50 shadow-primary/20",
+          (isAnimating || isChatAnimating) && "scale-110 ring-4 ring-primary shadow-[0_0_30px_rgba(var(--primary),0.5)]"
         )}
+        data-tour="notification-bell"
       >
-        <MessageCircle className={cn("h-5 w-5", isChatAnimating && "animate-pulse")} />
-        {unreadChatCount > 0 && (
-          <span 
-            className={cn(
-              "absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold",
-              "bg-blue-500 text-white shadow-lg",
-              isChatAnimating && "animate-ping"
-            )}
-          >
-            {unreadChatCount > 9 ? '9+' : unreadChatCount}
-          </span>
-        )}
-      </Button>
-
-      {/* Divider */}
-      <div className="w-px h-8 bg-border" />
-
-      {/* Notification Button */}
-      <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "relative h-11 w-11 rounded-xl transition-all duration-300",
-              isAnimating && "animate-bounce",
-              unreadCount > 0 && "bg-primary/20 hover:bg-primary/30"
-            )}
-          >
-            <Bell className={cn("h-5 w-5", isAnimating && "animate-pulse")} />
-            {unreadCount > 0 && (
+        {/* Chat Button */}
+        <Button
+          variant={isChatOpen ? "default" : "ghost"}
+          size="icon"
+          onClick={onChatClick}
+          className={cn(
+            "relative h-12 w-12 rounded-xl transition-all duration-300",
+            isChatOpen && "bg-primary text-primary-foreground shadow-lg",
+            isChatAnimating && "animate-bounce scale-125",
+            !isChatOpen && unreadChatCount > 0 && "bg-blue-500/30 hover:bg-blue-500/40 shadow-blue-500/30 shadow-lg"
+          )}
+        >
+          <MessageCircle className={cn(
+            "h-5 w-5 transition-transform", 
+            isChatAnimating && "animate-pulse scale-110"
+          )} />
+          {unreadChatCount > 0 && (
+            <>
               <span 
                 className={cn(
-                  "absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold",
-                  "bg-primary text-primary-foreground shadow-lg",
-                  isAnimating && "animate-ping"
+                  "absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold",
+                  "bg-blue-500 text-white shadow-lg border-2 border-background",
+                  isChatAnimating && "animate-bounce"
                 )}
               >
-                {unreadCount > 9 ? '9+' : unreadCount}
+                {unreadChatCount > 9 ? '9+' : unreadChatCount}
               </span>
-            )}
-          </Button>
-        </PopoverTrigger>
+              {/* Pulsing ring effect */}
+              <span className="absolute inset-0 rounded-xl animate-ping bg-blue-500/30" />
+            </>
+          )}
+        </Button>
+
+        {/* Divider */}
+        <div className="w-px h-8 bg-border" />
+
+        {/* Notification Button */}
+        <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "relative h-12 w-12 rounded-xl transition-all duration-300",
+                isAnimating && "animate-bounce scale-125",
+                unreadCount > 0 && "bg-primary/30 hover:bg-primary/40 shadow-primary/30 shadow-lg"
+              )}
+            >
+              <Bell className={cn(
+                "h-5 w-5 transition-transform", 
+                isAnimating && "animate-pulse scale-110"
+              )} />
+              {unreadCount > 0 && (
+                <>
+                  <span 
+                    className={cn(
+                      "absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold",
+                      "bg-primary text-primary-foreground shadow-lg border-2 border-background",
+                      isAnimating && "animate-bounce"
+                    )}
+                  >
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                  {/* Pulsing ring effect */}
+                  <span className="absolute inset-0 rounded-xl animate-ping bg-primary/30" />
+                </>
+              )}
+            </Button>
+          </PopoverTrigger>
         <PopoverContent 
           className="w-96 p-0 shadow-2xl border-border/50 bg-card/95 backdrop-blur-md" 
           align="end"
@@ -313,5 +353,6 @@ export function FloatingNotificationBar({
         </PopoverContent>
       </Popover>
     </div>
+    </>
   );
 }

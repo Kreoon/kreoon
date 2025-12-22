@@ -43,25 +43,32 @@ export function useChatNotifications(
     return false;
   }, []);
 
-  // Show browser notification
+  // Show browser notification with enhanced options
   const showBrowserNotification = useCallback((title: string, body: string, onClick?: () => void) => {
     if (permissionRef.current !== 'granted') return;
 
-    const notification = new Notification(title, {
-      body,
-      icon: '/favicon.ico',
-      tag: 'chat-message',
-      requireInteraction: true, // Keep notification visible until user interacts
-    });
+    try {
+      const notification = new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: 'chat-message-' + Date.now(),
+        requireInteraction: true,
+        silent: false, // Allow system sound
+        vibrate: [200, 100, 200], // Vibration pattern for mobile
+      } as NotificationOptions);
 
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-      onClick?.();
-    };
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+        onClick?.();
+      };
 
-    // Auto-close after 10 seconds
-    setTimeout(() => notification.close(), 10000);
+      // Auto-close after 15 seconds
+      setTimeout(() => notification.close(), 15000);
+    } catch (error) {
+      console.warn('Could not show notification:', error);
+    }
   }, []);
 
   // Show in-app toast notification
