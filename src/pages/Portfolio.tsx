@@ -113,6 +113,7 @@ export default function Portfolio() {
   const [content, setContent] = useState<PublishedContent[]>([]);
   const [followingContent, setFollowingContent] = useState<PublishedContent[]>([]);
   const [followingUsers, setFollowingUsers] = useState<FollowingUser[]>([]);
+  const [allUsersWithStories, setAllUsersWithStories] = useState<FollowingUser[]>([]);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -131,11 +132,48 @@ export default function Portfolio() {
 
   useEffect(() => {
     fetchPublishedContent();
+    fetchAllStories();
     if (user?.id) {
       fetchUserProfile();
       fetchFollowingData();
     }
   }, [user?.id]);
+
+  // Fetch all users with active stories for the "For You" feed
+  const fetchAllStories = async () => {
+    try {
+      // Get all active stories
+      const { data: storiesData } = await supabase
+        .from('portfolio_stories')
+        .select('user_id')
+        .gt('expires_at', new Date().toISOString());
+      
+      if (!storiesData || storiesData.length === 0) {
+        setAllUsersWithStories([]);
+        return;
+      }
+
+      const userIds = [...new Set(storiesData.map(s => s.user_id))];
+      
+      // Get profiles of users with stories
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, is_public')
+        .in('id', userIds)
+        .eq('is_public', true);
+      
+      const usersWithStories = (profiles || []).map(p => ({
+        id: p.id,
+        full_name: p.full_name,
+        avatar_url: p.avatar_url,
+        has_stories: true
+      }));
+      
+      setAllUsersWithStories(usersWithStories);
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+    }
+  };
 
   const fetchUserProfile = async () => {
     if (!user?.id) return;
@@ -676,25 +714,33 @@ export default function Portfolio() {
             </div>
           </div>
 
-          {/* Stories Row */}
-          {isLoggedIn && followingUsers.length > 0 && activeTab === 'following' && (
-            <div className="px-4 py-2 overflow-x-auto">
-              <div className="flex gap-3">
-                {followingUsers.map(u => (
-                  <StoryRing
-                    key={u.id}
-                    avatarUrl={u.avatar_url}
-                    name={u.full_name}
-                    hasStories={u.has_stories}
-                    hasUnseenStories={u.has_stories}
-                    isOwn={false}
-                    onClick={() => navigate(`/p/${u.id}`)}
-                    size="sm"
-                  />
-                ))}
+          {/* Stories Row - Show in both tabs */}
+          {(() => {
+            const storiesToShow = activeTab === 'following' 
+              ? followingUsers.filter(u => u.has_stories)
+              : allUsersWithStories;
+            
+            if (storiesToShow.length === 0) return null;
+            
+            return (
+              <div className="px-4 py-2 overflow-x-auto">
+                <div className="flex gap-3">
+                  {storiesToShow.map(u => (
+                    <StoryRing
+                      key={u.id}
+                      avatarUrl={u.avatar_url}
+                      name={u.full_name}
+                      hasStories={true}
+                      hasUnseenStories={true}
+                      isOwn={user?.id === u.id}
+                      onClick={() => navigate(`/p/${u.id}`)}
+                      size="sm"
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Mixed Feed - Videos and Images together ordered by date */}
           <section className="px-4 pb-8">
@@ -882,24 +928,32 @@ export default function Portfolio() {
           </div>
         </header>
 
-        {/* Stories Row for Following tab */}
-        {isLoggedIn && followingUsers.length > 0 && activeTab === 'following' && (
-          <div className="max-w-4xl mx-auto px-4 py-4 overflow-x-auto border-b border-white/5">
-            <div className="flex gap-4">
-              {followingUsers.map(u => (
-                <StoryRing
-                  key={u.id}
-                  avatarUrl={u.avatar_url}
-                  name={u.full_name}
-                  hasStories={u.has_stories}
-                  hasUnseenStories={u.has_stories}
-                  isOwn={false}
-                  onClick={() => navigate(`/p/${u.id}`)}
-                />
-              ))}
+        {/* Stories Row - Show in both tabs */}
+        {(() => {
+          const storiesToShow = activeTab === 'following' 
+            ? followingUsers.filter(u => u.has_stories)
+            : allUsersWithStories;
+          
+          if (storiesToShow.length === 0) return null;
+          
+          return (
+            <div className="max-w-4xl mx-auto px-4 py-4 overflow-x-auto border-b border-white/5">
+              <div className="flex gap-4">
+                {storiesToShow.map(u => (
+                  <StoryRing
+                    key={u.id}
+                    avatarUrl={u.avatar_url}
+                    name={u.full_name}
+                    hasStories={true}
+                    hasUnseenStories={true}
+                    isOwn={user?.id === u.id}
+                    onClick={() => navigate(`/p/${u.id}`)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Content Grid (Videos + Images) */}
         <div className="max-w-4xl mx-auto px-4 py-8">
