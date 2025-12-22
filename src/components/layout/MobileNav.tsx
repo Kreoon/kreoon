@@ -40,6 +40,7 @@ const adminNavigation = [
 
 const strategistNavigation = [
   { name: "Dashboard", href: "/strategist-dashboard", icon: LayoutDashboard },
+  { name: "Mi Perfil", href: "/profile", icon: User, isDynamic: true },
   { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Configuración", href: "/settings", icon: Settings },
@@ -56,6 +57,7 @@ const creatorNavigation = [
 
 const editorNavigation = [
   { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard },
+  { name: "Mi Perfil", href: "/profile", icon: User, isDynamic: true },
   { name: "Tablero", href: "/board", icon: Kanban },
   { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
