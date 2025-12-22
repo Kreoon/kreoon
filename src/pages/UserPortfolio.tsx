@@ -743,8 +743,8 @@ export default function UserPortfolio() {
                         variant="glow"
                         className="gap-1.5"
                         onClick={() => {
-                          const agencyWhatsApp = '573001234567'; // Número de WhatsApp de la agencia
-                          const message = encodeURIComponent(`Hola! Me interesa contratar contenido del creador ${displayName} (@${profile.username || profile.id})`);
+                          const agencyWhatsApp = '573113842399';
+                          const message = encodeURIComponent(`Hola, Estoy interesado en crear contenido para mi marca con el creador @${profile.username || displayName}`);
                           window.open(`https://wa.me/${agencyWhatsApp}?text=${message}`, '_blank');
                         }}
                       >
