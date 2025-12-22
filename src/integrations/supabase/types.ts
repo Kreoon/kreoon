@@ -122,6 +122,7 @@ export type Database = {
           content_quantity: number
           created_at: string
           creators_count: number | null
+          currency: Database["public"]["Enums"]["currency_type"]
           description: string | null
           hooks_per_video: number | null
           id: string
@@ -141,6 +142,7 @@ export type Database = {
           content_quantity?: number
           created_at?: string
           creators_count?: number | null
+          currency?: Database["public"]["Enums"]["currency_type"]
           description?: string | null
           hooks_per_video?: number | null
           id?: string
@@ -160,6 +162,7 @@ export type Database = {
           content_quantity?: number
           created_at?: string
           creators_count?: number | null
+          currency?: Database["public"]["Enums"]["currency_type"]
           description?: string | null
           hooks_per_video?: number | null
           id?: string
@@ -236,6 +239,7 @@ export type Database = {
           creator_id: string | null
           creator_paid: boolean | null
           creator_payment: number | null
+          creator_payment_currency: Database["public"]["Enums"]["currency_type"]
           deadline: string | null
           delivered_at: string | null
           description: string | null
@@ -245,6 +249,7 @@ export type Database = {
           editor_id: string | null
           editor_paid: boolean | null
           editor_payment: number | null
+          editor_payment_currency: Database["public"]["Enums"]["currency_type"]
           hooks_count: number | null
           id: string
           invoiced: boolean | null
@@ -288,6 +293,7 @@ export type Database = {
           creator_id?: string | null
           creator_paid?: boolean | null
           creator_payment?: number | null
+          creator_payment_currency?: Database["public"]["Enums"]["currency_type"]
           deadline?: string | null
           delivered_at?: string | null
           description?: string | null
@@ -297,6 +303,7 @@ export type Database = {
           editor_id?: string | null
           editor_paid?: boolean | null
           editor_payment?: number | null
+          editor_payment_currency?: Database["public"]["Enums"]["currency_type"]
           hooks_count?: number | null
           id?: string
           invoiced?: boolean | null
@@ -340,6 +347,7 @@ export type Database = {
           creator_id?: string | null
           creator_paid?: boolean | null
           creator_payment?: number | null
+          creator_payment_currency?: Database["public"]["Enums"]["currency_type"]
           deadline?: string | null
           delivered_at?: string | null
           description?: string | null
@@ -349,6 +357,7 @@ export type Database = {
           editor_id?: string | null
           editor_paid?: boolean | null
           editor_payment?: number | null
+          editor_payment_currency?: Database["public"]["Enums"]["currency_type"]
           hooks_count?: number | null
           id?: string
           invoiced?: boolean | null
@@ -535,6 +544,96 @@ export type Database = {
           },
         ]
       }
+      currency_balances: {
+        Row: {
+          balance: number
+          currency: Database["public"]["Enums"]["currency_type"]
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          balance?: number
+          currency: Database["public"]["Enums"]["currency_type"]
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          balance?: number
+          currency?: Database["public"]["Enums"]["currency_type"]
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      currency_transfers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          exchange_rate: number
+          from_amount: number
+          from_currency: Database["public"]["Enums"]["currency_type"]
+          id: string
+          notes: string | null
+          to_amount: number
+          to_currency: Database["public"]["Enums"]["currency_type"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          exchange_rate: number
+          from_amount: number
+          from_currency: Database["public"]["Enums"]["currency_type"]
+          id?: string
+          notes?: string | null
+          to_amount: number
+          to_currency: Database["public"]["Enums"]["currency_type"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          exchange_rate?: number
+          from_amount?: number
+          from_currency?: Database["public"]["Enums"]["currency_type"]
+          id?: string
+          notes?: string | null
+          to_amount?: number
+          to_currency?: Database["public"]["Enums"]["currency_type"]
+        }
+        Relationships: []
+      }
+      exchange_rates: {
+        Row: {
+          created_at: string
+          from_currency: Database["public"]["Enums"]["currency_type"]
+          id: string
+          is_active: boolean
+          rate: number
+          set_by: string | null
+          to_currency: Database["public"]["Enums"]["currency_type"]
+        }
+        Insert: {
+          created_at?: string
+          from_currency: Database["public"]["Enums"]["currency_type"]
+          id?: string
+          is_active?: boolean
+          rate: number
+          set_by?: string | null
+          to_currency: Database["public"]["Enums"]["currency_type"]
+        }
+        Update: {
+          created_at?: string
+          from_currency?: Database["public"]["Enums"]["currency_type"]
+          id?: string
+          is_active?: boolean
+          rate?: number
+          set_by?: string | null
+          to_currency?: Database["public"]["Enums"]["currency_type"]
+        }
+        Relationships: []
+      }
       followers: {
         Row: {
           created_at: string
@@ -636,6 +735,7 @@ export type Database = {
           amount: number
           content_id: string | null
           created_at: string | null
+          currency: Database["public"]["Enums"]["currency_type"]
           id: string
           notes: string | null
           paid_at: string | null
@@ -647,6 +747,7 @@ export type Database = {
           amount: number
           content_id?: string | null
           created_at?: string | null
+          currency?: Database["public"]["Enums"]["currency_type"]
           id?: string
           notes?: string | null
           paid_at?: string | null
@@ -658,6 +759,7 @@ export type Database = {
           amount?: number
           content_id?: string | null
           created_at?: string | null
+          currency?: Database["public"]["Enums"]["currency_type"]
           id?: string
           notes?: string | null
           paid_at?: string | null
@@ -889,6 +991,7 @@ export type Database = {
           amount: number
           commission_percentage: number
           created_at: string
+          currency: Database["public"]["Enums"]["currency_type"]
           description: string | null
           id: string
           paid_at: string | null
@@ -901,6 +1004,7 @@ export type Database = {
           amount: number
           commission_percentage: number
           created_at?: string
+          currency?: Database["public"]["Enums"]["currency_type"]
           description?: string | null
           id?: string
           paid_at?: string | null
@@ -913,6 +1017,7 @@ export type Database = {
           amount?: number
           commission_percentage?: number
           created_at?: string
+          currency?: Database["public"]["Enums"]["currency_type"]
           description?: string | null
           id?: string
           paid_at?: string | null
@@ -1116,6 +1221,13 @@ export type Database = {
       }
       generate_referral_code: { Args: never; Returns: string }
       get_best_available_editor: { Args: never; Returns: string }
+      get_exchange_rate: {
+        Args: {
+          _from: Database["public"]["Enums"]["currency_type"]
+          _to: Database["public"]["Enums"]["currency_type"]
+        }
+        Returns: number
+      }
       get_follow_counts: {
         Args: { _user_id: string }
         Returns: {
@@ -1151,6 +1263,15 @@ export type Database = {
       toggle_content_pin: { Args: { content_id: string }; Returns: boolean }
       toggle_follow: { Args: { _following_id: string }; Returns: boolean }
       toggle_post_pin: { Args: { post_id: string }; Returns: boolean }
+      transfer_currency: {
+        Args: {
+          _from_amount: number
+          _from_currency: Database["public"]["Enums"]["currency_type"]
+          _notes?: string
+          _to_currency: Database["public"]["Enums"]["currency_type"]
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role:
@@ -1174,6 +1295,7 @@ export type Database = {
         | "recorded"
         | "delivered"
         | "issue"
+      currency_type: "COP" | "USD"
       subscription_plan: "free" | "basic" | "pro"
       subscription_status: "active" | "cancelled" | "expired" | "pending"
     }
@@ -1326,6 +1448,7 @@ export const Constants = {
         "delivered",
         "issue",
       ],
+      currency_type: ["COP", "USD"],
       subscription_plan: ["free", "basic", "pro"],
       subscription_status: ["active", "cancelled", "expired", "pending"],
     },
