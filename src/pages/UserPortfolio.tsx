@@ -588,18 +588,24 @@ export default function UserPortfolio() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+      <div className="min-h-screen bg-black">
+        <PortfolioHeader />
+        <div className="flex items-center justify-center pt-20">
+          <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+        </div>
       </div>
     );
   }
 
   if (!profile && !clientInfo) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
-        <User className="h-16 w-16 text-white/30 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Perfil no encontrado</h2>
-        <p className="text-white/50">El perfil que buscas no existe o no está disponible.</p>
+      <div className="min-h-screen bg-black text-white">
+        <PortfolioHeader />
+        <div className="flex flex-col items-center justify-center pt-20">
+          <User className="h-16 w-16 text-white/30 mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Perfil no encontrado</h2>
+          <p className="text-white/50">El perfil que buscas no existe o no está disponible.</p>
+        </div>
       </div>
     );
   }
@@ -607,20 +613,23 @@ export default function UserPortfolio() {
   // Private profile check - only show to owner
   if (profile && !profile.is_public && !isOwner) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
-        <div className="text-center p-6">
-          <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
-            <User className="h-12 w-12 text-white/50" />
+      <div className="min-h-screen bg-black text-white">
+        <PortfolioHeader />
+        <div className="flex flex-col items-center justify-center pt-20">
+          <div className="text-center p-6">
+            <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+              <User className="h-12 w-12 text-white/50" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Perfil privado</h2>
+            <p className="text-white/50 mb-4">Este usuario ha configurado su perfil como privado.</p>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/portfolio')}
+              className="border-white/20 text-white hover:bg-white/10"
+            >
+              Volver al portfolio
+            </Button>
           </div>
-          <h2 className="text-xl font-semibold mb-2">Perfil privado</h2>
-          <p className="text-white/50 mb-4">Este usuario ha configurado su perfil como privado.</p>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/portfolio')}
-            className="border-white/20 text-white hover:bg-white/10"
-          >
-            Volver al portfolio
-          </Button>
         </div>
       </div>
     );
