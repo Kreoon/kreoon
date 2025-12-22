@@ -20,6 +20,7 @@ interface ProfileEditorProps {
   currentName: string;
   currentBio: string | null;
   currentAvatar: string | null;
+  currentUsername?: string | null;
   currentIsPublic?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -31,6 +32,7 @@ export function ProfileEditor({
   currentName,
   currentBio,
   currentAvatar,
+  currentUsername,
   currentIsPublic = true,
   open,
   onOpenChange,
@@ -42,17 +44,73 @@ export function ProfileEditor({
   const [uploading, setUploading] = useState(false);
   const [name, setName] = useState(currentName);
   const [bio, setBio] = useState(currentBio || '');
+  const [username, setUsername] = useState(currentUsername || '');
   const [isPublic, setIsPublic] = useState(currentIsPublic);
   const [avatarUrl, setAvatarUrl] = useState(currentAvatar);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
 
   useEffect(() => {
     setName(currentName);
     setBio(currentBio || '');
+    setUsername(currentUsername || '');
     setIsPublic(currentIsPublic);
     setAvatarUrl(currentAvatar);
-  }, [currentName, currentBio, currentIsPublic, currentAvatar]);
+  }, [currentName, currentBio, currentUsername, currentIsPublic, currentAvatar]);
+
+  // Validate username in real-time
+  useEffect(() => {
+    const validateUsername = async () => {
+      if (!username || username === currentUsername) {
+        setUsernameError(null);
+        return;
+      }
+
+      // Validate format: only letters, numbers, underscores
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(username)) {
+        setUsernameError('Solo letras, números y guiones bajos');
+        return;
+      }
+
+      if (username.length < 3) {
+        setUsernameError('Mínimo 3 caracteres');
+        return;
+      }
+
+      if (username.length > 30) {
+        setUsernameError('Máximo 30 caracteres');
+        return;
+      }
+
+      setCheckingUsername(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', username.toLowerCase())
+          .neq('id', userId)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          setUsernameError('Este username ya está en uso');
+        } else {
+          setUsernameError(null);
+        }
+      } catch (error) {
+        console.error('Error checking username:', error);
+      } finally {
+        setCheckingUsername(false);
+      }
+    };
+
+    const debounce = setTimeout(validateUsername, 500);
+    return () => clearTimeout(debounce);
+  }, [username, currentUsername, userId]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,6 +184,15 @@ export function ProfileEditor({
       return;
     }
 
+    if (usernameError) {
+      toast({
+        title: 'Username inválido',
+        description: usernameError,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       // Upload new avatar if selected
@@ -139,6 +206,7 @@ export function ProfileEditor({
           bio: bio.trim() || null,
           avatar_url: newAvatarUrl,
           is_public: isPublic,
+          username: username.toLowerCase().trim() || null,
         })
         .eq('id', userId);
 
@@ -215,6 +283,33 @@ export function ProfileEditor({
               className="bg-zinc-800 border-zinc-700 text-white placeholder:text-white/40"
               maxLength={100}
             />
+          </div>
+
+          {/* Username */}
+          <div className="space-y-2">
+            <Label htmlFor="username" className="text-white/70">Username</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">@</span>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                placeholder="tu_username"
+                className={`bg-zinc-800 border-zinc-700 text-white placeholder:text-white/40 pl-7 ${
+                  usernameError ? 'border-red-500' : username && !checkingUsername && !usernameError ? 'border-green-500' : ''
+                }`}
+                maxLength={30}
+              />
+              {checkingUsername && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-white/40" />
+              )}
+            </div>
+            {usernameError && (
+              <p className="text-xs text-red-400">{usernameError}</p>
+            )}
+            {!usernameError && username && !checkingUsername && (
+              <p className="text-xs text-green-400">Username disponible</p>
+            )}
           </div>
 
           {/* Bio */}
