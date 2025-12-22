@@ -194,9 +194,9 @@ export default function UserPortfolio() {
             .maybeSingle();
           
           if (clientData) {
-            // It's a company, redirect to company portfolio
+          // It's a company, redirect to company portfolio
             const path = clientData.username 
-              ? `/empresa/@${clientData.username}` 
+              ? `/empresa/${clientData.username}` 
               : `/empresa/${clientData.id}`;
             navigate(path, { replace: true });
             return;
@@ -231,7 +231,7 @@ export default function UserPortfolio() {
             
             if (clientData) {
               // Redirect to company portfolio
-              navigate(`/empresa/@${clientData.username}`, { replace: true });
+              navigate(`/empresa/${clientData.username}`, { replace: true });
               return;
             }
             

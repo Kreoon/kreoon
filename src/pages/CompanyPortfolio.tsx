@@ -110,11 +110,12 @@ export default function CompanyPortfolio() {
         if (isUuid) {
           setResolvedCompanyId(paramId);
         } else {
-          // It's a username, resolve it
+          // It's a username, resolve it (remove @ prefix if present)
+          const cleanUsername = paramId.startsWith('@') ? paramId.slice(1) : paramId;
           const { data, error } = await supabase
             .from('clients')
             .select('id')
-            .eq('username', paramId)
+            .eq('username', cleanUsername)
             .maybeSingle();
           
           if (error) {
