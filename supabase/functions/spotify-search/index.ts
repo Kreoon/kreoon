@@ -77,26 +77,31 @@ serve(async (req) => {
     }
 
     const searchData = await searchResponse.json();
-    
-    const tracks = searchData.tracks?.items?.map((track: any) => ({
-      id: track.id,
-      name: track.name,
-      artist: track.artists?.map((a: any) => a.name).join(', ') || 'Unknown',
-      album: track.album?.name || '',
-      albumArt: track.album?.images?.[0]?.url || null,
-      previewUrl: track.preview_url, // 30-second preview (may be null)
-      duration: track.duration_ms,
-      spotifyUrl: track.external_urls?.spotify,
-    })) || [];
 
-    // Log how many tracks have previews
-    const tracksWithPreview = tracks.filter((t: any) => t.previewUrl !== null);
-    console.log(`Found ${tracks.length} tracks for query: ${query}, ${tracksWithPreview.length} with previews`);
+    const allTracks =
+      searchData.tracks?.items?.map((track: any) => ({
+        id: track.id,
+        name: track.name,
+        artist: track.artists?.map((a: any) => a.name).join(", ") || "Unknown",
+        album: track.album?.name || "",
+        albumArt: track.album?.images?.[0]?.url || null,
+        previewUrl: track.preview_url, // 30-second preview (may be null)
+        duration: track.duration_ms,
+        spotifyUrl: track.external_urls?.spotify,
+      })) || [];
 
-    return new Response(
-      JSON.stringify({ tracks }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    const tracks = allTracks.filter(
+      (t: any) => typeof t.previewUrl === "string" && t.previewUrl.length > 0
     );
+    const skippedCount = allTracks.length - tracks.length;
+
+    console.log(
+      `Found ${allTracks.length} tracks for query: ${query}; returning ${tracks.length} with previews (skipped ${skippedCount})`
+    );
+
+    return new Response(JSON.stringify({ tracks, totalCount: allTracks.length, skippedCount }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error('Error in spotify-search:', error);
     return new Response(
