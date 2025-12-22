@@ -27,6 +27,8 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AmbassadorBadge } from "@/components/ui/ambassador-badge";
 import { ReferralStats } from "@/components/dashboard/ReferralStats";
+import { CurrencyDisplay, CurrencyBadge, formatCurrency, type CurrencyType } from "@/components/ui/currency-input";
+import { useCurrency } from "@/hooks/useCurrency";
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -311,14 +313,24 @@ export default function Dashboard() {
   const [allGoals, setAllGoals] = useState<any[]>([]);
   const [monthlyActuals, setMonthlyActuals] = useState<any[]>([]);
 
-  // Billing data from packages
+  // Billing data from packages - now separated by currency
   const [packages, setPackages] = useState<(ClientPackage & { client?: Client })[]>([]);
   const [clientsBilling, setClientsBilling] = useState<{
     totalBilled: number;
     totalPending: number;
     totalPaid: number;
     contentOwed: number;
-  }>({ totalBilled: 0, totalPending: 0, totalPaid: 0, contentOwed: 0 });
+    totalBilledUSD: number;
+    totalPendingUSD: number;
+    totalPaidUSD: number;
+    totalBilledCOP: number;
+    totalPendingCOP: number;
+    totalPaidCOP: number;
+  }>({ 
+    totalBilled: 0, totalPending: 0, totalPaid: 0, contentOwed: 0,
+    totalBilledUSD: 0, totalPendingUSD: 0, totalPaidUSD: 0,
+    totalBilledCOP: 0, totalPendingCOP: 0, totalPaidCOP: 0
+  });
 
   // Active clients, creators, editors lists
   const [activeClients, setActiveClients] = useState<Client[]>([]);
@@ -374,10 +386,24 @@ export default function Dashboard() {
         })) as (ClientPackage & { client?: Client })[];
         setPackages(mappedPackages);
 
-        // Calculate billing - CORRECTED LOGIC (only packages with values > 0)
+        // Calculate billing - separated by currency
         const packagesWithValues = packagesData.filter(p => (p.total_value || 0) > 0);
-        const totalBilled = packagesWithValues.reduce((sum, p) => sum + (p.total_value || 0), 0);
-        const totalPaid = packagesWithValues.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+        
+        // COP packages
+        const copPackages = packagesWithValues.filter(p => (p as any).currency === 'COP' || !(p as any).currency);
+        const totalBilledCOP = copPackages.reduce((sum, p) => sum + (p.total_value || 0), 0);
+        const totalPaidCOP = copPackages.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+        const totalPendingCOP = totalBilledCOP - totalPaidCOP;
+        
+        // USD packages
+        const usdPackages = packagesWithValues.filter(p => (p as any).currency === 'USD');
+        const totalBilledUSD = usdPackages.reduce((sum, p) => sum + (p.total_value || 0), 0);
+        const totalPaidUSD = usdPackages.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+        const totalPendingUSD = totalBilledUSD - totalPaidUSD;
+
+        // Total for backward compatibility (keep as COP equivalent for now)
+        const totalBilled = totalBilledCOP + totalBilledUSD;
+        const totalPaid = totalPaidCOP + totalPaidUSD;
         const totalPending = totalBilled - totalPaid;
         
         // Content owed = total content promised in all active packages - delivered/approved content
@@ -385,7 +411,11 @@ export default function Dashboard() {
         const deliveredContent = allContent.filter(c => ['approved', 'delivered'].includes(c.status)).length;
         const contentOwed = Math.max(0, totalContentPromised - deliveredContent);
 
-        setClientsBilling({ totalBilled, totalPending, totalPaid, contentOwed });
+        setClientsBilling({ 
+          totalBilled, totalPending, totalPaid, contentOwed,
+          totalBilledUSD, totalPendingUSD, totalPaidUSD,
+          totalBilledCOP, totalPendingCOP, totalPaidCOP
+        });
       }
 
       // Fetch current month/quarter goal
@@ -508,15 +538,29 @@ export default function Dashboard() {
   const completed = content.filter(c => c.status === 'approved').length;
   const pending = content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)).length;
   
-  // Payment stats - CORRECTED LOGIC
+  // Payment stats - CORRECTED LOGIC - now separated by currency
   // Unpaid creator content: approved content where creator hasn't been paid AND has a payment value assigned
   const unpaidCreatorContent = content.filter(c => c.status === 'approved' && !c.creator_paid && (c.creator_payment || 0) > 0);
   // Unpaid editor content: approved content where editor hasn't been paid AND has a payment value assigned
   const unpaidEditorContent = content.filter(c => c.status === 'approved' && !c.editor_paid && (c.editor_payment || 0) > 0);
   
-  // Calculate pending amounts to pay team (only for content with assigned values)
-  const pendingCreatorPayment = unpaidCreatorContent.reduce((sum, c) => sum + (c.creator_payment || 0), 0);
-  const pendingEditorPayment = unpaidEditorContent.reduce((sum, c) => sum + (c.editor_payment || 0), 0);
+  // Calculate pending amounts to pay team - separated by currency
+  const pendingCreatorPaymentCOP = unpaidCreatorContent
+    .filter(c => (c as any).creator_payment_currency !== 'USD')
+    .reduce((sum, c) => sum + (c.creator_payment || 0), 0);
+  const pendingCreatorPaymentUSD = unpaidCreatorContent
+    .filter(c => (c as any).creator_payment_currency === 'USD')
+    .reduce((sum, c) => sum + (c.creator_payment || 0), 0);
+  const pendingEditorPaymentCOP = unpaidEditorContent
+    .filter(c => (c as any).editor_payment_currency !== 'USD')
+    .reduce((sum, c) => sum + (c.editor_payment || 0), 0);
+  const pendingEditorPaymentUSD = unpaidEditorContent
+    .filter(c => (c as any).editor_payment_currency === 'USD')
+    .reduce((sum, c) => sum + (c.editor_payment || 0), 0);
+  
+  // Total for backwards compat
+  const pendingCreatorPayment = pendingCreatorPaymentCOP + pendingCreatorPaymentUSD;
+  const pendingEditorPayment = pendingEditorPaymentCOP + pendingEditorPaymentUSD;
 
   const openKpiDialog = (title: string, contentList: Content[]) => {
     setKpiDialog({ open: true, title, content: contentList });
@@ -932,42 +976,80 @@ export default function Dashboard() {
               <Banknote className="h-8 w-8 text-warning" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div 
-                className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
-                onClick={() => openKpiDialog('Por Pagar a Creadores', unpaidCreatorContent)}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Por pagar a Creadores</p>
-                <p className="text-3xl font-bold text-warning">
-                  ${pendingCreatorPayment.toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {unpaidCreatorContent.length} contenidos
-                </p>
-              </div>
-              <div 
-                className="p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
-                onClick={() => openKpiDialog('Por Pagar a Editores', unpaidEditorContent)}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Por pagar a Editores</p>
-                <p className="text-3xl font-bold text-info">
-                  ${pendingEditorPayment.toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {unpaidEditorContent.length} contenidos
-                </p>
-              </div>
-            </div>
+            <Tabs defaultValue="cop" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="cop" className="gap-2">
+                  🇨🇴 COP
+                </TabsTrigger>
+                <TabsTrigger value="usd" className="gap-2">
+                  🇺🇸 USD
+                </TabsTrigger>
+              </TabsList>
 
-            <div 
-              className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
-              onClick={() => openKpiDialog('Total Por Pagar Equipo', [...unpaidCreatorContent, ...unpaidEditorContent])}
-            >
-              <p className="text-sm text-muted-foreground mb-1">Total por pagar al equipo</p>
-              <p className="text-3xl font-bold text-destructive">
-                ${(pendingCreatorPayment + pendingEditorPayment).toLocaleString()}
-              </p>
-            </div>
+              <TabsContent value="cop" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div 
+                    className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
+                    onClick={() => openKpiDialog('Por Pagar a Creadores (COP)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">Creadores</p>
+                    <p className="text-2xl font-bold text-warning">
+                      <CurrencyDisplay value={pendingCreatorPaymentCOP} currency="COP" />
+                    </p>
+                  </div>
+                  <div 
+                    className="p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
+                    onClick={() => openKpiDialog('Por Pagar a Editores (COP)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">Editores</p>
+                    <p className="text-2xl font-bold text-info">
+                      <CurrencyDisplay value={pendingEditorPaymentCOP} currency="COP" />
+                    </p>
+                  </div>
+                </div>
+                <div 
+                  className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
+                  onClick={() => openKpiDialog('Total Por Pagar Equipo (COP)', [...unpaidCreatorContent, ...unpaidEditorContent].filter(c => (c as any).creator_payment_currency !== 'USD' && (c as any).editor_payment_currency !== 'USD'))}
+                >
+                  <p className="text-sm text-muted-foreground mb-1">Total por pagar</p>
+                  <p className="text-2xl font-bold text-destructive">
+                    <CurrencyDisplay value={pendingCreatorPaymentCOP + pendingEditorPaymentCOP} currency="COP" />
+                  </p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="usd" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div 
+                    className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
+                    onClick={() => openKpiDialog('Por Pagar a Creadores (USD)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">Creadores</p>
+                    <p className="text-2xl font-bold text-warning">
+                      <CurrencyDisplay value={pendingCreatorPaymentUSD} currency="USD" />
+                    </p>
+                  </div>
+                  <div 
+                    className="p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
+                    onClick={() => openKpiDialog('Por Pagar a Editores (USD)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">Editores</p>
+                    <p className="text-2xl font-bold text-info">
+                      <CurrencyDisplay value={pendingEditorPaymentUSD} currency="USD" />
+                    </p>
+                  </div>
+                </div>
+                <div 
+                  className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
+                  onClick={() => openKpiDialog('Total Por Pagar Equipo (USD)', [...unpaidCreatorContent, ...unpaidEditorContent].filter(c => (c as any).creator_payment_currency === 'USD' || (c as any).editor_payment_currency === 'USD'))}
+                >
+                  <p className="text-sm text-muted-foreground mb-1">Total por pagar</p>
+                  <p className="text-2xl font-bold text-destructive">
+                    <CurrencyDisplay value={pendingCreatorPaymentUSD + pendingEditorPaymentUSD} currency="USD" />
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Financial Overview - Client Billing */}
@@ -980,45 +1062,92 @@ export default function Dashboard() {
               <BarChart3 className="h-8 w-8 text-primary" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div 
-                className="p-4 rounded-2xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
-                onClick={() => openListDialog('Total Ventas - Paquetes', 'packages-sold', { packages })}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Total Ventas</p>
-                <p className="text-2xl font-bold text-primary">
-                  ${clientsBilling.totalBilled.toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">{packages.length} paquetes</p>
-              </div>
-              <div 
-                className="p-4 rounded-2xl bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
-                onClick={() => openListDialog('Recaudado', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0) })}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Recaudado</p>
-                <p className="text-2xl font-bold text-success">
-                  ${clientsBilling.totalPaid.toLocaleString()}
-                </p>
-              </div>
-              <div 
-                className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
-                onClick={() => openListDialog('Por Cobrar', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0) })}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Por Cobrar</p>
-                <p className="text-2xl font-bold text-warning">
-                  ${clientsBilling.totalPending.toLocaleString()}
-                </p>
-              </div>
-              <div 
-                className="p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
-                onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Videos Adeudados</p>
-                <p className="text-2xl font-bold text-info">
-                  {clientsBilling.contentOwed}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">por entregar</p>
-              </div>
+            {/* Currency Tabs */}
+            <Tabs defaultValue="cop" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="cop" className="gap-2">
+                  🇨🇴 COP
+                </TabsTrigger>
+                <TabsTrigger value="usd" className="gap-2">
+                  🇺🇸 USD
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="cop" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div 
+                    className="p-4 rounded-2xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
+                    onClick={() => openListDialog('Total Ventas COP', 'packages-sold', { packages: packages.filter(p => (p as any).currency !== 'USD') })}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">Total Ventas</p>
+                    <p className="text-xl font-bold text-primary">
+                      <CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" />
+                    </p>
+                  </div>
+                  <div 
+                    className="p-4 rounded-2xl bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
+                    onClick={() => openListDialog('Recaudado COP', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency !== 'USD') })}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">Recaudado</p>
+                    <p className="text-xl font-bold text-success">
+                      <CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" />
+                    </p>
+                  </div>
+                  <div 
+                    className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors col-span-2"
+                    onClick={() => openListDialog('Por Cobrar COP', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency !== 'USD') })}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">Por Cobrar</p>
+                    <p className="text-2xl font-bold text-warning">
+                      <CurrencyDisplay value={clientsBilling.totalPendingCOP} currency="COP" />
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="usd" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div 
+                    className="p-4 rounded-2xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
+                    onClick={() => openListDialog('Total Ventas USD', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">Total Ventas</p>
+                    <p className="text-xl font-bold text-primary">
+                      <CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" />
+                    </p>
+                  </div>
+                  <div 
+                    className="p-4 rounded-2xl bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
+                    onClick={() => openListDialog('Recaudado USD', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency === 'USD') })}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">Recaudado</p>
+                    <p className="text-xl font-bold text-success">
+                      <CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" />
+                    </p>
+                  </div>
+                  <div 
+                    className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors col-span-2"
+                    onClick={() => openListDialog('Por Cobrar USD', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency === 'USD') })}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">Por Cobrar</p>
+                    <p className="text-2xl font-bold text-warning">
+                      <CurrencyDisplay value={clientsBilling.totalPendingUSD} currency="USD" />
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            {/* Videos owed - same for both */}
+            <div 
+              className="mt-4 p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
+              onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
+            >
+              <p className="text-sm text-muted-foreground mb-1">Videos Adeudados</p>
+              <p className="text-2xl font-bold text-info">
+                {clientsBilling.contentOwed}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">por entregar</p>
             </div>
           </div>
         </div>

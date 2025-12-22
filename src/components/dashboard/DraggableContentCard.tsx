@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { CurrencyDisplay, CurrencyBadge, type CurrencyType } from "@/components/ui/currency-input";
 
 interface DraggableContentCardProps {
   content: Content;
@@ -164,8 +165,12 @@ export function DraggableContentCard({
             </div>
             {(content.creator_payment > 0 || content.editor_payment > 0) && (
               <div className="flex items-center gap-1 text-success">
-                <DollarSign className="h-3 w-3" />
-                <span>${(content.creator_payment || 0) + (content.editor_payment || 0)}</span>
+                <CurrencyDisplay 
+                  value={(content.creator_payment || 0) + (content.editor_payment || 0)} 
+                  currency={((content as any).creator_payment_currency as CurrencyType) || 'COP'}
+                  size="sm"
+                  showFlag
+                />
               </div>
             )}
           </div>
@@ -225,7 +230,7 @@ export function DraggableContentCard({
                   className="h-7 px-2 text-xs border-warning/50 text-warning hover:bg-warning/10 hover:text-warning"
                 >
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  Creador ${content.creator_payment}
+                  Creador <CurrencyDisplay value={content.creator_payment} currency={((content as any).creator_payment_currency as CurrencyType) || 'COP'} size="sm" />
                 </Button>
               )}
               {!content.editor_paid && content.editor_payment > 0 && (
@@ -236,7 +241,7 @@ export function DraggableContentCard({
                   className="h-7 px-2 text-xs border-info/50 text-info hover:bg-info/10 hover:text-info"
                 >
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  Editor ${content.editor_payment}
+                  Editor <CurrencyDisplay value={content.editor_payment} currency={((content as any).editor_payment_currency as CurrencyType) || 'COP'} size="sm" />
                 </Button>
               )}
             </div>
