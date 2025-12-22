@@ -26,6 +26,7 @@ const adminNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Tablero", href: "/board", icon: Kanban },
   { name: "Contenido", href: "/content", icon: Video },
+  { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Creadores", href: "/creators", icon: Users },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Clientes", href: "/clients", icon: Building2 },
@@ -33,21 +34,32 @@ const adminNavigation = [
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
+const strategistNavigation = [
+  { name: "Dashboard", href: "/strategist-dashboard", icon: LayoutDashboard },
+  { name: "Portafolio", href: "/portfolio", icon: Video },
+  { name: "Guiones IA", href: "/scripts", icon: Sparkles },
+  { name: "Configuración", href: "/settings", icon: Settings },
+];
+
 const creatorNavigation = [
   { name: "Mi Panel", href: "/creator-dashboard", icon: LayoutDashboard },
+  { name: "Tablero", href: "/board", icon: Kanban },
+  { name: "Portafolio", href: "/portfolio", icon: Video },
+  { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
 const editorNavigation = [
   { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard },
   { name: "Tablero", href: "/board", icon: Kanban },
-  { name: "Contenido", href: "/portfolio", icon: Video },
+  { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
 const clientNavigation = [
   { name: "Mi Panel", href: "/client-dashboard", icon: Package },
+  { name: "Tablero", href: "/client-board", icon: Kanban },
   { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
@@ -56,7 +68,7 @@ export function MobileNav() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, isAdmin, isCreator, isEditor, isClient, roles } = useAuth();
+  const { signOut, profile, isAdmin, isCreator, isEditor, isClient, isStrategist, roles } = useAuth();
 
   const handleSignOut = async () => {
     setOpen(false);
@@ -64,11 +76,12 @@ export function MobileNav() {
     navigate('/auth');
   };
 
-  // Determinar navegación según rol
+  // Determinar navegación según rol (prioridad: admin > strategist > editor > creator > client)
   const getNavigation = () => {
     if (isAdmin) return adminNavigation;
-    if (isCreator) return creatorNavigation;
+    if (isStrategist) return strategistNavigation;
     if (isEditor) return editorNavigation;
+    if (isCreator) return creatorNavigation;
     if (isClient) return clientNavigation;
     return [{ name: "Configuración", href: "/settings", icon: Settings }];
   };
@@ -77,6 +90,7 @@ export function MobileNav() {
 
   const getRoleBadge = () => {
     if (isAdmin) return { label: "Admin", color: "bg-primary" };
+    if (isStrategist) return { label: "Estratega", color: "bg-orange-500" };
     if (isCreator) return { label: "Creador", color: "bg-purple-500" };
     if (isEditor) return { label: "Editor", color: "bg-blue-500" };
     if (isClient) return { label: "Cliente", color: "bg-green-500" };
