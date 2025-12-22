@@ -41,22 +41,24 @@ export function PortfolioHeader({
     <div className="sticky top-0 z-50 p-4 bg-gradient-to-b from-black via-black/90 to-transparent pointer-events-none">
       <div className="flex items-center justify-between pointer-events-auto">
         <div className="flex items-center gap-2">
-          {isProfilePage ? (
+          {/* Back button when on profile page */}
+          {isProfilePage && (
             <button 
               onClick={() => navigate('/portfolio')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
             >
               <ChevronLeft className="h-4 w-4 text-white" />
-              <span className="text-white text-sm font-medium">Portfolio</span>
-            </button>
-          ) : (
-            <button 
-              onClick={() => navigate('/portfolio')}
-              className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
-            >
-              <span className="text-black font-bold text-sm">U</span>
             </button>
           )}
+          
+          {/* Logo - Always visible */}
+          <button 
+            onClick={() => navigate('/portfolio')}
+            className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+          >
+            <span className="text-black font-bold text-sm">U</span>
+          </button>
+          
           {onRefresh && (
             <Button
               variant="ghost"
