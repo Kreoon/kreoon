@@ -27,8 +27,40 @@ export function DraggableContentCard({
   onPaymentUpdate,
   onStatusChange
 }: DraggableContentCardProps) {
-  const { isAdmin, isCreator, user } = useAuth();
+  const { isAdmin, isCreator, isEditor, user } = useAuth();
   const { toast } = useToast();
+
+  // Determine what payment to show based on user role
+  const isUserCreator = user?.id === content.creator_id;
+  const isUserEditor = user?.id === content.editor_id;
+  
+  const getDisplayPayment = () => {
+    if (isAdmin) {
+      // Admin sees total
+      return {
+        value: (content.creator_payment || 0) + (content.editor_payment || 0),
+        currency: ((content as any).creator_payment_currency as CurrencyType) || 'COP'
+      };
+    }
+    if (isUserCreator) {
+      // Creator sees their payment
+      return {
+        value: content.creator_payment || 0,
+        currency: ((content as any).creator_payment_currency as CurrencyType) || 'COP'
+      };
+    }
+    if (isUserEditor) {
+      // Editor sees their payment
+      return {
+        value: content.editor_payment || 0,
+        currency: ((content as any).editor_payment_currency as CurrencyType) || 'COP'
+      };
+    }
+    // Others don't see payment
+    return null;
+  };
+  
+  const displayPayment = getDisplayPayment();
 
   const statusInfo = {
     label: STATUS_LABELS[content.status],
@@ -170,11 +202,11 @@ export function DraggableContentCard({
               <Calendar className="h-3 w-3" />
               <span>{formatDate(content.deadline)}</span>
             </div>
-            {(content.creator_payment > 0 || content.editor_payment > 0) && (
+            {displayPayment && displayPayment.value > 0 && (
               <div className="flex items-center gap-1 text-success">
                 <CurrencyDisplay 
-                  value={(content.creator_payment || 0) + (content.editor_payment || 0)} 
-                  currency={((content as any).creator_payment_currency as CurrencyType) || 'COP'}
+                  value={displayPayment.value} 
+                  currency={displayPayment.currency}
                   size="sm"
                   showFlag
                 />
