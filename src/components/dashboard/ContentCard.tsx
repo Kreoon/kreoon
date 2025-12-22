@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Calendar, User, Clock, MoreVertical } from "lucide-react";
+import { Calendar, User, Clock, MoreVertical, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export type ContentStatus = "pendiente" | "en_progreso" | "revision" | "completado";
@@ -13,6 +13,7 @@ interface ContentCardProps {
   status: ContentStatus;
   thumbnail?: string;
   priority?: "alta" | "media" | "baja";
+  isAmbassadorContent?: boolean;
 }
 
 const statusConfig: Record<ContentStatus, { label: string; className: string }> = {
@@ -48,7 +49,8 @@ export function ContentCard({
   dueDate, 
   status,
   thumbnail,
-  priority = "media"
+  priority = "media",
+  isAmbassadorContent = false
 }: ContentCardProps) {
   const statusInfo = statusConfig[status];
 
@@ -61,13 +63,19 @@ export function ContentCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className={cn(
               "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
               statusInfo.className
             )}>
               {statusInfo.label}
             </span>
+            {isAmbassadorContent && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-sm">
+                <Crown className="h-3 w-3" />
+                Embajador
+              </span>
+            )}
           </div>
           
           <h3 className="font-semibold text-card-foreground truncate mb-1">

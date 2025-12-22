@@ -1,4 +1,4 @@
-import { Calendar, User, GripVertical, DollarSign, CheckCircle, Video, FileVideo } from "lucide-react";
+import { Calendar, User, GripVertical, DollarSign, CheckCircle, Video, FileVideo, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Content, STATUS_LABELS, STATUS_COLORS } from "@/types/database";
 import { format } from "date-fns";
@@ -136,8 +136,9 @@ export function DraggableContentCard({
               {statusInfo.label}
             </span>
             {content.is_ambassador_content && (
-              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary">
-                Ambassador
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-sm">
+                <Crown className="h-3 w-3" />
+                Embajador
               </span>
             )}
           </div>
