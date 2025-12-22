@@ -414,7 +414,7 @@ export default function CompanyPortfolio() {
           
           {/* Action buttons */}
           <div className="flex gap-2 mt-3">
-            {!isAssociatedUser && !isAdmin && user && (
+            {user && !isAssociatedUser && (
               <CompanyFollowButton
                 companyId={company.id}
                 isFollowing={isFollowing}
