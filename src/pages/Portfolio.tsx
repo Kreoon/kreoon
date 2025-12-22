@@ -627,11 +627,31 @@ export default function Portfolio() {
             onTabChange={setActiveTab}
           />
 
-          {/* Stories Row - Show in both tabs */}
+          {/* Stories Row - Always show all stories in both tabs */}
           {(() => {
-            const storiesToShow = activeTab === 'following' 
-              ? followingUsers.filter(u => u.has_stories)
-              : allUsersWithStories;
+            // Combine stories from followed users and all public users
+            const followingWithStories = followingUsers.filter(u => u.has_stories);
+            const allWithStories = allUsersWithStories;
+            
+            // Merge and dedupe, keeping followed users first
+            const seenIds = new Set<string>();
+            const storiesToShow: FollowingUser[] = [];
+            
+            // First add followed users with stories
+            followingWithStories.forEach(u => {
+              if (!seenIds.has(u.id)) {
+                seenIds.add(u.id);
+                storiesToShow.push(u);
+              }
+            });
+            
+            // Then add other public users with stories
+            allWithStories.forEach(u => {
+              if (!seenIds.has(u.id)) {
+                seenIds.add(u.id);
+                storiesToShow.push(u);
+              }
+            });
             
             if (storiesToShow.length === 0) return null;
             
@@ -739,11 +759,31 @@ export default function Portfolio() {
           onTabChange={setActiveTab}
         />
 
-        {/* Stories Row - Show in both tabs */}
+        {/* Stories Row - Always show all stories in both tabs */}
         {(() => {
-          const storiesToShow = activeTab === 'following' 
-            ? followingUsers.filter(u => u.has_stories)
-            : allUsersWithStories;
+          // Combine stories from followed users and all public users
+          const followingWithStories = followingUsers.filter(u => u.has_stories);
+          const allWithStories = allUsersWithStories;
+          
+          // Merge and dedupe, keeping followed users first
+          const seenIds = new Set<string>();
+          const storiesToShow: FollowingUser[] = [];
+          
+          // First add followed users with stories
+          followingWithStories.forEach(u => {
+            if (!seenIds.has(u.id)) {
+              seenIds.add(u.id);
+              storiesToShow.push(u);
+            }
+          });
+          
+          // Then add other public users with stories
+          allWithStories.forEach(u => {
+            if (!seenIds.has(u.id)) {
+              seenIds.add(u.id);
+              storiesToShow.push(u);
+            }
+          });
           
           if (storiesToShow.length === 0) return null;
           
