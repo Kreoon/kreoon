@@ -4,7 +4,7 @@ import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
-import { Search, Eye, AlertCircle, CheckCircle2, Package } from "lucide-react";
+import { Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Content, ContentStatus, STATUS_LABELS } from "@/types/database";
@@ -14,18 +14,22 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 
-// Columnas específicas para el cliente
-const CLIENT_COLUMNS: ContentStatus[] = ['delivered', 'issue', 'approved'];
+// Columnas específicas para el cliente: Creado, Entregado, Novedad, Corregido, Aprobado
+const CLIENT_COLUMNS: ContentStatus[] = ['draft', 'delivered', 'issue', 'corrected', 'approved'];
 
 const CLIENT_COLUMN_LABELS: Record<string, string> = {
+  draft: 'Creado',
   delivered: 'Entregado',
   issue: 'Novedad',
+  corrected: 'Corregido',
   approved: 'Aprobado'
 };
 
 const CLIENT_COLUMN_COLORS: Record<string, string> = {
+  draft: 'border-t-muted-foreground',
   delivered: 'border-t-info',
   issue: 'border-t-warning',
+  corrected: 'border-t-blue-500',
   approved: 'border-t-success'
 };
 
@@ -38,11 +42,15 @@ const canClientMoveToStatus = (
   if (currentStatus === 'delivered' && targetStatus === 'approved') return true;
   if (currentStatus === 'delivered' && targetStatus === 'issue') return true;
   
-  // Desde novedad puede ir a aprobado (después de resolverse)
-  if (currentStatus === 'issue' && targetStatus === 'approved') return true;
+  // Desde corregido puede ir a aprobado o novedad
+  if (currentStatus === 'corrected' && targetStatus === 'approved') return true;
+  if (currentStatus === 'corrected' && targetStatus === 'issue') return true;
   
+  // Draft y Novedad son solo lectura para el cliente
   // Aprobado no puede cambiar a nada - es estado final para el cliente
   if (currentStatus === 'approved') return false;
+  if (currentStatus === 'draft') return false;
+  if (currentStatus === 'issue') return false;
   
   return false;
 };
@@ -98,7 +106,7 @@ export default function ClientContentBoard() {
             client:clients(*)
           `)
           .eq('client_id', clientData.id)
-          .in('status', ['delivered', 'issue', 'approved'])
+          .in('status', ['draft', 'delivered', 'issue', 'corrected', 'approved'])
           .order('created_at', { ascending: false });
 
         setContent((contentData || []) as unknown as Content[]);
@@ -206,15 +214,17 @@ export default function ClientContentBoard() {
   }, []);
 
   // Stats
+  const draftCount = getContentByStatus('draft').length;
   const deliveredCount = getContentByStatus('delivered').length;
   const issueCount = getContentByStatus('issue').length;
+  const correctedCount = getContentByStatus('corrected').length;
   const approvedCount = getContentByStatus('approved').length;
 
   if (loading) {
     return (
       <div className="min-h-screen p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map(i => (
             <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
@@ -263,12 +273,20 @@ export default function ClientContentBoard() {
         {/* Stats */}
         <div className="flex items-center gap-3 px-4 md:px-6 pb-4 overflow-x-auto">
           <Badge variant="outline" className="gap-1.5 px-3 py-1.5">
+            <FileText className="h-3 w-3" />
+            {draftCount} Creado{draftCount !== 1 ? 's' : ''}
+          </Badge>
+          <Badge variant="outline" className="gap-1.5 px-3 py-1.5 border-info/50 text-info">
             <Eye className="h-3 w-3" />
             {deliveredCount} Entregado{deliveredCount !== 1 ? 's' : ''}
           </Badge>
           <Badge variant="outline" className="gap-1.5 px-3 py-1.5 border-warning/50 text-warning">
             <AlertCircle className="h-3 w-3" />
             {issueCount} Novedad{issueCount !== 1 ? 'es' : ''}
+          </Badge>
+          <Badge variant="outline" className="gap-1.5 px-3 py-1.5 border-blue-500/50 text-blue-500">
+            <RefreshCw className="h-3 w-3" />
+            {correctedCount} Corregido{correctedCount !== 1 ? 's' : ''}
           </Badge>
           <Badge variant="outline" className="gap-1.5 px-3 py-1.5 border-success/50 text-success">
             <CheckCircle2 className="h-3 w-3" />
@@ -294,13 +312,17 @@ export default function ClientContentBoard() {
 
       {/* Kanban Board */}
       <div className="p-4 md:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-6">
           {CLIENT_COLUMNS.map((status) => {
             const colorMap: Record<string, string> = {
+              draft: 'bg-muted-foreground',
               delivered: 'bg-info',
               issue: 'bg-warning',
+              corrected: 'bg-blue-500',
               approved: 'bg-success'
             };
+            // El cliente solo puede arrastrar hacia aprobado o novedad desde entregado/corregido
+            const canDropHere = status === 'approved' || status === 'issue';
             return (
               <DroppableKanbanColumn
                 key={status}
@@ -311,7 +333,7 @@ export default function ClientContentBoard() {
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, status)}
                 color={colorMap[status] || 'bg-muted'}
-                canDrop={status !== 'approved' || draggingContent?.status !== 'approved'}
+                canDrop={canDropHere && (status !== 'approved' || draggingContent?.status !== 'approved')}
               >
                 {getContentByStatus(status).map((item) => (
                   <DraggableContentCard
@@ -325,8 +347,10 @@ export default function ClientContentBoard() {
                 
                 {getContentByStatus(status).length === 0 && (
                   <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                    {status === 'draft' && <FileText className="h-8 w-8 mb-2 opacity-50" />}
                     {status === 'delivered' && <Eye className="h-8 w-8 mb-2 opacity-50" />}
                     {status === 'issue' && <AlertCircle className="h-8 w-8 mb-2 opacity-50" />}
+                    {status === 'corrected' && <RefreshCw className="h-8 w-8 mb-2 opacity-50" />}
                     {status === 'approved' && <CheckCircle2 className="h-8 w-8 mb-2 opacity-50" />}
                     <p className="text-sm">Sin contenido</p>
                   </div>
