@@ -30,6 +30,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { ParsedText } from '@/components/ui/parsed-text';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
+import { useSeenStories } from '@/hooks/useSeenStories';
 
 interface UserProfile {
   id: string;
@@ -98,6 +99,7 @@ export default function UserPortfolio() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const { hasUnseenStories, markMultipleAsSeen } = useSeenStories();
   
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -123,6 +125,7 @@ export default function UserPortfolio() {
     full_name: string;
     avatar_url: string | null;
     has_stories: boolean;
+    story_ids: string[];
   }>>([]);
   const [storyViewerUser, setStoryViewerUser] = useState<{
     id: string;
@@ -378,35 +381,41 @@ export default function UserPortfolio() {
       }
 
       // Fetch all public users with active stories (for the stories row)
-      const { data: usersWithStoriesData } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          avatar_url,
-          is_public
-        `)
-        .eq('is_public', true);
+      const { data: activeStories } = await supabase
+        .from('portfolio_stories')
+        .select('id, user_id')
+        .gt('expires_at', new Date().toISOString());
       
-      if (usersWithStoriesData) {
-        // Get users who have active stories
-        const { data: activeStories } = await supabase
-          .from('portfolio_stories')
-          .select('user_id')
-          .gt('expires_at', new Date().toISOString());
+      if (activeStories && activeStories.length > 0) {
+        // Group story IDs by user
+        const storyIdsByUser = new Map<string, string[]>();
+        activeStories.forEach(s => {
+          if (!storyIdsByUser.has(s.user_id)) {
+            storyIdsByUser.set(s.user_id, []);
+          }
+          storyIdsByUser.get(s.user_id)!.push(s.id);
+        });
+
+        const userIds = [...storyIdsByUser.keys()];
         
-        const userIdsWithStories = new Set((activeStories || []).map(s => s.user_id));
+        // Get profiles of users with stories
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, is_public')
+          .in('id', userIds)
+          .eq('is_public', true);
         
-        const usersWithStories = usersWithStoriesData
-          .filter(u => userIdsWithStories.has(u.id))
-          .map(u => ({
-            id: u.id,
-            full_name: u.full_name,
-            avatar_url: u.avatar_url,
-            has_stories: true
-          }));
+        const usersWithStories = (profiles || []).map(p => ({
+          id: p.id,
+          full_name: p.full_name,
+          avatar_url: p.avatar_url,
+          has_stories: true,
+          story_ids: storyIdsByUser.get(p.id) || []
+        }));
         
         setAllUsersWithStories(usersWithStories);
+      } else {
+        setAllUsersWithStories([]);
       }
 
     } catch (error) {
@@ -803,9 +812,14 @@ export default function UserPortfolio() {
                   avatarUrl={displayAvatar}
                   name="Tu historia"
                   hasStories={stories.length > 0}
-                  hasUnseenStories={stories.length > 0}
+                  hasUnseenStories={stories.length > 0 && hasUnseenStories(stories.map(s => s.id))}
                   isOwn={true}
-                  onClick={() => stories.length > 0 && setShowStoryViewer(true)}
+                  onClick={() => {
+                    if (stories.length > 0) {
+                      markMultipleAsSeen(stories.map(s => s.id));
+                      setShowStoryViewer(true);
+                    }
+                  }}
                   onAddClick={() => openUploader('story')}
                 />
               )}
@@ -816,9 +830,12 @@ export default function UserPortfolio() {
                   avatarUrl={displayAvatar}
                   name={displayName || ''}
                   hasStories={true}
-                  hasUnseenStories={true}
+                  hasUnseenStories={hasUnseenStories(stories.map(s => s.id))}
                   isOwn={false}
-                  onClick={() => setShowStoryViewer(true)}
+                  onClick={() => {
+                    markMultipleAsSeen(stories.map(s => s.id));
+                    setShowStoryViewer(true);
+                  }}
                 />
               )}
               
@@ -831,9 +848,12 @@ export default function UserPortfolio() {
                     avatarUrl={u.avatar_url}
                     name={u.full_name}
                     hasStories={true}
-                    hasUnseenStories={true}
+                    hasUnseenStories={hasUnseenStories(u.story_ids)}
                     isOwn={user?.id === u.id}
-                    onClick={() => handleOpenUserStories(u.id, u.full_name, u.avatar_url)}
+                    onClick={() => {
+                      markMultipleAsSeen(u.story_ids);
+                      handleOpenUserStories(u.id, u.full_name, u.avatar_url);
+                    }}
                     size="sm"
                   />
                 ))}

@@ -18,6 +18,7 @@ import { TikTokFeed } from "@/components/content/TikTokFeed";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StoryRing } from "@/components/portfolio/StoryRing";
+import { useSeenStories } from "@/hooks/useSeenStories";
 
 interface PublishedContent {
   id: string;
@@ -44,6 +45,7 @@ interface FollowingUser {
   full_name: string;
   avatar_url: string | null;
   has_stories: boolean;
+  story_ids: string[];
 }
 
 // Helper to get all video URLs for a content item
@@ -109,6 +111,7 @@ export default function Portfolio() {
   const { user, roles, signOut } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { hasUnseenStories, markAsSeen } = useSeenStories();
   const isAdmin = roles.includes('admin');
   const isLoggedIn = !!user;
   const [content, setContent] = useState<PublishedContent[]>([]);
@@ -143,10 +146,10 @@ export default function Portfolio() {
   // Fetch all users with active stories for the "For You" feed
   const fetchAllStories = async () => {
     try {
-      // Get all active stories
+      // Get all active stories with their IDs
       const { data: storiesData } = await supabase
         .from('portfolio_stories')
-        .select('user_id')
+        .select('id, user_id')
         .gt('expires_at', new Date().toISOString());
       
       if (!storiesData || storiesData.length === 0) {
@@ -154,7 +157,16 @@ export default function Portfolio() {
         return;
       }
 
-      const userIds = [...new Set(storiesData.map(s => s.user_id))];
+      // Group story IDs by user
+      const storyIdsByUser = new Map<string, string[]>();
+      storiesData.forEach(s => {
+        if (!storyIdsByUser.has(s.user_id)) {
+          storyIdsByUser.set(s.user_id, []);
+        }
+        storyIdsByUser.get(s.user_id)!.push(s.id);
+      });
+
+      const userIds = [...storyIdsByUser.keys()];
       
       // Get profiles of users with stories
       const { data: profiles } = await supabase
@@ -163,11 +175,12 @@ export default function Portfolio() {
         .in('id', userIds)
         .eq('is_public', true);
       
-      const usersWithStories = (profiles || []).map(p => ({
+      const usersWithStories: FollowingUser[] = (profiles || []).map(p => ({
         id: p.id,
         full_name: p.full_name,
         avatar_url: p.avatar_url,
-        has_stories: true
+        has_stories: true,
+        story_ids: storyIdsByUser.get(p.id) || []
       }));
       
       setAllUsersWithStories(usersWithStories);
@@ -206,18 +219,26 @@ export default function Portfolio() {
           .select('id, full_name, avatar_url')
           .in('id', ids);
 
-        // Check which ones have active stories
+        // Check which ones have active stories and get their IDs
         const { data: storiesData } = await supabase
           .from('portfolio_stories')
-          .select('user_id')
+          .select('id, user_id')
           .in('user_id', ids)
           .gt('expires_at', new Date().toISOString());
 
-        const usersWithStories = new Set(storiesData?.map(s => s.user_id) || []);
+        // Group story IDs by user
+        const storyIdsByUser = new Map<string, string[]>();
+        (storiesData || []).forEach(s => {
+          if (!storyIdsByUser.has(s.user_id)) {
+            storyIdsByUser.set(s.user_id, []);
+          }
+          storyIdsByUser.get(s.user_id)!.push(s.id);
+        });
 
-        const usersWithStoryFlag = (profiles || []).map(p => ({
+        const usersWithStoryFlag: FollowingUser[] = (profiles || []).map(p => ({
           ...p,
-          has_stories: usersWithStories.has(p.id)
+          has_stories: storyIdsByUser.has(p.id),
+          story_ids: storyIdsByUser.get(p.id) || []
         }));
 
         // Sort: users with stories first
@@ -664,7 +685,7 @@ export default function Portfolio() {
                       avatarUrl={u.avatar_url}
                       name={u.full_name}
                       hasStories={true}
-                      hasUnseenStories={true}
+                      hasUnseenStories={hasUnseenStories(u.story_ids)}
                       isOwn={user?.id === u.id}
                       onClick={() => navigate(`/p/${u.id}`)}
                       size="sm"
@@ -796,7 +817,7 @@ export default function Portfolio() {
                     avatarUrl={u.avatar_url}
                     name={u.full_name}
                     hasStories={true}
-                    hasUnseenStories={true}
+                    hasUnseenStories={hasUnseenStories(u.story_ids)}
                     isOwn={user?.id === u.id}
                     onClick={() => navigate(`/p/${u.id}`)}
                   />
