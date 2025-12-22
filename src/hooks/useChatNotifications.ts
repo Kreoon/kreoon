@@ -12,6 +12,100 @@ interface ChatMessage {
   created_at: string;
 }
 
+// Register custom service worker for push notifications
+const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
+  const sw = getServiceWorker();
+  if (!sw) {
+    console.log('[Notifications] Service workers not supported');
+    return null;
+  }
+
+  try {
+    // Register custom SW from public folder
+    const registration = await sw.register('/sw.js', {
+      scope: '/'
+    });
+    console.log('[Notifications] Service worker registered:', registration.scope);
+    
+    // Wait for it to be ready
+    await sw.ready;
+    return registration;
+  } catch (error) {
+    console.error('[Notifications] SW registration failed:', error);
+    return null;
+  }
+};
+
+// Get service worker container safely
+const getServiceWorker = (): ServiceWorkerContainer | null => {
+  if (typeof window !== 'undefined' && 'serviceWorker' in window.navigator) {
+    return window.navigator.serviceWorker;
+  }
+  return null;
+};
+
+// Set app badge count
+const setAppBadge = async (count: number) => {
+  try {
+    // Try native Badge API first (works on supported browsers/PWAs)
+    if ('setAppBadge' in navigator) {
+      if (count > 0) {
+        await (navigator as any).setAppBadge(count);
+      } else {
+        await (navigator as any).clearAppBadge();
+      }
+      console.log('[Badge] Set to:', count);
+      return;
+    }
+
+    // Fallback: send to service worker
+    const sw = getServiceWorker();
+    if (sw) {
+      const registration = await sw.ready;
+      registration.active?.postMessage({
+        type: count > 0 ? 'SET_BADGE' : 'CLEAR_BADGE',
+        count
+      });
+    }
+  } catch (error) {
+    console.warn('[Badge] Could not set badge:', error);
+  }
+};
+
+// Show notification via service worker (works in background)
+const showPushNotification = async (title: string, body: string, tag?: string) => {
+  try {
+    const sw = getServiceWorker();
+    if (!sw) {
+      throw new Error('Service worker not available');
+    }
+    
+    const registration = await sw.ready;
+    
+    // Send message to SW to show notification
+    registration.active?.postMessage({
+      type: 'SHOW_NOTIFICATION',
+      title,
+      body,
+      tag: tag || 'chat-' + Date.now(),
+      data: { url: '/' }
+    });
+
+    console.log('[Notifications] Sent to SW:', title);
+  } catch (error) {
+    console.warn('[Notifications] Could not show via SW:', error);
+    
+    // Fallback to regular Notification API
+    if (Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: '/pwa-192x192.png',
+        tag: tag || 'chat-' + Date.now()
+      });
+    }
+  }
+};
+
 export function useChatNotifications(
   isChatOpen: boolean,
   activeConversationId?: string | null
@@ -19,92 +113,37 @@ export function useChatNotifications(
   const { user } = useAuth();
   const { toast } = useToast();
   const { playChatSound } = useNotificationSound();
-  const permissionRef = useRef<NotificationPermission>('default');
   const [unreadCount, setUnreadCount] = useState(0);
-  const serviceWorkerReady = useRef<ServiceWorkerRegistration | null>(null);
+  const swRegistration = useRef<ServiceWorkerRegistration | null>(null);
+  const hasRequestedPermission = useRef(false);
 
-  // Request notification permission with better browser integration
+  // Request notification permission and register SW
   const requestPermission = useCallback(async () => {
+    if (hasRequestedPermission.current) return Notification.permission === 'granted';
+    hasRequestedPermission.current = true;
+
     if (!('Notification' in window)) {
-      console.log('This browser does not support notifications');
+      console.log('[Notifications] Not supported in this browser');
       return false;
     }
 
-    if (Notification.permission === 'granted') {
-      permissionRef.current = 'granted';
-      // Get service worker registration for push notifications
-      if ('serviceWorker' in navigator) {
-        try {
-          serviceWorkerReady.current = await navigator.serviceWorker.ready;
-        } catch (e) {
-          console.warn('Service worker not ready:', e);
-        }
-      }
-      return true;
+    // Request permission
+    let permission = Notification.permission;
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
     }
 
-    if (Notification.permission !== 'denied') {
-      const permission = await Notification.requestPermission();
-      permissionRef.current = permission;
-      if (permission === 'granted' && 'serviceWorker' in navigator) {
-        try {
-          serviceWorkerReady.current = await navigator.serviceWorker.ready;
-        } catch (e) {
-          console.warn('Service worker not ready:', e);
-        }
-      }
-      return permission === 'granted';
+    if (permission === 'granted') {
+      // Register our custom service worker
+      swRegistration.current = await registerServiceWorker();
+      console.log('[Notifications] Permission granted, SW ready');
+      return true;
     }
 
     return false;
   }, []);
 
-  // Show browser notification with enhanced options and service worker support
-  const showBrowserNotification = useCallback(async (title: string, body: string, onClick?: () => void) => {
-    if (permissionRef.current !== 'granted') return;
-
-    // Vibrate device for mobile
-    if ('vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200, 100, 200]);
-    }
-
-    try {
-      // Try service worker notification first (works in background and on mobile)
-      if (serviceWorkerReady.current) {
-        await serviceWorkerReady.current.showNotification(title, {
-          body,
-          icon: '/pwa-192x192.png',
-          badge: '/pwa-192x192.png',
-          tag: 'chat-message-' + Date.now(),
-          requireInteraction: true,
-          data: { onClick: true },
-        });
-        return;
-      }
-
-      // Fallback to regular notification
-      const notification = new Notification(title, {
-        body,
-        icon: '/pwa-192x192.png',
-        badge: '/pwa-192x192.png',
-        tag: 'chat-message-' + Date.now(),
-        requireInteraction: true,
-      });
-
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-        onClick?.();
-      };
-
-      // Auto-close after 20 seconds
-      setTimeout(() => notification.close(), 20000);
-    } catch (error) {
-      console.warn('Could not show notification:', error);
-    }
-  }, []);
-
-  // Show in-app toast notification with more visibility
+  // Show in-app toast notification
   const showToastNotification = useCallback((senderName: string, message: string) => {
     toast({
       title: `💬 Nuevo mensaje de ${senderName}`,
@@ -113,35 +152,51 @@ export function useChatNotifications(
     });
   }, [toast]);
 
-  // Request permission on mount and setup service worker
+  // Initialize on mount
   useEffect(() => {
     requestPermission();
     
-    // Listen for service worker notification clicks
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data?.type === 'NOTIFICATION_CLICK') {
-          window.focus();
-        }
-      });
+    // Listen for SW notification clicks
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'NOTIFICATION_CLICK') {
+        window.focus();
+      }
+    };
+
+    const sw = getServiceWorker();
+    if (sw) {
+      sw.addEventListener('message', handleMessage);
     }
+
+    return () => {
+      const sw = getServiceWorker();
+      if (sw) {
+        sw.removeEventListener('message', handleMessage);
+      }
+    };
   }, [requestPermission]);
+
+  // Update badge when unread count changes
+  useEffect(() => {
+    setAppBadge(unreadCount);
+  }, [unreadCount]);
 
   // Fetch initial unread count
   useEffect(() => {
     if (!user?.id) return;
 
     const fetchUnreadCount = async () => {
-      // Get conversations where user is participant
       const { data: participations } = await supabase
         .from('chat_participants')
         .select('conversation_id, last_read_at')
         .eq('user_id', user.id);
 
-      if (!participations?.length) return;
+      if (!participations?.length) {
+        setUnreadCount(0);
+        return;
+      }
 
       let totalUnread = 0;
-
       for (const p of participations) {
         const { count } = await supabase
           .from('chat_messages')
@@ -159,11 +214,10 @@ export function useChatNotifications(
     fetchUnreadCount();
   }, [user?.id]);
 
-  // Subscribe to ALL new messages for this user
+  // Subscribe to new messages
   useEffect(() => {
     if (!user?.id) return;
 
-    // Get all conversations this user participates in
     const setupSubscription = async () => {
       const { data: participations } = await supabase
         .from('chat_participants')
@@ -186,24 +240,24 @@ export function useChatNotifications(
           async (payload) => {
             const newMessage = payload.new as ChatMessage;
 
-            // Skip if it's from the current user
+            // Skip if from current user
             if (newMessage.sender_id === user.id) return;
 
-            // Skip if it's not in our conversations
+            // Skip if not in our conversations
             if (!conversationIds.includes(newMessage.conversation_id)) return;
 
-            // Increment unread count
+            // Increment unread count if not viewing this conversation
             if (!isChatOpen || activeConversationId !== newMessage.conversation_id) {
               setUnreadCount(prev => prev + 1);
             }
 
-            // Skip toast if chat is open and viewing this conversation
+            // Skip notifications if viewing this conversation
             if (isChatOpen && activeConversationId === newMessage.conversation_id) return;
 
-            // Play sound
+            // Play sound - works even in background with our audio implementation
             playChatSound();
 
-            // Fetch sender profile
+            // Fetch sender name
             const { data: sender } = await supabase
               .from('profiles')
               .select('full_name')
@@ -212,13 +266,14 @@ export function useChatNotifications(
 
             const senderName = sender?.full_name || 'Usuario';
 
-            // Show browser notification - works even in background with service worker
-            showBrowserNotification(
+            // Show push notification via service worker (works in background!)
+            await showPushNotification(
               `💬 ${senderName}`,
-              newMessage.content
+              newMessage.content,
+              `chat-${newMessage.conversation_id}`
             );
 
-            // Also show toast notification if window is visible
+            // Also show toast if window is visible
             if (!document.hidden) {
               showToastNotification(senderName, newMessage.content);
             }
@@ -236,9 +291,9 @@ export function useChatNotifications(
     return () => {
       cleanup.then(fn => fn?.());
     };
-  }, [user?.id, isChatOpen, activeConversationId, showBrowserNotification, showToastNotification, playChatSound]);
+  }, [user?.id, isChatOpen, activeConversationId, showToastNotification, playChatSound]);
 
-  // Reset unread count and mark ALL messages as read when viewing a conversation
+  // Mark messages as read when viewing conversation
   useEffect(() => {
     if (isChatOpen && activeConversationId && user?.id) {
       const markAllAsRead = async () => {
@@ -251,7 +306,7 @@ export function useChatNotifications(
           .eq('conversation_id', activeConversationId)
           .eq('user_id', user.id);
         
-        // Mark all unread messages in this conversation as read (for read receipts)
+        // Mark all unread messages as read (for read receipts)
         await supabase
           .from('chat_messages')
           .update({ read_at: now })
