@@ -4,7 +4,7 @@ import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ClientContentDetailDialog } from "@/components/content/ClientContentDetailDialog";
-import { Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw } from "lucide-react";
+import { Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Content, ContentStatus, STATUS_LABELS } from "@/types/database";
@@ -13,12 +13,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-// Columnas específicas para el cliente: Creado, Entregado, Novedad, Corregido, Aprobado
-const CLIENT_COLUMNS: ContentStatus[] = ['draft', 'delivered', 'issue', 'corrected', 'approved'];
+// Columnas específicas para el cliente: Creado, Guión Aprobado, Entregado, Novedad, Corregido, Aprobado
+const CLIENT_COLUMNS: ContentStatus[] = ['draft', 'script_approved', 'delivered', 'issue', 'corrected', 'approved'];
 
 const CLIENT_COLUMN_LABELS: Record<string, string> = {
   draft: 'Creado',
+  script_approved: 'Guión Aprobado',
   delivered: 'Entregado',
   issue: 'Novedad',
   corrected: 'Corregido',
@@ -27,6 +29,7 @@ const CLIENT_COLUMN_LABELS: Record<string, string> = {
 
 const CLIENT_COLUMN_COLORS: Record<string, string> = {
   draft: 'border-t-muted-foreground',
+  script_approved: 'border-t-cyan-500',
   delivered: 'border-t-info',
   issue: 'border-t-warning',
   corrected: 'border-t-blue-500',
@@ -36,8 +39,15 @@ const CLIENT_COLUMN_COLORS: Record<string, string> = {
 // Verificar si un movimiento de estado es válido para el cliente
 const canClientMoveToStatus = (
   currentStatus: ContentStatus,
-  targetStatus: ContentStatus
+  targetStatus: ContentStatus,
+  content?: Content
 ): boolean => {
+  // Desde creado (draft) puede ir a guión aprobado SI tiene guión
+  if (currentStatus === 'draft' && targetStatus === 'script_approved') {
+    // Solo permitir si el contenido tiene guión
+    return !!(content?.script && content.script.trim().length > 0);
+  }
+  
   // Desde entregado puede ir a aprobado o novedad
   if (currentStatus === 'delivered' && targetStatus === 'approved') return true;
   if (currentStatus === 'delivered' && targetStatus === 'issue') return true;
@@ -46,11 +56,10 @@ const canClientMoveToStatus = (
   if (currentStatus === 'corrected' && targetStatus === 'approved') return true;
   if (currentStatus === 'corrected' && targetStatus === 'issue') return true;
   
-  // Draft y Novedad son solo lectura para el cliente
-  // Aprobado no puede cambiar a nada - es estado final para el cliente
+  // Estados que no pueden cambiar
   if (currentStatus === 'approved') return false;
-  if (currentStatus === 'draft') return false;
-  if (currentStatus === 'issue') return false;
+  if (currentStatus === 'script_approved') return false; // Solo lectura, el equipo lo mueve
+  if (currentStatus === 'issue') return false; // Espera corrección del equipo
   
   return false;
 };
@@ -106,7 +115,7 @@ export default function ClientContentBoard() {
             client:clients(*)
           `)
           .eq('client_id', clientData.id)
-          .in('status', ['draft', 'delivered', 'issue', 'corrected', 'approved'])
+          .in('status', ['draft', 'script_approved', 'delivered', 'issue', 'corrected', 'approved'])
           .order('created_at', { ascending: false });
 
         setContent((contentData || []) as unknown as Content[]);
@@ -136,15 +145,21 @@ export default function ClientContentBoard() {
 
   // Update content status
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus) => {
+    const updates: any = { status: newStatus };
+    
+    if (newStatus === 'approved') {
+      updates.approved_at = new Date().toISOString();
+      updates.approved_by = user?.id;
+    }
+    
+    if (newStatus === 'script_approved') {
+      updates.script_approved_at = new Date().toISOString();
+      updates.script_approved_by = user?.id;
+    }
+    
     const { error } = await supabase
       .from('content')
-      .update({ 
-        status: newStatus,
-        ...(newStatus === 'approved' ? {
-          approved_at: new Date().toISOString(),
-          approved_by: user?.id
-        } : {})
-      })
+      .update(updates)
       .eq('id', contentId);
 
     if (error) throw error;
@@ -176,7 +191,7 @@ export default function ClientContentBoard() {
       return;
     }
 
-    const canMove = canClientMoveToStatus(draggingContent.status, targetStatus);
+    const canMove = canClientMoveToStatus(draggingContent.status, targetStatus, draggingContent);
 
     if (!canMove) {
       const message = draggingContent.status === 'approved' 
@@ -215,6 +230,7 @@ export default function ClientContentBoard() {
 
   // Stats
   const draftCount = getContentByStatus('draft').length;
+  const scriptApprovedCount = getContentByStatus('script_approved').length;
   const deliveredCount = getContentByStatus('delivered').length;
   const issueCount = getContentByStatus('issue').length;
   const correctedCount = getContentByStatus('corrected').length;
@@ -223,8 +239,8 @@ export default function ClientContentBoard() {
   if (loading) {
     return (
       <div className="min-h-screen p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {[1, 2, 3, 4, 5].map(i => (
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          {[1, 2, 3, 4, 5, 6].map(i => (
             <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
@@ -271,58 +287,60 @@ export default function ClientContentBoard() {
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-3 px-4 md:px-6 pb-4 overflow-x-auto">
-          <Badge variant="outline" className="gap-1.5 px-3 py-1.5">
+        <div className="flex items-center gap-2 px-4 md:px-6 pb-4 overflow-x-auto">
+          <Badge variant="outline" className="gap-1.5 px-2 py-1 text-xs">
             <FileText className="h-3 w-3" />
-            {draftCount} Creado{draftCount !== 1 ? 's' : ''}
+            {draftCount}
           </Badge>
-          <Badge variant="outline" className="gap-1.5 px-3 py-1.5 border-info/50 text-info">
+          <Badge variant="outline" className="gap-1.5 px-2 py-1 text-xs border-cyan-500/50 text-cyan-500">
+            <FileCheck className="h-3 w-3" />
+            {scriptApprovedCount}
+          </Badge>
+          <Badge variant="outline" className="gap-1.5 px-2 py-1 text-xs border-info/50 text-info">
             <Eye className="h-3 w-3" />
-            {deliveredCount} Entregado{deliveredCount !== 1 ? 's' : ''}
+            {deliveredCount}
           </Badge>
-          <Badge variant="outline" className="gap-1.5 px-3 py-1.5 border-warning/50 text-warning">
+          <Badge variant="outline" className="gap-1.5 px-2 py-1 text-xs border-warning/50 text-warning">
             <AlertCircle className="h-3 w-3" />
-            {issueCount} Novedad{issueCount !== 1 ? 'es' : ''}
+            {issueCount}
           </Badge>
-          <Badge variant="outline" className="gap-1.5 px-3 py-1.5 border-blue-500/50 text-blue-500">
+          <Badge variant="outline" className="gap-1.5 px-2 py-1 text-xs border-blue-500/50 text-blue-500">
             <RefreshCw className="h-3 w-3" />
-            {correctedCount} Corregido{correctedCount !== 1 ? 's' : ''}
+            {correctedCount}
           </Badge>
-          <Badge variant="outline" className="gap-1.5 px-3 py-1.5 border-success/50 text-success">
+          <Badge variant="outline" className="gap-1.5 px-2 py-1 text-xs border-success/50 text-success">
             <CheckCircle2 className="h-3 w-3" />
-            {approvedCount} Aprobado{approvedCount !== 1 ? 's' : ''}
+            {approvedCount}
           </Badge>
         </div>
       </header>
 
       {/* Info Card */}
-      {deliveredCount > 0 && (
-        <div className="px-4 md:px-6 pt-4">
-          <Card className="border-info/30 bg-info/5">
-            <CardContent className="p-3 flex items-center gap-3">
-              <Eye className="h-5 w-5 text-info flex-shrink-0" />
-              <p className="text-sm">
-                <span className="font-medium">Arrastra</span> los videos de "Entregado" a "Aprobado" para aprobar, o a "Novedad" si hay correcciones.
-                <span className="text-muted-foreground"> Los aprobados no se pueden modificar.</span>
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <div className="px-4 md:px-6 pt-4">
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-3">
+            <p className="text-sm">
+              <span className="font-medium">Flujo de trabajo:</span> Arrastra contenido de <span className="text-muted-foreground">"Creado"</span> a <span className="text-cyan-500">"Guión Aprobado"</span> para aprobar guiones. 
+              Desde <span className="text-info">"Entregado"</span> o <span className="text-blue-500">"Corregido"</span> puedes mover a <span className="text-success">"Aprobado"</span> o <span className="text-warning">"Novedad"</span>.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Kanban Board */}
       <div className="p-4 md:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 md:gap-4">
           {CLIENT_COLUMNS.map((status) => {
             const colorMap: Record<string, string> = {
               draft: 'bg-muted-foreground',
+              script_approved: 'bg-cyan-500',
               delivered: 'bg-info',
               issue: 'bg-warning',
               corrected: 'bg-blue-500',
               approved: 'bg-success'
             };
-            // El cliente solo puede arrastrar hacia aprobado o novedad desde entregado/corregido
-            const canDropHere = status === 'approved' || status === 'issue';
+            // El cliente puede arrastrar hacia: script_approved (desde draft), approved o issue (desde delivered/corrected)
+            const canDropHere = status === 'script_approved' || status === 'approved' || status === 'issue';
             return (
               <DroppableKanbanColumn
                 key={status}
@@ -333,7 +351,7 @@ export default function ClientContentBoard() {
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, status)}
                 color={colorMap[status] || 'bg-muted'}
-                canDrop={canDropHere && (status !== 'approved' || draggingContent?.status !== 'approved')}
+                canDrop={canDropHere}
               >
                 {getContentByStatus(status).map((item) => (
                   <DraggableContentCard
@@ -346,13 +364,14 @@ export default function ClientContentBoard() {
                 ))}
                 
                 {getContentByStatus(status).length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                    {status === 'draft' && <FileText className="h-8 w-8 mb-2 opacity-50" />}
-                    {status === 'delivered' && <Eye className="h-8 w-8 mb-2 opacity-50" />}
-                    {status === 'issue' && <AlertCircle className="h-8 w-8 mb-2 opacity-50" />}
-                    {status === 'corrected' && <RefreshCw className="h-8 w-8 mb-2 opacity-50" />}
-                    {status === 'approved' && <CheckCircle2 className="h-8 w-8 mb-2 opacity-50" />}
-                    <p className="text-sm">Sin contenido</p>
+                  <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+                    {status === 'draft' && <FileText className="h-6 w-6 mb-1 opacity-50" />}
+                    {status === 'script_approved' && <FileCheck className="h-6 w-6 mb-1 opacity-50" />}
+                    {status === 'delivered' && <Eye className="h-6 w-6 mb-1 opacity-50" />}
+                    {status === 'issue' && <AlertCircle className="h-6 w-6 mb-1 opacity-50" />}
+                    {status === 'corrected' && <RefreshCw className="h-6 w-6 mb-1 opacity-50" />}
+                    {status === 'approved' && <CheckCircle2 className="h-6 w-6 mb-1 opacity-50" />}
+                    <p className="text-xs">Vacío</p>
                   </div>
                 )}
               </DroppableKanbanColumn>
