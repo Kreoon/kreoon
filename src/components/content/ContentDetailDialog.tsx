@@ -881,6 +881,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                         <AutoPauseVideo
                           src={videoUrl}
                           index={index}
+                          contentId={content?.id}
+                          thumbnailUrl={content?.thumbnail_url}
                           className="rounded-lg overflow-hidden bg-black flex items-center justify-center mx-auto"
                           style={{ aspectRatio: '9/16', maxHeight: '350px', width: 'auto' }}
                         />

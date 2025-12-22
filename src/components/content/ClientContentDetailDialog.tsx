@@ -363,6 +363,8 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
                               <AutoPauseVideo
                                 src={url}
                                 index={idx}
+                                contentId={content.id}
+                                thumbnailUrl={content.thumbnail_url}
                                 className="w-full h-full object-cover"
                               />
                             </div>
