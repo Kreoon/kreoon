@@ -304,6 +304,42 @@ export default function ContentBoard() {
     setDropTarget(status);
   }, []);
 
+  // Handler for creator status change (assigned -> recording -> recorded)
+  const handleCreatorStatusChange = useCallback(async (contentId: string, newStatus: 'recording' | 'recorded') => {
+    try {
+      const updateData: any = { status: newStatus };
+      
+      if (newStatus === 'recorded') {
+        updateData.recorded_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('content')
+        .update(updateData)
+        .eq('id', contentId);
+
+      if (error) throw error;
+      
+      // Refresh the content list
+      refetch();
+      
+      const statusLabels: Record<string, string> = {
+        'recording': 'En Grabación',
+        'recorded': 'Grabado'
+      };
+      toast({
+        title: 'Estado actualizado',
+        description: `Cambiado a: ${statusLabels[newStatus]}`
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar el estado',
+        variant: 'destructive'
+      });
+    }
+  }, [refetch, toast]);
+
   if (loading) {
     return (
       <div className="min-h-screen p-6 space-y-6">
@@ -539,6 +575,7 @@ export default function ContentBoard() {
                         onClick={setSelectedContent}
                         isDragging={draggingContent?.id === item.id}
                         onPaymentUpdate={refetch}
+                        onStatusChange={handleCreatorStatusChange}
                       />
                     ))}
                     {columnContent.length === 0 && (
