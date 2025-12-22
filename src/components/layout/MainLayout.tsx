@@ -1,9 +1,8 @@
 import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
-import { FloatingNotificationBar } from "@/components/notifications/FloatingNotificationBar";
+import { IntegratedNotificationHeader } from "@/components/notifications/IntegratedNotificationHeader";
 import { ChatPanel } from "@/components/chat/ChatPanel";
-import { ChatButton } from "@/components/chat/ChatButton";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
@@ -12,7 +11,7 @@ import { usePresence } from "@/hooks/usePresence";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors, MessageCircle, Bell } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MainLayoutProps {
@@ -113,18 +112,24 @@ export function MainLayout({
           </div>
         </nav>
         
-        {/* Desktop Floating Notification Bar */}
+        {/* Desktop Integrated Notification Header */}
         <div className="hidden md:block">
-          <FloatingNotificationBar
+          <IntegratedNotificationHeader
             onChatClick={() => setChatOpen(!chatOpen)}
             isChatOpen={chatOpen}
             unreadChatCount={unreadChatCount}
+            sidebarCollapsed={sidebarCollapsed}
           />
         </div>
         
         {/* Main Content */}
-        <main className={`pb-16 md:pb-0 transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"} ${chatOpen ? 'md:mr-96' : ''}`}>
-          <div className="min-h-screen p-4 md:p-6 md:pt-6">
+        <main className={cn(
+          "pb-16 md:pb-0 transition-all duration-300",
+          sidebarCollapsed ? "md:ml-20" : "md:ml-64",
+          chatOpen ? 'md:mr-96' : '',
+          "md:pt-14" // Add padding for the header
+        )}>
+          <div className="min-h-screen p-4 md:p-6">
             {children}
           </div>
         </main>
@@ -255,18 +260,23 @@ export function MainLayout({
           </div>
         </nav>
         
-        {/* Desktop Floating Notification Bar */}
+        {/* Desktop Integrated Notification Header */}
         <div className="hidden md:block">
-          <FloatingNotificationBar
+          <IntegratedNotificationHeader
             onChatClick={() => setChatOpen(!chatOpen)}
             isChatOpen={chatOpen}
             unreadChatCount={unreadChatCount}
+            sidebarCollapsed={false}
           />
         </div>
         
         {/* Main Content */}
-        <main className={`md:ml-64 pb-16 md:pb-0 ${chatOpen ? 'md:mr-96' : ''}`}>
-          <div className="min-h-screen p-4 md:p-6 md:pt-6">
+        <main className={cn(
+          "md:ml-64 pb-16 md:pb-0",
+          chatOpen ? 'md:mr-96' : '',
+          "md:pt-14" // Add padding for the header
+        )}>
+          <div className="min-h-screen p-4 md:p-6">
             {children}
           </div>
         </main>
@@ -320,18 +330,24 @@ export function MainLayout({
         </div>
       </header>
       
-      {/* Desktop Floating Notification Bar */}
+      {/* Desktop Integrated Notification Header */}
       <div className="hidden md:block">
-        <FloatingNotificationBar
+        <IntegratedNotificationHeader
           onChatClick={() => setChatOpen(!chatOpen)}
           isChatOpen={chatOpen}
           unreadChatCount={unreadChatCount}
+          sidebarCollapsed={sidebarCollapsed}
         />
       </div>
       
       {/* Main Content */}
-      <main className={`transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"} ${chatOpen ? 'md:mr-96' : ''}`}>
-        <div className="min-h-screen p-4 md:p-6 md:pt-6">
+      <main className={cn(
+        "transition-all duration-300",
+        sidebarCollapsed ? "md:ml-20" : "md:ml-64",
+        chatOpen ? 'md:mr-96' : '',
+        "md:pt-14" // Add padding for the header
+      )}>
+        <div className="min-h-screen p-4 md:p-6">
           {children}
         </div>
       </main>
