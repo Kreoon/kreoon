@@ -118,6 +118,18 @@ export default function UserPortfolio() {
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [allUsersWithStories, setAllUsersWithStories] = useState<Array<{
+    id: string;
+    full_name: string;
+    avatar_url: string | null;
+    has_stories: boolean;
+  }>>([]);
+  const [storyViewerUser, setStoryViewerUser] = useState<{
+    id: string;
+    name: string;
+    avatar: string | null;
+    stories: Story[];
+  } | null>(null);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -364,6 +376,39 @@ export default function UserPortfolio() {
           setContent(enrichedClientContent);
         }
       }
+
+      // Fetch all public users with active stories (for the stories row)
+      const { data: usersWithStoriesData } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          full_name,
+          avatar_url,
+          is_public
+        `)
+        .eq('is_public', true);
+      
+      if (usersWithStoriesData) {
+        // Get users who have active stories
+        const { data: activeStories } = await supabase
+          .from('portfolio_stories')
+          .select('user_id')
+          .gt('expires_at', new Date().toISOString());
+        
+        const userIdsWithStories = new Set((activeStories || []).map(s => s.user_id));
+        
+        const usersWithStories = usersWithStoriesData
+          .filter(u => userIdsWithStories.has(u.id))
+          .map(u => ({
+            id: u.id,
+            full_name: u.full_name,
+            avatar_url: u.avatar_url,
+            has_stories: true
+          }));
+        
+        setAllUsersWithStories(usersWithStories);
+      }
+
     } catch (error) {
       console.error('[Portfolio] Error fetching data:', error);
     } finally {
@@ -461,6 +506,29 @@ export default function UserPortfolio() {
       } else {
         toast.error('Error al fijar publicación');
       }
+    }
+  };
+
+  // Load stories for any user
+  const handleOpenUserStories = async (userId: string, userName: string, userAvatar: string | null) => {
+    try {
+      const { data: userStories } = await supabase
+        .from('portfolio_stories')
+        .select('*')
+        .eq('user_id', userId)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: true });
+
+      if (userStories && userStories.length > 0) {
+        setStoryViewerUser({
+          id: userId,
+          name: userName,
+          avatar: userAvatar,
+          stories: userStories
+        });
+      }
+    } catch (error) {
+      console.error('Error loading stories:', error);
     }
   };
 
@@ -693,7 +761,7 @@ export default function UserPortfolio() {
     );
   }
 
-  // Story viewer
+  // Story viewer - for profile owner's stories
   if (showStoryViewer && stories.length > 0) {
     return (
       <StoryViewer
@@ -701,6 +769,18 @@ export default function UserPortfolio() {
         userName={displayName || ''}
         userAvatar={displayAvatar}
         onClose={() => setShowStoryViewer(false)}
+      />
+    );
+  }
+
+  // Story viewer - for other users' stories
+  if (storyViewerUser) {
+    return (
+      <StoryViewer
+        stories={storyViewerUser.stories}
+        userName={storyViewerUser.name}
+        userAvatar={storyViewerUser.avatar}
+        onClose={() => setStoryViewerUser(null)}
       />
     );
   }
@@ -713,19 +793,50 @@ export default function UserPortfolio() {
       <PortfolioHeader />
       
       <div className="max-w-4xl mx-auto">
-        {/* Stories Row */}
-        {(stories.length > 0 || isOwner) && profileType === 'user' && (
+        {/* Stories Row - Show all users with stories */}
+        {(allUsersWithStories.length > 0 || (stories.length > 0 || isOwner)) && (
           <div className="px-4 pt-4 pb-2 overflow-x-auto">
-            <div className="flex gap-4">
-              <StoryRing
-                avatarUrl={displayAvatar}
-                name={displayName || ''}
-                hasStories={stories.length > 0}
-                hasUnseenStories={stories.length > 0}
-                isOwn={isOwner}
-                onClick={() => stories.length > 0 && setShowStoryViewer(true)}
-                onAddClick={() => openUploader('story')}
-              />
+            <div className="flex gap-3">
+              {/* Owner's story ring (if owner and user profile) */}
+              {isOwner && profileType === 'user' && (
+                <StoryRing
+                  avatarUrl={displayAvatar}
+                  name="Tu historia"
+                  hasStories={stories.length > 0}
+                  hasUnseenStories={stories.length > 0}
+                  isOwn={true}
+                  onClick={() => stories.length > 0 && setShowStoryViewer(true)}
+                  onAddClick={() => openUploader('story')}
+                />
+              )}
+              
+              {/* Current profile's stories (if not owner) */}
+              {!isOwner && profileType === 'user' && stories.length > 0 && (
+                <StoryRing
+                  avatarUrl={displayAvatar}
+                  name={displayName || ''}
+                  hasStories={true}
+                  hasUnseenStories={true}
+                  isOwn={false}
+                  onClick={() => setShowStoryViewer(true)}
+                />
+              )}
+              
+              {/* All other users with stories */}
+              {allUsersWithStories
+                .filter(u => u.id !== resolvedUserId) // Don't show current profile user again
+                .map(u => (
+                  <StoryRing
+                    key={u.id}
+                    avatarUrl={u.avatar_url}
+                    name={u.full_name}
+                    hasStories={true}
+                    hasUnseenStories={true}
+                    isOwn={user?.id === u.id}
+                    onClick={() => handleOpenUserStories(u.id, u.full_name, u.avatar_url)}
+                    size="sm"
+                  />
+                ))}
             </div>
           </div>
         )}
