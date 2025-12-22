@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2 } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
@@ -10,10 +10,47 @@ import { SubscriptionManagement } from "@/components/settings/SubscriptionManage
 import { UserPlansManagement } from "@/components/settings/UserPlansManagement";
 import { RootAdminPanel } from "@/components/settings/RootAdminPanel";
 import { useAuth } from "@/hooks/useAuth";
+import { useTour } from "@/hooks/useTour";
+import { Sparkles, Play } from "lucide-react";
 
 const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin';
+// Tour section component
+function TourSection({ onStartTour }: { onStartTour: () => void }) {
+  return (
+    <div className="p-6 space-y-6">
+      <div className="text-center space-y-4">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+          <Sparkles className="h-10 w-10 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Tour Guiado</h2>
+          <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+            ¿Quieres volver a ver el tour de introducción? Te mostraremos las funcionalidades principales de la plataforma según tu rol.
+          </p>
+        </div>
+      </div>
+      
+      <div className="flex justify-center">
+        <Button onClick={onStartTour} size="lg" className="gap-2">
+          <Play className="h-5 w-5" />
+          Iniciar Tour Guiado
+        </Button>
+      </div>
+      
+      <div className="mt-8 p-4 rounded-lg bg-muted/50 border max-w-md mx-auto">
+        <h3 className="font-medium text-sm text-foreground mb-2">El tour incluye:</h3>
+        <ul className="text-sm text-muted-foreground space-y-1">
+          <li>• Navegación por las secciones principales</li>
+          <li>• Funcionalidades específicas de tu rol</li>
+          <li>• Tips para aprovechar la plataforma</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour';
 
 const settingsSections = [
   { 
@@ -88,10 +125,19 @@ const settingsSections = [
     adminOnly: true,
     rootOnly: false
   },
+  { 
+    id: 'tour' as const,
+    icon: HelpCircle, 
+    title: "Tour Guiado", 
+    description: "Vuelve a ver el tour de introducción a la plataforma",
+    adminOnly: false,
+    rootOnly: false
+  },
 ];
 
 const Settings = () => {
   const { isAdmin, profile } = useAuth();
+  const { resetTour } = useTour();
   const [activeSection, setActiveSection] = useState<SettingsSection>('main');
 
   const isRoot = profile?.email === ROOT_EMAIL;
@@ -169,6 +215,9 @@ const Settings = () => {
       case 'usuarios':
         return <UserManagement />;
       case 'root-admin':
+        return <RootAdminPanel />;
+      case 'tour':
+        return <TourSection onStartTour={() => { resetTour(); setActiveSection('main'); }} />;
         return <RootAdminPanel />;
       default:
         return null;

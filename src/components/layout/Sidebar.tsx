@@ -31,6 +31,7 @@ const adminNavigation: NavItem[] = [
   { name: "Mi Perfil", href: (id) => `/p/${id}`, icon: User, tourId: "sidebar-profile", isDynamic: true },
   { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
   { name: "Contenido", href: "/content", icon: FileText, tourId: "sidebar-content" },
+  { name: "Portafolio", href: "/portfolio", icon: Video, tourId: "sidebar-portfolio" },
   { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
   { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients" },
@@ -41,7 +42,7 @@ const adminNavigation: NavItem[] = [
 const strategistNavigation: NavItem[] = [
   { name: "Dashboard", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { name: "Mi Perfil", href: (id) => `/p/${id}`, icon: User, tourId: "sidebar-profile", isDynamic: true },
-  { name: "Contenido", href: "/portfolio", icon: Video, tourId: "sidebar-content" },
+  { name: "Portafolio", href: "/portfolio", icon: Video, tourId: "sidebar-portfolio" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
@@ -50,7 +51,7 @@ const editorNavigation: NavItem[] = [
   { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { name: "Mi Perfil", href: (id) => `/p/${id}`, icon: User, tourId: "sidebar-profile", isDynamic: true },
   { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-  { name: "Contenido", href: "/portfolio", icon: Video, tourId: "sidebar-content" },
+  { name: "Portafolio", href: "/portfolio", icon: Video, tourId: "sidebar-portfolio" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
@@ -59,7 +60,7 @@ const creatorNavigation: NavItem[] = [
   { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { name: "Mi Perfil", href: (id) => `/p/${id}`, icon: User, tourId: "sidebar-profile", isDynamic: true },
   { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-  { name: "Contenido", href: "/portfolio", icon: Video, tourId: "sidebar-content" },
+  { name: "Portafolio", href: "/portfolio", icon: Video, tourId: "sidebar-portfolio" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
@@ -68,7 +69,7 @@ const clientNavigation: NavItem[] = [
   { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { name: "Mi Perfil", href: (id) => `/p/${id}`, icon: User, tourId: "sidebar-profile", isDynamic: true },
   { name: "Tablero", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
-  { name: "Contenido", href: "/portfolio", icon: Video, tourId: "sidebar-content" },
+  { name: "Portafolio", href: "/portfolio", icon: Video, tourId: "sidebar-portfolio" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 

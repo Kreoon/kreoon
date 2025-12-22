@@ -10,6 +10,7 @@ export function useTour() {
   const [showTour, setShowTour] = useState(false);
   const [tourConfig, setTourConfig] = useState<RoleTourConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasCheckedTour, setHasCheckedTour] = useState(false);
 
   useEffect(() => {
     if (!user || !profile || !roles.length) {
@@ -17,9 +18,17 @@ export function useTour() {
       return;
     }
 
-    // Check if user has seen the tour
+    // Only check once per session to avoid re-showing
+    if (hasCheckedTour) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if user has seen the tour - must be explicitly false (never seen)
+    // null or undefined means tour was seen or not applicable
     const hasSeenTour = (profile as any).has_seen_tour;
     
+    // Only show if has_seen_tour is explicitly false (new user who hasn't seen it)
     if (hasSeenTour === false) {
       const config = getTourConfig(roles);
       if (config) {
@@ -31,8 +40,9 @@ export function useTour() {
       }
     }
     
+    setHasCheckedTour(true);
     setIsLoading(false);
-  }, [user, profile, roles]);
+  }, [user, profile, roles, hasCheckedTour]);
 
   const startTour = useCallback(() => {
     setShowWelcome(false);
