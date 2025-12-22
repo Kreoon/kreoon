@@ -125,19 +125,90 @@ export function BunnyVideoCard({
       return;
     }
 
+    // Check if it's a Bunny video URL
     const videoId = extractVideoId(currentVideoUrl);
-    if (!videoId) {
-      setResolvedThumbnail(null);
+    if (videoId) {
+      // Use backend proxy so the thumbnail is always accessible in the browser
+      setResolvedThumbnail(getProxiedThumbnailUrl({ contentId: id, videoId }));
       setThumbnailLoading(false);
-      setThumbnailError(true);
+      setThumbnailError(false);
       return;
     }
 
-    // Use backend proxy so the thumbnail is always accessible in the browser
-    setResolvedThumbnail(getProxiedThumbnailUrl({ contentId: id, videoId }));
+    // For non-Bunny videos (like portfolio uploads), try to generate a thumbnail from the video
+    if (currentVideoUrl && !currentVideoUrl.includes('iframe.mediadelivery.net')) {
+      setThumbnailLoading(true);
+      generateVideoThumbnail(currentVideoUrl)
+        .then(thumbUrl => {
+          if (thumbUrl) {
+            setResolvedThumbnail(thumbUrl);
+            setThumbnailError(false);
+          } else {
+            setThumbnailError(true);
+          }
+        })
+        .catch(() => {
+          setThumbnailError(true);
+        })
+        .finally(() => {
+          setThumbnailLoading(false);
+        });
+      return;
+    }
+
+    // No thumbnail available
+    setResolvedThumbnail(null);
     setThumbnailLoading(false);
-    setThumbnailError(false);
+    setThumbnailError(true);
   }, [currentVideoUrl, thumbnailUrl, id]);
+
+  // Function to generate thumbnail from video
+  async function generateVideoThumbnail(videoUrl: string): Promise<string | null> {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.crossOrigin = 'anonymous';
+      video.muted = true;
+      video.preload = 'metadata';
+      
+      video.onloadedmetadata = () => {
+        // Seek to 1 second or 10% of video duration
+        video.currentTime = Math.min(1, video.duration * 0.1);
+      };
+      
+      video.onseeked = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            resolve(dataUrl);
+          } else {
+            resolve(null);
+          }
+        } catch {
+          resolve(null);
+        }
+        video.remove();
+      };
+      
+      video.onerror = () => {
+        resolve(null);
+        video.remove();
+      };
+      
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        resolve(null);
+        video.remove();
+      }, 5000);
+      
+      video.src = videoUrl;
+      video.load();
+    });
+  }
 
   // Intersection Observer for scroll-based autoplay
   useEffect(() => {
