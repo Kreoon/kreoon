@@ -238,23 +238,51 @@ export function useChatNotifications(
     };
   }, [user?.id, isChatOpen, activeConversationId, showBrowserNotification, showToastNotification, playChatSound]);
 
-  // Reset unread count when viewing a conversation
+  // Reset unread count and mark ALL messages as read when viewing a conversation
   useEffect(() => {
-    if (isChatOpen && activeConversationId) {
-      // Mark messages as read
-      const markAsRead = async () => {
+    if (isChatOpen && activeConversationId && user?.id) {
+      const markAllAsRead = async () => {
+        const now = new Date().toISOString();
+        
+        // Update participant's last_read_at
         await supabase
           .from('chat_participants')
-          .update({ last_read_at: new Date().toISOString() })
+          .update({ last_read_at: now })
           .eq('conversation_id', activeConversationId)
-          .eq('user_id', user?.id);
+          .eq('user_id', user.id);
+        
+        // Mark all unread messages in this conversation as read (for read receipts)
+        await supabase
+          .from('chat_messages')
+          .update({ read_at: now })
+          .eq('conversation_id', activeConversationId)
+          .neq('sender_id', user.id)
+          .is('read_at', null);
+        
+        // Recalculate total unread count
+        const { data: participations } = await supabase
+          .from('chat_participants')
+          .select('conversation_id, last_read_at')
+          .eq('user_id', user.id);
+
+        if (participations?.length) {
+          let totalUnread = 0;
+          for (const p of participations) {
+            const { count } = await supabase
+              .from('chat_messages')
+              .select('*', { count: 'exact', head: true })
+              .eq('conversation_id', p.conversation_id)
+              .neq('sender_id', user.id)
+              .gt('created_at', p.last_read_at || '1970-01-01');
+            totalUnread += count || 0;
+          }
+          setUnreadCount(totalUnread);
+        } else {
+          setUnreadCount(0);
+        }
       };
       
-      markAsRead();
-      // Refetch unread count after a short delay
-      setTimeout(() => {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }, 500);
+      markAllAsRead();
     }
   }, [isChatOpen, activeConversationId, user?.id]);
 
