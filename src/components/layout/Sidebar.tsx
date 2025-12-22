@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
   Video, 
@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NavItem {
   name: string;
@@ -86,6 +87,50 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const navigate = useNavigate();
   const { signOut, profile, user, isAdmin, isEditor, isCreator, isStrategist, isClient } = useAuth();
   const [showClientSelector, setShowClientSelector] = useState(false);
+  const [currentClientName, setCurrentClientName] = useState<string | null>(null);
+
+  // Fetch current client name for client users
+  useEffect(() => {
+    if (isClient && user) {
+      const fetchCurrentClient = async () => {
+        const savedClientId = localStorage.getItem('selectedClientId');
+        
+        if (savedClientId) {
+          const { data } = await supabase
+            .from('clients')
+            .select('name')
+            .eq('id', savedClientId)
+            .maybeSingle();
+          
+          if (data) {
+            setCurrentClientName(data.name);
+            return;
+          }
+        }
+
+        // Get first client from user's associations
+        const { data: associations } = await supabase
+          .from('client_users')
+          .select('client_id')
+          .eq('user_id', user.id)
+          .limit(1);
+
+        if (associations && associations.length > 0) {
+          const { data: client } = await supabase
+            .from('clients')
+            .select('name')
+            .eq('id', associations[0].client_id)
+            .maybeSingle();
+
+          if (client) {
+            setCurrentClientName(client.name);
+          }
+        }
+      };
+
+      fetchCurrentClient();
+    }
+  }, [isClient, user]);
 
   // Determinar navegación según rol (prioridad: admin > strategist > editor > creator > client)
   const navigation = isAdmin 
@@ -176,18 +221,27 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
           {/* Client company switcher */}
           {isClient && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowClientSelector(true)}
-              className={cn(
-                "w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                collapsed && "px-2"
+            <div className="space-y-1">
+              {!collapsed && currentClientName && (
+                <div className="px-3 py-1 text-xs text-sidebar-foreground/60 truncate flex items-center gap-2">
+                  <Building2 className="h-3 w-3" />
+                  {currentClientName}
+                </div>
               )}
-            >
-              <RefreshCw className="h-4 w-4" />
-              {!collapsed && <span className="ml-2">Cambiar Empresa</span>}
-            </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowClientSelector(true)}
+                className={cn(
+                  "w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  collapsed && "px-2"
+                )}
+                title={collapsed ? `${currentClientName || 'Cambiar Empresa'}` : undefined}
+              >
+                <RefreshCw className="h-4 w-4" />
+                {!collapsed && <span className="ml-2">Cambiar Empresa</span>}
+              </Button>
+            </div>
           )}
           
           <Button
