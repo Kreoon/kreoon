@@ -17,8 +17,12 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { 
   Building2, Video, Save, Mail, Phone, Calendar, DollarSign, 
-  Package, Plus, Trash2, Edit2, ExternalLink, ShoppingBag, CheckCircle
+  Package, Plus, Trash2, Edit2, ExternalLink, ShoppingBag, CheckCircle,
+  Star, Eye
 } from "lucide-react";
+import { VipBadge } from "@/components/ui/vip-badge";
+import { Switch } from "@/components/ui/switch";
+import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +53,8 @@ interface ClientDetailDialogProps {
     contact_email: string | null;
     contact_phone: string | null;
     notes: string | null;
+    is_vip?: boolean;
+    username?: string | null;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -58,6 +64,7 @@ interface ClientDetailDialogProps {
 export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: ClientDetailDialogProps) {
   const { toast } = useToast();
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [assignedContent, setAssignedContent] = useState<Content[]>([]);
@@ -77,7 +84,8 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
     name: "",
     contact_email: "",
     contact_phone: "",
-    notes: ""
+    notes: "",
+    is_vip: false
   });
 
   useEffect(() => {
@@ -86,7 +94,8 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         name: client.name || "",
         contact_email: client.contact_email || "",
         contact_phone: client.contact_phone || "",
-        notes: client.notes || ""
+        notes: client.notes || "",
+        is_vip: client.is_vip ?? false
       });
       fetchClientContent();
       fetchProducts();
@@ -231,7 +240,8 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
           name: formData.name,
           contact_email: formData.contact_email || null,
           contact_phone: formData.contact_phone || null,
-          notes: formData.notes || null
+          notes: formData.notes || null,
+          is_vip: formData.is_vip
         })
         .eq('id', client.id);
 
@@ -286,10 +296,26 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                 <Building2 className="h-8 w-8 text-primary" />
               </div>
             )}
-            <div>
-              <DialogTitle className="text-xl">{client.name}</DialogTitle>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <DialogTitle className="text-xl">{client.name}</DialogTitle>
+                {formData.is_vip && <VipBadge size="sm" variant="minimal" />}
+              </div>
               <p className="text-sm text-muted-foreground">{client.contact_email}</p>
             </div>
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate(`/empresa/${client.username || client.id}`);
+                }}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Ver perfil
+              </Button>
+            )}
           </div>
         </DialogHeader>
 
@@ -359,6 +385,26 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                 <p className="text-sm">{client.notes || "Sin notas"}</p>
               )}
             </div>
+
+            {/* VIP Toggle - Admin only */}
+            {isAdmin && (
+              <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                <div className="flex items-center gap-3">
+                  <Star className="h-5 w-5 text-purple-500" />
+                  <div>
+                    <p className="font-medium">Cliente VIP</p>
+                    <p className="text-xs text-muted-foreground">
+                      Mostrar insignia VIP en el perfil de la empresa
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.is_vip}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_vip: checked })}
+                  disabled={!editMode}
+                />
+              </div>
+            )}
 
             {isAdmin && (
               <div className="flex justify-end gap-3 pt-4 border-t">
