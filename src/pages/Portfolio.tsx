@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Filter, X, Home, User, LogOut, Users, Sparkles, UserPlus, Search, Image as ImageIcon } from "lucide-react";
+import { Play, Filter, X, Home, User, LogOut, Users, Sparkles, UserPlus, Search, Image as ImageIcon, RefreshCw } from "lucide-react";
 import { SmartSearch } from "@/components/portfolio/SmartSearch";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,7 +34,8 @@ interface PublishedContent {
   type?: 'content' | 'post';
   can_interact?: boolean;
   media_type?: 'video' | 'image';
-  media_url?: string; // For posts
+  media_url?: string;
+  score?: number;
 }
 
 interface FollowingUser {
@@ -59,25 +60,46 @@ function getVideoUrls(item: PublishedContent): string[] {
   return urls;
 }
 
-// Shuffle array with seed based on current date + hour (changes hourly)
-function shuffleArray<T>(array: T[]): T[] {
-  const seed = new Date().toISOString().slice(0, 13); // YYYY-MM-DDTHH
+// AI-powered shuffle with engagement and recency weighting
+function aiShuffle<T extends { score?: number; created_at?: string; views_count?: number; likes_count?: number }>(array: T[]): T[] {
+  const seed = new Date().toISOString().slice(0, 13); // Changes hourly
   const shuffled = [...array];
   
-  // Simple seeded random based on string hash
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
-    hash |= 0;
-  }
+  // Score each item if not already scored
+  const scored = shuffled.map((item, idx) => {
+    if (item.score !== undefined) return { item, score: item.score };
+    
+    let score = 0;
+    const now = Date.now();
+    const createdAt = item.created_at ? new Date(item.created_at).getTime() : now;
+    const ageHours = (now - createdAt) / (1000 * 60 * 60);
+    
+    // Recency boost
+    if (ageHours < 24) score += 50;
+    else if (ageHours < 72) score += 30;
+    else if (ageHours < 168) score += 15;
+    
+    // Engagement boost
+    const likes = (item as any).likes_count || 0;
+    const views = (item as any).views_count || 0;
+    score += Math.min(25, Math.log10(likes + 1) * 8 + Math.log10(views + 1) * 3);
+    
+    // Random factor for variety
+    let hash = 0;
+    const seedStr = seed + idx.toString();
+    for (let i = 0; i < seedStr.length; i++) {
+      hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+      hash |= 0;
+    }
+    score += (Math.abs(hash) % 20) - 10;
+    
+    return { item, score };
+  });
   
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    hash = ((hash << 5) - hash) + i;
-    const j = Math.abs(hash) % (i + 1);
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
+  // Sort by score with some randomness
+  scored.sort((a, b) => b.score - a.score);
   
-  return shuffled;
+  return scored.map(s => s.item);
 }
 
 type FeedTab = 'for-you' | 'following';
@@ -91,11 +113,14 @@ export default function Portfolio() {
   const [content, setContent] = useState<PublishedContent[]>([]);
   const [followingContent, setFollowingContent] = useState<PublishedContent[]>([]);
   const [followingUsers, setFollowingUsers] = useState<FollowingUser[]>([]);
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<FeedTab>('for-you');
   const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
+  const lastRefreshRef = useRef<number>(0);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -132,20 +157,21 @@ export default function Portfolio() {
         .select('following_id')
         .eq('follower_id', user.id);
 
-      const followingIds = followingData?.map(f => f.following_id) || [];
+      const ids = followingData?.map(f => f.following_id) || [];
+      setFollowingIds(ids);
 
-      if (followingIds.length > 0) {
+      if (ids.length > 0) {
         // Get profiles of users I follow
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url')
-          .in('id', followingIds);
+          .in('id', ids);
 
         // Check which ones have active stories
         const { data: storiesData } = await supabase
           .from('portfolio_stories')
           .select('user_id')
-          .in('user_id', followingIds)
+          .in('user_id', ids)
           .gt('expires_at', new Date().toISOString());
 
         const usersWithStories = new Set(storiesData?.map(s => s.user_id) || []);
@@ -164,28 +190,58 @@ export default function Portfolio() {
 
         setFollowingUsers(usersWithStoryFlag);
 
-        // Fetch content from followed users (creators)
-        const { data: contentData } = await supabase
-          .from('content')
-          .select(`
-            id,
-            title,
-            video_url,
-            video_urls,
-            thumbnail_url,
-            created_at,
-            creator_id,
-            client_id,
-            views_count,
-            likes_count
-          `)
-          .eq('is_published', true)
-          .in('creator_id', followingIds)
-          .or('video_url.not.is.null,video_urls.not.is.null')
-          .order('created_at', { ascending: false });
+        // Fetch content from followed users (creators) - includes posts too
+        const [{ data: contentData }, { data: postData }] = await Promise.all([
+          supabase
+            .from('content')
+            .select(`
+              id,
+              title,
+              video_url,
+              video_urls,
+              thumbnail_url,
+              created_at,
+              creator_id,
+              client_id,
+              views_count,
+              likes_count
+            `)
+            .eq('is_published', true)
+            .in('creator_id', ids)
+            .or('video_url.not.is.null,video_urls.not.is.null')
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('portfolio_posts')
+            .select('id, user_id, media_url, media_type, thumbnail_url, caption, created_at, views_count, likes_count')
+            .in('user_id', ids)
+            .order('created_at', { ascending: false })
+        ]);
 
-        if (contentData && contentData.length > 0) {
-          const enrichedContent = await enrichContent(contentData);
+        // Map posts to unified format
+        const mappedPosts = (postData || []).map(p => ({
+          id: p.id,
+          title: p.caption || '',
+          video_url: p.media_type === 'video' ? p.media_url : null,
+          video_urls: null,
+          thumbnail_url: p.thumbnail_url,
+          created_at: p.created_at,
+          creator_id: p.user_id,
+          client_id: null,
+          views_count: p.views_count || 0,
+          likes_count: p.likes_count || 0,
+          type: 'post' as const,
+          can_interact: true,
+          media_type: p.media_type as 'video' | 'image',
+          media_url: p.media_url,
+        }));
+
+        const allFollowingContent = [
+          ...(contentData || []).map(c => ({ ...c, type: 'content' as const, can_interact: true })),
+          ...mappedPosts,
+        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        if (allFollowingContent.length > 0) {
+          const enrichedContent = await enrichContent(allFollowingContent);
           setFollowingContent(enrichedContent);
         }
       }
@@ -383,23 +439,47 @@ export default function Portfolio() {
     }
   };
 
-  // Get current content based on tab and shuffle for "for-you"
+  // Refresh feed with new AI recommendations
+  const handleRefreshFeed = async () => {
+    if (refreshing) return;
+    const now = Date.now();
+    if (now - lastRefreshRef.current < 5000) {
+      toast.info('Espera unos segundos para refrescar');
+      return;
+    }
+    lastRefreshRef.current = now;
+    setRefreshing(true);
+    await fetchPublishedContent();
+    setRefreshing(false);
+    toast.success('Feed actualizado con nuevas recomendaciones');
+  };
+
+  // Get current content based on tab with AI-powered ordering
   const currentContent = useMemo(() => {
     const items = activeTab === 'following' ? followingContent : content;
-    // Include all media types now, not just videos
+    // Include all media types
     const filtered = items.filter(item => {
       const hasVideos = getVideoUrls(item).length > 0;
       const hasImage = (item as any).media_type === 'image' && (item as any).media_url;
       return hasVideos || hasImage;
     });
     
-    // Shuffle for "for-you" tab
+    // Apply AI shuffle for "for-you" tab
     if (activeTab === 'for-you') {
-      return shuffleArray(filtered);
+      return aiShuffle(filtered);
     }
     
-    return filtered;
-  }, [content, followingContent, activeTab]);
+    // For following tab, sort by recency with followed users first
+    return filtered.sort((a, b) => {
+      // Prioritize content from followed users
+      const aIsFollowed = a.creator_id && followingIds.includes(a.creator_id);
+      const bIsFollowed = b.creator_id && followingIds.includes(b.creator_id);
+      if (aIsFollowed && !bIsFollowed) return -1;
+      if (!aIsFollowed && bIsFollowed) return 1;
+      // Then by recency
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [content, followingContent, activeTab, followingIds]);
 
   // Separate video content for TikTok feed (mobile)
   const videoContent = useMemo(() => {
@@ -524,6 +604,15 @@ export default function Portfolio() {
                 <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg">
                   <span className="text-black font-bold text-sm">U</span>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRefreshFeed}
+                  disabled={refreshing}
+                  className="text-white hover:bg-white/20 h-8 w-8"
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </Button>
               </div>
               
               {/* Feed Tabs */}
@@ -686,6 +775,17 @@ export default function Portfolio() {
                 <p className="text-primary text-xs">Feed</p>
               </div>
             </div>
+
+            {/* Refresh Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefreshFeed}
+              disabled={refreshing}
+              className="text-white/70 hover:text-white hover:bg-white/10 mr-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
 
             {/* Search Bar */}
             <SmartSearch 
