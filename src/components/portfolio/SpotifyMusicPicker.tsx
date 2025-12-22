@@ -2,7 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Search, Music, Play, Pause, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -111,6 +116,8 @@ export function SpotifyMusicPicker({
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
+  const playableTracks = tracks.filter((t) => Boolean(t.previewUrl));
+
   return (
     <Dialog
       open
@@ -119,11 +126,14 @@ export function SpotifyMusicPicker({
       }}
     >
       <DialogContent className="w-[calc(100vw-2rem)] max-w-lg p-0 overflow-hidden">
+        <DialogDescription className="sr-only">
+          Busca canciones disponibles con preview de 30 segundos y selecciónalas para tu historia.
+        </DialogDescription>
         <div className="flex flex-col max-h-[80vh]">
           <div className="p-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Music className="w-5 h-5 text-foreground" />
-              <h2 className="font-semibold">Buscar en Spotify</h2>
+              <DialogTitle className="font-semibold">Buscar en Spotify</DialogTitle>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="w-4 h-4" />
@@ -148,20 +158,19 @@ export function SpotifyMusicPicker({
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
-            ) : tracks.length === 0 && query ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No se encontraron canciones
+            ) : query && playableTracks.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground space-y-2">
+                <p>No hay canciones con preview para esta búsqueda.</p>
+                <p className="text-xs">
+                  Spotify ya no ofrece preview para muchas canciones; prueba con otra búsqueda.
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
-                {tracks.map((track) => (
+                {playableTracks.map((track) => (
                   <div
                     key={track.id}
-                    className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                      !track.previewUrl 
-                        ? "opacity-50" 
-                        : "hover:bg-muted/50"
-                    } ${
+                    className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${
                       selectedTrackId === track.id
                         ? "bg-primary/10 border border-primary/30"
                         : ""
@@ -186,32 +195,27 @@ export function SpotifyMusicPicker({
                       <p className="text-sm text-muted-foreground truncate">
                         {track.artist}
                       </p>
-                      {!track.previewUrl && (
-                        <p className="text-xs text-destructive">Sin preview</p>
-                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">
                         {formatDuration(track.duration)}
                       </span>
-                      {track.previewUrl && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            togglePlay(track);
-                          }}
-                        >
-                          {playingId === track.id ? (
-                            <Pause className="w-4 h-4" />
-                          ) : (
-                            <Play className="w-4 h-4" />
-                          )}
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          togglePlay(track);
+                        }}
+                      >
+                        {playingId === track.id ? (
+                          <Pause className="w-4 h-4" />
+                        ) : (
+                          <Play className="w-4 h-4" />
+                        )}
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -219,9 +223,9 @@ export function SpotifyMusicPicker({
             )}
           </ScrollArea>
 
-          {tracks.length > 0 && (
+          {query && playableTracks.length > 0 && (
             <div className="p-3 border-t border-border text-center text-xs text-muted-foreground">
-              Preview de 30 segundos cortesía de Spotify
+              Mostrando {playableTracks.length} canciones con preview (30s)
             </div>
           )}
         </div>
