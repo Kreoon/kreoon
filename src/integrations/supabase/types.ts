@@ -822,6 +822,44 @@ export type Database = {
           },
         ]
       }
+      point_transactions: {
+        Row: {
+          content_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          points: number
+          transaction_type: Database["public"]["Enums"]["point_transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          content_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          points: number
+          transaction_type: Database["public"]["Enums"]["point_transaction_type"]
+          user_id: string
+        }
+        Update: {
+          content_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          transaction_type?: Database["public"]["Enums"]["point_transaction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "point_transactions_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_posts: {
         Row: {
           caption: string | null
@@ -1171,6 +1209,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_points: {
+        Row: {
+          consecutive_on_time: number
+          created_at: string
+          current_level: Database["public"]["Enums"]["up_level"]
+          id: string
+          total_completions: number
+          total_corrections: number
+          total_late: number
+          total_on_time: number
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consecutive_on_time?: number
+          created_at?: string
+          current_level?: Database["public"]["Enums"]["up_level"]
+          id?: string
+          total_completions?: number
+          total_corrections?: number
+          total_late?: number
+          total_on_time?: number
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consecutive_on_time?: number
+          created_at?: string
+          current_level?: Database["public"]["Enums"]["up_level"]
+          id?: string
+          total_completions?: number
+          total_corrections?: number
+          total_late?: number
+          total_on_time?: number
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_presence: {
         Row: {
           created_at: string
@@ -1269,14 +1349,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_user_points: {
+        Args: {
+          _content_id: string
+          _description?: string
+          _points: number
+          _transaction_type: Database["public"]["Enums"]["point_transaction_type"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       append_raw_video_url: {
         Args: { _content_id: string; _url: string }
         Returns: string[]
+      }
+      calculate_up_level: {
+        Args: { points: number }
+        Returns: Database["public"]["Enums"]["up_level"]
       }
       can_users_chat: {
         Args: { _user1_id: string; _user2_id: string }
         Returns: boolean
       }
+      check_perfect_streak: { Args: { _user_id: string }; Returns: boolean }
       cleanup_expired_stories: { Args: never; Returns: undefined }
       create_chat_conversation: {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
@@ -1368,8 +1463,18 @@ export type Database = {
         | "issue"
         | "corrected"
       currency_type: "COP" | "USD"
+      point_transaction_type:
+        | "base_completion"
+        | "early_delivery"
+        | "late_delivery"
+        | "correction_needed"
+        | "perfect_streak"
+        | "five_star_rating"
+        | "viral_hook"
+        | "manual_adjustment"
       subscription_plan: "free" | "basic" | "pro"
       subscription_status: "active" | "cancelled" | "expired" | "pending"
+      up_level: "bronze" | "silver" | "gold" | "diamond"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1522,8 +1627,19 @@ export const Constants = {
         "corrected",
       ],
       currency_type: ["COP", "USD"],
+      point_transaction_type: [
+        "base_completion",
+        "early_delivery",
+        "late_delivery",
+        "correction_needed",
+        "perfect_streak",
+        "five_star_rating",
+        "viral_hook",
+        "manual_adjustment",
+      ],
       subscription_plan: ["free", "basic", "pro"],
       subscription_status: ["active", "cancelled", "expired", "pending"],
+      up_level: ["bronze", "silver", "gold", "diamond"],
     },
   },
 } as const
