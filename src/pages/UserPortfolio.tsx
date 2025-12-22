@@ -447,6 +447,17 @@ export default function UserPortfolio() {
     });
   }, [content, posts, isOwner, profileType, userRoles]);
 
+  const imagePosts = useMemo(() => {
+    return posts
+      .filter(p => p.media_type === 'image')
+      .sort((a, b) => {
+        // Pinned first
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+  }, [posts]);
+
   // Check if current user is a client viewing their own content
   const isClientOwner = profileType === 'client' && isOwner;
 
@@ -763,7 +774,7 @@ export default function UserPortfolio() {
 
         {/* Unified Content Grid */}
         <div className="px-4 py-6">
-          {allVideos.length === 0 ? (
+          {allVideos.length === 0 && imagePosts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-white/40">
               <VideoIcon className="h-12 w-12 mb-3" />
               <p className="text-sm">Aún no hay contenido publicado</p>
@@ -780,54 +791,102 @@ export default function UserPortfolio() {
               )}
             </div>
           ) : isMobile ? (
-            // Mobile: TikTok feed
-            <VideoPlayerProvider>
-              <TikTokFeed
-                videos={allVideos}
-                onLike={(contentId) => handleLike(contentId)}
-                onView={(contentId) => handleView(contentId)}
-                onShare={(item) => handleShare(content.find(c => c.id === item.id) || content[0])}
-                onCreatorStatusChange={(contentId, newStatus) => handleCreatorStatusChange(contentId, newStatus)}
-              />
-            </VideoPlayerProvider>
-          ) : (
-            // Desktop: Grid with BunnyVideoCard
-            <VideoPlayerProvider>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                {allVideos.map((item) => {
-                  // Check if current user is the creator of this content
-                  const isCreatorOfContent = isOwner && profileType === 'user' && userRoles.includes('creator') && item.type === 'work';
-                  const canChangeStatus = isCreatorOfContent && (item.status === 'assigned' || item.status === 'recording');
-                  
-                  return (
-                    <BunnyVideoCard
-                      key={item.id}
-                      id={item.id}
-                      title={item.title}
-                      caption={item.title}
-                      videoUrls={item.videoUrls}
-                      thumbnailUrl={item.thumbnailUrl}
-                      viewsCount={item.viewsCount}
-                      likesCount={item.likesCount}
-                      isLiked={item.isLiked}
-                      isPinned={item.isPinned}
-                      isOwner={isOwner && profileType === 'user'}
-                      isCreatorOwner={isCreatorOfContent}
-                      status={item.status}
-                      showActions={true}
-                      onLike={(e) => handleLike(item.id, e)}
-                      onView={() => handleView(item.id)}
-                      onShare={() => {
-                        const contentItem = content.find(c => c.id === item.id);
-                        if (contentItem) handleShare(contentItem);
-                      }}
-                      onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
-                      onApprove={isClientOwner && item.status === 'delivered' ? () => handleApproveContent(item.id) : undefined}
-                      onCreatorStatusChange={canChangeStatus ? (newStatus) => handleCreatorStatusChange(item.id, newStatus) : undefined}
-                      onSettingsUpdate={() => fetchData()}
+            // Mobile: prefer TikTok feed when there are videos, otherwise show image grid
+            allVideos.length > 0 ? (
+              <VideoPlayerProvider>
+                <TikTokFeed
+                  videos={allVideos}
+                  onLike={(contentId) => handleLike(contentId)}
+                  onView={(contentId) => handleView(contentId)}
+                  onShare={(item) => handleShare(content.find(c => c.id === item.id) || content[0])}
+                  onCreatorStatusChange={(contentId, newStatus) => handleCreatorStatusChange(contentId, newStatus)}
+                />
+              </VideoPlayerProvider>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {imagePosts.map((post) => (
+                  <button
+                    key={post.id}
+                    type="button"
+                    onClick={() => setSelectedPost(post)}
+                    className="relative aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900 border border-white/10"
+                  >
+                    <img
+                      src={post.media_url}
+                      alt={post.caption || 'Post de imagen'}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
                     />
-                  );
-                })}
+                  </button>
+                ))}
+              </div>
+            )
+          ) : (
+            // Desktop
+            <VideoPlayerProvider>
+              <div className="space-y-8">
+                {allVideos.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                    {allVideos.map((item) => {
+                      // Check if current user is the creator of this content
+                      const isCreatorOfContent = isOwner && profileType === 'user' && userRoles.includes('creator') && item.type === 'work';
+                      const canChangeStatus = isCreatorOfContent && (item.status === 'assigned' || item.status === 'recording');
+
+                      return (
+                        <BunnyVideoCard
+                          key={item.id}
+                          id={item.id}
+                          title={item.title}
+                          caption={item.title}
+                          videoUrls={item.videoUrls}
+                          thumbnailUrl={item.thumbnailUrl}
+                          viewsCount={item.viewsCount}
+                          likesCount={item.likesCount}
+                          isLiked={item.isLiked}
+                          isPinned={item.isPinned}
+                          isOwner={isOwner && profileType === 'user'}
+                          isCreatorOwner={isCreatorOfContent}
+                          status={item.status}
+                          showActions={true}
+                          onLike={item.type === 'work' ? (e) => handleLike(item.id, e) : undefined}
+                          onView={item.type === 'work' ? () => handleView(item.id) : undefined}
+                          onShare={() => {
+                            const contentItem = content.find(c => c.id === item.id);
+                            if (contentItem) handleShare(contentItem);
+                          }}
+                          onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
+                          onApprove={isClientOwner && item.status === 'delivered' ? () => handleApproveContent(item.id) : undefined}
+                          onCreatorStatusChange={canChangeStatus ? (newStatus) => handleCreatorStatusChange(item.id, newStatus) : undefined}
+                          onSettingsUpdate={() => fetchData()}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+
+                {imagePosts.length > 0 && (
+                  <section aria-label="Posts de imagen" className="space-y-4">
+                    <h2 className="text-white/80 text-sm font-semibold">Fotos</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                      {imagePosts.map((post) => (
+                        <button
+                          key={post.id}
+                          type="button"
+                          onClick={() => setSelectedPost(post)}
+                          className="group relative aspect-[9/16] rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 hover:border-white/20 transition-colors"
+                        >
+                          <img
+                            src={post.media_url}
+                            alt={post.caption || 'Post de imagen'}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
               </div>
             </VideoPlayerProvider>
           )}

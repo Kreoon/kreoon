@@ -30,6 +30,8 @@ interface PublishedContent {
   views_count: number;
   likes_count: number;
   is_liked: boolean;
+  type?: 'content' | 'post';
+  can_interact?: boolean;
 }
 
 interface FollowingUser {
@@ -220,34 +222,75 @@ export default function Portfolio() {
       likes_count: item.likes_count || 0,
       is_liked: likedSet.has(item.id),
       client: item.client_id ? clientsMap.get(item.client_id) || null : null,
-      creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null
+      creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null,
+      type: item.type || 'content',
+      can_interact: item.can_interact ?? true,
     }));
   };
 
   const fetchPublishedContent = async () => {
     try {
-      const { data, error } = await supabase
-        .from('content')
-        .select(`
-          id,
-          title,
-          video_url,
-          video_urls,
-          thumbnail_url,
-          created_at,
-          creator_id,
-          client_id,
-          views_count,
-          likes_count
-        `)
-        .eq('is_published', true)
-        .or('video_url.not.is.null,video_urls.not.is.null')
-        .order('created_at', { ascending: false });
+      const [{ data: contentData, error: contentError }, { data: postData, error: postError }] = await Promise.all([
+        supabase
+          .from('content')
+          .select(`
+            id,
+            title,
+            video_url,
+            video_urls,
+            thumbnail_url,
+            created_at,
+            creator_id,
+            client_id,
+            views_count,
+            likes_count
+          `)
+          .eq('is_published', true)
+          .or('video_url.not.is.null,video_urls.not.is.null')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('portfolio_posts')
+          .select('id, user_id, media_url, thumbnail_url, caption, created_at, views_count, likes_count')
+          .eq('media_type', 'video')
+          .order('created_at', { ascending: false })
+          .limit(200)
+      ]);
 
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        const enrichedData = await enrichContent(data);
+      if (contentError) throw contentError;
+      if (postError) throw postError;
+
+      // Filter post videos to only public profiles
+      const postUserIds = [...new Set((postData || []).map(p => p.user_id))] as string[];
+      const { data: postProfiles } = postUserIds.length
+        ? await supabase.from('profiles').select('id, is_public').in('id', postUserIds)
+        : { data: [] };
+
+      const publicUserIds = new Set((postProfiles || []).filter(p => (p as any).is_public !== false).map(p => p.id));
+
+      const mappedPosts = (postData || [])
+        .filter(p => publicUserIds.has(p.user_id))
+        .map(p => ({
+          id: p.id,
+          title: p.caption || 'Post',
+          video_url: p.media_url,
+          video_urls: null,
+          thumbnail_url: p.thumbnail_url,
+          created_at: p.created_at,
+          creator_id: p.user_id,
+          client_id: null,
+          views_count: p.views_count || 0,
+          likes_count: p.likes_count || 0,
+          type: 'post' as const,
+          can_interact: false,
+        }));
+
+      const merged = [
+        ...(contentData || []).map(c => ({ ...c, type: 'content' as const, can_interact: true })),
+        ...mappedPosts,
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      if (merged.length > 0) {
+        const enrichedData = await enrichContent(merged);
         setContent(enrichedData);
       } else {
         setContent([]);
