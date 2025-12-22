@@ -26,6 +26,8 @@ import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { ParsedText } from '@/components/ui/parsed-text';
+import { VipBadge } from '@/components/ui/vip-badge';
+import { CompanyFollowButton } from '@/components/portfolio/CompanyFollowButton';
 
 interface CompanyProfile {
   id: string;
@@ -39,6 +41,7 @@ interface CompanyProfile {
   portfolio_url: string | null;
   is_public: boolean;
   contact_email: string | null;
+  is_vip: boolean;
 }
 
 interface ContentItem {
@@ -80,6 +83,8 @@ export default function CompanyPortfolio() {
   const [isAssociatedUser, setIsAssociatedUser] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'products'>('content');
   const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -149,7 +154,7 @@ export default function CompanyPortfolio() {
       // Fetch company profile
       const { data: companyData, error: companyError } = await supabase
         .from('clients')
-        .select('id, name, username, logo_url, bio, instagram, tiktok, facebook, portfolio_url, is_public, contact_email')
+        .select('id, name, username, logo_url, bio, instagram, tiktok, facebook, portfolio_url, is_public, contact_email, is_vip')
         .eq('id', resolvedCompanyId)
         .maybeSingle();
 
@@ -184,7 +189,8 @@ export default function CompanyPortfolio() {
       setCompany({
         ...companyData,
         username: companyData.username ?? null,
-        is_public: companyData.is_public ?? true
+        is_public: companyData.is_public ?? true,
+        is_vip: companyData.is_vip ?? false
       });
 
       // Check if current user is associated with this company
@@ -197,7 +203,19 @@ export default function CompanyPortfolio() {
           .maybeSingle();
         
         setIsAssociatedUser(!!userAssoc);
+
+        // Check if user follows this company
+        const { data: followingData } = await supabase.rpc('is_following_company', { 
+          _company_id: resolvedCompanyId 
+        });
+        setIsFollowing(followingData === true);
       }
+
+      // Fetch followers count
+      const { data: followersData } = await supabase.rpc('get_company_followers_count', {
+        _company_id: resolvedCompanyId
+      });
+      setFollowersCount(Number(followersData) || 0);
 
       // Fetch company's approved content
       const { data: contentData } = await supabase
@@ -384,23 +402,38 @@ export default function CompanyPortfolio() {
             </AvatarFallback>
           </Avatar>
           
-          <h1 className="text-xl font-bold">{company.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold">{company.name}</h1>
+            {company.is_vip && <VipBadge size="sm" variant="minimal" />}
+          </div>
           {company.username && (
             <p className="text-sm text-muted-foreground">@{company.username}</p>
           )}
           
-          {/* Edit button for associated users */}
-          {isAssociatedUser && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => setShowProfileEditor(true)}
-            >
-              <Pencil className="w-4 h-4 mr-2" />
-              Editar perfil
-            </Button>
-          )}
+          {/* Action buttons */}
+          <div className="flex gap-2 mt-3">
+            {!isAssociatedUser && user && (
+              <CompanyFollowButton
+                companyId={company.id}
+                isFollowing={isFollowing}
+                onFollowChange={(following) => {
+                  setIsFollowing(following);
+                  setFollowersCount(prev => following ? prev + 1 : Math.max(0, prev - 1));
+                }}
+                size="sm"
+              />
+            )}
+            {isAssociatedUser && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowProfileEditor(true)}
+              >
+                <Pencil className="w-4 h-4 mr-2" />
+                Editar perfil
+              </Button>
+            )}
+          </div>
           
           {company.bio && (
             <div className="mt-3 text-sm text-muted-foreground max-w-md">
@@ -460,6 +493,10 @@ export default function CompanyPortfolio() {
         {/* Stats */}
         <div className="flex justify-center gap-8 py-4 border-y border-border">
           <div className="text-center">
+            <div className="text-lg font-bold">{formatNumber(followersCount)}</div>
+            <div className="text-xs text-muted-foreground">Seguidores</div>
+          </div>
+          <div className="text-center">
             <div className="text-lg font-bold">{sortedContent.length}</div>
             <div className="text-xs text-muted-foreground">Videos</div>
           </div>
@@ -470,10 +507,6 @@ export default function CompanyPortfolio() {
           <div className="text-center">
             <div className="text-lg font-bold">{formatNumber(totalLikes)}</div>
             <div className="text-xs text-muted-foreground">Likes</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold">{products.length}</div>
-            <div className="text-xs text-muted-foreground">Productos</div>
           </div>
         </div>
 
