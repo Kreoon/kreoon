@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
   Video, 
@@ -23,6 +23,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const adminNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -69,9 +70,53 @@ const clientNavigation = [
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const [showClientSelector, setShowClientSelector] = useState(false);
+  const [currentClientName, setCurrentClientName] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, isAdmin, isCreator, isEditor, isClient, isStrategist, roles } = useAuth();
+  const { signOut, profile, user, isAdmin, isCreator, isEditor, isClient, isStrategist, roles } = useAuth();
+
+  // Fetch current client name for client users
+  useEffect(() => {
+    if (isClient && user) {
+      const fetchCurrentClient = async () => {
+        const savedClientId = localStorage.getItem('selectedClientId');
+        
+        if (savedClientId) {
+          const { data } = await supabase
+            .from('clients')
+            .select('name')
+            .eq('id', savedClientId)
+            .maybeSingle();
+          
+          if (data) {
+            setCurrentClientName(data.name);
+            return;
+          }
+        }
+
+        // Get first client from user's associations
+        const { data: associations } = await supabase
+          .from('client_users')
+          .select('client_id')
+          .eq('user_id', user.id)
+          .limit(1);
+
+        if (associations && associations.length > 0) {
+          const { data: client } = await supabase
+            .from('clients')
+            .select('name')
+            .eq('id', associations[0].client_id)
+            .maybeSingle();
+
+          if (client) {
+            setCurrentClientName(client.name);
+          }
+        }
+      };
+
+      fetchCurrentClient();
+    }
+  }, [isClient, user]);
 
   const handleSignOut = async () => {
     setOpen(false);
@@ -178,18 +223,26 @@ export function MobileNav() {
           {/* Client Company Switcher & Sign Out */}
           <div className="border-t border-sidebar-border p-3 space-y-2">
             {isClient && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setOpen(false);
-                  setShowClientSelector(true);
-                }}
-                className="w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground justify-start py-3"
-              >
-                <RefreshCw className="h-5 w-5 mr-3" />
-                Cambiar Empresa
-              </Button>
+              <div className="space-y-1">
+                {currentClientName && (
+                  <div className="px-3 py-1 text-xs text-sidebar-foreground/60 truncate flex items-center gap-2">
+                    <Building2 className="h-3 w-3" />
+                    {currentClientName}
+                  </div>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setOpen(false);
+                    setShowClientSelector(true);
+                  }}
+                  className="w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground justify-start py-3"
+                >
+                  <RefreshCw className="h-5 w-5 mr-3" />
+                  Cambiar Empresa
+                </Button>
+              </div>
             )}
             <Button
               variant="ghost"
