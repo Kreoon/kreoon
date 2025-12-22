@@ -21,8 +21,9 @@ export function useChatNotifications(
   const { playChatSound } = useNotificationSound();
   const permissionRef = useRef<NotificationPermission>('default');
   const [unreadCount, setUnreadCount] = useState(0);
+  const serviceWorkerReady = useRef<ServiceWorkerRegistration | null>(null);
 
-  // Request notification permission
+  // Request notification permission with better browser integration
   const requestPermission = useCallback(async () => {
     if (!('Notification' in window)) {
       console.log('This browser does not support notifications');
@@ -31,32 +32,64 @@ export function useChatNotifications(
 
     if (Notification.permission === 'granted') {
       permissionRef.current = 'granted';
+      // Get service worker registration for push notifications
+      if ('serviceWorker' in navigator) {
+        try {
+          serviceWorkerReady.current = await navigator.serviceWorker.ready;
+        } catch (e) {
+          console.warn('Service worker not ready:', e);
+        }
+      }
       return true;
     }
 
     if (Notification.permission !== 'denied') {
       const permission = await Notification.requestPermission();
       permissionRef.current = permission;
+      if (permission === 'granted' && 'serviceWorker' in navigator) {
+        try {
+          serviceWorkerReady.current = await navigator.serviceWorker.ready;
+        } catch (e) {
+          console.warn('Service worker not ready:', e);
+        }
+      }
       return permission === 'granted';
     }
 
     return false;
   }, []);
 
-  // Show browser notification with enhanced options
-  const showBrowserNotification = useCallback((title: string, body: string, onClick?: () => void) => {
+  // Show browser notification with enhanced options and service worker support
+  const showBrowserNotification = useCallback(async (title: string, body: string, onClick?: () => void) => {
     if (permissionRef.current !== 'granted') return;
 
+    // Vibrate device for mobile
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200, 100, 200]);
+    }
+
     try {
+      // Try service worker notification first (works in background and on mobile)
+      if (serviceWorkerReady.current) {
+        await serviceWorkerReady.current.showNotification(title, {
+          body,
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-192x192.png',
+          tag: 'chat-message-' + Date.now(),
+          requireInteraction: true,
+          data: { onClick: true },
+        });
+        return;
+      }
+
+      // Fallback to regular notification
       const notification = new Notification(title, {
         body,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
+        icon: '/pwa-192x192.png',
+        badge: '/pwa-192x192.png',
         tag: 'chat-message-' + Date.now(),
         requireInteraction: true,
-        silent: false, // Allow system sound
-        vibrate: [200, 100, 200], // Vibration pattern for mobile
-      } as NotificationOptions);
+      });
 
       notification.onclick = () => {
         window.focus();
@@ -64,25 +97,34 @@ export function useChatNotifications(
         onClick?.();
       };
 
-      // Auto-close after 15 seconds
-      setTimeout(() => notification.close(), 15000);
+      // Auto-close after 20 seconds
+      setTimeout(() => notification.close(), 20000);
     } catch (error) {
       console.warn('Could not show notification:', error);
     }
   }, []);
 
-  // Show in-app toast notification
+  // Show in-app toast notification with more visibility
   const showToastNotification = useCallback((senderName: string, message: string) => {
     toast({
       title: `💬 Nuevo mensaje de ${senderName}`,
       description: message.length > 80 ? `${message.substring(0, 80)}...` : message,
-      duration: 6000,
+      duration: 8000,
     });
   }, [toast]);
 
-  // Request permission on mount
+  // Request permission on mount and setup service worker
   useEffect(() => {
     requestPermission();
+    
+    // Listen for service worker notification clicks
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type === 'NOTIFICATION_CLICK') {
+          window.focus();
+        }
+      });
+    }
   }, [requestPermission]);
 
   // Fetch initial unread count
@@ -170,16 +212,16 @@ export function useChatNotifications(
 
             const senderName = sender?.full_name || 'Usuario';
 
-            // Show browser notification if tab is not focused
-            if (document.hidden) {
-              showBrowserNotification(
-                `💬 ${senderName}`,
-                newMessage.content
-              );
-            }
+            // Show browser notification - works even in background with service worker
+            showBrowserNotification(
+              `💬 ${senderName}`,
+              newMessage.content
+            );
 
-            // Always show toast notification if chat is not focused on this conversation
-            showToastNotification(senderName, newMessage.content);
+            // Also show toast notification if window is visible
+            if (!document.hidden) {
+              showToastNotification(senderName, newMessage.content);
+            }
           }
         )
         .subscribe();
