@@ -12,13 +12,14 @@ interface ProtectedRouteProps {
 
 // Helper to get the correct dashboard path based on user roles
 function getDashboardPath(roles: AppRole[]): string {
+  if (roles.length === 0) return '/pending-access';
   if (roles.includes('admin')) return '/';
   if (roles.includes('ambassador')) return '/';
   if (roles.includes('strategist')) return '/strategist-dashboard';
   if (roles.includes('creator')) return '/creator-dashboard';
   if (roles.includes('editor')) return '/editor-dashboard';
   if (roles.includes('client')) return '/client-dashboard';
-  return '/auth';
+  return '/pending-access';
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -73,6 +74,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Users without any roles need to request access
+  if (roles.length === 0) {
+    return <Navigate to="/pending-access" replace />;
   }
 
   // Client users without an associated company cannot access the app
