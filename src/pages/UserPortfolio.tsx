@@ -35,6 +35,7 @@ import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 interface UserProfile {
   id: string;
   full_name: string;
+  username: string | null;
   avatar_url: string | null;
   bio: string | null;
   is_public: boolean;
@@ -138,13 +139,14 @@ export default function UserPortfolio() {
       // First, try to find as a user profile
       const { data: userData } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, bio, is_public, is_ambassador')
+        .select('id, full_name, username, avatar_url, bio, is_public, is_ambassador')
         .eq('id', id)
         .maybeSingle();
 
       if (userData) {
         setProfile({
           ...userData,
+          username: userData.username ?? null,
           is_public: userData.is_public ?? true,
           is_ambassador: userData.is_ambassador ?? false
         });
@@ -401,10 +403,11 @@ export default function UserPortfolio() {
     return null;
   };
 
-  // Unified content: work + video posts
-  const allVideos = useMemo(() => {
+  // Unified content: work + video posts + image posts - ALL MIXED
+  const allContent = useMemo(() => {
     const isCreatorRole = userRoles.includes('creator');
     
+    // Videos from content table
     const workVideos = content.map(item => ({
       id: item.id,
       title: item.caption?.replace('[PINNED]', '').trim() || item.title,
@@ -415,11 +418,14 @@ export default function UserPortfolio() {
       isLiked: item.is_liked,
       createdAt: item.created_at,
       type: 'work' as const,
+      mediaType: 'video' as const,
+      mediaUrl: null as string | null,
       isPinned: item.is_pinned || false,
       status: item.status,
       isCreatorOwner: isOwner && profileType === 'user' && isCreatorRole,
     }));
     
+    // Video posts from portfolio_posts
     const postVideos = posts.filter(p => p.media_type === 'video').map(item => ({
       id: item.id,
       title: item.caption || '',
@@ -430,13 +436,33 @@ export default function UserPortfolio() {
       isLiked: false,
       createdAt: item.created_at,
       type: 'post' as const,
+      mediaType: 'video' as const,
+      mediaUrl: item.media_url,
       isPinned: item.is_pinned || false,
       status: undefined,
       isCreatorOwner: false,
     }));
     
-    // Combine, sort pinned first, then by date
-    const combined = [...workVideos, ...postVideos];
+    // Image posts from portfolio_posts
+    const imagePostItems = posts.filter(p => p.media_type === 'image').map(item => ({
+      id: item.id,
+      title: item.caption || '',
+      videoUrls: [] as string[],
+      thumbnailUrl: item.media_url,
+      viewsCount: item.views_count || 0,
+      likesCount: item.likes_count || 0,
+      isLiked: false,
+      createdAt: item.created_at,
+      type: 'post' as const,
+      mediaType: 'image' as const,
+      mediaUrl: item.media_url,
+      isPinned: item.is_pinned || false,
+      status: undefined,
+      isCreatorOwner: false,
+    }));
+    
+    // Combine all content, sort pinned first, then by date
+    const combined = [...workVideos, ...postVideos, ...imagePostItems];
     
     return combined.sort((a, b) => {
       // Pinned items first
@@ -447,16 +473,10 @@ export default function UserPortfolio() {
     });
   }, [content, posts, isOwner, profileType, userRoles]);
 
-  const imagePosts = useMemo(() => {
-    return posts
-      .filter(p => p.media_type === 'image')
-      .sort((a, b) => {
-        // Pinned first
-        if (a.is_pinned && !b.is_pinned) return -1;
-        if (!a.is_pinned && b.is_pinned) return 1;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-  }, [posts]);
+  // Keep allVideos for TikTok feed (only videos)
+  const allVideos = useMemo(() => {
+    return allContent.filter(item => item.mediaType === 'video');
+  }, [allContent]);
 
   // Check if current user is a client viewing their own content
   const isClientOwner = profileType === 'client' && isOwner;
@@ -671,10 +691,15 @@ export default function UserPortfolio() {
 
             {/* Info */}
             <div className="flex-1 text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-3 mb-3 flex-wrap">
+              <div className="flex flex-col items-center md:items-start gap-1 mb-3">
                 <h1 className="text-xl md:text-2xl font-bold text-white">
                   {displayName}
                 </h1>
+                {profile?.username && (
+                  <span className="text-sm text-white/60">@{profile.username}</span>
+                )}
+              </div>
+              <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap">
                 {(profile?.is_ambassador || userRoles.includes('ambassador')) && (
                   <AmbassadorBadge size="sm" variant="glow" />
                 )}
@@ -772,9 +797,9 @@ export default function UserPortfolio() {
           />
         </div>
 
-        {/* Unified Content Grid */}
+        {/* Unified Content Grid - Mixed Videos and Photos */}
         <div className="px-4 py-6">
-          {allVideos.length === 0 && imagePosts.length === 0 ? (
+          {allContent.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-white/40">
               <VideoIcon className="h-12 w-12 mb-3" />
               <p className="text-sm">Aún no hay contenido publicado</p>
@@ -791,102 +816,110 @@ export default function UserPortfolio() {
               )}
             </div>
           ) : isMobile ? (
-            // Mobile: prefer TikTok feed when there are videos, otherwise show image grid
-            allVideos.length > 0 ? (
-              <VideoPlayerProvider>
-                <TikTokFeed
-                  videos={allVideos}
-                  onLike={(contentId) => handleLike(contentId)}
-                  onView={(contentId) => handleView(contentId)}
-                  onShare={(item) => handleShare(content.find(c => c.id === item.id) || content[0])}
-                  onCreatorStatusChange={(contentId, newStatus) => handleCreatorStatusChange(contentId, newStatus)}
-                />
-              </VideoPlayerProvider>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {imagePosts.map((post) => (
-                  <button
-                    key={post.id}
-                    type="button"
-                    onClick={() => setSelectedPost(post)}
-                    className="relative aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900 border border-white/10"
-                  >
-                    <img
-                      src={post.media_url}
-                      alt={post.caption || 'Post de imagen'}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </button>
-                ))}
-              </div>
-            )
+            // Mobile: Show mixed grid of all content
+            <div className="grid grid-cols-2 gap-3">
+              {allContent.map((item) => {
+                if (item.mediaType === 'image' && item.mediaUrl) {
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setSelectedPost(posts.find(p => p.id === item.id) || null)}
+                      className="relative aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900 border border-white/10"
+                    >
+                      <img
+                        src={item.mediaUrl}
+                        alt={item.title || 'Post de imagen'}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </button>
+                  );
+                }
+                
+                // Video content
+                return (
+                  <BunnyVideoCard
+                    key={item.id}
+                    id={item.id}
+                    title={item.title}
+                    caption={item.title}
+                    videoUrls={item.videoUrls}
+                    thumbnailUrl={item.thumbnailUrl}
+                    viewsCount={item.viewsCount}
+                    likesCount={item.likesCount}
+                    isLiked={item.isLiked}
+                    isPinned={item.isPinned}
+                    isOwner={isOwner && profileType === 'user'}
+                    showActions={true}
+                    onLike={item.type === 'work' ? (e) => handleLike(item.id, e) : undefined}
+                    onView={item.type === 'work' ? () => handleView(item.id) : undefined}
+                    onShare={() => {
+                      const contentItem = content.find(c => c.id === item.id);
+                      if (contentItem) handleShare(contentItem);
+                    }}
+                    onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
+                  />
+                );
+              })}
+            </div>
           ) : (
-            // Desktop
+            // Desktop: Show mixed grid of all content
             <VideoPlayerProvider>
-              <div className="space-y-8">
-                {allVideos.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                    {allVideos.map((item) => {
-                      // Check if current user is the creator of this content
-                      const isCreatorOfContent = isOwner && profileType === 'user' && userRoles.includes('creator') && item.type === 'work';
-                      const canChangeStatus = isCreatorOfContent && (item.status === 'assigned' || item.status === 'recording');
-
-                      return (
-                        <BunnyVideoCard
-                          key={item.id}
-                          id={item.id}
-                          title={item.title}
-                          caption={item.title}
-                          videoUrls={item.videoUrls}
-                          thumbnailUrl={item.thumbnailUrl}
-                          viewsCount={item.viewsCount}
-                          likesCount={item.likesCount}
-                          isLiked={item.isLiked}
-                          isPinned={item.isPinned}
-                          isOwner={isOwner && profileType === 'user'}
-                          isCreatorOwner={isCreatorOfContent}
-                          status={item.status}
-                          showActions={true}
-                          onLike={item.type === 'work' ? (e) => handleLike(item.id, e) : undefined}
-                          onView={item.type === 'work' ? () => handleView(item.id) : undefined}
-                          onShare={() => {
-                            const contentItem = content.find(c => c.id === item.id);
-                            if (contentItem) handleShare(contentItem);
-                          }}
-                          onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
-                          onApprove={isClientOwner && item.status === 'delivered' ? () => handleApproveContent(item.id) : undefined}
-                          onCreatorStatusChange={canChangeStatus ? (newStatus) => handleCreatorStatusChange(item.id, newStatus) : undefined}
-                          onSettingsUpdate={() => fetchData()}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                {allContent.map((item) => {
+                  if (item.mediaType === 'image' && item.mediaUrl) {
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setSelectedPost(posts.find(p => p.id === item.id) || null)}
+                        className="group relative aspect-[9/16] rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 hover:border-white/20 transition-colors"
+                      >
+                        <img
+                          src={item.mediaUrl}
+                          alt={item.title || 'Post de imagen'}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
                         />
-                      );
-                    })}
-                  </div>
-                )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    );
+                  }
+                  
+                  // Video content
+                  const isCreatorOfContent = isOwner && profileType === 'user' && userRoles.includes('creator') && item.type === 'work';
+                  const canChangeStatus = isCreatorOfContent && (item.status === 'assigned' || item.status === 'recording');
 
-                {imagePosts.length > 0 && (
-                  <section aria-label="Posts de imagen" className="space-y-4">
-                    <h2 className="text-white/80 text-sm font-semibold">Fotos</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                      {imagePosts.map((post) => (
-                        <button
-                          key={post.id}
-                          type="button"
-                          onClick={() => setSelectedPost(post)}
-                          className="group relative aspect-[9/16] rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 hover:border-white/20 transition-colors"
-                        >
-                          <img
-                            src={post.media_url}
-                            alt={post.caption || 'Post de imagen'}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                )}
+                  return (
+                    <BunnyVideoCard
+                      key={item.id}
+                      id={item.id}
+                      title={item.title}
+                      caption={item.title}
+                      videoUrls={item.videoUrls}
+                      thumbnailUrl={item.thumbnailUrl}
+                      viewsCount={item.viewsCount}
+                      likesCount={item.likesCount}
+                      isLiked={item.isLiked}
+                      isPinned={item.isPinned}
+                      isOwner={isOwner && profileType === 'user'}
+                      isCreatorOwner={isCreatorOfContent}
+                      status={item.status}
+                      showActions={true}
+                      onLike={item.type === 'work' ? (e) => handleLike(item.id, e) : undefined}
+                      onView={item.type === 'work' ? () => handleView(item.id) : undefined}
+                      onShare={() => {
+                        const contentItem = content.find(c => c.id === item.id);
+                        if (contentItem) handleShare(contentItem);
+                      }}
+                      onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
+                      onApprove={isClientOwner && item.status === 'delivered' ? () => handleApproveContent(item.id) : undefined}
+                      onCreatorStatusChange={canChangeStatus ? (newStatus) => handleCreatorStatusChange(item.id, newStatus) : undefined}
+                      onSettingsUpdate={() => fetchData()}
+                    />
+                  );
+                })}
               </div>
             </VideoPlayerProvider>
           )}
