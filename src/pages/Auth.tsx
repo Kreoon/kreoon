@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Play, Heart, X, LogIn, UserPlus } from 'lucide-react';
+import { Loader2, Sparkles, Play, Heart, X, LogIn, UserPlus, Chrome } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { AppRole } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
@@ -245,6 +246,35 @@ export default function Auth() {
     }
 
     setLoading(false);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth`,
+        }
+      });
+      
+      if (error) {
+        toast({
+          title: 'Error con Google',
+          description: error.message,
+          variant: 'destructive'
+        });
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('[Auth] Google sign in error:', err);
+      toast({
+        title: 'Error',
+        description: 'No se pudo conectar con Google',
+        variant: 'destructive'
+      });
+      setLoading(false);
+    }
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -530,9 +560,27 @@ export default function Auth() {
                             </div>
                             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                           </div>
-                          <Button type="submit" className="w-full" disabled={loading}>
+                        <Button type="submit" className="w-full" disabled={loading}>
                             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                             Iniciar Sesión
+                          </Button>
+                          
+                          <div className="relative my-4">
+                            <Separator />
+                            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+                              o continúa con
+                            </span>
+                          </div>
+                          
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            className="w-full" 
+                            onClick={handleGoogleSignIn}
+                            disabled={loading}
+                          >
+                            <Chrome className="w-4 h-4 mr-2" />
+                            Google
                           </Button>
                         </form>
                       )}
@@ -571,6 +619,24 @@ export default function Auth() {
                         <Button type="submit" className="w-full" disabled={loading}>
                           {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                           Crear Cuenta
+                        </Button>
+                        
+                        <div className="relative my-4">
+                          <Separator />
+                          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+                            o continúa con
+                          </span>
+                        </div>
+                        
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          className="w-full" 
+                          onClick={handleGoogleSignIn}
+                          disabled={loading}
+                        >
+                          <Chrome className="w-4 h-4 mr-2" />
+                          Google
                         </Button>
                       </form>
                     </TabsContent>
@@ -899,6 +965,24 @@ export default function Auth() {
                             'Iniciar Sesión'
                           )}
                         </Button>
+                        
+                        <div className="relative my-4">
+                          <Separator />
+                          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+                            o continúa con
+                          </span>
+                        </div>
+                        
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          className="w-full" 
+                          onClick={handleGoogleSignIn}
+                          disabled={loading}
+                        >
+                          <Chrome className="w-4 h-4 mr-2" />
+                          Google
+                        </Button>
                       </form>
                     )}
                   </TabsContent>
@@ -976,6 +1060,24 @@ export default function Auth() {
                         ) : (
                           'Crear Cuenta'
                         )}
+                      </Button>
+                      
+                      <div className="relative my-4">
+                        <Separator />
+                        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+                          o continúa con
+                        </span>
+                      </div>
+                      
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={handleGoogleSignIn}
+                        disabled={loading}
+                      >
+                        <Chrome className="w-4 h-4 mr-2" />
+                        Google
                       </Button>
                     </form>
                   </TabsContent>
