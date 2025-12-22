@@ -221,6 +221,9 @@ export default function ClientDashboard() {
   const [packages, setPackages] = useState<ClientPackage[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
+  const [userClients, setUserClients] = useState<ClientInfo[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [showClientSelector, setShowClientSelector] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -241,18 +244,79 @@ export default function ClientDashboard() {
 
   useEffect(() => {
     if (user) {
-      fetchClientData();
+      fetchUserClients();
     }
   }, [user]);
 
-  const fetchClientData = async () => {
+  useEffect(() => {
+    if (selectedClientId) {
+      fetchClientData(selectedClientId);
+    }
+  }, [selectedClientId]);
+
+  const fetchUserClients = async () => {
     if (!user) return;
+    setLoading(true);
+
+    try {
+      // First try to get clients from the new client_users table
+      const { data: associations } = await supabase
+        .from('client_users')
+        .select('client_id')
+        .eq('user_id', user.id);
+
+      let clientIds = associations?.map(a => a.client_id) || [];
+
+      // Fallback to legacy user_id relationship if no associations
+      if (clientIds.length === 0) {
+        const { data: legacyClient } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (legacyClient) {
+          clientIds = [legacyClient.id];
+        }
+      }
+
+      if (clientIds.length > 0) {
+        const { data: clientsData } = await supabase
+          .from('clients')
+          .select('id, name, logo_url, contact_email, contact_phone, notes')
+          .in('id', clientIds);
+
+        setUserClients(clientsData || []);
+
+        // Auto-select if only one client
+        if (clientsData && clientsData.length === 1) {
+          setSelectedClientId(clientsData[0].id);
+          setClientInfo(clientsData[0]);
+        } else if (clientsData && clientsData.length > 1) {
+          // Show selector if multiple clients
+          setShowClientSelector(true);
+          setLoading(false);
+        } else {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error fetching user clients:', error);
+      setLoading(false);
+    }
+  };
+
+  const fetchClientData = async (clientId: string) => {
+    if (!user || !clientId) return;
+    setLoading(true);
 
     try {
       const { data: clientData } = await supabase
         .from('clients')
         .select('id, name, logo_url, contact_email, contact_phone, notes')
-        .eq('user_id', user.id)
+        .eq('id', clientId)
         .maybeSingle();
 
       if (clientData) {
@@ -389,7 +453,7 @@ export default function ClientDashboard() {
       toast({ title: 'Contenido aprobado', description: 'El contenido ha sido aprobado exitosamente' });
       setSelectedContent(null);
       setFeedback('');
-      fetchClientData();
+      if (selectedClientId) fetchClientData(selectedClientId);
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo aprobar el contenido', variant: 'destructive' });
     } finally {
@@ -419,7 +483,7 @@ export default function ClientDashboard() {
       toast({ title: 'Enviado a corrección', description: 'El editor realizará los cambios solicitados' });
       setSelectedContent(null);
       setFeedback('');
-      fetchClientData();
+      if (selectedClientId) fetchClientData(selectedClientId);
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo enviar a corrección', variant: 'destructive' });
     } finally {
@@ -457,7 +521,7 @@ export default function ClientDashboard() {
       comment: `Estado cambiado a: ${STATUS_LABELS[newStatus]}`
     });
     
-    fetchClientData();
+    if (selectedClientId) fetchClientData(selectedClientId);
   };
 
   const getContentByStatus = (statuses: ContentStatus[]) => content.filter(c => statuses.includes(c.status));
@@ -537,6 +601,38 @@ export default function ClientDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show client selector if multiple clients
+  if (userClients.length > 1 && !selectedClientId) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <Building2 className="w-16 h-16 text-primary mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Selecciona una empresa</h2>
+        <p className="text-muted-foreground text-center max-w-md mb-6">
+          Tienes acceso a múltiples empresas. Selecciona cuál deseas ver.
+        </p>
+        <div className="grid gap-3 w-full max-w-md">
+          {userClients.map(client => (
+            <Button
+              key={client.id}
+              variant="outline"
+              className="h-auto p-4 justify-start"
+              onClick={() => setSelectedClientId(client.id)}
+            >
+              {client.logo_url ? (
+                <img src={client.logo_url} alt={client.name} className="h-10 w-10 rounded-lg object-cover mr-3" />
+              ) : (
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mr-3">
+                  <Building2 className="h-5 w-5 text-primary" />
+                </div>
+              )}
+              <span className="font-medium">{client.name}</span>
+            </Button>
+          ))}
+        </div>
       </div>
     );
   }
