@@ -282,6 +282,7 @@ export type Database = {
           id: string
           instagram: string | null
           is_public: boolean | null
+          is_vip: boolean | null
           logo_url: string | null
           name: string
           notes: string | null
@@ -301,6 +302,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_public?: boolean | null
+          is_vip?: boolean | null
           logo_url?: string | null
           name: string
           notes?: string | null
@@ -320,6 +322,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_public?: boolean | null
+          is_vip?: boolean | null
           logo_url?: string | null
           name?: string
           notes?: string | null
@@ -330,6 +333,35 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      company_followers: {
+        Row: {
+          company_id: string
+          created_at: string
+          follower_id: string
+          id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          follower_id: string
+          id?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          follower_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_followers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content: {
         Row: {
@@ -1444,6 +1476,10 @@ export type Database = {
         Returns: string
       }
       get_best_available_editor: { Args: never; Returns: string }
+      get_company_followers_count: {
+        Args: { _company_id: string }
+        Returns: number
+      }
       get_exchange_rate: {
         Args: {
           _from: Database["public"]["Enums"]["currency_type"]
@@ -1483,6 +1519,7 @@ export type Database = {
         Returns: boolean
       }
       is_following: { Args: { _following_id: string }; Returns: boolean }
+      is_following_company: { Args: { _company_id: string }; Returns: boolean }
       log_activity: {
         Args: {
           _action: string
@@ -1494,6 +1531,7 @@ export type Database = {
         }
         Returns: string
       }
+      toggle_company_follow: { Args: { _company_id: string }; Returns: boolean }
       toggle_content_like: {
         Args: { content_uuid: string; viewer: string }
         Returns: boolean
