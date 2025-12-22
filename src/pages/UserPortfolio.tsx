@@ -186,6 +186,23 @@ export default function UserPortfolio() {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(paramId);
         
         if (isUuid) {
+          // First check if this UUID is a company (client)
+          const { data: clientData } = await supabase
+            .from('clients')
+            .select('id, username')
+            .eq('id', paramId)
+            .maybeSingle();
+          
+          if (clientData) {
+            // It's a company, redirect to company portfolio
+            const path = clientData.username 
+              ? `/empresa/@${clientData.username}` 
+              : `/empresa/${clientData.id}`;
+            navigate(path, { replace: true });
+            return;
+          }
+          
+          // Not a company, assume it's a user
           setResolvedUserId(paramId);
         } else {
           // It's a username, resolve it
@@ -205,6 +222,19 @@ export default function UserPortfolio() {
           if (data) {
             setResolvedUserId(data.id);
           } else {
+            // Maybe it's a company username?
+            const { data: clientData } = await supabase
+              .from('clients')
+              .select('id, username')
+              .eq('username', paramId)
+              .maybeSingle();
+            
+            if (clientData) {
+              // Redirect to company portfolio
+              navigate(`/empresa/@${clientData.username}`, { replace: true });
+              return;
+            }
+            
             setResolvedUserId(null);
             setLoading(false);
           }
@@ -217,7 +247,7 @@ export default function UserPortfolio() {
     };
     
     resolveUser();
-  }, [paramId]);
+  }, [paramId, navigate]);
 
   // Fetch data when we have a resolved user ID
   // Note: We don't wait for auth to be ready - portfolios should work for anonymous users too
