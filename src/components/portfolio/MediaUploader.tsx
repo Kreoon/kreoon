@@ -325,6 +325,10 @@ export function MediaUploader({
   };
 
   const handleSpotifySelect = (track: SpotifyTrack) => {
+    if (!track.previewUrl) {
+      toast.error('Esta canción no tiene preview disponible. Intenta con otra.');
+      return;
+    }
     setSpotifyTrack(track);
     setMusicFile(null);
     setMusicName('');

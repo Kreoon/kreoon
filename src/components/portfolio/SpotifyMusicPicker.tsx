@@ -157,7 +157,11 @@ export function SpotifyMusicPicker({
                 {tracks.map((track) => (
                   <div
                     key={track.id}
-                    className={`flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors ${
+                    className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                      !track.previewUrl 
+                        ? "opacity-50" 
+                        : "hover:bg-muted/50"
+                    } ${
                       selectedTrackId === track.id
                         ? "bg-primary/10 border border-primary/30"
                         : ""
@@ -182,6 +186,9 @@ export function SpotifyMusicPicker({
                       <p className="text-sm text-muted-foreground truncate">
                         {track.artist}
                       </p>
+                      {!track.previewUrl && (
+                        <p className="text-xs text-destructive">Sin preview</p>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
