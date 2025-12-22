@@ -77,6 +77,11 @@ interface Story {
   media_type: string;
   created_at: string;
   expires_at: string;
+  music_url?: string | null;
+  music_name?: string | null;
+  mute_video_audio?: boolean;
+  music_volume?: number;
+  video_volume?: number;
 }
 
 interface ClientInfo {

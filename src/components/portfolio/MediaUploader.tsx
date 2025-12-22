@@ -3,9 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Image, Video, X, Camera, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Image, Video, X, Camera, Upload, ChevronLeft, ChevronRight, Music, VolumeX, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 interface MediaUploaderProps {
   userId: string;
@@ -31,16 +34,26 @@ export function MediaUploader({
   const [showThumbnailSelector, setShowThumbnailSelector] = useState(false);
   const [videoTime, setVideoTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
+  
+  // Music settings for stories
+  const [musicFile, setMusicFile] = useState<File | null>(null);
+  const [musicName, setMusicName] = useState('');
+  const [muteVideoAudio, setMuteVideoAudio] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.5);
+  const [videoVolume, setVideoVolume] = useState(1);
+  const [showMusicSettings, setShowMusicSettings] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const musicInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const audioPreviewRef = useRef<HTMLAudioElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    // Validate file type
     const isImage = selectedFile.type.startsWith('image/');
     const isVideo = selectedFile.type.startsWith('video/');
     
@@ -49,7 +62,6 @@ export function MediaUploader({
       return;
     }
 
-    // Validate file size (max 50MB)
     if (selectedFile.size > 50 * 1024 * 1024) {
       toast.error('El archivo es muy grande (máx. 50MB)');
       return;
@@ -60,9 +72,31 @@ export function MediaUploader({
     setThumbnail(null);
     setCustomThumbnailFile(null);
     
-    // Auto-generate thumbnail for videos
     if (isVideo) {
       setShowThumbnailSelector(false);
+    }
+  };
+
+  const handleMusicSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    if (!selectedFile.type.startsWith('audio/')) {
+      toast.error('Solo se permiten archivos de audio');
+      return;
+    }
+
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      toast.error('El archivo de audio es muy grande (máx. 10MB)');
+      return;
+    }
+
+    setMusicFile(selectedFile);
+    setMusicName(selectedFile.name.replace(/\.[^/.]+$/, ''));
+    
+    // Preview audio
+    if (audioPreviewRef.current) {
+      audioPreviewRef.current.src = URL.createObjectURL(selectedFile);
     }
   };
 
@@ -83,7 +117,6 @@ export function MediaUploader({
   const handleVideoLoaded = useCallback(() => {
     if (videoRef.current) {
       setVideoDuration(videoRef.current.duration);
-      // Capture initial frame at 1 second or start
       const initialTime = Math.min(1, videoRef.current.duration);
       videoRef.current.currentTime = initialTime;
     }
@@ -136,13 +169,13 @@ export function MediaUploader({
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('portfolio')
         .getPublicUrl(fileName);
 
       const mediaUrl = urlData.publicUrl;
       let thumbnailUrl: string | null = null;
+      let musicUrl: string | null = null;
 
       // Upload thumbnail if it's a video and we have one
       if (isVideo && (thumbnail || customThumbnailFile)) {
@@ -151,11 +184,9 @@ export function MediaUploader({
         if (customThumbnailFile) {
           thumbnailBlob = customThumbnailFile;
         } else if (thumbnail && thumbnail.startsWith('data:')) {
-          // Convert base64 to blob
           const response = await fetch(thumbnail);
           thumbnailBlob = await response.blob();
         } else {
-          // Capture frame if no thumbnail exists
           captureFrame();
           if (thumbnail && thumbnail.startsWith('data:')) {
             const response = await fetch(thumbnail);
@@ -183,6 +214,23 @@ export function MediaUploader({
         }
       }
 
+      // Upload music file if it's a story and we have one
+      if (type === 'story' && musicFile) {
+        const musicExt = musicFile.name.split('.').pop();
+        const musicFileName = `${userId}/stories/music/${timestamp}.${musicExt}`;
+        
+        const { error: musicError } = await supabase.storage
+          .from('portfolio')
+          .upload(musicFileName, musicFile);
+
+        if (!musicError) {
+          const { data: musicUrlData } = supabase.storage
+            .from('portfolio')
+            .getPublicUrl(musicFileName);
+          musicUrl = musicUrlData.publicUrl;
+        }
+      }
+
       // Insert into database
       if (type === 'story') {
         const { error: dbError } = await supabase
@@ -191,6 +239,11 @@ export function MediaUploader({
             user_id: userId,
             media_url: mediaUrl,
             media_type: isVideo ? 'video' : 'image',
+            music_url: musicUrl,
+            music_name: musicFile ? musicName : null,
+            mute_video_audio: isVideo ? muteVideoAudio : false,
+            music_volume: musicFile ? musicVolume : 0.5,
+            video_volume: isVideo ? videoVolume : 1,
           });
 
         if (dbError) throw dbError;
@@ -228,7 +281,21 @@ export function MediaUploader({
     setShowThumbnailSelector(false);
     setVideoTime(0);
     setVideoDuration(0);
+    setMusicFile(null);
+    setMusicName('');
+    setMuteVideoAudio(false);
+    setMusicVolume(0.5);
+    setVideoVolume(1);
+    setShowMusicSettings(false);
     onClose();
+  };
+
+  const removeMusicFile = () => {
+    setMusicFile(null);
+    setMusicName('');
+    if (audioPreviewRef.current) {
+      audioPreviewRef.current.src = '';
+    }
   };
 
   const isVideo = file?.type.startsWith('video/');
@@ -286,7 +353,7 @@ export function MediaUploader({
                 </button>
               </div>
 
-              {/* Thumbnail selector for videos */}
+              {/* Thumbnail selector for videos (posts only) */}
               {isVideo && type === 'post' && (
                 <div className="bg-zinc-800 rounded-xl p-3 space-y-3">
                   <div className="flex items-center justify-between">
@@ -301,7 +368,6 @@ export function MediaUploader({
                     </Button>
                   </div>
 
-                  {/* Current thumbnail preview */}
                   {thumbnail && (
                     <div className="relative w-20 h-28 rounded-lg overflow-hidden bg-zinc-700">
                       <img 
@@ -317,7 +383,6 @@ export function MediaUploader({
 
                   {showThumbnailSelector && (
                     <div className="space-y-3">
-                      {/* Timeline slider */}
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Button
@@ -353,7 +418,6 @@ export function MediaUploader({
                         </div>
                       </div>
 
-                      {/* Actions */}
                       <div className="flex gap-2">
                         <Button
                           size="sm"
@@ -378,6 +442,131 @@ export function MediaUploader({
                   )}
                 </div>
               )}
+
+              {/* Music settings for stories */}
+              {type === 'story' && (
+                <div className="bg-zinc-800 rounded-xl p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Music className="h-4 w-4 text-primary" />
+                      <span className="text-white/70 text-sm font-medium">Música</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowMusicSettings(!showMusicSettings)}
+                      className="text-white/60 hover:text-white h-7 px-2"
+                    >
+                      {showMusicSettings ? 'Ocultar' : musicFile ? 'Editar' : 'Agregar'}
+                    </Button>
+                  </div>
+
+                  {musicFile && !showMusicSettings && (
+                    <div className="flex items-center gap-2 bg-zinc-700/50 rounded-lg px-3 py-2">
+                      <Music className="h-3 w-3 text-primary" />
+                      <span className="text-white/80 text-xs truncate flex-1">{musicName}</span>
+                      <button
+                        onClick={removeMusicFile}
+                        className="text-white/40 hover:text-white"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+
+                  {showMusicSettings && (
+                    <div className="space-y-4">
+                      {/* Music file selector */}
+                      {!musicFile ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => musicInputRef.current?.click()}
+                          className="w-full h-10 text-xs border-white/20 text-white hover:bg-white/10"
+                        >
+                          <Music className="h-4 w-4 mr-2" />
+                          Seleccionar archivo de audio
+                        </Button>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 bg-zinc-700/50 rounded-lg px-3 py-2">
+                            <Music className="h-3 w-3 text-primary" />
+                            <span className="text-white/80 text-xs truncate flex-1">{musicFile.name}</span>
+                            <button
+                              onClick={removeMusicFile}
+                              className="text-white/40 hover:text-white"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-white/60 text-xs">Nombre de la canción</Label>
+                            <Input
+                              value={musicName}
+                              onChange={(e) => setMusicName(e.target.value)}
+                              placeholder="Nombre de la música"
+                              className="bg-zinc-700 border-white/10 text-white h-8 text-xs"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Volume controls */}
+                      {(musicFile || isVideo) && (
+                        <div className="space-y-3 pt-2 border-t border-white/10">
+                          <p className="text-white/50 text-xs">Ajustar volúmenes</p>
+                          
+                          {isVideo && (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Volume2 className="h-3 w-3 text-white/60" />
+                                  <span className="text-white/70 text-xs">Audio del video</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={!muteVideoAudio}
+                                    onCheckedChange={(checked) => setMuteVideoAudio(!checked)}
+                                    className="scale-75"
+                                  />
+                                </div>
+                              </div>
+                              {!muteVideoAudio && (
+                                <Slider
+                                  value={[videoVolume * 100]}
+                                  min={0}
+                                  max={100}
+                                  step={1}
+                                  onValueChange={([value]) => setVideoVolume(value / 100)}
+                                  className="w-full"
+                                />
+                              )}
+                            </div>
+                          )}
+
+                          {musicFile && (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Music className="h-3 w-3 text-primary" />
+                                <span className="text-white/70 text-xs">Volumen de la música</span>
+                              </div>
+                              <Slider
+                                value={[musicVolume * 100]}
+                                min={0}
+                                max={100}
+                                step={1}
+                                onValueChange={([value]) => setMusicVolume(value / 100)}
+                                className="w-full"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -397,8 +586,17 @@ export function MediaUploader({
             className="hidden"
           />
 
-          {/* Hidden canvas for frame capture */}
+          <input
+            ref={musicInputRef}
+            type="file"
+            accept="audio/*"
+            onChange={handleMusicSelect}
+            className="hidden"
+          />
+
+          {/* Hidden elements */}
           <canvas ref={canvasRef} className="hidden" />
+          <audio ref={audioPreviewRef} className="hidden" />
 
           {type === 'post' && preview && (
             <Textarea
