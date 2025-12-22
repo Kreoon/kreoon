@@ -24,6 +24,7 @@ import { TikTokFeed } from '@/components/content/TikTokFeed';
 import { BunnyVideoCard } from '@/components/content/BunnyVideoCard';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { useAuth } from '@/hooks/useAuth';
+import { AppRole } from '@/types/database';
 import { toast } from 'sonner';
 import { ParsedText } from '@/components/ui/parsed-text';
 import { VipBadge } from '@/components/ui/vip-badge';
@@ -69,8 +70,9 @@ interface Product {
 export default function CompanyPortfolio() {
   const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const isMobile = useIsMobile();
+  const isAdmin = roles?.includes('admin' as AppRole);
   
   const [resolvedCompanyId, setResolvedCompanyId] = useState<string | null>(null);
   const [company, setCompany] = useState<CompanyProfile | null>(null);
@@ -412,7 +414,7 @@ export default function CompanyPortfolio() {
           
           {/* Action buttons */}
           <div className="flex gap-2 mt-3">
-            {!isAssociatedUser && user && (
+            {!isAssociatedUser && !isAdmin && user && (
               <CompanyFollowButton
                 companyId={company.id}
                 isFollowing={isFollowing}
@@ -423,7 +425,7 @@ export default function CompanyPortfolio() {
                 size="sm"
               />
             )}
-            {isAssociatedUser && (
+            {(isAssociatedUser || isAdmin) && (
               <Button
                 variant="outline"
                 size="sm"
