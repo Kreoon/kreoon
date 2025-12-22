@@ -1,4 +1,4 @@
-import { Calendar, User, GripVertical, DollarSign, CheckCircle, Video, FileVideo, Crown } from "lucide-react";
+import { Calendar, User, GripVertical, DollarSign, CheckCircle, Video, FileVideo, Crown, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Content, STATUS_LABELS, STATUS_COLORS } from "@/types/database";
 import { format } from "date-fns";
@@ -16,6 +16,7 @@ interface DraggableContentCardProps {
   onClick?: (content: Content) => void;
   isDragging?: boolean;
   onPaymentUpdate?: () => void;
+  onStatusChange?: (contentId: string, newStatus: 'recording' | 'recorded') => void;
 }
 
 export function DraggableContentCard({ 
@@ -23,9 +24,10 @@ export function DraggableContentCard({
   onDragStart,
   onClick,
   isDragging,
-  onPaymentUpdate
+  onPaymentUpdate,
+  onStatusChange
 }: DraggableContentCardProps) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isCreator, user } = useAuth();
   const { toast } = useToast();
 
   const statusInfo = {
@@ -116,8 +118,13 @@ export function DraggableContentCard({
   // Show pay buttons only for admin on approved content
   const showPayButtons = isAdmin && content.status === 'approved' && (!content.creator_paid || !content.editor_paid);
 
+  // Check if current user is the creator and can change status
+  const isCreatorOfContent = isCreator && content.creator_id === user?.id;
+  const canStartRecording = isCreatorOfContent && content.status === 'assigned';
+  const canMarkRecorded = isCreatorOfContent && content.status === 'recording';
+
   return (
-    <div 
+    <div
       draggable
       onDragStart={(e) => onDragStart(e, content)}
       onClick={() => onClick?.(content)}
@@ -242,6 +249,40 @@ export function DraggableContentCard({
                 >
                   <CheckCircle className="h-3 w-3 mr-1" />
                   Editor <CurrencyDisplay value={content.editor_payment} currency={((content as any).editor_payment_currency as CurrencyType) || 'COP'} size="sm" />
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Creator Status Change Buttons */}
+          {(canStartRecording || canMarkRecorded) && onStatusChange && (
+            <div className="flex gap-2 mt-3 pt-3 border-t border-border">
+              {canStartRecording && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(content.id, 'recording');
+                  }}
+                  className="h-7 px-2 text-xs border-blue-500/50 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400"
+                >
+                  <Circle className="h-3 w-3 mr-1 fill-current animate-pulse" />
+                  Iniciar Grabación
+                </Button>
+              )}
+              {canMarkRecorded && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(content.id, 'recorded');
+                  }}
+                  className="h-7 px-2 text-xs border-green-500/50 text-green-500 hover:bg-green-500/10 hover:text-green-400"
+                >
+                  <Video className="h-3 w-3 mr-1" />
+                  Marcar Grabado
                 </Button>
               )}
             </div>
