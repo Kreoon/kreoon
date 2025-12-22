@@ -273,40 +273,61 @@ export type Database = {
       }
       clients: {
         Row: {
+          bio: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string | null
           created_by: string | null
+          facebook: string | null
           id: string
+          instagram: string | null
+          is_public: boolean | null
           logo_url: string | null
           name: string
           notes: string | null
+          portfolio_url: string | null
+          tiktok: string | null
           updated_at: string | null
           user_id: string | null
+          username: string | null
         }
         Insert: {
+          bio?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string | null
           created_by?: string | null
+          facebook?: string | null
           id?: string
+          instagram?: string | null
+          is_public?: boolean | null
           logo_url?: string | null
           name: string
           notes?: string | null
+          portfolio_url?: string | null
+          tiktok?: string | null
           updated_at?: string | null
           user_id?: string | null
+          username?: string | null
         }
         Update: {
+          bio?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string | null
           created_by?: string | null
+          facebook?: string | null
           id?: string
+          instagram?: string | null
+          is_public?: boolean | null
           logo_url?: string | null
           name?: string
           notes?: string | null
+          portfolio_url?: string | null
+          tiktok?: string | null
           updated_at?: string | null
           user_id?: string | null
+          username?: string | null
         }
         Relationships: []
       }
