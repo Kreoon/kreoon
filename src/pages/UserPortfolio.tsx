@@ -163,7 +163,7 @@ export default function UserPortfolio() {
         // If viewing own profile, show all content; otherwise only published
         let creatorContentQuery = supabase
           .from('content')
-          .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
+          .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id, status')
           .eq('creator_id', id)
           .or('video_url.not.is.null,video_urls.not.is.null')
           .order('created_at', { ascending: false });
@@ -186,7 +186,7 @@ export default function UserPortfolio() {
         if (collabContentIds.length > 0) {
           let collabQuery = supabase
             .from('content')
-            .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
+            .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id, status')
             .in('id', collabContentIds)
             .or('video_url.not.is.null,video_urls.not.is.null')
             .order('created_at', { ascending: false });
@@ -403,6 +403,8 @@ export default function UserPortfolio() {
 
   // Unified content: work + video posts
   const allVideos = useMemo(() => {
+    const isCreatorRole = userRoles.includes('creator');
+    
     const workVideos = content.map(item => ({
       id: item.id,
       title: item.caption?.replace('[PINNED]', '').trim() || item.title,
@@ -415,6 +417,7 @@ export default function UserPortfolio() {
       type: 'work' as const,
       isPinned: item.is_pinned || false,
       status: item.status,
+      isCreatorOwner: isOwner && profileType === 'user' && isCreatorRole,
     }));
     
     const postVideos = posts.filter(p => p.media_type === 'video').map(item => ({
@@ -429,6 +432,7 @@ export default function UserPortfolio() {
       type: 'post' as const,
       isPinned: item.is_pinned || false,
       status: undefined,
+      isCreatorOwner: false,
     }));
     
     // Combine, sort pinned first, then by date
@@ -441,7 +445,7 @@ export default function UserPortfolio() {
       // Then by date
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [content, posts]);
+  }, [content, posts, isOwner, profileType, userRoles]);
 
   // Check if current user is a client viewing their own content
   const isClientOwner = profileType === 'client' && isOwner;
@@ -468,6 +472,38 @@ export default function UserPortfolio() {
     } catch (error) {
       console.error('Error approving content:', error);
       toast.error('Error al aprobar contenido');
+    }
+  };
+
+  // Handle creator status change (assigned -> recording -> recorded)
+  const handleCreatorStatusChange = async (contentId: string, newStatus: 'recording' | 'recorded') => {
+    try {
+      const updateData: any = { status: newStatus };
+      
+      if (newStatus === 'recorded') {
+        updateData.recorded_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('content')
+        .update(updateData)
+        .eq('id', contentId);
+
+      if (error) throw error;
+
+      // Update local state
+      setContent(prev => prev.map(item =>
+        item.id === contentId ? { ...item, status: newStatus } : item
+      ));
+      
+      const statusLabels: Record<string, string> = {
+        'recording': 'En Grabación',
+        'recorded': 'Grabado'
+      };
+      toast.success(`Estado cambiado a: ${statusLabels[newStatus]}`);
+    } catch (error) {
+      console.error('Error updating content status:', error);
+      toast.error('Error al actualizar el estado');
     }
   };
 
@@ -751,38 +787,47 @@ export default function UserPortfolio() {
                 onLike={(contentId) => handleLike(contentId)}
                 onView={(contentId) => handleView(contentId)}
                 onShare={(item) => handleShare(content.find(c => c.id === item.id) || content[0])}
+                onCreatorStatusChange={(contentId, newStatus) => handleCreatorStatusChange(contentId, newStatus)}
               />
             </VideoPlayerProvider>
           ) : (
             // Desktop: Grid with BunnyVideoCard
             <VideoPlayerProvider>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                {allVideos.map((item) => (
-                  <BunnyVideoCard
-                    key={item.id}
-                    id={item.id}
-                    title={item.title}
-                    caption={item.title}
-                    videoUrls={item.videoUrls}
-                    thumbnailUrl={item.thumbnailUrl}
-                    viewsCount={item.viewsCount}
-                    likesCount={item.likesCount}
-                    isLiked={item.isLiked}
-                    isPinned={item.isPinned}
-                    isOwner={isOwner && profileType === 'user'}
-                    status={item.status}
-                    showActions={true}
-                    onLike={(e) => handleLike(item.id, e)}
-                    onView={() => handleView(item.id)}
-                    onShare={() => {
-                      const contentItem = content.find(c => c.id === item.id);
-                      if (contentItem) handleShare(contentItem);
-                    }}
-                    onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
-                    onApprove={isClientOwner && item.status === 'delivered' ? () => handleApproveContent(item.id) : undefined}
-                    onSettingsUpdate={() => fetchData()}
-                  />
-                ))}
+                {allVideos.map((item) => {
+                  // Check if current user is the creator of this content
+                  const isCreatorOfContent = isOwner && profileType === 'user' && userRoles.includes('creator') && item.type === 'work';
+                  const canChangeStatus = isCreatorOfContent && (item.status === 'assigned' || item.status === 'recording');
+                  
+                  return (
+                    <BunnyVideoCard
+                      key={item.id}
+                      id={item.id}
+                      title={item.title}
+                      caption={item.title}
+                      videoUrls={item.videoUrls}
+                      thumbnailUrl={item.thumbnailUrl}
+                      viewsCount={item.viewsCount}
+                      likesCount={item.likesCount}
+                      isLiked={item.isLiked}
+                      isPinned={item.isPinned}
+                      isOwner={isOwner && profileType === 'user'}
+                      isCreatorOwner={isCreatorOfContent}
+                      status={item.status}
+                      showActions={true}
+                      onLike={(e) => handleLike(item.id, e)}
+                      onView={() => handleView(item.id)}
+                      onShare={() => {
+                        const contentItem = content.find(c => c.id === item.id);
+                        if (contentItem) handleShare(contentItem);
+                      }}
+                      onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
+                      onApprove={isClientOwner && item.status === 'delivered' ? () => handleApproveContent(item.id) : undefined}
+                      onCreatorStatusChange={canChangeStatus ? (newStatus) => handleCreatorStatusChange(item.id, newStatus) : undefined}
+                      onSettingsUpdate={() => fetchData()}
+                    />
+                  );
+                })}
               </div>
             </VideoPlayerProvider>
           )}
