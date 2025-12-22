@@ -896,7 +896,7 @@ export default function Dashboard() {
             goalValue={currentGoal?.content_goal}
             goalLabel="Meta del mes"
           />
-          {/* Ingresos Totales with Currency Tabs */}
+          {/* Ingresos Totales - Both Currencies */}
           <div 
             className={cn(
               "group relative overflow-hidden rounded-3xl border border-border/50 p-8",
@@ -914,51 +914,50 @@ export default function Dashboard() {
                 <p className="text-lg font-medium text-muted-foreground">Ingresos Totales</p>
               </div>
               
-              <Tabs defaultValue="cop" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="cop" className="gap-2">
-                    🇨🇴 COP
-                  </TabsTrigger>
-                  <TabsTrigger value="usd" className="gap-2">
-                    🇺🇸 USD
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="cop" className="space-y-2">
-                  <p 
-                    className="text-5xl font-bold tracking-tight text-foreground cursor-pointer hover:text-primary transition-colors"
-                    onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
-                  >
-                    <CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="lg" />
+              <div className="grid grid-cols-2 gap-4">
+                {/* COP */}
+                <div 
+                  className="p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 cursor-pointer hover:bg-yellow-500/20 transition-colors"
+                  onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span>🇨🇴</span>
+                    <span className="text-xs font-medium text-muted-foreground">COP</span>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">
+                    <CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" />
                   </p>
-                  <p className="text-sm text-muted-foreground">Facturación total en pesos colombianos</p>
-                  {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
-                    <div className="mt-4 space-y-1 max-w-xs">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Meta: <CurrencyDisplay value={currentGoal.revenue_goal} currency="COP" size="sm" /></span>
-                        <span className={cn(
-                          "font-medium",
-                          (clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100 >= 100 ? "text-success" : 
-                          (clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100 >= 75 ? "text-warning" : "text-muted-foreground"
-                        )}>
-                          {Math.round((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100)}%
-                        </span>
-                      </div>
-                      <Progress value={Math.min((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100, 100)} className="h-2" />
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="usd" className="space-y-2">
-                  <p 
-                    className="text-5xl font-bold tracking-tight text-foreground cursor-pointer hover:text-primary transition-colors"
-                    onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
-                  >
-                    <CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="lg" />
+                </div>
+                {/* USD */}
+                <div 
+                  className="p-4 rounded-2xl bg-green-500/10 border border-green-500/20 cursor-pointer hover:bg-green-500/20 transition-colors"
+                  onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span>🇺🇸</span>
+                    <span className="text-xs font-medium text-muted-foreground">USD</span>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">
+                    <CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" />
                   </p>
-                  <p className="text-sm text-muted-foreground">Facturación total en dólares</p>
-                </TabsContent>
-              </Tabs>
+                </div>
+              </div>
+
+              {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
+                <div className="mt-4 space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Meta COP: <CurrencyDisplay value={currentGoal.revenue_goal} currency="COP" size="sm" /></span>
+                    <span className={cn(
+                      "font-medium",
+                      (clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100 >= 100 ? "text-success" : 
+                      (clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100 >= 75 ? "text-warning" : "text-muted-foreground"
+                    )}>
+                      {Math.round((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100)}%
+                    </span>
+                  </div>
+                  <Progress value={Math.min((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100, 100)} className="h-2" />
+                </div>
+              )}
             </div>
           </div>
           <LargeKpiCard
@@ -1021,7 +1020,7 @@ export default function Dashboard() {
 
         {/* Payment Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Quick Payments Panel */}
+          {/* Quick Payments Panel - Both Currencies */}
           <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -1031,83 +1030,84 @@ export default function Dashboard() {
               <Banknote className="h-8 w-8 text-warning" />
             </div>
 
-            <Tabs defaultValue="cop" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="cop" className="gap-2">
-                  🇨🇴 COP
-                </TabsTrigger>
-                <TabsTrigger value="usd" className="gap-2">
-                  🇺🇸 USD
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="cop" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
+              {/* COP Section */}
+              <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <span>🇨🇴</span>
+                  <span className="text-sm font-semibold text-muted-foreground">COP</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
                   <div 
-                    className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
+                    className="p-3 rounded-xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
                     onClick={() => openKpiDialog('Por Pagar a Creadores (COP)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
                   >
-                    <p className="text-sm text-muted-foreground mb-1">Creadores</p>
-                    <p className="text-2xl font-bold text-warning">
-                      <CurrencyDisplay value={pendingCreatorPaymentCOP} currency="COP" />
+                    <p className="text-xs text-muted-foreground mb-1">Creadores</p>
+                    <p className="text-lg font-bold text-warning">
+                      <CurrencyDisplay value={pendingCreatorPaymentCOP} currency="COP" size="sm" />
                     </p>
                   </div>
                   <div 
-                    className="p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
+                    className="p-3 rounded-xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
                     onClick={() => openKpiDialog('Por Pagar a Editores (COP)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
                   >
-                    <p className="text-sm text-muted-foreground mb-1">Editores</p>
-                    <p className="text-2xl font-bold text-info">
-                      <CurrencyDisplay value={pendingEditorPaymentCOP} currency="COP" />
+                    <p className="text-xs text-muted-foreground mb-1">Editores</p>
+                    <p className="text-lg font-bold text-info">
+                      <CurrencyDisplay value={pendingEditorPaymentCOP} currency="COP" size="sm" />
+                    </p>
+                  </div>
+                  <div 
+                    className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
+                    onClick={() => openKpiDialog('Total Por Pagar (COP)', [...unpaidCreatorContent, ...unpaidEditorContent].filter(c => (c as any).creator_payment_currency !== 'USD'))}
+                  >
+                    <p className="text-xs text-muted-foreground mb-1">Total</p>
+                    <p className="text-lg font-bold text-destructive">
+                      <CurrencyDisplay value={pendingCreatorPaymentCOP + pendingEditorPaymentCOP} currency="COP" size="sm" />
                     </p>
                   </div>
                 </div>
-                <div 
-                  className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
-                  onClick={() => openKpiDialog('Total Por Pagar Equipo (COP)', [...unpaidCreatorContent, ...unpaidEditorContent].filter(c => (c as any).creator_payment_currency !== 'USD' && (c as any).editor_payment_currency !== 'USD'))}
-                >
-                  <p className="text-sm text-muted-foreground mb-1">Total por pagar</p>
-                  <p className="text-2xl font-bold text-destructive">
-                    <CurrencyDisplay value={pendingCreatorPaymentCOP + pendingEditorPaymentCOP} currency="COP" />
-                  </p>
-                </div>
-              </TabsContent>
+              </div>
 
-              <TabsContent value="usd" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              {/* USD Section */}
+              <div className="p-3 rounded-xl bg-green-500/5 border border-green-500/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <span>🇺🇸</span>
+                  <span className="text-sm font-semibold text-muted-foreground">USD</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
                   <div 
-                    className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
+                    className="p-3 rounded-xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
                     onClick={() => openKpiDialog('Por Pagar a Creadores (USD)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
                   >
-                    <p className="text-sm text-muted-foreground mb-1">Creadores</p>
-                    <p className="text-2xl font-bold text-warning">
-                      <CurrencyDisplay value={pendingCreatorPaymentUSD} currency="USD" />
+                    <p className="text-xs text-muted-foreground mb-1">Creadores</p>
+                    <p className="text-lg font-bold text-warning">
+                      <CurrencyDisplay value={pendingCreatorPaymentUSD} currency="USD" size="sm" />
                     </p>
                   </div>
                   <div 
-                    className="p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
+                    className="p-3 rounded-xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
                     onClick={() => openKpiDialog('Por Pagar a Editores (USD)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
                   >
-                    <p className="text-sm text-muted-foreground mb-1">Editores</p>
-                    <p className="text-2xl font-bold text-info">
-                      <CurrencyDisplay value={pendingEditorPaymentUSD} currency="USD" />
+                    <p className="text-xs text-muted-foreground mb-1">Editores</p>
+                    <p className="text-lg font-bold text-info">
+                      <CurrencyDisplay value={pendingEditorPaymentUSD} currency="USD" size="sm" />
+                    </p>
+                  </div>
+                  <div 
+                    className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
+                    onClick={() => openKpiDialog('Total Por Pagar (USD)', [...unpaidCreatorContent, ...unpaidEditorContent].filter(c => (c as any).creator_payment_currency === 'USD'))}
+                  >
+                    <p className="text-xs text-muted-foreground mb-1">Total</p>
+                    <p className="text-lg font-bold text-destructive">
+                      <CurrencyDisplay value={pendingCreatorPaymentUSD + pendingEditorPaymentUSD} currency="USD" size="sm" />
                     </p>
                   </div>
                 </div>
-                <div 
-                  className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
-                  onClick={() => openKpiDialog('Total Por Pagar Equipo (USD)', [...unpaidCreatorContent, ...unpaidEditorContent].filter(c => (c as any).creator_payment_currency === 'USD' || (c as any).editor_payment_currency === 'USD'))}
-                >
-                  <p className="text-sm text-muted-foreground mb-1">Total por pagar</p>
-                  <p className="text-2xl font-bold text-destructive">
-                    <CurrencyDisplay value={pendingCreatorPaymentUSD + pendingEditorPaymentUSD} currency="USD" />
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           </div>
 
-          {/* Financial Overview - Client Billing */}
+          {/* Financial Overview - Client Billing - Both Currencies */}
           <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -1117,92 +1117,89 @@ export default function Dashboard() {
               <BarChart3 className="h-8 w-8 text-primary" />
             </div>
 
-            {/* Currency Tabs */}
-            <Tabs defaultValue="cop" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="cop" className="gap-2">
-                  🇨🇴 COP
-                </TabsTrigger>
-                <TabsTrigger value="usd" className="gap-2">
-                  🇺🇸 USD
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="cop" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
+              {/* COP Section */}
+              <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <span>🇨🇴</span>
+                  <span className="text-sm font-semibold text-muted-foreground">COP</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
                   <div 
-                    className="p-4 rounded-2xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
+                    className="p-3 rounded-xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
                     onClick={() => openListDialog('Total Ventas COP', 'packages-sold', { packages: packages.filter(p => (p as any).currency !== 'USD') })}
                   >
-                    <p className="text-sm text-muted-foreground mb-1">Total Ventas</p>
-                    <p className="text-xl font-bold text-primary">
-                      <CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" />
+                    <p className="text-xs text-muted-foreground mb-1">Ventas</p>
+                    <p className="text-lg font-bold text-primary">
+                      <CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" />
                     </p>
                   </div>
                   <div 
-                    className="p-4 rounded-2xl bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
+                    className="p-3 rounded-xl bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
                     onClick={() => openListDialog('Recaudado COP', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency !== 'USD') })}
                   >
-                    <p className="text-sm text-muted-foreground mb-1">Recaudado</p>
-                    <p className="text-xl font-bold text-success">
-                      <CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" />
+                    <p className="text-xs text-muted-foreground mb-1">Recaudado</p>
+                    <p className="text-lg font-bold text-success">
+                      <CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" />
                     </p>
                   </div>
                   <div 
-                    className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors col-span-2"
+                    className="p-3 rounded-xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
                     onClick={() => openListDialog('Por Cobrar COP', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency !== 'USD') })}
                   >
-                    <p className="text-sm text-muted-foreground mb-1">Por Cobrar</p>
-                    <p className="text-2xl font-bold text-warning">
-                      <CurrencyDisplay value={clientsBilling.totalPendingCOP} currency="COP" />
+                    <p className="text-xs text-muted-foreground mb-1">Por Cobrar</p>
+                    <p className="text-lg font-bold text-warning">
+                      <CurrencyDisplay value={clientsBilling.totalPendingCOP} currency="COP" size="sm" />
                     </p>
                   </div>
                 </div>
-              </TabsContent>
+              </div>
 
-              <TabsContent value="usd" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              {/* USD Section */}
+              <div className="p-3 rounded-xl bg-green-500/5 border border-green-500/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <span>🇺🇸</span>
+                  <span className="text-sm font-semibold text-muted-foreground">USD</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
                   <div 
-                    className="p-4 rounded-2xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
+                    className="p-3 rounded-xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
                     onClick={() => openListDialog('Total Ventas USD', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
                   >
-                    <p className="text-sm text-muted-foreground mb-1">Total Ventas</p>
-                    <p className="text-xl font-bold text-primary">
-                      <CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" />
+                    <p className="text-xs text-muted-foreground mb-1">Ventas</p>
+                    <p className="text-lg font-bold text-primary">
+                      <CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" />
                     </p>
                   </div>
                   <div 
-                    className="p-4 rounded-2xl bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
+                    className="p-3 rounded-xl bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
                     onClick={() => openListDialog('Recaudado USD', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency === 'USD') })}
                   >
-                    <p className="text-sm text-muted-foreground mb-1">Recaudado</p>
-                    <p className="text-xl font-bold text-success">
-                      <CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" />
+                    <p className="text-xs text-muted-foreground mb-1">Recaudado</p>
+                    <p className="text-lg font-bold text-success">
+                      <CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" />
                     </p>
                   </div>
                   <div 
-                    className="p-4 rounded-2xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors col-span-2"
+                    className="p-3 rounded-xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
                     onClick={() => openListDialog('Por Cobrar USD', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency === 'USD') })}
                   >
-                    <p className="text-sm text-muted-foreground mb-1">Por Cobrar</p>
-                    <p className="text-2xl font-bold text-warning">
-                      <CurrencyDisplay value={clientsBilling.totalPendingUSD} currency="USD" />
+                    <p className="text-xs text-muted-foreground mb-1">Por Cobrar</p>
+                    <p className="text-lg font-bold text-warning">
+                      <CurrencyDisplay value={clientsBilling.totalPendingUSD} currency="USD" size="sm" />
                     </p>
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
+              </div>
 
-            {/* Videos owed - same for both */}
-            <div 
-              className="mt-4 p-4 rounded-2xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
-              onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
-            >
-              <p className="text-sm text-muted-foreground mb-1">Videos Adeudados</p>
-              <p className="text-2xl font-bold text-info">
-                {clientsBilling.contentOwed}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">por entregar</p>
+              {/* Videos owed */}
+              <div 
+                className="p-3 rounded-xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
+                onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
+              >
+                <p className="text-xs text-muted-foreground mb-1">Videos Adeudados</p>
+                <p className="text-lg font-bold text-info">{clientsBilling.contentOwed} por entregar</p>
+              </div>
             </div>
           </div>
         </div>
