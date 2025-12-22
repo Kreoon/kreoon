@@ -131,42 +131,72 @@ export default function UserPortfolio() {
   // Resolve username or UUID to user id
   useEffect(() => {
     const resolveUser = async () => {
-      if (!paramId) return;
+      if (!paramId) {
+        setLoading(false);
+        return;
+      }
       
-      // Check if it's a UUID format
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(paramId);
-      
-      if (isUuid) {
-        setResolvedUserId(paramId);
-      } else {
-        // It's a username, resolve it
-        const { data } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', paramId)
-          .maybeSingle();
+      try {
+        // Check if it's a UUID format
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(paramId);
         
-        if (data) {
-          setResolvedUserId(data.id);
+        if (isUuid) {
+          setResolvedUserId(paramId);
         } else {
-          setResolvedUserId(null);
-          setLoading(false);
+          // It's a username, resolve it
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('username', paramId)
+            .maybeSingle();
+          
+          if (error) {
+            console.error('Error resolving username:', error);
+            setResolvedUserId(null);
+            setLoading(false);
+            return;
+          }
+          
+          if (data) {
+            setResolvedUserId(data.id);
+          } else {
+            setResolvedUserId(null);
+            setLoading(false);
+          }
         }
+      } catch (error) {
+        console.error('Error in resolveUser:', error);
+        setResolvedUserId(null);
+        setLoading(false);
       }
     };
     
     resolveUser();
   }, [paramId]);
 
+  // Fetch data when we have a resolved user ID
+  // Note: We don't wait for auth to be ready - portfolios should work for anonymous users too
   useEffect(() => {
     if (resolvedUserId) {
       fetchData();
     }
-  }, [resolvedUserId, user?.id]);
+  }, [resolvedUserId]);
+  
+  // Refetch when auth state changes (to show/hide owner controls)
+  useEffect(() => {
+    if (resolvedUserId && user !== undefined) {
+      fetchData();
+    }
+  }, [user?.id]);
 
   const fetchData = async () => {
     const id = resolvedUserId;
-    if (!id) return;
+    if (!id) {
+      console.log('[Portfolio] No resolved user ID, skipping fetch');
+      return;
+    }
+    
+    console.log('[Portfolio] Fetching data for user:', id);
     setLoading(true);
 
     // Check if current user is viewing their own profile
@@ -335,8 +365,9 @@ export default function UserPortfolio() {
         }
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('[Portfolio] Error fetching data:', error);
     } finally {
+      console.log('[Portfolio] Fetch complete, setting loading to false');
       setLoading(false);
     }
   };
