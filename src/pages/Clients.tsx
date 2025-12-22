@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle } from "lucide-react";
+import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
+import { ClientUsersDialog } from "@/components/clients/ClientUsersDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Client {
   id: string;
@@ -43,6 +51,7 @@ interface Client {
   content_count: number;
   active_projects: number;
   user_id: string | null;
+  users_count: number;
 }
 
 interface ClientUser {
@@ -53,7 +62,7 @@ interface ClientUser {
   phone: string | null;
   city: string | null;
   created_at: string;
-  linked_client: Client | null;
+  linked_clients: Array<{ id: string; name: string; role: string }>;
 }
 
 const Clients = () => {
@@ -74,6 +83,8 @@ const Clients = () => {
     notes: ""
   });
   const [submitting, setSubmitting] = useState(false);
+  const [clientUsersDialogOpen, setClientUsersDialogOpen] = useState(false);
+  const [selectedClientForUsers, setSelectedClientForUsers] = useState<Client | null>(null);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -83,6 +94,11 @@ const Clients = () => {
         .from('clients')
         .select('*')
         .order('name');
+
+      // Fetch all client_users associations
+      const { data: clientUsersAssociations } = await supabase
+        .from('client_users')
+        .select('client_id, user_id, role');
 
       // Fetch users with client role
       const { data: clientRoles } = await supabase
@@ -102,28 +118,25 @@ const Clients = () => {
           .order('full_name');
 
         if (profilesData) {
-          // Map profiles to client users
-          clientUsersList = profilesData.map(p => ({
-            id: p.id,
-            full_name: p.full_name,
-            email: p.email,
-            avatar_url: p.avatar_url,
-            phone: p.phone,
-            city: p.city,
-            created_at: p.created_at || '',
-            linked_client: clientsData?.find(c => c.user_id === p.id) ? {
-              id: clientsData.find(c => c.user_id === p.id)!.id,
-              name: clientsData.find(c => c.user_id === p.id)!.name,
-              logo_url: clientsData.find(c => c.user_id === p.id)!.logo_url,
-              contact_email: clientsData.find(c => c.user_id === p.id)!.contact_email,
-              contact_phone: clientsData.find(c => c.user_id === p.id)!.contact_phone,
-              notes: clientsData.find(c => c.user_id === p.id)!.notes,
-              created_at: clientsData.find(c => c.user_id === p.id)!.created_at || '',
-              content_count: 0,
-              active_projects: 0,
-              user_id: p.id
-            } : null
-          }));
+          // Map profiles to client users with their linked clients
+          clientUsersList = profilesData.map(p => {
+            const userAssociations = clientUsersAssociations?.filter(a => a.user_id === p.id) || [];
+            const linkedClients = userAssociations.map(a => {
+              const client = clientsData?.find(c => c.id === a.client_id);
+              return client ? { id: client.id, name: client.name, role: a.role || 'viewer' } : null;
+            }).filter(Boolean) as Array<{ id: string; name: string; role: string }>;
+
+            return {
+              id: p.id,
+              full_name: p.full_name,
+              email: p.email,
+              avatar_url: p.avatar_url,
+              phone: p.phone,
+              city: p.city,
+              created_at: p.created_at || '',
+              linked_clients: linkedClients
+            };
+          });
         }
       }
 
@@ -152,6 +165,13 @@ const Clients = () => {
         }
       });
 
+      // Count users per client
+      const usersCountMap = new Map<string, number>();
+      clientUsersAssociations?.forEach(a => {
+        const count = usersCountMap.get(a.client_id) || 0;
+        usersCountMap.set(a.client_id, count + 1);
+      });
+
       const clientsList: Client[] = clientsData.map(c => ({
         id: c.id,
         name: c.name,
@@ -162,7 +182,8 @@ const Clients = () => {
         created_at: c.created_at || '',
         content_count: countMap.get(c.id)?.total || 0,
         active_projects: countMap.get(c.id)?.active || 0,
-        user_id: c.user_id
+        user_id: c.user_id,
+        users_count: usersCountMap.get(c.id) || 0
       }));
 
       setClients(clientsList);
@@ -245,12 +266,15 @@ const Clients = () => {
     }
   };
 
-  const handleLinkClientToUser = async (userId: string, clientId: string) => {
+  const handleLinkClientToUser = async (userId: string, clientId: string, role: string = 'owner') => {
     try {
       const { error } = await supabase
-        .from('clients')
-        .update({ user_id: userId })
-        .eq('id', clientId);
+        .from('client_users')
+        .insert({
+          client_id: clientId,
+          user_id: userId,
+          role: role
+        });
 
       if (error) throw error;
 
@@ -261,11 +285,46 @@ const Clients = () => {
 
       fetchClients();
       setSelectedClientUser(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error linking client:', error);
+      if (error.code === '23505') {
+        toast({
+          title: "Ya vinculado",
+          description: "Este usuario ya está vinculado a esta empresa",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo vincular el cliente",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const handleUnlinkClientFromUser = async (userId: string, clientId: string) => {
+    try {
+      const { error } = await supabase
+        .from('client_users')
+        .delete()
+        .eq('client_id', clientId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Desvinculado",
+        description: "Usuario desvinculado de la empresa"
+      });
+
+      fetchClients();
+      setSelectedClientUser(null);
+    } catch (error) {
+      console.error('Error unlinking client:', error);
       toast({
         title: "Error",
-        description: "No se pudo vincular el cliente",
+        description: "No se pudo desvincular el cliente",
         variant: "destructive"
       });
     }
@@ -390,12 +449,18 @@ const Clients = () => {
                         {client.contact_email && (
                           <p className="text-xs text-muted-foreground truncate">{client.contact_email}</p>
                         )}
-                        {client.user_id && (
-                          <Badge variant="outline" className="mt-1 text-xs">
-                            <UserCircle className="h-3 w-3 mr-1" />
-                            Vinculado
-                          </Badge>
-                        )}
+                        <Badge 
+                          variant="outline" 
+                          className="mt-1 text-xs cursor-pointer hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedClientForUsers(client);
+                            setClientUsersDialogOpen(true);
+                          }}
+                        >
+                          <Users className="h-3 w-3 mr-1" />
+                          {client.users_count} usuario{client.users_count !== 1 ? 's' : ''}
+                        </Badge>
                       </div>
 
                       {isAdmin && (
@@ -485,11 +550,20 @@ const Clients = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-card-foreground truncate">{user.full_name}</h3>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                        {user.linked_client ? (
-                          <Badge className="mt-1 text-xs bg-green-500/20 text-green-600 border-green-500/30">
-                            <Building2 className="h-3 w-3 mr-1" />
-                            {user.linked_client.name}
-                          </Badge>
+                        {user.linked_clients.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {user.linked_clients.slice(0, 2).map(c => (
+                              <Badge key={c.id} className="text-xs bg-green-500/20 text-green-600 border-green-500/30">
+                                <Building2 className="h-3 w-3 mr-1" />
+                                {c.name}
+                              </Badge>
+                            ))}
+                            {user.linked_clients.length > 2 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{user.linked_clients.length - 2}
+                              </Badge>
+                            )}
+                          </div>
                         ) : (
                           <Badge variant="outline" className="mt-1 text-xs text-amber-600 border-amber-500/30">
                             Sin empresa vinculada
@@ -578,22 +652,56 @@ const Clients = () => {
                 </div>
               </div>
 
-              {selectedClientUser.linked_client ? (
-                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                  <div className="flex items-center gap-2 text-green-600 font-medium mb-2">
-                    <Building2 className="h-4 w-4" />
-                    Empresa vinculada
-                  </div>
-                  <p className="text-sm">{selectedClientUser.linked_client.name}</p>
+              {/* Empresas vinculadas */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Empresas vinculadas</p>
+                  <Badge variant="secondary">{selectedClientUser.linked_clients.length}</Badge>
                 </div>
-              ) : (
-                isAdmin && (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Este usuario no tiene una empresa vinculada. Selecciona una empresa para vincular:
-                    </p>
-                    <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
-                      {clients.filter(c => !c.user_id).map(client => (
+                
+                {selectedClientUser.linked_clients.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedClientUser.linked_clients.map(c => {
+                      const RoleIcon = c.role === 'owner' ? Crown : c.role === 'admin' ? Shield : Eye;
+                      return (
+                        <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-green-600" />
+                            <span className="font-medium">{c.name}</span>
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <RoleIcon className="h-3 w-3" />
+                              {c.role === 'owner' ? 'Propietario' : c.role === 'admin' ? 'Admin' : 'Visor'}
+                            </Badge>
+                          </div>
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleUnlinkClientFromUser(selectedClientUser.id, c.id)}
+                            >
+                              Desvincular
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Este usuario no tiene empresas vinculadas
+                  </p>
+                )}
+              </div>
+
+              {/* Agregar nueva empresa */}
+              {isAdmin && (
+                <div className="space-y-3 pt-4 border-t">
+                  <p className="text-sm font-medium">Vincular empresa</p>
+                  <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
+                    {clients
+                      .filter(c => !selectedClientUser.linked_clients.some(lc => lc.id === c.id))
+                      .map(client => (
                         <Button
                           key={client.id}
                           variant="outline"
@@ -605,14 +713,13 @@ const Clients = () => {
                           {client.name}
                         </Button>
                       ))}
-                    </div>
-                    {clients.filter(c => !c.user_id).length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-2">
-                        Todas las empresas ya están vinculadas
-                      </p>
-                    )}
                   </div>
-                )
+                  {clients.filter(c => !selectedClientUser.linked_clients.some(lc => lc.id === c.id)).length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      No hay más empresas disponibles
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -679,6 +786,20 @@ const Clients = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Client Users Management Dialog */}
+      {selectedClientForUsers && (
+        <ClientUsersDialog
+          clientId={selectedClientForUsers.id}
+          clientName={selectedClientForUsers.name}
+          open={clientUsersDialogOpen}
+          onOpenChange={(open) => {
+            setClientUsersDialogOpen(open);
+            if (!open) setSelectedClientForUsers(null);
+          }}
+          onUpdate={fetchClients}
+        />
+      )}
     </>
   );
 };
