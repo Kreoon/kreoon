@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Filter, X, Home, User, LogOut, Users, Sparkles, UserPlus, Search } from "lucide-react";
+import { Play, Filter, X, Home, User, LogOut, Users, Sparkles, UserPlus, Search, Image as ImageIcon } from "lucide-react";
 import { SmartSearch } from "@/components/portfolio/SmartSearch";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CommentsSection } from "@/components/content/CommentsSection";
 import { VideoPlayerProvider } from "@/contexts/VideoPlayerContext";
 import { BunnyVideoCard } from "@/components/content/BunnyVideoCard";
+import { MediaCard, type MediaItem } from "@/components/content/MediaCard";
 import { TikTokFeed } from "@/components/content/TikTokFeed";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +33,8 @@ interface PublishedContent {
   is_liked: boolean;
   type?: 'content' | 'post';
   can_interact?: boolean;
+  media_type?: 'video' | 'image';
+  media_url?: string; // For posts
 }
 
 interface FollowingUser {
@@ -250,8 +253,7 @@ export default function Portfolio() {
           .order('created_at', { ascending: false }),
         supabase
           .from('portfolio_posts')
-          .select('id, user_id, media_url, thumbnail_url, caption, created_at, views_count, likes_count')
-          .eq('media_type', 'video')
+          .select('id, user_id, media_url, media_type, thumbnail_url, caption, created_at, views_count, likes_count')
           .order('created_at', { ascending: false })
           .limit(200)
       ]);
@@ -259,33 +261,40 @@ export default function Portfolio() {
       if (contentError) throw contentError;
       if (postError) throw postError;
 
-      // Filter post videos to only public profiles
+      // Filter posts to only public profiles
       const postUserIds = [...new Set((postData || []).map(p => p.user_id))] as string[];
       const { data: postProfiles } = postUserIds.length
-        ? await supabase.from('profiles').select('id, is_public').in('id', postUserIds)
+        ? await supabase.from('profiles').select('id, is_public, full_name, avatar_url').in('id', postUserIds)
         : { data: [] };
 
       const publicUserIds = new Set((postProfiles || []).filter(p => (p as any).is_public !== false).map(p => p.id));
+      const profilesMap = new Map((postProfiles || []).map(p => [p.id, p]));
 
       const mappedPosts = (postData || [])
         .filter(p => publicUserIds.has(p.user_id))
-        .map(p => ({
-          id: p.id,
-          title: p.caption || 'Post',
-          video_url: p.media_url,
-          video_urls: null,
-          thumbnail_url: p.thumbnail_url,
-          created_at: p.created_at,
-          creator_id: p.user_id,
-          client_id: null,
-          views_count: p.views_count || 0,
-          likes_count: p.likes_count || 0,
-          type: 'post' as const,
-          can_interact: false,
-        }));
+        .map(p => {
+          const profile = profilesMap.get(p.user_id);
+          return {
+            id: p.id,
+            title: p.caption || '',
+            video_url: p.media_type === 'video' ? p.media_url : null,
+            video_urls: null,
+            thumbnail_url: p.thumbnail_url,
+            created_at: p.created_at,
+            creator_id: p.user_id,
+            client_id: null,
+            views_count: p.views_count || 0,
+            likes_count: p.likes_count || 0,
+            type: 'post' as const,
+            can_interact: false,
+            media_type: p.media_type as 'video' | 'image',
+            media_url: p.media_url,
+            creator: profile ? { id: profile.id, full_name: profile.full_name, avatar_url: profile.avatar_url } : null,
+          };
+        });
 
       const merged = [
-        ...(contentData || []).map(c => ({ ...c, type: 'content' as const, can_interact: true })),
+        ...(contentData || []).map(c => ({ ...c, type: 'content' as const, can_interact: true, media_type: 'video' as const })),
         ...mappedPosts,
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -377,7 +386,12 @@ export default function Portfolio() {
   // Get current content based on tab and shuffle for "for-you"
   const currentContent = useMemo(() => {
     const items = activeTab === 'following' ? followingContent : content;
-    const filtered = items.filter(item => getVideoUrls(item).length > 0);
+    // Include all media types now, not just videos
+    const filtered = items.filter(item => {
+      const hasVideos = getVideoUrls(item).length > 0;
+      const hasImage = (item as any).media_type === 'image' && (item as any).media_url;
+      return hasVideos || hasImage;
+    });
     
     // Shuffle for "for-you" tab
     if (activeTab === 'for-you') {
@@ -387,9 +401,14 @@ export default function Portfolio() {
     return filtered;
   }, [content, followingContent, activeTab]);
 
-  // Prepare videos for TikTok feed
+  // Separate video content for TikTok feed (mobile)
+  const videoContent = useMemo(() => {
+    return currentContent.filter(item => getVideoUrls(item).length > 0);
+  }, [currentContent]);
+
+  // Prepare videos for TikTok feed (only videos, not images)
   const tikTokVideos = useMemo(() => {
-    return currentContent.map(item => ({
+    return videoContent.map(item => ({
       id: item.id,
       title: item.title,
       videoUrls: getVideoUrls(item),
@@ -399,9 +418,10 @@ export default function Portfolio() {
       isLiked: item.is_liked,
       creatorName: item.creator?.full_name,
       creatorId: item.creator_id,
-      creatorAvatar: item.creator?.avatar_url
+      creatorAvatar: item.creator?.avatar_url,
+      canInteract: (item as any).can_interact !== false,
     }));
-  }, [currentContent]);
+  }, [videoContent]);
 
   const handleLogout = async () => {
     await signOut();
@@ -488,13 +508,17 @@ export default function Portfolio() {
     );
   }
 
-  // Mobile TikTok-style view
+  // Mobile view - mix of TikTok feed for videos and grid for images
   if (isMobile) {
+    const imageContent = currentContent.filter(item => (item as any).media_type === 'image' && (item as any).media_url);
+    const hasVideos = tikTokVideos.length > 0;
+    const hasImages = imageContent.length > 0;
+
     return (
       <VideoPlayerProvider>
-        <div className="h-screen bg-black overflow-hidden">
+        <div className="min-h-screen bg-black overflow-auto">
           {/* Floating header for mobile */}
-          <div className="absolute top-0 left-0 right-0 z-50 p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+          <div className="sticky top-0 z-50 p-4 bg-gradient-to-b from-black via-black/90 to-transparent pointer-events-none">
             <div className="flex items-center justify-between pointer-events-auto">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg">
@@ -559,7 +583,7 @@ export default function Portfolio() {
 
           {/* Stories Row */}
           {isLoggedIn && followingUsers.length > 0 && activeTab === 'following' && (
-            <div className="absolute top-16 left-0 right-0 z-40 px-4 py-2 overflow-x-auto bg-gradient-to-b from-black/60 to-transparent">
+            <div className="px-4 py-2 overflow-x-auto">
               <div className="flex gap-3">
                 {followingUsers.map(u => (
                   <StoryRing
@@ -577,17 +601,57 @@ export default function Portfolio() {
             </div>
           )}
 
-          {/* TikTok Feed */}
-          <TikTokFeed
-            videos={tikTokVideos}
-            onLike={(id, e) => handleLike(id, e)}
-            onView={(id) => handleView(id)}
-            onShare={(video) => handleShare({ id: video.id, title: video.title } as PublishedContent)}
-            onComment={(id) => {
-              setSelectedContentId(id);
-              setCommentDialogOpen(true);
-            }}
-          />
+          {/* Videos Section */}
+          {hasVideos && (
+            <section className="mb-6">
+              <div className="px-4 py-2 flex items-center gap-2 text-white/60 text-sm">
+                <Play className="h-4 w-4" />
+                <span>Videos</span>
+              </div>
+              <div className="h-[70vh]">
+                <TikTokFeed
+                  videos={tikTokVideos}
+                  onLike={(id, e) => handleLike(id, e)}
+                  onView={(id) => handleView(id)}
+                  onShare={(video) => handleShare({ id: video.id, title: video.title } as PublishedContent)}
+                  onComment={(id) => {
+                    setSelectedContentId(id);
+                    setCommentDialogOpen(true);
+                  }}
+                />
+              </div>
+            </section>
+          )}
+
+          {/* Images Section */}
+          {hasImages && (
+            <section className="px-4 pb-8">
+              <div className="py-2 flex items-center gap-2 text-white/60 text-sm mb-2">
+                <ImageIcon className="h-4 w-4" />
+                <span>Fotos</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {imageContent.map((item) => {
+                  const media: MediaItem[] = [{ url: (item as any).media_url, type: 'image' }];
+                  return (
+                    <MediaCard
+                      key={item.id}
+                      id={item.id}
+                      title={item.title}
+                      media={media}
+                      viewsCount={item.views_count}
+                      likesCount={item.likes_count}
+                      isLiked={item.is_liked}
+                      creatorId={item.creator_id || undefined}
+                      creatorName={item.creator?.full_name}
+                      creatorAvatar={item.creator?.avatar_url}
+                      onShare={() => handleShare(item)}
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           {/* Comments Dialog */}
           <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
@@ -728,11 +792,35 @@ export default function Portfolio() {
           </div>
         )}
 
-        {/* Video Grid */}
+        {/* Content Grid (Videos + Images) */}
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {currentContent.map((item) => {
               const videoUrls = getVideoUrls(item);
+              const isImagePost = (item as any).media_type === 'image' && (item as any).media_url;
+              const canInteract = (item as any).can_interact !== false;
+
+              // Image post
+              if (isImagePost) {
+                const media: MediaItem[] = [{ url: (item as any).media_url, type: 'image' }];
+                return (
+                  <MediaCard
+                    key={item.id}
+                    id={item.id}
+                    title={item.title}
+                    media={media}
+                    viewsCount={item.views_count}
+                    likesCount={item.likes_count}
+                    isLiked={item.is_liked}
+                    creatorId={item.creator_id || undefined}
+                    creatorName={item.creator?.full_name}
+                    creatorAvatar={item.creator?.avatar_url}
+                    onShare={() => handleShare(item)}
+                  />
+                );
+              }
+
+              // Video content
               return (
                 <BunnyVideoCard
                   key={item.id}
@@ -746,13 +834,13 @@ export default function Portfolio() {
                   creatorId={item.creator_id || undefined}
                   creatorName={item.creator?.full_name}
                   isAdmin={isAdmin}
-                  onLike={(e) => handleLike(item.id, e)}
-                  onView={() => handleView(item.id)}
+                  onLike={canInteract ? (e) => handleLike(item.id, e) : undefined}
+                  onView={canInteract ? () => handleView(item.id) : undefined}
                   onShare={() => handleShare(item)}
-                  onComment={() => {
+                  onComment={canInteract ? () => {
                     setSelectedContentId(item.id);
                     setCommentDialogOpen(true);
-                  }}
+                  } : undefined}
                 />
               );
             })}
