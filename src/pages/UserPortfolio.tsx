@@ -15,7 +15,8 @@ import {
   Plus,
   Pencil,
   Home,
-  ArrowLeft
+  ArrowLeft,
+  MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -724,20 +725,36 @@ export default function UserPortfolio() {
                   </Button>
                 )}
                 {!isOwner && profileType === 'user' && profile && (
-                  <FollowButton
-                    userId={profile.id}
-                    initialIsFollowing={isFollowing}
-                    onFollowChange={(following) => {
-                      setIsFollowing(following);
-                      setFollowCounts(prev => ({
-                        ...prev,
-                        followers: prev.followers + (following ? 1 : -1),
-                      }));
-                    }}
-                  />
+                  <>
+                    <FollowButton
+                      userId={profile.id}
+                      initialIsFollowing={isFollowing}
+                      onFollowChange={(following) => {
+                        setIsFollowing(following);
+                        setFollowCounts(prev => ({
+                          ...prev,
+                          followers: prev.followers + (following ? 1 : -1),
+                        }));
+                      }}
+                    />
+                    {userRoles.includes('creator') && (
+                      <Button
+                        size="sm"
+                        variant="glow"
+                        className="gap-1.5"
+                        onClick={() => {
+                          const agencyWhatsApp = '573001234567'; // Número de WhatsApp de la agencia
+                          const message = encodeURIComponent(`Hola! Me interesa contratar contenido del creador ${displayName} (@${profile.username || profile.id})`);
+                          window.open(`https://wa.me/${agencyWhatsApp}?text=${message}`, '_blank');
+                        }}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Contratar
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
-
               {/* Stats Row */}
               <div className="flex items-center justify-center md:justify-start gap-6 mb-4">
                 <div className="text-center">
