@@ -18,6 +18,7 @@ import { AutoPauseVideo } from "@/components/content/AutoPauseVideo";
 import { BunnyStorageUploader } from "@/components/content/BunnyStorageUploader";
 import { CollaboratorSelector } from "@/components/content/CollaboratorSelector";
 import { RawVideoUploader } from "@/components/content/RawVideoUploader";
+import { ThumbnailSelector } from "@/components/content/ThumbnailSelector";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -28,7 +29,7 @@ import {
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
   Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Package, Lock, Share2,
-  Plus, X, Clipboard, Megaphone, Target, Upload, Download, Loader2
+  Plus, X, Clipboard, Megaphone, Target, Upload, Download, Loader2, Image
 } from "lucide-react";
 import {
   AlertDialog,
@@ -796,6 +797,26 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     }}
                   />
                 </div>
+              </div>
+            )}
+
+            {/* Thumbnail Selector - For Admin/Strategist when there's at least one video */}
+            {canEditVideoTab && formData.video_urls.some(url => url) && (
+              <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4 text-primary" />
+                  <h4 className="font-medium">Miniatura del Contenido</h4>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Selecciona un frame del video o sube una imagen personalizada para usar como miniatura
+                </p>
+                <ThumbnailSelector
+                  contentId={content.id}
+                  videoUrl={formData.video_urls.find(url => url) || ''}
+                  currentThumbnail={content.thumbnail_url}
+                  onThumbnailChange={() => onUpdate?.()}
+                  disabled={!editMode && !isAdmin}
+                />
               </div>
             )}
 
