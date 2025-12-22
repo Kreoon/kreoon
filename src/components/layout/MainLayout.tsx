@@ -9,6 +9,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
+import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors, MessageCircle } from "lucide-react";
@@ -45,6 +46,9 @@ export function MainLayout({
   
   // Track user presence
   usePresence();
+  
+  // Client realtime notifications (for new videos, comments)
+  useClientRealtimeNotifications();
   
   // Setup chat notifications with sound
   const { unreadCount: unreadChatCount } = useChatNotifications(chatOpen, activeConversationId);
