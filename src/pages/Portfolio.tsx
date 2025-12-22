@@ -284,6 +284,9 @@ export default function Portfolio() {
       creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null,
       type: item.type || 'content',
       can_interact: item.can_interact ?? true,
+      media_type: (item as any).media_type,
+      media_url: (item as any).media_url,
+      score: (item as any).score,
     }));
   };
 
