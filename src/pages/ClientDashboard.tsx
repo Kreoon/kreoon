@@ -513,7 +513,8 @@ export default function ClientDashboard() {
       'approved': 100,
       'paid': 100,
       'rejected': 50,
-      'issue': 80
+      'issue': 80,
+      'corrected': 85
     };
     return progressMap[status] || 0;
   };
@@ -1675,29 +1676,16 @@ function ContentList({
       });
     }
     
-    // Issue content can be approved
-    if (status === 'issue') {
-      actions.push({ 
-        status: 'approved', 
-        label: 'Aprobar', 
-        icon: ThumbsUp, 
-        color: 'bg-success hover:bg-success/90 text-success-foreground' 
-      });
-    }
+    // Issue content can be marked as corrected (by editor/admin, not client)
+    // Client sees issue and waits for correction
     
-    // Review content can be approved or marked as issue
-    if (status === 'review') {
+    // Corrected content can be approved by client
+    if (status === 'corrected') {
       actions.push({ 
         status: 'approved', 
         label: 'Aprobar', 
         icon: ThumbsUp, 
         color: 'bg-success hover:bg-success/90 text-success-foreground' 
-      });
-      actions.push({ 
-        status: 'issue', 
-        label: 'Novedad', 
-        icon: AlertTriangle, 
-        color: 'bg-warning hover:bg-warning/90 text-warning-foreground' 
       });
     }
     
