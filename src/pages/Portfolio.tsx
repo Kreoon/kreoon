@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Play, Filter, X, Home, User, LogOut, Users, Sparkles, UserPlus, Search, Image as ImageIcon, RefreshCw } from "lucide-react";
 import { SmartSearch } from "@/components/portfolio/SmartSearch";
+import { PortfolioHeader } from "@/components/portfolio/PortfolioHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -574,35 +575,14 @@ export default function Portfolio() {
   if (currentContent.length === 0) {
     return (
       <div className="min-h-screen bg-black flex flex-col">
-        {/* Header */}
-        <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-xl border-b border-white/10">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-gradient-gold flex items-center justify-center">
-                <span className="text-black font-bold text-lg">U</span>
-              </div>
-              <span className="text-white font-bold">UGC Colombia</span>
-            </div>
-            {isLoggedIn ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(getDashboardRoute())}
-                className="text-white/70 hover:text-white"
-              >
-                <Home className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                onClick={() => navigate('/auth')}
-                className="bg-gradient-gold text-black font-semibold"
-              >
-                Entrar
-              </Button>
-            )}
-          </div>
-        </header>
+        {/* Shared Header */}
+        <PortfolioHeader 
+          onRefresh={handleRefreshFeed}
+          refreshing={refreshing}
+          showTabs={isLoggedIn}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
         <div className="flex-1 flex items-center justify-center text-white">
           <div className="text-center p-6">
@@ -638,81 +618,14 @@ export default function Portfolio() {
     return (
       <VideoPlayerProvider>
         <div className="min-h-screen bg-black overflow-auto">
-          {/* Floating header for mobile */}
-          <div className="sticky top-0 z-50 p-4 bg-gradient-to-b from-black via-black/90 to-transparent pointer-events-none">
-            <div className="flex items-center justify-between pointer-events-auto">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg">
-                  <span className="text-black font-bold text-sm">U</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRefreshFeed}
-                  disabled={refreshing}
-                  className="text-white hover:bg-white/20 h-8 w-8"
-                >
-                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
-              
-              {/* Feed Tabs */}
-              {isLoggedIn && (
-                <div className="flex items-center bg-black/40 rounded-full p-1">
-                  <button
-                    onClick={() => setActiveTab('following')}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-                      activeTab === 'following' ? 'bg-white text-black' : 'text-white/70'
-                    }`}
-                  >
-                    Siguiendo
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('for-you')}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-                      activeTab === 'for-you' ? 'bg-white text-black' : 'text-white/70'
-                    }`}
-                  >
-                    Para ti
-                  </button>
-                </div>
-              )}
-
-              <div className="flex items-center gap-1">
-                {/* Search Icon */}
-                <SmartSearch variant="icon" />
-                
-                {isLoggedIn ? (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => user && navigate(`/p/${user.id}`)}
-                      className="text-white hover:bg-white/20 h-8 w-8"
-                    >
-                      <User className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => navigate(getDashboardRoute())}
-                      className="text-white hover:bg-white/20 h-8 w-8"
-                    >
-                      <Home className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={() => navigate('/auth')}
-                    className="bg-gradient-gold text-black font-semibold text-xs px-3 h-8"
-                  >
-                    Entrar
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
+          {/* Shared header component for mobile */}
+          <PortfolioHeader 
+            onRefresh={handleRefreshFeed}
+            refreshing={refreshing}
+            showTabs={true}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
 
           {/* Stories Row - Show in both tabs */}
           {(() => {
@@ -817,116 +730,14 @@ export default function Portfolio() {
   return (
     <VideoPlayerProvider>
       <div className="min-h-screen bg-black">
-        {/* Header with navigation */}
-        <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg">
-                <span className="text-black font-bold text-lg">U</span>
-              </div>
-              <div>
-                <h1 className="text-white font-bold text-lg">UGC Colombia</h1>
-                <p className="text-primary text-xs">Feed</p>
-              </div>
-            </div>
-
-            {/* Refresh Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRefreshFeed}
-              disabled={refreshing}
-              className="text-white/70 hover:text-white hover:bg-white/10 mr-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
-
-            {/* Search Bar */}
-            <SmartSearch 
-              className="flex-1 max-w-md mx-4"
-              placeholder="Buscar usuarios, videos, marcas..."
-            />
-
-            {/* Feed Tabs */}
-            {isLoggedIn && (
-              <div className="flex items-center bg-white/5 rounded-full p-1">
-                <button
-                  onClick={() => setActiveTab('for-you')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
-                    activeTab === 'for-you' ? 'bg-white text-black' : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Para ti
-                </button>
-                <button
-                  onClick={() => setActiveTab('following')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
-                    activeTab === 'following' ? 'bg-white text-black' : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  <Users className="h-4 w-4" />
-                  Siguiendo
-                </button>
-              </div>
-            )}
-
-            {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-2">
-              {isLoggedIn ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => user && navigate(`/p/${user.id}`)}
-                    className="text-white/70 hover:text-white hover:bg-white/10"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Mi Perfil
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate(getDashboardRoute())}
-                    className="text-white/70 hover:text-white hover:bg-white/10"
-                  >
-                    <Home className="h-4 w-4 mr-2" />
-                    Dashboard
-                  </Button>
-                  <div className="h-6 w-px bg-white/20 mx-2" />
-                  <div 
-                    className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
-                    onClick={() => user && navigate(`/p/${user.id}`)}
-                  >
-                    <Avatar className="h-8 w-8 border-2 border-primary/50">
-                      <AvatarImage src={userProfile?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                        {userProfile?.full_name?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-white/80 text-sm">{userProfile?.full_name || 'Usuario'}</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleLogout}
-                    className="text-white/50 hover:text-white hover:bg-white/10"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  onClick={() => navigate('/auth')}
-                  className="bg-gradient-gold text-black font-semibold hover:opacity-90"
-                >
-                  Iniciar Sesión
-                </Button>
-              )}
-            </nav>
-          </div>
-        </header>
+        {/* Shared Header - same as mobile for consistency */}
+        <PortfolioHeader 
+          onRefresh={handleRefreshFeed}
+          refreshing={refreshing}
+          showTabs={isLoggedIn}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
         {/* Stories Row - Show in both tabs */}
         {(() => {

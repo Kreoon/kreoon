@@ -25,7 +25,9 @@ export function PortfolioHeader({
   const isLoggedIn = !!user;
   
   // Check if we're on a profile page (not the main portfolio)
-  const isProfilePage = location.pathname.startsWith('/p/') || location.pathname.startsWith('/@');
+  const isProfilePage = location.pathname.startsWith('/p/') || 
+                        location.pathname.startsWith('/@') ||
+                        (location.pathname !== '/portfolio' && !location.pathname.startsWith('/portfolio'));
 
   const getDashboardRoute = () => {
     if (roles.includes('admin')) return '/';
@@ -68,7 +70,7 @@ export function PortfolioHeader({
           )}
         </div>
         
-        {/* Feed Tabs */}
+        {/* Feed Tabs - Only show on main portfolio when logged in */}
         {showTabs && isLoggedIn && onTabChange && (
           <div className="flex items-center bg-black/40 rounded-full p-1">
             <button
