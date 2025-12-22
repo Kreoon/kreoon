@@ -874,7 +874,12 @@ export type Database = {
           id: string
           media_type: string
           media_url: string
+          music_name: string | null
+          music_url: string | null
+          music_volume: number | null
+          mute_video_audio: boolean | null
           user_id: string
+          video_volume: number | null
           views_count: number | null
         }
         Insert: {
@@ -883,7 +888,12 @@ export type Database = {
           id?: string
           media_type?: string
           media_url: string
+          music_name?: string | null
+          music_url?: string | null
+          music_volume?: number | null
+          mute_video_audio?: boolean | null
           user_id: string
+          video_volume?: number | null
           views_count?: number | null
         }
         Update: {
@@ -892,7 +902,12 @@ export type Database = {
           id?: string
           media_type?: string
           media_url?: string
+          music_name?: string | null
+          music_url?: string | null
+          music_volume?: number | null
+          mute_video_audio?: boolean | null
           user_id?: string
+          video_volume?: number | null
           views_count?: number | null
         }
         Relationships: []

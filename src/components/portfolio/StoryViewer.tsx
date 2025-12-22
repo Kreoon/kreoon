@@ -1,14 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
-import { X, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { X, ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, Music } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
 
 interface Story {
   id: string;
   media_url: string;
   media_type: string;
   created_at: string;
+  music_url?: string | null;
+  music_name?: string | null;
+  mute_video_audio?: boolean;
+  music_volume?: number;
+  video_volume?: number;
 }
 
 interface StoryViewerProps {
@@ -19,6 +24,9 @@ interface StoryViewerProps {
   onClose: () => void;
   onViewed?: (storyId: string) => void;
 }
+
+const IMAGE_DURATION = 10000; // 10 seconds for images
+const MAX_VIDEO_DURATION = 60000; // 1 minute max for videos
 
 export function StoryViewer({
   stories,
@@ -31,25 +39,81 @@ export function StoryViewer({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [showVolumeControls, setShowVolumeControls] = useState(false);
+  const [videoVolume, setVideoVolume] = useState(1);
+  const [musicVolume, setMusicVolume] = useState(0.5);
+  const [isMusicMuted, setIsMusicMuted] = useState(false);
+  const [isVideoMuted, setIsVideoMuted] = useState(false);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
+  const musicRef = useRef<HTMLAudioElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
 
   const currentStory = stories[currentIndex];
-  const STORY_DURATION = currentStory?.media_type === 'video' ? 15000 : 5000;
+  const isVideo = currentStory?.media_type === 'video';
+  
+  // Calculate duration based on media type
+  const getStoryDuration = useCallback(() => {
+    if (isVideo && videoRef.current) {
+      // Use actual video duration, capped at 1 minute
+      const videoDuration = videoRef.current.duration * 1000;
+      return Math.min(videoDuration || MAX_VIDEO_DURATION, MAX_VIDEO_DURATION);
+    }
+    return IMAGE_DURATION;
+  }, [isVideo]);
 
+  // Initialize volumes from story data
+  useEffect(() => {
+    if (currentStory) {
+      setVideoVolume(currentStory.video_volume ?? 1);
+      setMusicVolume(currentStory.music_volume ?? 0.5);
+      setIsVideoMuted(currentStory.mute_video_audio ?? false);
+    }
+  }, [currentStory]);
+
+  // Apply volume changes to audio elements
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = isVideoMuted ? 0 : videoVolume;
+      videoRef.current.muted = isVideoMuted;
+    }
+  }, [videoVolume, isVideoMuted]);
+
+  useEffect(() => {
+    if (musicRef.current) {
+      musicRef.current.volume = isMusicMuted ? 0 : musicVolume;
+    }
+  }, [musicVolume, isMusicMuted]);
+
+  // Mark story as viewed
   useEffect(() => {
     if (currentStory && onViewed) {
       onViewed(currentStory.id);
     }
   }, [currentIndex, currentStory, onViewed]);
 
+  // Handle music playback
+  useEffect(() => {
+    if (musicRef.current && currentStory?.music_url) {
+      if (isPaused) {
+        musicRef.current.pause();
+      } else {
+        musicRef.current.play().catch(() => {});
+      }
+    }
+  }, [isPaused, currentStory?.music_url]);
+
+  // Progress timer
   useEffect(() => {
     if (isPaused) return;
-
-    const startTime = Date.now();
+    
+    startTimeRef.current = Date.now() - (progress / 100) * getStoryDuration();
+    
     const updateProgress = () => {
-      const elapsed = Date.now() - startTime;
-      const newProgress = Math.min((elapsed / STORY_DURATION) * 100, 100);
+      const elapsed = Date.now() - startTimeRef.current;
+      const duration = getStoryDuration();
+      const newProgress = Math.min((elapsed / duration) * 100, 100);
       setProgress(newProgress);
 
       if (newProgress >= 100) {
@@ -61,21 +125,40 @@ export function StoryViewer({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [currentIndex, isPaused, STORY_DURATION]);
+  }, [currentIndex, isPaused, getStoryDuration]);
+
+  // Handle video end - auto advance to next story
+  const handleVideoEnded = useCallback(() => {
+    goToNext();
+  }, []);
 
   const goToNext = () => {
+    // Stop music before transitioning
+    if (musicRef.current) {
+      musicRef.current.pause();
+      musicRef.current.currentTime = 0;
+    }
+    
     if (currentIndex < stories.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setProgress(0);
+      startTimeRef.current = Date.now();
     } else {
       onClose();
     }
   };
 
   const goToPrev = () => {
+    // Stop music before transitioning
+    if (musicRef.current) {
+      musicRef.current.pause();
+      musicRef.current.currentTime = 0;
+    }
+    
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
       setProgress(0);
+      startTimeRef.current = Date.now();
     }
   };
 
@@ -111,8 +194,20 @@ export function StoryViewer({
     return `Hace ${hours}h`;
   };
 
+  const hasMusic = !!currentStory.music_url;
+
   return (
     <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+      {/* Background music */}
+      {currentStory.music_url && (
+        <audio
+          ref={musicRef}
+          src={currentStory.music_url}
+          loop
+          autoPlay
+        />
+      )}
+
       {/* Progress bars */}
       <div className="absolute top-2 left-2 right-2 flex gap-1 z-20">
         {stories.map((_, index) => (
@@ -147,6 +242,15 @@ export function StoryViewer({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Volume controls toggle */}
+          {(isVideo || hasMusic) && (
+            <button
+              onClick={() => setShowVolumeControls(!showVolumeControls)}
+              className="p-2 text-white/80 hover:text-white"
+            >
+              <Volume2 className="h-5 w-5" />
+            </button>
+          )}
           <button
             onClick={togglePause}
             className="p-2 text-white/80 hover:text-white"
@@ -162,19 +266,99 @@ export function StoryViewer({
         </div>
       </div>
 
+      {/* Volume Controls Panel */}
+      {showVolumeControls && (
+        <div className="absolute top-20 right-4 z-30 bg-black/80 backdrop-blur-lg rounded-xl p-4 space-y-4 min-w-[200px]">
+          {/* Video Volume */}
+          {isVideo && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-white/70 text-xs">Video</span>
+                <button
+                  onClick={() => setIsVideoMuted(!isVideoMuted)}
+                  className="text-white/60 hover:text-white"
+                >
+                  {isVideoMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+              </div>
+              <Slider
+                value={[isVideoMuted ? 0 : videoVolume * 100]}
+                min={0}
+                max={100}
+                step={1}
+                onValueChange={([value]) => {
+                  setVideoVolume(value / 100);
+                  if (value > 0) setIsVideoMuted(false);
+                }}
+                className="w-full"
+              />
+            </div>
+          )}
+
+          {/* Music Volume */}
+          {hasMusic && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <Music className="h-3 w-3 text-primary" />
+                  <span className="text-white/70 text-xs">Música</span>
+                </div>
+                <button
+                  onClick={() => setIsMusicMuted(!isMusicMuted)}
+                  className="text-white/60 hover:text-white"
+                >
+                  {isMusicMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+              </div>
+              <Slider
+                value={[isMusicMuted ? 0 : musicVolume * 100]}
+                min={0}
+                max={100}
+                step={1}
+                onValueChange={([value]) => {
+                  setMusicVolume(value / 100);
+                  if (value > 0) setIsMusicMuted(false);
+                }}
+                className="w-full"
+              />
+              {currentStory.music_name && (
+                <p className="text-white/40 text-[10px] truncate">
+                  ♪ {currentStory.music_name}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Music indicator */}
+      {hasMusic && !showVolumeControls && (
+        <div className="absolute bottom-20 left-4 z-20 flex items-center gap-2 bg-black/40 rounded-full px-3 py-1.5">
+          <Music className="h-3 w-3 text-primary animate-pulse" />
+          <span className="text-white/70 text-xs truncate max-w-[150px]">
+            {currentStory.music_name || 'Música'}
+          </span>
+        </div>
+      )}
+
       {/* Content */}
       <div
         className="w-full h-full flex items-center justify-center"
         onTouchStart={handleTouchStart}
       >
-        {currentStory.media_type === 'video' ? (
+        {isVideo ? (
           <video
             ref={videoRef}
             src={currentStory.media_url}
             className="w-full h-full object-contain"
             autoPlay
-            muted
             playsInline
+            onEnded={handleVideoEnded}
+            onLoadedMetadata={() => {
+              // Reset progress when video loads to recalculate duration
+              setProgress(0);
+              startTimeRef.current = Date.now();
+            }}
           />
         ) : (
           <img
