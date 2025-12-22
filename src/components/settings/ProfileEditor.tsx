@@ -23,6 +23,7 @@ interface ProfileData {
   facebook: string;
   document_type: string;
   document_number: string;
+  username: string;
 }
 
 export function ProfileEditor() {
@@ -31,6 +32,9 @@ export function ProfileEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [originalUsername, setOriginalUsername] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [profile, setProfile] = useState<ProfileData>({
@@ -45,7 +49,8 @@ export function ProfileEditor() {
     tiktok: "",
     facebook: "",
     document_type: "",
-    document_number: ""
+    document_number: "",
+    username: ""
   });
 
   useEffect(() => {
@@ -53,6 +58,58 @@ export function ProfileEditor() {
       fetchProfile();
     }
   }, [user?.id]);
+
+  // Validate username in real-time
+  useEffect(() => {
+    const validateUsername = async () => {
+      if (!profile.username || profile.username === originalUsername) {
+        setUsernameError(null);
+        return;
+      }
+
+      // Validate format: only letters, numbers, underscores
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(profile.username)) {
+        setUsernameError('Solo letras, números y guiones bajos');
+        return;
+      }
+
+      if (profile.username.length < 3) {
+        setUsernameError('Mínimo 3 caracteres');
+        return;
+      }
+
+      if (profile.username.length > 30) {
+        setUsernameError('Máximo 30 caracteres');
+        return;
+      }
+
+      setCheckingUsername(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', profile.username.toLowerCase())
+          .neq('id', user?.id || '')
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          setUsernameError('Este username ya está en uso');
+        } else {
+          setUsernameError(null);
+        }
+      } catch (error) {
+        console.error('Error checking username:', error);
+      } finally {
+        setCheckingUsername(false);
+      }
+    };
+
+    const debounce = setTimeout(validateUsername, 500);
+    return () => clearTimeout(debounce);
+  }, [profile.username, originalUsername, user?.id]);
 
   const fetchProfile = async () => {
     if (!user?.id) return;
@@ -79,8 +136,10 @@ export function ProfileEditor() {
           tiktok: data.tiktok || "",
           facebook: data.facebook || "",
           document_type: data.document_type || "",
-          document_number: data.document_number || ""
+          document_number: data.document_number || "",
+          username: data.username || ""
         });
+        setOriginalUsername(data.username || "");
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -96,6 +155,16 @@ export function ProfileEditor() {
 
   const handleSave = async () => {
     if (!user?.id) return;
+
+    if (usernameError) {
+      toast({
+        title: "Username inválido",
+        description: usernameError,
+        variant: "destructive"
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       const { error } = await supabase
@@ -111,12 +180,14 @@ export function ProfileEditor() {
           tiktok: profile.tiktok,
           facebook: profile.facebook,
           document_type: profile.document_type,
-          document_number: profile.document_number
+          document_number: profile.document_number,
+          username: profile.username.toLowerCase().trim() || null
         })
         .eq('id', user.id);
       
       if (error) throw error;
       
+      setOriginalUsername(profile.username);
       toast({
         title: "Perfil actualizado",
         description: "Tus cambios se han guardado correctamente"
@@ -288,6 +359,32 @@ export function ProfileEditor() {
               disabled
               className="bg-muted"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
+              <Input
+                id="username"
+                value={profile.username}
+                onChange={(e) => setProfile(prev => ({ ...prev, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
+                placeholder="tu_username"
+                className={`pl-7 ${
+                  usernameError ? 'border-destructive' : profile.username && !checkingUsername && !usernameError ? 'border-green-500' : ''
+                }`}
+                maxLength={30}
+              />
+              {checkingUsername && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            {usernameError && (
+              <p className="text-xs text-destructive">{usernameError}</p>
+            )}
+            {!usernameError && profile.username && !checkingUsername && (
+              <p className="text-xs text-green-500">Username disponible</p>
+            )}
           </div>
 
           <div className="space-y-2">

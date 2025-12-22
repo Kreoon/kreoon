@@ -1013,6 +1013,7 @@ export default function UserPortfolio() {
           currentName={profile.full_name}
           currentBio={profile.bio}
           currentAvatar={profile.avatar_url}
+          currentUsername={profile.username}
           currentIsPublic={profile.is_public}
           open={showProfileEditor}
           onOpenChange={setShowProfileEditor}
