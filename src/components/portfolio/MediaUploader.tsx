@@ -9,18 +9,6 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { SpotifyMusicPicker } from './SpotifyMusicPicker';
-
-interface SpotifyTrack {
-  id: string;
-  name: string;
-  artist: string;
-  album: string;
-  albumArt: string | null;
-  previewUrl: string | null;
-  duration: number;
-  spotifyUrl: string;
-}
 
 interface MediaUploaderProps {
   userId: string;
@@ -53,8 +41,6 @@ export function MediaUploader({
   const [muteVideoAudio, setMuteVideoAudio] = useState(false);
   const [musicVolume, setMusicVolume] = useState(0.5);
   const [videoVolume, setVideoVolume] = useState(1);
-  const [showSpotifyPicker, setShowSpotifyPicker] = useState(false);
-  const [spotifyTrack, setSpotifyTrack] = useState<SpotifyTrack | null>(null);
   const [showMusicSettings, setShowMusicSettings] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -228,16 +214,13 @@ export function MediaUploader({
         }
       }
 
-      // Handle music: either Spotify track or uploaded file
+      // Handle music (uploaded file only)
       if (type === 'story') {
-        if (spotifyTrack?.previewUrl) {
-          // Use Spotify preview URL directly
-          musicUrl = spotifyTrack.previewUrl;
-        } else if (musicFile) {
+        if (musicFile) {
           // Upload local music file
           const musicExt = musicFile.name.split('.').pop();
           const musicFileName = `${userId}/stories/music/${timestamp}.${musicExt}`;
-          
+
           const { error: musicError } = await supabase.storage
             .from('portfolio')
             .upload(musicFileName, musicFile);
@@ -252,7 +235,7 @@ export function MediaUploader({
       }
 
       // Determine music name
-      const finalMusicName = spotifyTrack ? `${spotifyTrack.name} - ${spotifyTrack.artist}` : (musicFile ? musicName : null);
+      const finalMusicName = musicFile ? musicName : null;
 
       // Insert into database
       if (type === 'story') {
@@ -265,7 +248,7 @@ export function MediaUploader({
             music_url: musicUrl,
             music_name: finalMusicName,
             mute_video_audio: isVideo ? muteVideoAudio : false,
-            music_volume: (musicFile || spotifyTrack) ? musicVolume : 0.5,
+            music_volume: musicFile ? musicVolume : 0.5,
             video_volume: isVideo ? videoVolume : 1,
           });
 
@@ -310,30 +293,17 @@ export function MediaUploader({
     setMusicVolume(0.5);
     setVideoVolume(1);
     setShowMusicSettings(false);
-    setShowSpotifyPicker(false);
-    setSpotifyTrack(null);
     onClose();
   };
 
   const removeMusicFile = () => {
     setMusicFile(null);
     setMusicName('');
-    setSpotifyTrack(null);
     if (audioPreviewRef.current) {
       audioPreviewRef.current.src = '';
     }
   };
 
-  const handleSpotifySelect = (track: SpotifyTrack) => {
-    if (!track.previewUrl) {
-      toast.error('Esta canción no tiene preview disponible. Intenta con otra.');
-      return;
-    }
-    setSpotifyTrack(track);
-    setMusicFile(null);
-    setMusicName('');
-    setShowSpotifyPicker(false);
-  };
 
   const isVideo = file?.type.startsWith('video/');
 
@@ -494,25 +464,18 @@ export function MediaUploader({
                       onClick={() => setShowMusicSettings(!showMusicSettings)}
                       className="text-white/60 hover:text-white h-7 px-2"
                     >
-                      {showMusicSettings ? 'Ocultar' : (musicFile || spotifyTrack) ? 'Editar' : 'Agregar'}
+                      {showMusicSettings ? 'Ocultar' : musicFile ? 'Editar' : 'Agregar'}
                     </Button>
                   </div>
 
                   {/* Show selected music preview */}
-                  {(spotifyTrack || musicFile) && !showMusicSettings && (
+                  {musicFile && !showMusicSettings && (
                     <div className="flex items-center gap-2 bg-zinc-700/50 rounded-lg px-3 py-2">
-                      {spotifyTrack?.albumArt ? (
-                        <img src={spotifyTrack.albumArt} alt="" className="w-8 h-8 rounded" />
-                      ) : (
-                        <Music className="h-3 w-3 text-green-500" />
-                      )}
+                      <Music className="h-3 w-3 text-primary" />
                       <div className="flex-1 min-w-0">
                         <span className="text-white/80 text-xs truncate block">
-                          {spotifyTrack ? spotifyTrack.name : musicName}
+                          {musicName || musicFile.name}
                         </span>
-                        {spotifyTrack && (
-                          <span className="text-white/50 text-[10px] truncate block">{spotifyTrack.artist}</span>
-                        )}
                       </div>
                       <button
                         onClick={removeMusicFile}
@@ -525,28 +488,8 @@ export function MediaUploader({
 
                   {showMusicSettings && (
                     <div className="space-y-4">
-                      {/* Music source selector */}
-                      {!musicFile && !spotifyTrack ? (
+                      {!musicFile ? (
                         <div className="space-y-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setShowSpotifyPicker(true)}
-                            className="w-full h-10 text-xs border-green-500/30 text-green-400 hover:bg-green-500/10 hover:text-green-300"
-                          >
-                            <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
-                            </svg>
-                            Buscar en Spotify
-                          </Button>
-                          <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                              <span className="w-full border-t border-white/10" />
-                            </div>
-                            <div className="relative flex justify-center text-xs">
-                              <span className="bg-zinc-800 px-2 text-white/40">o</span>
-                            </div>
-                          </div>
                           <Button
                             size="sm"
                             variant="outline"
@@ -556,27 +499,6 @@ export function MediaUploader({
                             <Upload className="h-4 w-4 mr-2" />
                             Subir archivo de audio
                           </Button>
-                        </div>
-                      ) : spotifyTrack ? (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3 bg-zinc-700/50 rounded-lg p-2">
-                            {spotifyTrack.albumArt && (
-                              <img src={spotifyTrack.albumArt} alt="" className="w-12 h-12 rounded" />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-white text-sm font-medium truncate">{spotifyTrack.name}</p>
-                              <p className="text-white/60 text-xs truncate">{spotifyTrack.artist}</p>
-                            </div>
-                            <button
-                              onClick={removeMusicFile}
-                              className="text-white/40 hover:text-white p-1"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                          <p className="text-white/40 text-[10px] text-center">
-                            Preview de 30 segundos cortesía de Spotify
-                          </p>
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -604,10 +526,10 @@ export function MediaUploader({
                       )}
 
                       {/* Volume controls */}
-                      {(musicFile || spotifyTrack || isVideo) && (
+                      {(musicFile || isVideo) && (
                         <div className="space-y-3 pt-2 border-t border-white/10">
                           <p className="text-white/50 text-xs">Ajustar volúmenes</p>
-                          
+
                           {isVideo && (
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
@@ -636,10 +558,10 @@ export function MediaUploader({
                             </div>
                           )}
 
-                          {(musicFile || spotifyTrack) && (
+                          {musicFile && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
-                                <Music className="h-3 w-3 text-green-500" />
+                                <Music className="h-3 w-3 text-primary" />
                                 <span className="text-white/70 text-xs">Volumen de la música</span>
                               </div>
                               <Slider
@@ -722,14 +644,6 @@ export function MediaUploader({
         </div>
       </DialogContent>
 
-      {/* Spotify Music Picker Modal */}
-      {showSpotifyPicker && (
-        <SpotifyMusicPicker
-          onSelect={handleSpotifySelect}
-          onClose={() => setShowSpotifyPicker(false)}
-          selectedTrackId={spotifyTrack?.id}
-        />
-      )}
     </Dialog>
   );
 }
