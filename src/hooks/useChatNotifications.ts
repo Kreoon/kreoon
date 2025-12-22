@@ -1,7 +1,8 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useNotificationSound } from './useNotificationSound';
 
 interface ChatMessage {
   id: string;
@@ -17,7 +18,9 @@ export function useChatNotifications(
 ) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { playChatSound } = useNotificationSound();
   const permissionRef = useRef<NotificationPermission>('default');
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Request notification permission
   const requestPermission = useCallback(async () => {
@@ -48,6 +51,7 @@ export function useChatNotifications(
       body,
       icon: '/favicon.ico',
       tag: 'chat-message',
+      requireInteraction: true, // Keep notification visible until user interacts
     });
 
     notification.onclick = () => {
@@ -56,16 +60,16 @@ export function useChatNotifications(
       onClick?.();
     };
 
-    // Auto-close after 5 seconds
-    setTimeout(() => notification.close(), 5000);
+    // Auto-close after 10 seconds
+    setTimeout(() => notification.close(), 10000);
   }, []);
 
   // Show in-app toast notification
   const showToastNotification = useCallback((senderName: string, message: string) => {
     toast({
-      title: `💬 ${senderName}`,
-      description: message.length > 50 ? `${message.substring(0, 50)}...` : message,
-      duration: 4000,
+      title: `💬 Nuevo mensaje de ${senderName}`,
+      description: message.length > 80 ? `${message.substring(0, 80)}...` : message,
+      duration: 6000,
     });
   }, [toast]);
 
@@ -73,6 +77,38 @@ export function useChatNotifications(
   useEffect(() => {
     requestPermission();
   }, [requestPermission]);
+
+  // Fetch initial unread count
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchUnreadCount = async () => {
+      // Get conversations where user is participant
+      const { data: participations } = await supabase
+        .from('chat_participants')
+        .select('conversation_id, last_read_at')
+        .eq('user_id', user.id);
+
+      if (!participations?.length) return;
+
+      let totalUnread = 0;
+
+      for (const p of participations) {
+        const { count } = await supabase
+          .from('chat_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', p.conversation_id)
+          .neq('sender_id', user.id)
+          .gt('created_at', p.last_read_at || '1970-01-01');
+
+        totalUnread += count || 0;
+      }
+
+      setUnreadCount(totalUnread);
+    };
+
+    fetchUnreadCount();
+  }, [user?.id]);
 
   // Subscribe to ALL new messages for this user
   useEffect(() => {
@@ -107,8 +143,16 @@ export function useChatNotifications(
             // Skip if it's not in our conversations
             if (!conversationIds.includes(newMessage.conversation_id)) return;
 
-            // Skip if chat is open and viewing this conversation
+            // Increment unread count
+            if (!isChatOpen || activeConversationId !== newMessage.conversation_id) {
+              setUnreadCount(prev => prev + 1);
+            }
+
+            // Skip toast if chat is open and viewing this conversation
             if (isChatOpen && activeConversationId === newMessage.conversation_id) return;
+
+            // Play sound
+            playChatSound();
 
             // Fetch sender profile
             const { data: sender } = await supabase
@@ -117,12 +161,12 @@ export function useChatNotifications(
               .eq('id', newMessage.sender_id)
               .single();
 
-            const senderName = sender?.full_name || 'Nuevo mensaje';
+            const senderName = sender?.full_name || 'Usuario';
 
             // Show browser notification if tab is not focused
             if (document.hidden) {
               showBrowserNotification(
-                senderName,
+                `💬 ${senderName}`,
                 newMessage.content
               );
             }
@@ -143,7 +187,27 @@ export function useChatNotifications(
     return () => {
       cleanup.then(fn => fn?.());
     };
-  }, [user?.id, isChatOpen, activeConversationId, showBrowserNotification, showToastNotification]);
+  }, [user?.id, isChatOpen, activeConversationId, showBrowserNotification, showToastNotification, playChatSound]);
 
-  return { requestPermission };
+  // Reset unread count when viewing a conversation
+  useEffect(() => {
+    if (isChatOpen && activeConversationId) {
+      // Mark messages as read
+      const markAsRead = async () => {
+        await supabase
+          .from('chat_participants')
+          .update({ last_read_at: new Date().toISOString() })
+          .eq('conversation_id', activeConversationId)
+          .eq('user_id', user?.id);
+      };
+      
+      markAsRead();
+      // Refetch unread count after a short delay
+      setTimeout(() => {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }, 500);
+    }
+  }, [isChatOpen, activeConversationId, user?.id]);
+
+  return { requestPermission, unreadCount };
 }

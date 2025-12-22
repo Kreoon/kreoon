@@ -1,17 +1,18 @@
 import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { FloatingNotificationBar } from "@/components/notifications/FloatingNotificationBar";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ChatButton } from "@/components/chat/ChatButton";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors, MessageCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MainLayoutProps {
@@ -46,8 +47,8 @@ export function MainLayout({
   // Track user presence
   usePresence();
   
-  // Setup chat notifications
-  useChatNotifications(chatOpen, activeConversationId);
+  // Setup chat notifications with sound
+  const { unreadCount: unreadChatCount } = useChatNotifications(chatOpen, activeConversationId);
   
   // For editors, show editor-specific layout with bottom nav on mobile
   if (isEditor && !isAdmin) {
@@ -67,7 +68,22 @@ export function MainLayout({
             <span className="text-sm font-bold">Panel Editor</span>
           </div>
           <div className="flex items-center gap-2">
-            <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
+            <Button
+              variant={chatOpen ? "default" : "ghost"}
+              size="icon"
+              onClick={() => setChatOpen(!chatOpen)}
+              className={cn(
+                "relative h-9 w-9 rounded-full",
+                unreadChatCount > 0 && !chatOpen && "bg-blue-500/20"
+              )}
+            >
+              <MessageCircle className="h-4 w-4" />
+              {unreadChatCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white animate-pulse">
+                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                </span>
+              )}
+            </Button>
             <NotificationBell />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
@@ -97,12 +113,13 @@ export function MainLayout({
           </div>
         </nav>
         
-        {/* Desktop Header with Notifications */}
-        <div className={`hidden md:flex fixed top-0 right-0 z-30 h-14 items-center gap-2 px-4 transition-[left] duration-300 ${sidebarCollapsed ? "left-20" : "left-64"}`}>
-          <div className="ml-auto flex items-center gap-2">
-            <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
-            <NotificationBell />
-          </div>
+        {/* Desktop Floating Notification Bar */}
+        <div className="hidden md:block">
+          <FloatingNotificationBar
+            onChatClick={() => setChatOpen(!chatOpen)}
+            isChatOpen={chatOpen}
+            unreadChatCount={unreadChatCount}
+          />
         </div>
         
         {/* Main Content */}
@@ -193,7 +210,22 @@ export function MainLayout({
             <span className="text-sm font-bold">Portal Cliente</span>
           </div>
           <div className="flex items-center gap-2">
-            <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
+            <Button
+              variant={chatOpen ? "default" : "ghost"}
+              size="icon"
+              onClick={() => setChatOpen(!chatOpen)}
+              className={cn(
+                "relative h-9 w-9 rounded-full",
+                unreadChatCount > 0 && !chatOpen && "bg-blue-500/20"
+              )}
+            >
+              <MessageCircle className="h-4 w-4" />
+              {unreadChatCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white animate-pulse">
+                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                </span>
+              )}
+            </Button>
             <NotificationBell />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
@@ -223,12 +255,13 @@ export function MainLayout({
           </div>
         </nav>
         
-        {/* Desktop Header with Notifications */}
-        <div className="hidden md:flex fixed top-0 right-0 z-30 h-14 items-center gap-2 px-4 left-64">
-          <div className="ml-auto flex items-center gap-2">
-            <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
-            <NotificationBell />
-          </div>
+        {/* Desktop Floating Notification Bar */}
+        <div className="hidden md:block">
+          <FloatingNotificationBar
+            onChatClick={() => setChatOpen(!chatOpen)}
+            isChatOpen={chatOpen}
+            unreadChatCount={unreadChatCount}
+          />
         </div>
         
         {/* Main Content */}
@@ -266,18 +299,34 @@ export function MainLayout({
             <span className="text-sm font-bold">UGC Colombia</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
+        <div className="flex items-center gap-1">
+          <Button
+            variant={chatOpen ? "default" : "ghost"}
+            size="icon"
+            onClick={() => setChatOpen(!chatOpen)}
+            className={cn(
+              "relative h-9 w-9 rounded-full",
+              unreadChatCount > 0 && !chatOpen && "bg-blue-500/20"
+            )}
+          >
+            <MessageCircle className="h-4 w-4" />
+            {unreadChatCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white animate-pulse">
+                {unreadChatCount > 9 ? '9+' : unreadChatCount}
+              </span>
+            )}
+          </Button>
           <NotificationBell />
         </div>
       </header>
       
-      {/* Desktop Header with Notifications */}
-      <div className={`hidden md:flex fixed top-0 right-0 z-30 h-14 items-center gap-2 px-4 transition-[left] duration-300 ${sidebarCollapsed ? "left-20" : "left-64"}`}>
-        <div className="ml-auto flex items-center gap-2" data-tour="notification-bell">
-          <ChatButton onClick={() => setChatOpen(!chatOpen)} isOpen={chatOpen} />
-          <NotificationBell />
-        </div>
+      {/* Desktop Floating Notification Bar */}
+      <div className="hidden md:block">
+        <FloatingNotificationBar
+          onChatClick={() => setChatOpen(!chatOpen)}
+          isChatOpen={chatOpen}
+          unreadChatCount={unreadChatCount}
+        />
       </div>
       
       {/* Main Content */}
