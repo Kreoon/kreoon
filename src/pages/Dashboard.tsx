@@ -896,16 +896,71 @@ export default function Dashboard() {
             goalValue={currentGoal?.content_goal}
             goalLabel="Meta del mes"
           />
-          <LargeKpiCard
-            title="Ingresos Totales"
-            value={clientsBilling.totalBilled}
-            prefix="$"
-            icon={DollarSign}
-            description="Facturación total de paquetes vendidos"
-            onClick={() => openListDialog('Paquetes Vendidos', 'packages-sold', { packages })}
-            goalValue={currentGoal?.revenue_goal}
-            goalLabel="Meta del mes"
-          />
+          {/* Ingresos Totales with Currency Tabs */}
+          <div 
+            className={cn(
+              "group relative overflow-hidden rounded-3xl border border-border/50 p-8",
+              "bg-gradient-to-br from-card via-card to-muted/20 backdrop-blur-xl",
+              "transition-all duration-500 hover:shadow-[0_0_60px_-10px] hover:shadow-primary/20"
+            )}
+          >
+            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl transition-transform duration-700 group-hover:scale-125" />
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-2xl bg-primary/10 backdrop-blur-sm">
+                  <DollarSign className="h-8 w-8 text-primary" />
+                </div>
+                <p className="text-lg font-medium text-muted-foreground">Ingresos Totales</p>
+              </div>
+              
+              <Tabs defaultValue="cop" className="space-y-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="cop" className="gap-2">
+                    🇨🇴 COP
+                  </TabsTrigger>
+                  <TabsTrigger value="usd" className="gap-2">
+                    🇺🇸 USD
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="cop" className="space-y-2">
+                  <p 
+                    className="text-5xl font-bold tracking-tight text-foreground cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
+                  >
+                    <CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="lg" />
+                  </p>
+                  <p className="text-sm text-muted-foreground">Facturación total en pesos colombianos</p>
+                  {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
+                    <div className="mt-4 space-y-1 max-w-xs">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Meta: <CurrencyDisplay value={currentGoal.revenue_goal} currency="COP" size="sm" /></span>
+                        <span className={cn(
+                          "font-medium",
+                          (clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100 >= 100 ? "text-success" : 
+                          (clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100 >= 75 ? "text-warning" : "text-muted-foreground"
+                        )}>
+                          {Math.round((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100)}%
+                        </span>
+                      </div>
+                      <Progress value={Math.min((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100, 100)} className="h-2" />
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="usd" className="space-y-2">
+                  <p 
+                    className="text-5xl font-bold tracking-tight text-foreground cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
+                  >
+                    <CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="lg" />
+                  </p>
+                  <p className="text-sm text-muted-foreground">Facturación total en dólares</p>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
           <LargeKpiCard
             title="Tasa de Completados"
             value={totalContent > 0 ? Math.round((completed / totalContent) * 100) : 0}
