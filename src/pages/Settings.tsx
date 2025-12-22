@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
@@ -9,6 +9,7 @@ import { ReferralManagement } from "@/components/settings/ReferralManagement";
 import { SubscriptionManagement } from "@/components/settings/SubscriptionManagement";
 import { UserPlansManagement } from "@/components/settings/UserPlansManagement";
 import { RootAdminPanel } from "@/components/settings/RootAdminPanel";
+import { CurrencyManagement } from "@/components/settings/CurrencyManagement";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { Sparkles, Play } from "lucide-react";
@@ -50,7 +51,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas';
 
 const settingsSections = [
   { 
@@ -82,6 +83,14 @@ const settingsSections = [
     icon: Crown, 
     title: "Planes y Comisiones", 
     description: "Gestiona comisiones de referidos",
+    adminOnly: true,
+    rootOnly: false
+  },
+  { 
+    id: 'monedas' as const,
+    icon: Coins, 
+    title: "Monedas", 
+    description: "Gestiona tasas de cambio y transferencias USD/COP",
     adminOnly: true,
     rootOnly: false
   },
@@ -182,6 +191,8 @@ const Settings = () => {
         return <ReferralManagement />;
       case 'planes':
         return <SubscriptionManagement />;
+      case 'monedas':
+        return <CurrencyManagement />;
       case 'gestion-usuarios':
         return <UserPlansManagement />;
       case 'notificaciones':

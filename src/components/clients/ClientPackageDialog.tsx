@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ClientPackage, Product, PaymentStatus } from "@/types/database";
 import { Save, Loader2 } from "lucide-react";
+import { CurrencyInput, CurrencyDisplay, CurrencyBadge, type CurrencyType } from "@/components/ui/currency-input";
 
 interface ClientPackageDialogProps {
   clientId: string;
@@ -34,6 +35,7 @@ export function ClientPackageDialog({
     name: "",
     description: "",
     total_value: 0,
+    currency: "COP" as CurrencyType,
     content_quantity: 1,
     hooks_per_video: 1,
     creators_count: 1,
@@ -50,6 +52,7 @@ export function ClientPackageDialog({
         name: package_.name || "",
         description: package_.description || "",
         total_value: package_.total_value || 0,
+        currency: ((package_ as any).currency as CurrencyType) || "COP",
         content_quantity: package_.content_quantity || 1,
         hooks_per_video: package_.hooks_per_video || 1,
         creators_count: package_.creators_count || 1,
@@ -64,6 +67,7 @@ export function ClientPackageDialog({
         name: "",
         description: "",
         total_value: 0,
+        currency: "COP",
         content_quantity: 1,
         hooks_per_video: 1,
         creators_count: 1,
@@ -105,6 +109,7 @@ export function ClientPackageDialog({
         name: formData.name,
         description: formData.description || null,
         total_value: formData.total_value,
+        currency: formData.currency,
         content_quantity: formData.content_quantity,
         hooks_per_video: formData.hooks_per_video,
         creators_count: formData.creators_count,
@@ -161,7 +166,7 @@ export function ClientPackageDialog({
 
         <div className="space-y-6 mt-4">
           {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label>Nombre del Paquete *</Label>
               <Input
@@ -171,11 +176,12 @@ export function ClientPackageDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Valor Total ($)</Label>
-              <Input
-                type="number"
+              <Label>Valor Total</Label>
+              <CurrencyInput
                 value={formData.total_value}
-                onChange={(e) => setFormData({ ...formData, total_value: Number(e.target.value) })}
+                currency={formData.currency}
+                onValueChange={(value) => setFormData({ ...formData, total_value: value })}
+                onCurrencyChange={(currency) => setFormData({ ...formData, currency })}
                 placeholder="0"
               />
             </div>
@@ -260,7 +266,10 @@ export function ClientPackageDialog({
 
           {/* Payment Section */}
           <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-4">
-            <h4 className="font-medium">Estado de Pago</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium">Estado de Pago</h4>
+              <CurrencyBadge currency={formData.currency} />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Estado</Label>
@@ -279,7 +288,7 @@ export function ClientPackageDialog({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Monto Pagado ($)</Label>
+                <Label>Monto Pagado</Label>
                 <Input
                   type="number"
                   value={formData.paid_amount}
@@ -295,9 +304,9 @@ export function ClientPackageDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Pendiente ($)</Label>
+                <Label>Pendiente</Label>
                 <div className={`h-10 px-3 flex items-center rounded-md border ${pendingAmount > 0 ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-success/10 border-success/30 text-success'}`}>
-                  ${pendingAmount.toLocaleString()}
+                  <CurrencyDisplay value={pendingAmount} currency={formData.currency} />
                 </div>
               </div>
             </div>
