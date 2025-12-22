@@ -17,8 +17,7 @@ import { es } from "date-fns/locale";
 import { 
   Calendar, Video, Clock, CheckCircle, MessageSquare, Send, 
   Package, Target, Download, Loader2, ThumbsUp, AlertTriangle,
-  Play, FileText, X, ChevronLeft, ChevronRight, Eye,
-  User, Sparkles
+  FileText, X, User
 } from "lucide-react";
 
 // Download Video Button Component
@@ -103,7 +102,6 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
   const [comments, setComments] = useState<(ContentComment & { profile?: { full_name: string; avatar_url?: string } })[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loadingComment, setLoadingComment] = useState(false);
-  const [selectedVideoIndex, setSelectedVideoIndex] = useState(0);
   const [productName, setProductName] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'videos' | 'script' | 'comments'>('videos');
 
@@ -113,7 +111,6 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
   useEffect(() => {
     if (content) {
       setCurrentStatus(content.status);
-      setSelectedVideoIndex(0);
       fetchComments();
       if (content.product_id) {
         fetchProduct(content.product_id);
@@ -208,20 +205,11 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
     return format(new Date(date), "d 'de' MMMM, yyyy", { locale: es });
   };
 
-  const goToPreviousVideo = () => {
-    setSelectedVideoIndex(prev => prev > 0 ? prev - 1 : videoUrls.length - 1);
-  };
-
-  const goToNextVideo = () => {
-    setSelectedVideoIndex(prev => prev < videoUrls.length - 1 ? prev + 1 : 0);
-  };
-
   if (!content) return null;
 
   const canApprove = currentStatus === 'delivered' || currentStatus === 'corrected';
   const canReportIssue = currentStatus === 'delivered' || currentStatus === 'corrected';
   const canDownload = ['approved', 'paid', 'delivered', 'corrected'].includes(currentStatus || '');
-  const currentVideoUrl = videoUrls[selectedVideoIndex] || '';
   const hasVideos = videoUrls.length > 0;
   const hasScript = !!content.script;
 
@@ -366,157 +354,46 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
               <div className="space-y-6">
                 {hasVideos ? (
                   <>
-                    {/* Main Video Carousel */}
-                    <div className="relative">
-                      <div className="flex items-center gap-4">
-                        {/* Navigation Left */}
-                        {videoUrls.length > 1 && (
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={goToPreviousVideo}
-                            className="shrink-0 rounded-full h-12 w-12"
-                          >
-                            <ChevronLeft className="h-6 w-6" />
-                          </Button>
-                        )}
-
-                        {/* Current Video */}
-                        <div className="flex-1 flex justify-center">
-                          <div className="relative w-full max-w-sm">
-                            <div className="relative rounded-2xl overflow-hidden shadow-2xl ring-1 ring-border bg-black">
+                    {/* Videos Grid - Each video independent */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {videoUrls.map((url: string, idx: number) => (
+                        <Card key={idx} className="overflow-hidden">
+                          <div className="relative">
+                            <div className="aspect-[9/16] bg-black rounded-t-lg overflow-hidden">
                               <AutoPauseVideo
-                                src={currentVideoUrl}
-                                index={selectedVideoIndex}
-                                className="w-full"
-                                style={{ aspectRatio: '9/16' }}
+                                src={url}
+                                index={idx}
+                                className="w-full h-full object-cover"
                               />
-                              
-                              {/* Video number badge */}
-                              <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm font-medium">
-                                Video {selectedVideoIndex + 1} de {videoUrls.length}
-                              </div>
-
-                              {/* Download overlay button for approved content */}
-                              {canDownload && (
-                                <div className="absolute bottom-3 right-3">
-                                  <DownloadVideoButton
-                                    contentId={content.id}
-                                    videoUrl={currentVideoUrl}
-                                    variantIndex={selectedVideoIndex}
-                                    title={content.title}
-                                  />
-                                </div>
-                              )}
+                            </div>
+                            <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white text-sm font-medium">
+                              Video {idx + 1}
                             </div>
                           </div>
-                        </div>
-
-                        {/* Navigation Right */}
-                        {videoUrls.length > 1 && (
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={goToNextVideo}
-                            className="shrink-0 rounded-full h-12 w-12"
-                          >
-                            <ChevronRight className="h-6 w-6" />
-                          </Button>
-                        )}
-                      </div>
-
-                      {/* Video dots indicator */}
-                      {videoUrls.length > 1 && (
-                        <div className="flex justify-center gap-2 mt-4">
-                          {videoUrls.map((_: string, idx: number) => (
-                            <button
-                              key={idx}
-                              onClick={() => setSelectedVideoIndex(idx)}
-                              className={`transition-all ${
-                                idx === selectedVideoIndex 
-                                  ? 'w-8 h-2 bg-primary rounded-full' 
-                                  : 'w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/50 rounded-full'
-                              }`}
-                              title={`Video ${idx + 1}`}
-                            />
-                          ))}
-                        </div>
-                      )}
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">Variante {idx + 1}</span>
+                              {canDownload && (
+                                <DownloadVideoButton
+                                  contentId={content.id}
+                                  videoUrl={url}
+                                  variantIndex={idx}
+                                  title={content.title}
+                                />
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
 
-                    {/* All Videos Grid - Only show if more than 1 video */}
-                    {videoUrls.length > 1 && (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-primary" />
-                          Todas las Variantes
-                        </h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {videoUrls.map((url: string, idx: number) => (
-                            <Card 
-                              key={idx}
-                              className={`cursor-pointer transition-all hover:shadow-lg ${
-                                idx === selectedVideoIndex ? 'ring-2 ring-primary' : ''
-                              }`}
-                              onClick={() => setSelectedVideoIndex(idx)}
-                            >
-                              <div className="relative">
-                                <div className="aspect-[9/16] rounded-t-lg overflow-hidden bg-black">
-                                  <AutoPauseVideo
-                                    src={url}
-                                    index={idx}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity">
-                                  <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm">
-                                    <Eye className="h-6 w-6 text-white" />
-                                  </div>
-                                </div>
-                                <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-black/60 text-white text-xs font-medium">
-                                  #{idx + 1}
-                                </div>
-                              </div>
-                              <CardContent className="p-3">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium">Variante {idx + 1}</span>
-                                  {canDownload && (
-                                    <DownloadVideoButton
-                                      contentId={content.id}
-                                      videoUrl={url}
-                                      variantIndex={idx}
-                                      title={content.title}
-                                    />
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Download All Button */}
+                    {/* Download All Info */}
                     {canDownload && videoUrls.length > 1 && (
                       <Card className="border-success/20 bg-success/5">
-                        <CardContent className="p-4 flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Descargar todos los videos</p>
-                            <p className="text-sm text-muted-foreground">
-                              {videoUrls.length} videos disponibles para descarga
-                            </p>
-                          </div>
-                          <div className="flex gap-2 flex-wrap justify-end">
-                            {videoUrls.map((url: string, idx: number) => (
-                              <DownloadVideoButton
-                                key={idx}
-                                contentId={content.id}
-                                videoUrl={url}
-                                variantIndex={idx}
-                                title={content.title}
-                              />
-                            ))}
-                          </div>
+                        <CardContent className="p-4">
+                          <p className="text-sm text-muted-foreground text-center">
+                            {videoUrls.length} videos disponibles. Usa el botón "Descargar" en cada video.
+                          </p>
                         </CardContent>
                       </Card>
                     )}
