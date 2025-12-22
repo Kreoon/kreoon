@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
-import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
+import { ClientContentDetailDialog } from "@/components/content/ClientContentDetailDialog";
 import { Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -363,7 +363,7 @@ export default function ClientContentBoard() {
 
       {/* Content Detail Dialog */}
       {selectedContent && (
-        <ContentDetailDialog
+        <ClientContentDetailDialog
           content={selectedContent}
           open={!!selectedContent}
           onOpenChange={(open) => !open && setSelectedContent(null)}
