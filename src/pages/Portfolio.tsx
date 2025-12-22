@@ -693,38 +693,17 @@ export default function Portfolio() {
             </div>
           )}
 
-          {/* Videos Section */}
-          {hasVideos && (
-            <section className="mb-6">
-              <div className="px-4 py-2 flex items-center gap-2 text-white/60 text-sm">
-                <Play className="h-4 w-4" />
-                <span>Videos</span>
-              </div>
-              <div className="h-[70vh]">
-                <TikTokFeed
-                  videos={tikTokVideos}
-                  onLike={(id, e) => handleLike(id, e)}
-                  onView={(id) => handleView(id)}
-                  onShare={(video) => handleShare({ id: video.id, title: video.title } as PublishedContent)}
-                  onComment={(id) => {
-                    setSelectedContentId(id);
-                    setCommentDialogOpen(true);
-                  }}
-                />
-              </div>
-            </section>
-          )}
+          {/* Mixed Feed - Videos and Images together ordered by date */}
+          <section className="px-4 pb-8">
+            <div className="grid grid-cols-2 gap-3">
+              {currentContent.map((item) => {
+                const videoUrls = getVideoUrls(item);
+                const isImagePost = item.media_type === 'image' && item.media_url;
+                const canInteract = item.can_interact !== false;
 
-          {/* Images Section */}
-          {hasImages && (
-            <section className="px-4 pb-8">
-              <div className="py-2 flex items-center gap-2 text-white/60 text-sm mb-2">
-                <ImageIcon className="h-4 w-4" />
-                <span>Fotos</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {imageContent.map((item) => {
-                  const media: MediaItem[] = [{ url: (item as any).media_url, type: 'image' }];
+                // Image post
+                if (isImagePost) {
+                  const media: MediaItem[] = [{ url: item.media_url!, type: 'image' }];
                   return (
                     <MediaCard
                       key={item.id}
@@ -740,10 +719,34 @@ export default function Portfolio() {
                       onShare={() => handleShare(item)}
                     />
                   );
-                })}
-              </div>
-            </section>
-          )}
+                }
+
+                // Video content
+                return (
+                  <BunnyVideoCard
+                    key={item.id}
+                    id={item.id}
+                    title={item.title}
+                    videoUrls={videoUrls}
+                    thumbnailUrl={item.thumbnail_url}
+                    viewsCount={item.views_count}
+                    likesCount={item.likes_count}
+                    isLiked={item.is_liked}
+                    creatorId={item.creator_id || undefined}
+                    creatorName={item.creator?.full_name}
+                    isAdmin={isAdmin}
+                    onLike={canInteract ? (e) => handleLike(item.id, e) : undefined}
+                    onView={canInteract ? () => handleView(item.id) : undefined}
+                    onShare={() => handleShare(item)}
+                    onComment={canInteract ? () => {
+                      setSelectedContentId(item.id);
+                      setCommentDialogOpen(true);
+                    } : undefined}
+                  />
+                );
+              })}
+            </div>
+          </section>
 
           {/* Comments Dialog */}
           <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
