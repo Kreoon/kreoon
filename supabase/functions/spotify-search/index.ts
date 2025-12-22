@@ -61,8 +61,9 @@ serve(async (req) => {
 
     const token = await getAccessToken();
 
+    // Try US market first (more previews available), fallback to no market
     const searchResponse = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}&market=US`,
       {
         headers: {
           'Authorization': `Bearer ${token}`,
