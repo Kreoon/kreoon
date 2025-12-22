@@ -288,12 +288,21 @@ export default function ClientDashboard() {
 
         setUserClients(clientsData || []);
 
-        // Auto-select if only one client
-        if (clientsData && clientsData.length === 1) {
+        // Check if there's a saved client selection in localStorage
+        const savedClientId = localStorage.getItem('selectedClientId');
+        
+        if (savedClientId && clientsData?.some(c => c.id === savedClientId)) {
+          // Use saved selection if valid
+          const savedClient = clientsData.find(c => c.id === savedClientId);
+          setSelectedClientId(savedClientId);
+          setClientInfo(savedClient || null);
+        } else if (clientsData && clientsData.length === 1) {
+          // Auto-select if only one client
           setSelectedClientId(clientsData[0].id);
           setClientInfo(clientsData[0]);
+          localStorage.setItem('selectedClientId', clientsData[0].id);
         } else if (clientsData && clientsData.length > 1) {
-          // Show selector if multiple clients
+          // Show selector if multiple clients and no saved selection
           setShowClientSelector(true);
           setLoading(false);
         } else {
@@ -620,7 +629,10 @@ export default function ClientDashboard() {
               key={client.id}
               variant="outline"
               className="h-auto p-4 justify-start"
-              onClick={() => setSelectedClientId(client.id)}
+              onClick={() => {
+                localStorage.setItem('selectedClientId', client.id);
+                setSelectedClientId(client.id);
+              }}
             >
               {client.logo_url ? (
                 <img src={client.logo_url} alt={client.name} className="h-10 w-10 rounded-lg object-cover mr-3" />
