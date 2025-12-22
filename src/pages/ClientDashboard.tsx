@@ -51,7 +51,9 @@ import {
   Sparkles,
   ExternalLink,
   ShoppingBag,
-  FolderOpen
+  FolderOpen,
+  AlertTriangle,
+  FileCheck
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -423,6 +425,39 @@ export default function ClientDashboard() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Quick status change handler for client
+  const handleQuickStatusChange = async (contentId: string, newStatus: ContentStatus, notes?: string) => {
+    if (!user) return;
+    
+    const updateData: any = { status: newStatus };
+    
+    if (newStatus === 'approved') {
+      updateData.approved_at = new Date().toISOString();
+      updateData.approved_by = user.id;
+    }
+    
+    if (newStatus === 'script_approved') {
+      updateData.script_approved_at = new Date().toISOString();
+      updateData.script_approved_by = user.id;
+    }
+    
+    const { error } = await supabase
+      .from('content')
+      .update(updateData)
+      .eq('id', contentId);
+      
+    if (error) throw error;
+    
+    // Log the change as a comment
+    await supabase.from('content_comments').insert({
+      content_id: contentId,
+      user_id: user.id,
+      comment: `Estado cambiado a: ${STATUS_LABELS[newStatus]}`
+    });
+    
+    fetchClientData();
   };
 
   const getContentByStatus = (statuses: ContentStatus[]) => content.filter(c => statuses.includes(c.status));
@@ -1142,7 +1177,8 @@ export default function ClientDashboard() {
                   };
                   return stageStatuses[stageFilter]?.includes(c.status);
                 })} 
-                onSelect={setSelectedContent} 
+                onSelect={setSelectedContent}
+                onStatusChange={handleQuickStatusChange}
               />
             ) : (
               <Tabs defaultValue="all" className="w-full">
@@ -1154,16 +1190,16 @@ export default function ClientDashboard() {
                 </TabsList>
 
                 <TabsContent value="all">
-                  <ContentList items={content} onSelect={setSelectedContent} />
+                  <ContentList items={content} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} />
                 </TabsContent>
                 <TabsContent value="progress">
-                  <ContentList items={inProgressContent} onSelect={setSelectedContent} />
+                  <ContentList items={inProgressContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} />
                 </TabsContent>
                 <TabsContent value="approved">
-                  <ContentList items={approvedContent} onSelect={setSelectedContent} />
+                  <ContentList items={approvedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} />
                 </TabsContent>
                 <TabsContent value="published">
-                  <ContentList items={publishedContent} onSelect={setSelectedContent} />
+                  <ContentList items={publishedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} />
                 </TabsContent>
               </Tabs>
             )}
@@ -1569,8 +1605,105 @@ export default function ClientDashboard() {
   );
 }
 
-// Content List Component
-function ContentList({ items, onSelect }: { items: Content[]; onSelect: (c: Content) => void }) {
+// Content List Component with Quick Actions
+function ContentList({ 
+  items, 
+  onSelect, 
+  onStatusChange 
+}: { 
+  items: Content[]; 
+  onSelect: (c: Content) => void;
+  onStatusChange?: (id: string, status: ContentStatus, notes?: string) => Promise<void>;
+}) {
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleQuickAction = async (
+    e: React.MouseEvent,
+    item: Content,
+    newStatus: ContentStatus,
+    actionLabel: string
+  ) => {
+    e.stopPropagation();
+    if (!onStatusChange) return;
+    
+    setLoadingId(item.id);
+    try {
+      await onStatusChange(item.id, newStatus);
+      toast({ 
+        title: actionLabel, 
+        description: `El contenido "${item.title}" ha sido actualizado` 
+      });
+    } catch (error) {
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo actualizar el estado', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  // Determine which actions are available based on status
+  const getAvailableActions = (status: ContentStatus) => {
+    const actions: { status: ContentStatus; label: string; icon: any; color: string }[] = [];
+    
+    // Script pending can be approved
+    if (status === 'script_pending') {
+      actions.push({ 
+        status: 'script_approved', 
+        label: 'Aprobar Guión', 
+        icon: FileCheck, 
+        color: 'bg-success hover:bg-success/90 text-success-foreground' 
+      });
+    }
+    
+    // Delivered content can be approved or marked as issue
+    if (status === 'delivered') {
+      actions.push({ 
+        status: 'approved', 
+        label: 'Aprobar', 
+        icon: ThumbsUp, 
+        color: 'bg-success hover:bg-success/90 text-success-foreground' 
+      });
+      actions.push({ 
+        status: 'issue', 
+        label: 'Novedad', 
+        icon: AlertTriangle, 
+        color: 'bg-warning hover:bg-warning/90 text-warning-foreground' 
+      });
+    }
+    
+    // Issue content can be approved
+    if (status === 'issue') {
+      actions.push({ 
+        status: 'approved', 
+        label: 'Aprobar', 
+        icon: ThumbsUp, 
+        color: 'bg-success hover:bg-success/90 text-success-foreground' 
+      });
+    }
+    
+    // Review content can be approved or marked as issue
+    if (status === 'review') {
+      actions.push({ 
+        status: 'approved', 
+        label: 'Aprobar', 
+        icon: ThumbsUp, 
+        color: 'bg-success hover:bg-success/90 text-success-foreground' 
+      });
+      actions.push({ 
+        status: 'issue', 
+        label: 'Novedad', 
+        icon: AlertTriangle, 
+        color: 'bg-warning hover:bg-warning/90 text-warning-foreground' 
+      });
+    }
+    
+    return actions;
+  };
+
   if (items.length === 0) {
     return (
       <Card>
@@ -1584,26 +1717,55 @@ function ContentList({ items, onSelect }: { items: Content[]; onSelect: (c: Cont
 
   return (
     <div className="space-y-2">
-      {items.map(item => (
-        <Card key={item.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => onSelect(item)}>
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-              {item.thumbnail_url ? (
-                <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
-              ) : (
-                <Play className="h-5 w-5 text-muted-foreground" />
+      {items.map(item => {
+        const actions = getAvailableActions(item.status);
+        const isLoading = loadingId === item.id;
+        
+        return (
+          <Card key={item.id} className="hover:bg-muted/50 transition-colors">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => onSelect(item)}>
+                <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                  {item.thumbnail_url ? (
+                    <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
+                  ) : (
+                    <Play className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{item.title}</p>
+                  <p className="text-xs text-muted-foreground">{item.creator?.full_name || 'Sin creador'}</p>
+                </div>
+                <Badge className={STATUS_COLORS[item.status]} variant="secondary">
+                  {STATUS_LABELS[item.status]}
+                </Badge>
+              </div>
+              
+              {/* Quick action buttons */}
+              {actions.length > 0 && onStatusChange && (
+                <div className="flex gap-2 mt-3 pt-3 border-t border-border/50">
+                  {actions.map(action => (
+                    <Button
+                      key={action.status}
+                      size="sm"
+                      className={cn("flex-1 h-8 text-xs", action.color)}
+                      onClick={(e) => handleQuickAction(e, item, action.status, action.label)}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <action.icon className="h-3 w-3 mr-1" />
+                      )}
+                      {action.label}
+                    </Button>
+                  ))}
+                </div>
               )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{item.title}</p>
-              <p className="text-xs text-muted-foreground">{item.creator?.full_name || 'Sin creador'}</p>
-            </div>
-            <Badge className={STATUS_COLORS[item.status]} variant="secondary">
-              {STATUS_LABELS[item.status]}
-            </Badge>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
