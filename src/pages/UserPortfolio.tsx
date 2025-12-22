@@ -125,11 +125,14 @@ export default function UserPortfolio() {
     if (id) {
       fetchData();
     }
-  }, [id]);
+  }, [id, user?.id]);
 
   const fetchData = async () => {
     if (!id) return;
     setLoading(true);
+
+    // Check if current user is viewing their own profile
+    const isViewingOwnProfile = user?.id === id;
 
     try {
       // First, try to find as a user profile
@@ -157,13 +160,19 @@ export default function UserPortfolio() {
         setUserRoles(roles);
         
         // Fetch content where user is creator
-        const { data: creatorContent } = await supabase
+        // If viewing own profile, show all content; otherwise only published
+        let creatorContentQuery = supabase
           .from('content')
           .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
-          .eq('is_published', true)
           .eq('creator_id', id)
           .or('video_url.not.is.null,video_urls.not.is.null')
           .order('created_at', { ascending: false });
+        
+        if (!isViewingOwnProfile) {
+          creatorContentQuery = creatorContentQuery.eq('is_published', true);
+        }
+        
+        const { data: creatorContent } = await creatorContentQuery;
 
         // Fetch content where user is a collaborator
         const { data: collabData } = await supabase
@@ -175,13 +184,18 @@ export default function UserPortfolio() {
         
         let collabContent: any[] = [];
         if (collabContentIds.length > 0) {
-          const { data: collabContentData } = await supabase
+          let collabQuery = supabase
             .from('content')
             .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
-            .eq('is_published', true)
             .in('id', collabContentIds)
             .or('video_url.not.is.null,video_urls.not.is.null')
             .order('created_at', { ascending: false });
+          
+          if (!isViewingOwnProfile) {
+            collabQuery = collabQuery.eq('is_published', true);
+          }
+          
+          const { data: collabContentData } = await collabQuery;
           collabContent = collabContentData || [];
         }
 
