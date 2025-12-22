@@ -462,6 +462,30 @@ export default function ClientDashboard() {
   // Saldo = Lo que pagó - Valor de videos aprobados
   const clientBalance = totalInvested - approvedVideosValue;
   
+  // Overall Progress - calculate based on content workflow stages
+  const getContentProgress = (status: ContentStatus): number => {
+    const progressMap: Record<ContentStatus, number> = {
+      'draft': 10,
+      'script_pending': 20,
+      'script_approved': 30,
+      'assigned': 40,
+      'recording': 50,
+      'recorded': 60,
+      'editing': 70,
+      'review': 80,
+      'delivered': 90,
+      'approved': 100,
+      'paid': 100,
+      'rejected': 50,
+      'issue': 80
+    };
+    return progressMap[status] || 0;
+  };
+  
+  const overallProgress = content.length > 0 
+    ? Math.round(content.reduce((sum, c) => sum + getContentProgress(c.status), 0) / content.length)
+    : 0;
+
   // Engagement Metrics
   const totalViews = content.reduce((sum, c) => sum + (c.views_count || 0), 0);
   const totalLikes = content.reduce((sum, c) => sum + (c.likes_count || 0), 0);
@@ -609,6 +633,37 @@ export default function ClientDashboard() {
                 color="destructive"
               />
             </div>
+
+            {/* Overall Progress Bar */}
+            <Card className="border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Target className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Progreso General</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {content.length} contenidos en proceso
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-3xl font-bold text-primary">{overallProgress}%</span>
+                    <p className="text-xs text-muted-foreground">completado</p>
+                  </div>
+                </div>
+                <Progress value={overallProgress} className="h-3" />
+                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                  <span>Inicio</span>
+                  <span>Guión</span>
+                  <span>Grabación</span>
+                  <span>Edición</span>
+                  <span>Entrega</span>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Charts Row */}
             <div className="grid md:grid-cols-2 gap-4">
