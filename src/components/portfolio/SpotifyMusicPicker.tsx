@@ -65,6 +65,15 @@ export function SpotifyMusicPicker({
 
       if (error) throw error;
       setTracks(data?.tracks || []);
+
+      // Optional: show a lightweight hint in console for debugging
+      if (import.meta.env.DEV) {
+        console.log(
+          `[SpotifyMusicPicker] total=${data?.totalCount ?? "?"} returned=${
+            (data?.tracks || []).length
+          } skipped=${data?.skippedCount ?? "?"}`
+        );
+      }
     } catch (error) {
       console.error("Error searching Spotify:", error);
       setTracks([]);
