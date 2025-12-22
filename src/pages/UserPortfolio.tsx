@@ -242,7 +242,8 @@ export default function UserPortfolio() {
         // Check if current user follows this profile
         const { data: followingData } = await supabase.rpc('is_following', { _following_id: id });
         setIsFollowing(followingData === true);
-        // Try as a client
+      } else {
+        // Try as a client only if user profile was not found
         const { data: clientData } = await supabase
           .from('clients')
           .select('id, name, logo_url, notes')
@@ -252,6 +253,8 @@ export default function UserPortfolio() {
         if (clientData) {
           setClientInfo(clientData);
           setProfileType('client');
+
+          const storedViewerId = localStorage.getItem('portfolio_viewer_id') || '';
 
           // For clients, show approved/delivered content (not just is_published)
           const { data: clientContentData } = await supabase
