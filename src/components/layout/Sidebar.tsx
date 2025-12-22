@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   LayoutDashboard, 
   Video, 
@@ -11,12 +12,14 @@ import {
   UsersRound,
   LogOut,
   Kanban,
-  User
+  User,
+  RefreshCw
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 
 interface NavItem {
   name: string;
@@ -82,6 +85,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, user, isAdmin, isEditor, isCreator, isStrategist, isClient } = useAuth();
+  const [showClientSelector, setShowClientSelector] = useState(false);
 
   // Determinar navegación según rol (prioridad: admin > strategist > editor > creator > client)
   const navigation = isAdmin 
@@ -169,6 +173,22 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               {profile.email}
             </div>
           )}
+
+          {/* Client company switcher */}
+          {isClient && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowClientSelector(true)}
+              className={cn(
+                "w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                collapsed && "px-2"
+              )}
+            >
+              <RefreshCw className="h-4 w-4" />
+              {!collapsed && <span className="ml-2">Cambiar Empresa</span>}
+            </Button>
+          )}
           
           <Button
             variant="ghost"
@@ -203,6 +223,17 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           </Button>
         </div>
       </div>
+
+      {/* Client Selector Dialog */}
+      <ClientSelectorDialog
+        open={showClientSelector}
+        onOpenChange={setShowClientSelector}
+        onSelectClient={(clientId) => {
+          // Store selected client and refresh
+          localStorage.setItem('selectedClientId', clientId);
+          window.location.reload();
+        }}
+      />
     </aside>
   );
 }
