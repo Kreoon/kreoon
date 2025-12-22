@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { SmartSearch } from '@/components/portfolio/SmartSearch';
+import { PortfolioHeader } from '@/components/portfolio/PortfolioHeader';
 import { 
   Play, 
   Loader2, 
@@ -14,8 +14,6 @@ import {
   Heart,
   Plus,
   Pencil,
-  Home,
-  ArrowLeft,
   MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -91,12 +89,12 @@ interface ClientInfo {
 type ProfileType = 'user' | 'client';
 
 export default function UserPortfolio() {
-  const { id } = useParams<{ id: string }>();
+  const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const isMobile = useIsMobile();
-  const isOwner = user?.id === id;
   
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
   const [profileType, setProfileType] = useState<ProfileType>('user');
@@ -123,13 +121,46 @@ export default function UserPortfolio() {
     return newId;
   });
 
+  const isOwner = user?.id === resolvedUserId;
+
+  // Resolve username or UUID to user id
   useEffect(() => {
-    if (id) {
+    const resolveUser = async () => {
+      if (!paramId) return;
+      
+      // Check if it's a UUID format
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(paramId);
+      
+      if (isUuid) {
+        setResolvedUserId(paramId);
+      } else {
+        // It's a username, resolve it
+        const { data } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', paramId)
+          .maybeSingle();
+        
+        if (data) {
+          setResolvedUserId(data.id);
+        } else {
+          setResolvedUserId(null);
+          setLoading(false);
+        }
+      }
+    };
+    
+    resolveUser();
+  }, [paramId]);
+
+  useEffect(() => {
+    if (resolvedUserId) {
       fetchData();
     }
-  }, [id, user?.id]);
+  }, [resolvedUserId, user?.id]);
 
   const fetchData = async () => {
+    const id = resolvedUserId;
     if (!id) return;
     setLoading(true);
 
@@ -633,25 +664,10 @@ export default function UserPortfolio() {
 
   return (
     <div className="min-h-screen bg-black">
+      {/* Portfolio Header */}
+      <PortfolioHeader />
+      
       <div className="max-w-4xl mx-auto">
-        {/* Navigation Header */}
-        <div className="flex items-center justify-between px-4 pt-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="text-sm">Volver</span>
-          </button>
-          <button
-            onClick={() => navigate('/portfolio')}
-            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
-          >
-            <Home className="h-5 w-5" />
-            <span className="text-sm">Portfolio</span>
-          </button>
-        </div>
-
         {/* Stories Row */}
         {(stories.length > 0 || isOwner) && profileType === 'user' && (
           <div className="px-4 pt-4 pb-2 overflow-x-auto">
@@ -805,14 +821,6 @@ export default function UserPortfolio() {
 
         {/* Content Divider */}
         <div className="border-t border-white/10 mt-4" />
-
-        {/* Smart Search Bar */}
-        <div className="px-4 pt-4">
-          <SmartSearch 
-            className="max-w-md mx-auto md:mx-0"
-            placeholder="Buscar usuarios, videos, marcas..."
-          />
-        </div>
 
         {/* Unified Content Grid - Mixed Videos and Photos */}
         <div className="px-4 py-6">
