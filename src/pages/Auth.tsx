@@ -158,7 +158,10 @@ export default function Auth() {
   };
 
   const redirectByRole = () => {
-    if (roles.includes('admin')) {
+    if (roles.length === 0) {
+      // No roles assigned yet - redirect to pending access
+      navigate('/pending-access');
+    } else if (roles.includes('admin')) {
       navigate('/');
     } else if (roles.includes('creator')) {
       navigate('/creator-dashboard');
@@ -166,8 +169,10 @@ export default function Auth() {
       navigate('/editor-dashboard');
     } else if (roles.includes('client')) {
       navigate('/client-dashboard');
+    } else if (roles.includes('strategist')) {
+      navigate('/strategist-dashboard');
     } else {
-      navigate('/settings');
+      navigate('/pending-access');
     }
   };
 
