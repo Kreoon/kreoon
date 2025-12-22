@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { Star, Sparkles } from 'lucide-react';
 
 interface VipBadgeProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   variant?: 'default' | 'glow' | 'minimal';
   className?: string;
 }
@@ -13,12 +13,14 @@ export function VipBadge({
   className 
 }: VipBadgeProps) {
   const sizeClasses = {
+    xs: 'px-1.5 py-0.5 text-[10px] gap-0.5',
     sm: 'px-2 py-0.5 text-xs gap-1',
     md: 'px-3 py-1.5 text-sm gap-1.5',
     lg: 'px-4 py-2 text-base gap-2',
   };
 
   const iconSizes = {
+    xs: 'w-2.5 h-2.5',
     sm: 'w-3 h-3',
     md: 'w-4 h-4',
     lg: 'w-5 h-5',

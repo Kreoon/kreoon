@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye } from "lucide-react";
+import { VipBadge } from "@/components/ui/vip-badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +53,8 @@ interface Client {
   active_projects: number;
   user_id: string | null;
   users_count: number;
+  is_vip: boolean;
+  username: string | null;
 }
 
 interface ClientUser {
@@ -183,7 +186,9 @@ const Clients = () => {
         content_count: countMap.get(c.id)?.total || 0,
         active_projects: countMap.get(c.id)?.active || 0,
         user_id: c.user_id,
-        users_count: usersCountMap.get(c.id) || 0
+        users_count: usersCountMap.get(c.id) || 0,
+        is_vip: c.is_vip ?? false,
+        username: c.username
       }));
 
       setClients(clientsList);
@@ -445,7 +450,10 @@ const Clients = () => {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-card-foreground truncate">{client.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-card-foreground truncate">{client.name}</h3>
+                          {client.is_vip && <VipBadge size="xs" variant="minimal" />}
+                        </div>
                         {client.contact_email && (
                           <p className="text-xs text-muted-foreground truncate">{client.contact_email}</p>
                         )}
