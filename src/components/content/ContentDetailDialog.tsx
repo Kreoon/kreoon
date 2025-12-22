@@ -999,9 +999,20 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
             {/* Section 3: Script Editor/Viewer */}
             <div className="space-y-3 pt-6 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <FileText className="h-4 w-4" /> Guión
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4" /> Guión
+                </h4>
+                
+                {/* Script Approval Status Badge */}
+                {content.script_approved_at && (
+                  <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Aprobado {format(new Date(content.script_approved_at), "d MMM, HH:mm", { locale: es })}
+                  </Badge>
+                )}
+              </div>
+              
               {editMode && canEditVideoTab ? (
                 <RichTextEditor
                   content={formData.script || ''}
@@ -1014,6 +1025,62 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   content={content.script || ''} 
                   className="min-h-[100px] max-h-[400px] overflow-y-auto"
                 />
+              )}
+              
+              {/* Script Approval Checkbox - Only for Clients */}
+              {isClient && content.script && !content.script_approved_at && (
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-success/5 to-success/10 mt-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-success/10">
+                      <CheckCircle className="h-4 w-4 text-success" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Aprobar Guión</p>
+                      <p className="text-xs text-muted-foreground">
+                        Al aprobar, el contenido pasará automáticamente al estado "Guión Aprobado"
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-success hover:bg-success/90"
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const { error } = await supabase
+                          .from('content')
+                          .update({ 
+                            script_approved_at: new Date().toISOString(),
+                            script_approved_by: user?.id 
+                          })
+                          .eq('id', content.id);
+                        if (error) throw error;
+                        toast({ 
+                          title: "Guión aprobado", 
+                          description: "El contenido ahora está en estado 'Guión Aprobado'" 
+                        });
+                        onUpdate?.();
+                      } catch (error) {
+                        toast({ title: "Error al aprobar guión", variant: "destructive" });
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    disabled={loading}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Aprobar
+                  </Button>
+                </div>
+              )}
+              
+              {/* Already approved message for clients */}
+              {isClient && content.script_approved_at && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Guión aprobado el {format(new Date(content.script_approved_at), "d 'de' MMMM, yyyy 'a las' HH:mm", { locale: es })}</span>
+                </div>
               )}
             </div>
 
