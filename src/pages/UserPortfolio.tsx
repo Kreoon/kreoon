@@ -97,9 +97,12 @@ type ProfileType = 'user' | 'client';
 export default function UserPortfolio() {
   const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const isMobile = useIsMobile();
   const { hasUnseenStories, markMultipleAsSeen } = useSeenStories();
+  
+  // Check if current user is a client trying to access their own profile
+  const isClientUser = roles.includes('client');
   
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -142,6 +145,33 @@ export default function UserPortfolio() {
   });
 
   const isOwner = user?.id === resolvedUserId;
+  
+  // Client users trying to access their own profile should be redirected to their company
+  useEffect(() => {
+    const redirectClientToCompany = async () => {
+      if (isClientUser && user && resolvedUserId === user.id) {
+        // Get the client's associated company
+        const { data: clientAssoc } = await supabase
+          .from('client_users')
+          .select('client_id, clients(username)')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+        
+        if (clientAssoc?.client_id) {
+          const companyUsername = (clientAssoc as any).clients?.username;
+          const path = companyUsername 
+            ? `/empresa/@${companyUsername}` 
+            : `/empresa/${clientAssoc.client_id}`;
+          navigate(path, { replace: true });
+        }
+      }
+    };
+    
+    if (resolvedUserId && user) {
+      redirectClientToCompany();
+    }
+  }, [resolvedUserId, user, isClientUser, navigate]);
 
   // Resolve username or UUID to user id
   useEffect(() => {

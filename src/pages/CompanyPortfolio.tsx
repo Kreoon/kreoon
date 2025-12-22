@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { PortfolioHeader } from '@/components/portfolio/PortfolioHeader';
+import { CompanyProfileEditor } from '@/components/portfolio/CompanyProfileEditor';
 import { 
   Play, 
   Loader2, 
@@ -14,7 +15,8 @@ import {
   Heart,
   Globe,
   Instagram,
-  ExternalLink
+  ExternalLink,
+  Pencil
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -77,6 +79,7 @@ export default function CompanyPortfolio() {
   const [initialVideoIndex, setInitialVideoIndex] = useState(0);
   const [isAssociatedUser, setIsAssociatedUser] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'products'>('content');
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -386,6 +389,19 @@ export default function CompanyPortfolio() {
             <p className="text-sm text-muted-foreground">@{company.username}</p>
           )}
           
+          {/* Edit button for associated users */}
+          {isAssociatedUser && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => setShowProfileEditor(true)}
+            >
+              <Pencil className="w-4 h-4 mr-2" />
+              Editar perfil
+            </Button>
+          )}
+          
           {company.bio && (
             <div className="mt-3 text-sm text-muted-foreground max-w-md">
               <ParsedText text={company.bio} />
@@ -574,6 +590,25 @@ export default function CompanyPortfolio() {
           </div>
         )}
       </div>
+      
+      {/* Profile Editor Dialog */}
+      {company && (
+        <CompanyProfileEditor
+          companyId={company.id}
+          currentName={company.name}
+          currentBio={company.bio}
+          currentLogo={company.logo_url}
+          currentUsername={company.username}
+          currentIsPublic={company.is_public}
+          currentInstagram={company.instagram}
+          currentTiktok={company.tiktok}
+          currentFacebook={company.facebook}
+          currentPortfolioUrl={company.portfolio_url}
+          open={showProfileEditor}
+          onOpenChange={setShowProfileEditor}
+          onSave={fetchData}
+        />
+      )}
     </div>
   );
 }
