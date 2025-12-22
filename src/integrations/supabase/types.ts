@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           content_id: string | null
@@ -1373,6 +1412,7 @@ export type Database = {
       }
       check_perfect_streak: { Args: { _user_id: string }; Returns: boolean }
       cleanup_expired_stories: { Args: never; Returns: undefined }
+      cleanup_old_audit_logs: { Args: never; Returns: undefined }
       create_chat_conversation: {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
         Returns: string
@@ -1422,6 +1462,17 @@ export type Database = {
         Returns: boolean
       }
       is_following: { Args: { _following_id: string }; Returns: boolean }
+      log_activity: {
+        Args: {
+          _action: string
+          _details?: Json
+          _entity_id?: string
+          _entity_name?: string
+          _entity_type: string
+          _user_id: string
+        }
+        Returns: string
+      }
       toggle_content_like: {
         Args: { content_uuid: string; viewer: string }
         Returns: boolean
