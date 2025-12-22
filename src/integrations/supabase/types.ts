@@ -1298,6 +1298,7 @@ export type Database = {
         | "recorded"
         | "delivered"
         | "issue"
+        | "corrected"
       currency_type: "COP" | "USD"
       subscription_plan: "free" | "basic" | "pro"
       subscription_status: "active" | "cancelled" | "expired" | "pending"
@@ -1450,6 +1451,7 @@ export const Constants = {
         "recorded",
         "delivered",
         "issue",
+        "corrected",
       ],
       currency_type: ["COP", "USD"],
       subscription_plan: ["free", "basic", "pro"],

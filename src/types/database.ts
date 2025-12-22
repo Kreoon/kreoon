@@ -10,6 +10,7 @@ export type ContentStatus =
   | 'editing'         // En Edición
   | 'delivered'       // Entregado
   | 'issue'           // Novedad
+  | 'corrected'       // Corregido
   | 'review'          // En Revisión (legacy)
   | 'approved'        // Aprobado
   | 'rejected'        // Rechazado (legacy)
@@ -193,6 +194,7 @@ export const STATUS_LABELS: Record<ContentStatus, string> = {
   editing: 'En Edición',
   delivered: 'Entregado',
   issue: 'Novedad',
+  corrected: 'Corregido',
   review: 'En Revisión',
   approved: 'Aprobado',
   rejected: 'Rechazado',
@@ -210,6 +212,7 @@ export const STATUS_COLORS: Record<ContentStatus, string> = {
   editing: 'bg-pink-500/10 text-pink-500',
   delivered: 'bg-emerald-500/10 text-emerald-500',
   issue: 'bg-destructive/10 text-destructive',
+  corrected: 'bg-blue-500/10 text-blue-500',
   review: 'bg-yellow-500/10 text-yellow-500',
   approved: 'bg-success/10 text-success',
   rejected: 'bg-destructive/10 text-destructive',
@@ -238,6 +241,7 @@ export const STATUS_ORDER: ContentStatus[] = [
   'editing',
   'delivered',
   'issue',
+  'corrected',
   'approved',
   'paid'
 ];
@@ -258,5 +262,6 @@ export const KANBAN_COLUMNS: KanbanColumnDef[] = [
   { status: 'editing', title: 'En Edición', color: 'bg-pink-500' },
   { status: 'delivered', title: 'Entregado', color: 'bg-emerald-500' },
   { status: 'issue', title: 'Novedad', color: 'bg-destructive' },
+  { status: 'corrected', title: 'Corregido', color: 'bg-blue-500' },
   { status: 'approved', title: 'Aprobado', color: 'bg-success' }
 ];
