@@ -26,6 +26,7 @@ import Ranking from "./pages/Ranking";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import NoCompany from "./pages/NoCompany";
+import CompanyPortfolio from "./pages/CompanyPortfolio";
 import { MainLayout } from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient({
@@ -65,6 +66,8 @@ function AppContent() {
             <Route path="/portfolio/:clientId" element={<ClientPortfolio />} />
             <Route path="/p/:id" element={<UserPortfolio />} />
             <Route path="/@:id" element={<UserPortfolio />} />
+            <Route path="/empresa/:id" element={<CompanyPortfolio />} />
+            <Route path="/empresa/@:id" element={<CompanyPortfolio />} />
             <Route path="/profile" element={<ProfileRedirect />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/no-company" element={<NoCompany />} />
