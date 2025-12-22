@@ -225,6 +225,7 @@ export default function ClientDashboard() {
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [stageFilter, setStageFilter] = useState<string | null>(null);
   
   // Edit company state
   const [isEditingCompany, setIsEditingCompany] = useState(false);
@@ -655,12 +656,40 @@ export default function ClientDashboard() {
                   </div>
                 </div>
                 <Progress value={overallProgress} className="h-3" />
-                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                  <span>Inicio</span>
-                  <span>Guión</span>
-                  <span>Grabación</span>
-                  <span>Edición</span>
-                  <span>Entrega</span>
+                <div className="flex justify-between mt-3">
+                  {[
+                    { id: 'inicio', label: 'Inicio', statuses: ['draft', 'script_pending'], count: content.filter(c => ['draft', 'script_pending'].includes(c.status)).length },
+                    { id: 'guion', label: 'Guión', statuses: ['script_approved', 'assigned'], count: content.filter(c => ['script_approved', 'assigned'].includes(c.status)).length },
+                    { id: 'grabacion', label: 'Grabación', statuses: ['recording', 'recorded'], count: content.filter(c => ['recording', 'recorded'].includes(c.status)).length },
+                    { id: 'edicion', label: 'Edición', statuses: ['editing', 'review'], count: content.filter(c => ['editing', 'review'].includes(c.status)).length },
+                    { id: 'entrega', label: 'Entrega', statuses: ['delivered', 'approved', 'paid'], count: content.filter(c => ['delivered', 'approved', 'paid'].includes(c.status)).length },
+                  ].map((stage) => (
+                    <button
+                      key={stage.id}
+                      onClick={() => {
+                        if (stage.count > 0) {
+                          setStageFilter(stageFilter === stage.id ? null : stage.id);
+                          setActiveTab('content');
+                        }
+                      }}
+                      disabled={stage.count === 0}
+                      className={cn(
+                        "flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-all text-xs",
+                        stage.count > 0 && "hover:bg-primary/10 cursor-pointer",
+                        stage.count === 0 && "opacity-50 cursor-not-allowed",
+                        stageFilter === stage.id && "bg-primary/20 text-primary font-medium"
+                      )}
+                    >
+                      <span className={stageFilter === stage.id ? "text-primary" : "text-muted-foreground"}>
+                        {stage.label}
+                      </span>
+                      {stage.count > 0 && (
+                        <Badge variant={stageFilter === stage.id ? "default" : "secondary"} className="h-5 text-[10px]">
+                          {stage.count}
+                        </Badge>
+                      )}
+                    </button>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -1067,32 +1096,77 @@ export default function ClientDashboard() {
         {/* Content Tab */}
         {activeTab === 'content' && (
           <div className="space-y-4">
-            <div>
-              <h2 className="text-lg font-bold mb-1">Todo el Contenido</h2>
-              <p className="text-sm text-muted-foreground">{content.length} videos en total</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold mb-1">
+                  {stageFilter ? `Contenido: ${
+                    stageFilter === 'inicio' ? 'Inicio' :
+                    stageFilter === 'guion' ? 'Guión' :
+                    stageFilter === 'grabacion' ? 'Grabación' :
+                    stageFilter === 'edicion' ? 'Edición' : 'Entrega'
+                  }` : 'Todo el Contenido'}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {stageFilter 
+                    ? `${content.filter(c => {
+                        const stageStatuses: Record<string, string[]> = {
+                          inicio: ['draft', 'script_pending'],
+                          guion: ['script_approved', 'assigned'],
+                          grabacion: ['recording', 'recorded'],
+                          edicion: ['editing', 'review'],
+                          entrega: ['delivered', 'approved', 'paid']
+                        };
+                        return stageStatuses[stageFilter]?.includes(c.status);
+                      }).length} videos en esta etapa`
+                    : `${content.length} videos en total`
+                  }
+                </p>
+              </div>
+              {stageFilter && (
+                <Button variant="outline" size="sm" onClick={() => setStageFilter(null)}>
+                  <X className="h-4 w-4 mr-1" />
+                  Limpiar filtro
+                </Button>
+              )}
             </div>
 
-            <Tabs defaultValue="all" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-4">
-                <TabsTrigger value="all" className="text-xs">Todos</TabsTrigger>
-                <TabsTrigger value="progress" className="text-xs">Progreso</TabsTrigger>
-                <TabsTrigger value="approved" className="text-xs">Aprobados</TabsTrigger>
-                <TabsTrigger value="published" className="text-xs">Publicados</TabsTrigger>
-              </TabsList>
+            {stageFilter ? (
+              <ContentList 
+                items={content.filter(c => {
+                  const stageStatuses: Record<string, string[]> = {
+                    inicio: ['draft', 'script_pending'],
+                    guion: ['script_approved', 'assigned'],
+                    grabacion: ['recording', 'recorded'],
+                    edicion: ['editing', 'review'],
+                    entrega: ['delivered', 'approved', 'paid']
+                  };
+                  return stageStatuses[stageFilter]?.includes(c.status);
+                })} 
+                onSelect={setSelectedContent} 
+              />
+            ) : (
+              <Tabs defaultValue="all" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 mb-4">
+                  <TabsTrigger value="all" className="text-xs">Todos</TabsTrigger>
+                  <TabsTrigger value="progress" className="text-xs">Progreso</TabsTrigger>
+                  <TabsTrigger value="approved" className="text-xs">Aprobados</TabsTrigger>
+                  <TabsTrigger value="published" className="text-xs">Publicados</TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="all">
-                <ContentList items={content} onSelect={setSelectedContent} />
-              </TabsContent>
-              <TabsContent value="progress">
-                <ContentList items={inProgressContent} onSelect={setSelectedContent} />
-              </TabsContent>
-              <TabsContent value="approved">
-                <ContentList items={approvedContent} onSelect={setSelectedContent} />
-              </TabsContent>
-              <TabsContent value="published">
-                <ContentList items={publishedContent} onSelect={setSelectedContent} />
-              </TabsContent>
-            </Tabs>
+                <TabsContent value="all">
+                  <ContentList items={content} onSelect={setSelectedContent} />
+                </TabsContent>
+                <TabsContent value="progress">
+                  <ContentList items={inProgressContent} onSelect={setSelectedContent} />
+                </TabsContent>
+                <TabsContent value="approved">
+                  <ContentList items={approvedContent} onSelect={setSelectedContent} />
+                </TabsContent>
+                <TabsContent value="published">
+                  <ContentList items={publishedContent} onSelect={setSelectedContent} />
+                </TabsContent>
+              </Tabs>
+            )}
           </div>
         )}
 
