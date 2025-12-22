@@ -9,6 +9,7 @@ export interface ChatMessage {
   sender_id: string;
   content: string;
   created_at: string;
+  read_at?: string | null;
   sender?: {
     full_name: string;
     avatar_url: string | null;
@@ -52,7 +53,22 @@ export function useChat() {
   const [availableUsers, setAvailableUsers] = useState<ChatUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
 
+  // Fetch user roles
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchRoles = async () => {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      setUserRoles(data?.map(r => r.role) || []);
+    };
+    fetchRoles();
+  }, [user?.id]);
+
+  const isAdmin = userRoles.includes('admin');
   // Fetch all conversations for the current user
   const fetchConversations = useCallback(async () => {
     if (!user?.id) return;
@@ -322,6 +338,92 @@ export function useChat() {
     }
   }, [activeConversation, fetchMessages]);
 
+  // Delete a conversation (admin only)
+  const deleteConversation = useCallback(async (conversationId: string) => {
+    if (!isAdmin) {
+      toast({
+        title: 'Error',
+        description: 'No tienes permisos para eliminar conversaciones',
+        variant: 'destructive'
+      });
+      return false;
+    }
+
+    try {
+      // Delete messages first
+      await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('conversation_id', conversationId);
+
+      // Delete participants
+      await supabase
+        .from('chat_participants')
+        .delete()
+        .eq('conversation_id', conversationId);
+
+      // Delete conversation
+      const { error } = await supabase
+        .from('chat_conversations')
+        .delete()
+        .eq('id', conversationId);
+
+      if (error) throw error;
+
+      // Refresh conversations
+      await fetchConversations();
+      
+      if (activeConversation?.id === conversationId) {
+        setActiveConversation(null);
+      }
+
+      toast({
+        title: 'Conversación eliminada',
+        description: 'La conversación se ha eliminado correctamente'
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo eliminar la conversación',
+        variant: 'destructive'
+      });
+      return false;
+    }
+  }, [isAdmin, activeConversation, fetchConversations, toast]);
+
+  // Subscribe to read receipt updates
+  useEffect(() => {
+    if (!activeConversation) return;
+
+    const channel = supabase
+      .channel(`read-receipts-${activeConversation.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `conversation_id=eq.${activeConversation.id}`
+        },
+        (payload) => {
+          const updatedMessage = payload.new as ChatMessage;
+          setMessages(prev => prev.map(msg => 
+            msg.id === updatedMessage.id 
+              ? { ...msg, read_at: updatedMessage.read_at }
+              : msg
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeConversation]);
+
   return {
     conversations,
     activeConversation,
@@ -333,6 +435,8 @@ export function useChat() {
     sendMessage,
     startConversation,
     fetchConversations,
-    fetchAvailableUsers
+    fetchAvailableUsers,
+    deleteConversation,
+    isAdmin
   };
 }

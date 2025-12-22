@@ -8,6 +8,17 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { 
   MessageCircle, 
   Send, 
   X, 
@@ -17,7 +28,10 @@ import {
   Users,
   User,
   Circle,
-  Loader2
+  Loader2,
+  Trash2,
+  Check,
+  CheckCheck
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -40,7 +54,9 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
     loading,
     loadingMessages,
     sendMessage,
-    startConversation
+    startConversation,
+    deleteConversation,
+    isAdmin
   } = useChat();
 
   // Notify parent when active conversation changes
@@ -138,6 +154,35 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
               <Plus className="h-4 w-4" />
             </Button>
           )}
+          {view === 'chat' && isAdmin && activeConversation && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar conversación?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción eliminará permanentemente la conversación y todos sus mensajes. Esta acción no se puede deshacer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      await deleteConversation(activeConversation.id);
+                      setView('list');
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
@@ -167,34 +212,69 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
                 {conversations.map(conv => (
                   <div
                     key={conv.id}
-                    onClick={() => {
-                      setActiveConversation(conv);
-                      setView('chat');
-                    }}
-                    className="p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                    className="p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
                   >
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={getConversationAvatar(conv) || ''} />
-                        <AvatarFallback>
-                          {conv.is_group ? <Users className="h-4 w-4" /> : <User className="h-4 w-4" />}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-sm truncate">{getConversationName(conv)}</p>
+                      <div 
+                        className="flex-1 flex items-center gap-3"
+                        onClick={() => {
+                          setActiveConversation(conv);
+                          setView('chat');
+                        }}
+                      >
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={getConversationAvatar(conv) || ''} />
+                          <AvatarFallback>
+                            {conv.is_group ? <Users className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-sm truncate">{getConversationName(conv)}</p>
+                            {conv.last_message && (
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(conv.last_message.created_at), 'HH:mm', { locale: es })}
+                              </span>
+                            )}
+                          </div>
                           {conv.last_message && (
-                            <span className="text-xs text-muted-foreground">
-                              {format(new Date(conv.last_message.created_at), 'HH:mm', { locale: es })}
-                            </span>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {conv.last_message.content}
+                            </p>
                           )}
                         </div>
-                        {conv.last_message && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {conv.last_message.content}
-                          </p>
-                        )}
                       </div>
+                      {isAdmin && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="opacity-0 group-hover:opacity-100 h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Eliminar conversación?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción eliminará permanentemente la conversación y todos sus mensajes.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteConversation(conv.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -246,12 +326,29 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
                             <p className="text-xs font-medium mb-1">{msg.sender?.full_name}</p>
                           )}
                           <p className="text-sm">{msg.content}</p>
-                          <p className={cn(
-                            'text-xs mt-1',
-                            isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                          <div className={cn(
+                            'flex items-center gap-1 mt-1',
+                            isOwn ? 'justify-end' : 'justify-start'
                           )}>
-                            {format(new Date(msg.created_at), 'HH:mm', { locale: es })}
-                          </p>
+                            <span className={cn(
+                              'text-xs',
+                              isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                            )}>
+                              {format(new Date(msg.created_at), 'HH:mm', { locale: es })}
+                            </span>
+                            {isOwn && (
+                              <span className={cn(
+                                'flex items-center',
+                                msg.read_at ? 'text-blue-400' : 'text-primary-foreground/50'
+                              )}>
+                                {msg.read_at ? (
+                                  <CheckCheck className="h-3 w-3" />
+                                ) : (
+                                  <Check className="h-3 w-3" />
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
