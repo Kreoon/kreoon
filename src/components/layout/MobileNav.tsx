@@ -12,7 +12,8 @@ import {
   Scissors,
   Star,
   Package,
-  Kanban
+  Kanban,
+  RefreshCw
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 
 const adminNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -66,6 +68,7 @@ const clientNavigation = [
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const [showClientSelector, setShowClientSelector] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, isAdmin, isCreator, isEditor, isClient, isStrategist, roles } = useAuth();
@@ -172,8 +175,22 @@ export function MobileNav() {
             })}
           </nav>
 
-          {/* Sign Out */}
-          <div className="border-t border-sidebar-border p-3">
+          {/* Client Company Switcher & Sign Out */}
+          <div className="border-t border-sidebar-border p-3 space-y-2">
+            {isClient && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setOpen(false);
+                  setShowClientSelector(true);
+                }}
+                className="w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground justify-start py-3"
+              >
+                <RefreshCw className="h-5 w-5 mr-3" />
+                Cambiar Empresa
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -186,6 +203,16 @@ export function MobileNav() {
           </div>
         </div>
       </SheetContent>
+
+      {/* Client Selector Dialog */}
+      <ClientSelectorDialog
+        open={showClientSelector}
+        onOpenChange={setShowClientSelector}
+        onSelectClient={(clientId) => {
+          localStorage.setItem('selectedClientId', clientId);
+          window.location.reload();
+        }}
+      />
     </Sheet>
   );
 }
