@@ -13,7 +13,8 @@ import {
   Star,
   Package,
   Kanban,
-  RefreshCw
+  RefreshCw,
+  User
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ const strategistNavigation = [
 
 const creatorNavigation = [
   { name: "Mi Panel", href: "/creator-dashboard", icon: LayoutDashboard },
+  { name: "Mi Perfil", href: "/profile", icon: User, isDynamic: true },
   { name: "Tablero", href: "/board", icon: Kanban },
   { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
@@ -200,11 +202,14 @@ export function MobileNav() {
           {/* Navigation */}
           <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
             {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
+              const href = (item as any).isDynamic && user?.id 
+                ? `/p/${user.id}` 
+                : item.href;
+              const isActive = location.pathname === href;
               return (
                 <NavLink
                   key={item.name}
-                  to={item.href}
+                  to={href}
                   onClick={() => setOpen(false)}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200",
