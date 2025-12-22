@@ -11,6 +11,9 @@ import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { ContentDetailDialog } from '@/components/content/ContentDetailDialog';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
+import { UPWidget } from '@/components/points/UPWidget';
+import { Leaderboard } from '@/components/points/Leaderboard';
+import { PointsHistory } from '@/components/points/PointsHistory';
 import { 
   Video, 
   Clock, 
@@ -206,24 +209,31 @@ export default function CreatorDashboard() {
           />
         </div>
 
-        {/* Progress Card */}
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-sm">Progreso General</h3>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {completedCount} de {totalAssigned} completados
-              </span>
+        {/* UGC Points Widget */}
+        {user && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <UPWidget userId={user.id} />
+            <div className="lg:col-span-2">
+              <Card className="border-border/50 h-full">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                      <h3 className="font-semibold text-sm">Progreso General</h3>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {completedCount} de {totalAssigned} completados
+                    </span>
+                  </div>
+                  <Progress value={progressPercent} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {progressPercent.toFixed(0)}% de tu contenido ha sido aprobado o entregado
+                  </p>
+                </CardContent>
+              </Card>
             </div>
-            <Progress value={progressPercent} className="h-2" />
-            <p className="text-xs text-muted-foreground mt-2">
-              {progressPercent.toFixed(0)}% de tu contenido ha sido aprobado o entregado
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        )}
 
         {/* Pending Work Alert */}
         {inProgressContent.length > 0 && (
@@ -293,6 +303,14 @@ export default function CreatorDashboard() {
             )}
           </div>
         </div>
+
+        {/* Ranking y Historial de Puntos */}
+        {user && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Leaderboard currentUserId={user.id} maxItems={5} />
+            <PointsHistory userId={user.id} maxItems={10} />
+          </div>
+        )}
       </div>
 
       {/* Content Detail Dialog */}

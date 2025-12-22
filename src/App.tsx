@@ -22,6 +22,7 @@ import ClientContentBoard from "./pages/ClientContentBoard";
 import Portfolio from "./pages/Portfolio";
 import ClientPortfolio from "./pages/ClientPortfolio";
 import UserPortfolio from "./pages/UserPortfolio";
+import Ranking from "./pages/Ranking";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import { MainLayout } from "./components/layout/MainLayout";
@@ -79,6 +80,7 @@ function AppContent() {
             <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
             <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
             <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
+            <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor', 'ambassador']}><MainLayout><Ranking /></MainLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>
