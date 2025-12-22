@@ -98,27 +98,63 @@ export default function ClientContentBoard() {
     try {
       setLoading(true);
       
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id, name')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Check for selected client from localStorage first
+      const savedClientId = localStorage.getItem('selectedClientId');
+      
+      let clientId: string | null = null;
+      
+      if (savedClientId) {
+        // Verify user has access to this client
+        const { data: association } = await supabase
+          .from('client_users')
+          .select('client_id')
+          .eq('user_id', user.id)
+          .eq('client_id', savedClientId)
+          .maybeSingle();
+        
+        if (association) {
+          clientId = savedClientId;
+        }
+      }
+      
+      // If no saved client or invalid, get first associated client
+      if (!clientId) {
+        const { data: associations } = await supabase
+          .from('client_users')
+          .select('client_id')
+          .eq('user_id', user.id)
+          .limit(1);
+        
+        if (associations && associations.length > 0) {
+          clientId = associations[0].client_id;
+          localStorage.setItem('selectedClientId', clientId);
+        }
+      }
+      
+      if (clientId) {
+        // Get client info
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('id, name')
+          .eq('id', clientId)
+          .maybeSingle();
 
-      if (clientData) {
-        setClientInfo(clientData);
+        if (clientData) {
+          setClientInfo(clientData);
 
-        // Solo traemos contenido en estados relevantes para el cliente
-        const { data: contentData } = await supabase
-          .from('content')
-          .select(`
-            *,
-            client:clients(*)
-          `)
-          .eq('client_id', clientData.id)
-          .in('status', ['draft', 'script_approved', 'delivered', 'issue', 'corrected', 'approved'])
-          .order('created_at', { ascending: false });
+          // Solo traemos contenido en estados relevantes para el cliente
+          const { data: contentData } = await supabase
+            .from('content')
+            .select(`
+              *,
+              client:clients(*)
+            `)
+            .eq('client_id', clientData.id)
+            .in('status', ['draft', 'script_approved', 'delivered', 'issue', 'corrected', 'approved'])
+            .order('created_at', { ascending: false });
 
-        setContent((contentData || []) as unknown as Content[]);
+          setContent((contentData || []) as unknown as Content[]);
+        }
       }
     } catch (error) {
       console.error('Error fetching data:', error);
