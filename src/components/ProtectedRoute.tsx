@@ -1,8 +1,9 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AppRole } from '@/types/database';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -22,9 +23,47 @@ function getDashboardPath(roles: AppRole[]): string {
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, roles, loading, rolesLoaded } = useAuth();
+  const [clientHasCompany, setClientHasCompany] = useState<boolean | null>(null);
+  const [checkingCompany, setCheckingCompany] = useState(false);
+
+  const isClient = roles.includes('client');
+
+  useEffect(() => {
+    async function checkClientCompany() {
+      if (!user || !isClient) {
+        setClientHasCompany(true); // Non-clients don't need company
+        return;
+      }
+
+      setCheckingCompany(true);
+      try {
+        const { data, error } = await supabase
+          .from('client_users')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1);
+
+        if (error) {
+          console.error('Error checking client company:', error);
+          setClientHasCompany(false);
+        } else {
+          setClientHasCompany(data && data.length > 0);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        setClientHasCompany(false);
+      } finally {
+        setCheckingCompany(false);
+      }
+    }
+
+    if (rolesLoaded && user) {
+      checkClientCompany();
+    }
+  }, [user, isClient, rolesLoaded]);
 
   // Wait for both auth loading AND roles to be loaded
-  if (loading || !rolesLoaded) {
+  if (loading || !rolesLoaded || (isClient && clientHasCompany === null) || checkingCompany) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -34,6 +73,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Client users without an associated company cannot access the app
+  if (isClient && !clientHasCompany) {
+    return <Navigate to="/no-company" replace />;
   }
 
   // Check if user has the required role
