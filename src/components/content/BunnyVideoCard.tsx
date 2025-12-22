@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Pin, Settings, Check } from 'lucide-react';
+import { Play, Pause, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Pin, Settings, Check, Video, Circle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,7 @@ export interface BunnyVideoCardProps {
   creatorName?: string;
   isAdmin?: boolean;
   isOwner?: boolean;
+  isCreatorOwner?: boolean; // Is the current user the creator of this content
   status?: string; // Content status for client approval
   onLike?: (e?: React.MouseEvent) => void;
   onView?: () => void;
@@ -28,6 +29,7 @@ export interface BunnyVideoCardProps {
   onComment?: () => void;
   onPin?: () => void;
   onApprove?: () => void; // Client approval action
+  onCreatorStatusChange?: (newStatus: 'recording' | 'recorded') => void; // Creator status change
   onSettingsUpdate?: () => void;
   showActions?: boolean;
   onOpenFullscreen?: () => void;
@@ -79,6 +81,7 @@ export function BunnyVideoCard({
   creatorName,
   isAdmin = false,
   isOwner = false,
+  isCreatorOwner = false,
   status,
   onLike,
   onView,
@@ -86,6 +89,7 @@ export function BunnyVideoCard({
   onComment,
   onPin,
   onApprove,
+  onCreatorStatusChange,
   onSettingsUpdate,
   showActions = true,
   onOpenFullscreen,
@@ -556,6 +560,48 @@ export function BunnyVideoCard({
             <div className="flex items-center gap-1.5 mt-2 text-green-400 text-xs">
               <Check className="h-3.5 w-3.5" />
               <span>Aprobado</span>
+            </div>
+          )}
+          
+          {/* Creator status change buttons */}
+          {isCreatorOwner && onCreatorStatusChange && (
+            <div className="mt-2 space-y-1.5">
+              {status === 'assigned' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreatorStatusChange('recording');
+                  }}
+                  className="flex items-center gap-1.5 w-full px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg text-xs font-medium transition-colors"
+                >
+                  <Circle className="h-3.5 w-3.5 fill-current animate-pulse" />
+                  <span>Iniciar Grabación</span>
+                </button>
+              )}
+              {status === 'recording' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreatorStatusChange('recorded');
+                  }}
+                  className="flex items-center gap-1.5 w-full px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors"
+                >
+                  <Video className="h-3.5 w-3.5" />
+                  <span>Marcar como Grabado</span>
+                </button>
+              )}
+              {status === 'recorded' && (
+                <div className="flex items-center gap-1.5 text-green-400 text-xs">
+                  <Video className="h-3.5 w-3.5" />
+                  <span>Grabado</span>
+                </div>
+              )}
+              {status === 'recording' && (
+                <div className="flex items-center gap-1.5 text-blue-400 text-xs">
+                  <Circle className="h-3 w-3 fill-current animate-pulse" />
+                  <span>En Grabación</span>
+                </div>
+              )}
             </div>
           )}
         </div>

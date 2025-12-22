@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Heart, MessageSquare, Share2, Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, MessageSquare, Share2, Play, Pause, ChevronLeft, ChevronRight, Circle, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { ParsedText } from '@/components/ui/parsed-text';
@@ -14,6 +14,8 @@ interface VideoItem {
   isLiked: boolean;
   clientName?: string;
   creatorName?: string;
+  status?: string;
+  isCreatorOwner?: boolean;
 }
 
 interface TikTokFeedProps {
@@ -22,6 +24,7 @@ interface TikTokFeedProps {
   onView: (id: string) => void;
   onShare: (video: VideoItem) => void;
   onComment?: (id: string) => void;
+  onCreatorStatusChange?: (id: string, newStatus: 'recording' | 'recorded') => void;
   className?: string;
 }
 
@@ -95,7 +98,8 @@ function TikTokVideoCard({
   onLike,
   onView,
   onShare,
-  onComment
+  onComment,
+  onCreatorStatusChange
 }: {
   video: VideoItem;
   isActive: boolean;
@@ -103,6 +107,7 @@ function TikTokVideoCard({
   onView: () => void;
   onShare: () => void;
   onComment?: () => void;
+  onCreatorStatusChange?: (newStatus: 'recording' | 'recorded') => void;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPauseIcon, setShowPauseIcon] = useState(false);
@@ -359,12 +364,54 @@ function TikTokVideoCard({
         {video.clientName && (
           <p className="text-white/80 text-xs mt-1 drop-shadow-lg">🏢 {video.clientName}</p>
         )}
+        
+        {/* Creator status change buttons */}
+        {video.isCreatorOwner && onCreatorStatusChange && (
+          <div className="mt-2 flex gap-2">
+            {video.status === 'assigned' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreatorStatusChange('recording');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/30 backdrop-blur-sm text-blue-300 rounded-lg text-xs font-medium active:scale-95 transition-transform"
+              >
+                <Circle className="h-3 w-3 fill-current animate-pulse" />
+                <span>Iniciar Grabación</span>
+              </button>
+            )}
+            {video.status === 'recording' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreatorStatusChange('recorded');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/30 backdrop-blur-sm text-green-300 rounded-lg text-xs font-medium active:scale-95 transition-transform"
+              >
+                <Video className="h-3 w-3" />
+                <span>Marcar Grabado</span>
+              </button>
+            )}
+            {video.status === 'recording' && (
+              <span className="flex items-center gap-1 text-blue-300 text-xs">
+                <Circle className="h-2.5 w-2.5 fill-current animate-pulse" />
+                En Grabación
+              </span>
+            )}
+            {video.status === 'recorded' && (
+              <span className="flex items-center gap-1 text-green-300 text-xs">
+                <Video className="h-3 w-3" />
+                Grabado
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export function TikTokFeed({ videos, onLike, onView, onShare, onComment, className }: TikTokFeedProps) {
+export function TikTokFeed({ videos, onLike, onView, onShare, onComment, onCreatorStatusChange, className }: TikTokFeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -421,6 +468,7 @@ export function TikTokFeed({ videos, onLike, onView, onShare, onComment, classNa
             onView={() => onView(video.id)}
             onShare={() => onShare(video)}
             onComment={onComment ? () => onComment(video.id) : undefined}
+            onCreatorStatusChange={video.isCreatorOwner && onCreatorStatusChange ? (newStatus) => onCreatorStatusChange(video.id, newStatus) : undefined}
           />
         </div>
       ))}
