@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
@@ -10,6 +10,7 @@ import { SubscriptionManagement } from "@/components/settings/SubscriptionManage
 import { UserPlansManagement } from "@/components/settings/UserPlansManagement";
 import { RootAdminPanel } from "@/components/settings/RootAdminPanel";
 import { CurrencyManagement } from "@/components/settings/CurrencyManagement";
+import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { Sparkles, Play } from "lucide-react";
@@ -51,7 +52,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial';
 
 const settingsSections = [
   { 
@@ -91,6 +92,14 @@ const settingsSections = [
     icon: Coins, 
     title: "Monedas", 
     description: "Gestiona tasas de cambio y transferencias USD/COP",
+    adminOnly: true,
+    rootOnly: false
+  },
+  { 
+    id: 'historial' as const,
+    icon: History, 
+    title: "Historial de Actividad", 
+    description: "Ver registro de todas las acciones en la plataforma",
     adminOnly: true,
     rootOnly: false
   },
@@ -193,6 +202,8 @@ const Settings = () => {
         return <SubscriptionManagement />;
       case 'monedas':
         return <CurrencyManagement />;
+      case 'historial':
+        return <AuditLogPanel />;
       case 'gestion-usuarios':
         return <UserPlansManagement />;
       case 'notificaciones':
@@ -229,7 +240,6 @@ const Settings = () => {
         return <RootAdminPanel />;
       case 'tour':
         return <TourSection onStartTour={() => { resetTour(); setActiveSection('main'); }} />;
-        return <RootAdminPanel />;
       default:
         return null;
     }
