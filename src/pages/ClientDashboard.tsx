@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { RichTextViewer } from '@/components/ui/rich-text-editor';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
@@ -44,7 +45,13 @@ import {
   X,
   Wallet,
   BarChart3,
-  Activity
+  Activity,
+  Target,
+  Users,
+  Sparkles,
+  ExternalLink,
+  ShoppingBag,
+  FolderOpen
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -69,6 +76,20 @@ interface ClientInfo {
   contact_email: string | null;
   contact_phone: string | null;
   notes: string | null;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  strategy: string | null;
+  market_research: string | null;
+  ideal_avatar: string | null;
+  sales_angles: string[] | null;
+  brief_url: string | null;
+  onboarding_url: string | null;
+  research_url: string | null;
+  created_at: string | null;
 }
 
 // Animated number counter
@@ -196,9 +217,11 @@ export default function ClientDashboard() {
   const navigate = useNavigate();
   const [content, setContent] = useState<Content[]>([]);
   const [packages, setPackages] = useState<ClientPackage[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -291,6 +314,15 @@ export default function ClientDashboard() {
           .order('created_at', { ascending: false });
 
         setPackages(packagesData || []);
+
+        // Fetch products for the client
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('*')
+          .eq('client_id', clientData.id)
+          .order('name');
+
+        setProducts(productsData || []);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -511,6 +543,7 @@ export default function ClientDashboard() {
           {[
             { id: 'overview', label: 'Dashboard', icon: Home },
             { id: 'finance', label: 'Finanzas', icon: Wallet },
+            { id: 'products', label: 'Productos', icon: Package, badge: products.length },
             { id: 'review', label: 'Revisar', icon: Eye, badge: reviewContent.length },
             { id: 'content', label: 'Contenido', icon: Video },
             { id: 'company', label: 'Empresa', icon: Building2 },
@@ -805,6 +838,126 @@ export default function ClientDashboard() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Products Tab */}
+        {activeTab === 'products' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-bold mb-1">Mis Productos</h2>
+              <p className="text-sm text-muted-foreground">
+                Productos y servicios que estamos promocionando para ti
+              </p>
+            </div>
+
+            {products.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h4 className="font-semibold mb-2">Sin productos registrados</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Contacta al equipo para configurar tus productos
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {products.map((product) => (
+                  <Card 
+                    key={product.id} 
+                    className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => setSelectedProduct(product)}
+                  >
+                    <CardContent className="p-0">
+                      {/* Product Header */}
+                      <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-primary/10">
+                              <Package className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-lg">{product.name}</h3>
+                              <p className="text-xs text-muted-foreground">
+                                Creado: {product.created_at ? format(new Date(product.created_at), "d 'de' MMM, yyyy", { locale: es }) : 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4 mr-1" />
+                            Ver detalles
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Product Quick Info */}
+                      <div className="p-4 space-y-4">
+                        {/* Sales Angles */}
+                        {product.sales_angles && product.sales_angles.length > 0 && (
+                          <div>
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
+                              <Sparkles className="h-3 w-3" /> Ángulos de Venta
+                            </Label>
+                            <div className="flex flex-wrap gap-2">
+                              {product.sales_angles.map((angle, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {angle}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Quick Links */}
+                        <div className="flex flex-wrap gap-2">
+                          {product.brief_url && (
+                            <a 
+                              href={product.brief_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded"
+                            >
+                              <FolderOpen className="h-3 w-3" /> Brief
+                            </a>
+                          )}
+                          {product.onboarding_url && (
+                            <a 
+                              href={product.onboarding_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded"
+                            >
+                              <FileText className="h-3 w-3" /> Onboarding
+                            </a>
+                          )}
+                          {product.research_url && (
+                            <a 
+                              href={product.research_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded"
+                            >
+                              <Target className="h-3 w-3" /> Investigación
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Description preview */}
+                        {product.description && (
+                          <div className="text-sm text-muted-foreground line-clamp-2">
+                            <RichTextViewer content={product.description} className="prose-sm" />
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -1126,6 +1279,157 @@ export default function ClientDashboard() {
                       </Button>
                     </div>
                   </>
+                )}
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Product Detail Dialog */}
+      <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="p-4 pb-0 border-b bg-gradient-to-r from-primary/5 to-primary/10">
+            <div className="flex items-center gap-3 pb-4">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Package className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">{selectedProduct?.name}</DialogTitle>
+                <p className="text-xs text-muted-foreground">
+                  Información detallada del producto
+                </p>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          {selectedProduct && (
+            <ScrollArea className="max-h-[calc(90vh-100px)]">
+              <div className="p-4 space-y-6">
+                {/* Sales Angles */}
+                {selectedProduct.sales_angles && selectedProduct.sales_angles.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" /> Ángulos de Venta
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProduct.sales_angles.map((angle, idx) => (
+                        <Badge key={idx} variant="secondary" className="px-3 py-1">
+                          {angle}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Description */}
+                {selectedProduct.description && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-4 w-4" /> Descripción
+                    </Label>
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <RichTextViewer content={selectedProduct.description} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Strategy */}
+                {selectedProduct.strategy && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Target className="h-4 w-4 text-purple-500" /> Estrategia de Contenido
+                    </Label>
+                    <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20">
+                      <RichTextViewer content={selectedProduct.strategy} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Market Research */}
+                {selectedProduct.market_research && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-blue-500" /> Investigación de Mercado
+                    </Label>
+                    <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                      <RichTextViewer content={selectedProduct.market_research} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Ideal Avatar */}
+                {selectedProduct.ideal_avatar && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Users className="h-4 w-4 text-green-500" /> Avatar / Cliente Ideal
+                    </Label>
+                    <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20">
+                      <RichTextViewer content={selectedProduct.ideal_avatar} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Document Links */}
+                {(selectedProduct.brief_url || selectedProduct.onboarding_url || selectedProduct.research_url) && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <FolderOpen className="h-4 w-4" /> Documentos
+                    </Label>
+                    <div className="grid gap-2">
+                      {selectedProduct.brief_url && (
+                        <a 
+                          href={selectedProduct.brief_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border hover:bg-muted transition-colors"
+                        >
+                          <div className="p-1.5 rounded bg-primary/10">
+                            <FileText className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Brief del Producto</p>
+                            <p className="text-xs text-muted-foreground">Documento de briefing</p>
+                          </div>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        </a>
+                      )}
+                      {selectedProduct.onboarding_url && (
+                        <a 
+                          href={selectedProduct.onboarding_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border hover:bg-muted transition-colors"
+                        >
+                          <div className="p-1.5 rounded bg-info/10">
+                            <FolderOpen className="h-4 w-4 text-info" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Material de Onboarding</p>
+                            <p className="text-xs text-muted-foreground">Documentos de incorporación</p>
+                          </div>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        </a>
+                      )}
+                      {selectedProduct.research_url && (
+                        <a 
+                          href={selectedProduct.research_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border hover:bg-muted transition-colors"
+                        >
+                          <div className="p-1.5 rounded bg-success/10">
+                            <Target className="h-4 w-4 text-success" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Investigación y Recursos</p>
+                            <p className="text-xs text-muted-foreground">Materiales de investigación</p>
+                          </div>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </ScrollArea>
