@@ -1296,6 +1296,10 @@ export type Database = {
         Args: { content_uuid: string }
         Returns: undefined
       }
+      is_client_owner: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
