@@ -3,19 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { PortfolioHeader } from '@/components/portfolio/PortfolioHeader';
 import { CompanyProfileEditor } from '@/components/portfolio/CompanyProfileEditor';
 import { 
-  Play, 
   Loader2, 
   Building2,
   Video as VideoIcon,
-  Eye,
-  Heart,
   Globe,
   Instagram,
-  ExternalLink,
   Pencil,
   Lock,
   Unlock,
@@ -23,7 +18,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { TikTokFeed } from '@/components/content/TikTokFeed';
 import { BunnyVideoCard } from '@/components/content/BunnyVideoCard';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -77,9 +71,6 @@ export default function CompanyPortfolio() {
   const [company, setCompany] = useState<CompanyProfile | null>(null);
   const [content, setContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
-  const [showTikTokView, setShowTikTokView] = useState(false);
-  const [initialVideoIndex, setInitialVideoIndex] = useState(0);
   const [isAssociatedUser, setIsAssociatedUser] = useState(false);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
@@ -397,32 +388,13 @@ export default function CompanyPortfolio() {
     );
   }
 
-  // TikTok-style fullscreen view
-  if (showTikTokView && sortedContent.length > 0) {
-    const videoItems = sortedContent.map(item => ({
-      id: item.id,
-      title: item.title,
-      videoUrls: item.bunny_embed_url 
-        ? [item.bunny_embed_url] 
-        : (item.video_urls || (item.video_url ? [item.video_url] : [])),
-      thumbnailUrl: item.thumbnail_url,
-      viewsCount: item.views_count,
-      likesCount: item.likes_count,
-      isLiked: item.is_liked,
-      clientName: company.name
-    }));
-
-    return (
-      <VideoPlayerProvider>
-        <TikTokFeed
-          videos={videoItems}
-          onLike={handleLike}
-          onView={handleView}
-          onShare={(video) => handleShare(sortedContent.find(c => c.id === video.id)!)}
-        />
-      </VideoPlayerProvider>
-    );
-  }
+  // Prepare video data for BunnyVideoCard
+  const getVideoUrls = (item: ContentItem) => {
+    if (item.bunny_embed_url) return [item.bunny_embed_url];
+    if (item.video_urls && item.video_urls.length > 0) return item.video_urls;
+    if (item.video_url) return [item.video_url];
+    return [];
+  };
 
   return (
     <div className="min-h-screen bg-black">
@@ -571,82 +543,60 @@ export default function CompanyPortfolio() {
           <span className="text-sm font-medium text-white">Contenido</span>
         </div>
 
-        {/* Content Grid */}
-        <div className="grid grid-cols-3 gap-1 mt-4">
+        {/* Content Grid - Same style as UserPortfolio */}
+        <div className="px-4 py-6">
           {sortedContent.length === 0 ? (
-            <div className="col-span-3 py-12 text-center text-white/50">
-              <VideoIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>Sin contenido publicado</p>
+            <div className="flex flex-col items-center justify-center py-20 text-white/40">
+              <VideoIcon className="h-12 w-12 mb-3" />
+              <p className="text-sm">Sin contenido publicado</p>
             </div>
           ) : (
-            sortedContent.map((item, index) => (
-              <div
-                key={item.id}
-                className={cn(
-                  "relative aspect-[9/16] bg-zinc-900 cursor-pointer group overflow-hidden",
-                  canManageVisibility && !item.is_portfolio_public && "ring-2 ring-inset ring-yellow-500/50"
-                )}
-                onClick={() => {
-                  setInitialVideoIndex(index);
-                  setShowTikTokView(true);
-                }}
-              >
-                {item.thumbnail_url ? (
-                  <img 
-                    src={item.thumbnail_url} 
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Play className="w-8 h-8 text-white/30" />
+            <VideoPlayerProvider>
+              <div className={cn(
+                "grid gap-3 md:gap-4",
+                isMobile ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"
+              )}>
+                {sortedContent.map((item) => (
+                  <div key={item.id} className="relative">
+                    {/* Private indicator overlay */}
+                    {canManageVisibility && !item.is_portfolio_public && (
+                      <div className="absolute top-2 right-2 z-20 bg-yellow-500/90 text-black text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                        <EyeOff className="w-3 h-3" />
+                        Privado
+                      </div>
+                    )}
+                    
+                    {/* Visibility toggle button for owners */}
+                    {canManageVisibility && (
+                      <button
+                        onClick={(e) => toggleContentVisibility(item.id, e)}
+                        className="absolute top-10 right-2 z-20 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded transition-opacity"
+                        title={item.is_portfolio_public ? 'Hacer privado' : 'Hacer público'}
+                      >
+                        {item.is_portfolio_public ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
+                    
+                    <BunnyVideoCard
+                      id={item.id}
+                      title={item.title}
+                      caption={item.caption || item.title}
+                      videoUrls={getVideoUrls(item)}
+                      thumbnailUrl={item.thumbnail_url}
+                      viewsCount={item.views_count}
+                      likesCount={item.likes_count}
+                      isLiked={item.is_liked}
+                      isPinned={item.is_pinned}
+                      isOwner={canManageVisibility}
+                      showActions={true}
+                      onLike={(e) => handleLike(item.id, e)}
+                      onView={() => handleView(item.id)}
+                      onShare={() => handleShare(item)}
+                    />
                   </div>
-                )}
-                
-                {/* Private indicator for owners */}
-                {canManageVisibility && !item.is_portfolio_public && (
-                  <div className="absolute top-1 right-1 bg-yellow-500/90 text-black text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                    <EyeOff className="w-3 h-3" />
-                    Privado
-                  </div>
-                )}
-                
-                {/* Pinned badge */}
-                {item.is_pinned && (
-                  <div className="absolute top-1 left-1 bg-white/20 backdrop-blur-sm text-white text-[10px] px-1.5 py-0.5 rounded">
-                    📌
-                  </div>
-                )}
-                
-                {/* Visibility toggle button for owners */}
-                {canManageVisibility && (
-                  <button
-                    onClick={(e) => toggleContentVisibility(item.id, e)}
-                    className="absolute top-8 right-1 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    title={item.is_portfolio_public ? 'Hacer privado' : 'Hacer público'}
-                  >
-                    {item.is_portfolio_public ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                  </button>
-                )}
-                
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                  <Play className="w-10 h-10 text-white" />
-                </div>
-                
-                {/* Stats */}
-                <div className="absolute bottom-1 left-1 right-1 flex justify-between text-white text-xs">
-                  <span className="flex items-center gap-0.5 drop-shadow-lg">
-                    <Eye className="w-3 h-3" />
-                    {formatNumber(item.views_count)}
-                  </span>
-                  <span className="flex items-center gap-0.5 drop-shadow-lg">
-                    <Heart className={cn("w-3 h-3", item.is_liked && "fill-red-500 text-red-500")} />
-                    {formatNumber(item.likes_count)}
-                  </span>
-                </div>
+                ))}
               </div>
-            ))
+            </VideoPlayerProvider>
           )}
         </div>
       </div>
