@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Plus, Play, Eye, Heart, ExternalLink, Film } from "lucide-react";
+import { Search, Plus, Play, Eye, Heart, ExternalLink, Film, MoreVertical, Image, Settings } from "lucide-react";
 import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,13 @@ import { toast } from "sonner";
 import { VideoPlayerProvider, useVideoPlayer } from "@/contexts/VideoPlayerContext";
 import { BunnyVideoCard } from "@/components/content/BunnyVideoCard";
 import { FullscreenVideoViewer } from "@/components/content/FullscreenVideoViewer";
+import { ContentSettingsDialog } from "@/components/content/ContentSettingsDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ContentItem {
   id: string;
@@ -59,6 +66,7 @@ const Content = () => {
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
+  const [settingsContentId, setSettingsContentId] = useState<string | null>(null);
   
   // Viewer ID for likes tracking
   const [viewerId] = useState(() => {
@@ -452,29 +460,56 @@ const Content = () => {
                     
                     {/* Admin controls overlay */}
                     {isAdmin && (
-                      <div className="absolute top-2 left-2 z-20 flex items-center gap-2">
-                        <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
-                          {item.is_published ? 'Publicado' : 'Privado'}
-                        </Badge>
-                      </div>
-                    )}
-                    
-                    {isAdmin && (
-                      <div className="absolute bottom-20 left-2 z-20 flex items-center gap-2">
-                        <Switch
-                          checked={item.is_published}
-                          onCheckedChange={() => togglePublish(item.id, item.is_published)}
-                          className="data-[state=checked]:bg-primary"
-                        />
-                        <a 
-                          href={videoUrls[0]}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
+                      <>
+                        <div className="absolute top-2 left-2 z-20 flex items-center gap-2">
+                          <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
+                            {item.is_published ? 'Publicado' : 'Privado'}
+                          </Badge>
+                        </div>
+                        
+                        {/* 3-dot menu for settings */}
+                        <div className="absolute top-2 right-2 z-20">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 bg-black/60 hover:bg-black/80 text-white rounded-full"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => setSettingsContentId(item.id)}>
+                                <Settings className="h-4 w-4 mr-2" />
+                                Configuración
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => togglePublish(item.id, item.is_published)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                {item.is_published ? 'Ocultar del portafolio' : 'Publicar en portafolio'}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a 
+                                  href={videoUrls[0]}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <ExternalLink className="h-4 w-4 mr-2" />
+                                  Ver video original
+                                </a>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        
+                        <div className="absolute bottom-20 left-2 z-20 flex items-center gap-2">
+                          <Switch
+                            checked={item.is_published}
+                            onCheckedChange={() => togglePublish(item.id, item.is_published)}
+                            className="data-[state=checked]:bg-primary"
+                          />
+                        </div>
+                      </>
                     )}
                   </div>
                 );
@@ -499,6 +534,18 @@ const Content = () => {
               onClose={() => setFullscreenIndex(null)}
               onLike={(id) => handleLike(id)}
               onView={(id) => handleView(id)}
+            />
+          )}
+
+          {/* Content Settings Dialog */}
+          {settingsContentId && (
+            <ContentSettingsDialog
+              contentId={settingsContentId}
+              open={!!settingsContentId}
+              onOpenChange={(open) => {
+                if (!open) setSettingsContentId(null);
+              }}
+              onSuccess={() => fetchContent()}
             />
           )}
         </div>
