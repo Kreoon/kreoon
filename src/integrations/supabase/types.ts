@@ -418,6 +418,7 @@ export type Database = {
           id: string
           invoiced: boolean | null
           is_ambassador_content: boolean | null
+          is_portfolio_public: boolean | null
           is_published: boolean | null
           likes_count: number | null
           notes: string | null
@@ -472,6 +473,7 @@ export type Database = {
           id?: string
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
+          is_portfolio_public?: boolean | null
           is_published?: boolean | null
           likes_count?: number | null
           notes?: string | null
@@ -526,6 +528,7 @@ export type Database = {
           id?: string
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
+          is_portfolio_public?: boolean | null
           is_published?: boolean | null
           likes_count?: number | null
           notes?: string | null
