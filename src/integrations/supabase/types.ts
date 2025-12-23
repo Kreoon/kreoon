@@ -894,6 +894,48 @@ export type Database = {
         }
         Relationships: []
       }
+      known_devices: {
+        Row: {
+          browser: string | null
+          created_at: string
+          device_fingerprint: string
+          device_name: string | null
+          id: string
+          is_trusted: boolean | null
+          last_country: string | null
+          last_ip: string | null
+          last_used_at: string | null
+          os: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          created_at?: string
+          device_fingerprint: string
+          device_name?: string | null
+          id?: string
+          is_trusted?: boolean | null
+          last_country?: string | null
+          last_ip?: string | null
+          last_used_at?: string | null
+          os?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          created_at?: string
+          device_fingerprint?: string
+          device_name?: string | null
+          id?: string
+          is_trusted?: boolean | null
+          last_country?: string | null
+          last_ip?: string | null
+          last_used_at?: string | null
+          os?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       login_history: {
         Row: {
           device_type: string | null
@@ -1278,6 +1320,39 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action_type: string
+          attempts: number | null
+          blocked_until: string | null
+          first_attempt_at: string | null
+          id: string
+          identifier: string
+          identifier_type: string
+          last_attempt_at: string | null
+        }
+        Insert: {
+          action_type: string
+          attempts?: number | null
+          blocked_until?: string | null
+          first_attempt_at?: string | null
+          id?: string
+          identifier: string
+          identifier_type: string
+          last_attempt_at?: string | null
+        }
+        Update: {
+          action_type?: string
+          attempts?: number | null
+          blocked_until?: string | null
+          first_attempt_at?: string | null
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          last_attempt_at?: string | null
+        }
+        Relationships: []
+      }
       referral_commissions: {
         Row: {
           amount: number
@@ -1397,6 +1472,69 @@ export type Database = {
           module?: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      security_events: {
+        Row: {
+          action_taken: string | null
+          city: string | null
+          country_code: string | null
+          country_name: string | null
+          created_at: string
+          details: Json | null
+          device_fingerprint: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          is_bot: boolean | null
+          is_proxy: boolean | null
+          is_tor: boolean | null
+          is_vpn: boolean | null
+          region: string | null
+          risk_score: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          city?: string | null
+          country_code?: string | null
+          country_name?: string | null
+          created_at?: string
+          details?: Json | null
+          device_fingerprint?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          is_bot?: boolean | null
+          is_proxy?: boolean | null
+          is_tor?: boolean | null
+          is_vpn?: boolean | null
+          region?: string | null
+          risk_score?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          city?: string | null
+          country_code?: string | null
+          country_name?: string | null
+          created_at?: string
+          details?: Json | null
+          device_fingerprint?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          is_bot?: boolean | null
+          is_proxy?: boolean | null
+          is_tor?: boolean | null
+          is_vpn?: boolean | null
+          region?: string | null
+          risk_score?: number | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1636,6 +1774,17 @@ export type Database = {
         Returns: boolean
       }
       check_perfect_streak: { Args: { _user_id: string }; Returns: boolean }
+      check_rate_limit: {
+        Args: {
+          _action_type: string
+          _block_minutes?: number
+          _identifier: string
+          _identifier_type: string
+          _max_attempts?: number
+          _window_minutes?: number
+        }
+        Returns: Json
+      }
       cleanup_expired_stories: { Args: never; Returns: undefined }
       cleanup_old_audit_logs: { Args: never; Returns: undefined }
       create_chat_conversation: {
@@ -1699,6 +1848,23 @@ export type Database = {
           _entity_id?: string
           _entity_name?: string
           _entity_type: string
+          _user_id: string
+        }
+        Returns: string
+      }
+      log_security_event: {
+        Args: {
+          _action_taken?: string
+          _city?: string
+          _country_code?: string
+          _country_name?: string
+          _details?: Json
+          _event_type: string
+          _ip_address?: string
+          _is_bot?: boolean
+          _is_vpn?: boolean
+          _risk_score?: number
+          _user_agent?: string
           _user_id: string
         }
         Returns: string
