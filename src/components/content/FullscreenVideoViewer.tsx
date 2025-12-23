@@ -116,13 +116,21 @@ export function FullscreenVideoViewer({
     const win = iframeRef.current?.contentWindow;
     if (!win) return;
 
+    // Send as object
     try {
       win.postMessage(payload, PLAYER_ORIGIN);
     } catch {
       // ignore
     }
+    // Send as JSON string
     try {
       win.postMessage(JSON.stringify(payload), PLAYER_ORIGIN);
+    } catch {
+      // ignore
+    }
+    // Also try wildcard origin for compatibility
+    try {
+      win.postMessage(payload, '*');
     } catch {
       // ignore
     }
@@ -130,11 +138,19 @@ export function FullscreenVideoViewer({
 
   const applyMuteStateToPlayer = useCallback(
     (muted: boolean) => {
-      postToPlayer({ api: muted ? 'mute' : 'unmute' });
-      postToPlayer({ api: 'volume', set: muted ? 0 : 1 });
-      // Also send play command to ensure audio starts
-      if (!muted) {
+      // Multiple command formats for Bunny/Player.js compatibility
+      if (muted) {
+        postToPlayer({ api: 'mute' });
+        postToPlayer({ event: 'command', func: 'mute' });
+        postToPlayer({ api: 'volume', set: 0 });
+        postToPlayer({ event: 'command', func: 'setVolume', args: [0] });
+      } else {
+        postToPlayer({ api: 'unmute' });
+        postToPlayer({ event: 'command', func: 'unmute' });
+        postToPlayer({ api: 'volume', set: 1 });
+        postToPlayer({ event: 'command', func: 'setVolume', args: [1] });
         postToPlayer({ api: 'play' });
+        postToPlayer({ event: 'command', func: 'play' });
       }
     },
     [postToPlayer]
