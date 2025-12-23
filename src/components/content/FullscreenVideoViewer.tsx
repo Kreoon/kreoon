@@ -160,12 +160,22 @@ export function FullscreenVideoViewer({
   }, [hasMultipleVariations, currentVideo]);
 
   // Touch handlers for swipe
+  const [touchActive, setTouchActive] = useState(false);
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
+    setTouchActive(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // Prevent default to avoid scrolling issues
+    if (touchActive) {
+      e.preventDefault();
+    }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    setTouchActive(false);
     const touchEndY = e.changedTouches[0].clientY;
     const touchEndX = e.changedTouches[0].clientX;
     const diffY = touchStartY.current - touchEndY;
@@ -200,8 +210,9 @@ export function FullscreenVideoViewer({
   return (
     <div 
       ref={containerRef}
-      className="fixed inset-0 z-[100] bg-black flex flex-col"
+      className="fixed inset-0 z-[100] bg-black flex flex-col touch-none"
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       {/* Content Container */}
@@ -231,16 +242,25 @@ export function FullscreenVideoViewer({
           />
         )}
 
+        {/* Touch overlay to capture swipes - positioned over content but under controls */}
+        <div 
+          className="absolute inset-0 z-10"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ touchAction: 'none' }}
+        />
+
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 z-20 p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+          className="absolute top-4 left-4 z-30 p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
         >
           <X className="h-6 w-6" />
         </button>
 
         {/* Top right controls */}
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
           {/* Mute toggle - only for videos */}
           {!isImage && (
             <button
@@ -303,19 +323,19 @@ export function FullscreenVideoViewer({
           <>
             <button
               onClick={goToPrevVariation}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
             >
               <ChevronLeft className="h-6 w-6" />
             </button>
             <button
               onClick={goToNextVariation}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
             >
               <ChevronRight className="h-6 w-6" />
             </button>
             
             {/* Variation indicator */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
               {currentVideo.videoUrls.map((_, idx) => (
                 <button
                   key={idx}
@@ -333,7 +353,7 @@ export function FullscreenVideoViewer({
         )}
 
         {/* Video navigation hints */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-10 hidden md:flex">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30 hidden md:flex">
           <button
             onClick={goToPrev}
             disabled={currentIndex === 0}
@@ -357,7 +377,7 @@ export function FullscreenVideoViewer({
         </div>
 
         {/* Actions sidebar (TikTok style) */}
-        <div className="absolute bottom-24 right-4 flex flex-col gap-4 z-20">
+        <div className="absolute bottom-24 right-4 flex flex-col gap-4 z-30">
           {onLike && (
             <button
               onClick={() => onLike(currentVideo.id)}
@@ -401,7 +421,7 @@ export function FullscreenVideoViewer({
         </div>
 
         {/* Video info */}
-        <div className="absolute bottom-4 left-4 right-20 z-20">
+        <div className="absolute bottom-4 left-4 right-20 z-30 pointer-events-none">
           <h2 className="text-white font-bold text-lg mb-1 line-clamp-2 drop-shadow-lg">
             {currentVideo.title}
           </h2>
