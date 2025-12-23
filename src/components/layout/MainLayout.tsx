@@ -12,7 +12,7 @@ import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors, MessageCircle } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors, MessageCircle, User, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MainLayoutProps {
@@ -71,6 +71,22 @@ export function MainLayout({
             <span className="text-sm font-bold">Panel Editor</span>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.location.href = '/settings'}
+              className="h-9 w-9 rounded-full"
+            >
+              <User className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.location.href = '/portfolio'}
+              className="h-9 w-9 rounded-full"
+            >
+              <Briefcase className="h-4 w-4" />
+            </Button>
             <Button
               variant={chatOpen ? "default" : "ghost"}
               size="icon"
@@ -220,6 +236,22 @@ export function MainLayout({
           </div>
           <div className="flex items-center gap-2">
             <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.location.href = '/settings'}
+              className="h-9 w-9 rounded-full"
+            >
+              <User className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.location.href = '/portfolio'}
+              className="h-9 w-9 rounded-full"
+            >
+              <Briefcase className="h-4 w-4" />
+            </Button>
+            <Button
               variant={chatOpen ? "default" : "ghost"}
               size="icon"
               onClick={() => setChatOpen(!chatOpen)}
@@ -314,6 +346,22 @@ export function MainLayout({
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => window.location.href = '/settings'}
+            className="h-9 w-9 rounded-full"
+          >
+            <User className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => window.location.href = '/portfolio'}
+            className="h-9 w-9 rounded-full"
+          >
+            <Briefcase className="h-4 w-4" />
+          </Button>
           <Button
             variant={chatOpen ? "default" : "ghost"}
             size="icon"
