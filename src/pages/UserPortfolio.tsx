@@ -1192,6 +1192,7 @@ export default function UserPortfolio() {
                     thumbnailUrl={item.thumbnailUrl}
                     viewsCount={item.viewsCount}
                     likesCount={item.likesCount}
+                    commentsCount={(item as any).commentsCount || 0}
                     isLiked={item.isLiked}
                     isPinned={item.isPinned}
                     isOwner={isOwner && profileType === 'user'}
@@ -1203,6 +1204,7 @@ export default function UserPortfolio() {
                       if (contentItem) handleShare(contentItem);
                     }}
                     onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
+                    isPortfolioPost={isPostVideo}
                   />
                 );
               })}
@@ -1261,6 +1263,7 @@ export default function UserPortfolio() {
                       thumbnailUrl={item.thumbnailUrl}
                       viewsCount={item.viewsCount}
                       likesCount={item.likesCount}
+                      commentsCount={(item as any).commentsCount || 0}
                       isLiked={item.isLiked}
                       isPinned={item.isPinned}
                       isOwner={isOwner && profileType === 'user'}
@@ -1277,6 +1280,7 @@ export default function UserPortfolio() {
                       onApprove={isClientOwner && item.status === 'delivered' ? () => handleApproveContent(item.id) : undefined}
                       onCreatorStatusChange={canChangeStatus ? (newStatus) => handleCreatorStatusChange(item.id, newStatus) : undefined}
                       onSettingsUpdate={() => fetchData()}
+                      isPortfolioPost={isPostVideo}
                     />
                   );
                 })}

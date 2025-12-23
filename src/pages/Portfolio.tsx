@@ -789,10 +789,7 @@ export default function Portfolio() {
                     onLike={canInteract ? (e) => handleLike(item.id, e) : undefined}
                     onView={canInteract ? () => handleView(item.id) : undefined}
                     onShare={() => handleShare(item)}
-                    onComment={canInteract ? () => {
-                      setSelectedContentId(item.id);
-                      setCommentDialogOpen(true);
-                    } : undefined}
+                    isPortfolioPost={item.type === 'post'}
                   />
                 );
               })}
@@ -924,10 +921,7 @@ export default function Portfolio() {
                   onLike={canInteract ? (e) => handleLike(item.id, e) : undefined}
                   onView={canInteract ? () => handleView(item.id) : undefined}
                   onShare={() => handleShare(item)}
-                  onComment={canInteract ? () => {
-                    setSelectedContentId(item.id);
-                    setCommentDialogOpen(true);
-                  } : undefined}
+                  isPortfolioPost={item.type === 'post'}
                 />
               );
             })}
