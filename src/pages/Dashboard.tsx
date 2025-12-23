@@ -3,10 +3,11 @@ import {
   Video, Users, CheckCircle, Clock, DollarSign, TrendingUp, 
   Activity, Target, BarChart3, ArrowUpRight, ArrowDownRight,
   Play, UserCheck, Calendar, Banknote, Filter, X, Settings,
-  Building2, Scissors, Zap, Trophy
+  Building2, Scissors, Zap, Trophy, Crown
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
+import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
 import { Content, Client, Profile, ClientPackage } from "@/types/database";
@@ -623,38 +624,34 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      {/* Header with glassmorphism */}
-      <header className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 lg:px-8">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-lg md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text truncate">
-              Dashboard
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground mt-0.5 truncate hidden sm:block">
-              {new Date().toLocaleDateString('es-CO', { 
-                weekday: 'short', 
-                month: 'short', 
-                day: 'numeric' 
-              })}
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-            {(isAmbassador || profile?.is_ambassador) && (
-              <AmbassadorBadge size="sm" variant="glow" />
-            )}
-            {isAdmin && (
-              <Button variant="outline" size="sm" onClick={() => setGoalsDialogOpen(true)} className="h-8 px-2 md:px-3">
-                <Target className="h-4 w-4 md:mr-2" />
-                <span className="hidden md:inline">Metas</span>
-              </Button>
-            )}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-success/10 border border-success/20">
-              <Activity className="h-3 w-3 text-success animate-pulse" />
-              <span className="text-xs font-medium text-success">En vivo</span>
+      {/* Medieval Banner Header */}
+      <div className="p-4 md:p-6">
+        <MedievalBanner
+          icon={Crown}
+          title="Sala del Trono"
+          subtitle="Centro de comando del reino"
+          action={
+            <div className="flex items-center gap-2">
+              {(isAmbassador || profile?.is_ambassador) && (
+                <AmbassadorBadge size="sm" variant="glow" />
+              )}
+              {isAdmin && (
+                <Button variant="medieval" size="sm" onClick={() => setGoalsDialogOpen(true)} className="h-8 px-2 md:px-3">
+                  <Target className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">Metas</span>
+                </Button>
+              )}
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-success/10 border border-success/20">
+                <Activity className="h-3 w-3 text-success animate-pulse" />
+                <span className="text-xs font-medium text-success">En vivo</span>
+              </div>
             </div>
-          </div>
-        </div>
+          }
+        />
+      </div>
+
+      {/* Filters section */}
+      <div className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur-xl">
 
         {/* Filters - Mobile optimized */}
         {isAdmin && (
@@ -884,7 +881,7 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-      </header>
+      </div>
 
       <div className="p-6 lg:p-8 space-y-8">
         {/* Main KPIs Row */}
