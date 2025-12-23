@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, MessageCircle, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Bell, MessageCircle, User, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -189,6 +189,28 @@ export function IntegratedNotificationHeader({
     >
       {/* Spacer to push buttons to the right */}
       <div className="flex-1" />
+
+      {/* Profile Button */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigate('/settings')}
+        className="gap-2"
+      >
+        <User className="h-4 w-4" />
+        <span className="hidden sm:inline">Mi Perfil</span>
+      </Button>
+
+      {/* Portfolio Button */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigate('/portfolio')}
+        className="gap-2"
+      >
+        <Briefcase className="h-4 w-4" />
+        <span className="hidden sm:inline">Portafolio</span>
+      </Button>
       
       {/* Chat Button */}
       <Button
