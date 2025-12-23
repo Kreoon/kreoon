@@ -228,8 +228,22 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
       const contentType = response.headers.get("content-type") || "";
       let generatedContent: GeneratedContent = { script: "" };
       
+      // First get the raw text to check if response is empty
+      const responseText = await response.text();
+      console.log("n8n raw response:", responseText);
+      
+      if (!responseText || responseText.trim() === "") {
+        throw new Error("El webhook devolvió una respuesta vacía. Verifica que el flujo en n8n esté activo.");
+      }
+      
       if (contentType.includes("application/json")) {
-        const data = await response.json();
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("Error parsing JSON:", parseError);
+          throw new Error("La respuesta del webhook no es JSON válido");
+        }
         console.log("n8n JSON response:", data);
         
         // Handle the segmented response structure from n8n
@@ -254,7 +268,7 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
         }
       } else {
         // Response is plain text - only script
-        generatedContent.script = await response.text();
+        generatedContent.script = responseText;
         console.log("n8n text response:", generatedContent.script);
       }
 
