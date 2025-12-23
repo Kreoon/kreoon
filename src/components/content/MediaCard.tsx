@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Heart, Eye, Share2, ChevronLeft, ChevronRight, Image as ImageIcon, Video, Volume2, VolumeX } from 'lucide-react';
+import { Play, Heart, Eye, Share2, ChevronLeft, ChevronRight, Image as ImageIcon, Video, Volume2, VolumeX, MessageCircle } from 'lucide-react';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { PortfolioCommentsSection } from './PortfolioCommentsSection';
+import { CommentsSection } from './CommentsSection';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +18,7 @@ export interface MediaCardProps {
   media: MediaItem[]; // Array for carousels
   viewsCount: number;
   likesCount: number;
+  commentsCount?: number;
   isLiked: boolean;
   creatorId?: string;
   creatorName?: string;
@@ -24,6 +28,7 @@ export interface MediaCardProps {
   onShare?: () => void;
   showActions?: boolean;
   className?: string;
+  isPortfolioPost?: boolean; // To determine which comments table to use
 }
 
 function formatCount(count: number): string {
@@ -38,6 +43,7 @@ export function MediaCard({
   media,
   viewsCount,
   likesCount,
+  commentsCount = 0,
   isLiked,
   creatorId,
   creatorName,
@@ -46,13 +52,15 @@ export function MediaCard({
   onView,
   onShare,
   showActions = true,
-  className
+  className,
+  isPortfolioPost = false
 }: MediaCardProps) {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [showFloatingHeart, setShowFloatingHeart] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewTracked = useRef(false);
 
@@ -259,6 +267,19 @@ export function MediaCard({
                 <span className="text-white text-xs font-medium">{formatCount(likesCount)}</span>
               </button>
             )}
+            {/* Comments button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowComments(true);
+              }}
+              className="flex flex-col items-center gap-1"
+            >
+              <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
+                <MessageCircle className="h-7 w-7" />
+              </div>
+              <span className="text-white text-xs font-medium">{formatCount(commentsCount)}</span>
+            </button>
             {onShare && (
               <button
                 onClick={(e) => {
@@ -290,6 +311,25 @@ export function MediaCard({
           <p className="text-white/80 text-xs line-clamp-2 mt-0.5">{title}</p>
         )}
       </div>
+
+      {/* Comments Drawer */}
+      <Drawer open={showComments} onOpenChange={setShowComments}>
+        <DrawerContent className="h-[70vh] bg-zinc-900 border-none">
+          {isPortfolioPost ? (
+            <PortfolioCommentsSection
+              postId={id}
+              isOpen={showComments}
+              onClose={() => setShowComments(false)}
+            />
+          ) : (
+            <CommentsSection
+              contentId={id}
+              isOpen={showComments}
+              onClose={() => setShowComments(false)}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
