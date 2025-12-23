@@ -53,7 +53,7 @@ serve(async (req) => {
     if (path === "/docs") {
       return new Response(
         JSON.stringify({
-          title: "Content Studio API",
+          title: "Creartor Studio API",
           version: "1.0.0",
           description: "API pública para integración con n8n, Zapier, Make y otras plataformas de automatización",
           authentication: {

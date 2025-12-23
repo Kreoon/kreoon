@@ -58,9 +58,9 @@ serve(async (req) => {
 
     // Send email with Resend
     const emailResponse = await resend.emails.send({
-      from: "Creator Studio <noreply@creatorstudio.com>",
+      from: "Creartor Studio <noreply@creatorstudio.com>",
       to: [email],
-      subject: `Invitación a Creator Studio - ${ROLE_LABELS[role]}`,
+      subject: `Invitación a Creartor Studio - ${ROLE_LABELS[role]}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -79,15 +79,15 @@ serve(async (req) => {
         </head>
         <body>
           <div class="container">
-            <div class="logo">🎬 Content Studio</div>
+            <div class="logo">🎬 Creartor Studio</div>
             <h1>¡Has sido invitado!</h1>
-            <p><strong>${inviter_name}</strong> te ha invitado a unirte a Content Studio como <span class="role-badge">${ROLE_LABELS[role]}</span></p>
-            <p>Content Studio es una plataforma profesional para la gestión de contenido de video, donde podrás colaborar con creadores y editores en proyectos de alto impacto.</p>
+            <p><strong>${inviter_name}</strong> te ha invitado a unirte a Creartor Studio como <span class="role-badge">${ROLE_LABELS[role]}</span></p>
+            <p>Creartor Studio es una plataforma profesional para la gestión de contenido de video, donde podrás colaborar con creadores y editores en proyectos de alto impacto.</p>
             <a href="${inviteLink}" class="button">Aceptar Invitación</a>
             <p style="font-size: 14px;">O copia este enlace: <br/><code style="background: #1a1a1a; padding: 8px 12px; border-radius: 4px; display: block; margin-top: 8px; word-break: break-all;">${inviteLink}</code></p>
             <div class="footer">
               <p>Si no esperabas esta invitación, puedes ignorar este correo.</p>
-              <p>© 2024 Content Studio. Todos los derechos reservados.</p>
+              <p>© 2024 Creartor Studio. Todos los derechos reservados.</p>
             </div>
           </div>
         </body>

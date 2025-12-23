@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'Creator Studio',
-        short_name: 'Creator Studio',
+        name: 'Creartor Studio',
+        short_name: 'Creartor Studio',
         description: 'Plataforma de gestión de contenido UGC',
         theme_color: '#F5A623',
         background_color: '#0D0D0D',

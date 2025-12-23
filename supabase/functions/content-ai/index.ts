@@ -52,7 +52,7 @@ Evalúa:
 Sé específico y da ejemplos concretos de cómo mejorar.`,
 
   chat: `Eres un asistente experto en producción de contenido de video y marketing digital.
-Ayudas al equipo de Content Studio con:
+Ayudas al equipo de Creartor Studio con:
 - Ideas creativas para videos
 - Estrategias de contenido
 - Mejores prácticas de redes sociales

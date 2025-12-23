@@ -156,7 +156,7 @@ export function MobileNav() {
                 <span className="text-lg font-bold text-primary-foreground">C</span>
               </div>
               <div>
-                <h1 className="text-sm font-bold text-sidebar-foreground">Creator Studio</h1>
+                <h1 className="text-sm font-bold text-sidebar-foreground">Creartor Studio</h1>
                 <p className="text-xs text-sidebar-foreground/60">by UGC Colombia</p>
               </div>
             </div>

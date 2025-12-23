@@ -22,7 +22,7 @@ interface BrandingSettings {
 }
 
 const DEFAULT_SETTINGS: BrandingSettings = {
-  platform_name: "Creator Studio",
+  platform_name: "Creartor Studio",
   logo_url: "",
   logo_dark_url: "",
   favicon_url: "",
