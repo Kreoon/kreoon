@@ -47,22 +47,23 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-function getEmbedUrl(url: string, muted: boolean): string {
+function getEmbedUrl(url: string): string {
   if (!url) return '';
   
+  // Always start muted to allow autoplay
   if (url.includes('iframe.mediadelivery.net')) {
     const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}autoplay=true&muted=${muted}&loop=true&preload=true`;
+    return `${url}${separator}autoplay=true&muted=true&loop=true&preload=true`;
   }
   
   const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
   if (cdnMatch) {
     const [, libraryId, videoId] = cdnMatch;
-    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=${muted}&loop=true&preload=true`;
+    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=true&loop=true&preload=true`;
   }
   
   const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}autoplay=true&muted=${muted}&loop=true`;
+  return `${url}${separator}autoplay=true&muted=true&loop=true`;
 }
 
 export function FullscreenVideoViewer({
@@ -86,9 +87,24 @@ export function FullscreenVideoViewer({
   const [swipeDirection, setSwipeDirection] = useState<'up' | 'down' | null>(null);
   const [showFullCaption, setShowFullCaption] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const viewTrackedRef = useRef<Set<string>>(new Set());
+
+  // Toggle mute using postMessage to avoid reloading the video
+  const toggleMute = useCallback(() => {
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    
+    // Send message to Bunny player iframe
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        { event: newMuted ? 'mute' : 'unmute' },
+        '*'
+      );
+    }
+  }, [isMuted]);
 
   const currentVideo = videos[currentIndex];
   const isImage = currentVideo?.mediaType === 'image' || 
@@ -276,8 +292,9 @@ export function FullscreenVideoViewer({
           </div>
         ) : (
           <iframe
+            ref={iframeRef}
             key={`${currentVideo.id}-${currentVariation}`}
-            src={getEmbedUrl(currentVideoUrl, isMuted)}
+            src={getEmbedUrl(currentVideoUrl)}
             className="w-full h-full border-0"
             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
@@ -311,7 +328,7 @@ export function FullscreenVideoViewer({
         <div className="absolute top-4 right-4 z-30 flex items-center gap-3">
           {!isImage && (
             <button
-              onClick={() => setIsMuted(!isMuted)}
+              onClick={toggleMute}
               className="p-2 text-white/90 hover:text-white transition-colors"
             >
               {isMuted ? <VolumeX className="h-6 w-6 drop-shadow-lg" /> : <Volume2 className="h-6 w-6 drop-shadow-lg" />}
