@@ -214,14 +214,20 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
 
       const response = await fetch(N8N_WEBHOOK_URL, {
         method: "POST",
+        mode: "cors",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify(payload),
       });
 
+      console.log("n8n response status:", response.status);
+      console.log("n8n response headers:", Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error(`Error en webhook: ${response.status}`);
+        const errorText = await response.text().catch(() => "");
+        throw new Error(`Error en webhook: ${response.status} - ${errorText}`);
       }
 
       // Get the response from n8n - handle segmented JSON response
@@ -229,11 +235,19 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
       let generatedContent: GeneratedContent = { script: "" };
       
       // First get the raw text to check if response is empty
-      const responseText = await response.text();
-      console.log("n8n raw response:", responseText);
+      let responseText = "";
+      try {
+        responseText = await response.text();
+      } catch (textError) {
+        console.error("Error reading response text:", textError);
+        throw new Error("No se pudo leer la respuesta del webhook. Posible problema de CORS.");
+      }
+      
+      console.log("n8n raw response length:", responseText.length);
+      console.log("n8n raw response preview:", responseText.substring(0, 500));
       
       if (!responseText || responseText.trim() === "") {
-        throw new Error("El webhook devolvió una respuesta vacía. Verifica que el flujo en n8n esté activo.");
+        throw new Error("El webhook devolvió una respuesta vacía. Verifica que n8n tenga los headers CORS configurados: Access-Control-Allow-Origin: *");
       }
       
       if (contentType.includes("application/json")) {
