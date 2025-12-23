@@ -1877,6 +1877,10 @@ export type Database = {
         Args: { _user1_id: string; _user2_id: string }
         Returns: boolean
       }
+      check_and_award_achievements: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       check_perfect_streak: { Args: { _user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
