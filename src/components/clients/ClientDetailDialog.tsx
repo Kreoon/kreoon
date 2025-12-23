@@ -18,11 +18,12 @@ import { es } from "date-fns/locale";
 import { 
   Building2, Video, Save, Mail, Phone, Calendar, DollarSign, 
   Package, Plus, Trash2, Edit2, ExternalLink, ShoppingBag, CheckCircle,
-  Star, Eye
+  Star, Eye, Settings
 } from "lucide-react";
 import { VipBadge } from "@/components/ui/vip-badge";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
+import { CompanyProfileEditor } from "@/components/portfolio/CompanyProfileEditor";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,6 +80,10 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<ClientPackage | null>(null);
   const [showPackageDialog, setShowPackageDialog] = useState(false);
+  
+  // Company Profile Editor
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [fullClientData, setFullClientData] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -100,8 +105,23 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
       fetchClientContent();
       fetchProducts();
       fetchPackages();
+      fetchFullClientData();
     }
   }, [client]);
+
+  const fetchFullClientData = async () => {
+    if (!client) return;
+    try {
+      const { data } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', client.id)
+        .single();
+      setFullClientData(data);
+    } catch (error) {
+      console.error('Error fetching full client data:', error);
+    }
+  };
 
   const fetchPackages = async () => {
     if (!client) return;
@@ -329,61 +349,103 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
           </TabsList>
 
           <TabsContent value="info" className="space-y-4 mt-4">
+            {/* Admin: Full Profile Editor Button */}
+            {isAdmin && fullClientData && (
+              <div className="p-4 rounded-lg border bg-primary/5 border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Settings className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium">Perfil completo de la empresa</p>
+                      <p className="text-xs text-muted-foreground">
+                        Edita todos los datos: documento legal, ubicación, redes sociales, categoría, etc.
+                      </p>
+                    </div>
+                  </div>
+                  <Button onClick={() => setShowProfileEditor(true)}>
+                    <Edit2 className="h-4 w-4 mr-2" />
+                    Editar perfil completo
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-muted-foreground text-xs flex items-center gap-1">
                   <Building2 className="h-3 w-3" /> Nombre
                 </Label>
-                {editMode ? (
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                ) : (
-                  <p className="font-medium">{client.name}</p>
-                )}
+                <p className="font-medium">{fullClientData?.name || client.name}</p>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-muted-foreground text-xs flex items-center gap-1">
                   <Mail className="h-3 w-3" /> Email
                 </Label>
-                {editMode ? (
-                  <Input
-                    value={formData.contact_email}
-                    onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                  />
-                ) : (
-                  <p className="font-medium">{client.contact_email || "—"}</p>
-                )}
+                <p className="font-medium">{fullClientData?.contact_email || client.contact_email || "—"}</p>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-muted-foreground text-xs flex items-center gap-1">
                   <Phone className="h-3 w-3" /> Teléfono
                 </Label>
-                {editMode ? (
-                  <Input
-                    value={formData.contact_phone}
-                    onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                  />
-                ) : (
-                  <p className="font-medium">{client.contact_phone || "—"}</p>
-                )}
+                <p className="font-medium">{fullClientData?.contact_phone || client.contact_phone || "—"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Contacto principal</Label>
+                <p className="font-medium">{fullClientData?.main_contact || "—"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Documento</Label>
+                <p className="font-medium">
+                  {fullClientData?.document_type ? `${fullClientData.document_type.toUpperCase()}: ${fullClientData.document_number || "—"}` : "—"}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Categoría</Label>
+                <p className="font-medium">{fullClientData?.category || "—"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Ubicación</Label>
+                <p className="font-medium">
+                  {[fullClientData?.city, fullClientData?.country].filter(Boolean).join(", ") || "—"}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Sitio Web</Label>
+                <p className="font-medium">{fullClientData?.website || "—"}</p>
               </div>
             </div>
 
+            {/* Social Links */}
+            {(fullClientData?.instagram || fullClientData?.tiktok || fullClientData?.facebook || fullClientData?.linkedin) && (
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Redes sociales</Label>
+                <div className="flex flex-wrap gap-2">
+                  {fullClientData?.instagram && (
+                    <Badge variant="outline">Instagram: {fullClientData.instagram}</Badge>
+                  )}
+                  {fullClientData?.tiktok && (
+                    <Badge variant="outline">TikTok: {fullClientData.tiktok}</Badge>
+                  )}
+                  {fullClientData?.facebook && (
+                    <Badge variant="outline">Facebook: {fullClientData.facebook}</Badge>
+                  )}
+                  {fullClientData?.linkedin && (
+                    <Badge variant="outline">LinkedIn: {fullClientData.linkedin}</Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">Notas</Label>
-              {editMode ? (
-                <Textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={3}
-                />
-              ) : (
-                <p className="text-sm">{client.notes || "Sin notas"}</p>
-              )}
+              <Label className="text-muted-foreground text-xs">Descripción</Label>
+              <p className="text-sm">{fullClientData?.bio || client.notes || "Sin descripción"}</p>
             </div>
 
             {/* VIP Toggle - Admin only */}
@@ -399,30 +461,21 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                   </div>
                 </div>
                 <Switch
-                  checked={formData.is_vip}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_vip: checked })}
-                  disabled={!editMode}
+                  checked={fullClientData?.is_vip ?? formData.is_vip}
+                  onCheckedChange={async (checked) => {
+                    try {
+                      await supabase
+                        .from('clients')
+                        .update({ is_vip: checked })
+                        .eq('id', client.id);
+                      setFullClientData({ ...fullClientData, is_vip: checked });
+                      setFormData({ ...formData, is_vip: checked });
+                      onUpdate?.();
+                    } catch (error) {
+                      console.error('Error updating VIP status:', error);
+                    }
+                  }}
                 />
-              </div>
-            )}
-
-            {isAdmin && (
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                {editMode ? (
-                  <>
-                    <Button variant="outline" onClick={() => setEditMode(false)}>
-                      Cancelar
-                    </Button>
-                    <Button onClick={handleSave} disabled={loading}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Guardar
-                    </Button>
-                  </>
-                ) : (
-                  <Button onClick={() => setEditMode(true)}>
-                    Editar
-                  </Button>
-                )}
               </div>
             )}
           </TabsContent>
@@ -912,6 +965,20 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         onOpenChange={setShowPackageDialog}
         onSuccess={fetchPackages}
       />
+
+      {/* Company Profile Editor */}
+      {fullClientData && (
+        <CompanyProfileEditor
+          companyId={client.id}
+          currentData={fullClientData}
+          open={showProfileEditor}
+          onOpenChange={setShowProfileEditor}
+          onSave={() => {
+            fetchFullClientData();
+            onUpdate?.();
+          }}
+        />
+      )}
     </Dialog>
   );
 }
