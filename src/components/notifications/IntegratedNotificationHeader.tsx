@@ -191,11 +191,11 @@ export function IntegratedNotificationHeader({
       {/* Spacer to push buttons to the right */}
       <div className="flex-1" />
 
-      {/* Profile Button with Avatar */}
+      {/* Profile Button with Avatar - navigates to user's social profile */}
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => navigate('/settings')}
+        onClick={() => navigate(user?.id ? `/p/${user.id}` : '/portfolio')}
         className="gap-2 px-2"
       >
         <Avatar className="h-7 w-7">
