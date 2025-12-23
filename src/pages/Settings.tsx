@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2 } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
@@ -15,6 +15,7 @@ import { AppSettingsManagement } from "@/components/settings/AppSettingsManageme
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { PlatformSecurityPanel } from "@/components/settings/PlatformSecurityPanel";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { Sparkles, Play } from "lucide-react";
@@ -56,7 +57,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings';
 
 const settingsSections = [
   { 
@@ -134,9 +135,17 @@ const settingsSections = [
   { 
     id: 'seguridad' as const,
     icon: Shield, 
-    title: "Seguridad", 
-    description: "Contraseña, autenticación y accesos",
+    title: "Mi Seguridad", 
+    description: "Contraseña, 2FA y seguridad de tu cuenta",
     adminOnly: false,
+    rootOnly: false
+  },
+  { 
+    id: 'seguridad-plataforma' as const,
+    icon: ShieldCheck, 
+    title: "Seguridad Plataforma", 
+    description: "Políticas de seguridad y gestión de usuarios",
+    adminOnly: true,
     rootOnly: false
   },
   { 
@@ -229,6 +238,8 @@ const Settings = () => {
         );
       case 'seguridad':
         return <SecuritySettings />;
+      case 'seguridad-plataforma':
+        return <PlatformSecurityPanel />;
       case 'apariencia':
         return <AppearanceSettings />;
       case 'integraciones':

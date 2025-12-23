@@ -80,6 +80,36 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_ips: {
+        Row: {
+          blocked_at: string
+          blocked_by: string | null
+          expires_at: string | null
+          id: string
+          ip_address: string
+          is_active: boolean | null
+          reason: string | null
+        }
+        Insert: {
+          blocked_at?: string
+          blocked_by?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_address: string
+          is_active?: boolean | null
+          reason?: string | null
+        }
+        Update: {
+          blocked_at?: string
+          blocked_by?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: string
+          is_active?: boolean | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           content_id: string | null
@@ -864,6 +894,45 @@ export type Database = {
         }
         Relationships: []
       }
+      login_history: {
+        Row: {
+          device_type: string | null
+          id: string
+          ip_address: string | null
+          is_suspicious: boolean | null
+          location: string | null
+          login_at: string
+          logout_at: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_suspicious?: boolean | null
+          location?: string | null
+          login_at?: string
+          logout_at?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_suspicious?: boolean | null
+          location?: string | null
+          login_at?: string
+          logout_at?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1331,6 +1400,33 @@ export type Database = {
         }
         Relationships: []
       }
+      security_settings: {
+        Row: {
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_points: {
         Row: {
           consecutive_on_time: number
@@ -1424,6 +1520,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_security_status: {
+        Row: {
+          account_locked: boolean | null
+          failed_login_attempts: number | null
+          force_password_reset: boolean | null
+          id: string
+          last_failed_login: string | null
+          last_password_change: string | null
+          last_security_review: string | null
+          locked_until: string | null
+          mfa_enabled: boolean | null
+          security_score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_locked?: boolean | null
+          failed_login_attempts?: number | null
+          force_password_reset?: boolean | null
+          id?: string
+          last_failed_login?: string | null
+          last_password_change?: string | null
+          last_security_review?: string | null
+          locked_until?: string | null
+          mfa_enabled?: boolean | null
+          security_score?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_locked?: boolean | null
+          failed_login_attempts?: number | null
+          force_password_reset?: boolean | null
+          id?: string
+          last_failed_login?: string | null
+          last_password_change?: string | null
+          last_security_review?: string | null
+          locked_until?: string | null
+          mfa_enabled?: boolean | null
+          security_score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           assigned_by: string | null
@@ -1485,6 +1626,7 @@ export type Database = {
         Args: { _content_id: string; _url: string }
         Returns: string[]
       }
+      calculate_security_score: { Args: { _user_id: string }; Returns: number }
       calculate_up_level: {
         Args: { points: number }
         Returns: Database["public"]["Enums"]["up_level"]
@@ -1557,6 +1699,15 @@ export type Database = {
           _entity_id?: string
           _entity_name?: string
           _entity_type: string
+          _user_id: string
+        }
+        Returns: string
+      }
+      log_user_login: {
+        Args: {
+          _device_type?: string
+          _ip_address?: string
+          _user_agent?: string
           _user_id: string
         }
         Returns: string
