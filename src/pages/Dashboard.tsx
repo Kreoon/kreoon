@@ -3,7 +3,7 @@ import {
   Video, Users, CheckCircle, Clock, DollarSign, TrendingUp, 
   Activity, Target, BarChart3, ArrowUpRight, ArrowDownRight,
   Play, UserCheck, Calendar, Banknote, Filter, X, Settings,
-  Building2, Scissors
+  Building2, Scissors, Zap, Trophy
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
@@ -29,6 +29,8 @@ import { AmbassadorBadge } from "@/components/ui/ambassador-badge";
 import { ReferralStats } from "@/components/dashboard/ReferralStats";
 import { CurrencyDisplay, CurrencyBadge, formatCurrency, type CurrencyType } from "@/components/ui/currency-input";
 import { useCurrency } from "@/hooks/useCurrency";
+import { Leaderboard } from "@/components/points/Leaderboard";
+import { useLeaderboard } from "@/hooks/useUserPoints";
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -1285,6 +1287,25 @@ export default function Dashboard() {
                 />
               </TabsContent>
             </Tabs>
+          </div>
+        )}
+
+        {/* UP System - Admin Only */}
+        {isAdmin && (
+          <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  <Zap className="h-6 w-6 text-primary" />
+                  Sistema UP (UGC Points)
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Gamificación y ranking de creadores y editores
+                </p>
+              </div>
+              <Trophy className="h-8 w-8 text-yellow-500" />
+            </div>
+            <Leaderboard maxItems={10} showHeader={false} />
           </div>
         )}
 
