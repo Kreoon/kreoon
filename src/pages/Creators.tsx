@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Star, Video, Trash2, User } from "lucide-react";
+import { Search, Plus, Star, Video, Trash2, User, Sword } from "lucide-react";
+import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -222,24 +223,23 @@ const Creators = () => {
   return (
     <>
       <div className="min-h-screen">
-        <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
-            <div className="min-w-0">
-              <h1 className="text-lg md:text-xl font-bold text-foreground">Creadores & Editores</h1>
-              <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Gestiona tu equipo de contenido</p>
-            </div>
-            
-            {isAdmin && (
-              <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Agregar Miembro</span>
-                <span className="sm:hidden">Agregar</span>
-              </Button>
-            )}
-          </div>
-        </header>
+        <div className="p-4 md:p-6 space-y-6">
+          {/* Medieval Banner */}
+          <MedievalBanner
+            icon={Sword}
+            title="Cuartel de Guerreros"
+            subtitle="Los artesanos y forjadores del reino"
+            action={
+              isAdmin && (
+                <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0 font-medieval">
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Reclutar Guerrero</span>
+                  <span className="sm:hidden">Reclutar</span>
+                </Button>
+              )
+            }
+          />
 
-        <div className="p-4 md:p-6">
           <div className="mb-4 md:mb-6">
             <div className="relative w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

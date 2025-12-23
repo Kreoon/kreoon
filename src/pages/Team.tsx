@@ -27,8 +27,10 @@ import {
   Send,
   UserPlus,
   Crown,
-  Search
+  Search,
+  Swords
 } from 'lucide-react';
+import { MedievalBanner } from '@/components/layout/MedievalBanner';
 
 const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Administrador',
@@ -372,78 +374,78 @@ export default function Team() {
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header with invite button */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Gestión de Equipo</h1>
-          <p className="text-muted-foreground">Administra usuarios, roles y clientes</p>
-        </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          {/* Search bar */}
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar usuarios..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+    <div className="p-4 md:p-6 space-y-6">
+      {/* Medieval Banner */}
+      <MedievalBanner
+        icon={Swords}
+        title="Consejo del Reino"
+        subtitle="Administra los vasallos, roles y alianzas"
+        action={
           <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <UserPlus className="w-4 h-4" />
-              Invitar Usuario
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Invitar nuevo usuario</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="invite-email">Email *</Label>
-                <Input
-                  id="invite-email"
-                  type="email"
-                  value={inviteData.email}
-                  onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
-                  placeholder="usuario@ejemplo.com"
-                />
-              </div>
-              <div>
-                <Label>Rol</Label>
-                <Select 
-                  value={inviteData.role} 
-                  onValueChange={(v) => setInviteData({ ...inviteData, role: v as AppRole })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="creator">Creador</SelectItem>
-                    <SelectItem value="editor">Editor</SelectItem>
-                    <SelectItem value="client">Cliente</SelectItem>
-                    <SelectItem value="strategist">Estratega</SelectItem>
-                    <SelectItem value="ambassador">Embajador</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setInviteDialog(false)}>
-                Cancelar
+            <DialogTrigger asChild>
+              <Button className="gap-2 font-medieval">
+                <UserPlus className="w-4 h-4" />
+                Invitar Vasallo
               </Button>
-              <Button onClick={handleSendInvitation} disabled={sendingInvite} className="gap-2">
-                {sendingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Enviar Invitación
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        </div>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Invitar nuevo usuario</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="invite-email">Email *</Label>
+                  <Input
+                    id="invite-email"
+                    type="email"
+                    value={inviteData.email}
+                    onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
+                    placeholder="usuario@ejemplo.com"
+                  />
+                </div>
+                <div>
+                  <Label>Rol</Label>
+                  <Select 
+                    value={inviteData.role} 
+                    onValueChange={(v) => setInviteData({ ...inviteData, role: v as AppRole })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="creator">Creador</SelectItem>
+                      <SelectItem value="editor">Editor</SelectItem>
+                      <SelectItem value="client">Cliente</SelectItem>
+                      <SelectItem value="strategist">Estratega</SelectItem>
+                      <SelectItem value="ambassador">Embajador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setInviteDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSendInvitation} disabled={sendingInvite} className="gap-2">
+                  {sendingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  Enviar Invitación
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+      />
+
+      {/* Search bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar usuarios..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       <Tabs defaultValue="no-role" className="w-full">
