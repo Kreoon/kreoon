@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { ClientFinanceChart } from '@/components/dashboard/ClientFinanceChart';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { FullscreenContentViewer } from '@/components/content/FullscreenContentViewer';
+import { ReviewCard } from '@/components/content/ReviewCard';
 import { 
   LogOut, 
   Video, 
@@ -1193,26 +1194,16 @@ export default function ClientDashboard() {
           </div>
         )}
 
-        {/* Review Tab - TikTok Style */}
+        {/* Review Tab - Inline Cards */}
         {activeTab === 'review' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold mb-1">Contenido por Revisar</h2>
-                <p className="text-sm text-muted-foreground">Revisa y aprueba tu contenido</p>
+                <p className="text-sm text-muted-foreground">
+                  {reviewContent.length} {reviewContent.length === 1 ? 'video' : 'videos'} pendientes de revisión
+                </p>
               </div>
-              {reviewContent.length > 0 && (
-                <Button 
-                  onClick={() => {
-                    setFullscreenStartIndex(0);
-                    setShowFullscreenReview(true);
-                  }}
-                  className="gap-2"
-                >
-                  <Maximize2 className="h-4 w-4" />
-                  Ver todos
-                </Button>
-              )}
             </div>
 
             {reviewContent.length === 0 ? (
@@ -1224,54 +1215,14 @@ export default function ClientDashboard() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {reviewContent.map((item, index) => (
-                  <div
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {reviewContent.map((item) => (
+                  <ReviewCard
                     key={item.id}
-                    className="group relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer bg-muted border-2 border-transparent hover:border-primary/50 transition-all"
-                    onClick={() => {
-                      setFullscreenStartIndex(index);
-                      setShowFullscreenReview(true);
-                    }}
-                  >
-                    {/* Thumbnail */}
-                    {item.thumbnail_url ? (
-                      <img 
-                        src={item.thumbnail_url} 
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-muted">
-                        <Video className="h-10 w-10 text-muted-foreground" />
-                      </div>
-                    )}
-
-                    {/* Overlay gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-
-                    {/* Status badge */}
-                    <div className="absolute top-2 left-2">
-                      <Badge className={cn("text-xs", STATUS_COLORS[item.status])}>
-                        {STATUS_LABELS[item.status]}
-                      </Badge>
-                    </div>
-
-                    {/* Play icon on hover */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="h-14 w-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <Play className="h-7 w-7 text-white fill-white" />
-                      </div>
-                    </div>
-
-                    {/* Bottom info */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <p className="text-white text-sm font-medium line-clamp-2">{item.title}</p>
-                      <p className="text-white/70 text-xs mt-1">
-                        {item.creator?.full_name || 'Sin creador'}
-                      </p>
-                    </div>
-                  </div>
+                    content={item}
+                    userId={user?.id}
+                    onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
+                  />
                 ))}
               </div>
             )}
