@@ -24,10 +24,17 @@ interface Product {
   research_url?: string | null;
 }
 
+interface GeneratedContent {
+  script: string;
+  editor_guidelines?: string;
+  strategist_guidelines?: string;
+  trafficker_guidelines?: string;
+}
+
 interface StrategistScriptFormProps {
   product: Product | null;
   contentId: string;
-  onScriptGenerated: (script: string) => void;
+  onScriptGenerated: (content: GeneratedContent) => void;
 }
 
 interface ScriptFormData {
@@ -63,8 +70,8 @@ const COUNTRIES = [
   "Otro",
 ];
 
-// n8n Webhook URL
-const N8N_WEBHOOK_URL = "https://n8n.infinygroup.com/webhook-test/787fcfa6-f590-458f-94b6-7b9f0ecd1be7";
+// n8n Webhook URL - Production
+const N8N_WEBHOOK_URL = "https://n8n.infinygroup.com/webhook/Creartorstudioguionizadorproyectos";
 
 export function StrategistScriptForm({ product, contentId, onScriptGenerated }: StrategistScriptFormProps) {
   const { toast } = useToast();
@@ -183,43 +190,44 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
         throw new Error(`Error en webhook: ${response.status}`);
       }
 
-      // Get the response from n8n - handle both JSON and plain text
+      // Get the response from n8n - handle segmented JSON response
       const contentType = response.headers.get("content-type") || "";
-      let script = "";
+      let generatedContent: GeneratedContent = { script: "" };
       
       if (contentType.includes("application/json")) {
-        // Response is JSON
         const data = await response.json();
         console.log("n8n JSON response:", data);
         
-        if (typeof data === "string") {
-          script = data;
+        // Handle the segmented response structure from n8n
+        // Expected: { bloques_html: { guion, pautas_editor, pautas_trafficker, pautas_estratega } }
+        if (data.bloques_html) {
+          generatedContent = {
+            script: data.bloques_html.guion || "",
+            editor_guidelines: data.bloques_html.pautas_editor || "",
+            strategist_guidelines: data.bloques_html.pautas_estratega || "",
+            trafficker_guidelines: data.bloques_html.pautas_trafficker || "",
+          };
+        } else if (typeof data === "string") {
+          generatedContent.script = data;
         } else if (data.script) {
-          script = data.script;
+          generatedContent.script = data.script;
         } else if (data.guion) {
-          script = data.guion;
-        } else if (data.output) {
-          script = data.output;
-        } else if (data.text) {
-          script = data.text;
-        } else if (data.message) {
-          script = data.message;
-        } else if (data.content) {
-          script = data.content;
-        } else if (data.result) {
-          script = typeof data.result === 'string' ? data.result : JSON.stringify(data.result);
+          generatedContent.script = data.guion;
         } else {
-          script = JSON.stringify(data, null, 2);
+          generatedContent.script = JSON.stringify(data, null, 2);
         }
       } else {
-        // Response is plain text
-        script = await response.text();
-        console.log("n8n text response:", script);
+        // Response is plain text - only script
+        generatedContent.script = await response.text();
+        console.log("n8n text response:", generatedContent.script);
       }
 
-      if (script) {
-        onScriptGenerated(script);
-        toast({ title: "Guión generado exitosamente" });
+      if (generatedContent.script) {
+        onScriptGenerated(generatedContent);
+        toast({ 
+          title: "Contenido generado exitosamente",
+          description: "Guión y pautas asignados a sus respectivos bloques"
+        });
       } else {
         throw new Error("No se recibió respuesta del webhook");
       }

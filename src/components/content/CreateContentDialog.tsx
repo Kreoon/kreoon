@@ -532,7 +532,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
             {/* AI Script Generator */}
             <ScriptGenerator 
               product={selectedProduct} 
-              onScriptGenerated={(generatedScript) => setScript(generatedScript)} 
+              onScriptGenerated={(generatedContent) => setScript(generatedContent.script)} 
             />
             
             <div className="space-y-2">
