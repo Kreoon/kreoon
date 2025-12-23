@@ -6,12 +6,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Settings, Users, History, Sword, Shield, Castle, Swords } from 'lucide-react';
+import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Settings, Users, History, Sword, Shield, Castle, Swords, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UPSettingsPanel } from '@/components/points/UPSettingsPanel';
 import { UPManualAdjustment } from '@/components/points/UPManualAdjustment';
 import { Leaderboard } from '@/components/points/Leaderboard';
 import { PointsHistory } from '@/components/points/PointsHistory';
+import { AchievementsShowcase } from '@/components/points/AchievementsShowcase';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -120,10 +121,14 @@ export default function RankingPage() {
       {/* Tabs for Admin */}
       {isAdmin ? (
         <Tabs defaultValue="ranking" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
             <TabsTrigger value="ranking" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Trophy className="w-4 h-4" />
               <span className="hidden sm:inline">Ranking</span>
+            </TabsTrigger>
+            <TabsTrigger value="achievements" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Award className="w-4 h-4" />
+              <span className="hidden sm:inline">Insignias</span>
             </TabsTrigger>
             <TabsTrigger value="manage" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Swords className="w-4 h-4" />
@@ -149,6 +154,10 @@ export default function RankingPage() {
               currentUserId={user?.id}
               thresholds={thresholds}
             />
+          </TabsContent>
+
+          <TabsContent value="achievements" className="space-y-6">
+            {user && <AchievementsShowcase userId={user.id} />}
           </TabsContent>
 
           <TabsContent value="manage" className="space-y-6">
@@ -216,15 +225,34 @@ export default function RankingPage() {
           </TabsContent>
         </Tabs>
       ) : (
-        <RankingContent 
-          leaderboard={leaderboard}
-          totalPoints={totalPoints}
-          diamondCount={diamondCount}
-          goldCount={goldCount}
-          silverCount={silverCount}
-          currentUserId={user?.id}
-          thresholds={thresholds}
-        />
+        <Tabs defaultValue="ranking" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+            <TabsTrigger value="ranking" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Trophy className="w-4 h-4" />
+              Ranking
+            </TabsTrigger>
+            <TabsTrigger value="achievements" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Award className="w-4 h-4" />
+              Mis Insignias
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="ranking" className="space-y-6">
+            <RankingContent 
+              leaderboard={leaderboard}
+              totalPoints={totalPoints}
+              diamondCount={diamondCount}
+              goldCount={goldCount}
+              silverCount={silverCount}
+              currentUserId={user?.id}
+              thresholds={thresholds}
+            />
+          </TabsContent>
+
+          <TabsContent value="achievements" className="space-y-6">
+            {user && <AchievementsShowcase userId={user.id} />}
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
