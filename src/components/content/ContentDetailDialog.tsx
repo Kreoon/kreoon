@@ -794,21 +794,21 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
             )}
 
-            {/* Thumbnail Selector - For Admin/Strategist when there's at least one video */}
-            {canEditVideoTab && formData.video_urls.some(url => url) && (
+            {/* Thumbnail Selector - For Admin/Strategist */}
+            {canEditVideoTab && (
               <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
                 <div className="flex items-center gap-2">
-                  <Video className="h-4 w-4 text-primary" />
+                  <Image className="h-4 w-4 text-primary" />
                   <h4 className="font-medium">Miniatura del Contenido</h4>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  La miniatura se genera automáticamente al subir el video. También puedes subir una imagen personalizada.
+                  Sube una imagen personalizada o quita la miniatura actual. Si no hay miniatura, se mostrará un fondo negro con icono de play.
                 </p>
                 <ThumbnailSelector
                   contentId={content.id}
                   currentThumbnail={content.thumbnail_url}
                   onThumbnailChange={() => onUpdate?.()}
-                  disabled={!editMode && !isAdmin}
+                  disabled={!isAdmin}
                 />
               </div>
             )}
