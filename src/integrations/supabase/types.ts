@@ -372,64 +372,94 @@ export type Database = {
       }
       clients: {
         Row: {
+          address: string | null
           bio: string | null
+          category: string | null
+          city: string | null
           contact_email: string | null
           contact_phone: string | null
+          country: string | null
           created_at: string | null
           created_by: string | null
+          document_number: string | null
+          document_type: string | null
           facebook: string | null
           id: string
           instagram: string | null
           is_public: boolean | null
           is_vip: boolean | null
+          linkedin: string | null
           logo_url: string | null
+          main_contact: string | null
           name: string
           notes: string | null
           portfolio_url: string | null
+          profile_completed: boolean | null
           tiktok: string | null
           updated_at: string | null
           user_id: string | null
           username: string | null
+          website: string | null
         }
         Insert: {
+          address?: string | null
           bio?: string | null
+          category?: string | null
+          city?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          country?: string | null
           created_at?: string | null
           created_by?: string | null
+          document_number?: string | null
+          document_type?: string | null
           facebook?: string | null
           id?: string
           instagram?: string | null
           is_public?: boolean | null
           is_vip?: boolean | null
+          linkedin?: string | null
           logo_url?: string | null
+          main_contact?: string | null
           name: string
           notes?: string | null
           portfolio_url?: string | null
+          profile_completed?: boolean | null
           tiktok?: string | null
           updated_at?: string | null
           user_id?: string | null
           username?: string | null
+          website?: string | null
         }
         Update: {
+          address?: string | null
           bio?: string | null
+          category?: string | null
+          city?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          country?: string | null
           created_at?: string | null
           created_by?: string | null
+          document_number?: string | null
+          document_type?: string | null
           facebook?: string | null
           id?: string
           instagram?: string | null
           is_public?: boolean | null
           is_vip?: boolean | null
+          linkedin?: string | null
           logo_url?: string | null
+          main_contact?: string | null
           name?: string
           notes?: string | null
           portfolio_url?: string | null
+          profile_completed?: boolean | null
           tiktok?: string | null
           updated_at?: string | null
           user_id?: string | null
           username?: string | null
+          website?: string | null
         }
         Relationships: []
       }

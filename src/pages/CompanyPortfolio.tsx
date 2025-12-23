@@ -39,7 +39,18 @@ interface CompanyProfile {
   portfolio_url: string | null;
   is_public: boolean;
   contact_email: string | null;
+  contact_phone: string | null;
   is_vip: boolean;
+  document_type: string | null;
+  document_number: string | null;
+  main_contact: string | null;
+  address: string | null;
+  city: string | null;
+  country: string | null;
+  website: string | null;
+  linkedin: string | null;
+  category: string | null;
+  profile_completed: boolean;
 }
 
 interface ContentItem {
@@ -145,7 +156,7 @@ export default function CompanyPortfolio() {
       // Fetch company profile
       const { data: companyData, error: companyError } = await supabase
         .from('clients')
-        .select('id, name, username, logo_url, bio, instagram, tiktok, facebook, portfolio_url, is_public, contact_email, is_vip')
+        .select('id, name, username, logo_url, bio, instagram, tiktok, facebook, portfolio_url, is_public, contact_email, contact_phone, is_vip, document_type, document_number, main_contact, address, city, country, website, linkedin, category, profile_completed')
         .eq('id', resolvedCompanyId)
         .maybeSingle();
 
@@ -181,7 +192,18 @@ export default function CompanyPortfolio() {
         ...companyData,
         username: companyData.username ?? null,
         is_public: companyData.is_public ?? true,
-        is_vip: companyData.is_vip ?? false
+        is_vip: companyData.is_vip ?? false,
+        contact_phone: companyData.contact_phone ?? null,
+        document_type: companyData.document_type ?? null,
+        document_number: companyData.document_number ?? null,
+        main_contact: companyData.main_contact ?? null,
+        address: companyData.address ?? null,
+        city: companyData.city ?? null,
+        country: companyData.country ?? null,
+        website: companyData.website ?? null,
+        linkedin: companyData.linkedin ?? null,
+        category: companyData.category ?? null,
+        profile_completed: companyData.profile_completed ?? false,
       });
 
       // Check if current user is associated with this company
@@ -605,15 +627,29 @@ export default function CompanyPortfolio() {
       {company && (
         <CompanyProfileEditor
           companyId={company.id}
-          currentName={company.name}
-          currentBio={company.bio}
-          currentLogo={company.logo_url}
-          currentUsername={company.username}
-          currentIsPublic={company.is_public}
-          currentInstagram={company.instagram}
-          currentTiktok={company.tiktok}
-          currentFacebook={company.facebook}
-          currentPortfolioUrl={company.portfolio_url}
+          currentData={{
+            name: company.name,
+            bio: company.bio,
+            logo_url: company.logo_url,
+            username: company.username,
+            is_public: company.is_public ?? true,
+            instagram: company.instagram,
+            tiktok: company.tiktok,
+            facebook: company.facebook,
+            portfolio_url: company.portfolio_url,
+            document_type: company.document_type,
+            document_number: company.document_number,
+            main_contact: company.main_contact,
+            contact_phone: company.contact_phone,
+            contact_email: company.contact_email,
+            address: company.address,
+            city: company.city,
+            country: company.country,
+            website: company.website,
+            linkedin: company.linkedin,
+            category: company.category,
+            profile_completed: company.profile_completed ?? false,
+          }}
           open={showProfileEditor}
           onOpenChange={setShowProfileEditor}
           onSave={fetchData}
