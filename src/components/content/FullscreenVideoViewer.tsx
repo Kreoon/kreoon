@@ -188,6 +188,8 @@ export function FullscreenVideoViewer({
 
   const currentVideo = videos[currentIndex];
   const canManageCurrent = !!currentVideo && (canManageVideo ? canManageVideo(currentVideo) : !!isOwner);
+  const hasManageActions = !!(onEdit || onToggleVisibility || onDelete);
+  const showManageMenu = canManageCurrent && hasManageActions;
   const isImage = currentVideo?.mediaType === 'image' || 
     (!currentVideo?.videoUrls?.length && currentVideo?.mediaUrl);
   const currentVideoUrl = currentVideo?.videoUrls?.[currentVariation] || currentVideo?.videoUrls?.[0];
@@ -477,7 +479,7 @@ export function FullscreenVideoViewer({
             </button>
           )}
 
-          {canManageCurrent && (
+          {showManageMenu && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button 
