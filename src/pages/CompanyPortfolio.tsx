@@ -366,23 +366,33 @@ export default function CompanyPortfolio() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-black">
+        <PortfolioHeader />
+        <div className="flex items-center justify-center pt-20">
+          <Loader2 className="w-8 h-8 animate-spin text-white/50" />
+        </div>
       </div>
     );
   }
 
   if (!company) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <Building2 className="w-16 h-16 text-muted-foreground mb-4" />
-        <h1 className="text-xl font-semibold mb-2">Empresa no encontrada</h1>
-        <p className="text-muted-foreground text-center mb-4">
-          Esta empresa no existe o su perfil es privado.
-        </p>
-        <Button onClick={() => navigate('/portfolio')}>
-          Ir al portfolio
-        </Button>
+      <div className="min-h-screen bg-black text-white">
+        <PortfolioHeader />
+        <div className="flex flex-col items-center justify-center pt-20 p-4">
+          <Building2 className="w-16 h-16 text-white/30 mb-4" />
+          <h1 className="text-xl font-semibold mb-2">Empresa no encontrada</h1>
+          <p className="text-white/50 text-center mb-4">
+            Esta empresa no existe o su perfil es privado.
+          </p>
+          <Button 
+            onClick={() => navigate('/portfolio')}
+            variant="outline"
+            className="border-white/20 text-white hover:bg-white/10"
+          >
+            Ir al portfolio
+          </Button>
+        </div>
       </div>
     );
   }
@@ -415,139 +425,156 @@ export default function CompanyPortfolio() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <PortfolioHeader />
 
       {/* Company Profile Section */}
       <div className="max-w-4xl mx-auto px-4 pt-16 pb-6">
-        {/* Avatar & Info */}
-        <div className="flex flex-col items-center text-center mb-6">
-          <Avatar className="w-24 h-24 mb-4 border-2 border-primary/20">
-            <AvatarImage src={company.logo_url || undefined} alt={company.name} />
-            <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-              <Building2 className="w-10 h-10" />
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold">{company.name}</h1>
-            {company.is_vip && <VipBadge size="sm" variant="minimal" />}
-          </div>
-          {company.username && (
-            <p className="text-sm text-muted-foreground">@{company.username}</p>
-          )}
-          
-          {/* Action buttons */}
-          <div className="flex gap-2 mt-3">
-            {user && !isAssociatedUser && (
-              <CompanyFollowButton
-                companyId={company.id}
-                isFollowing={isFollowing}
-                onFollowChange={(following) => {
-                  setIsFollowing(following);
-                  setFollowersCount(prev => following ? prev + 1 : Math.max(0, prev - 1));
-                }}
-                size="sm"
-              />
-            )}
+        {/* Profile Section - TikTok style */}
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 py-6">
+          {/* Avatar */}
+          <div className="relative group">
+            <Avatar className="h-24 w-24 md:h-36 md:w-36 ring-2 ring-white/20">
+              <AvatarImage src={company.logo_url || undefined} alt={company.name} className="object-cover" />
+              <AvatarFallback className="bg-zinc-800 text-white text-2xl md:text-4xl">
+                <Building2 className="w-10 h-10 md:w-14 md:h-14" />
+              </AvatarFallback>
+            </Avatar>
             {(isAssociatedUser || isAdmin) && (
-              <Button
-                variant="outline"
-                size="sm"
+              <button
                 onClick={() => setShowProfileEditor(true)}
+                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <Pencil className="w-4 h-4 mr-2" />
-                Editar perfil
-              </Button>
+                <Pencil className="h-6 w-6 text-white" />
+              </button>
             )}
           </div>
-          
-          {company.bio && (
-            <div className="mt-3 text-sm text-muted-foreground max-w-md">
-              <ParsedText text={company.bio} />
-            </div>
-          )}
 
-          {/* Social Links */}
-          <div className="flex gap-3 mt-4">
-            {company.instagram && (
-              <a 
-                href={`https://instagram.com/${company.instagram.replace('@', '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 bg-muted rounded-full hover:bg-muted/80 transition-colors"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
+          {/* Info */}
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex flex-col items-center md:items-start gap-1 mb-3">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl md:text-2xl font-bold text-white">{company.name}</h1>
+                {company.is_vip && <VipBadge size="sm" variant="minimal" />}
+              </div>
+              {company.username && (
+                <span className="text-sm text-white/60">@{company.username}</span>
+              )}
+            </div>
+            
+            {/* Action buttons */}
+            <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap mb-4">
+              {user && !isAssociatedUser && (
+                <CompanyFollowButton
+                  companyId={company.id}
+                  isFollowing={isFollowing}
+                  onFollowChange={(following) => {
+                    setIsFollowing(following);
+                    setFollowersCount(prev => following ? prev + 1 : Math.max(0, prev - 1));
+                  }}
+                  size="sm"
+                />
+              )}
+              {(isAssociatedUser || isAdmin) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowProfileEditor(true)}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Editar perfil
+                </Button>
+              )}
+            </div>
+            
+            {company.bio && (
+              <div className="text-sm text-white/70 max-w-md mx-auto md:mx-0">
+                <ParsedText text={company.bio} />
+              </div>
             )}
-            {company.tiktok && (
-              <a 
-                href={`https://tiktok.com/@${company.tiktok.replace('@', '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 bg-muted rounded-full hover:bg-muted/80 transition-colors"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                </svg>
-              </a>
-            )}
-            {company.facebook && (
-              <a 
-                href={`https://facebook.com/${company.facebook}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 bg-muted rounded-full hover:bg-muted/80 transition-colors"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </a>
-            )}
-            {company.portfolio_url && (
-              <a 
-                href={company.portfolio_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 bg-muted rounded-full hover:bg-muted/80 transition-colors"
-              >
-                <Globe className="w-5 h-5" />
-              </a>
-            )}
+
+            {/* Social Links */}
+            <div className="flex gap-3 mt-4 justify-center md:justify-start">
+              {company.instagram && (
+                <a 
+                  href={`https://instagram.com/${company.instagram.replace('@', '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors text-white"
+                >
+                  <Instagram className="w-5 h-5" />
+                </a>
+              )}
+              {company.tiktok && (
+                <a 
+                  href={`https://tiktok.com/@${company.tiktok.replace('@', '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors text-white"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                  </svg>
+                </a>
+              )}
+              {company.facebook && (
+                <a 
+                  href={`https://facebook.com/${company.facebook}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors text-white"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                </a>
+              )}
+              {company.portfolio_url && (
+                <a 
+                  href={company.portfolio_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors text-white"
+                >
+                  <Globe className="w-5 h-5" />
+                </a>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="flex justify-center gap-8 py-4 border-y border-border">
+        {/* Stats - TikTok style */}
+        <div className="flex justify-center gap-8 py-4 border-y border-white/10">
           <div className="text-center">
-            <div className="text-lg font-bold">{formatNumber(followersCount)}</div>
-            <div className="text-xs text-muted-foreground">Seguidores</div>
+            <div className="text-lg font-bold text-white">{formatNumber(followersCount)}</div>
+            <div className="text-xs text-white/50">Seguidores</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold">{sortedContent.length}</div>
-            <div className="text-xs text-muted-foreground">Videos</div>
+            <div className="text-lg font-bold text-white">{sortedContent.length}</div>
+            <div className="text-xs text-white/50">Videos</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold">{formatNumber(totalViews)}</div>
-            <div className="text-xs text-muted-foreground">Vistas</div>
+            <div className="text-lg font-bold text-white">{formatNumber(totalViews)}</div>
+            <div className="text-xs text-white/50">Vistas</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold">{formatNumber(totalLikes)}</div>
-            <div className="text-xs text-muted-foreground">Likes</div>
+            <div className="text-lg font-bold text-white">{formatNumber(totalLikes)}</div>
+            <div className="text-xs text-white/50">Likes</div>
           </div>
         </div>
 
         {/* Content Header */}
-        <div className="flex items-center justify-center gap-2 py-3 mt-4 border-b border-border">
-          <VideoIcon className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-primary">Contenido</span>
+        <div className="flex items-center justify-center gap-2 py-3 mt-4 border-b border-white/10">
+          <VideoIcon className="w-4 h-4 text-white" />
+          <span className="text-sm font-medium text-white">Contenido</span>
         </div>
 
         {/* Content Grid */}
         <div className="grid grid-cols-3 gap-1 mt-4">
           {sortedContent.length === 0 ? (
-            <div className="col-span-3 py-12 text-center text-muted-foreground">
+            <div className="col-span-3 py-12 text-center text-white/50">
               <VideoIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>Sin contenido publicado</p>
             </div>
@@ -556,7 +583,7 @@ export default function CompanyPortfolio() {
               <div
                 key={item.id}
                 className={cn(
-                  "relative aspect-[9/16] bg-muted cursor-pointer group overflow-hidden",
+                  "relative aspect-[9/16] bg-zinc-900 cursor-pointer group overflow-hidden",
                   canManageVisibility && !item.is_portfolio_public && "ring-2 ring-inset ring-yellow-500/50"
                 )}
                 onClick={() => {
@@ -572,7 +599,7 @@ export default function CompanyPortfolio() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Play className="w-8 h-8 text-muted-foreground" />
+                    <Play className="w-8 h-8 text-white/30" />
                   </div>
                 )}
                 
@@ -586,7 +613,7 @@ export default function CompanyPortfolio() {
                 
                 {/* Pinned badge */}
                 {item.is_pinned && (
-                  <div className="absolute top-1 left-1 bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
+                  <div className="absolute top-1 left-1 bg-white/20 backdrop-blur-sm text-white text-[10px] px-1.5 py-0.5 rounded">
                     📌
                   </div>
                 )}
