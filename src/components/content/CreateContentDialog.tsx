@@ -533,6 +533,12 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
             <ScriptGenerator 
               product={selectedProduct} 
               onScriptGenerated={(generatedContent) => {
+                console.log("[CreateContentDialog] onScriptGenerated", {
+                  script: generatedContent.script?.length,
+                  editor: generatedContent.editor_guidelines?.length,
+                  strategist: generatedContent.strategist_guidelines?.length,
+                  trafficker: generatedContent.trafficker_guidelines?.length,
+                });
                 setScript(generatedContent.script);
                 if (generatedContent.editor_guidelines) {
                   setEditorGuidelines(generatedContent.editor_guidelines);

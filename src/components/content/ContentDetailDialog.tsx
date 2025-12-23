@@ -1005,17 +1005,17 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   product={selectedProduct}
                   contentId={content.id}
                   onScriptGenerated={(generatedContent) => {
-                    setFormData({ 
-                      ...formData, 
-                      script: generatedContent.script,
-                      editor_guidelines: generatedContent.editor_guidelines || formData.editor_guidelines,
-                      strategist_guidelines: generatedContent.strategist_guidelines || formData.strategist_guidelines,
-                      trafficker_guidelines: generatedContent.trafficker_guidelines || formData.trafficker_guidelines,
-                    });
+                    setFormData((prev) => ({
+                      ...prev,
+                      ...(generatedContent.script ? { script: generatedContent.script } : {}),
+                      ...(generatedContent.editor_guidelines ? { editor_guidelines: generatedContent.editor_guidelines } : {}),
+                      ...(generatedContent.strategist_guidelines ? { strategist_guidelines: generatedContent.strategist_guidelines } : {}),
+                      ...(generatedContent.trafficker_guidelines ? { trafficker_guidelines: generatedContent.trafficker_guidelines } : {}),
+                    }));
                     setEditMode(true);
-                    toast({ 
-                      title: "Contenido generado", 
-                      description: "Guión y pautas asignados a sus respectivos bloques" 
+                    toast({
+                      title: "Contenido generado",
+                      description: "Se actualizó el contenido en sus campos a medida que se generaba",
                     });
                   }}
                 />

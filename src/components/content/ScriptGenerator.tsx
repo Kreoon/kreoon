@@ -527,29 +527,41 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       trafficker_guidelines: "",
     };
 
+    const emitProgress = (patch: Partial<GeneratedContent>) => {
+      console.log("[ScriptGenerator] emitProgress", {
+        script: patch.script?.length,
+        editor: patch.editor_guidelines?.length,
+        strategist: patch.strategist_guidelines?.length,
+        trafficker: patch.trafficker_guidelines?.length,
+      });
+      onScriptGenerated({ ...generatedContent, ...patch });
+    };
+
     try {
       // Step 1: Generate Script
       updateStepStatus("script", "generating");
       generatedContent.script = await generateContent("script", formData.script_prompt);
       updateStepStatus("script", "done");
+      emitProgress({ script: generatedContent.script });
 
       // Step 2: Generate Editor Guidelines
       updateStepStatus("editor", "generating");
       generatedContent.editor_guidelines = await generateContent("editor", formData.editor_prompt, generatedContent.script);
       updateStepStatus("editor", "done");
+      emitProgress({ editor_guidelines: generatedContent.editor_guidelines });
 
       // Step 3: Generate Strategist Guidelines
       updateStepStatus("strategist", "generating");
       generatedContent.strategist_guidelines = await generateContent("strategist", formData.strategist_prompt, generatedContent.script);
       updateStepStatus("strategist", "done");
+      emitProgress({ strategist_guidelines: generatedContent.strategist_guidelines });
 
       // Step 4: Generate Trafficker Guidelines
       updateStepStatus("trafficker", "generating");
       generatedContent.trafficker_guidelines = await generateContent("trafficker", formData.trafficker_prompt, generatedContent.script);
       updateStepStatus("trafficker", "done");
+      emitProgress({ trafficker_guidelines: generatedContent.trafficker_guidelines });
 
-      onScriptGenerated(generatedContent);
-      
       toast({
         title: "Contenido generado exitosamente",
         description: `Guión y pautas generados con ${currentProvider?.label}`,
