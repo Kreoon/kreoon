@@ -696,12 +696,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     Guardar
                   </Button>
                 )}
-                {editMode && (
-                  <Button onClick={handleSave} disabled={loading} size="sm">
-                    <Save className="h-4 w-4 mr-1" />
-                    Guardar
-                  </Button>
-                )}
               </div>
             </div>
 
