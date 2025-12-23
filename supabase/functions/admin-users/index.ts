@@ -51,7 +51,8 @@ serve(async (req) => {
       });
     }
 
-    const { action, userId, email, role } = await req.json();
+    const body = await req.json();
+    const { action, userId, email, role, clientId, contentId, conversationId, productId, notificationId, postId, referralId } = body;
     console.log(`Admin action: ${action} by ${caller.email}`);
 
     switch (action) {
@@ -223,7 +224,6 @@ serve(async (req) => {
       // ============ ROOT DELETE ANY ENTITY ============
       
       case "delete_client": {
-        const { clientId } = await req.json().catch(() => ({}));
         if (!clientId) {
           return new Response(JSON.stringify({ error: "Client ID required" }), {
             status: 400,
@@ -246,7 +246,6 @@ serve(async (req) => {
       }
 
       case "delete_content": {
-        const { contentId } = await req.json().catch(() => ({}));
         if (!contentId) {
           return new Response(JSON.stringify({ error: "Content ID required" }), {
             status: 400,
@@ -271,7 +270,6 @@ serve(async (req) => {
       }
 
       case "delete_conversation": {
-        const { conversationId } = await req.json().catch(() => ({}));
         if (!conversationId) {
           return new Response(JSON.stringify({ error: "Conversation ID required" }), {
             status: 400,
@@ -293,7 +291,6 @@ serve(async (req) => {
       }
 
       case "delete_product": {
-        const { productId } = await req.json().catch(() => ({}));
         if (!productId) {
           return new Response(JSON.stringify({ error: "Product ID required" }), {
             status: 400,
@@ -313,7 +310,6 @@ serve(async (req) => {
       }
 
       case "delete_notification": {
-        const { notificationId } = await req.json().catch(() => ({}));
         if (!notificationId) {
           return new Response(JSON.stringify({ error: "Notification ID required" }), {
             status: 400,
@@ -331,7 +327,6 @@ serve(async (req) => {
       }
 
       case "delete_portfolio_post": {
-        const { postId } = await req.json().catch(() => ({}));
         if (!postId) {
           return new Response(JSON.stringify({ error: "Post ID required" }), {
             status: 400,
@@ -349,7 +344,6 @@ serve(async (req) => {
       }
 
       case "delete_referral": {
-        const { referralId } = await req.json().catch(() => ({}));
         if (!referralId) {
           return new Response(JSON.stringify({ error: "Referral ID required" }), {
             status: 400,
