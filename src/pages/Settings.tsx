@@ -68,7 +68,8 @@ const settingsSections = [
     title: "Perfil", 
     description: "Gestiona tu información personal y preferencias de cuenta",
     adminOnly: false,
-    rootOnly: false
+    rootOnly: false,
+    hideForClients: false
   },
   { 
     id: 'referidos' as const,
@@ -156,7 +157,8 @@ const settingsSections = [
     title: "Apariencia", 
     description: "Tema, colores y personalización visual",
     adminOnly: false,
-    rootOnly: false
+    rootOnly: false,
+    hideForClients: true
   },
   { 
     id: 'integraciones' as const,
@@ -177,7 +179,7 @@ const settingsSections = [
 ];
 
 const Settings = () => {
-  const { isAdmin, profile } = useAuth();
+  const { isAdmin, isClient, profile } = useAuth();
   const { resetTour } = useTour();
   const [activeSection, setActiveSection] = useState<SettingsSection>('main');
 
@@ -193,7 +195,8 @@ const Settings = () => {
         title: "Usuarios",
         description: "Gestiona usuarios, contraseñas y accesos",
         adminOnly: false,
-        rootOnly: true
+        rootOnly: true,
+        hideForClients: false
       },
       {
         id: 'root-admin' as const,
@@ -201,7 +204,8 @@ const Settings = () => {
         title: "Eliminar Entidades",
         description: "Elimina cualquier cosa de la plataforma",
         adminOnly: false,
-        rootOnly: true
+        rootOnly: true,
+        hideForClients: false
       }
     ] : [])
   ];
@@ -210,6 +214,7 @@ const Settings = () => {
   const visibleSections = allSections.filter(s => {
     if (s.rootOnly && !isRoot) return false;
     if (s.adminOnly && !isAdmin) return false;
+    if (s.hideForClients && isClient) return false;
     return true;
   });
 
