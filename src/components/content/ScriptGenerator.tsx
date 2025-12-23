@@ -216,9 +216,9 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated }: Scrip
     }
   }, [product]);
 
-  // Fetch document from URL
-  const fetchDocument = async (url: string): Promise<string> => {
-    if (!url) return "";
+  // Fetch document from URL - returns { content, warning }
+  const fetchDocument = async (url: string): Promise<{ content: string; warning?: string }> => {
+    if (!url) return { content: "" };
     
     try {
       const { data, error } = await supabase.functions.invoke("fetch-document", {
@@ -227,13 +227,16 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated }: Scrip
 
       if (error) {
         console.error("Error fetching document:", error);
-        return "";
+        return { content: "", warning: error.message };
       }
 
-      return data?.content || "";
+      return { 
+        content: data?.content || "", 
+        warning: data?.warning 
+      };
     } catch (error) {
       console.error("Error fetching document:", error);
-      return "";
+      return { content: "", warning: error instanceof Error ? error.message : "Error desconocido" };
     }
   };
 
@@ -242,26 +245,42 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated }: Scrip
     if (!product) return;
 
     setLoadingDocs(true);
+    const warnings: string[] = [];
+    
     try {
-      const [briefContent, onboardingContent, researchContent] = await Promise.all([
-        product.brief_url ? fetchDocument(product.brief_url) : Promise.resolve(""),
-        product.onboarding_url ? fetchDocument(product.onboarding_url) : Promise.resolve(""),
-        product.research_url ? fetchDocument(product.research_url) : Promise.resolve(""),
+      const [briefResult, onboardingResult, researchResult] = await Promise.all([
+        product.brief_url ? fetchDocument(product.brief_url) : Promise.resolve({ content: "", warning: undefined }),
+        product.onboarding_url ? fetchDocument(product.onboarding_url) : Promise.resolve({ content: "", warning: undefined }),
+        product.research_url ? fetchDocument(product.research_url) : Promise.resolve({ content: "", warning: undefined }),
       ]);
 
+      // Collect warnings
+      if (product.brief_url && briefResult.warning) warnings.push(`Brief: ${briefResult.warning}`);
+      if (product.onboarding_url && onboardingResult.warning) warnings.push(`Onboarding: ${onboardingResult.warning}`);
+      if (product.research_url && researchResult.warning) warnings.push(`Research: ${researchResult.warning}`);
+
       setDocumentContent({
-        brief: briefContent,
-        onboarding: onboardingContent,
-        research: researchContent,
+        brief: briefResult.content,
+        onboarding: onboardingResult.content,
+        research: researchResult.content,
       });
       setDocsLoaded(true);
 
-      const loadedCount = [briefContent, onboardingContent, researchContent].filter(c => c.length > 0).length;
+      const loadedCount = [briefResult.content, onboardingResult.content, researchResult.content].filter(c => c.length > 0).length;
+      const totalDocs = [product.brief_url, product.onboarding_url, product.research_url].filter(Boolean).length;
       
-      toast({
-        title: "Documentos cargados",
-        description: `Se cargaron ${loadedCount} documento(s) exitosamente`,
-      });
+      if (warnings.length > 0) {
+        toast({
+          title: `${loadedCount}/${totalDocs} documentos cargados`,
+          description: warnings.join(". "),
+          variant: loadedCount === 0 ? "destructive" : "default",
+        });
+      } else {
+        toast({
+          title: "Documentos cargados",
+          description: `Se cargaron ${loadedCount} documento(s) exitosamente`,
+        });
+      }
     } catch (error) {
       console.error("Error loading documents:", error);
       toast({
