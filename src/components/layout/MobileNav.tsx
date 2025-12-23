@@ -9,12 +9,9 @@ import {
   UsersRound,
   LogOut,
   Menu,
-  Scissors,
-  Star,
   Package,
   Kanban,
-  RefreshCw,
-  User
+  RefreshCw
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -30,7 +27,6 @@ const adminNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Tablero", href: "/board", icon: Kanban },
   { name: "Contenido", href: "/content", icon: Video },
-  { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Creadores", href: "/creators", icon: Users },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Clientes", href: "/clients", icon: Building2 },
@@ -40,35 +36,27 @@ const adminNavigation = [
 
 const strategistNavigation = [
   { name: "Dashboard", href: "/strategist-dashboard", icon: LayoutDashboard },
-  { name: "Mi Perfil", href: "/profile", icon: User, isDynamic: true },
-  { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
 const creatorNavigation = [
   { name: "Mi Panel", href: "/creator-dashboard", icon: LayoutDashboard },
-  { name: "Mi Perfil", href: "/profile", icon: User, isDynamic: true },
   { name: "Tablero", href: "/board", icon: Kanban },
-  { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
 const editorNavigation = [
   { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard },
-  { name: "Mi Perfil", href: "/profile", icon: User, isDynamic: true },
   { name: "Tablero", href: "/board", icon: Kanban },
-  { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
 const clientNavigation = [
   { name: "Mi Panel", href: "/client-dashboard", icon: Package },
-  { name: "Mi Perfil", href: "/profile", icon: User, isDynamic: true },
   { name: "Tablero", href: "/client-board", icon: Kanban },
-  { name: "Portafolio", href: "/portfolio", icon: Video },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
@@ -205,14 +193,11 @@ export function MobileNav() {
           {/* Navigation */}
           <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
             {navigation.map((item) => {
-              const href = (item as any).isDynamic && user?.id 
-                ? `/p/${user.id}` 
-                : item.href;
-              const isActive = location.pathname === href;
+              const isActive = location.pathname === item.href;
               return (
                 <NavLink
                   key={item.name}
-                  to={href}
+                  to={item.href}
                   onClick={() => setOpen(false)}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200",
