@@ -752,7 +752,7 @@ export default function Portfolio() {
                 const videoUrls = getVideoUrls(item);
                 const isImagePost = item.media_type === 'image' && item.media_url;
 
-                // Image post
+                // Image post - use same thumbnail component style
                 if (isImagePost) {
                   return (
                     <PortfolioImageThumbnail
@@ -761,17 +761,14 @@ export default function Portfolio() {
                       imageUrl={item.media_url!}
                       title={item.title}
                       onClick={() => {
-                        // For images, just open in new tab or handle differently
-                        window.open(item.media_url!, '_blank');
+                        setInitialVideoIndex(index);
+                        setShowFullscreenViewer(true);
                       }}
                     />
                   );
                 }
 
-                // Video content - find index among video-only items for fullscreen
-                const videoItems = currentContent.filter(c => !(c.media_type === 'image' && c.media_url));
-                const videoIndex = videoItems.findIndex(v => v.id === item.id);
-
+                // Video content
                 return (
                   <PortfolioVideoThumbnail
                     key={item.id}
@@ -780,7 +777,7 @@ export default function Portfolio() {
                     title={item.title}
                     viewsCount={item.views_count}
                     onClick={() => {
-                      setInitialVideoIndex(videoIndex >= 0 ? videoIndex : 0);
+                      setInitialVideoIndex(index);
                       setShowFullscreenViewer(true);
                     }}
                   />
@@ -789,33 +786,32 @@ export default function Portfolio() {
             </div>
           </section>
 
-          {/* Fullscreen Video Viewer */}
-          {showFullscreenViewer && (() => {
-            const videoItems = currentContent.filter(c => !(c.media_type === 'image' && c.media_url));
-            return (
-              <FullscreenVideoViewer
-                videos={videoItems.map(item => ({
-                  id: item.id,
-                  title: item.title,
-                  videoUrls: getVideoUrls(item),
-                  thumbnailUrl: item.thumbnail_url,
-                  viewsCount: item.views_count,
-                  likesCount: item.likes_count,
-                  isLiked: item.is_liked,
-                  creatorId: item.creator_id || undefined,
-                  creatorName: item.creator?.full_name
-                }))}
-                initialIndex={initialVideoIndex}
-                onClose={() => setShowFullscreenViewer(false)}
-                onLike={(id) => handleLike(id)}
-                onView={(id) => handleView(id)}
-                onShare={(video) => {
-                  const item = videoItems.find(v => v.id === video.id);
-                  if (item) handleShare(item);
-                }}
-              />
-            );
-          })()}
+          {/* Fullscreen Content Viewer - handles both images and videos */}
+          {showFullscreenViewer && (
+            <FullscreenVideoViewer
+              videos={currentContent.map(item => ({
+                id: item.id,
+                title: item.title,
+                videoUrls: getVideoUrls(item),
+                thumbnailUrl: item.thumbnail_url,
+                viewsCount: item.views_count,
+                likesCount: item.likes_count,
+                isLiked: item.is_liked,
+                creatorId: item.creator_id || undefined,
+                creatorName: item.creator?.full_name,
+                mediaType: item.media_type,
+                mediaUrl: item.media_url
+              }))}
+              initialIndex={initialVideoIndex}
+              onClose={() => setShowFullscreenViewer(false)}
+              onLike={(id) => handleLike(id)}
+              onView={(id) => handleView(id)}
+              onShare={(video) => {
+                const item = currentContent.find(v => v.id === video.id);
+                if (item) handleShare(item);
+              }}
+            />
+          )}
 
           {/* Comments Dialog */}
           <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
@@ -896,11 +892,11 @@ export default function Portfolio() {
         {/* TikTok-style Content Grid - 3 columns */}
         <div className="max-w-4xl mx-auto py-4">
           <div className="grid grid-cols-3 gap-0.5">
-            {currentContent.map((item) => {
+            {currentContent.map((item, index) => {
               const videoUrls = getVideoUrls(item);
               const isImagePost = (item as any).media_type === 'image' && (item as any).media_url;
 
-              // Image post
+              // Image post - opens in same fullscreen viewer
               if (isImagePost) {
                 return (
                   <PortfolioImageThumbnail
@@ -909,16 +905,14 @@ export default function Portfolio() {
                     imageUrl={(item as any).media_url}
                     title={item.title}
                     onClick={() => {
-                      window.open((item as any).media_url, '_blank');
+                      setInitialVideoIndex(index);
+                      setShowFullscreenViewer(true);
                     }}
                   />
                 );
               }
 
               // Video content
-              const videoItems = currentContent.filter(c => !((c as any).media_type === 'image' && (c as any).media_url));
-              const videoIndex = videoItems.findIndex(v => v.id === item.id);
-
               return (
                 <PortfolioVideoThumbnail
                   key={item.id}
@@ -927,7 +921,7 @@ export default function Portfolio() {
                   title={item.title}
                   viewsCount={item.views_count}
                   onClick={() => {
-                    setInitialVideoIndex(videoIndex >= 0 ? videoIndex : 0);
+                    setInitialVideoIndex(index);
                     setShowFullscreenViewer(true);
                   }}
                 />
@@ -936,33 +930,32 @@ export default function Portfolio() {
           </div>
         </div>
 
-        {/* Fullscreen Video Viewer */}
-        {showFullscreenViewer && (() => {
-          const videoItems = currentContent.filter(c => !((c as any).media_type === 'image' && (c as any).media_url));
-          return (
-            <FullscreenVideoViewer
-              videos={videoItems.map(item => ({
-                id: item.id,
-                title: item.title,
-                videoUrls: getVideoUrls(item),
-                thumbnailUrl: item.thumbnail_url,
-                viewsCount: item.views_count,
-                likesCount: item.likes_count,
-                isLiked: item.is_liked,
-                creatorId: item.creator_id || undefined,
-                creatorName: item.creator?.full_name
-              }))}
-              initialIndex={initialVideoIndex}
-              onClose={() => setShowFullscreenViewer(false)}
-              onLike={(id) => handleLike(id)}
-              onView={(id) => handleView(id)}
-              onShare={(video) => {
-                const item = videoItems.find(v => v.id === video.id);
-                if (item) handleShare(item);
-              }}
-            />
-          );
-        })()}
+        {/* Fullscreen Content Viewer - handles both images and videos */}
+        {showFullscreenViewer && (
+          <FullscreenVideoViewer
+            videos={currentContent.map(item => ({
+              id: item.id,
+              title: item.title,
+              videoUrls: getVideoUrls(item),
+              thumbnailUrl: item.thumbnail_url,
+              viewsCount: item.views_count,
+              likesCount: item.likes_count,
+              isLiked: item.is_liked,
+              creatorId: item.creator_id || undefined,
+              creatorName: item.creator?.full_name,
+              mediaType: (item as any).media_type,
+              mediaUrl: (item as any).media_url
+            }))}
+            initialIndex={initialVideoIndex}
+            onClose={() => setShowFullscreenViewer(false)}
+            onLike={(id) => handleLike(id)}
+            onView={(id) => handleView(id)}
+            onShare={(video) => {
+              const item = currentContent.find(v => v.id === video.id);
+              if (item) handleShare(item);
+            }}
+          />
+        )}
 
         {/* Comments Dialog */}
         <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
