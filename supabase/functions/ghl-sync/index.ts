@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface GHLSyncPayload {
-  event_type: 'new_client' | 'new_lead' | 'content_approved' | 'payment_created' | 'content_delivered' | 'custom';
+  event_type: 'new_client' | 'new_lead' | 'content_approved' | 'payment_created' | 'content_delivered' | 'custom' | 'test';
   data: Record<string, any>;
 }
 
@@ -22,16 +22,59 @@ serve(async (req) => {
     const GHL_LOCATION_ID = Deno.env.get('GHL_LOCATION_ID');
 
     if (!GHL_WEBHOOK_URL) {
-      console.error('GHL_WEBHOOK_URL not configured');
+      console.error('[ghl-sync] GHL_WEBHOOK_URL not configured');
       return new Response(
-        JSON.stringify({ error: 'GHL webhook URL not configured' }),
+        JSON.stringify({ error: 'GHL webhook URL not configured. Por favor configura el secret GHL_WEBHOOK_URL.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const payload: GHLSyncPayload = await req.json();
-    console.log('Received sync request:', payload.event_type);
-    console.log('Data:', JSON.stringify(payload.data));
+    console.log('[ghl-sync] Received sync request:', payload.event_type);
+
+    // Handle test connection request
+    if (payload.event_type === 'test') {
+      console.log('[ghl-sync] Sending test connection to GHL');
+      
+      const testPayload = {
+        locationId: GHL_LOCATION_ID,
+        source: 'Content Studio',
+        type: 'test',
+        timestamp: new Date().toISOString(),
+        message: 'Test connection from Content Studio',
+        tags: ['Test Connection']
+      };
+
+      const response = await fetch(GHL_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testPayload),
+      });
+
+      const responseText = await response.text();
+      console.log('[ghl-sync] Test response:', response.status, responseText);
+
+      if (!response.ok) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `GHL respondió con error ${response.status}`,
+            details: responseText 
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Conexión exitosa con Funnel ROI (GHL)' 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('[ghl-sync] Data:', JSON.stringify(payload.data));
 
     // Map the event to GHL format
     let ghlPayload: Record<string, any> = {
