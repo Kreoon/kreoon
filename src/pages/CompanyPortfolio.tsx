@@ -16,7 +16,10 @@ import {
   Globe,
   Instagram,
   ExternalLink,
-  Pencil
+  Pencil,
+  Lock,
+  Unlock,
+  EyeOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -59,6 +62,7 @@ interface ContentItem {
   creator_id: string | null;
   is_liked: boolean;
   is_pinned?: boolean;
+  is_portfolio_public?: boolean;
 }
 
 
@@ -216,7 +220,7 @@ export default function CompanyPortfolio() {
       // Fetch company's approved content
       const { data: contentData } = await supabase
         .from('content')
-        .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id')
+        .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id, is_portfolio_public')
         .eq('client_id', resolvedCompanyId)
         .in('status', ['approved', 'delivered', 'paid'])
         .or('video_url.not.is.null,video_urls.not.is.null')
@@ -233,7 +237,8 @@ export default function CompanyPortfolio() {
         ...item,
         caption: item.caption || null,
         is_liked: likedSet.has(item.id),
-        is_pinned: item.caption?.includes('[PINNED]') || false
+        is_pinned: item.caption?.includes('[PINNED]') || false,
+        is_portfolio_public: item.is_portfolio_public ?? false
       }));
       setContent(enrichedContent);
 
@@ -308,15 +313,50 @@ export default function CompanyPortfolio() {
     }
   };
 
+  // Toggle content visibility in portfolio
+  const toggleContentVisibility = async (contentId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const item = content.find(c => c.id === contentId);
+    if (!item) return;
+    
+    const newVisibility = !item.is_portfolio_public;
+    
+    const { error } = await supabase
+      .from('content')
+      .update({ is_portfolio_public: newVisibility })
+      .eq('id', contentId);
+    
+    if (error) {
+      toast.error('Error al actualizar visibilidad');
+      return;
+    }
+    
+    setContent(prev => prev.map(c => 
+      c.id === contentId ? { ...c, is_portfolio_public: newVisibility } : c
+    ));
+    
+    toast.success(newVisibility ? 'Contenido ahora es público' : 'Contenido ahora es privado');
+  };
+
+  // Check if user can manage content visibility
+  const canManageVisibility = isAssociatedUser || isAdmin;
+
   const videoContent = content.filter(c => c.video_url || (c.video_urls && c.video_urls.length > 0) || c.bunny_embed_url);
-  const sortedContent = [...videoContent].sort((a, b) => {
+  
+  // Filter content based on user access
+  const visibleContent = canManageVisibility 
+    ? videoContent // Show all content to company users and admins
+    : videoContent.filter(c => c.is_portfolio_public); // Show only public content to visitors
+  
+  const sortedContent = [...visibleContent].sort((a, b) => {
     if (a.is_pinned && !b.is_pinned) return -1;
     if (!a.is_pinned && b.is_pinned) return 1;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  const totalViews = content.reduce((sum, c) => sum + (c.views_count || 0), 0);
-  const totalLikes = content.reduce((sum, c) => sum + (c.likes_count || 0), 0);
+  const totalViews = visibleContent.reduce((sum, c) => sum + (c.views_count || 0), 0);
+  const totalLikes = visibleContent.reduce((sum, c) => sum + (c.likes_count || 0), 0);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -515,7 +555,10 @@ export default function CompanyPortfolio() {
             sortedContent.map((item, index) => (
               <div
                 key={item.id}
-                className="relative aspect-[9/16] bg-muted cursor-pointer group overflow-hidden"
+                className={cn(
+                  "relative aspect-[9/16] bg-muted cursor-pointer group overflow-hidden",
+                  canManageVisibility && !item.is_portfolio_public && "ring-2 ring-inset ring-yellow-500/50"
+                )}
                 onClick={() => {
                   setInitialVideoIndex(index);
                   setShowTikTokView(true);
@@ -533,6 +576,14 @@ export default function CompanyPortfolio() {
                   </div>
                 )}
                 
+                {/* Private indicator for owners */}
+                {canManageVisibility && !item.is_portfolio_public && (
+                  <div className="absolute top-1 right-1 bg-yellow-500/90 text-black text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                    <EyeOff className="w-3 h-3" />
+                    Privado
+                  </div>
+                )}
+                
                 {/* Pinned badge */}
                 {item.is_pinned && (
                   <div className="absolute top-1 left-1 bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
@@ -540,8 +591,19 @@ export default function CompanyPortfolio() {
                   </div>
                 )}
                 
+                {/* Visibility toggle button for owners */}
+                {canManageVisibility && (
+                  <button
+                    onClick={(e) => toggleContentVisibility(item.id, e)}
+                    className="absolute top-8 right-1 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    title={item.is_portfolio_public ? 'Hacer privado' : 'Hacer público'}
+                  >
+                    {item.is_portfolio_public ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                  </button>
+                )}
+                
                 {/* Hover overlay */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                   <Play className="w-10 h-10 text-white" />
                 </div>
                 
