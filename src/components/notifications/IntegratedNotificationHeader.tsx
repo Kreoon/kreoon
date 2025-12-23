@@ -204,7 +204,9 @@ export function IntegratedNotificationHeader({
             {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
-        <span className="hidden sm:inline">{profile?.full_name?.split(' ')[0] || 'Mi Perfil'}</span>
+        <span className="hidden sm:inline text-sm font-medium">
+          @{profile?.username || profile?.full_name?.split(' ')[0]?.toLowerCase() || 'usuario'}
+        </span>
       </Button>
 
       {/* Portfolio Button */}
