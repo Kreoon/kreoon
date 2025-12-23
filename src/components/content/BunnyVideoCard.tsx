@@ -521,7 +521,7 @@ export function BunnyVideoCard({
                       Este video no se puede reproducir en el navegador.
                     </p>
                     <p className="text-xs text-white/60">
-                      Sube el video en formato MP4 (H.264) o WebM.
+                      Si fue subido antes del convertidor, elimínalo y súbelo de nuevo para convertirlo automáticamente a MP4 (H.264).
                     </p>
                     <a
                       href={currentVideoUrl}
