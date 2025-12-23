@@ -11,22 +11,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Profile, UserRole, Client, AppRole } from '@/types/database';
+import { Profile, UserRole, AppRole } from '@/types/database';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { 
   Plus, 
   User, 
   Users, 
-  Building2, 
   Shield, 
-  Trash2,
-  Mail,
-  Phone,
   Star,
   Loader2,
   Send,
   UserPlus,
-  Crown,
   Search,
   Swords
 } from 'lucide-react';
@@ -55,16 +50,7 @@ export default function Team() {
   const { toast } = useToast();
   
   const [profiles, setProfiles] = useState<(Profile & { roles: AppRole[] })[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const [newClientDialog, setNewClientDialog] = useState(false);
-  const [newClientData, setNewClientData] = useState({
-    name: '',
-    contact_email: '',
-    contact_phone: '',
-    user_email: ''
-  });
   
   const [addRoleDialog, setAddRoleDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
@@ -106,13 +92,6 @@ export default function Team() {
 
       setProfiles(profilesWithRoles as (Profile & { roles: AppRole[] })[]);
 
-      // Fetch clients
-      const { data: clientsData } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      setClients(clientsData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -182,88 +161,6 @@ export default function Team() {
     }
   };
 
-  const handleCreateClient = async () => {
-    if (!newClientData.name) {
-      toast({
-        title: 'Error',
-        description: 'El nombre del cliente es requerido',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    try {
-      let clientUserId = null;
-
-      // If user email provided, find the user
-      if (newClientData.user_email) {
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', newClientData.user_email)
-          .single();
-
-        if (userProfile) {
-          clientUserId = userProfile.id;
-          
-          // Add client role to the user
-          await supabase
-            .from('user_roles')
-            .insert({ user_id: userProfile.id, role: 'client' })
-            .select();
-        }
-      }
-
-      const { error } = await supabase
-        .from('clients')
-        .insert({
-          name: newClientData.name,
-          contact_email: newClientData.contact_email || null,
-          contact_phone: newClientData.contact_phone || null,
-          user_id: clientUserId,
-          created_by: user?.id
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Cliente creado',
-        description: `${newClientData.name} ha sido agregado`
-      });
-
-      setNewClientDialog(false);
-      setNewClientData({ name: '', contact_email: '', contact_phone: '', user_email: '' });
-      fetchData();
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo crear el cliente',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleDeleteClient = async (clientId: string) => {
-    try {
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', clientId);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Cliente eliminado'
-      });
-      fetchData();
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo eliminar el cliente',
-        variant: 'destructive'
-      });
-    }
-  };
 
   const handleSendInvitation = async () => {
     if (!inviteData.email) {
@@ -475,8 +372,8 @@ export default function Team() {
             Embajadores ({ambassadors.length})
           </TabsTrigger>
           <TabsTrigger value="clients" className="gap-2">
-            <Building2 className="w-4 h-4" />
-            Clientes ({clients.length})
+            <User className="w-4 h-4" />
+            Clientes ({clientUsers.length})
           </TabsTrigger>
         </TabsList>
 
@@ -630,120 +527,24 @@ export default function Team() {
           </Card>
         </TabsContent>
 
+        {/* Client Users Tab */}
         <TabsContent value="clients" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Building2 className="w-5 h-5" />
-                Clientes ({clients.filter(c => c.id !== '00000000-0000-0000-0000-000000000001').length})
+                <User className="w-5 h-5 text-info" />
+                Usuarios Clientes ({clientUsers.length})
               </CardTitle>
-              <Dialog open={newClientDialog} onOpenChange={setNewClientDialog}>
-                <DialogTrigger asChild>
-                  <Button className="gap-2">
-                    <Plus className="w-4 h-4" />
-                    Nuevo Cliente
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Crear nuevo cliente</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="client-name">Nombre de la empresa *</Label>
-                      <Input
-                        id="client-name"
-                        value={newClientData.name}
-                        onChange={(e) => setNewClientData({ ...newClientData, name: e.target.value })}
-                        placeholder="Empresa XYZ"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="client-email">Email de contacto</Label>
-                      <Input
-                        id="client-email"
-                        type="email"
-                        value={newClientData.contact_email}
-                        onChange={(e) => setNewClientData({ ...newClientData, contact_email: e.target.value })}
-                        placeholder="contacto@empresa.com"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="client-phone">Teléfono</Label>
-                      <Input
-                        id="client-phone"
-                        value={newClientData.contact_phone}
-                        onChange={(e) => setNewClientData({ ...newClientData, contact_phone: e.target.value })}
-                        placeholder="+57 300 123 4567"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="user-email">Email del usuario (opcional)</Label>
-                      <Input
-                        id="user-email"
-                        type="email"
-                        value={newClientData.user_email}
-                        onChange={(e) => setNewClientData({ ...newClientData, user_email: e.target.value })}
-                        placeholder="usuario@email.com"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Si el cliente ya tiene cuenta, ingresa su email para vincularlo
-                      </p>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setNewClientDialog(false)}>
-                      Cancelar
-                    </Button>
-                    <Button onClick={handleCreateClient}>
-                      Crear Cliente
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
             </CardHeader>
             <CardContent>
-              {clients.filter(c => c.id !== '00000000-0000-0000-0000-000000000001').length === 0 ? (
+              {clientUsers.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
-                  No hay clientes registrados
+                  No hay usuarios con rol de cliente
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {clients
-                    .filter(c => c.id !== '00000000-0000-0000-0000-000000000001')
-                    .map(client => (
-                    <div key={client.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-info/20 flex items-center justify-center">
-                          <Building2 className="w-6 h-6 text-info" />
-                        </div>
-                        <div>
-                          <p className="font-semibold">{client.name}</p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            {client.contact_email && (
-                              <span className="flex items-center gap-1">
-                                <Mail className="w-3 h-3" />
-                                {client.contact_email}
-                              </span>
-                            )}
-                            {client.contact_phone && (
-                              <span className="flex items-center gap-1">
-                                <Phone className="w-3 h-3" />
-                                {client.contact_phone}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteClient(client.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                  {clientUsers.map(profile => (
+                    <UserCard key={profile.id} profile={profile} />
                   ))}
                 </div>
               )}
