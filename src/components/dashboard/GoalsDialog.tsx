@@ -14,7 +14,8 @@ interface Goal {
   period_type: 'month' | 'quarter';
   period_value: number;
   year: number;
-  revenue_goal: number;
+  revenue_goal: number; // COP
+  revenue_goal_usd: number; // USD
   content_goal: number;
   new_clients_goal: number;
   notes?: string;
@@ -44,6 +45,7 @@ export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
     period_value: currentMonth,
     year: currentYear,
     revenue_goal: 0,
+    revenue_goal_usd: 0,
     content_goal: 0,
     new_clients_goal: 0,
     notes: ''
@@ -67,6 +69,7 @@ export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
           period_value: data.period_value,
           year: data.year,
           revenue_goal: data.revenue_goal || 0,
+          revenue_goal_usd: (data as any).revenue_goal_usd || 0,
           content_goal: data.content_goal || 0,
           new_clients_goal: data.new_clients_goal || 0,
           notes: data.notes || ''
@@ -77,6 +80,7 @@ export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
         setGoal(prev => ({
           ...prev,
           revenue_goal: 0,
+          revenue_goal_usd: 0,
           content_goal: 0,
           new_clients_goal: 0,
           notes: ''
@@ -97,10 +101,11 @@ export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
           .from('goals')
           .update({
             revenue_goal: goal.revenue_goal,
+            revenue_goal_usd: goal.revenue_goal_usd,
             content_goal: goal.content_goal,
             new_clients_goal: goal.new_clients_goal,
             notes: goal.notes
-          })
+          } as any)
           .eq('id', existingGoalId);
 
         if (error) throw error;
@@ -112,10 +117,11 @@ export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
             period_value: goal.period_value,
             year: goal.year,
             revenue_goal: goal.revenue_goal,
+            revenue_goal_usd: goal.revenue_goal_usd,
             content_goal: goal.content_goal,
             new_clients_goal: goal.new_clients_goal,
             notes: goal.notes
-          });
+          } as any);
 
         if (error) throw error;
       }
@@ -203,17 +209,37 @@ export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
+          {/* Revenue Goals by Currency */}
+          <div className="space-y-3">
             <Label className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-success" />
-              Meta de Ingresos
+              Metas de Ingresos
             </Label>
-            <Input
-              type="number"
-              value={goal.revenue_goal || ''}
-              onChange={(e) => setGoal({ ...goal, revenue_goal: parseFloat(e.target.value) || 0 })}
-              placeholder="0"
-            />
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span>🇨🇴</span> COP
+                </Label>
+                <Input
+                  type="number"
+                  value={goal.revenue_goal || ''}
+                  onChange={(e) => setGoal({ ...goal, revenue_goal: parseFloat(e.target.value) || 0 })}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span>🇺🇸</span> USD
+                </Label>
+                <Input
+                  type="number"
+                  value={goal.revenue_goal_usd || ''}
+                  onChange={(e) => setGoal({ ...goal, revenue_goal_usd: parseFloat(e.target.value) || 0 })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">

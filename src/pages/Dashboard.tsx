@@ -466,11 +466,19 @@ export default function Dashboard() {
           const monthStart = new Date(year, month - 1, 1);
           const monthEnd = endOfMonth(monthStart);
           
-          // Revenue from packages paid in this month
-          const monthRevenue = packagesData?.filter(p => {
+          // Revenue from packages paid in this month - separated by currency
+          const monthPackages = packagesData?.filter(p => {
             const paidDate = p.paid_at ? new Date(p.paid_at) : null;
             return paidDate && paidDate >= monthStart && paidDate <= monthEnd;
-          }).reduce((sum, p) => sum + (p.paid_amount || 0), 0) || 0;
+          }) || [];
+          
+          const monthRevenueCOP = monthPackages
+            .filter(p => (p as any).currency !== 'USD')
+            .reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+          
+          const monthRevenueUSD = monthPackages
+            .filter(p => (p as any).currency === 'USD')
+            .reduce((sum, p) => sum + (p.paid_amount || 0), 0);
 
           // Content completed in this month
           const monthContent = allContent.filter(c => {
@@ -487,7 +495,9 @@ export default function Dashboard() {
           monthlyData.push({
             month,
             year,
-            revenue: monthRevenue,
+            revenue: monthRevenueCOP + monthRevenueUSD,
+            revenueCOP: monthRevenueCOP,
+            revenueUSD: monthRevenueUSD,
             content: monthContent,
             clients: monthClients
           });
@@ -501,6 +511,8 @@ export default function Dashboard() {
             month,
             year: currentYear,
             revenue: 0,
+            revenueCOP: 0,
+            revenueUSD: 0,
             content: 0,
             clients: 0
           });
