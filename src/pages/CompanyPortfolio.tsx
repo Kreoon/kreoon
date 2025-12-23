@@ -357,10 +357,10 @@ export default function CompanyPortfolio() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-background">
         <PortfolioHeader />
         <div className="flex items-center justify-center pt-20">
-          <Loader2 className="w-8 h-8 animate-spin text-white/50" />
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       </div>
     );
@@ -368,18 +368,17 @@ export default function CompanyPortfolio() {
 
   if (!company) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-background">
         <PortfolioHeader />
         <div className="flex flex-col items-center justify-center pt-20 p-4">
-          <Building2 className="w-16 h-16 text-white/30 mb-4" />
-          <h1 className="text-xl font-semibold mb-2">Empresa no encontrada</h1>
-          <p className="text-white/50 text-center mb-4">
+          <Building2 className="w-16 h-16 text-muted-foreground/50 mb-4" />
+          <h1 className="text-xl font-semibold text-foreground mb-2">Empresa no encontrada</h1>
+          <p className="text-muted-foreground text-center mb-4">
             Esta empresa no existe o su perfil es privado.
           </p>
           <Button 
             onClick={() => navigate('/portfolio')}
             variant="outline"
-            className="border-white/20 text-white hover:bg-white/10"
           >
             Ir al portfolio
           </Button>
@@ -399,7 +398,7 @@ export default function CompanyPortfolio() {
   };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <PortfolioHeader />
 
@@ -409,9 +408,9 @@ export default function CompanyPortfolio() {
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 py-6">
           {/* Avatar */}
           <div className="relative group">
-            <Avatar className="h-24 w-24 md:h-36 md:w-36 ring-2 ring-white/20">
+            <Avatar className="h-24 w-24 md:h-36 md:w-36 ring-2 ring-border">
               <AvatarImage src={company.logo_url || undefined} alt={company.name} className="object-cover" />
-              <AvatarFallback className="bg-zinc-800 text-white text-2xl md:text-4xl">
+              <AvatarFallback className="bg-muted text-muted-foreground text-2xl md:text-4xl">
                 <Building2 className="w-10 h-10 md:w-14 md:h-14" />
               </AvatarFallback>
             </Avatar>
@@ -429,11 +428,11 @@ export default function CompanyPortfolio() {
           <div className="flex-1 text-center md:text-left">
             <div className="flex flex-col items-center md:items-start gap-1 mb-3">
               <div className="flex items-center gap-2">
-                <h1 className="text-xl md:text-2xl font-bold text-white">{company.name}</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-foreground">{company.name}</h1>
                 {company.is_vip && <VipBadge size="sm" variant="minimal" />}
               </div>
               {company.username && (
-                <span className="text-sm text-white/60">@{company.username}</span>
+                <span className="text-sm text-muted-foreground">@{company.username}</span>
               )}
             </div>
             
@@ -455,7 +454,6 @@ export default function CompanyPortfolio() {
                   size="sm"
                   variant="outline"
                   onClick={() => setShowProfileEditor(true)}
-                  className="border-white/20 text-white hover:bg-white/10"
                 >
                   <Pencil className="w-4 h-4 mr-2" />
                   Editar perfil
@@ -464,7 +462,7 @@ export default function CompanyPortfolio() {
             </div>
             
             {company.bio && (
-              <div className="text-sm text-white/70 max-w-md mx-auto md:mx-0">
+              <div className="text-sm text-muted-foreground max-w-md mx-auto md:mx-0">
                 <ParsedText text={company.bio} />
               </div>
             )}
@@ -476,7 +474,7 @@ export default function CompanyPortfolio() {
                   href={`https://instagram.com/${company.instagram.replace('@', '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors text-white"
+                  className="p-2 bg-muted rounded-full hover:bg-muted/80 transition-colors text-foreground"
                 >
                   <Instagram className="w-5 h-5" />
                 </a>
@@ -486,7 +484,7 @@ export default function CompanyPortfolio() {
                   href={`https://tiktok.com/@${company.tiktok.replace('@', '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors text-white"
+                  className="p-2 bg-muted rounded-full hover:bg-muted/80 transition-colors text-foreground"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
@@ -498,7 +496,7 @@ export default function CompanyPortfolio() {
                   href={`https://facebook.com/${company.facebook}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors text-white"
+                  className="p-2 bg-muted rounded-full hover:bg-muted/80 transition-colors text-foreground"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -510,7 +508,7 @@ export default function CompanyPortfolio() {
                   href={company.portfolio_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors text-white"
+                  className="p-2 bg-muted rounded-full hover:bg-muted/80 transition-colors text-foreground"
                 >
                   <Globe className="w-5 h-5" />
                 </a>
@@ -519,36 +517,36 @@ export default function CompanyPortfolio() {
           </div>
         </div>
 
-        {/* Stats - TikTok style */}
-        <div className="flex justify-center gap-8 py-4 border-y border-white/10">
+        {/* Stats */}
+        <div className="flex justify-center gap-8 py-4 border-y border-border">
           <div className="text-center">
-            <div className="text-lg font-bold text-white">{formatNumber(followersCount)}</div>
-            <div className="text-xs text-white/50">Seguidores</div>
+            <div className="text-lg font-bold text-foreground">{formatNumber(followersCount)}</div>
+            <div className="text-xs text-muted-foreground">Seguidores</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-white">{sortedContent.length}</div>
-            <div className="text-xs text-white/50">Videos</div>
+            <div className="text-lg font-bold text-foreground">{sortedContent.length}</div>
+            <div className="text-xs text-muted-foreground">Videos</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-white">{formatNumber(totalViews)}</div>
-            <div className="text-xs text-white/50">Vistas</div>
+            <div className="text-lg font-bold text-foreground">{formatNumber(totalViews)}</div>
+            <div className="text-xs text-muted-foreground">Vistas</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-white">{formatNumber(totalLikes)}</div>
-            <div className="text-xs text-white/50">Likes</div>
+            <div className="text-lg font-bold text-foreground">{formatNumber(totalLikes)}</div>
+            <div className="text-xs text-muted-foreground">Likes</div>
           </div>
         </div>
 
         {/* Content Header */}
-        <div className="flex items-center justify-center gap-2 py-3 mt-4 border-b border-white/10">
-          <VideoIcon className="w-4 h-4 text-white" />
-          <span className="text-sm font-medium text-white">Contenido</span>
+        <div className="flex items-center justify-center gap-2 py-3 mt-4 border-b border-border">
+          <VideoIcon className="w-4 h-4 text-foreground" />
+          <span className="text-sm font-medium text-foreground">Contenido</span>
         </div>
 
-        {/* Content Grid - Same style as UserPortfolio */}
+        {/* Content Grid */}
         <div className="px-4 py-6">
           {sortedContent.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-white/40">
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
               <VideoIcon className="h-12 w-12 mb-3" />
               <p className="text-sm">Sin contenido publicado</p>
             </div>
