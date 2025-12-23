@@ -759,6 +759,7 @@ export default function Portfolio() {
                       media={media}
                       viewsCount={item.views_count}
                       likesCount={item.likes_count}
+                      commentsCount={0}
                       isLiked={item.is_liked}
                       creatorId={item.creator_id || undefined}
                       creatorName={item.creator?.full_name}
@@ -766,6 +767,7 @@ export default function Portfolio() {
                       onLike={canInteract ? (e) => handleLike(item.id, e) : undefined}
                       onView={canInteract ? () => handleView(item.id) : undefined}
                       onShare={() => handleShare(item)}
+                      isPortfolioPost={item.type === 'post'}
                     />
                   );
                 }
@@ -892,6 +894,7 @@ export default function Portfolio() {
                     media={media}
                     viewsCount={item.views_count}
                     likesCount={item.likes_count}
+                    commentsCount={0}
                     isLiked={item.is_liked}
                     creatorId={item.creator_id || undefined}
                     creatorName={item.creator?.full_name}
@@ -899,6 +902,7 @@ export default function Portfolio() {
                     onLike={canInteract ? (e) => handleLike(item.id, e) : undefined}
                     onView={canInteract ? () => handleView(item.id) : undefined}
                     onShare={() => handleShare(item)}
+                    isPortfolioPost={item.type === 'post'}
                   />
                 );
               }

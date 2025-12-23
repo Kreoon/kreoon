@@ -68,6 +68,7 @@ interface PortfolioPost {
   caption: string | null;
   views_count: number;
   likes_count: number;
+  comments_count: number;
   created_at: string;
   is_pinned: boolean;
   pinned_at: string | null;
@@ -699,6 +700,7 @@ export default function UserPortfolio() {
       thumbnailUrl: item.thumbnail_url,
       viewsCount: item.views_count || 0,
       likesCount: item.likes_count || 0,
+      commentsCount: item.comments_count || 0,
       isLiked: item.is_liked || false,
       createdAt: item.created_at,
       type: 'post' as const,
@@ -707,6 +709,7 @@ export default function UserPortfolio() {
       isPinned: item.is_pinned || false,
       status: undefined,
       isCreatorOwner: false,
+      isPortfolioPost: true,
     }));
     
     // Image posts from portfolio_posts
@@ -717,6 +720,7 @@ export default function UserPortfolio() {
       thumbnailUrl: item.media_url,
       viewsCount: item.views_count || 0,
       likesCount: item.likes_count || 0,
+      commentsCount: item.comments_count || 0,
       isLiked: item.is_liked || false,
       createdAt: item.created_at,
       type: 'post' as const,
@@ -725,6 +729,7 @@ export default function UserPortfolio() {
       isPinned: item.is_pinned || false,
       status: undefined,
       isCreatorOwner: false,
+      isPortfolioPost: true,
     }));
     
     // Combine all content, sort pinned first, then by date
@@ -1151,12 +1156,14 @@ export default function UserPortfolio() {
                       media={media}
                       viewsCount={item.viewsCount}
                       likesCount={item.likesCount}
+                      commentsCount={(item as any).commentsCount || 0}
                       isLiked={item.isLiked}
                       creatorId={resolvedUserId || undefined}
                       creatorName={profile?.full_name}
                       creatorAvatar={profile?.avatar_url}
                       onLike={(e) => handlePostLike(item.id, e)}
                       onView={() => handlePostView(item.id)}
+                      isPortfolioPost={(item as any).isPortfolioPost || false}
                       onShare={() => {
                         const post = posts.find(p => p.id === item.id);
                         if (post) {
@@ -1215,12 +1222,14 @@ export default function UserPortfolio() {
                         media={media}
                         viewsCount={item.viewsCount}
                         likesCount={item.likesCount}
+                        commentsCount={(item as any).commentsCount || 0}
                         isLiked={item.isLiked}
                         creatorId={resolvedUserId || undefined}
                         creatorName={profile?.full_name}
                         creatorAvatar={profile?.avatar_url}
                         onLike={(e) => handlePostLike(item.id, e)}
                         onView={() => handlePostView(item.id)}
+                        isPortfolioPost={(item as any).isPortfolioPost || false}
                         onShare={() => {
                           const post = posts.find(p => p.id === item.id);
                           if (post) {

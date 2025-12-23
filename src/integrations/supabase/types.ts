@@ -1138,6 +1138,38 @@ export type Database = {
           },
         ]
       }
+      portfolio_post_comments: {
+        Row: {
+          comment: string
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_post_likes: {
         Row: {
           created_at: string | null
@@ -1170,6 +1202,7 @@ export type Database = {
       portfolio_posts: {
         Row: {
           caption: string | null
+          comments_count: number | null
           created_at: string
           id: string
           is_pinned: boolean | null
@@ -1184,6 +1217,7 @@ export type Database = {
         }
         Insert: {
           caption?: string | null
+          comments_count?: number | null
           created_at?: string
           id?: string
           is_pinned?: boolean | null
@@ -1198,6 +1232,7 @@ export type Database = {
         }
         Update: {
           caption?: string | null
+          comments_count?: number | null
           created_at?: string
           id?: string
           is_pinned?: boolean | null
