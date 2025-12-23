@@ -421,15 +421,22 @@ export default function Dashboard() {
         });
       }
 
-      // Fetch current month/quarter goal
+      // Determine which year(s) to query based on date filters or current/next year
       const currentMonth = new Date().getMonth() + 1;
       const currentYear = new Date().getFullYear();
+      const filterYear = startDateFilter ? startDateFilter.getFullYear() : 
+                         endDateFilter ? endDateFilter.getFullYear() : 
+                         currentYear;
+      
+      // Fetch current month/quarter goal - check both current year and filter year
       const { data: goalData } = await supabase
         .from('goals')
         .select('*')
         .eq('period_type', 'month')
         .eq('period_value', currentMonth)
-        .eq('year', currentYear)
+        .in('year', [currentYear, currentYear + 1, filterYear])
+        .order('year', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (goalData) {
@@ -440,52 +447,71 @@ export default function Dashboard() {
         });
       }
 
-      // Fetch all goals for chart
+      // Fetch all goals for chart - include current year, next year, and filter year
+      const yearsToFetch = [...new Set([currentYear, currentYear + 1, filterYear])];
       const { data: allGoalsData } = await supabase
         .from('goals')
         .select('*')
-        .eq('year', currentYear)
+        .in('year', yearsToFetch)
         .eq('period_type', 'month');
       
       setAllGoals(allGoalsData || []);
 
-      // Calculate monthly actuals
-      const monthlyData = [];
-      for (let month = 1; month <= 12; month++) {
-        const monthStart = new Date(currentYear, month - 1, 1);
-        const monthEnd = endOfMonth(monthStart);
-        
-        // Revenue from packages paid in this month
-        const monthRevenue = packagesData?.filter(p => {
-          const paidDate = p.paid_at ? new Date(p.paid_at) : null;
-          return paidDate && paidDate >= monthStart && paidDate <= monthEnd;
-        }).reduce((sum, p) => sum + (p.paid_amount || 0), 0) || 0;
+      // Calculate monthly actuals for each year that has goals
+      const monthlyData: any[] = [];
+      const yearsWithGoals = [...new Set((allGoalsData || []).map(g => g.year))];
+      
+      for (const year of yearsWithGoals) {
+        for (let month = 1; month <= 12; month++) {
+          const monthStart = new Date(year, month - 1, 1);
+          const monthEnd = endOfMonth(monthStart);
+          
+          // Revenue from packages paid in this month
+          const monthRevenue = packagesData?.filter(p => {
+            const paidDate = p.paid_at ? new Date(p.paid_at) : null;
+            return paidDate && paidDate >= monthStart && paidDate <= monthEnd;
+          }).reduce((sum, p) => sum + (p.paid_amount || 0), 0) || 0;
 
-        // Content completed in this month
-        const monthContent = allContent.filter(c => {
-          const approvedDate = c.approved_at ? new Date(c.approved_at) : null;
-          return approvedDate && approvedDate >= monthStart && approvedDate <= monthEnd;
-        }).length;
+          // Content completed in this month
+          const monthContent = allContent.filter(c => {
+            const approvedDate = c.approved_at ? new Date(c.approved_at) : null;
+            return approvedDate && approvedDate >= monthStart && approvedDate <= monthEnd;
+          }).length;
 
-        // Clients created in this month
-        const monthClients = clientsList?.filter(c => {
-          const createdDate = c.created_at ? new Date(c.created_at) : null;
-          return createdDate && createdDate >= monthStart && createdDate <= monthEnd;
-        }).length || 0;
+          // Clients created in this month
+          const monthClients = clientsList?.filter(c => {
+            const createdDate = c.created_at ? new Date(c.created_at) : null;
+            return createdDate && createdDate >= monthStart && createdDate <= monthEnd;
+          }).length || 0;
 
-        monthlyData.push({
-          month,
-          year: currentYear,
-          revenue: monthRevenue,
-          content: monthContent,
-          clients: monthClients
-        });
+          monthlyData.push({
+            month,
+            year,
+            revenue: monthRevenue,
+            content: monthContent,
+            clients: monthClients
+          });
+        }
       }
+      
+      // Also add current year if no goals exist yet
+      if (yearsWithGoals.length === 0) {
+        for (let month = 1; month <= 12; month++) {
+          monthlyData.push({
+            month,
+            year: currentYear,
+            revenue: 0,
+            content: 0,
+            clients: 0
+          });
+        }
+      }
+      
       setMonthlyActuals(monthlyData);
     };
 
     fetchFiltersAndData();
-  }, [allContent]);
+  }, [allContent, startDateFilter, endDateFilter]);
 
   // Calculate active creators and editors with their stats
   useEffect(() => {
