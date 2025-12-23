@@ -56,23 +56,24 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-function getEmbedUrl(url: string): string {
+function getEmbedUrl(url: string, startMuted: boolean = true): string {
   if (!url) return '';
   
-  // Always start muted to allow autoplay
+  const mutedParam = startMuted ? 'true' : 'false';
+  
   if (url.includes('iframe.mediadelivery.net')) {
     const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}autoplay=true&muted=true&loop=true&preload=true`;
+    return `${url}${separator}autoplay=true&muted=${mutedParam}&loop=true&preload=true`;
   }
   
   const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
   if (cdnMatch) {
     const [, libraryId, videoId] = cdnMatch;
-    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=true&loop=true&preload=true`;
+    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=${mutedParam}&loop=true&preload=true`;
   }
   
   const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}autoplay=true&muted=true&loop=true`;
+  return `${url}${separator}autoplay=true&muted=${mutedParam}&loop=true`;
 }
 
 export function FullscreenVideoViewer({
@@ -95,7 +96,10 @@ export function FullscreenVideoViewer({
 }: FullscreenVideoViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [currentVariation, setCurrentVariation] = useState(0);
+  // Start with audio OFF, user must interact to enable
   const [isMuted, setIsMuted] = useState(true);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+  const [showAudioHint, setShowAudioHint] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'up' | 'down' | null>(null);
@@ -112,14 +116,11 @@ export function FullscreenVideoViewer({
     const win = iframeRef.current?.contentWindow;
     if (!win) return;
 
-    // Bunny Stream embed uses Player.js compatible messages.
-    // Commands are sent as objects like: { api: 'mute' } / { api: 'unmute' } / { api: 'volume', set: 1 }
     try {
       win.postMessage(payload, PLAYER_ORIGIN);
     } catch {
       // ignore
     }
-    // Some implementations expect JSON strings
     try {
       win.postMessage(JSON.stringify(payload), PLAYER_ORIGIN);
     } catch {
@@ -129,19 +130,45 @@ export function FullscreenVideoViewer({
 
   const applyMuteStateToPlayer = useCallback(
     (muted: boolean) => {
-      // Use Bunny Playback Control API / Player.js commands
       postToPlayer({ api: muted ? 'mute' : 'unmute' });
       postToPlayer({ api: 'volume', set: muted ? 0 : 1 });
+      // Also send play command to ensure audio starts
+      if (!muted) {
+        postToPlayer({ api: 'play' });
+      }
     },
     [postToPlayer]
   );
+
+  // Apply mute state with retries (iframe may not be ready immediately)
+  const applyMuteStateWithRetry = useCallback((muted: boolean) => {
+    applyMuteStateToPlayer(muted);
+    // Retry after short delays
+    setTimeout(() => applyMuteStateToPlayer(muted), 150);
+    setTimeout(() => applyMuteStateToPlayer(muted), 400);
+    setTimeout(() => applyMuteStateToPlayer(muted), 800);
+  }, [applyMuteStateToPlayer]);
+
+  // Unlock audio on first user interaction
+  const unlockAudio = useCallback(() => {
+    if (!audioUnlocked) {
+      setAudioUnlocked(true);
+      setIsMuted(false);
+      setShowAudioHint(false);
+      applyMuteStateWithRetry(false);
+    }
+  }, [audioUnlocked, applyMuteStateWithRetry]);
 
   // Toggle mute using postMessage to avoid reloading the video
   const toggleMute = useCallback(() => {
     const newMuted = !isMuted;
     setIsMuted(newMuted);
-    applyMuteStateToPlayer(newMuted);
-  }, [applyMuteStateToPlayer, isMuted]);
+    setShowAudioHint(false);
+    if (!audioUnlocked) {
+      setAudioUnlocked(true);
+    }
+    applyMuteStateWithRetry(newMuted);
+  }, [applyMuteStateWithRetry, isMuted, audioUnlocked]);
 
   const currentVideo = videos[currentIndex];
   const canManageCurrent = !!currentVideo && (canManageVideo ? canManageVideo(currentVideo) : !!isOwner);
@@ -170,12 +197,12 @@ export function FullscreenVideoViewer({
       if (e.key === 'ArrowDown') goToNext();
       if (e.key === 'ArrowLeft') goToPrevVariation();
       if (e.key === 'ArrowRight') goToNextVariation();
-      if (e.key === 'm') setIsMuted(m => !m);
+      if (e.key === 'm') toggleMute();
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, currentIndex, currentVariation]);
+  }, [onClose, currentIndex, currentVariation, toggleMute]);
 
   // Lock body scroll
   useEffect(() => {
@@ -189,6 +216,13 @@ export function FullscreenVideoViewer({
   useEffect(() => {
     setShowFullCaption(false);
   }, [currentIndex]);
+
+  // Re-apply audio state when video changes
+  useEffect(() => {
+    if (audioUnlocked && !isMuted) {
+      applyMuteStateWithRetry(false);
+    }
+  }, [currentIndex, currentVariation, audioUnlocked, isMuted, applyMuteStateWithRetry]);
 
   const goToNext = useCallback(() => {
     if (currentIndex < videos.length - 1 && !isTransitioning) {
@@ -224,10 +258,31 @@ export function FullscreenVideoViewer({
     }
   }, [hasMultipleVariations, currentVideo]);
 
+  // Check if touch target should prevent swipe
+  const shouldPreventSwipe = useCallback((target: EventTarget | null): boolean => {
+    if (!target || !(target instanceof HTMLElement)) return false;
+    // Check if target or any parent has data-no-swipe attribute
+    let el: HTMLElement | null = target;
+    while (el) {
+      if (el.dataset.noSwipe === 'true' || el.closest('[data-no-swipe="true"]')) {
+        return true;
+      }
+      el = el.parentElement;
+    }
+    return false;
+  }, []);
+
   // Touch handlers for swipe with dynamic feedback
   const [touchActive, setTouchActive] = useState(false);
+  const swipeBlocked = useRef(false);
   
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Check if touch is on a control element
+    if (shouldPreventSwipe(e.target)) {
+      swipeBlocked.current = true;
+      return;
+    }
+    swipeBlocked.current = false;
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     setTouchActive(true);
@@ -236,9 +291,7 @@ export function FullscreenVideoViewer({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchActive) return;
-    
-    e.preventDefault();
+    if (!touchActive || swipeBlocked.current) return;
     
     const currentY = e.touches[0].clientY;
     const currentX = e.touches[0].clientX;
@@ -247,6 +300,7 @@ export function FullscreenVideoViewer({
     
     // Only apply visual feedback for vertical swipes
     if (Math.abs(diffY) > Math.abs(diffX)) {
+      e.preventDefault();
       const maxOffset = 150;
       const dampedOffset = Math.sign(diffY) * Math.min(Math.abs(diffY) * 0.5, maxOffset);
       
@@ -264,6 +318,11 @@ export function FullscreenVideoViewer({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    if (swipeBlocked.current) {
+      swipeBlocked.current = false;
+      return;
+    }
+    
     setTouchActive(false);
     
     const touchEndY = e.changedTouches[0].clientY;
@@ -294,6 +353,13 @@ export function FullscreenVideoViewer({
       }
     }
   };
+
+  // Handle tap on video area to unlock audio
+  const handleVideoAreaClick = useCallback(() => {
+    if (!audioUnlocked) {
+      unlockAudio();
+    }
+  }, [audioUnlocked, unlockAudio]);
 
   if (!currentVideo) return null;
 
@@ -329,26 +395,41 @@ export function FullscreenVideoViewer({
             />
           </div>
         ) : (
-          <iframe
-            ref={iframeRef}
-            key={`${currentVideo.id}-${currentVariation}`}
-            src={getEmbedUrl(currentVideoUrl)}
-            className="w-full h-full border-0"
-            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-            onLoad={() => {
-              // Re-apply desired mute state after the player loads
-              setTimeout(() => applyMuteStateToPlayer(isMuted), 120);
-            }}
-          />
+          <div className="w-full h-full relative" onClick={handleVideoAreaClick}>
+            <iframe
+              ref={iframeRef}
+              key={`${currentVideo.id}-${currentVariation}`}
+              src={getEmbedUrl(currentVideoUrl, !audioUnlocked)}
+              className="w-full h-full border-0"
+              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              onLoad={() => {
+                // Apply mute state after iframe loads
+                setTimeout(() => {
+                  if (audioUnlocked && !isMuted) {
+                    applyMuteStateWithRetry(false);
+                  }
+                }, 200);
+              }}
+            />
+            
+            {/* Audio unlock hint overlay */}
+            {!audioUnlocked && showAudioHint && !isImage && (
+              <div 
+                className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
+              >
+                <div className="bg-black/60 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 animate-pulse">
+                  <VolumeX className="h-6 w-6 text-white" />
+                  <span className="text-white font-medium">Toca para activar sonido</span>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Touch overlay */}
+        {/* Touch overlay - pointer-events-none to not block menu */}
         <div 
-          className="absolute inset-0 z-10"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          className="absolute inset-0 z-10 pointer-events-none"
           style={{ touchAction: 'none' }}
         />
 
@@ -361,16 +442,18 @@ export function FullscreenVideoViewer({
         {/* Close button - minimal style */}
         <button
           onClick={onClose}
+          data-no-swipe="true"
           className="absolute top-4 left-4 z-30 p-2 text-white/90 hover:text-white transition-colors"
         >
           <X className="h-7 w-7 drop-shadow-lg" />
         </button>
 
         {/* Top right controls */}
-        <div className="absolute top-4 right-4 z-30 flex items-center gap-3">
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-3" data-no-swipe="true">
           {!isImage && (
             <button
               onClick={toggleMute}
+              data-no-swipe="true"
               className="p-2 text-white/90 hover:text-white transition-colors"
             >
               {isMuted ? <VolumeX className="h-6 w-6 drop-shadow-lg" /> : <Volume2 className="h-6 w-6 drop-shadow-lg" />}
@@ -380,11 +463,15 @@ export function FullscreenVideoViewer({
           {canManageCurrent && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-2 text-white/90 hover:text-white transition-colors">
+                <button 
+                  className="p-2 text-white/90 hover:text-white transition-colors"
+                  data-no-swipe="true"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <MoreVertical className="h-6 w-6 drop-shadow-lg" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-48" data-no-swipe="true">
                 {onEdit && (
                   <DropdownMenuItem onClick={() => onEdit(currentVideo.id)}>
                     <Pencil className="h-4 w-4 mr-2" />
@@ -425,11 +512,12 @@ export function FullscreenVideoViewer({
 
         {/* Variation indicator - top center */}
         {!isImage && hasMultipleVariations && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-1.5" data-no-swipe="true">
             {currentVideo.videoUrls.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentVariation(idx)}
+                data-no-swipe="true"
                 className={cn(
                   "h-1 rounded-full transition-all duration-300",
                   idx === currentVariation 
@@ -446,12 +534,14 @@ export function FullscreenVideoViewer({
           <>
             <button
               onClick={goToPrevVariation}
+              data-no-swipe="true"
               className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 text-white/70 hover:text-white transition-colors hidden md:block"
             >
               <ChevronLeft className="h-8 w-8 drop-shadow-lg" />
             </button>
             <button
               onClick={goToNextVariation}
+              data-no-swipe="true"
               className="absolute right-20 top-1/2 -translate-y-1/2 z-30 p-2 text-white/70 hover:text-white transition-colors hidden md:block"
             >
               <ChevronRight className="h-8 w-8 drop-shadow-lg" />
@@ -460,7 +550,7 @@ export function FullscreenVideoViewer({
         )}
 
         {/* TikTok-style right sidebar actions */}
-        <div className="absolute bottom-32 right-3 flex flex-col items-center gap-5 z-30">
+        <div className="absolute bottom-32 right-3 flex flex-col items-center gap-5 z-30" data-no-swipe="true">
           {/* Creator Avatar with follow button */}
           <div className="relative mb-2">
             <button
@@ -470,6 +560,7 @@ export function FullscreenVideoViewer({
                   onProfileClick(currentVideo.creatorId);
                 }
               }}
+              data-no-swipe="true"
               className="block"
             >
               <Avatar className="h-12 w-12 ring-2 ring-white shadow-lg cursor-pointer hover:ring-primary transition-all">
@@ -482,6 +573,7 @@ export function FullscreenVideoViewer({
             {!canManageCurrent && currentVideo.creatorId && onFollow && (
               <button 
                 onClick={() => onFollow(currentVideo.creatorId!)}
+                data-no-swipe="true"
                 className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors active:scale-90"
               >
                 {isFollowing?.(currentVideo.creatorId) ? (
@@ -497,6 +589,7 @@ export function FullscreenVideoViewer({
           {onLike && (
             <button
               onClick={() => onLike(currentVideo.id)}
+              data-no-swipe="true"
               className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
             >
               <div className={cn(
@@ -518,6 +611,7 @@ export function FullscreenVideoViewer({
           {onComment && (
             <button
               onClick={() => onComment(currentVideo.id)}
+              data-no-swipe="true"
               className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
             >
               <MessageCircle className="h-8 w-8 text-white drop-shadow-lg" />
@@ -529,6 +623,7 @@ export function FullscreenVideoViewer({
           {onSave && (
             <button
               onClick={() => onSave(currentVideo.id, currentVideo.itemType || 'content')}
+              data-no-swipe="true"
               className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
             >
               <Bookmark 
@@ -547,6 +642,7 @@ export function FullscreenVideoViewer({
           {onShare && (
             <button
               onClick={() => onShare(currentVideo)}
+              data-no-swipe="true"
               className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
             >
               <Share2 className="h-8 w-8 text-white drop-shadow-lg" />
@@ -563,7 +659,7 @@ export function FullscreenVideoViewer({
         </div>
 
         {/* Bottom left - Creator info and caption (TikTok style) */}
-        <div className="absolute bottom-6 left-4 right-20 z-30">
+        <div className="absolute bottom-6 left-4 right-20 z-30" data-no-swipe="true">
           {/* Username */}
           <div className="flex items-center gap-2 mb-2">
             <button 
@@ -573,6 +669,7 @@ export function FullscreenVideoViewer({
                   onProfileClick(currentVideo.creatorId);
                 }
               }}
+              data-no-swipe="true"
               className="text-white font-bold text-base drop-shadow-lg hover:underline transition-all pointer-events-auto"
             >
               @{currentVideo.creatorName || 'usuario'}
@@ -581,7 +678,7 @@ export function FullscreenVideoViewer({
           </div>
 
           {/* Caption with "...more" */}
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto" data-no-swipe="true">
             {showFullCaption ? (
               <p 
                 className="text-white text-sm drop-shadow-lg cursor-pointer"
@@ -629,10 +726,11 @@ export function FullscreenVideoViewer({
         </div>
 
         {/* Video navigation hints - desktop only */}
-        <div className="absolute right-20 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 hidden md:flex">
+        <div className="absolute right-20 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 hidden md:flex" data-no-swipe="true">
           <button
             onClick={goToPrev}
             disabled={currentIndex === 0}
+            data-no-swipe="true"
             className={cn(
               "p-2 text-white/70 transition-all",
               currentIndex === 0 ? "opacity-20 cursor-not-allowed" : "hover:text-white hover:scale-110"
@@ -643,6 +741,7 @@ export function FullscreenVideoViewer({
           <button
             onClick={goToNext}
             disabled={currentIndex === videos.length - 1}
+            data-no-swipe="true"
             className={cn(
               "p-2 text-white/70 transition-all",
               currentIndex === videos.length - 1 ? "opacity-20 cursor-not-allowed" : "hover:text-white hover:scale-110"
