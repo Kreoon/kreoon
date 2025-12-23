@@ -12,6 +12,7 @@ import { RootAdminPanel } from "@/components/settings/RootAdminPanel";
 import { CurrencyManagement } from "@/components/settings/CurrencyManagement";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import { AppSettingsManagement } from "@/components/settings/AppSettingsManagement";
+import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { Sparkles, Play } from "lucide-react";
@@ -232,12 +233,7 @@ const Settings = () => {
           </div>
         );
       case 'apariencia':
-        return (
-          <div className="p-6 text-center text-muted-foreground">
-            <Palette className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Configuración de apariencia próximamente</p>
-          </div>
-        );
+        return <AppearanceSettings />;
       case 'integraciones':
         return (
           <div className="p-6 text-center text-muted-foreground">
