@@ -61,11 +61,6 @@ interface ContentItem {
   is_pinned?: boolean;
 }
 
-interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-}
 
 export default function CompanyPortfolio() {
   const { id: paramId } = useParams<{ id: string }>();
@@ -77,13 +72,11 @@ export default function CompanyPortfolio() {
   const [resolvedCompanyId, setResolvedCompanyId] = useState<string | null>(null);
   const [company, setCompany] = useState<CompanyProfile | null>(null);
   const [content, setContent] = useState<ContentItem[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [showTikTokView, setShowTikTokView] = useState(false);
   const [initialVideoIndex, setInitialVideoIndex] = useState(0);
   const [isAssociatedUser, setIsAssociatedUser] = useState(false);
-  const [activeTab, setActiveTab] = useState<'content' | 'products'>('content');
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -244,14 +237,6 @@ export default function CompanyPortfolio() {
       }));
       setContent(enrichedContent);
 
-      // Fetch company products
-      const { data: productsData } = await supabase
-        .from('products')
-        .select('id, name, description')
-        .eq('client_id', resolvedCompanyId)
-        .order('name');
-      
-      setProducts(productsData || []);
 
     } catch (error) {
       console.error('Error fetching company data:', error);
@@ -513,118 +498,68 @@ export default function CompanyPortfolio() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-border mt-4">
-          <button
-            onClick={() => setActiveTab('content')}
-            className={cn(
-              "flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2",
-              activeTab === 'content' 
-                ? "border-primary text-primary" 
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <VideoIcon className="w-4 h-4" />
-            Contenido
-          </button>
-          <button
-            onClick={() => setActiveTab('products')}
-            className={cn(
-              "flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2",
-              activeTab === 'products' 
-                ? "border-primary text-primary" 
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Building2 className="w-4 h-4" />
-            Productos
-          </button>
+        {/* Content Header */}
+        <div className="flex items-center justify-center gap-2 py-3 mt-4 border-b border-border">
+          <VideoIcon className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium text-primary">Contenido</span>
         </div>
 
         {/* Content Grid */}
-        {activeTab === 'content' && (
-          <div className="grid grid-cols-3 gap-1 mt-4">
-            {sortedContent.length === 0 ? (
-              <div className="col-span-3 py-12 text-center text-muted-foreground">
-                <VideoIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Sin contenido publicado</p>
-              </div>
-            ) : (
-              sortedContent.map((item, index) => (
-                <div
-                  key={item.id}
-                  className="relative aspect-[9/16] bg-muted cursor-pointer group overflow-hidden"
-                  onClick={() => {
-                    setInitialVideoIndex(index);
-                    setShowTikTokView(true);
-                  }}
-                >
-                  {item.thumbnail_url ? (
-                    <img 
-                      src={item.thumbnail_url} 
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Play className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                  )}
-                  
-                  {/* Pinned badge */}
-                  {item.is_pinned && (
-                    <div className="absolute top-1 left-1 bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
-                      📌
-                    </div>
-                  )}
-                  
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Play className="w-10 h-10 text-white" />
+        <div className="grid grid-cols-3 gap-1 mt-4">
+          {sortedContent.length === 0 ? (
+            <div className="col-span-3 py-12 text-center text-muted-foreground">
+              <VideoIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>Sin contenido publicado</p>
+            </div>
+          ) : (
+            sortedContent.map((item, index) => (
+              <div
+                key={item.id}
+                className="relative aspect-[9/16] bg-muted cursor-pointer group overflow-hidden"
+                onClick={() => {
+                  setInitialVideoIndex(index);
+                  setShowTikTokView(true);
+                }}
+              >
+                {item.thumbnail_url ? (
+                  <img 
+                    src={item.thumbnail_url} 
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Play className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  
-                  {/* Stats */}
-                  <div className="absolute bottom-1 left-1 right-1 flex justify-between text-white text-xs">
-                    <span className="flex items-center gap-0.5 drop-shadow-lg">
-                      <Eye className="w-3 h-3" />
-                      {formatNumber(item.views_count)}
-                    </span>
-                    <span className="flex items-center gap-0.5 drop-shadow-lg">
-                      <Heart className={cn("w-3 h-3", item.is_liked && "fill-red-500 text-red-500")} />
-                      {formatNumber(item.likes_count)}
-                    </span>
+                )}
+                
+                {/* Pinned badge */}
+                {item.is_pinned && (
+                  <div className="absolute top-1 left-1 bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
+                    📌
                   </div>
+                )}
+                
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Play className="w-10 h-10 text-white" />
                 </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* Products List */}
-        {activeTab === 'products' && (
-          <div className="mt-4 space-y-3">
-            {products.length === 0 ? (
-              <div className="py-12 text-center text-muted-foreground">
-                <Building2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Sin productos registrados</p>
+                
+                {/* Stats */}
+                <div className="absolute bottom-1 left-1 right-1 flex justify-between text-white text-xs">
+                  <span className="flex items-center gap-0.5 drop-shadow-lg">
+                    <Eye className="w-3 h-3" />
+                    {formatNumber(item.views_count)}
+                  </span>
+                  <span className="flex items-center gap-0.5 drop-shadow-lg">
+                    <Heart className={cn("w-3 h-3", item.is_liked && "fill-red-500 text-red-500")} />
+                    {formatNumber(item.likes_count)}
+                  </span>
+                </div>
               </div>
-            ) : (
-              products.map(product => (
-                <div 
-                  key={product.id}
-                  className="p-4 bg-muted/50 rounded-lg border border-border"
-                >
-                  <h3 className="font-medium">{product.name}</h3>
-                  {product.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {product.description}
-                    </p>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
       
       {/* Profile Editor Dialog */}
