@@ -2,14 +2,15 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, Check, X, Image } from 'lucide-react';
+import { Upload, Loader2, Check, X, Image, Trash2 } from 'lucide-react';
 
 interface ThumbnailSelectorProps {
   contentId: string;
   currentThumbnail?: string | null;
-  onThumbnailChange?: (thumbnailUrl: string) => void;
+  onThumbnailChange?: (thumbnailUrl: string | null) => void;
   disabled?: boolean;
   compact?: boolean;
+  showRemove?: boolean;
 }
 
 export function ThumbnailSelector({
@@ -17,12 +18,14 @@ export function ThumbnailSelector({
   currentThumbnail,
   onThumbnailChange,
   disabled = false,
-  compact = false
+  compact = false,
+  showRemove = true
 }: ThumbnailSelectorProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
 
@@ -115,6 +118,34 @@ export function ThumbnailSelector({
     }
   };
 
+  const removeThumbnail = async () => {
+    setRemoving(true);
+    try {
+      // Update content to remove thumbnail
+      const { error: updateError } = await supabase
+        .from('content')
+        .update({ thumbnail_url: null })
+        .eq('id', contentId);
+
+      if (updateError) throw updateError;
+
+      onThumbnailChange?.(null);
+      toast({
+        title: 'Miniatura eliminada',
+        description: 'La miniatura se eliminó correctamente',
+      });
+    } catch (error) {
+      console.error('Error removing thumbnail:', error);
+      toast({
+        title: 'Error al eliminar',
+        description: 'No se pudo eliminar la miniatura',
+        variant: 'destructive',
+      });
+    } finally {
+      setRemoving(false);
+    }
+  };
+
   const cancelPreview = () => {
     setPreviewImage(null);
     setPreviewFile(null);
@@ -133,7 +164,7 @@ export function ThumbnailSelector({
           accept="image/*"
           className="hidden"
           onChange={handleFileSelect}
-          disabled={disabled || uploading}
+          disabled={disabled || uploading || removing}
         />
         
         {currentThumbnail ? (
@@ -154,67 +185,115 @@ export function ThumbnailSelector({
           variant="outline"
           size="sm"
           onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || uploading}
+          disabled={disabled || uploading || removing}
         >
           <Upload className="h-3 w-3 mr-1" />
           {currentThumbnail ? 'Cambiar' : 'Subir'}
         </Button>
+        
+        {showRemove && currentThumbnail && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={removeThumbnail}
+            disabled={disabled || uploading || removing}
+            className="text-destructive hover:text-destructive"
+          >
+            {removing ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Trash2 className="h-3 w-3" />
+            )}
+          </Button>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="space-y-3">
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         className="hidden"
         onChange={handleFileSelect}
-        disabled={disabled || uploading}
+        disabled={disabled || uploading || removing}
       />
       
+      {/* Current thumbnail preview */}
+      {currentThumbnail && !previewImage && (
+        <div className="relative w-24 h-32 rounded-lg overflow-hidden border bg-black">
+          <img 
+            src={currentThumbnail} 
+            alt="Miniatura actual" 
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+      
       {previewImage ? (
-        <>
-          <div className="relative w-12 h-12 rounded overflow-hidden border">
+        <div className="space-y-2">
+          <div className="relative w-24 h-32 rounded-lg overflow-hidden border">
             <img 
               src={previewImage} 
               alt="Preview" 
               className="w-full h-full object-cover"
             />
           </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={cancelPreview}
+              disabled={uploading}
+            >
+              <X className="h-3 w-3 mr-1" />
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              onClick={uploadThumbnail}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Check className="h-3 w-3 mr-1" />
+              )}
+              Guardar
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={cancelPreview}
-            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled || uploading || removing}
           >
-            <X className="h-3 w-3 mr-1" />
-            Cancelar
+            <Upload className="h-3 w-3 mr-1" />
+            {currentThumbnail ? 'Cambiar miniatura' : 'Subir miniatura'}
           </Button>
-          <Button
-            size="sm"
-            onClick={uploadThumbnail}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-            ) : (
-              <Check className="h-3 w-3 mr-1" />
-            )}
-            Guardar
-          </Button>
-        </>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || uploading}
-        >
-          <Upload className="h-3 w-3 mr-1" />
-          {currentThumbnail ? 'Cambiar miniatura' : 'Subir miniatura'}
-        </Button>
+          
+          {showRemove && currentThumbnail && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={removeThumbnail}
+              disabled={disabled || uploading || removing}
+              className="text-destructive hover:text-destructive"
+            >
+              {removing ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Trash2 className="h-3 w-3 mr-1" />
+              )}
+              Quitar
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );
