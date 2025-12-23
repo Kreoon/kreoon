@@ -23,7 +23,6 @@ interface MainLayoutProps {
 // Client navigation items
 const clientNavigation = [
   { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard },
-  { name: "Tablero", href: "/client-board", icon: Kanban },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
