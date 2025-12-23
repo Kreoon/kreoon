@@ -883,443 +883,283 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="p-6 lg:p-8 space-y-8">
-        {/* Main KPIs Row */}
-        <div data-tour="stats-section" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <LargeKpiCard
-            title="Total Contenidos"
-            value={totalContent}
-            icon={Video}
-            description="Contenidos gestionados en la plataforma"
-            onClick={() => openKpiDialog('Todos los Contenidos', content)}
-            goalValue={currentGoal?.content_goal}
-            goalLabel="Meta del mes"
-          />
-          {/* Ingresos Totales - Both Currencies */}
+      <div className="px-4 py-2 lg:px-6 space-y-3">
+        {/* Row 1: Main KPIs - Compact */}
+        <div data-tour="stats-section" className="grid grid-cols-3 gap-3">
+          {/* Total Contenidos - Compact */}
           <div 
-            className={cn(
-              "group relative overflow-hidden rounded-3xl border border-border/50 p-8",
-              "bg-gradient-to-br from-card via-card to-muted/20 backdrop-blur-xl",
-              "transition-all duration-500 hover:shadow-[0_0_60px_-10px] hover:shadow-primary/20"
-            )}
+            onClick={() => openKpiDialog('Todos los Contenidos', content)}
+            className="group relative overflow-hidden rounded-xl border border-border/50 p-3 bg-gradient-to-br from-card to-muted/10 cursor-pointer hover:shadow-lg transition-all"
           >
-            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl transition-transform duration-700 group-hover:scale-125" />
-            
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 rounded-2xl bg-primary/10 backdrop-blur-sm">
-                  <DollarSign className="h-8 w-8 text-primary" />
-                </div>
-                <p className="text-lg font-medium text-muted-foreground">Ingresos Totales</p>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <Video className="h-4 w-4 text-primary" />
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                {/* COP */}
-                <div 
-                  className="p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 cursor-pointer hover:bg-yellow-500/20 transition-colors"
-                  onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span>🇨🇴</span>
-                    <span className="text-xs font-medium text-muted-foreground">COP</span>
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">
-                    <CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" />
-                  </p>
-                </div>
-                {/* USD */}
-                <div 
-                  className="p-4 rounded-2xl bg-green-500/10 border border-green-500/20 cursor-pointer hover:bg-green-500/20 transition-colors"
-                  onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span>🇺🇸</span>
-                    <span className="text-xs font-medium text-muted-foreground">USD</span>
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">
-                    <CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" />
-                  </p>
-                </div>
+              <span className="text-xs text-muted-foreground">Contenidos</span>
+            </div>
+            <p className="text-2xl font-bold"><AnimatedNumber value={totalContent} /></p>
+            {currentGoal?.content_goal && currentGoal.content_goal > 0 && (
+              <div className="mt-1">
+                <Progress value={Math.min((totalContent / currentGoal.content_goal) * 100, 100)} className="h-1" />
+                <span className="text-[10px] text-muted-foreground">Meta: {currentGoal.content_goal}</span>
               </div>
+            )}
+          </div>
 
-              {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
-                <div className="mt-4 space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Meta COP: <CurrencyDisplay value={currentGoal.revenue_goal} currency="COP" size="sm" /></span>
-                    <span className={cn(
-                      "font-medium",
-                      (clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100 >= 100 ? "text-success" : 
-                      (clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100 >= 75 ? "text-warning" : "text-muted-foreground"
-                    )}>
-                      {Math.round((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100)}%
-                    </span>
+          {/* Ingresos COP */}
+          <div 
+            onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
+            className="group relative overflow-hidden rounded-xl border border-yellow-500/30 p-3 bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 cursor-pointer hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span>🇨🇴</span>
+              <span className="text-xs text-muted-foreground">Ingresos COP</span>
+            </div>
+            <p className="text-xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" /></p>
+            {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
+              <div className="mt-1">
+                <Progress value={Math.min((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100, 100)} className="h-1" />
+                <span className="text-[10px] text-muted-foreground">{Math.round((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100)}%</span>
+              </div>
+            )}
+          </div>
+
+          {/* Ingresos USD */}
+          <div 
+            onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
+            className="group relative overflow-hidden rounded-xl border border-green-500/30 p-3 bg-gradient-to-br from-green-500/10 to-green-500/5 cursor-pointer hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span>🇺🇸</span>
+              <span className="text-xs text-muted-foreground">Ingresos USD</span>
+            </div>
+            <p className="text-xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" /></p>
+            <div className="mt-1">
+              <span className="text-[10px] text-muted-foreground">Completados: {Math.round((completed / totalContent) * 100) || 0}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Status Grid - Very Compact */}
+        <div className="grid grid-cols-6 gap-2">
+          <div onClick={() => openKpiDialog('Contenido Activo', content.filter(c => !['approved', 'paid', 'delivered'].includes(c.status)))} 
+            className="p-2 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
+            <Play className="h-3 w-3 mx-auto text-info mb-0.5" />
+            <p className="text-lg font-bold text-info">{activeContent}</p>
+            <p className="text-[10px] text-muted-foreground">Activos</p>
+          </div>
+          <div onClick={() => openKpiDialog('En Proceso', content.filter(c => ['recording', 'editing'].includes(c.status)))}
+            className="p-2 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
+            <Clock className="h-3 w-3 mx-auto text-warning mb-0.5" />
+            <p className="text-lg font-bold text-warning">{inProgress}</p>
+            <p className="text-[10px] text-muted-foreground">Proceso</p>
+          </div>
+          <div onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
+            className="p-2 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
+            <Calendar className="h-3 w-3 mx-auto text-primary mb-0.5" />
+            <p className="text-lg font-bold text-primary">{pending}</p>
+            <p className="text-[10px] text-muted-foreground">Pendientes</p>
+          </div>
+          <div onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
+            className="p-2 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors text-center">
+            <CheckCircle className="h-3 w-3 mx-auto text-success mb-0.5" />
+            <p className="text-lg font-bold text-success">{completed}</p>
+            <p className="text-[10px] text-muted-foreground">Aprobados</p>
+          </div>
+          <div onClick={() => openListDialog('Creadores Activos', 'creators', { profiles: activeCreators })}
+            className="p-2 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
+            <Users className="h-3 w-3 mx-auto text-info mb-0.5" />
+            <p className="text-lg font-bold text-info">{activeCreators.length}</p>
+            <p className="text-[10px] text-muted-foreground">Creadores</p>
+          </div>
+          <div onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
+            className="p-2 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
+            <Building2 className="h-3 w-3 mx-auto text-primary mb-0.5" />
+            <p className="text-lg font-bold text-primary">{activeClients.length}</p>
+            <p className="text-[10px] text-muted-foreground">Clientes</p>
+          </div>
+        </div>
+
+        {/* Row 3: Payments & Billing - Side by Side Compact */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Pagos al Equipo */}
+          <div className="rounded-xl border border-border/50 bg-card p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold">Pagos Equipo</h3>
+              <Banknote className="h-4 w-4 text-warning" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {/* COP */}
+              <div className="p-2 rounded-lg bg-yellow-500/5 border border-yellow-500/10">
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="text-xs">🇨🇴</span>
+                  <span className="text-[10px] text-muted-foreground">COP</span>
+                </div>
+                <div className="space-y-1">
+                  <div onClick={() => openKpiDialog('Por Pagar a Creadores (COP)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
+                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">Creadores</span>
+                    <span className="text-xs font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentCOP} currency="COP" size="sm" /></span>
                   </div>
-                  <Progress value={Math.min((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100, 100)} className="h-2" />
+                  <div onClick={() => openKpiDialog('Por Pagar a Editores (COP)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
+                    className="flex justify-between items-center cursor-pointer hover:bg-info/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">Editores</span>
+                    <span className="text-xs font-bold text-info"><CurrencyDisplay value={pendingEditorPaymentCOP} currency="COP" size="sm" /></span>
+                  </div>
+                </div>
+              </div>
+              {/* USD */}
+              <div className="p-2 rounded-lg bg-green-500/5 border border-green-500/10">
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="text-xs">🇺🇸</span>
+                  <span className="text-[10px] text-muted-foreground">USD</span>
+                </div>
+                <div className="space-y-1">
+                  <div onClick={() => openKpiDialog('Por Pagar a Creadores (USD)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
+                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">Creadores</span>
+                    <span className="text-xs font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentUSD} currency="USD" size="sm" /></span>
+                  </div>
+                  <div onClick={() => openKpiDialog('Por Pagar a Editores (USD)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
+                    className="flex justify-between items-center cursor-pointer hover:bg-info/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">Editores</span>
+                    <span className="text-xs font-bold text-info"><CurrencyDisplay value={pendingEditorPaymentUSD} currency="USD" size="sm" /></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Facturación Clientes */}
+          <div className="rounded-xl border border-border/50 bg-card p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold">Facturación</h3>
+              <BarChart3 className="h-4 w-4 text-primary" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {/* COP */}
+              <div className="p-2 rounded-lg bg-yellow-500/5 border border-yellow-500/10">
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="text-xs">🇨🇴</span>
+                  <span className="text-[10px] text-muted-foreground">COP</span>
+                </div>
+                <div className="space-y-1">
+                  <div onClick={() => openListDialog('Recaudado COP', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency !== 'USD') })}
+                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">Recaudado</span>
+                    <span className="text-xs font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" /></span>
+                  </div>
+                  <div onClick={() => openListDialog('Por Cobrar COP', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency !== 'USD') })}
+                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">Por Cobrar</span>
+                    <span className="text-xs font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingCOP} currency="COP" size="sm" /></span>
+                  </div>
+                </div>
+              </div>
+              {/* USD */}
+              <div className="p-2 rounded-lg bg-green-500/5 border border-green-500/10">
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="text-xs">🇺🇸</span>
+                  <span className="text-[10px] text-muted-foreground">USD</span>
+                </div>
+                <div className="space-y-1">
+                  <div onClick={() => openListDialog('Recaudado USD', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency === 'USD') })}
+                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">Recaudado</span>
+                    <span className="text-xs font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></span>
+                  </div>
+                  <div onClick={() => openListDialog('Por Cobrar USD', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency === 'USD') })}
+                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">Por Cobrar</span>
+                    <span className="text-xs font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingUSD} currency="USD" size="sm" /></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 4: Editors + Videos Owed */}
+        <div className="grid grid-cols-4 gap-2">
+          <div onClick={() => openListDialog('Editores Activos', 'editors', { profiles: activeEditors })}
+            className="p-2 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
+            <Scissors className="h-3 w-3 mx-auto text-info mb-0.5" />
+            <p className="text-lg font-bold text-info">{activeEditors.length}</p>
+            <p className="text-[10px] text-muted-foreground">Editores</p>
+          </div>
+          <div onClick={() => openKpiDialog('Videos en Edición', content.filter(c => c.status === 'editing'))}
+            className="p-2 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
+            <Clock className="h-3 w-3 mx-auto text-warning mb-0.5" />
+            <p className="text-lg font-bold text-warning">{content.filter(c => c.status === 'editing').length}</p>
+            <p className="text-[10px] text-muted-foreground">En Edición</p>
+          </div>
+          <div onClick={() => openKpiDialog('Videos Entregados', content.filter(c => c.status === 'delivered'))}
+            className="p-2 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors text-center">
+            <CheckCircle className="h-3 w-3 mx-auto text-success mb-0.5" />
+            <p className="text-lg font-bold text-success">{content.filter(c => c.status === 'delivered').length}</p>
+            <p className="text-[10px] text-muted-foreground">Entregados</p>
+          </div>
+          <div onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
+            className="p-2 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors text-center">
+            <Video className="h-3 w-3 mx-auto text-destructive mb-0.5" />
+            <p className="text-lg font-bold text-destructive">{clientsBilling.contentOwed}</p>
+            <p className="text-[10px] text-muted-foreground">Adeudados</p>
+          </div>
+        </div>
+
+        {/* Row 5: Tabs for Charts, Leaderboard, Referrals */}
+        {isAdmin && (
+          <Tabs defaultValue="leaderboard" className="rounded-xl border border-border/50 bg-card p-3">
+            <TabsList className="grid w-full grid-cols-3 h-8">
+              <TabsTrigger value="leaderboard" className="text-xs h-7">
+                <Trophy className="h-3 w-3 mr-1" />
+                Ranking
+              </TabsTrigger>
+              <TabsTrigger value="goals" className="text-xs h-7">
+                <Target className="h-3 w-3 mr-1" />
+                Metas
+              </TabsTrigger>
+              <TabsTrigger value="referrals" className="text-xs h-7">
+                <Users className="h-3 w-3 mr-1" />
+                Referidos
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="leaderboard" className="mt-2">
+              <Leaderboard maxItems={5} showHeader={false} />
+            </TabsContent>
+            
+            <TabsContent value="goals" className="mt-2">
+              {allGoals.length > 0 ? (
+                <Tabs defaultValue="revenue" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 h-7 mb-2">
+                    <TabsTrigger value="revenue" className="text-[10px] h-6">Ingresos</TabsTrigger>
+                    <TabsTrigger value="content" className="text-[10px] h-6">Contenidos</TabsTrigger>
+                    <TabsTrigger value="clients" className="text-[10px] h-6">Clientes</TabsTrigger>
+                  </TabsList>
+                  <div className="h-48">
+                    <TabsContent value="revenue" className="h-full m-0">
+                      <GoalsChart goals={allGoals} actuals={monthlyActuals} metric="revenue" title="" />
+                    </TabsContent>
+                    <TabsContent value="content" className="h-full m-0">
+                      <GoalsChart goals={allGoals} actuals={monthlyActuals} metric="content" title="" />
+                    </TabsContent>
+                    <TabsContent value="clients" className="h-full m-0">
+                      <GoalsChart goals={allGoals} actuals={monthlyActuals} metric="clients" title="" />
+                    </TabsContent>
+                  </div>
+                </Tabs>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  No hay metas configuradas. <button onClick={() => setGoalsDialogOpen(true)} className="text-primary underline">Configurar</button>
                 </div>
               )}
-            </div>
-          </div>
-          <LargeKpiCard
-            title="Tasa de Completados"
-            value={totalContent > 0 ? Math.round((completed / totalContent) * 100) : 0}
-            suffix="%"
-            icon={Target}
-            description="Porcentaje de contenidos aprobados"
-            onClick={() => openKpiDialog('Contenidos Aprobados', content.filter(c => c.status === 'approved'))}
-          />
-        </div>
-
-        {/* Secondary Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <PremiumStatsCard
-            title="Activos"
-            value={activeContent}
-            icon={Play}
-            color="info"
-            onClick={() => openKpiDialog('Contenido Activo', content.filter(c => !['approved', 'paid', 'delivered'].includes(c.status)))}
-          />
-          <PremiumStatsCard
-            title="En Proceso"
-            value={inProgress}
-            icon={Clock}
-            color="warning"
-            onClick={() => openKpiDialog('En Proceso', content.filter(c => ['recording', 'editing'].includes(c.status)))}
-          />
-          <PremiumStatsCard
-            title="Pendientes"
-            value={pending}
-            icon={Calendar}
-            color="primary"
-            onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
-          />
-          <PremiumStatsCard
-            title="Aprobados"
-            value={completed}
-            icon={CheckCircle}
-            color="success"
-            onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
-          />
-          <PremiumStatsCard
-            title="Creadores"
-            value={activeCreators.length}
-            icon={Users}
-            color="info"
-            onClick={() => openListDialog('Creadores Activos', 'creators', { profiles: activeCreators })}
-          />
-          <PremiumStatsCard
-            title="Clientes"
-            value={activeClients.length}
-            icon={Building2}
-            color="primary"
-            onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
-            goalValue={currentGoal?.new_clients_goal}
-            goalLabel="Meta nuevos"
-          />
-        </div>
-
-        {/* Payment Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Quick Payments Panel - Both Currencies */}
-          <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Pagos al Equipo</h2>
-                <p className="text-sm text-muted-foreground">Pagos pendientes a creadores y editores</p>
-              </div>
-              <Banknote className="h-8 w-8 text-warning" />
-            </div>
-
-            <div className="space-y-4">
-              {/* COP Section */}
-              <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10">
-                <div className="flex items-center gap-2 mb-3">
-                  <span>🇨🇴</span>
-                  <span className="text-sm font-semibold text-muted-foreground">COP</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div 
-                    className="p-3 rounded-xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
-                    onClick={() => openKpiDialog('Por Pagar a Creadores (COP)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Creadores</p>
-                    <p className="text-lg font-bold text-warning">
-                      <CurrencyDisplay value={pendingCreatorPaymentCOP} currency="COP" size="sm" />
-                    </p>
-                  </div>
-                  <div 
-                    className="p-3 rounded-xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
-                    onClick={() => openKpiDialog('Por Pagar a Editores (COP)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Editores</p>
-                    <p className="text-lg font-bold text-info">
-                      <CurrencyDisplay value={pendingEditorPaymentCOP} currency="COP" size="sm" />
-                    </p>
-                  </div>
-                  <div 
-                    className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
-                    onClick={() => openKpiDialog('Total Por Pagar (COP)', [...unpaidCreatorContent, ...unpaidEditorContent].filter(c => (c as any).creator_payment_currency !== 'USD'))}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Total</p>
-                    <p className="text-lg font-bold text-destructive">
-                      <CurrencyDisplay value={pendingCreatorPaymentCOP + pendingEditorPaymentCOP} currency="COP" size="sm" />
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* USD Section */}
-              <div className="p-3 rounded-xl bg-green-500/5 border border-green-500/10">
-                <div className="flex items-center gap-2 mb-3">
-                  <span>🇺🇸</span>
-                  <span className="text-sm font-semibold text-muted-foreground">USD</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div 
-                    className="p-3 rounded-xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
-                    onClick={() => openKpiDialog('Por Pagar a Creadores (USD)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Creadores</p>
-                    <p className="text-lg font-bold text-warning">
-                      <CurrencyDisplay value={pendingCreatorPaymentUSD} currency="USD" size="sm" />
-                    </p>
-                  </div>
-                  <div 
-                    className="p-3 rounded-xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
-                    onClick={() => openKpiDialog('Por Pagar a Editores (USD)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Editores</p>
-                    <p className="text-lg font-bold text-info">
-                      <CurrencyDisplay value={pendingEditorPaymentUSD} currency="USD" size="sm" />
-                    </p>
-                  </div>
-                  <div 
-                    className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
-                    onClick={() => openKpiDialog('Total Por Pagar (USD)', [...unpaidCreatorContent, ...unpaidEditorContent].filter(c => (c as any).creator_payment_currency === 'USD'))}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Total</p>
-                    <p className="text-lg font-bold text-destructive">
-                      <CurrencyDisplay value={pendingCreatorPaymentUSD + pendingEditorPaymentUSD} currency="USD" size="sm" />
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Financial Overview - Client Billing - Both Currencies */}
-          <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Facturación Clientes</h2>
-                <p className="text-sm text-muted-foreground">Balance de paquetes vendidos</p>
-              </div>
-              <BarChart3 className="h-8 w-8 text-primary" />
-            </div>
-
-            <div className="space-y-4">
-              {/* COP Section */}
-              <div className="p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10">
-                <div className="flex items-center gap-2 mb-3">
-                  <span>🇨🇴</span>
-                  <span className="text-sm font-semibold text-muted-foreground">COP</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div 
-                    className="p-3 rounded-xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
-                    onClick={() => openListDialog('Total Ventas COP', 'packages-sold', { packages: packages.filter(p => (p as any).currency !== 'USD') })}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Ventas</p>
-                    <p className="text-lg font-bold text-primary">
-                      <CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" />
-                    </p>
-                  </div>
-                  <div 
-                    className="p-3 rounded-xl bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
-                    onClick={() => openListDialog('Recaudado COP', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency !== 'USD') })}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Recaudado</p>
-                    <p className="text-lg font-bold text-success">
-                      <CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" />
-                    </p>
-                  </div>
-                  <div 
-                    className="p-3 rounded-xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
-                    onClick={() => openListDialog('Por Cobrar COP', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency !== 'USD') })}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Por Cobrar</p>
-                    <p className="text-lg font-bold text-warning">
-                      <CurrencyDisplay value={clientsBilling.totalPendingCOP} currency="COP" size="sm" />
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* USD Section */}
-              <div className="p-3 rounded-xl bg-green-500/5 border border-green-500/10">
-                <div className="flex items-center gap-2 mb-3">
-                  <span>🇺🇸</span>
-                  <span className="text-sm font-semibold text-muted-foreground">USD</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div 
-                    className="p-3 rounded-xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
-                    onClick={() => openListDialog('Total Ventas USD', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Ventas</p>
-                    <p className="text-lg font-bold text-primary">
-                      <CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" />
-                    </p>
-                  </div>
-                  <div 
-                    className="p-3 rounded-xl bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors"
-                    onClick={() => openListDialog('Recaudado USD', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency === 'USD') })}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Recaudado</p>
-                    <p className="text-lg font-bold text-success">
-                      <CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" />
-                    </p>
-                  </div>
-                  <div 
-                    className="p-3 rounded-xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors"
-                    onClick={() => openListDialog('Por Cobrar USD', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency === 'USD') })}
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">Por Cobrar</p>
-                    <p className="text-lg font-bold text-warning">
-                      <CurrencyDisplay value={clientsBilling.totalPendingUSD} currency="USD" size="sm" />
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Videos owed */}
-              <div 
-                className="p-3 rounded-xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors"
-                onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
-              >
-                <p className="text-xs text-muted-foreground mb-1">Videos Adeudados</p>
-                <p className="text-lg font-bold text-info">{clientsBilling.contentOwed} por entregar</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Editors KPI */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <PremiumStatsCard
-            title="Editores Activos"
-            value={activeEditors.length}
-            icon={Scissors}
-            color="info"
-            onClick={() => openListDialog('Editores Activos', 'editors', { profiles: activeEditors })}
-          />
-          <PremiumStatsCard
-            title="Videos en Edición"
-            value={content.filter(c => c.status === 'editing').length}
-            icon={Clock}
-            color="warning"
-            onClick={() => openKpiDialog('Videos en Edición', content.filter(c => c.status === 'editing'))}
-          />
-          <PremiumStatsCard
-            title="Videos Entregados"
-            value={content.filter(c => c.status === 'delivered').length}
-            icon={CheckCircle}
-            color="success"
-            onClick={() => openKpiDialog('Videos Entregados', content.filter(c => c.status === 'delivered'))}
-          />
-        </div>
-
-        {/* Goals vs Actuals Chart */}
-        {isAdmin && allGoals.length > 0 && (
-          <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Metas vs Resultados</h2>
-                <p className="text-sm text-muted-foreground">
-                  {startDateFilter || endDateFilter 
-                    ? `Filtrado: ${startDateFilter ? format(startDateFilter, "MMM yyyy", { locale: es }) : 'Inicio'} - ${endDateFilter ? format(endDateFilter, "MMM yyyy", { locale: es }) : 'Actual'}`
-                    : `Comparativa mensual ${new Date().getFullYear()}`
-                  }
-                </p>
-              </div>
-              <Target className="h-8 w-8 text-primary" />
-            </div>
+            </TabsContent>
             
-            <Tabs defaultValue="revenue" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-6">
-                <TabsTrigger value="revenue">Ingresos</TabsTrigger>
-                <TabsTrigger value="content">Contenidos</TabsTrigger>
-                <TabsTrigger value="clients">Clientes</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="revenue">
-                <GoalsChart 
-                  goals={allGoals} 
-                  actuals={monthlyActuals} 
-                  metric="revenue" 
-                  title="Ingresos Mensuales"
-                  startMonth={startDateFilter ? startDateFilter.getMonth() + 1 : 1}
-                  endMonth={endDateFilter ? endDateFilter.getMonth() + 1 : 12}
-                />
-              </TabsContent>
-              
-              <TabsContent value="content">
-                <GoalsChart 
-                  goals={allGoals} 
-                  actuals={monthlyActuals} 
-                  metric="content" 
-                  title="Contenidos Aprobados"
-                  startMonth={startDateFilter ? startDateFilter.getMonth() + 1 : 1}
-                  endMonth={endDateFilter ? endDateFilter.getMonth() + 1 : 12}
-                />
-              </TabsContent>
-              
-              <TabsContent value="clients">
-                <GoalsChart 
-                  goals={allGoals} 
-                  actuals={monthlyActuals} 
-                  metric="clients" 
-                  title="Nuevos Clientes"
-                  startMonth={startDateFilter ? startDateFilter.getMonth() + 1 : 1}
-                  endMonth={endDateFilter ? endDateFilter.getMonth() + 1 : 12}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
-
-        {/* UP System - Admin Only */}
-        {isAdmin && (
-          <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                  <Zap className="h-6 w-6 text-primary" />
-                  Sistema UP (UGC Points)
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Gamificación y ranking de creadores y editores
-                </p>
-              </div>
-              <Trophy className="h-8 w-8 text-yellow-500" />
-            </div>
-            <Leaderboard maxItems={10} showHeader={false} />
-          </div>
-        )}
-
-        {/* Referral Stats Section - Admin Only */}
-        {isAdmin && (
-          <div className="rounded-3xl border border-border/50 bg-gradient-to-br from-card to-muted/10 p-6 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Sistema de Referidos</h2>
-                <p className="text-sm text-muted-foreground">
-                  Gestión de referidos, comisiones y suscripciones
-                </p>
-              </div>
-              <Users className="h-8 w-8 text-primary" />
-            </div>
-            <ReferralStats />
-          </div>
+            <TabsContent value="referrals" className="mt-2">
+              <ReferralStats />
+            </TabsContent>
+          </Tabs>
         )}
       </div>
 
