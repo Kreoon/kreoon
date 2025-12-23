@@ -22,11 +22,20 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string;
+  username: string | null;
   avatar_url: string | null;
   phone: string | null;
   bio: string | null;
   is_ambassador: boolean;
+  is_public: boolean | null;
   portfolio_url: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
+  city: string | null;
+  address: string | null;
+  document_type: string | null;
+  document_number: string | null;
   created_at: string;
   updated_at: string;
 }
