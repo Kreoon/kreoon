@@ -2,81 +2,18 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, Check, X, Image, Download } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Upload, Loader2, Check, X, Image } from 'lucide-react';
 
 interface ThumbnailSelectorProps {
   contentId: string;
-  videoUrl: string;
   currentThumbnail?: string | null;
   onThumbnailChange?: (thumbnailUrl: string) => void;
   disabled?: boolean;
   compact?: boolean;
 }
 
-// Extract video ID from Bunny URL
-function extractVideoId(url: string): string | null {
-  if (!url) return null;
-  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/\d+\/([a-f0-9-]+)/i);
-  if (embedMatch) return embedMatch[1];
-  const cdnMatch = url.match(/b-cdn\.net\/([a-f0-9-]+)/i);
-  if (cdnMatch) return cdnMatch[1];
-  return null;
-}
-
-function cssHslVar(name: string, fallback = '0 0% 50%') {
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue(name)
-    .trim();
-  return raw || fallback;
-}
-
-async function generateFallbackThumbnailBlob(opts: { label?: string }): Promise<Blob> {
-  const width = 1280;
-  const height = 720;
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas no soportado');
-
-  const bg = `hsl(${cssHslVar('--background', '0 0% 98%')})`;
-  const fg = `hsl(${cssHslVar('--foreground', '0 0% 10%')})`;
-  const primary = `hsl(${cssHslVar('--primary', '222.2 47.4% 11.2%')})`;
-
-  // Background
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, width, height);
-
-  // Accent ribbon
-  ctx.fillStyle = primary;
-  ctx.globalAlpha = 0.12;
-  ctx.fillRect(0, height * 0.62, width, height * 0.38);
-  ctx.globalAlpha = 1;
-
-  // Text
-  ctx.fillStyle = fg;
-  ctx.font = '700 56px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('Miniatura', width / 2, height / 2 - 20);
-
-  ctx.globalAlpha = 0.8;
-  ctx.font = '500 28px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
-  ctx.fillText(opts.label || 'Generada automáticamente', width / 2, height / 2 + 40);
-  ctx.globalAlpha = 1;
-
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('No se pudo generar la imagen'))), 'image/jpeg', 0.9);
-  });
-
-  return blob;
-}
-
 export function ThumbnailSelector({
   contentId,
-  videoUrl,
   currentThumbnail,
   onThumbnailChange,
   disabled = false,
@@ -86,11 +23,10 @@ export function ThumbnailSelector({
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [uploading, setUploading] = useState(false);
-  const [fetchingAuto, setFetchingAuto] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
 
-  // Clear preview when dialog closes or content changes
+  // Clear preview when content changes
   useEffect(() => {
     setPreviewImage(null);
     setPreviewFile(null);
@@ -127,54 +63,36 @@ export function ThumbnailSelector({
     reader.readAsDataURL(file);
   };
 
-  const uploadThumbnailBlob = async (blob: Blob) => {
-    // Upload to storage - use dedicated content-thumbnails bucket
-    const fileName = `${contentId}-${Date.now()}.jpg`;
-    const { error: uploadError } = await supabase.storage
-      .from('content-thumbnails')
-      .upload(fileName, blob, {
-        contentType: blob.type || 'image/jpeg',
-        upsert: true,
-      });
-
-    if (uploadError) throw uploadError;
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('content-thumbnails')
-      .getPublicUrl(fileName);
-
-    // Update content with new thumbnail
-    const { error: updateError } = await supabase
-      .from('content')
-      .update({ thumbnail_url: publicUrl })
-      .eq('id', contentId);
-
-    if (updateError) throw updateError;
-
-    onThumbnailChange?.(publicUrl);
-
-    return publicUrl;
-  };
-
   const uploadThumbnail = async () => {
-    if (!previewFile && !previewImage) return;
+    if (!previewFile) return;
 
     setUploading(true);
     try {
-      let blob: Blob;
+      // Upload to storage
+      const fileName = `${contentId}-${Date.now()}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from('content-thumbnails')
+        .upload(fileName, previewFile, {
+          contentType: previewFile.type || 'image/jpeg',
+          upsert: true,
+        });
 
-      if (previewFile) {
-        blob = previewFile;
-      } else if (previewImage) {
-        const response = await fetch(previewImage);
-        blob = await response.blob();
-      } else {
-        throw new Error('No image to upload');
-      }
+      if (uploadError) throw uploadError;
 
-      await uploadThumbnailBlob(blob);
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('content-thumbnails')
+        .getPublicUrl(fileName);
 
+      // Update content with new thumbnail
+      const { error: updateError } = await supabase
+        .from('content')
+        .update({ thumbnail_url: publicUrl })
+        .eq('id', contentId);
+
+      if (updateError) throw updateError;
+
+      onThumbnailChange?.(publicUrl);
       toast({
         title: 'Miniatura actualizada',
         description: 'La miniatura se guardó correctamente',
@@ -194,80 +112,6 @@ export function ThumbnailSelector({
       });
     } finally {
       setUploading(false);
-    }
-  };
-
-  const fetchAutoThumbnail = async () => {
-    const videoId = extractVideoId(videoUrl);
-    if (!videoId) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo extraer el ID del video',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setFetchingAuto(true);
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const functionUrl = `${supabaseUrl}/functions/v1/bunny-thumbnail?content_id=${contentId}&video_id=${videoId}`;
-      const response = await fetch(functionUrl);
-
-      if (!response.ok) {
-        const details = await response.text().catch(() => '');
-        const isNotReady = response.status === 404 && details.toLowerCase().includes('thumbnail');
-
-        if (isNotReady) {
-          // Fallback: generate a thumbnail immediately so the UI is never blocked by processing
-          const blob = await generateFallbackThumbnailBlob({ label: 'Video aún procesando' });
-          await uploadThumbnailBlob(blob);
-
-          toast({
-            title: 'Miniatura creada',
-            description: 'Bunny aún no la generaba, así que se creó una miniatura automática.',
-          });
-          return;
-        }
-
-        toast({
-          title: 'Error al obtener miniatura',
-          description: details || 'No se pudo obtener la miniatura del video.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const blob = await response.blob();
-      const imageUrl = URL.createObjectURL(blob);
-      setPreviewImage(imageUrl);
-
-      // Create a file from the blob for upload
-      const file = new File([blob], 'thumbnail.jpg', { type: blob.type || 'image/jpeg' });
-      setPreviewFile(file);
-
-      toast({
-        title: 'Miniatura obtenida',
-        description: 'Haz clic en Guardar para confirmar'
-      });
-    } catch (error) {
-      console.error('Error fetching auto thumbnail:', error);
-      try {
-        const blob = await generateFallbackThumbnailBlob({ label: 'Error al obtener miniatura' });
-        await uploadThumbnailBlob(blob);
-        toast({
-          title: 'Miniatura creada',
-          description: 'Se creó una miniatura automática como respaldo.',
-        });
-      } catch {
-        toast({
-          title: 'Error al obtener miniatura',
-          description: 'No se pudo obtener ni generar la miniatura. Sube una imagen manualmente.',
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      setFetchingAuto(false);
     }
   };
 
@@ -313,7 +157,7 @@ export function ThumbnailSelector({
           disabled={disabled || uploading}
         >
           <Upload className="h-3 w-3 mr-1" />
-          Subir
+          {currentThumbnail ? 'Cambiar' : 'Subir'}
         </Button>
       </div>
     );
@@ -348,13 +192,13 @@ export function ThumbnailSelector({
           <div className="w-full h-full flex items-center justify-center">
             <div className="text-center text-muted-foreground">
               <Image className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Sin miniatura</p>
+              <p className="text-sm">Miniatura automática al subir video</p>
             </div>
           </div>
         )}
         
         {/* Uploading overlay */}
-        {(uploading || fetchingAuto) && (
+        {uploading && (
           <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -387,32 +231,15 @@ export function ThumbnailSelector({
           </Button>
         </div>
       ) : (
-        <div className="flex gap-2">
-          {videoUrl && (
-            <Button
-              variant="outline"
-              onClick={fetchAutoThumbnail}
-              disabled={disabled || fetchingAuto}
-              className="flex-1"
-            >
-              {fetchingAuto ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4 mr-2" />
-              )}
-              Obtener de video
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={disabled || uploading}
-            className="flex-1"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Subir imagen
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled || uploading}
+          className="w-full"
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          {currentThumbnail ? 'Cambiar miniatura' : 'Subir miniatura'}
+        </Button>
       )}
     </div>
   );
