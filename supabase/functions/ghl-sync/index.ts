@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -9,6 +10,8 @@ const corsHeaders = {
 interface GHLSyncPayload {
   event_type: 'new_client' | 'new_lead' | 'content_approved' | 'payment_created' | 'content_delivered' | 'custom' | 'test';
   data: Record<string, any>;
+  webhook_url?: string;
+  location_id?: string;
 }
 
 serve(async (req) => {
@@ -18,48 +21,82 @@ serve(async (req) => {
   }
 
   try {
-    const GHL_WEBHOOK_URL = Deno.env.get('GHL_WEBHOOK_URL');
-    const GHL_LOCATION_ID = Deno.env.get('GHL_LOCATION_ID');
+    const payload: GHLSyncPayload = await req.json();
+    console.log('[ghl-sync] Received sync request:', payload.event_type);
 
-    if (!GHL_WEBHOOK_URL) {
+    // Get webhook URL and location ID from payload or environment
+    let webhookUrl = payload.webhook_url || Deno.env.get('GHL_WEBHOOK_URL');
+    let locationId = payload.location_id || Deno.env.get('GHL_LOCATION_ID');
+
+    // If not in payload or env, try to get from app_settings
+    if (!webhookUrl || !locationId) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      const { data: settings } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .in('key', ['ghl_webhook_url', 'ghl_location_id']);
+
+      if (settings) {
+        settings.forEach((s: { key: string; value: string }) => {
+          if (s.key === 'ghl_webhook_url' && !webhookUrl) webhookUrl = s.value;
+          if (s.key === 'ghl_location_id' && !locationId) locationId = s.value;
+        });
+      }
+    }
+
+    if (!webhookUrl) {
       console.error('[ghl-sync] GHL_WEBHOOK_URL not configured');
       return new Response(
-        JSON.stringify({ error: 'GHL webhook URL not configured. Por favor configura el secret GHL_WEBHOOK_URL.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          success: false,
+          error: 'URL del webhook no configurada. Por favor ingresa la URL en Configuración → Integraciones → Funnel ROI.' 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const payload: GHLSyncPayload = await req.json();
-    console.log('[ghl-sync] Received sync request:', payload.event_type);
+    console.log('[ghl-sync] Using webhook URL:', webhookUrl);
+    console.log('[ghl-sync] Using location ID:', locationId || '(not set)');
 
     // Handle test connection request
     if (payload.event_type === 'test') {
       console.log('[ghl-sync] Sending test connection to GHL');
       
       const testPayload = {
-        locationId: GHL_LOCATION_ID,
+        locationId: locationId,
         source: 'Content Studio',
         type: 'test',
         timestamp: new Date().toISOString(),
         message: 'Test connection from Content Studio',
-        tags: ['Test Connection']
+        tags: ['Test Connection'],
+        customField: {
+          test: true,
+          platform: 'UGC Colombia'
+        }
       };
 
-      const response = await fetch(GHL_WEBHOOK_URL, {
+      console.log('[ghl-sync] Test payload:', JSON.stringify(testPayload));
+
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(testPayload),
       });
 
       const responseText = await response.text();
-      console.log('[ghl-sync] Test response:', response.status, responseText);
+      console.log('[ghl-sync] Test response status:', response.status);
+      console.log('[ghl-sync] Test response body:', responseText);
 
-      if (!response.ok) {
+      // GHL webhooks often return empty response on success
+      if (response.ok || response.status === 200) {
         return new Response(
           JSON.stringify({ 
-            success: false, 
-            error: `GHL respondió con error ${response.status}`,
-            details: responseText 
+            success: true, 
+            message: 'Conexión exitosa con Funnel ROI (GHL)',
+            status: response.status
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -67,8 +104,9 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ 
-          success: true, 
-          message: 'Conexión exitosa con Funnel ROI (GHL)' 
+          success: false, 
+          error: `GHL respondió con error ${response.status}`,
+          details: responseText 
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -78,8 +116,8 @@ serve(async (req) => {
 
     // Map the event to GHL format
     let ghlPayload: Record<string, any> = {
-      locationId: GHL_LOCATION_ID,
-      source: 'UGC Platform',
+      locationId: locationId,
+      source: 'Content Studio - UGC Colombia',
       timestamp: new Date().toISOString(),
     };
 
@@ -184,10 +222,10 @@ serve(async (req) => {
         };
     }
 
-    console.log('Sending to GHL:', JSON.stringify(ghlPayload));
+    console.log('[ghl-sync] Sending to GHL:', JSON.stringify(ghlPayload));
 
     // Send to GHL webhook
-    const ghlResponse = await fetch(GHL_WEBHOOK_URL, {
+    const ghlResponse = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -196,10 +234,10 @@ serve(async (req) => {
     });
 
     const responseText = await ghlResponse.text();
-    console.log('GHL Response:', ghlResponse.status, responseText);
+    console.log('[ghl-sync] GHL Response:', ghlResponse.status, responseText);
 
     if (!ghlResponse.ok) {
-      console.error('GHL webhook error:', responseText);
+      console.error('[ghl-sync] GHL webhook error:', responseText);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -221,10 +259,10 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in GHL sync:', error);
+    console.error('[ghl-sync] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ success: false, error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
