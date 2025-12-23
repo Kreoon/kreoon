@@ -313,41 +313,55 @@ export default function Portfolio() {
   const enrichContent = async (data: any[]): Promise<PublishedContent[]> => {
     const clientIds = [...new Set(data.filter(d => d.client_id).map(d => d.client_id))] as string[];
     const creatorIds = [...new Set(data.filter(d => d.creator_id).map(d => d.creator_id))] as string[];
-    const contentIds = data.map(d => d.id);
+    
+    // Separate content IDs and post IDs
+    const contentIds = data.filter(d => d.type !== 'post').map(d => d.id);
+    const postIds = data.filter(d => d.type === 'post').map(d => d.id);
 
-    const [clientsResult, creatorsResult, likesResult] = await Promise.all([
+    const [clientsResult, creatorsResult, contentLikesResult, postLikesResult] = await Promise.all([
       clientIds.length > 0 
         ? supabase.from('clients').select('id, name, logo_url').in('id', clientIds)
         : Promise.resolve({ data: [] }),
       creatorIds.length > 0 
         ? supabase.from('profiles').select('id, full_name, avatar_url').in('id', creatorIds)
         : Promise.resolve({ data: [] }),
-      supabase.from('content_likes').select('content_id').eq('viewer_id', viewerId).in('content_id', contentIds)
+      contentIds.length > 0
+        ? supabase.from('content_likes').select('content_id').eq('viewer_id', viewerId).in('content_id', contentIds)
+        : Promise.resolve({ data: [] }),
+      postIds.length > 0
+        ? supabase.from('portfolio_post_likes').select('post_id').eq('viewer_id', viewerId).in('post_id', postIds)
+        : Promise.resolve({ data: [] })
     ]);
 
     const clientsMap = new Map((clientsResult.data || []).map(c => [c.id, c]));
     const creatorsMap = new Map((creatorsResult.data || []).map(c => [c.id, c]));
-    const likedSet = new Set((likesResult.data || []).map(l => l.content_id));
+    const contentLikedSet = new Set((contentLikesResult.data || []).map(l => l.content_id));
+    const postLikedSet = new Set((postLikesResult.data || []).map(l => l.post_id));
 
-    return data.map(item => ({
-      id: item.id,
-      title: item.title,
-      video_url: item.video_url,
-      video_urls: item.video_urls,
-      thumbnail_url: item.thumbnail_url,
-      created_at: item.created_at,
-      creator_id: item.creator_id,
-      views_count: item.views_count || 0,
-      likes_count: item.likes_count || 0,
-      is_liked: likedSet.has(item.id),
-      client: item.client_id ? clientsMap.get(item.client_id) || null : null,
-      creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null,
-      type: item.type || 'content',
-      can_interact: item.can_interact ?? true,
-      media_type: (item as any).media_type,
-      media_url: (item as any).media_url,
-      score: (item as any).score,
-    }));
+    return data.map(item => {
+      const isPost = item.type === 'post';
+      const isLiked = isPost ? postLikedSet.has(item.id) : contentLikedSet.has(item.id);
+      
+      return {
+        id: item.id,
+        title: item.title,
+        video_url: item.video_url,
+        video_urls: item.video_urls,
+        thumbnail_url: item.thumbnail_url,
+        created_at: item.created_at,
+        creator_id: item.creator_id,
+        views_count: item.views_count || 0,
+        likes_count: item.likes_count || 0,
+        is_liked: isLiked,
+        client: item.client_id ? clientsMap.get(item.client_id) || null : null,
+        creator: item.creator_id ? creatorsMap.get(item.creator_id) || null : null,
+        type: item.type || 'content',
+        can_interact: item.can_interact ?? true,
+        media_type: (item as any).media_type,
+        media_url: (item as any).media_url,
+        score: (item as any).score,
+      };
+    });
   };
 
   const fetchPublishedContent = async () => {
@@ -405,7 +419,7 @@ export default function Portfolio() {
             views_count: p.views_count || 0,
             likes_count: p.likes_count || 0,
             type: 'post' as const,
-            can_interact: false,
+            can_interact: true,
             media_type: p.media_type as 'video' | 'image',
             media_url: p.media_url,
             creator: profile ? { id: profile.id, full_name: profile.full_name, avatar_url: profile.avatar_url } : null,
@@ -436,10 +450,31 @@ export default function Portfolio() {
       e.stopPropagation();
     }
     try {
-      const { data, error } = await supabase.rpc('toggle_content_like', {
-        content_uuid: contentId,
-        viewer: viewerId
-      });
+      // Find the item to determine if it's a post or content
+      const allItems = [...content, ...followingContent];
+      const item = allItems.find(i => i.id === contentId);
+      const isPost = item?.type === 'post';
+
+      let data: boolean;
+      let error: any;
+
+      if (isPost) {
+        // Use portfolio post like function
+        const result = await supabase.rpc('toggle_portfolio_post_like', {
+          post_uuid: contentId,
+          viewer: viewerId
+        });
+        data = result.data;
+        error = result.error;
+      } else {
+        // Use content like function
+        const result = await supabase.rpc('toggle_content_like', {
+          content_uuid: contentId,
+          viewer: viewerId
+        });
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) throw error;
 
@@ -467,7 +502,16 @@ export default function Portfolio() {
 
   const handleView = useCallback(async (contentId: string) => {
     try {
-      await supabase.rpc('increment_content_views', { content_uuid: contentId });
+      // Find the item to determine if it's a post or content
+      const allItems = [...content, ...followingContent];
+      const item = allItems.find(i => i.id === contentId);
+      const isPost = item?.type === 'post';
+
+      if (isPost) {
+        await supabase.rpc('increment_portfolio_post_views', { post_uuid: contentId });
+      } else {
+        await supabase.rpc('increment_content_views', { content_uuid: contentId });
+      }
       
       const updateContent = (items: PublishedContent[]) => 
         items.map(item => {
@@ -482,7 +526,7 @@ export default function Portfolio() {
     } catch (error) {
       console.error('Error incrementing views:', error);
     }
-  }, []);
+  }, [content, followingContent]);
 
   const handleShare = async (item: PublishedContent) => {
     const url = `${window.location.origin}/portfolio?v=${item.id}`;

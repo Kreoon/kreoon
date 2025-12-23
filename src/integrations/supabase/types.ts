@@ -1138,6 +1138,35 @@ export type Database = {
           },
         ]
       }
+      portfolio_post_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          viewer_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          viewer_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_posts: {
         Row: {
           caption: string | null
@@ -1943,6 +1972,10 @@ export type Database = {
         Args: { content_uuid: string }
         Returns: undefined
       }
+      increment_portfolio_post_views: {
+        Args: { post_uuid: string }
+        Returns: undefined
+      }
       is_client_owner: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
@@ -1997,6 +2030,10 @@ export type Database = {
       }
       toggle_content_pin: { Args: { content_id: string }; Returns: boolean }
       toggle_follow: { Args: { _following_id: string }; Returns: boolean }
+      toggle_portfolio_post_like: {
+        Args: { post_uuid: string; viewer: string }
+        Returns: boolean
+      }
       toggle_post_pin: { Args: { post_id: string }; Returns: boolean }
       transfer_currency: {
         Args: {
