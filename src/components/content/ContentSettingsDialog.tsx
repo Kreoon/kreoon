@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { CollaboratorSelector } from '@/components/content/CollaboratorSelector';
+import { ThumbnailSelector } from '@/components/content/ThumbnailSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Save, Eye, Heart, Calendar, Pin } from 'lucide-react';
+import { Loader2, Save, Eye, Heart, Calendar, Pin, Image } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -30,6 +31,7 @@ interface ContentData {
   likes_count: number;
   is_published: boolean;
   created_at: string;
+  thumbnail_url: string | null;
 }
 
 export function ContentSettingsDialog({ 
@@ -46,6 +48,7 @@ export function ContentSettingsDialog({
   const [caption, setCaption] = useState('');
   const [description, setDescription] = useState('');
   const [isPublished, setIsPublished] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && contentId) {
@@ -58,7 +61,7 @@ export function ContentSettingsDialog({
     try {
       const { data, error } = await supabase
         .from('content')
-        .select('id, title, caption, description, creator_id, views_count, likes_count, is_published, created_at')
+        .select('id, title, caption, description, creator_id, views_count, likes_count, is_published, created_at, thumbnail_url')
         .eq('id', contentId)
         .maybeSingle();
 
@@ -71,6 +74,7 @@ export function ContentSettingsDialog({
         setCaption(cleanCaption);
         setDescription(data.description || '');
         setIsPublished(data.is_published || false);
+        setThumbnailUrl(data.thumbnail_url);
       }
     } catch (error) {
       console.error('Error fetching content:', error);
@@ -153,6 +157,28 @@ export function ContentSettingsDialog({
                 <Calendar className="h-4 w-4" />
                 <span>{formatDate(content.created_at)}</span>
               </div>
+            </div>
+
+            <Separator />
+
+            {/* Thumbnail */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Image className="h-4 w-4 text-primary" />
+                <Label>Miniatura</Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Sube una imagen personalizada o usa la miniatura automática del video.
+              </p>
+              <ThumbnailSelector
+                contentId={contentId}
+                currentThumbnail={thumbnailUrl}
+                onThumbnailChange={(url) => {
+                  setThumbnailUrl(url);
+                  onSuccess?.();
+                }}
+                showRemove={true}
+              />
             </div>
 
             <Separator />
