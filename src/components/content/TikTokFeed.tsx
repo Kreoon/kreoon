@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Heart, MessageSquare, Share2, Play, Pause, ChevronLeft, ChevronRight, Circle, Video } from 'lucide-react';
+import { Heart, MessageSquare, Share2, Play, Pause, ChevronLeft, ChevronRight, Circle, Video, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { ParsedText } from '@/components/ui/parsed-text';
@@ -115,6 +115,7 @@ function TikTokVideoCard({
   onCreatorStatusChange?: (newStatus: 'recording' | 'recorded') => void;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [showPauseIcon, setShowPauseIcon] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
@@ -251,12 +252,25 @@ function TikTokVideoCard({
 
       {/* Video - always try to show iframe for seamless experience */}
       {isPlaying ? (
-        <iframe
-          src={getEmbedUrl(currentVideoUrl, true)}
-          className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-          allowFullScreen={false}
-        />
+        <>
+          <iframe
+            src={getEmbedUrl(currentVideoUrl, isMuted)}
+            className="absolute inset-0 w-full h-full border-0 pointer-events-none"
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen={false}
+          />
+
+          {/* Volume toggle (only control shown) */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMuted((v) => !v);
+            }}
+            className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+          >
+            {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+          </button>
+        </>
       ) : (
         <>
           {thumbnailUrl ? (

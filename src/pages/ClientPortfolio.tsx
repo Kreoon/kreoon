@@ -12,7 +12,9 @@ import {
   X,
   CheckCircle2,
   Building2,
-  Video as VideoIcon
+  Video as VideoIcon,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import {
   Select,
@@ -59,6 +61,7 @@ export default function ClientPortfolio() {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
+  const [previewMuted, setPreviewMuted] = useState(true);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -416,7 +419,7 @@ export default function ClientPortfolio() {
               <div className="relative aspect-video bg-black">
                 {selectedContent.bunny_embed_url ? (
                   <iframe
-                    src={`${selectedContent.bunny_embed_url}?autoplay=true`}
+                    src={`${selectedContent.bunny_embed_url}?autoplay=true&muted=${previewMuted}&controls=false`}
                     className="w-full h-full"
                     allow="autoplay; fullscreen"
                     allowFullScreen
@@ -424,14 +427,26 @@ export default function ClientPortfolio() {
                 ) : getVideoUrl(selectedContent) ? (
                   <video
                     src={getVideoUrl(selectedContent)!}
-                    controls
                     autoPlay
+                    muted={previewMuted}
+                    playsInline
+                    controls={false}
                     className="w-full h-full"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-white/50">
                     No hay video disponible
                   </div>
+                )}
+
+                {/* Volume toggle (only control shown) */}
+                {(selectedContent.bunny_embed_url || getVideoUrl(selectedContent)) && (
+                  <button
+                    onClick={() => setPreviewMuted((v) => !v)}
+                    className="absolute top-3 right-3 z-20 p-2.5 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+                  >
+                    {previewMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                  </button>
                 )}
               </div>
 

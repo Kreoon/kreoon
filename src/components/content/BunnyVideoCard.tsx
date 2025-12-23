@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Pin, Settings, Check, Video, Circle } from 'lucide-react';
+import { Play, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Pin, Settings, Check, Video, Circle, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
@@ -262,23 +262,23 @@ export function BunnyVideoCard({
   // Build Bunny embed URL with autoplay params
   const getEmbedUrl = useCallback((url: string): string => {
     if (!url) return '';
-    
+
     // Already has embed format
     if (url.includes('iframe.mediadelivery.net')) {
       const separator = url.includes('?') ? '&' : '?';
-      return `${url}${separator}autoplay=true&muted=${isMuted}&loop=true&preload=true`;
+      return `${url}${separator}autoplay=true&muted=${isMuted}&loop=true&preload=true&controls=false`;
     }
-    
+
     // Extract video ID from CDN URL and convert to embed
     const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
     if (cdnMatch) {
       const [, libraryId, videoId] = cdnMatch;
-      return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=${isMuted}&loop=true&preload=true`;
+      return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=${isMuted}&loop=true&preload=true&controls=false`;
     }
-    
+
     // Fallback - return as-is with params
     const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}autoplay=true&muted=${isMuted}&loop=true`;
+    return `${url}${separator}autoplay=true&muted=${isMuted}&loop=true&controls=false`;
   }, [isMuted]);
 
   const handlePlay = (e: React.MouseEvent) => {
@@ -483,17 +483,22 @@ export function BunnyVideoCard({
               loading="lazy"
             />
 
-            {/* Pause button - only show pause, no volume control */}
+            {/* Tap anywhere to pause/stop (no native controls) */}
             <div 
               className="absolute inset-0 cursor-pointer" 
               onClick={handleStop}
             />
-            <div className="absolute top-3 left-3 z-20">
+
+            {/* Volume toggle (only visible control) */}
+            <div className="absolute top-3 right-3 z-20">
               <button
-                onClick={handleStop}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMuted((v) => !v);
+                }}
                 className="p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
               >
-                <Pause className="h-5 w-5" />
+                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
               </button>
             </div>
 

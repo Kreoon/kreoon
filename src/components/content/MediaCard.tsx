@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Heart, Eye, Share2, ChevronLeft, ChevronRight, Image as ImageIcon, Video } from 'lucide-react';
+import { Play, Heart, Eye, Share2, ChevronLeft, ChevronRight, Image as ImageIcon, Video, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -51,9 +51,9 @@ export function MediaCard({
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [showFloatingHeart, setShowFloatingHeart] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const viewTracked = useRef(false);
 
   const currentMedia = media[currentIndex] || media[0];
   const hasMultiple = media.length > 1;
@@ -135,20 +135,34 @@ export function MediaCard({
         {/* Media Content */}
         {isVideo ? (
           isPlaying ? (
-            <video
-              ref={videoRef}
-              src={currentMedia.url}
-              className="w-full h-full object-cover"
-              autoPlay
-              loop
-              muted
-              playsInline
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsPlaying(false);
-                videoRef.current?.pause();
-              }}
-            />
+            <>
+              <video
+                ref={videoRef}
+                src={currentMedia.url}
+                className="w-full h-full object-cover"
+                autoPlay
+                loop
+                muted={isMuted}
+                playsInline
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsPlaying(false);
+                  videoRef.current?.pause();
+                }}
+              />
+
+              {/* Volume toggle (only control shown) */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMuted((v) => !v);
+                  if (videoRef.current) videoRef.current.muted = !videoRef.current.muted;
+                }}
+                className="absolute top-2 right-2 z-20 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+              >
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
+            </>
           ) : (
             <>
               <img
