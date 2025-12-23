@@ -763,6 +763,8 @@ export default function Portfolio() {
                       creatorId={item.creator_id || undefined}
                       creatorName={item.creator?.full_name}
                       creatorAvatar={item.creator?.avatar_url}
+                      onLike={canInteract ? (e) => handleLike(item.id, e) : undefined}
+                      onView={canInteract ? () => handleView(item.id) : undefined}
                       onShare={() => handleShare(item)}
                     />
                   );
@@ -894,6 +896,8 @@ export default function Portfolio() {
                     creatorId={item.creator_id || undefined}
                     creatorName={item.creator?.full_name}
                     creatorAvatar={item.creator?.avatar_url}
+                    onLike={canInteract ? (e) => handleLike(item.id, e) : undefined}
+                    onView={canInteract ? () => handleView(item.id) : undefined}
                     onShare={() => handleShare(item)}
                   />
                 );

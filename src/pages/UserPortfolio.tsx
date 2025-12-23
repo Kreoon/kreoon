@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { TikTokFeed } from '@/components/content/TikTokFeed';
 import { BunnyVideoCard } from '@/components/content/BunnyVideoCard';
+import { MediaCard, type MediaItem } from '@/components/content/MediaCard';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { StoryViewer } from '@/components/portfolio/StoryViewer';
 import { StoryRing } from '@/components/portfolio/StoryRing';
@@ -70,6 +71,7 @@ interface PortfolioPost {
   created_at: string;
   is_pinned: boolean;
   pinned_at: string | null;
+  is_liked?: boolean;
 }
 
 interface Story {
@@ -377,7 +379,19 @@ export default function UserPortfolio() {
           .select('*')
           .eq('user_id', id)
           .order('created_at', { ascending: false });
-        setPosts(postsData || []);
+        
+        // Get liked post IDs
+        const postIds = postsData?.map(p => p.id) || [];
+        const { data: postLikedData } = postIds.length > 0 
+          ? await supabase.from('portfolio_post_likes').select('post_id').eq('viewer_id', storedViewerId).in('post_id', postIds)
+          : { data: [] };
+        const postLikedSet = new Set((postLikedData || []).map(l => l.post_id));
+        
+        const enrichedPosts = (postsData || []).map(p => ({
+          ...p,
+          is_liked: postLikedSet.has(p.id)
+        }));
+        setPosts(enrichedPosts);
 
         // Fetch active stories
         const { data: storiesData } = await supabase
@@ -531,6 +545,53 @@ export default function UserPortfolio() {
     }
   }, []);
 
+  // Handle like for portfolio posts
+  const handlePostLike = async (postId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      const { data, error } = await supabase.rpc('toggle_portfolio_post_like', {
+        post_uuid: postId,
+        viewer: viewerId
+      });
+
+      if (error) throw error;
+
+      setPosts(prev => prev.map(item => {
+        if (item.id === postId) {
+          return {
+            ...item,
+            is_liked: data,
+            likes_count: data ? item.likes_count + 1 : Math.max(0, item.likes_count - 1)
+          };
+        }
+        return item;
+      }));
+
+      toast.success(data ? '❤️ Me gusta' : 'Ya no te gusta');
+    } catch (error) {
+      console.error('Error toggling post like:', error);
+      toast.error('Error al dar like');
+    }
+  };
+
+  // Handle view for portfolio posts
+  const handlePostView = useCallback(async (postId: string) => {
+    try {
+      await supabase.rpc('increment_portfolio_post_views', { post_uuid: postId });
+      setPosts(prev => prev.map(item => {
+        if (item.id === postId) {
+          return { ...item, views_count: item.views_count + 1 };
+        }
+        return item;
+      }));
+    } catch (error) {
+      console.error('Error incrementing post views:', error);
+    }
+  }, []);
+
   const handleShare = async (item: ContentItem) => {
     const url = `${window.location.origin}/portfolio?v=${item.id}`;
     try {
@@ -638,7 +699,7 @@ export default function UserPortfolio() {
       thumbnailUrl: item.thumbnail_url,
       viewsCount: item.views_count || 0,
       likesCount: item.likes_count || 0,
-      isLiked: false,
+      isLiked: item.is_liked || false,
       createdAt: item.created_at,
       type: 'post' as const,
       mediaType: 'video' as const,
@@ -656,7 +717,7 @@ export default function UserPortfolio() {
       thumbnailUrl: item.media_url,
       viewsCount: item.views_count || 0,
       likesCount: item.likes_count || 0,
-      isLiked: false,
+      isLiked: item.is_liked || false,
       createdAt: item.created_at,
       type: 'post' as const,
       mediaType: 'image' as const,
@@ -1081,24 +1142,39 @@ export default function UserPortfolio() {
             <div className="grid grid-cols-2 gap-3">
               {allContent.map((item) => {
                 if (item.mediaType === 'image' && item.mediaUrl) {
+                  const media: MediaItem[] = [{ url: item.mediaUrl, type: 'image' }];
                   return (
-                    <button
+                    <MediaCard
                       key={item.id}
-                      type="button"
-                      onClick={() => setSelectedPost(posts.find(p => p.id === item.id) || null)}
-                      className="relative aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900 border border-white/10"
-                    >
-                      <img
-                        src={item.mediaUrl}
-                        alt={item.title || 'Post de imagen'}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </button>
+                      id={item.id}
+                      title={item.title}
+                      media={media}
+                      viewsCount={item.viewsCount}
+                      likesCount={item.likesCount}
+                      isLiked={item.isLiked}
+                      creatorId={resolvedUserId || undefined}
+                      creatorName={profile?.full_name}
+                      creatorAvatar={profile?.avatar_url}
+                      onLike={(e) => handlePostLike(item.id, e)}
+                      onView={() => handlePostView(item.id)}
+                      onShare={() => {
+                        const post = posts.find(p => p.id === item.id);
+                        if (post) {
+                          const url = `${window.location.origin}/p/${resolvedUserId}`;
+                          if (navigator.share) {
+                            navigator.share({ title: post.caption || '', url });
+                          } else {
+                            navigator.clipboard.writeText(url);
+                            toast.success('Link copiado al portapapeles');
+                          }
+                        }
+                      }}
+                    />
                   );
                 }
                 
                 // Video content
+                const isPostVideo = item.type === 'post';
                 return (
                   <BunnyVideoCard
                     key={item.id}
@@ -1113,8 +1189,8 @@ export default function UserPortfolio() {
                     isPinned={item.isPinned}
                     isOwner={isOwner && profileType === 'user'}
                     showActions={true}
-                    onLike={item.type === 'work' ? (e) => handleLike(item.id, e) : undefined}
-                    onView={item.type === 'work' ? () => handleView(item.id) : undefined}
+                    onLike={isPostVideo ? (e) => handlePostLike(item.id, e) : (e) => handleLike(item.id, e)}
+                    onView={isPostVideo ? () => handlePostView(item.id) : () => handleView(item.id)}
                     onShare={() => {
                       const contentItem = content.find(c => c.id === item.id);
                       if (contentItem) handleShare(contentItem);
@@ -1130,27 +1206,41 @@ export default function UserPortfolio() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                 {allContent.map((item) => {
                   if (item.mediaType === 'image' && item.mediaUrl) {
+                    const media: MediaItem[] = [{ url: item.mediaUrl, type: 'image' }];
                     return (
-                      <button
+                      <MediaCard
                         key={item.id}
-                        type="button"
-                        onClick={() => setSelectedPost(posts.find(p => p.id === item.id) || null)}
-                        className="group relative aspect-[9/16] rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 hover:border-white/20 transition-colors"
-                      >
-                        <img
-                          src={item.mediaUrl}
-                          alt={item.title || 'Post de imagen'}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
+                        id={item.id}
+                        title={item.title}
+                        media={media}
+                        viewsCount={item.viewsCount}
+                        likesCount={item.likesCount}
+                        isLiked={item.isLiked}
+                        creatorId={resolvedUserId || undefined}
+                        creatorName={profile?.full_name}
+                        creatorAvatar={profile?.avatar_url}
+                        onLike={(e) => handlePostLike(item.id, e)}
+                        onView={() => handlePostView(item.id)}
+                        onShare={() => {
+                          const post = posts.find(p => p.id === item.id);
+                          if (post) {
+                            const url = `${window.location.origin}/p/${resolvedUserId}`;
+                            if (navigator.share) {
+                              navigator.share({ title: post.caption || '', url });
+                            } else {
+                              navigator.clipboard.writeText(url);
+                              toast.success('Link copiado al portapapeles');
+                            }
+                          }
+                        }}
+                      />
                     );
                   }
                   
                   // Video content
                   const isCreatorOfContent = isOwner && profileType === 'user' && userRoles.includes('creator') && item.type === 'work';
                   const canChangeStatus = isCreatorOfContent && (item.status === 'assigned' || item.status === 'recording');
+                  const isPostVideo = item.type === 'post';
 
                   return (
                     <BunnyVideoCard
@@ -1168,8 +1258,8 @@ export default function UserPortfolio() {
                       isCreatorOwner={isCreatorOfContent}
                       status={item.status}
                       showActions={true}
-                      onLike={item.type === 'work' ? (e) => handleLike(item.id, e) : undefined}
-                      onView={item.type === 'work' ? () => handleView(item.id) : undefined}
+                      onLike={isPostVideo ? (e) => handlePostLike(item.id, e) : (e) => handleLike(item.id, e)}
+                      onView={isPostVideo ? () => handlePostView(item.id) : () => handleView(item.id)}
                       onShare={() => {
                         const contentItem = content.find(c => c.id === item.id);
                         if (contentItem) handleShare(contentItem);
