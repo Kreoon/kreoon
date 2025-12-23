@@ -13,6 +13,7 @@ import { CurrencyManagement } from "@/components/settings/CurrencyManagement";
 import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import { AppSettingsManagement } from "@/components/settings/AppSettingsManagement";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
+import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { Sparkles, Play } from "lucide-react";
@@ -235,12 +236,7 @@ const Settings = () => {
       case 'apariencia':
         return <AppearanceSettings />;
       case 'integraciones':
-        return (
-          <div className="p-6 text-center text-muted-foreground">
-            <Globe className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Integraciones próximamente</p>
-          </div>
-        );
+        return <IntegrationsSettings />;
       case 'usuarios':
         return <UserManagement />;
       case 'root-admin':
