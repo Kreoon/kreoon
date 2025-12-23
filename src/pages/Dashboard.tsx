@@ -374,7 +374,6 @@ export default function Dashboard() {
         .from('clients')
         .select('*');
       setClients(clientsList?.map(c => ({ id: c.id, name: c.name })) || []);
-      setActiveClients(clientsList as Client[] || []);
 
       // Fetch packages with client info
       const { data: packagesData } = await supabase
@@ -387,10 +386,19 @@ export default function Dashboard() {
           ...p,
           client: p.clients as Client
         })) as (ClientPackage & { client?: Client })[];
-        setPackages(mappedPackages);
+        
+        // Filter packages by date range
+        const filteredPackages = mappedPackages.filter(p => {
+          const packageDate = p.created_at ? new Date(p.created_at) : null;
+          if (startDateFilter && packageDate && packageDate < startDateFilter) return false;
+          if (endDateFilter && packageDate && packageDate > endDateFilter) return false;
+          return true;
+        });
+        
+        setPackages(filteredPackages);
 
-        // Calculate billing - separated by currency
-        const packagesWithValues = packagesData.filter(p => (p.total_value || 0) > 0);
+        // Calculate billing - separated by currency (using filtered packages)
+        const packagesWithValues = filteredPackages.filter(p => (p.total_value || 0) > 0);
         
         // COP packages
         const copPackages = packagesWithValues.filter(p => (p as any).currency === 'COP' || !(p as any).currency);
@@ -409,9 +417,9 @@ export default function Dashboard() {
         const totalPaid = totalPaidCOP + totalPaidUSD;
         const totalPending = totalBilled - totalPaid;
         
-        // Content owed = total content promised in all active packages - delivered/approved content
-        const totalContentPromised = packagesData.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
-        const deliveredContent = allContent.filter(c => ['approved', 'delivered'].includes(c.status)).length;
+        // Content owed = total content promised in filtered packages - delivered/approved content in range
+        const totalContentPromised = filteredPackages.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
+        const deliveredContent = content.filter(c => ['approved', 'delivered'].includes(c.status)).length;
         const contentOwed = Math.max(0, totalContentPromised - deliveredContent);
 
         setClientsBilling({ 
@@ -419,6 +427,15 @@ export default function Dashboard() {
           totalBilledUSD, totalPendingUSD, totalPaidUSD,
           totalBilledCOP, totalPendingCOP, totalPaidCOP
         });
+        
+        // Filter active clients by date range
+        const filteredClients = (clientsList || []).filter(c => {
+          const clientDate = c.created_at ? new Date(c.created_at) : null;
+          if (startDateFilter && clientDate && clientDate < startDateFilter) return false;
+          if (endDateFilter && clientDate && clientDate > endDateFilter) return false;
+          return true;
+        });
+        setActiveClients(filteredClients as Client[]);
       }
 
       // Determine which year(s) to query based on date filters or current/next year
