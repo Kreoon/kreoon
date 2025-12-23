@@ -174,11 +174,10 @@ export const AutoPauseVideo = forwardRef<HTMLDivElement, AutoPauseVideoProps>(
                   </div>
                 </>
               ) : (
-                <div className="text-center">
-                  <div className="p-3 rounded-full bg-primary/20 inline-block">
-                    <Play className="h-8 w-8 text-primary" />
+                <div className="w-full h-full bg-black flex items-center justify-center">
+                  <div className="p-3 rounded-full bg-white/15">
+                    <Play className="h-8 w-8 text-white/50" fill="currentColor" />
                   </div>
-                  <p className="text-xs mt-2">Scroll para ver</p>
                 </div>
               )}
             </div>

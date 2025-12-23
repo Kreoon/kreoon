@@ -136,21 +136,12 @@ Deno.serve(async (req) => {
     if (!result) {
       console.error('[bunny-thumbnail] No thumbnail found from any candidate URL')
 
-      // Return a lightweight placeholder image instead of 404.
-      // This prevents broken-image UI / raw text showing up while the video is still processing.
+      // Return a simple black background with subtle play icon - no text
       const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0b0b0f"/>
-      <stop offset="1" stop-color="#1b1b2a"/>
-    </linearGradient>
-  </defs>
-  <rect width="720" height="1280" fill="url(#bg)"/>
-  <circle cx="360" cy="560" r="92" fill="#ffffff" opacity="0.12"/>
-  <path d="M335 520 L430 560 L335 600 Z" fill="#ffffff" opacity="0.7"/>
-  <text x="360" y="710" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="28" fill="#ffffff" opacity="0.86">Miniatura</text>
-  <text x="360" y="748" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="20" fill="#ffffff" opacity="0.6">Video aún procesando…</text>
+  <rect width="720" height="1280" fill="#000000"/>
+  <circle cx="360" cy="640" r="60" fill="#ffffff" opacity="0.15"/>
+  <path d="M340 605 L400 640 L340 675 Z" fill="#ffffff" opacity="0.5"/>
 </svg>`
 
       return new Response(svg, {
@@ -158,8 +149,7 @@ Deno.serve(async (req) => {
         headers: {
           ...corsHeaders,
           'Content-Type': 'image/svg+xml; charset=utf-8',
-          // Very short cache so it can update soon once the real thumbnail exists.
-          'Cache-Control': 'public, max-age=5, stale-while-revalidate=30',
+          'Cache-Control': 'public, max-age=10, stale-while-revalidate=60',
         },
       })
     }
