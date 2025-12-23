@@ -62,20 +62,11 @@ export function MediaUploader({
       return;
     }
 
-    // Para que se reproduzca tipo TikTok en todos los navegadores, limitamos a MP4/WebM
-    if (isVideo) {
-      const ext = (selectedFile.name.split('.').pop() || '').toLowerCase();
-      const allowed = ['mp4', 'webm'];
-      if (!allowed.includes(ext)) {
-        toast.error('Formato de video no compatible. Sube MP4 (H.264) o WebM');
-        // Limpia el input para permitir re-seleccionar el mismo archivo
-        e.currentTarget.value = '';
-        return;
-      }
-    }
+    // Videos now go through Bunny Stream for automatic transcoding
+    // All formats accepted (MOV, MP4, WebM, AVI, MKV, etc.)
 
-    if (selectedFile.size > 50 * 1024 * 1024) {
-      toast.error('El archivo es muy grande (máx. 50MB)');
+    if (selectedFile.size > 100 * 1024 * 1024) {
+      toast.error('El archivo es muy grande (máx. 100MB)');
       return;
     }
 
@@ -170,11 +161,46 @@ export function MediaUploader({
 
     try {
       const isVideo = file.type.startsWith('video/');
-      const ext = file.name.split('.').pop();
+      const ext = file.name.split('.').pop()?.toLowerCase();
       const timestamp = Date.now();
+
+      // For videos, use Bunny Stream for automatic transcoding
+      if (isVideo) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('user_id', userId);
+        formData.append('type', type);
+        if (caption) {
+          formData.append('caption', caption);
+        }
+
+        const supabaseUrl = (supabase as any).supabaseUrl as string;
+        
+        const response = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Error al subir el video');
+        }
+
+        const result = await response.json();
+        console.log('[MediaUploader] Video uploaded to Bunny:', result);
+
+        toast.success(
+          type === 'story' ? 'Historia publicada' : 'Post publicado',
+          { description: 'El video se está procesando para mejor compatibilidad.' }
+        );
+        handleClose();
+        onSuccess();
+        return;
+      }
+
+      // For images, use standard Supabase storage
       const fileName = `${userId}/${type}s/${timestamp}.${ext}`;
 
-      // Upload main file to storage
       const { error: uploadError } = await supabase.storage
         .from('portfolio')
         .upload(fileName, file);
@@ -186,50 +212,11 @@ export function MediaUploader({
         .getPublicUrl(fileName);
 
       const mediaUrl = urlData.publicUrl;
-      let thumbnailUrl: string | null = null;
       let musicUrl: string | null = null;
 
-      // Upload thumbnail if it's a video and we have one
-      if (isVideo && (thumbnail || customThumbnailFile)) {
-        let thumbnailBlob: Blob;
-        
-        if (customThumbnailFile) {
-          thumbnailBlob = customThumbnailFile;
-        } else if (thumbnail && thumbnail.startsWith('data:')) {
-          const response = await fetch(thumbnail);
-          thumbnailBlob = await response.blob();
-        } else {
-          captureFrame();
-          if (thumbnail && thumbnail.startsWith('data:')) {
-            const response = await fetch(thumbnail);
-            thumbnailBlob = await response.blob();
-          } else {
-            thumbnailBlob = new Blob();
-          }
-        }
-
-        if (thumbnailBlob.size > 0) {
-          const thumbFileName = `${userId}/${type}s/thumbs/${timestamp}.jpg`;
-          
-          const { error: thumbError } = await supabase.storage
-            .from('portfolio')
-            .upload(thumbFileName, thumbnailBlob, {
-              contentType: 'image/jpeg'
-            });
-
-          if (!thumbError) {
-            const { data: thumbUrlData } = supabase.storage
-              .from('portfolio')
-              .getPublicUrl(thumbFileName);
-            thumbnailUrl = thumbUrlData.publicUrl;
-          }
-        }
-      }
-
-      // Handle music (uploaded file only)
+      // Handle music for stories (images only - videos go through Bunny)
       if (type === 'story') {
         if (musicFile) {
-          // Upload local music file
           const musicExt = musicFile.name.split('.').pop();
           const musicFileName = `${userId}/stories/music/${timestamp}.${musicExt}`;
 
@@ -249,19 +236,19 @@ export function MediaUploader({
       // Determine music name
       const finalMusicName = musicFile ? musicName : null;
 
-      // Insert into database
+      // Insert into database (images only - videos handled by edge function)
       if (type === 'story') {
         const { error: dbError } = await supabase
           .from('portfolio_stories')
           .insert({
             user_id: userId,
             media_url: mediaUrl,
-            media_type: isVideo ? 'video' : 'image',
+            media_type: 'image',
             music_url: musicUrl,
             music_name: finalMusicName,
-            mute_video_audio: isVideo ? muteVideoAudio : false,
+            mute_video_audio: false,
             music_volume: musicFile ? musicVolume : 0.5,
-            video_volume: isVideo ? videoVolume : 1,
+            video_volume: 1,
           });
 
         if (dbError) throw dbError;
@@ -271,9 +258,9 @@ export function MediaUploader({
           .insert({
             user_id: userId,
             media_url: mediaUrl,
-            media_type: isVideo ? 'video' : 'image',
+            media_type: 'image',
             caption: caption || null,
-            thumbnail_url: thumbnailUrl,
+            thumbnail_url: null,
           });
 
         if (dbError) throw dbError;
@@ -598,7 +585,7 @@ export function MediaUploader({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,video/mp4,video/webm"
+            accept="image/*,video/*"
             onChange={handleFileSelect}
             className="hidden"
           />
