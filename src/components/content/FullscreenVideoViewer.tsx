@@ -35,7 +35,10 @@ interface FullscreenVideoViewerProps {
   onView?: (id: string) => void;
   onShare?: (video: VideoItem) => void;
   onComment?: (id: string) => void;
+  /** Legacy: use canManageVideo for per-item permissions */
   isOwner?: boolean;
+  /** If provided, decides whether the three-dots menu is shown for the current item (owner/admin). */
+  canManageVideo?: (video: VideoItem) => boolean;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   onToggleVisibility?: (id: string, isPublic: boolean) => void;
@@ -78,6 +81,7 @@ export function FullscreenVideoViewer({
   onShare,
   onComment,
   isOwner,
+  canManageVideo,
   onEdit,
   onDelete,
   onToggleVisibility,
@@ -98,22 +102,41 @@ export function FullscreenVideoViewer({
   const touchStartX = useRef(0);
   const viewTrackedRef = useRef<Set<string>>(new Set());
 
+  const postToPlayer = useCallback((payload: any) => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+
+    // Bunny player implementations vary; send both object + JSON string for compatibility
+    try {
+      win.postMessage(payload, '*');
+    } catch {
+      // ignore
+    }
+    try {
+      win.postMessage(JSON.stringify(payload), '*');
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const applyMuteStateToPlayer = useCallback(
+    (muted: boolean) => {
+      // Prefer mute/unmute, then setVolume as fallback
+      postToPlayer({ method: muted ? 'mute' : 'unmute' });
+      postToPlayer({ method: 'setVolume', value: muted ? 0 : 1 });
+    },
+    [postToPlayer]
+  );
+
   // Toggle mute using postMessage to avoid reloading the video
   const toggleMute = useCallback(() => {
     const newMuted = !isMuted;
     setIsMuted(newMuted);
-    
-    // Send message to Bunny player iframe using their API format
-    if (iframeRef.current?.contentWindow) {
-      // Bunny.net uses 'method' property for player actions
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ method: newMuted ? 'mute' : 'unmute' }),
-        '*'
-      );
-    }
-  }, [isMuted]);
+    applyMuteStateToPlayer(newMuted);
+  }, [applyMuteStateToPlayer, isMuted]);
 
   const currentVideo = videos[currentIndex];
+  const canManageCurrent = !!currentVideo && (canManageVideo ? canManageVideo(currentVideo) : !!isOwner);
   const isImage = currentVideo?.mediaType === 'image' || 
     (!currentVideo?.videoUrls?.length && currentVideo?.mediaUrl);
   const currentVideoUrl = currentVideo?.videoUrls?.[currentVariation] || currentVideo?.videoUrls?.[0];
@@ -305,6 +328,10 @@ export function FullscreenVideoViewer({
             className="w-full h-full border-0"
             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
+            onLoad={() => {
+              // Re-apply desired mute state after the player loads
+              setTimeout(() => applyMuteStateToPlayer(isMuted), 120);
+            }}
           />
         )}
 
@@ -342,7 +369,7 @@ export function FullscreenVideoViewer({
             </button>
           )}
 
-          {isOwner && (
+          {canManageCurrent && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="p-2 text-white/90 hover:text-white transition-colors">
@@ -444,7 +471,7 @@ export function FullscreenVideoViewer({
                 </AvatarFallback>
               </Avatar>
             </button>
-            {!isOwner && currentVideo.creatorId && onFollow && (
+            {!canManageCurrent && currentVideo.creatorId && onFollow && (
               <button 
                 onClick={() => onFollow(currentVideo.creatorId!)}
                 className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors active:scale-90"

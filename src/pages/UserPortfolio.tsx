@@ -1449,16 +1449,27 @@ export default function UserPortfolio() {
               }
             }
           }}
-          onShare={(video) => {
-            const url = `${window.location.origin}/p/${resolvedUserId}`;
-            if (navigator.share) {
-              navigator.share({ title: video.title, url });
-            } else {
-              navigator.clipboard.writeText(url);
-              toast.success('Link copiado al portapapeles');
+          onShare={async (video) => {
+            try {
+              const url = `${window.location.origin}/p/${resolvedUserId}`;
+              if (navigator.share) {
+                await navigator.share({ title: video.title, url });
+              } else {
+                await navigator.clipboard.writeText(url);
+                toast.success('Link copiado al portapapeles');
+              }
+            } catch {
+              // share can be blocked by browser policy
+              try {
+                const url = `${window.location.origin}/p/${resolvedUserId}`;
+                await navigator.clipboard.writeText(url);
+                toast.success('Link copiado al portapapeles');
+              } catch {
+                toast.error('No se pudo compartir');
+              }
             }
           }}
-          isOwner={isOwner}
+          canManageVideo={() => isOwner}
           onEdit={handleEditContent}
           onDelete={handleDeleteContent}
           onToggleVisibility={handleToggleVisibility}
