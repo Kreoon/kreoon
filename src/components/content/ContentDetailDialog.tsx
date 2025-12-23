@@ -1045,11 +1045,15 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   placeholder="Escribe el guión aquí..."
                   className="min-h-[250px]"
                 />
-              ) : (
+              ) : formData.script || content.script ? (
                 <RichTextViewer 
-                  content={content.script || ''} 
+                  content={formData.script || content.script || ''} 
                   className="min-h-[100px] max-h-[400px] overflow-y-auto"
                 />
+              ) : (
+                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
+                  <p className="text-sm text-muted-foreground italic">Sin guión disponible</p>
+                </div>
               )}
               
               {/* Script Approval Checkbox - Only for Clients */}
