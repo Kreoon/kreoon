@@ -365,12 +365,14 @@ export function BunnyVideoCard({
                 }}
               />
             ) : thumbnailLoading ? (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-muted">
-                <div className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+              <div className="w-full h-full flex items-center justify-center bg-black">
+                <div className="w-8 h-8 border-3 border-white/30 border-t-white/70 rounded-full animate-spin" />
               </div>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-muted">
-                <Play className="h-12 w-12 text-primary/50" />
+              <div className="w-full h-full flex items-center justify-center bg-black">
+                <div className="p-3 rounded-full bg-white/15">
+                  <Play className="h-8 w-8 text-white/50" fill="currentColor" />
+                </div>
               </div>
             )}
             
