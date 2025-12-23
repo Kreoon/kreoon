@@ -388,10 +388,12 @@ export default function CompanyPortfolio() {
     );
   }
 
-  // Prepare video data for BunnyVideoCard
+  // Prepare video data for BunnyVideoCard - prioritize video_urls array for carousel
   const getVideoUrls = (item: ContentItem) => {
-    if (item.bunny_embed_url) return [item.bunny_embed_url];
+    // If video_urls has multiple videos, use them for carousel
     if (item.video_urls && item.video_urls.length > 0) return item.video_urls;
+    // Fallback to single bunny_embed_url or video_url
+    if (item.bunny_embed_url) return [item.bunny_embed_url];
     if (item.video_url) return [item.video_url];
     return [];
   };
