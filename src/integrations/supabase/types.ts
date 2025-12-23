@@ -905,6 +905,7 @@ export type Database = {
           period_type: string
           period_value: number
           revenue_goal: number | null
+          revenue_goal_usd: number | null
           updated_at: string
           year: number
         }
@@ -918,6 +919,7 @@ export type Database = {
           period_type: string
           period_value: number
           revenue_goal?: number | null
+          revenue_goal_usd?: number | null
           updated_at?: string
           year: number
         }
@@ -931,6 +933,7 @@ export type Database = {
           period_type?: string
           period_value?: number
           revenue_goal?: number | null
+          revenue_goal_usd?: number | null
           updated_at?: string
           year?: number
         }
