@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { FullscreenContentViewer } from '@/components/content/FullscreenContentViewer';
+import { PortfolioVideoThumbnail } from '@/components/portfolio/PortfolioVideoThumbnail';
 
 interface ContentItem {
   id: string;
@@ -309,8 +310,8 @@ export default function ClientPortfolio() {
         </div>
       </header>
 
-      {/* Content Grid - 3 columns centered minimalist */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      {/* TikTok-style Content Grid - 3 columns */}
+      <main className="max-w-4xl mx-auto py-4">
         {filteredContent.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-white/50">
             <VideoIcon className="h-16 w-16 mb-4" />
@@ -326,81 +327,54 @@ export default function ClientPortfolio() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            {filteredContent.map((item) => (
-              <div
-                key={item.id}
-                className={cn(
-                  "group relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer",
-                  "bg-zinc-800 border-2 transition-all duration-200",
-                  isSelecting && selectedItems.has(item.id) 
-                    ? "border-primary ring-2 ring-primary/50" 
-                    : "border-transparent hover:border-white/20"
-                )}
-                onClick={() => {
-                  if (isSelecting) {
-                    toggleSelection(item.id);
-                  } else {
-                    const itemIndex = filteredContent.findIndex(c => c.id === item.id);
-                    setFullscreenStartIndex(itemIndex >= 0 ? itemIndex : 0);
-                    setShowFullscreenViewer(true);
-                  }
-                }}
-              >
-                {/* Thumbnail */}
-                {item.thumbnail_url ? (
-                  <img 
-                    src={item.thumbnail_url} 
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-zinc-800">
-                    <VideoIcon className="h-10 w-10 text-white/20" />
-                  </div>
-                )}
-
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
+          <div className="grid grid-cols-3 gap-0.5">
+            {filteredContent.map((item, index) => (
+              <div key={item.id} className="relative">
                 {/* Selection checkbox */}
                 {isSelecting && (
-                  <div className={cn(
-                    "absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center transition-all",
-                    selectedItems.has(item.id) 
-                      ? "bg-primary text-white" 
-                      : "bg-black/50 border-2 border-white/50"
-                  )}>
+                  <div 
+                    className={cn(
+                      "absolute top-2 right-2 z-20 h-6 w-6 rounded-full flex items-center justify-center transition-all cursor-pointer",
+                      selectedItems.has(item.id) 
+                        ? "bg-primary text-white" 
+                        : "bg-black/50 border-2 border-white/50"
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelection(item.id);
+                    }}
+                  >
                     {selectedItems.has(item.id) && <CheckCircle2 className="h-4 w-4" />}
                   </div>
                 )}
 
-                {/* Play button */}
-                {!isSelecting && (
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <Play className="h-6 w-6 text-white fill-white" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Title */}
-                <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-white text-sm font-medium line-clamp-2">{item.title}</p>
-                </div>
-
-                {/* Download button on hover */}
+                {/* Download button */}
                 {!isSelecting && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSingleDownload(item);
                     }}
-                    className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                    className="absolute top-2 right-2 z-20 h-7 w-7 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-opacity"
                   >
-                    <Download className="h-4 w-4 text-white" />
+                    <Download className="h-3.5 w-3.5 text-white" />
                   </button>
                 )}
+
+                <PortfolioVideoThumbnail
+                  id={item.id}
+                  thumbnailUrl={item.thumbnail_url}
+                  title={item.title}
+                  viewsCount={0}
+                  onClick={() => {
+                    if (isSelecting) {
+                      toggleSelection(item.id);
+                    } else {
+                      setFullscreenStartIndex(index);
+                      setShowFullscreenViewer(true);
+                    }
+                  }}
+                />
               </div>
             ))}
           </div>

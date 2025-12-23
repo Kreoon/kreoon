@@ -18,14 +18,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { BunnyVideoCard } from '@/components/content/BunnyVideoCard';
-import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { useAuth } from '@/hooks/useAuth';
 import { AppRole } from '@/types/database';
 import { toast } from 'sonner';
 import { ParsedText } from '@/components/ui/parsed-text';
 import { VipBadge } from '@/components/ui/vip-badge';
 import { CompanyFollowButton } from '@/components/portfolio/CompanyFollowButton';
+import { PortfolioVideoThumbnail } from '@/components/portfolio/PortfolioVideoThumbnail';
+import { FullscreenVideoViewer } from '@/components/content/FullscreenVideoViewer';
 
 interface CompanyProfile {
   id: string;
@@ -86,6 +86,8 @@ export default function CompanyPortfolio() {
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [showFullscreenViewer, setShowFullscreenViewer] = useState(false);
+  const [initialVideoIndex, setInitialVideoIndex] = useState(0);
   const [viewerId] = useState(() => {
     const stored = localStorage.getItem('portfolio_viewer_id');
     if (stored) return stored;
@@ -565,20 +567,17 @@ export default function CompanyPortfolio() {
           <span className="text-sm font-medium text-foreground">Contenido</span>
         </div>
 
-        {/* Content Grid */}
-        <div className="px-4 py-6">
+        {/* TikTok-style Content Grid - 3 columns */}
+        <div className="py-4">
           {sortedContent.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
               <VideoIcon className="h-12 w-12 mb-3" />
               <p className="text-sm">Sin contenido publicado</p>
             </div>
           ) : (
-            <VideoPlayerProvider>
-              <div className={cn(
-                "grid gap-3 md:gap-4",
-                isMobile ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"
-              )}>
-                {sortedContent.map((item) => (
+            <>
+              <div className="grid grid-cols-3 gap-0.5">
+                {sortedContent.map((item, index) => (
                   <div key={item.id} className="relative">
                     {/* Private indicator overlay */}
                     {canManageVisibility && !item.is_portfolio_public && (
@@ -592,33 +591,50 @@ export default function CompanyPortfolio() {
                     {canManageVisibility && (
                       <button
                         onClick={(e) => toggleContentVisibility(item.id, e)}
-                        className="absolute top-10 right-2 z-20 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded transition-opacity"
+                        className="absolute top-8 right-2 z-20 bg-black/60 hover:bg-black/80 text-white p-1 rounded transition-opacity"
                         title={item.is_portfolio_public ? 'Hacer privado' : 'Hacer público'}
                       >
-                        {item.is_portfolio_public ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                        {item.is_portfolio_public ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
                       </button>
                     )}
                     
-                    <BunnyVideoCard
+                    <PortfolioVideoThumbnail
                       id={item.id}
-                      title={item.title}
-                      caption={item.caption || item.title}
-                      videoUrls={getVideoUrls(item)}
                       thumbnailUrl={item.thumbnail_url}
+                      title={item.title}
                       viewsCount={item.views_count}
-                      likesCount={item.likes_count}
-                      isLiked={item.is_liked}
-                      isPinned={item.is_pinned}
-                      isOwner={canManageVisibility}
-                      showActions={true}
-                      onLike={(e) => handleLike(item.id, e)}
-                      onView={() => handleView(item.id)}
-                      onShare={() => handleShare(item)}
+                      onClick={() => {
+                        setInitialVideoIndex(index);
+                        setShowFullscreenViewer(true);
+                      }}
                     />
                   </div>
                 ))}
               </div>
-            </VideoPlayerProvider>
+
+              {/* Fullscreen Video Viewer */}
+              {showFullscreenViewer && (
+                <FullscreenVideoViewer
+                  videos={sortedContent.map(item => ({
+                    id: item.id,
+                    title: item.title,
+                    videoUrls: getVideoUrls(item),
+                    thumbnailUrl: item.thumbnail_url,
+                    viewsCount: item.views_count,
+                    likesCount: item.likes_count,
+                    isLiked: item.is_liked
+                  }))}
+                  initialIndex={initialVideoIndex}
+                  onClose={() => setShowFullscreenViewer(false)}
+                  onLike={(id) => handleLike(id)}
+                  onView={(id) => handleView(id)}
+                  onShare={(video) => {
+                    const item = sortedContent.find(c => c.id === video.id);
+                    if (item) handleShare(item);
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
