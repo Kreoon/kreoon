@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, MessageCircle, User, Briefcase } from "lucide-react";
+import { Bell, MessageCircle, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
@@ -40,7 +41,7 @@ export function IntegratedNotificationHeader({
   unreadChatCount = 0,
   sidebarCollapsed = false 
 }: IntegratedNotificationHeaderProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { playNotificationSound, playChatSound, playUrgentSound } = useNotificationSound();
@@ -190,15 +191,20 @@ export function IntegratedNotificationHeader({
       {/* Spacer to push buttons to the right */}
       <div className="flex-1" />
 
-      {/* Profile Button */}
+      {/* Profile Button with Avatar */}
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={() => navigate('/settings')}
-        className="gap-2"
+        className="gap-2 px-2"
       >
-        <User className="h-4 w-4" />
-        <span className="hidden sm:inline">Mi Perfil</span>
+        <Avatar className="h-7 w-7">
+          <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
+          <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+            {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+          </AvatarFallback>
+        </Avatar>
+        <span className="hidden sm:inline">{profile?.full_name?.split(' ')[0] || 'Mi Perfil'}</span>
       </Button>
 
       {/* Portfolio Button */}

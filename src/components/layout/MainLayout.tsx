@@ -10,10 +10,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors, MessageCircle, User, Briefcase } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors, MessageCircle, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -43,6 +44,7 @@ export function MainLayout({
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const { isClient, isEditor, isAdmin, isCreator, signOut, profile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Track user presence
   usePresence();
@@ -70,19 +72,24 @@ export function MainLayout({
             </div>
             <span className="text-sm font-bold">Panel Editor</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => window.location.href = '/settings'}
-              className="h-9 w-9 rounded-full"
+              onClick={() => navigate('/settings')}
+              className="h-9 w-9 rounded-full p-0"
             >
-              <User className="h-4 w-4" />
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
+                <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                  {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => window.location.href = '/portfolio'}
+              onClick={() => navigate('/portfolio')}
               className="h-9 w-9 rounded-full"
             >
               <Briefcase className="h-4 w-4" />
@@ -234,19 +241,24 @@ export function MainLayout({
             </div>
             <span className="text-sm font-bold">Portal Cliente</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => window.location.href = '/settings'}
-              className="h-9 w-9 rounded-full"
+              onClick={() => navigate('/settings')}
+              className="h-9 w-9 rounded-full p-0"
             >
-              <User className="h-4 w-4" />
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
+                <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                  {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => window.location.href = '/portfolio'}
+              onClick={() => navigate('/portfolio')}
               className="h-9 w-9 rounded-full"
             >
               <Briefcase className="h-4 w-4" />
@@ -349,15 +361,20 @@ export function MainLayout({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => window.location.href = '/settings'}
-            className="h-9 w-9 rounded-full"
+            onClick={() => navigate('/settings')}
+            className="h-9 w-9 rounded-full p-0"
           >
-            <User className="h-4 w-4" />
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
+              <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => window.location.href = '/portfolio'}
+            onClick={() => navigate('/portfolio')}
             className="h-9 w-9 rounded-full"
           >
             <Briefcase className="h-4 w-4" />
