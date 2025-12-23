@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -176,95 +177,57 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
         prompt: buildPrompt(),
       };
 
-      console.log("Sending to n8n webhook:", payload);
+      console.log("Sending to n8n via proxy:", payload);
 
-      const response = await fetch(N8N_WEBHOOK_URL, {
-        method: "POST",
-        mode: "cors",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
+      // Use Edge Function proxy to avoid CORS issues
+      const { data: proxyResponse, error: proxyError } = await supabase.functions.invoke('n8n-proxy', {
+        body: {
+          webhookUrl: N8N_WEBHOOK_URL,
+          payload: payload,
         },
-        body: JSON.stringify(payload),
       });
 
-      console.log("=== n8n RESPONSE DEBUG ===");
-      console.log("Status:", response.status, response.statusText);
-      console.log("Response type:", response.type);
-      console.log("Response URL:", response.url);
+      console.log("Proxy response:", proxyResponse);
       
-      // Log all headers
-      const allHeaders = Object.fromEntries(response.headers.entries());
-      console.log("All response headers:", allHeaders);
-      
-      // Specifically check CORS headers
-      console.log("=== CORS HEADERS ===");
-      console.log("Access-Control-Allow-Origin:", response.headers.get("access-control-allow-origin") || "NOT PRESENT");
-      console.log("Access-Control-Allow-Methods:", response.headers.get("access-control-allow-methods") || "NOT PRESENT");
-      console.log("Access-Control-Allow-Headers:", response.headers.get("access-control-allow-headers") || "NOT PRESENT");
-      console.log("Access-Control-Expose-Headers:", response.headers.get("access-control-expose-headers") || "NOT PRESENT");
-      console.log("Content-Type:", response.headers.get("content-type") || "NOT PRESENT");
-      console.log("======================");
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new Error(`Error en webhook: ${response.status} - ${errorText}`);
+      if (proxyError) {
+        console.error("Proxy error:", proxyError);
+        throw new Error(`Error en proxy: ${proxyError.message}`);
       }
 
-      // Get the response from n8n - handle segmented JSON response
-      const contentType = response.headers.get("content-type") || "";
+      if (!proxyResponse) {
+        throw new Error("El proxy devolvió una respuesta vacía");
+      }
+
+      if (proxyResponse.error) {
+        throw new Error(proxyResponse.error);
+      }
+
+      // Get the response data
       let generatedContent: GeneratedContent = { script: "" };
       
-      // First get the raw text to check if response is empty
-      let responseText = "";
-      try {
-        responseText = await response.text();
-      } catch (textError) {
-        console.error("Error reading response text:", textError);
-        throw new Error("No se pudo leer la respuesta del webhook. Posible problema de CORS.");
-      }
+      // Handle the response - proxy returns the JSON directly
+      const data = proxyResponse;
+      console.log("n8n JSON response:", data);
       
-      console.log("n8n raw response length:", responseText.length);
-      console.log("n8n raw response preview:", responseText.substring(0, 500));
+      // Handle the segmented response structure from n8n
+      // Response comes as array: [{ bloques_html: { guion, pautas_editor, pautas_trafficker, pautas_estratega } }]
+      const responseData = Array.isArray(data) ? data[0] : data;
       
-      if (!responseText || responseText.trim() === "") {
-        throw new Error("El webhook devolvió una respuesta vacía. Verifica que n8n tenga los headers CORS configurados: Access-Control-Allow-Origin: *");
-      }
-      
-      if (contentType.includes("application/json")) {
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error("Error parsing JSON:", parseError);
-          throw new Error("La respuesta del webhook no es JSON válido");
-        }
-        console.log("n8n JSON response:", data);
-        
-        // Handle the segmented response structure from n8n
-        // Response comes as array: [{ bloques_html: { guion, pautas_editor, pautas_trafficker, pautas_estratega } }]
-        const responseData = Array.isArray(data) ? data[0] : data;
-        
-        if (responseData?.bloques_html) {
-          generatedContent = {
-            script: responseData.bloques_html.guion || "",
-            editor_guidelines: responseData.bloques_html.pautas_editor || "",
-            strategist_guidelines: responseData.bloques_html.pautas_estratega || "",
-            trafficker_guidelines: responseData.bloques_html.pautas_trafficker || "",
-          };
-        } else if (typeof data === "string") {
-          generatedContent.script = data;
-        } else if (data.script) {
-          generatedContent.script = data.script;
-        } else if (data.guion) {
-          generatedContent.script = data.guion;
-        } else {
-          generatedContent.script = JSON.stringify(data, null, 2);
-        }
+      if (responseData?.bloques_html) {
+        generatedContent = {
+          script: responseData.bloques_html.guion || "",
+          editor_guidelines: responseData.bloques_html.pautas_editor || "",
+          strategist_guidelines: responseData.bloques_html.pautas_estratega || "",
+          trafficker_guidelines: responseData.bloques_html.pautas_trafficker || "",
+        };
+      } else if (typeof data === "string") {
+        generatedContent.script = data;
+      } else if (data.script) {
+        generatedContent.script = data.script;
+      } else if (data.guion) {
+        generatedContent.script = data.guion;
       } else {
-        // Response is plain text - only script
-        generatedContent.script = responseText;
-        console.log("n8n text response:", generatedContent.script);
+        generatedContent.script = JSON.stringify(data, null, 2);
       }
 
       if (generatedContent.script) {
