@@ -507,16 +507,19 @@ export function BunnyVideoCard({
             {/* Video Player - Native video or Bunny iframe */}
             {isNativeVideo ? (
               // Native video player for mp4, mov, webm, etc.
-              <video
-                ref={videoRef}
-                src={currentVideoUrl}
-                className="w-full h-full object-cover"
-                autoPlay
-                loop
-                muted={isMuted}
-                playsInline
-                onClick={handleStop}
-              />
+              <div className="absolute inset-0 bg-black flex items-center justify-center">
+                <video
+                  ref={videoRef}
+                  src={currentVideoUrl}
+                  className="w-full h-full object-contain"
+                  autoPlay
+                  loop
+                  muted={isMuted}
+                  playsInline
+                  onClick={handleStop}
+                  style={{ backgroundColor: 'black' }}
+                />
+              </div>
             ) : (
               // Bunny iframe player
               <iframe
