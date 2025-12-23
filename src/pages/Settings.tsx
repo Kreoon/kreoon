@@ -14,6 +14,7 @@ import { AuditLogPanel } from "@/components/settings/AuditLogPanel";
 import { AppSettingsManagement } from "@/components/settings/AppSettingsManagement";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
+import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { Sparkles, Play } from "lucide-react";
@@ -227,12 +228,7 @@ const Settings = () => {
           </div>
         );
       case 'seguridad':
-        return (
-          <div className="p-6 text-center text-muted-foreground">
-            <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Configuración de seguridad próximamente</p>
-          </div>
-        );
+        return <SecuritySettings />;
       case 'apariencia':
         return <AppearanceSettings />;
       case 'integraciones':
