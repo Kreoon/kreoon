@@ -207,11 +207,267 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
 
   if (!content) return null;
 
+  const hasVideos = videoUrls.length > 0;
+  const hasScript = !!content.script;
+  const hasEditorGuidelines = !!(content as any).editor_guidelines;
+  const isDraftOrScriptPending = currentStatus === 'draft' || currentStatus === 'script_pending';
+  const canApproveScript = isDraftOrScriptPending && hasScript;
   const canApprove = currentStatus === 'delivered' || currentStatus === 'corrected';
   const canReportIssue = currentStatus === 'delivered' || currentStatus === 'corrected';
   const canDownload = ['approved', 'paid', 'delivered', 'corrected'].includes(currentStatus || '');
-  const hasVideos = videoUrls.length > 0;
-  const hasScript = !!content.script;
+
+  const handleApproveScript = async () => {
+    if (!content || !user) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('content')
+        .update({ 
+          script_approved_at: new Date().toISOString(),
+          script_approved_by: user.id,
+          status: 'script_approved'
+        })
+        .eq('id', content.id);
+      if (error) throw error;
+      setCurrentStatus('script_approved');
+      toast({ title: "Guión aprobado", description: "El contenido pasará a producción" });
+      onUpdate?.();
+      onOpenChange(false);
+    } catch (error) {
+      toast({ title: "Error al aprobar guión", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Simplified view for draft/script_pending status
+  if (isDraftOrScriptPending) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-3xl max-h-[95vh] overflow-hidden p-0 gap-0">
+          {/* Header */}
+          <div className="relative border-b bg-gradient-to-r from-primary/5 via-background to-primary/5">
+            <button
+              onClick={() => onOpenChange(false)}
+              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-background/80 backdrop-blur-sm hover:bg-muted transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Badge className={`shrink-0 ${STATUS_COLORS[currentStatus || content.status]}`}>
+                      {STATUS_LABELS[currentStatus || content.status]}
+                    </Badge>
+                    <Badge variant="outline" className="gap-1">
+                      <FileText className="h-3 w-3" />
+                      Revisión de guión
+                    </Badge>
+                  </div>
+                  <h2 className="text-2xl font-bold tracking-tight truncate">{content.title}</h2>
+                  <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
+                    {content.client?.name && (
+                      <span className="flex items-center gap-1.5">
+                        <Package className="h-3.5 w-3.5" />
+                        {content.client.name}
+                      </span>
+                    )}
+                    {productName && (
+                      <span className="flex items-center gap-1.5">
+                        <Target className="h-3.5 w-3.5" />
+                        {productName}
+                      </span>
+                    )}
+                    {content.campaign_week && (
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {content.campaign_week}
+                      </span>
+                    )}
+                    {content.deadline && (
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        Entrega: {formatDate(content.deadline)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <ScrollArea className="flex-1 max-h-[calc(95vh-200px)]">
+            <div className="p-6 space-y-6">
+              {/* Script Section */}
+              {hasScript ? (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Guión del Contenido
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-lg border bg-muted/30 p-4">
+                      <RichTextViewer 
+                        content={content.script} 
+                        className="prose prose-sm dark:prose-invert max-w-none"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="border-warning/30 bg-warning/5">
+                  <CardContent className="p-6 text-center">
+                    <FileText className="h-10 w-10 mx-auto mb-3 text-warning" />
+                    <p className="font-medium">El guión está siendo preparado</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Te notificaremos cuando esté listo para revisión
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Editor Guidelines */}
+              {hasEditorGuidelines && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Video className="h-5 w-5 text-primary" />
+                      Pautas de Edición
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-lg border bg-muted/30 p-4">
+                      <RichTextViewer 
+                        content={(content as any).editor_guidelines} 
+                        className="prose prose-sm dark:prose-invert max-w-none"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Sales Angle */}
+              {content.sales_angle && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Target className="h-5 w-5 text-primary" />
+                      Ángulo de Venta
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-foreground/90">{content.sales_angle}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Comments Section */}
+              <Card className="border-primary/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    Comentarios
+                    {comments.length > 0 && (
+                      <span className="text-sm font-normal text-muted-foreground">
+                        ({comments.length})
+                      </span>
+                    )}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Si necesitas modificaciones en el guión, escríbelas aquí
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <Textarea 
+                      placeholder="Escribe aquí las correcciones o sugerencias para el guión..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="min-h-[100px] resize-none"
+                    />
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleAddComment} 
+                        disabled={loadingComment || !newComment.trim()}
+                        variant="outline"
+                        className="gap-2"
+                      >
+                        {loadingComment ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                        Enviar Comentario
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Comments list */}
+                  {comments.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t">
+                      {comments.map((comment) => (
+                        <div key={comment.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                          <Avatar className="h-8 w-8 shrink-0">
+                            {comment.profile?.avatar_url ? (
+                              <img src={comment.profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                <User className="h-4 w-4" />
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <span className="font-medium text-sm">{comment.profile?.full_name}</span>
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
+                              </span>
+                            </div>
+                            <p className="text-sm text-foreground/90 whitespace-pre-wrap">{comment.comment}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </ScrollArea>
+
+          {/* Footer with Approve Script button */}
+          {canApproveScript && (
+            <div className="border-t p-4 bg-gradient-to-r from-success/5 via-background to-success/5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">¿El guión está listo?</p>
+                  <p className="text-xs text-muted-foreground">
+                    Al aprobar, el contenido pasará a producción
+                  </p>
+                </div>
+                <Button
+                  onClick={handleApproveScript}
+                  disabled={loading}
+                  className="gap-2 bg-success hover:bg-success/90 text-success-foreground shrink-0"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4" />
+                  )}
+                  Aprobar Guión
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
