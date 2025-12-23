@@ -849,6 +849,7 @@ export default function Portfolio() {
                 const item = currentContent.find(v => v.id === video.id);
                 if (item) handleShare(item);
               }}
+              canManageVideo={(video) => isAdmin || (!!user?.id && video.creatorId === user.id)}
               onProfileClick={handleProfileClick}
               onFollow={handleFollowFromViewer}
               isFollowing={isFollowingUser}
@@ -998,6 +999,7 @@ export default function Portfolio() {
               const item = currentContent.find(v => v.id === video.id);
               if (item) handleShare(item);
             }}
+            canManageVideo={(video) => isAdmin || (!!user?.id && video.creatorId === user.id)}
             onProfileClick={handleProfileClick}
             onFollow={handleFollowFromViewer}
             isFollowing={isFollowingUser}
