@@ -325,7 +325,7 @@ function RankingContent({
             </div>
             <div>
               <p className="text-2xl font-bold text-success font-medieval">{leaderboard.length}</p>
-              <p className="text-xs text-muted-foreground font-body">Guerreros en la Orden</p>
+              <p className="text-xs text-muted-foreground font-body">Miembros de la Orden</p>
             </div>
           </CardContent>
         </Card>
