@@ -18,6 +18,8 @@ interface VideoItem {
   viewsCount: number;
   likesCount: number;
   isLiked: boolean;
+  isSaved?: boolean;
+  itemType?: 'content' | 'post';
   creatorId?: string;
   creatorName?: string;
   creatorAvatar?: string;
@@ -35,6 +37,7 @@ interface FullscreenVideoViewerProps {
   onView?: (id: string) => void;
   onShare?: (video: VideoItem) => void;
   onComment?: (id: string) => void;
+  onSave?: (id: string, itemType: 'content' | 'post') => void;
   /** Legacy: use canManageVideo for per-item permissions */
   isOwner?: boolean;
   /** If provided, decides whether the three-dots menu is shown for the current item (owner/admin). */
@@ -80,6 +83,7 @@ export function FullscreenVideoViewer({
   onView,
   onShare,
   onComment,
+  onSave,
   isOwner,
   canManageVideo,
   onEdit,
@@ -521,13 +525,23 @@ export function FullscreenVideoViewer({
             </button>
           )}
           
-          {/* Bookmark button */}
-          <button
-            className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
-          >
-            <Bookmark className="h-8 w-8 text-white drop-shadow-lg" />
-            <span className="text-white text-xs font-semibold drop-shadow-lg">{formatCount(currentVideo.viewsCount)}</span>
-          </button>
+          {/* Bookmark/Save button */}
+          {onSave && (
+            <button
+              onClick={() => onSave(currentVideo.id, currentVideo.itemType || 'content')}
+              className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
+            >
+              <Bookmark 
+                className={cn(
+                  "h-8 w-8 drop-shadow-lg transition-colors",
+                  currentVideo.isSaved ? "text-yellow-400 fill-yellow-400" : "text-white"
+                )} 
+              />
+              <span className="text-white text-xs font-semibold drop-shadow-lg">
+                {currentVideo.isSaved ? 'Guardado' : 'Guardar'}
+              </span>
+            </button>
+          )}
           
           {/* Share button */}
           {onShare && (

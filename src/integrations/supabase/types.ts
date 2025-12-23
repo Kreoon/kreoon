@@ -1614,6 +1614,48 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_content: {
+        Row: {
+          content_id: string | null
+          content_type: string
+          created_at: string
+          id: string
+          post_id: string | null
+          user_id: string
+        }
+        Insert: {
+          content_id?: string | null
+          content_type?: string
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          user_id: string
+        }
+        Update: {
+          content_id?: string | null
+          content_type?: string
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_content_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_content_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_events: {
         Row: {
           action_taken: string | null
@@ -2045,6 +2087,10 @@ export type Database = {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
       }
+      is_content_saved: {
+        Args: { _content_id?: string; _post_id?: string }
+        Returns: boolean
+      }
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
@@ -2100,6 +2146,10 @@ export type Database = {
         Returns: boolean
       }
       toggle_post_pin: { Args: { post_id: string }; Returns: boolean }
+      toggle_save_content: {
+        Args: { _content_id?: string; _post_id?: string }
+        Returns: boolean
+      }
       transfer_currency: {
         Args: {
           _from_amount: number
