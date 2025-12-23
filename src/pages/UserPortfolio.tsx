@@ -14,7 +14,9 @@ import {
   Heart,
   Plus,
   Pencil,
-  MessageCircle
+  MessageCircle,
+  Bookmark,
+  Grid3X3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -155,6 +157,8 @@ export default function UserPortfolio() {
     localStorage.setItem('portfolio_viewer_id', newId);
     return newId;
   });
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<'content' | 'saved'>('content');
 
   const isOwner = user?.id === resolvedUserId || isAdmin;
   
@@ -510,6 +514,70 @@ export default function UserPortfolio() {
     }
   };
 
+  // Fetch saved content IDs for current user
+  const fetchSavedContent = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('saved_content')
+        .select('content_id, post_id')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      const ids = new Set<string>();
+      (data || []).forEach(item => {
+        if (item.content_id) ids.add(item.content_id);
+        if (item.post_id) ids.add(item.post_id);
+      });
+      setSavedIds(ids);
+    } catch (error) {
+      console.error('Error fetching saved content:', error);
+    }
+  }, [user]);
+
+  // Fetch saved content when user logs in
+  useEffect(() => {
+    if (user && isOwner) {
+      fetchSavedContent();
+    }
+  }, [user, isOwner, fetchSavedContent]);
+
+  // Handle save/unsave content
+  const handleSaveContent = async (id: string, itemType: 'content' | 'post') => {
+    if (!user) {
+      toast.error('Inicia sesión para guardar contenido');
+      return;
+    }
+
+    try {
+      const params = itemType === 'content' 
+        ? { _content_id: id } 
+        : { _post_id: id };
+      
+      const { data, error } = await supabase.rpc('toggle_save_content', params);
+      
+      if (error) throw error;
+      
+      const isSaved = data as boolean;
+      setSavedIds(prev => {
+        const next = new Set(prev);
+        if (isSaved) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+        return next;
+      });
+      
+      toast.success(isSaved ? '🔖 Guardado' : 'Eliminado de guardados');
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      toast.error('Error al guardar contenido');
+    }
+  };
+
   const handleLike = async (contentId: string, e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
@@ -823,6 +891,14 @@ export default function UserPortfolio() {
   const allVideos = useMemo(() => {
     return allContent.filter(item => item.mediaType === 'video');
   }, [allContent]);
+
+  // Saved content - filter allContent to only show saved items
+  const savedContent = useMemo(() => {
+    return allContent.filter(item => savedIds.has(item.id));
+  }, [allContent, savedIds]);
+
+  // Current display content based on active tab
+  const displayContent = activeTab === 'saved' ? savedContent : allContent;
 
   // Check if current user is a client viewing their own content
   const isClientOwner = profileType === 'client' && isOwner;
@@ -1211,9 +1287,45 @@ export default function UserPortfolio() {
         {/* Content Divider */}
         <div className="border-t border-white/10 mt-4" />
 
+        {/* Tabs - only show saved tab to profile owner */}
+        {isOwner && user && (
+          <div className="flex justify-center gap-8 py-3 border-b border-white/10">
+            <button
+              onClick={() => setActiveTab('content')}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors",
+                activeTab === 'content' 
+                  ? "text-white border-b-2 border-white" 
+                  : "text-white/50 hover:text-white/80"
+              )}
+            >
+              <Grid3X3 className="h-4 w-4" />
+              Contenido
+            </button>
+            <button
+              onClick={() => setActiveTab('saved')}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors",
+                activeTab === 'saved' 
+                  ? "text-white border-b-2 border-white" 
+                  : "text-white/50 hover:text-white/80"
+              )}
+            >
+              <Bookmark className="h-4 w-4" />
+              Guardados
+            </button>
+          </div>
+        )}
+
         {/* Unified Content Grid - Mixed Videos and Photos */}
         <div className="px-4 py-6">
-          {allContent.length === 0 ? (
+          {activeTab === 'saved' && savedContent.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-white/40">
+              <Bookmark className="h-12 w-12 mb-3" />
+              <p className="text-sm">No tienes contenido guardado</p>
+              <p className="text-xs mt-1">Guarda contenido tocando el ícono de marcador</p>
+            </div>
+          ) : displayContent.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-white/40">
               <VideoIcon className="h-12 w-12 mb-3" />
               <p className="text-sm">Aún no hay contenido publicado</p>
@@ -1232,7 +1344,7 @@ export default function UserPortfolio() {
           ) : isMobile ? (
             // Mobile: Show grid of thumbnails
             <div className="grid grid-cols-3 gap-0.5">
-              {allContent.map((item, index) => {
+              {displayContent.map((item, index) => {
                 if (item.mediaType === 'image' && item.mediaUrl) {
                   return (
                     <PortfolioImageThumbnail
@@ -1267,7 +1379,7 @@ export default function UserPortfolio() {
           ) : (
             // Desktop: Show grid of thumbnails
             <div className="grid grid-cols-3 gap-0.5">
-              {allContent.map((item, index) => {
+              {displayContent.map((item, index) => {
                 if (item.mediaType === 'image' && item.mediaUrl) {
                   return (
                     <PortfolioImageThumbnail
@@ -1411,7 +1523,7 @@ export default function UserPortfolio() {
       {/* Fullscreen Content Viewer - TikTok style (handles both images and videos) */}
       {showFullscreenViewer && allContent.length > 0 && (
         <FullscreenVideoViewer
-          videos={allContent.map(item => ({
+          videos={displayContent.map(item => ({
             id: item.id,
             title: item.title,
             videoUrls: item.videoUrls || [],
@@ -1419,6 +1531,8 @@ export default function UserPortfolio() {
             viewsCount: item.viewsCount,
             likesCount: item.likesCount,
             isLiked: item.isLiked,
+            isSaved: savedIds.has(item.id),
+            itemType: item.type === 'post' ? 'post' as const : 'content' as const,
             creatorId: resolvedUserId || undefined,
             creatorName: profile?.full_name,
             creatorAvatar: profile?.avatar_url || undefined,
@@ -1469,6 +1583,7 @@ export default function UserPortfolio() {
               }
             }
           }}
+          onSave={handleSaveContent}
           canManageVideo={() => isOwner}
           onEdit={handleEditContent}
           onDelete={handleDeleteContent}
