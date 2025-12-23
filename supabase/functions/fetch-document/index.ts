@@ -20,47 +20,37 @@ serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
-    if (!apiKey) {
-      console.error("FIRECRAWL_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ success: false, error: "Firecrawl not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     // Format URL
     let formattedUrl = url.trim();
     if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    // Convert Google Drive sharing links to direct view links if needed
-    if (formattedUrl.includes("drive.google.com")) {
-      // Convert /file/d/ID/view to /file/d/ID/preview or export
-      if (formattedUrl.includes("/file/d/")) {
+    const isGoogleDoc = formattedUrl.includes("docs.google.com") || formattedUrl.includes("drive.google.com");
+
+    // Convert Google Drive/Docs links to export format
+    if (isGoogleDoc) {
+      // Handle Drive file links
+      if (formattedUrl.includes("drive.google.com") && formattedUrl.includes("/file/d/")) {
         const fileIdMatch = formattedUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (fileIdMatch) {
           const fileId = fileIdMatch[1];
-          // Try to get the document as HTML for Google Docs
           formattedUrl = `https://docs.google.com/document/d/${fileId}/export?format=txt`;
         }
       }
-    }
-
-    // Convert Google Docs links
-    if (formattedUrl.includes("docs.google.com/document")) {
-      const docIdMatch = formattedUrl.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
-      if (docIdMatch) {
-        const docId = docIdMatch[1];
-        formattedUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`;
+      
+      // Handle Google Docs links
+      if (formattedUrl.includes("docs.google.com/document")) {
+        const docIdMatch = formattedUrl.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+        if (docIdMatch) {
+          const docId = docIdMatch[1];
+          formattedUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`;
+        }
       }
-    }
 
-    console.log("Fetching document from:", formattedUrl);
+      console.log("Fetching Google Doc from:", formattedUrl);
 
-    // First try direct fetch for Google export URLs
-    if (formattedUrl.includes("/export?format=txt")) {
+      // Direct fetch for Google Docs - always use this method for Google URLs
       try {
         const directResponse = await fetch(formattedUrl, {
           headers: {
@@ -70,25 +60,51 @@ serve(async (req) => {
 
         if (directResponse.ok) {
           const text = await directResponse.text();
-          if (text && text.length > 0 && !text.includes("<!DOCTYPE html>")) {
-            console.log("Direct fetch successful, content length:", text.length);
+          // Check if we got actual content (not an HTML error page)
+          if (text && text.length > 0 && !text.startsWith("<!DOCTYPE")) {
+            console.log("Google Doc fetch successful, content length:", text.length);
             return new Response(
               JSON.stringify({
                 success: true,
                 content: text,
-                source: "direct",
+                source: "google-direct",
                 url: formattedUrl,
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
+          } else {
+            console.log("Google Doc returned HTML page instead of text content");
           }
+        } else {
+          console.log("Google Doc fetch failed with status:", directResponse.status);
         }
       } catch (directError) {
-        console.log("Direct fetch failed, trying Firecrawl:", directError);
+        console.error("Google Doc direct fetch error:", directError);
       }
+
+      // If Google direct fetch failed, return error (don't try Firecrawl for private Google docs)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "No se pudo acceder al documento de Google. Verifica que sea público o tenga permisos de 'Cualquiera con el enlace'.",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Use Firecrawl for scraping
+    // For non-Google URLs, use Firecrawl
+    const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
+    if (!apiKey) {
+      console.error("FIRECRAWL_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ success: false, error: "Firecrawl not configured for external URLs" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Using Firecrawl for external URL:", formattedUrl);
+
+    // Use Firecrawl for scraping non-Google URLs
     const response = await fetch("https://api.firecrawl.dev/v1/scrape", {
       method: "POST",
       headers: {
@@ -96,23 +112,23 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        url: url, // Use original URL for Firecrawl
+        url: formattedUrl,
         formats: ["markdown"],
         onlyMainContent: true,
-        waitFor: 3000, // Wait for dynamic content
+        timeout: 15000, // 15 second timeout
       }),
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
+    if (!response.ok || data.success === false) {
       console.error("Firecrawl error:", data);
       return new Response(
         JSON.stringify({
           success: false,
           error: data.error || `Failed to fetch document: ${response.status}`,
         }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: response.status === 200 ? 400 : response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -127,7 +143,7 @@ serve(async (req) => {
         content,
         metadata,
         source: "firecrawl",
-        url,
+        url: formattedUrl,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
