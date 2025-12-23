@@ -1175,13 +1175,37 @@ export default function Dashboard() {
                   </TabsList>
                   <div className="h-48">
                     <TabsContent value="revenue" className="h-full m-0">
-                      <GoalsChart goals={allGoals} actuals={monthlyActuals} metric="revenue" title="" />
+                      <GoalsChart 
+                        goals={allGoals} 
+                        actuals={monthlyActuals} 
+                        metric="revenue" 
+                        title="" 
+                        startMonth={startDateFilter ? startDateFilter.getMonth() + 1 : 1}
+                        endMonth={endDateFilter ? endDateFilter.getMonth() + 1 : 12}
+                        year={startDateFilter?.getFullYear() || endDateFilter?.getFullYear()}
+                      />
                     </TabsContent>
                     <TabsContent value="content" className="h-full m-0">
-                      <GoalsChart goals={allGoals} actuals={monthlyActuals} metric="content" title="" />
+                      <GoalsChart 
+                        goals={allGoals} 
+                        actuals={monthlyActuals} 
+                        metric="content" 
+                        title="" 
+                        startMonth={startDateFilter ? startDateFilter.getMonth() + 1 : 1}
+                        endMonth={endDateFilter ? endDateFilter.getMonth() + 1 : 12}
+                        year={startDateFilter?.getFullYear() || endDateFilter?.getFullYear()}
+                      />
                     </TabsContent>
                     <TabsContent value="clients" className="h-full m-0">
-                      <GoalsChart goals={allGoals} actuals={monthlyActuals} metric="clients" title="" />
+                      <GoalsChart 
+                        goals={allGoals} 
+                        actuals={monthlyActuals} 
+                        metric="clients" 
+                        title="" 
+                        startMonth={startDateFilter ? startDateFilter.getMonth() + 1 : 1}
+                        endMonth={endDateFilter ? endDateFilter.getMonth() + 1 : 12}
+                        year={startDateFilter?.getFullYear() || endDateFilter?.getFullYear()}
+                      />
                     </TabsContent>
                   </div>
                 </Tabs>
