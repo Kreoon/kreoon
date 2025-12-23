@@ -72,6 +72,15 @@ const SYSTEM_WEBHOOKS: SystemWebhook[] = [
     productionUrlKey: "bunny_callback_url",
     usedIn: ["bunny-webhook (Edge Function)"],
     docsUrl: "https://docs.bunny.net/docs/stream-webhook"
+  },
+  {
+    key: "ghl_sync",
+    label: "Funnel ROI (GHL) - Sincronización",
+    description: "Webhook para sincronizar datos con Funnel ROI / GoHighLevel. Sincroniza clientes, leads, contenido aprobado y pagos automáticamente.",
+    testUrl: "",
+    productionUrlKey: "ghl_webhook_url",
+    usedIn: ["ghl-sync (Edge Function)", "Triggers automáticos en DB"],
+    docsUrl: "https://highlevel.stoplight.io/docs/integrations"
   }
 ];
 
@@ -511,7 +520,28 @@ export function IntegrationsSettings() {
     return settings[webhook.productionUrlKey] || "";
   };
 
-  const testWebhook = async (url: string, label: string) => {
+  const testWebhook = async (url: string, label: string, webhookKey?: string) => {
+    // Special handling for GHL webhook - use edge function
+    if (webhookKey === "ghl_sync") {
+      try {
+        const { data, error } = await supabase.functions.invoke("ghl-sync", {
+          body: { event_type: "test", data: {} }
+        });
+
+        if (error) throw error;
+
+        if (data?.success) {
+          toast.success("Conexión exitosa con Funnel ROI (GHL)");
+        } else {
+          toast.error(data?.error || "Error al conectar con GHL");
+        }
+      } catch (error: any) {
+        console.error("GHL test error:", error);
+        toast.error("Error al probar webhook: " + error.message);
+      }
+      return;
+    }
+
     if (!url) {
       toast.error("Ingresa una URL de webhook primero");
       return;
@@ -595,11 +625,11 @@ export function IntegrationsSettings() {
               Producción
             </span>
           </div>
-          {activeUrl && (
+          {(activeUrl || webhook.key === "ghl_sync") && (
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => testWebhook(activeUrl, webhook.label)}
+              onClick={() => testWebhook(activeUrl, webhook.label, webhook.key)}
             >
               <Zap className="h-4 w-4 mr-1" />
               Test
