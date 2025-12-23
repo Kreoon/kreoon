@@ -414,7 +414,10 @@ export function IntegrationsSettings() {
       const webhookProdKeys = SYSTEM_WEBHOOKS.map(w => w.productionUrlKey);
       const webhookModeKeys = SYSTEM_WEBHOOKS.map(w => `${w.key}_mode`);
       
-      const allSettingsKeys = [...allKeys, ...webhookProdKeys, ...webhookModeKeys];
+      // Add GHL specific keys
+      const ghlKeys = ['ghl_webhook_url', 'ghl_location_id'];
+      
+      const allSettingsKeys = [...allKeys, ...webhookProdKeys, ...webhookModeKeys, ...ghlKeys];
 
       const { data, error } = await supabase
         .from("app_settings")
@@ -523,19 +526,37 @@ export function IntegrationsSettings() {
   const testWebhook = async (url: string, label: string, webhookKey?: string) => {
     // Special handling for GHL webhook - use edge function
     if (webhookKey === "ghl_sync") {
+      const webhookUrl = settings["ghl_webhook_url"];
+      const locationId = settings["ghl_location_id"];
+
+      if (!webhookUrl) {
+        toast.error("Ingresa la URL del webhook de Funnel ROI primero");
+        return;
+      }
+
       try {
+        toast.loading("Enviando prueba a Funnel ROI...");
+        
         const { data, error } = await supabase.functions.invoke("ghl-sync", {
-          body: { event_type: "test", data: {} }
+          body: { 
+            event_type: "test", 
+            data: {},
+            webhook_url: webhookUrl,
+            location_id: locationId || ""
+          }
         });
+
+        toast.dismiss();
 
         if (error) throw error;
 
         if (data?.success) {
-          toast.success("Conexión exitosa con Funnel ROI (GHL)");
+          toast.success(data.message || "Conexión exitosa con Funnel ROI (GHL)");
         } else {
           toast.error(data?.error || "Error al conectar con GHL");
         }
       } catch (error: any) {
+        toast.dismiss();
         console.error("GHL test error:", error);
         toast.error("Error al probar webhook: " + error.message);
       }
@@ -563,6 +584,119 @@ export function IntegrationsSettings() {
     } catch (error) {
       toast.error("Error al enviar webhook de prueba");
     }
+  };
+
+  const renderGHLWebhook = () => {
+    const webhookUrl = settings["ghl_webhook_url"] || "";
+    const locationId = settings["ghl_location_id"] || "";
+    const isConfigured = Boolean(webhookUrl);
+
+    return (
+      <div className="border rounded-lg p-4 space-y-4 border-primary/30 bg-primary/5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Label className="text-sm font-medium">Funnel ROI (GHL) - Sincronización</Label>
+              {isConfigured ? (
+                <Badge className="bg-green-600">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Configurado
+                </Badge>
+              ) : (
+                <Badge variant="destructive">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  Sin configurar
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Sincroniza automáticamente clientes, leads, contenido aprobado y pagos con tu CRM.
+            </p>
+            <div className="flex flex-wrap gap-1 mt-2">
+              <Badge variant="outline" className="text-xs font-mono">ghl-sync (Edge Function)</Badge>
+              <Badge variant="outline" className="text-xs font-mono">Triggers automáticos en DB</Badge>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" asChild>
+            <a href="https://highlevel.stoplight.io/docs/integrations" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </Button>
+        </div>
+
+        {/* Configuration Fields */}
+        <div className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Webhook className="h-4 w-4" />
+              URL del Webhook Entrante
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Crea un workflow en Funnel ROI con trigger "Webhook Entrante" y pega la URL aquí
+            </p>
+            <Input
+              value={webhookUrl}
+              onChange={(e) => setSettings(prev => ({ 
+                ...prev, 
+                ghl_webhook_url: e.target.value 
+              }))}
+              placeholder="https://services.leadconnectorhq.com/hooks/..."
+              className="font-mono text-xs"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              Location ID (opcional)
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              ID de la ubicación en Funnel ROI. Se incluye en cada payload enviado.
+            </p>
+            <Input
+              value={locationId}
+              onChange={(e) => setSettings(prev => ({ 
+                ...prev, 
+                ghl_location_id: e.target.value 
+              }))}
+              placeholder="ej: abc123xyz..."
+              className="font-mono text-xs"
+            />
+          </div>
+        </div>
+
+        {/* Test Button */}
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <div className="text-sm text-muted-foreground">
+            {isConfigured ? "Webhook configurado y listo" : "Configura la URL para habilitar"}
+          </div>
+          <Button 
+            variant={isConfigured ? "default" : "outline"}
+            size="sm"
+            onClick={() => testWebhook("", "Funnel ROI", "ghl_sync")}
+            disabled={!isConfigured}
+          >
+            <Zap className="h-4 w-4 mr-1" />
+            Probar conexión
+          </Button>
+        </div>
+
+        {/* Info */}
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription className="text-xs">
+            <strong>Eventos sincronizados automáticamente:</strong>
+            <ul className="mt-1 list-disc list-inside">
+              <li>Nuevos clientes → Contacto en CRM</li>
+              <li>Nuevos usuarios/leads → Contacto en CRM</li>
+              <li>Contenido aprobado → Nota en contacto</li>
+              <li>Contenido entregado → Nota en contacto</li>
+              <li>Pagos creados → Oportunidad en CRM</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   };
 
   const renderSystemWebhook = (webhook: SystemWebhook) => {
@@ -811,7 +945,13 @@ export function IntegrationsSettings() {
                 </AlertDescription>
               </Alert>
               
-              {SYSTEM_WEBHOOKS.map(renderSystemWebhook)}
+              {/* Render GHL with special component */}
+              {renderGHLWebhook()}
+              
+              <Separator className="my-4" />
+              
+              {/* Render other webhooks */}
+              {SYSTEM_WEBHOOKS.filter(w => w.key !== "ghl_sync").map(renderSystemWebhook)}
 
               <Separator className="my-6" />
 
