@@ -940,25 +940,47 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Row 2: Status Grid - Very Compact */}
-        <div className="grid grid-cols-6 gap-2">
-          <div onClick={() => openKpiDialog('Contenido Activo', content.filter(c => !['approved', 'paid', 'delivered'].includes(c.status)))} 
+        {/* Row 2: Team KPIs - Creadores, Editores, Clientes */}
+        <div className="grid grid-cols-3 gap-2">
+          <div onClick={() => openListDialog('Creadores Activos', 'creators', { profiles: activeCreators })}
             className="p-2 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
-            <Play className="h-3 w-3 mx-auto text-info mb-0.5" />
-            <p className="text-lg font-bold text-info">{activeContent}</p>
-            <p className="text-[10px] text-muted-foreground">Activos</p>
+            <Users className="h-3 w-3 mx-auto text-info mb-0.5" />
+            <p className="text-lg font-bold text-info">{activeCreators.length}</p>
+            <p className="text-[10px] text-muted-foreground">Creadores</p>
           </div>
-          <div onClick={() => openKpiDialog('En Proceso', content.filter(c => ['recording', 'editing'].includes(c.status)))}
+          <div onClick={() => openListDialog('Editores Activos', 'editors', { profiles: activeEditors })}
             className="p-2 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
-            <Clock className="h-3 w-3 mx-auto text-warning mb-0.5" />
-            <p className="text-lg font-bold text-warning">{inProgress}</p>
-            <p className="text-[10px] text-muted-foreground">Proceso</p>
+            <Scissors className="h-3 w-3 mx-auto text-warning mb-0.5" />
+            <p className="text-lg font-bold text-warning">{activeEditors.length}</p>
+            <p className="text-[10px] text-muted-foreground">Editores</p>
           </div>
-          <div onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
+          <div onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
             className="p-2 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
-            <Calendar className="h-3 w-3 mx-auto text-primary mb-0.5" />
-            <p className="text-lg font-bold text-primary">{pending}</p>
+            <Building2 className="h-3 w-3 mx-auto text-primary mb-0.5" />
+            <p className="text-lg font-bold text-primary">{activeClients.length}</p>
+            <p className="text-[10px] text-muted-foreground">Clientes</p>
+          </div>
+        </div>
+
+        {/* Row 3: Status KPIs - In order: Pendientes → En Proceso → En Edición → Aprobados → Entregados */}
+        <div className="grid grid-cols-5 gap-2">
+          <div onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
+            className="p-2 rounded-lg bg-muted/50 border border-border cursor-pointer hover:bg-muted transition-colors text-center">
+            <Calendar className="h-3 w-3 mx-auto text-muted-foreground mb-0.5" />
+            <p className="text-lg font-bold">{pending}</p>
             <p className="text-[10px] text-muted-foreground">Pendientes</p>
+          </div>
+          <div onClick={() => openKpiDialog('En Grabación', content.filter(c => c.status === 'recording'))}
+            className="p-2 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
+            <Video className="h-3 w-3 mx-auto text-info mb-0.5" />
+            <p className="text-lg font-bold text-info">{content.filter(c => c.status === 'recording').length}</p>
+            <p className="text-[10px] text-muted-foreground">Grabación</p>
+          </div>
+          <div onClick={() => openKpiDialog('En Edición', content.filter(c => c.status === 'editing'))}
+            className="p-2 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
+            <Scissors className="h-3 w-3 mx-auto text-warning mb-0.5" />
+            <p className="text-lg font-bold text-warning">{content.filter(c => c.status === 'editing').length}</p>
+            <p className="text-[10px] text-muted-foreground">Edición</p>
           </div>
           <div onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
             className="p-2 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors text-center">
@@ -966,17 +988,11 @@ export default function Dashboard() {
             <p className="text-lg font-bold text-success">{completed}</p>
             <p className="text-[10px] text-muted-foreground">Aprobados</p>
           </div>
-          <div onClick={() => openListDialog('Creadores Activos', 'creators', { profiles: activeCreators })}
-            className="p-2 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
-            <Users className="h-3 w-3 mx-auto text-info mb-0.5" />
-            <p className="text-lg font-bold text-info">{activeCreators.length}</p>
-            <p className="text-[10px] text-muted-foreground">Creadores</p>
-          </div>
-          <div onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
+          <div onClick={() => openKpiDialog('Entregados', content.filter(c => c.status === 'delivered'))}
             className="p-2 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
-            <Building2 className="h-3 w-3 mx-auto text-primary mb-0.5" />
-            <p className="text-lg font-bold text-primary">{activeClients.length}</p>
-            <p className="text-[10px] text-muted-foreground">Clientes</p>
+            <Play className="h-3 w-3 mx-auto text-primary mb-0.5" />
+            <p className="text-lg font-bold text-primary">{content.filter(c => c.status === 'delivered').length}</p>
+            <p className="text-[10px] text-muted-foreground">Entregados</p>
           </div>
         </div>
 
@@ -1079,32 +1095,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Row 4: Editors + Videos Owed */}
-        <div className="grid grid-cols-4 gap-2">
-          <div onClick={() => openListDialog('Editores Activos', 'editors', { profiles: activeEditors })}
-            className="p-2 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
-            <Scissors className="h-3 w-3 mx-auto text-info mb-0.5" />
-            <p className="text-lg font-bold text-info">{activeEditors.length}</p>
-            <p className="text-[10px] text-muted-foreground">Editores</p>
+        {/* Row 4: Videos Adeudados - Compact */}
+        <div onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
+          className="p-2 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Video className="h-4 w-4 text-destructive" />
+            <span className="text-sm font-medium">Videos Adeudados a Clientes</span>
           </div>
-          <div onClick={() => openKpiDialog('Videos en Edición', content.filter(c => c.status === 'editing'))}
-            className="p-2 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
-            <Clock className="h-3 w-3 mx-auto text-warning mb-0.5" />
-            <p className="text-lg font-bold text-warning">{content.filter(c => c.status === 'editing').length}</p>
-            <p className="text-[10px] text-muted-foreground">En Edición</p>
-          </div>
-          <div onClick={() => openKpiDialog('Videos Entregados', content.filter(c => c.status === 'delivered'))}
-            className="p-2 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors text-center">
-            <CheckCircle className="h-3 w-3 mx-auto text-success mb-0.5" />
-            <p className="text-lg font-bold text-success">{content.filter(c => c.status === 'delivered').length}</p>
-            <p className="text-[10px] text-muted-foreground">Entregados</p>
-          </div>
-          <div onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
-            className="p-2 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors text-center">
-            <Video className="h-3 w-3 mx-auto text-destructive mb-0.5" />
-            <p className="text-lg font-bold text-destructive">{clientsBilling.contentOwed}</p>
-            <p className="text-[10px] text-muted-foreground">Adeudados</p>
-          </div>
+          <span className="text-lg font-bold text-destructive">{clientsBilling.contentOwed}</span>
         </div>
 
         {/* Row 5: Tabs for Charts, Leaderboard, Referrals */}
