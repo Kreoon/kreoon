@@ -65,17 +65,50 @@ serve(async (req) => {
     if (payload.event_type === 'test') {
       console.log('[ghl-sync] Sending test connection to GHL');
       
+      // Send a complete test payload with all fields that GHL can map
       const testPayload = {
+        // Location identifier
         locationId: locationId,
+        
+        // Contact fields - these are the main fields GHL uses for mapping
+        firstName: 'Test',
+        lastName: 'ContentStudio',
+        name: 'Test ContentStudio',
+        email: 'test@contentstudio.ugc.com',
+        phone: '+573001234567',
+        companyName: 'UGC Colombia Test',
+        
+        // Source tracking
         source: 'Content Studio',
-        type: 'test',
+        type: 'contact',
+        
+        // Tags for segmentation
+        tags: ['Test Connection', 'Content Studio', 'UGC Colombia'],
+        
+        // Timestamp
         timestamp: new Date().toISOString(),
-        message: 'Test connection from Content Studio',
-        tags: ['Test Connection'],
+        dateAdded: new Date().toISOString(),
+        
+        // Custom fields that can be mapped
         customField: {
-          test: true,
-          platform: 'UGC Colombia'
-        }
+          platform: 'UGC Colombia',
+          client_id: 'test-client-123',
+          user_id: 'test-user-456',
+          content_id: 'test-content-789',
+          test_connection: true,
+          instagram: '@test_ugc',
+          tiktok: '@test_ugc',
+          city: 'Bogotá',
+          country: 'Colombia'
+        },
+        
+        // Additional fields for different event types
+        monetaryValue: 1000000,
+        currency: 'COP',
+        status: 'open',
+        title: 'Test Contenido UGC',
+        body: 'Este es un mensaje de prueba desde Content Studio para verificar la conexión con Funnel ROI.',
+        notes: 'Conexión de prueba exitosa desde Content Studio'
       };
 
       console.log('[ghl-sync] Test payload:', JSON.stringify(testPayload));
@@ -95,8 +128,12 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: true, 
-            message: 'Conexión exitosa con Funnel ROI (GHL)',
-            status: response.status
+            message: 'Datos de prueba enviados a Funnel ROI. Ahora puedes mapear los campos en tu workflow.',
+            status: response.status,
+            fields_sent: [
+              'firstName', 'lastName', 'name', 'email', 'phone', 'companyName',
+              'tags', 'customField.*', 'monetaryValue', 'currency', 'title', 'body'
+            ]
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
