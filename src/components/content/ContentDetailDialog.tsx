@@ -794,8 +794,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
             )}
 
-            {/* Thumbnail Selector - For Admin/Strategist */}
-            {canEditVideoTab && (
+            {/* Thumbnail Selector - Always visible for Admin */}
+            {isAdmin && (
               <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
                 <div className="flex items-center gap-2">
                   <Image className="h-4 w-4 text-primary" />
@@ -808,7 +808,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   contentId={content.id}
                   currentThumbnail={content.thumbnail_url}
                   onThumbnailChange={() => onUpdate?.()}
-                  disabled={!isAdmin}
+                  disabled={false}
                 />
               </div>
             )}
