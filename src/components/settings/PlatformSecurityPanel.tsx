@@ -37,7 +37,7 @@ import {
   Loader2, Shield, Smartphone, Key, Lock, Users, Globe,
   CheckCircle2, XCircle, AlertTriangle, Ban, Clock, 
   Monitor, MapPin, RefreshCw, Settings2, UserCheck,
-  ShieldCheck, ShieldAlert, History, Activity
+  ShieldCheck, ShieldAlert, History, Activity, Bot, Radar
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -94,6 +94,22 @@ interface BlockedIP {
   is_active: boolean;
 }
 
+interface SecurityEvent {
+  id: string;
+  user_id: string | null;
+  event_type: string;
+  ip_address: string | null;
+  country_code: string | null;
+  country_name: string | null;
+  city: string | null;
+  is_vpn: boolean;
+  is_bot: boolean;
+  risk_score: number;
+  action_taken: string | null;
+  created_at: string;
+  details: any;
+}
+
 export function PlatformSecurityPanel() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -101,6 +117,7 @@ export function PlatformSecurityPanel() {
   const [userStatuses, setUserStatuses] = useState<UserSecurityStatus[]>([]);
   const [loginHistory, setLoginHistory] = useState<LoginHistory[]>([]);
   const [blockedIPs, setBlockedIPs] = useState<BlockedIP[]>([]);
+  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
   
   // Edit dialogs
   const [editingPolicy, setEditingPolicy] = useState<SecurityPolicy | null>(null);
@@ -164,6 +181,17 @@ export function PlatformSecurityPanel() {
 
       if (blockedData) {
         setBlockedIPs(blockedData);
+      }
+
+      // Load security events
+      const { data: eventsData } = await supabase
+        .from('security_events')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (eventsData) {
+        setSecurityEvents(eventsData as SecurityEvent[]);
       }
     } catch (error) {
       console.error("Error loading security data:", error);
@@ -341,6 +369,34 @@ export function PlatformSecurityPanel() {
   const avgSecurityScore = totalUsers > 0 
     ? Math.round(userStatuses.reduce((acc, u) => acc + u.security_score, 0) / totalUsers)
     : 0;
+  const botsDetected = securityEvents.filter(e => e.is_bot || e.event_type === 'bot_detected').length;
+  const blockedEvents = securityEvents.filter(e => e.action_taken === 'blocked').length;
+
+  const getEventTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      'login_attempt': 'Intento de login',
+      'bot_detected': 'Bot detectado',
+      'geo_blocked': 'Bloqueo geográfico',
+      'rate_limited': 'Rate limitado',
+      'suspicious_login': 'Login sospechoso',
+      'tor_blocked': 'Tor bloqueado',
+      'new_device': 'Nuevo dispositivo'
+    };
+    return labels[type] || type;
+  };
+
+  const getEventTypeBadge = (type: string, actionTaken: string | null) => {
+    if (actionTaken === 'blocked') {
+      return <Badge variant="destructive">Bloqueado</Badge>;
+    }
+    if (type === 'bot_detected') {
+      return <Badge variant="destructive"><Bot className="h-3 w-3 mr-1" /> Bot</Badge>;
+    }
+    if (type === 'suspicious_login' || type === 'rate_limited') {
+      return <Badge variant="secondary" className="bg-amber-100 text-amber-800"><AlertTriangle className="h-3 w-3 mr-1" /> Sospechoso</Badge>;
+    }
+    return <Badge variant="outline"><CheckCircle2 className="h-3 w-3 mr-1" /> Normal</Badge>;
+  };
 
   if (loading) {
     return (
@@ -404,22 +460,26 @@ export function PlatformSecurityPanel() {
       </div>
 
       <Tabs defaultValue="policies" className="space-y-4">
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+        <TabsList className="grid grid-cols-5 w-full max-w-3xl">
           <TabsTrigger value="policies" className="flex items-center gap-2">
             <Settings2 className="h-4 w-4" />
-            Políticas
+            <span className="hidden sm:inline">Políticas</span>
+          </TabsTrigger>
+          <TabsTrigger value="events" className="flex items-center gap-2">
+            <Radar className="h-4 w-4" />
+            <span className="hidden sm:inline">Eventos</span>
           </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Usuarios
+            <span className="hidden sm:inline">Usuarios</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
-            Historial
+            <span className="hidden sm:inline">Historial</span>
           </TabsTrigger>
           <TabsTrigger value="blocked" className="flex items-center gap-2">
             <Ban className="h-4 w-4" />
-            IPs Bloqueadas
+            <span className="hidden sm:inline">IPs</span>
           </TabsTrigger>
         </TabsList>
 
@@ -456,7 +516,136 @@ export function PlatformSecurityPanel() {
           </Card>
         </TabsContent>
 
-        {/* Users Security Tab */}
+        {/* Security Events Tab */}
+        <TabsContent value="events" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Radar className="h-5 w-5" />
+                Eventos de Seguridad
+              </CardTitle>
+              <CardDescription>
+                Monitoreo de actividad sospechosa, bots y amenazas detectadas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="p-3 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Total eventos</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{securityEvents.length}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-4 w-4 text-red-600" />
+                    <span className="text-sm text-red-600">Bots detectados</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{botsDetected}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
+                  <div className="flex items-center gap-2">
+                    <Ban className="h-4 w-4 text-amber-600" />
+                    <span className="text-sm text-amber-600">Bloqueados</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1 text-amber-600">{blockedEvents}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <span className="text-sm text-green-600">Permitidos</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1 text-green-600">
+                    {securityEvents.filter(e => e.action_taken === 'allowed').length}
+                  </p>
+                </div>
+              </div>
+
+              <ScrollArea className="h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>IP / Ubicación</TableHead>
+                      <TableHead>Riesgo</TableHead>
+                      <TableHead>Estado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {securityEvents.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          <Radar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                          <p>No hay eventos de seguridad registrados</p>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      securityEvents.map((event) => (
+                        <TableRow key={event.id}>
+                          <TableCell>
+                            <div>
+                              <p className="text-sm">{format(new Date(event.created_at), "dd/MM/yyyy HH:mm", { locale: es })}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(event.created_at), { addSuffix: true, locale: es })}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {event.is_bot && <Bot className="h-4 w-4 text-red-500" />}
+                              <span className="text-sm">{getEventTypeLabel(event.event_type)}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                                {event.ip_address || "N/A"}
+                              </code>
+                              {event.country_name && (
+                                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {event.city ? `${event.city}, ` : ""}{event.country_name}
+                                  {event.is_vpn && <Badge variant="outline" className="ml-1 text-[10px] py-0">VPN</Badge>}
+                                </p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Progress 
+                                value={event.risk_score} 
+                                className={`w-12 h-2 ${
+                                  event.risk_score >= 70 ? "[&>div]:bg-red-500" :
+                                  event.risk_score >= 40 ? "[&>div]:bg-amber-500" :
+                                  "[&>div]:bg-green-500"
+                                }`}
+                              />
+                              <span className={`text-xs font-medium ${
+                                event.risk_score >= 70 ? "text-red-600" :
+                                event.risk_score >= 40 ? "text-amber-600" :
+                                "text-green-600"
+                              }`}>
+                                {event.risk_score}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getEventTypeBadge(event.event_type, event.action_taken)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+
         <TabsContent value="users" className="space-y-4">
           <Card>
             <CardHeader>
@@ -862,6 +1051,53 @@ export function PlatformSecurityPanel() {
                   <Switch 
                     checked={policyValue.allow_vpn !== false}
                     onCheckedChange={(checked) => setPolicyValue({...policyValue, allow_vpn: checked})}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Permitir Tor</Label>
+                  <Switch 
+                    checked={policyValue.allow_tor || false}
+                    onCheckedChange={(checked) => setPolicyValue({...policyValue, allow_tor: checked})}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Bloquear IPs sospechosas automáticamente</Label>
+                  <Switch 
+                    checked={policyValue.block_suspicious_ips !== false}
+                    onCheckedChange={(checked) => setPolicyValue({...policyValue, block_suspicious_ips: checked})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Umbral de riesgo para bloqueo (0-100)</Label>
+                  <Input 
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={policyValue.risk_score_threshold || 70}
+                    onChange={(e) => setPolicyValue({...policyValue, risk_score_threshold: parseInt(e.target.value)})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Máximo intentos de login</Label>
+                  <Input 
+                    type="number"
+                    value={policyValue.max_login_attempts || 5}
+                    onChange={(e) => setPolicyValue({...policyValue, max_login_attempts: parseInt(e.target.value)})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Minutos de bloqueo por rate limiting</Label>
+                  <Input 
+                    type="number"
+                    value={policyValue.lockout_minutes || 30}
+                    onChange={(e) => setPolicyValue({...policyValue, lockout_minutes: parseInt(e.target.value)})}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Notificar actividad sospechosa</Label>
+                  <Switch 
+                    checked={policyValue.notify_on_suspicious !== false}
+                    onCheckedChange={(checked) => setPolicyValue({...policyValue, notify_on_suspicious: checked})}
                   />
                 </div>
               </>
