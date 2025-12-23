@@ -534,7 +534,7 @@ export default function Portfolio() {
       if (navigator.share) {
         await navigator.share({
           title: item.title,
-          text: `Mira este video de ${item.client?.name || 'UGC Colombia'}`,
+          text: `Mira este video de ${item.client?.name || 'Creartor Studio'}`,
           url
         });
       } else {

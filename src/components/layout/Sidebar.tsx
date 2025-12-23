@@ -163,7 +163,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               </div>
               <div>
                 <h1 className="text-sm font-bold text-sidebar-foreground">Creartor Studio</h1>
-                <p className="text-xs text-sidebar-foreground/60">by UGC Colombia</p>
+                <p className="text-xs text-sidebar-foreground/60">Content Agency</p>
               </div>
             </div>
           )}

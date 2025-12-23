@@ -376,7 +376,7 @@ export default function Auth() {
       if (navigator.share) {
         await navigator.share({
           title: item.title,
-          text: `Mira este video de ${item.client?.name || 'UGC Colombia'}`,
+          text: `Mira este video de ${item.client?.name || 'Creartor Studio'}`,
           url
         });
       } else {
@@ -434,9 +434,9 @@ export default function Auth() {
             <div className="flex items-center justify-between pointer-events-auto">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg">
-                  <span className="text-black font-bold text-sm">U</span>
+                  <span className="text-black font-bold text-sm">C</span>
                 </div>
-                <span className="text-white font-bold text-sm">UGC Colombia</span>
+                <span className="text-white font-bold text-sm">Creartor Studio</span>
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -487,7 +487,7 @@ export default function Auth() {
                   <X className="h-4 w-4" />
                 </Button>
                 <CardHeader className="text-center">
-                  <CardTitle>UGC Colombia</CardTitle>
+                  <CardTitle>Creartor Studio</CardTitle>
                   <CardDescription>Red de creadores de contenido</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -663,10 +663,10 @@ export default function Auth() {
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg glow-gold">
-                <span className="text-black font-bold text-lg">U</span>
+                <span className="text-black font-bold text-lg">C</span>
               </div>
               <div>
-                <h1 className="text-white font-bold text-xl">UGC Colombia</h1>
+                <h1 className="text-white font-bold text-xl">Creartor Studio</h1>
                 <p className="text-primary text-xs">Red de Creadores</p>
               </div>
             </div>
@@ -812,9 +812,9 @@ export default function Auth() {
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-lg bg-gradient-gold flex items-center justify-center">
-                <span className="text-black font-bold text-sm">U</span>
+                <span className="text-black font-bold text-sm">C</span>
               </div>
-              <span className="text-white/60 text-sm">UGC Colombia</span>
+              <span className="text-white/60 text-sm">Creartor Studio</span>
             </div>
             <p className="text-white/40 text-sm">© 2024 Todos los derechos reservados</p>
           </div>
@@ -842,9 +842,9 @@ export default function Auth() {
               <CardHeader className="text-center pt-8">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center">
-                    <span className="text-black font-bold">U</span>
+                    <span className="text-black font-bold">C</span>
                   </div>
-                  <span className="font-bold text-lg">UGC Colombia</span>
+                  <span className="font-bold text-lg">Creartor Studio</span>
                 </div>
                 <CardTitle className="text-2xl">
                   {authTab === 'login' ? 'Bienvenido de vuelta' : 'Crear cuenta'}

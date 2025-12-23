@@ -576,7 +576,7 @@ export function IntegrationsSettings() {
         body: JSON.stringify({
           test: true,
           timestamp: new Date().toISOString(),
-          source: "UGC Colombia - Test"
+          source: "Creartor Studio - Test"
         })
       });
       

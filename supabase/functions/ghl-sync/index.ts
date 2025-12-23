@@ -76,14 +76,14 @@ serve(async (req) => {
         name: 'Test CreartorStudio',
         email: 'test@creartorstudio.ugc.com',
         phone: '+573001234567',
-        companyName: 'UGC Colombia Test',
+        companyName: 'Creartor Studio Test',
         
         // Source tracking
         source: 'Creartor Studio',
         type: 'contact',
         
         // Tags for segmentation
-        tags: ['Test Connection', 'Creartor Studio', 'UGC Colombia'],
+        tags: ['Test Connection', 'Creartor Studio'],
         
         // Timestamp
         timestamp: new Date().toISOString(),
@@ -91,7 +91,7 @@ serve(async (req) => {
         
         // Custom fields that can be mapped
         customField: {
-          platform: 'UGC Colombia',
+          platform: 'Creartor Studio',
           client_id: 'test-client-123',
           user_id: 'test-user-456',
           content_id: 'test-content-789',
@@ -154,7 +154,7 @@ serve(async (req) => {
     // Map the event to GHL format
     let ghlPayload: Record<string, any> = {
       locationId: locationId,
-      source: 'Creartor Studio - UGC Colombia',
+      source: 'Creartor Studio',
       timestamp: new Date().toISOString(),
     };
 
