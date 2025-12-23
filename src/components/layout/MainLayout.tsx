@@ -42,7 +42,7 @@ export function MainLayout({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const { isClient, isEditor, isAdmin, isCreator, signOut, profile } = useAuth();
+  const { isClient, isEditor, isAdmin, isCreator, signOut, profile, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -76,7 +76,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/portfolio')}
               className="h-9 w-9 rounded-full p-0"
             >
               <Avatar className="h-8 w-8">
@@ -245,7 +245,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/portfolio')}
               className="h-9 w-9 rounded-full p-0"
             >
               <Avatar className="h-8 w-8">
@@ -361,7 +361,7 @@ export function MainLayout({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate(user?.id ? `/p/${user.id}` : '/portfolio')}
             className="h-9 w-9 rounded-full p-0"
           >
             <Avatar className="h-8 w-8">
