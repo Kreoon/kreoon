@@ -4,7 +4,8 @@ import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ClientContentDetailDialog } from "@/components/content/ClientContentDetailDialog";
-import { Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw, FileCheck } from "lucide-react";
+import { Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw, FileCheck, Scroll } from "lucide-react";
+import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Content, ContentStatus, STATUS_LABELS } from "@/types/database";
@@ -299,31 +300,30 @@ export default function ClientContentBoard() {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
-          <div className="min-w-0 flex-shrink">
-            <h1 className="text-lg md:text-xl font-bold text-foreground truncate">Tablero de Contenido</h1>
-            <p className="text-xs md:text-sm text-muted-foreground truncate hidden sm:block">
-              {clientInfo.name} - Revisión y aprobación
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input 
-                type="text"
-                placeholder="Buscar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-9 md:h-10 w-40 md:w-64 rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Medieval Banner */}
+        <MedievalBanner
+          icon={Scroll}
+          title="Mesa de Batallas"
+          subtitle={`${clientInfo.name} - Revisión y aprobación de misiones`}
+        />
+
+        {/* Search */}
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input 
+              type="text"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-9 md:h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-2 px-4 md:px-6 pb-4 overflow-x-auto">
+        <div className="flex items-center gap-2 overflow-x-auto">
           <Badge variant="outline" className="gap-1.5 px-2 py-1 text-xs">
             <FileText className="h-3 w-3" />
             {draftCount}
@@ -349,10 +349,8 @@ export default function ClientContentBoard() {
             {approvedCount}
           </Badge>
         </div>
-      </header>
 
-      {/* Info Card */}
-      <div className="px-4 md:px-6 pt-4">
+        {/* Info Card */}
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="p-3">
             <p className="text-sm">

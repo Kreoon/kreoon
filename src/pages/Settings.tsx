@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog } from "lucide-react";
+import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { PermissionsEditor } from "@/components/settings/PermissionsEditor";
@@ -253,36 +254,27 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-3">
-            {activeSection !== 'main' && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setActiveSection('main')}
-                className="md:hidden"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-            )}
-            <div>
-              <h1 className="text-lg md:text-xl font-bold text-foreground">
-                {activeSection === 'main' ? 'Configuración' : visibleSections.find(s => s.id === activeSection)?.title}
-              </h1>
-              <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">
-                {activeSection === 'main' 
-                  ? 'Personaliza tu experiencia en la plataforma'
-                  : visibleSections.find(s => s.id === activeSection)?.description
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Medieval Banner */}
+        <MedievalBanner
+          icon={Cog}
+          title="Cámara del Consejo"
+          subtitle="Configura los decretos y ordenanzas del reino"
+          action={activeSection !== 'main' ? (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setActiveSection('main')}
+              className="gap-2 font-medieval"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Volver
+            </Button>
+          ) : undefined}
+        />
+      </div>
+      
       <div className="flex">
-        {/* Sidebar for desktop */}
         <aside className="hidden md:block w-64 border-r border-border min-h-[calc(100vh-4rem)] p-4">
           <nav className="space-y-1">
             {visibleSections.map((section) => (
