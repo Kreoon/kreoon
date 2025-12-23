@@ -4,7 +4,8 @@ import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ClientContentDetailDialog } from "@/components/content/ClientContentDetailDialog";
-import { Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw, FileCheck, Scroll } from "lucide-react";
+import { FullscreenContentViewer } from "@/components/content/FullscreenContentViewer";
+import { Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw, FileCheck, Scroll, Maximize2 } from "lucide-react";
 import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -85,6 +86,10 @@ export default function ClientContentBoard() {
   
   // Dialog para detalle
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  
+  // Fullscreen viewer state
+  const [showFullscreenViewer, setShowFullscreenViewer] = useState(false);
+  const [fullscreenStartIndex, setFullscreenStartIndex] = useState(0);
 
   // Fetch client data
   useEffect(() => {
@@ -308,7 +313,7 @@ export default function ClientContentBoard() {
           subtitle={`${clientInfo.name} - Revisión y aprobación de misiones`}
         />
 
-        {/* Search */}
+        {/* Search and Review All Button */}
         <div className="flex items-center gap-2 md:gap-3">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -320,6 +325,23 @@ export default function ClientContentBoard() {
               className="h-9 md:h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+          
+          {/* Review All Button - Shows when there's content to review */}
+          {(deliveredCount + correctedCount) > 0 && (
+            <Button
+              onClick={() => {
+                setFullscreenStartIndex(0);
+                setShowFullscreenViewer(true);
+              }}
+              className="gap-2"
+            >
+              <Maximize2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Revisar todo</span>
+              <Badge variant="secondary" className="ml-1">
+                {deliveredCount + correctedCount}
+              </Badge>
+            </Button>
+          )}
         </div>
 
         {/* Stats */}
@@ -387,13 +409,25 @@ export default function ClientContentBoard() {
                 color={colorMap[status] || 'bg-muted'}
                 canDrop={canDropHere}
               >
-                {getContentByStatus(status).map((item) => (
+                {getContentByStatus(status).map((item, itemIndex) => (
                   <DraggableContentCard
                     key={item.id}
                     content={item}
                     isDragging={draggingContent?.id === item.id}
                     onDragStart={handleDragStart}
-                    onClick={() => setSelectedContent(item)}
+                    onClick={() => {
+                      // Para contenido entregado o corregido, abrir visor fullscreen
+                      if (item.status === 'delivered' || item.status === 'corrected') {
+                        const reviewableContent = filteredContent.filter(c => 
+                          c.status === 'delivered' || c.status === 'corrected'
+                        );
+                        const index = reviewableContent.findIndex(c => c.id === item.id);
+                        setFullscreenStartIndex(index >= 0 ? index : 0);
+                        setShowFullscreenViewer(true);
+                      } else {
+                        setSelectedContent(item);
+                      }
+                    }}
                   />
                 ))}
                 
@@ -414,13 +448,58 @@ export default function ClientContentBoard() {
         </div>
       </div>
 
-      {/* Content Detail Dialog */}
+      {/* Content Detail Dialog - For non-review content */}
       {selectedContent && (
         <ClientContentDetailDialog
           content={selectedContent}
           open={!!selectedContent}
           onOpenChange={(open) => !open && setSelectedContent(null)}
           onUpdate={fetchClientData}
+        />
+      )}
+
+      {/* Fullscreen Viewer - For delivered/corrected content */}
+      {showFullscreenViewer && (
+        <FullscreenContentViewer
+          items={filteredContent
+            .filter(c => c.status === 'delivered' || c.status === 'corrected')
+            .map(c => ({
+              id: c.id,
+              title: c.title,
+              thumbnail_url: c.thumbnail_url,
+              video_url: c.video_url,
+              video_urls: c.video_urls,
+              bunny_embed_url: c.bunny_embed_url,
+              status: c.status,
+              creator: c.creator,
+              script: c.script,
+              description: c.description
+            }))}
+          initialIndex={fullscreenStartIndex}
+          onClose={() => setShowFullscreenViewer(false)}
+          onApprove={async (item) => {
+            await updateContentStatus(item.id, 'approved');
+            toast({ title: 'Contenido aprobado', description: 'El contenido ha sido aprobado exitosamente' });
+          }}
+          onReject={async (item, feedback) => {
+            const { error } = await supabase
+              .from('content')
+              .update({ status: 'issue' as ContentStatus, notes: feedback })
+              .eq('id', item.id);
+            
+            if (!error) {
+              await supabase.from('content_comments').insert({
+                content_id: item.id,
+                user_id: user?.id,
+                comment: `Novedad reportada: ${feedback}`
+              });
+            }
+            
+            await fetchClientData();
+            toast({ title: 'Novedad reportada', description: 'El equipo revisará y corregirá el contenido' });
+          }}
+          showActions={true}
+          mode="review"
         />
       )}
     </div>
