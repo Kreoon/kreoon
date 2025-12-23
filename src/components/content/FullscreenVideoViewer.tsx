@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Heart, MessageSquare, Share2, Volume2, VolumeX, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Heart, MessageSquare, Share2, Volume2, VolumeX, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, Globe, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface VideoItem {
   id: string;
@@ -14,6 +21,7 @@ interface VideoItem {
   creatorName?: string;
   mediaType?: 'video' | 'image';
   mediaUrl?: string;
+  isPublic?: boolean;
 }
 
 interface FullscreenVideoViewerProps {
@@ -24,6 +32,10 @@ interface FullscreenVideoViewerProps {
   onView?: (id: string) => void;
   onShare?: (video: VideoItem) => void;
   onComment?: (id: string) => void;
+  isOwner?: boolean;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onToggleVisibility?: (id: string, isPublic: boolean) => void;
 }
 
 function formatCount(count: number): string {
@@ -57,7 +69,11 @@ export function FullscreenVideoViewer({
   onLike,
   onView,
   onShare,
-  onComment
+  onComment,
+  isOwner,
+  onEdit,
+  onDelete,
+  onToggleVisibility
 }: FullscreenVideoViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [currentVariation, setCurrentVariation] = useState(0);
@@ -194,13 +210,14 @@ export function FullscreenVideoViewer({
         isTransitioning && "opacity-90"
       )}>
         {isImage ? (
-          // Image display
-          <div className="w-full h-full flex items-center justify-center">
+          // Image display - contained within viewport
+          <div className="w-full h-full flex items-center justify-center p-4">
             <img
               key={currentVideo.id}
               src={currentVideo.mediaUrl || currentVideo.thumbnailUrl || ''}
               alt={currentVideo.title}
-              className="max-w-full max-h-full object-contain"
+              className="max-w-full max-h-full w-auto h-auto object-contain"
+              style={{ maxHeight: 'calc(100vh - 120px)' }}
             />
           </div>
         ) : (
@@ -222,15 +239,64 @@ export function FullscreenVideoViewer({
           <X className="h-6 w-6" />
         </button>
 
-        {/* Mute toggle - only for videos */}
-        {!isImage && (
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
-          >
-            {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
-          </button>
-        )}
+        {/* Top right controls */}
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+          {/* Mute toggle - only for videos */}
+          {!isImage && (
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+            >
+              {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+            </button>
+          )}
+
+          {/* Owner menu */}
+          {isOwner && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors">
+                  <MoreVertical className="h-6 w-6" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {onEdit && (
+                  <DropdownMenuItem onClick={() => onEdit(currentVideo.id)}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                )}
+                {onToggleVisibility && (
+                  <DropdownMenuItem onClick={() => onToggleVisibility(currentVideo.id, !currentVideo.isPublic)}>
+                    {currentVideo.isPublic ? (
+                      <>
+                        <Lock className="h-4 w-4 mr-2" />
+                        Hacer privado
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="h-4 w-4 mr-2" />
+                        Hacer público
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                )}
+                {onDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => onDelete(currentVideo.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
 
         {/* Variation navigation (horizontal) - only for videos with multiple variations */}
         {!isImage && hasMultipleVariations && (

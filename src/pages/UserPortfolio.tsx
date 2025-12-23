@@ -618,6 +618,69 @@ export default function UserPortfolio() {
     }
   };
 
+  const handleDeleteContent = async (id: string) => {
+    const item = allContent.find(c => c.id === id);
+    if (!item) return;
+
+    try {
+      if (item.type === 'post') {
+        const { error } = await supabase
+          .from('portfolio_posts')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+        setPosts(prev => prev.filter(p => p.id !== id));
+      } else {
+        const { error } = await supabase
+          .from('content')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+        setContent(prev => prev.filter(c => c.id !== id));
+      }
+      toast.success('Contenido eliminado');
+      setShowFullscreenViewer(false);
+    } catch (error) {
+      console.error('Error deleting content:', error);
+      toast.error('Error al eliminar contenido');
+    }
+  };
+
+  const handleEditContent = (id: string) => {
+    // For now, close the viewer and let user edit in the dialog
+    setShowFullscreenViewer(false);
+    const postItem = posts.find(p => p.id === id);
+    if (postItem) {
+      setSelectedPost(postItem);
+    } else {
+      const contentItem = content.find(c => c.id === id);
+      if (contentItem) {
+        setSelectedContent(contentItem);
+      }
+    }
+    toast.info('Puedes editar el contenido desde el panel de detalles');
+  };
+
+  const handleToggleVisibility = async (id: string, makePublic: boolean) => {
+    const item = allContent.find(c => c.id === id);
+    if (!item) return;
+
+    try {
+      if (item.type === 'work') {
+        // For content table, toggle is_published
+        const { error } = await supabase
+          .from('content')
+          .update({ is_published: makePublic })
+          .eq('id', id);
+        if (error) throw error;
+        toast.success(makePublic ? 'Contenido visible públicamente' : 'Contenido ocultado');
+      }
+    } catch (error) {
+      console.error('Error toggling visibility:', error);
+      toast.error('Error al cambiar visibilidad');
+    }
+  };
+
   const handlePin = async (itemId: string, type: 'work' | 'post') => {
     try {
       if (type === 'post') {
@@ -1354,7 +1417,8 @@ export default function UserPortfolio() {
             creatorId: resolvedUserId || undefined,
             creatorName: profile?.full_name,
             mediaType: item.mediaType,
-            mediaUrl: item.mediaUrl
+            mediaUrl: item.mediaUrl,
+            isPublic: true // Posts are always public, for content we could track this
           }))}
           initialIndex={initialVideoIndex}
           onClose={() => setShowFullscreenViewer(false)}
@@ -1387,6 +1451,10 @@ export default function UserPortfolio() {
               toast.success('Link copiado al portapapeles');
             }
           }}
+          isOwner={isOwner}
+          onEdit={handleEditContent}
+          onDelete={handleDeleteContent}
+          onToggleVisibility={handleToggleVisibility}
         />
       )}
     </div>
