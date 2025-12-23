@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
-  Video, ChevronDown, CheckCircle2
+  Video, ChevronDown, CheckCircle2, Bot
 } from "lucide-react";
 
 interface Product {
@@ -49,15 +49,15 @@ interface ScriptFormData {
   narrative_structure: string;
   additional_instructions: string;
   hooks: string[];
-  // New fields for custom prompts
   script_prompt: string;
   editor_prompt: string;
   strategist_prompt: string;
   trafficker_prompt: string;
-  // Reference video transcription
   reference_transcription: string;
-  // Video strategies
   video_strategies: string;
+  // AI Selection
+  ai_provider: "lovable" | "openai" | "anthropic";
+  ai_model: string;
 }
 
 interface GenerationStep {
@@ -65,6 +65,42 @@ interface GenerationStep {
   label: string;
   status: "pending" | "generating" | "done" | "error";
 }
+
+// AI Provider options
+const AI_PROVIDERS = [
+  { 
+    value: "lovable", 
+    label: "Lovable AI", 
+    description: "Google Gemini & OpenAI GPT-5",
+    models: [
+      { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash (Recomendado)" },
+      { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite (Rápido)" },
+      { value: "openai/gpt-5", label: "GPT-5" },
+      { value: "openai/gpt-5-mini", label: "GPT-5 Mini" },
+    ]
+  },
+  { 
+    value: "openai", 
+    label: "OpenAI GPT", 
+    description: "Requiere API Key",
+    models: [
+      { value: "gpt-4o", label: "GPT-4o (Recomendado)" },
+      { value: "gpt-4o-mini", label: "GPT-4o Mini (Rápido)" },
+      { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
+      { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo (Económico)" },
+    ]
+  },
+  { 
+    value: "anthropic", 
+    label: "Anthropic Claude", 
+    description: "Requiere API Key",
+    models: [
+      { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4 (Recomendado)" },
+      { value: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku (Rápido)" },
+    ]
+  },
+];
 
 const NARRATIVE_STRUCTURES = [
   { value: "problema-solucion", label: "Problema → Solución" },
@@ -138,15 +174,29 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated }: Scrip
     narrative_structure: "",
     additional_instructions: "",
     hooks: [],
-    // Custom prompts with defaults
     script_prompt: DEFAULT_PROMPTS.script,
     editor_prompt: DEFAULT_PROMPTS.editor,
     strategist_prompt: DEFAULT_PROMPTS.strategist,
     trafficker_prompt: DEFAULT_PROMPTS.trafficker,
-    // New fields
     reference_transcription: "",
     video_strategies: "",
+    ai_provider: "lovable",
+    ai_model: "google/gemini-2.5-flash",
   });
+
+  const currentProvider = AI_PROVIDERS.find(p => p.value === formData.ai_provider);
+  const availableModels = currentProvider?.models || [];
+
+  // Update model when provider changes
+  useEffect(() => {
+    const provider = AI_PROVIDERS.find(p => p.value === formData.ai_provider);
+    if (provider && provider.models.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        ai_model: provider.models[0].value
+      }));
+    }
+  }, [formData.ai_provider]);
 
   // Pre-fill avatar from product if available
   useEffect(() => {
@@ -216,7 +266,12 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
 ${formData.reference_transcription ? `TRANSCRIPCIÓN VIDEO DE REFERENCIA:\n${formData.reference_transcription}\n` : ''}
 ${formData.video_strategies ? `ESTRATEGIAS/ESTRUCTURAS DE VIDEO A USAR:\n${formData.video_strategies}\n` : ''}
-${formData.additional_instructions ? `INSTRUCCIONES ADICIONALES:\n${formData.additional_instructions}` : ''}`;
+${formData.additional_instructions ? `INSTRUCCIONES ADICIONALES:\n${formData.additional_instructions}` : ''}
+
+DOCUMENTOS DEL PRODUCTO:
+${product?.brief_url ? `- Brief: ${product.brief_url}` : ''}
+${product?.onboarding_url ? `- Onboarding: ${product.onboarding_url}` : ''}
+${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
   };
 
   const generateContent = async (
@@ -244,8 +299,13 @@ ${formData.additional_instructions ? `INSTRUCCIONES ADICIONALES:\n${formData.add
           market_research: product?.market_research,
           ideal_avatar: product?.ideal_avatar,
           sales_angles: product?.sales_angles,
+          brief_url: product?.brief_url,
+          onboarding_url: product?.onboarding_url,
+          research_url: product?.research_url,
         },
         generation_type: type,
+        ai_provider: formData.ai_provider,
+        ai_model: formData.ai_model,
       },
     });
 
@@ -322,7 +382,7 @@ ${formData.additional_instructions ? `INSTRUCCIONES ADICIONALES:\n${formData.add
       
       toast({
         title: "Contenido generado exitosamente",
-        description: "Guión y todas las pautas han sido generadas",
+        description: `Guión y pautas generados con ${currentProvider?.label}`,
       });
     } catch (error) {
       console.error("Error:", error);
@@ -359,8 +419,59 @@ ${formData.additional_instructions ? `INSTRUCCIONES ADICIONALES:\n${formData.add
           Formulario de Guión
         </h4>
         <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-          IA Secuencial
+          {currentProvider?.label}
         </Badge>
+      </div>
+
+      {/* AI Provider Selection */}
+      <div className="p-4 rounded-lg bg-muted/50 border space-y-4">
+        <div className="flex items-center gap-2">
+          <Bot className="h-5 w-5 text-primary" />
+          <Label className="text-sm font-medium">Seleccionar IA</Label>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Proveedor</Label>
+            <Select 
+              value={formData.ai_provider} 
+              onValueChange={(v: "lovable" | "openai" | "anthropic") => setFormData({ ...formData, ai_provider: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {AI_PROVIDERS.map((provider) => (
+                  <SelectItem key={provider.value} value={provider.value}>
+                    <div className="flex flex-col">
+                      <span>{provider.label}</span>
+                      <span className="text-xs text-muted-foreground">{provider.description}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Modelo</Label>
+            <Select 
+              value={formData.ai_model} 
+              onValueChange={(v) => setFormData({ ...formData, ai_model: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableModels.map((model) => (
+                  <SelectItem key={model.value} value={model.value}>
+                    {model.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -643,7 +754,7 @@ ${formData.additional_instructions ? `INSTRUCCIONES ADICIONALES:\n${formData.add
       {/* Generation Progress */}
       {loading && (
         <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
-          <p className="text-sm font-medium mb-3">Progreso de generación:</p>
+          <p className="text-sm font-medium mb-3">Progreso de generación ({currentProvider?.label}):</p>
           {generationSteps.map((step) => (
             <div key={step.key} className="flex items-center gap-3">
               {step.status === "pending" && (
@@ -676,7 +787,7 @@ ${formData.additional_instructions ? `INSTRUCCIONES ADICIONALES:\n${formData.add
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Generando contenido...
+            Generando con {currentProvider?.label}...
           </>
         ) : (
           <>
