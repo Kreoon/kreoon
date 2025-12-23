@@ -16,6 +16,7 @@ import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { PlatformSecurityPanel } from "@/components/settings/PlatformSecurityPanel";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { Sparkles, Play } from "lucide-react";
@@ -230,12 +231,7 @@ const Settings = () => {
       case 'gestion-usuarios':
         return <UserPlansManagement />;
       case 'notificaciones':
-        return (
-          <div className="p-6 text-center text-muted-foreground">
-            <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Configuración de notificaciones próximamente</p>
-          </div>
-        );
+        return <NotificationSettings />;
       case 'seguridad':
         return <SecuritySettings />;
       case 'seguridad-plataforma':
