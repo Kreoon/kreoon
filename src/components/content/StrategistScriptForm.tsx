@@ -188,8 +188,23 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
         body: JSON.stringify(payload),
       });
 
-      console.log("n8n response status:", response.status);
-      console.log("n8n response headers:", Object.fromEntries(response.headers.entries()));
+      console.log("=== n8n RESPONSE DEBUG ===");
+      console.log("Status:", response.status, response.statusText);
+      console.log("Response type:", response.type);
+      console.log("Response URL:", response.url);
+      
+      // Log all headers
+      const allHeaders = Object.fromEntries(response.headers.entries());
+      console.log("All response headers:", allHeaders);
+      
+      // Specifically check CORS headers
+      console.log("=== CORS HEADERS ===");
+      console.log("Access-Control-Allow-Origin:", response.headers.get("access-control-allow-origin") || "NOT PRESENT");
+      console.log("Access-Control-Allow-Methods:", response.headers.get("access-control-allow-methods") || "NOT PRESENT");
+      console.log("Access-Control-Allow-Headers:", response.headers.get("access-control-allow-headers") || "NOT PRESENT");
+      console.log("Access-Control-Expose-Headers:", response.headers.get("access-control-expose-headers") || "NOT PRESENT");
+      console.log("Content-Type:", response.headers.get("content-type") || "NOT PRESENT");
+      console.log("======================");
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
