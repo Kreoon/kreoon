@@ -64,7 +64,6 @@ const creatorNavigation: NavItem[] = [
 
 const clientNavigation: NavItem[] = [
   { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-  { name: "Tablero", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 

@@ -56,7 +56,6 @@ const editorNavigation = [
 
 const clientNavigation = [
   { name: "Mi Panel", href: "/client-dashboard", icon: Package },
-  { name: "Tablero", href: "/client-board", icon: Kanban },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
