@@ -4,21 +4,155 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, Palette, Image, Loader2, Save, ExternalLink } from "lucide-react";
+import { Upload, Palette, Image, Loader2, Save, Info, Smartphone, Globe, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+interface BrandingSettings {
+  platform_name: string;
+  logo_url: string;
+  logo_dark_url: string;
+  favicon_url: string;
+  pwa_icon_192: string;
+  pwa_icon_512: string;
+  og_image_url: string;
+  primary_color: string;
+  theme_color: string;
+}
+
+const DEFAULT_SETTINGS: BrandingSettings = {
+  platform_name: "UGC Colombia",
+  logo_url: "",
+  logo_dark_url: "",
+  favicon_url: "",
+  pwa_icon_192: "",
+  pwa_icon_512: "",
+  og_image_url: "",
+  primary_color: "#F5A623",
+  theme_color: "#F5A623"
+};
+
+const BRANDING_ITEMS = [
+  {
+    key: "platform_name",
+    title: "Nombre de la Plataforma",
+    description: "Aparece en el título del navegador, PWA y meta tags",
+    type: "text",
+    icon: Globe,
+    tips: null
+  },
+  {
+    key: "logo_url",
+    title: "Logo Principal (Claro)",
+    description: "Logo para fondos claros. Se usa en el header y áreas con fondo blanco.",
+    type: "image",
+    icon: Image,
+    tips: {
+      format: "PNG con fondo transparente (recomendado) o SVG",
+      size: "Mínimo 200x50px, máximo 400x100px",
+      aspectRatio: "Proporción horizontal recomendada (4:1 o 5:1)",
+      fileSize: "Menos de 500KB para carga rápida"
+    }
+  },
+  {
+    key: "logo_dark_url",
+    title: "Logo Principal (Oscuro)",
+    description: "Logo para fondos oscuros. Versión en blanco o colores claros.",
+    type: "image",
+    icon: Image,
+    tips: {
+      format: "PNG con fondo transparente (recomendado) o SVG",
+      size: "Mínimo 200x50px, máximo 400x100px",
+      aspectRatio: "Mismas dimensiones que el logo claro",
+      fileSize: "Menos de 500KB"
+    }
+  },
+  {
+    key: "favicon_url",
+    title: "Favicon",
+    description: "Icono pequeño en la pestaña del navegador y favoritos.",
+    type: "image",
+    icon: Image,
+    tips: {
+      format: "ICO, PNG o SVG",
+      size: "32x32px (estándar) o 16x16px (mínimo)",
+      aspectRatio: "Cuadrado (1:1)",
+      fileSize: "Menos de 50KB",
+      note: "Usa un ícono simple y reconocible, no el logo completo"
+    }
+  },
+  {
+    key: "pwa_icon_192",
+    title: "Ícono PWA (192x192)",
+    description: "Ícono para cuando se instala la app en dispositivos móviles.",
+    type: "image",
+    icon: Smartphone,
+    tips: {
+      format: "PNG (obligatorio para PWA)",
+      size: "Exactamente 192x192px",
+      aspectRatio: "Cuadrado (1:1)",
+      fileSize: "Menos de 100KB",
+      note: "Incluye padding interno de ~10% para que no se corte en círculos"
+    }
+  },
+  {
+    key: "pwa_icon_512",
+    title: "Ícono PWA (512x512)",
+    description: "Ícono de alta resolución para splash screens y tiendas de apps.",
+    type: "image",
+    icon: Smartphone,
+    tips: {
+      format: "PNG (obligatorio para PWA)",
+      size: "Exactamente 512x512px",
+      aspectRatio: "Cuadrado (1:1)",
+      fileSize: "Menos de 200KB",
+      note: "Mismo diseño que el ícono 192x192, solo más grande"
+    }
+  },
+  {
+    key: "og_image_url",
+    title: "Imagen para Redes Sociales (OG Image)",
+    description: "Imagen que aparece cuando compartes enlaces en Facebook, Twitter, WhatsApp, etc.",
+    type: "image",
+    icon: Share2,
+    tips: {
+      format: "PNG o JPG",
+      size: "1200x630px (recomendado para todas las redes)",
+      aspectRatio: "Aproximadamente 1.91:1",
+      fileSize: "Menos de 1MB",
+      note: "Incluye logo, nombre de marca y un mensaje corto. El texto debe ser legible"
+    }
+  },
+  {
+    key: "primary_color",
+    title: "Color Primario",
+    description: "Color principal de la marca. Se usa en botones, enlaces y acentos.",
+    type: "color",
+    icon: Palette,
+    tips: {
+      format: "Código hexadecimal (#RRGGBB)",
+      note: "Elige un color con buen contraste. Evita colores muy claros"
+    }
+  },
+  {
+    key: "theme_color",
+    title: "Color del Tema (PWA)",
+    description: "Color de la barra de estado en dispositivos móviles cuando se instala como app.",
+    type: "color",
+    icon: Palette,
+    tips: {
+      format: "Código hexadecimal (#RRGGBB)",
+      note: "Generalmente igual o similar al color primario"
+    }
+  }
+];
 
 export function AppearanceSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  
-  const [settings, setSettings] = useState({
-    platform_name: "UGC Colombia",
-    logo_url: "",
-    favicon_url: "",
-    primary_color: "#F5A623"
-  });
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [settings, setSettings] = useState<BrandingSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
     loadSettings();
@@ -29,11 +163,11 @@ export function AppearanceSettings() {
       const { data, error } = await supabase
         .from("app_settings")
         .select("key, value")
-        .in("key", ["platform_name", "logo_url", "favicon_url", "primary_color"]);
+        .in("key", Object.keys(DEFAULT_SETTINGS));
 
       if (error) throw error;
 
-      const newSettings = { ...settings };
+      const newSettings = { ...DEFAULT_SETTINGS };
       data?.forEach((item) => {
         if (item.key in newSettings) {
           (newSettings as any)[item.key] = item.value;
@@ -47,13 +181,13 @@ export function AppearanceSettings() {
     }
   };
 
-  const handleFileUpload = async (file: File, type: "logo" | "favicon") => {
+  const handleFileUpload = async (file: File, key: string) => {
     if (!file) return;
 
-    setUploading(true);
+    setUploading(key);
     try {
       const fileExt = file.name.split(".").pop();
-      const fileName = `${type}_${Date.now()}.${fileExt}`;
+      const fileName = `${key}_${Date.now()}.${fileExt}`;
       const filePath = `branding/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -66,39 +200,45 @@ export function AppearanceSettings() {
         .from("public-assets")
         .getPublicUrl(filePath);
 
-      setSettings(prev => ({
-        ...prev,
-        [type === "logo" ? "logo_url" : "favicon_url"]: publicUrl
-      }));
-
-      toast.success(`${type === "logo" ? "Logo" : "Favicon"} subido correctamente`);
+      setSettings(prev => ({ ...prev, [key]: publicUrl }));
+      toast.success("Imagen subida correctamente");
     } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error("Error al subir archivo: " + error.message);
+      toast.error("Error al subir: " + error.message);
     } finally {
-      setUploading(false);
+      setUploading(null);
     }
   };
 
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const updates = Object.entries(settings).map(([key, value]) => ({
-        key,
-        value: value || "",
-        description: getDescription(key),
-        updated_at: new Date().toISOString()
-      }));
+      const descriptions: Record<string, string> = {
+        platform_name: "Nombre de la plataforma",
+        logo_url: "URL del logo principal (claro)",
+        logo_dark_url: "URL del logo para fondos oscuros",
+        favicon_url: "URL del favicon",
+        pwa_icon_192: "Ícono PWA 192x192",
+        pwa_icon_512: "Ícono PWA 512x512",
+        og_image_url: "Imagen para redes sociales",
+        primary_color: "Color primario de la marca",
+        theme_color: "Color del tema PWA"
+      };
 
-      for (const update of updates) {
+      for (const [key, value] of Object.entries(settings)) {
         const { error } = await supabase
           .from("app_settings")
-          .upsert(update, { onConflict: "key" });
+          .upsert({
+            key,
+            value: value || "",
+            description: descriptions[key] || key,
+            updated_at: new Date().toISOString()
+          }, { onConflict: "key" });
 
         if (error) throw error;
       }
 
-      toast.success("Configuración de apariencia guardada");
+      toast.success("Configuración de branding guardada correctamente");
     } catch (error: any) {
       console.error("Save error:", error);
       toast.error("Error al guardar: " + error.message);
@@ -107,14 +247,83 @@ export function AppearanceSettings() {
     }
   };
 
-  const getDescription = (key: string): string => {
-    const descriptions: Record<string, string> = {
-      platform_name: "Nombre de la plataforma",
-      logo_url: "URL del logo de la plataforma",
-      favicon_url: "URL del favicon",
-      primary_color: "Color primario de la marca"
-    };
-    return descriptions[key] || key;
+  const renderImageUploader = (key: string, currentValue: string) => (
+    <div className="flex items-start gap-4">
+      <div className="h-20 w-20 rounded-lg border border-border flex items-center justify-center bg-muted overflow-hidden shrink-0">
+        {currentValue ? (
+          <img src={currentValue} alt={key} className="h-full w-full object-contain" />
+        ) : (
+          <Image className="h-8 w-8 text-muted-foreground" />
+        )}
+      </div>
+      <div className="flex-1 space-y-2">
+        <Input
+          value={currentValue}
+          onChange={(e) => setSettings(prev => ({ ...prev, [key]: e.target.value }))}
+          placeholder="https://ejemplo.com/imagen.png"
+          className="text-sm"
+        />
+        <Label className="cursor-pointer inline-block">
+          <Input
+            type="file"
+            accept="image/*,.ico,.svg"
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], key)}
+            disabled={uploading === key}
+          />
+          <Button variant="outline" size="sm" asChild disabled={uploading === key}>
+            <span>
+              {uploading === key ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Upload className="h-4 w-4 mr-2" />
+              )}
+              Subir imagen
+            </span>
+          </Button>
+        </Label>
+      </div>
+    </div>
+  );
+
+  const renderColorPicker = (key: string, currentValue: string) => (
+    <div className="flex items-center gap-4">
+      <input
+        type="color"
+        value={currentValue || "#000000"}
+        onChange={(e) => setSettings(prev => ({ ...prev, [key]: e.target.value }))}
+        className="h-12 w-16 rounded border border-border cursor-pointer"
+      />
+      <Input
+        value={currentValue}
+        onChange={(e) => setSettings(prev => ({ ...prev, [key]: e.target.value }))}
+        placeholder="#F5A623"
+        className="max-w-40"
+      />
+      <div 
+        className="h-12 flex-1 rounded-lg border border-border"
+        style={{ backgroundColor: currentValue || "#000000" }}
+      />
+    </div>
+  );
+
+  const renderTips = (tips: Record<string, string> | null) => {
+    if (!tips) return null;
+    
+    return (
+      <div className="mt-3 p-3 rounded-lg bg-muted/50 border text-xs space-y-1">
+        <div className="flex items-center gap-1 text-muted-foreground font-medium mb-2">
+          <Info className="h-3 w-3" />
+          Especificaciones:
+        </div>
+        {Object.entries(tips).map(([label, value]) => (
+          <div key={label} className="flex gap-2">
+            <span className="text-muted-foreground capitalize min-w-20">{label === "note" ? "💡 Tip" : label}:</span>
+            <span className="text-foreground">{value}</span>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   if (loading) {
@@ -128,179 +337,115 @@ export function AppearanceSettings() {
   return (
     <div className="space-y-6 p-6">
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">Apariencia</h2>
+        <h2 className="text-xl font-semibold text-foreground">Branding y Apariencia</h2>
         <p className="text-sm text-muted-foreground">
-          Personaliza la identidad visual de tu plataforma
+          Personaliza la identidad visual completa de tu plataforma. Todos estos elementos reemplazarán el branding por defecto.
         </p>
       </div>
 
-      {/* Platform Name */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Palette className="h-4 w-4" />
-            Nombre de la Plataforma
-          </CardTitle>
-          <CardDescription>
-            El nombre que aparece en el título y encabezados
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Input
-            value={settings.platform_name}
-            onChange={(e) => setSettings(prev => ({ ...prev, platform_name: e.target.value }))}
-            placeholder="Nombre de tu plataforma"
-          />
-        </CardContent>
-      </Card>
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Importante:</strong> Después de guardar los cambios, algunos elementos como el favicon y los íconos PWA pueden requerir que limpies la caché del navegador o reinstales la app para ver los cambios.
+        </AlertDescription>
+      </Alert>
 
-      {/* Logo */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Image className="h-4 w-4" />
-            Logo
-          </CardTitle>
-          <CardDescription>
-            Logo principal de la plataforma (recomendado: PNG transparente, mínimo 200x200px)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20 rounded-lg">
-              <AvatarImage src={settings.logo_url} className="object-contain" />
-              <AvatarFallback className="rounded-lg bg-muted">
-                <Image className="h-8 w-8 text-muted-foreground" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-2">
+      {BRANDING_ITEMS.map((item) => (
+        <Card key={item.key}>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <item.icon className="h-4 w-4" />
+              {item.title}
+            </CardTitle>
+            <CardDescription>{item.description}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {item.type === "text" && (
               <Input
-                value={settings.logo_url}
-                onChange={(e) => setSettings(prev => ({ ...prev, logo_url: e.target.value }))}
-                placeholder="https://ejemplo.com/logo.png"
+                value={(settings as any)[item.key] || ""}
+                onChange={(e) => setSettings(prev => ({ ...prev, [item.key]: e.target.value }))}
+                placeholder="Nombre de tu plataforma"
               />
-              <div className="flex gap-2">
-                <Label className="cursor-pointer">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "logo")}
-                    disabled={uploading}
-                  />
-                  <Button variant="outline" size="sm" asChild disabled={uploading}>
-                    <span>
-                      {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-                      Subir imagen
-                    </span>
-                  </Button>
-                </Label>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            )}
+            {item.type === "image" && renderImageUploader(item.key, (settings as any)[item.key] || "")}
+            {item.type === "color" && renderColorPicker(item.key, (settings as any)[item.key] || "")}
+            {renderTips(item.tips)}
+          </CardContent>
+        </Card>
+      ))}
 
-      {/* Favicon */}
+      {/* Preview Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <ExternalLink className="h-4 w-4" />
-            Favicon
-          </CardTitle>
-          <CardDescription>
-            Icono pequeño que aparece en la pestaña del navegador (recomendado: ICO o PNG 32x32px)
-          </CardDescription>
+          <CardTitle className="text-base">Vista Previa</CardTitle>
+          <CardDescription>Así se verá tu branding en diferentes contextos</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-lg border border-border flex items-center justify-center bg-muted">
+          {/* Browser Tab Preview */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Pestaña del navegador:</Label>
+            <div className="flex items-center gap-2 p-2 bg-muted rounded-t-lg border max-w-xs">
               {settings.favicon_url ? (
-                <img src={settings.favicon_url} alt="Favicon" className="h-8 w-8 object-contain" />
+                <img src={settings.favicon_url} alt="Favicon" className="h-4 w-4" />
               ) : (
-                <Image className="h-6 w-6 text-muted-foreground" />
+                <div className="h-4 w-4 bg-muted-foreground/30 rounded" />
               )}
+              <span className="text-xs truncate">{settings.platform_name || "Tu Plataforma"}</span>
             </div>
-            <div className="flex-1 space-y-2">
-              <Input
-                value={settings.favicon_url}
-                onChange={(e) => setSettings(prev => ({ ...prev, favicon_url: e.target.value }))}
-                placeholder="https://ejemplo.com/favicon.ico"
-              />
-              <div className="flex gap-2">
-                <Label className="cursor-pointer">
-                  <Input
-                    type="file"
-                    accept="image/*,.ico"
-                    className="hidden"
-                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "favicon")}
-                    disabled={uploading}
-                  />
-                  <Button variant="outline" size="sm" asChild disabled={uploading}>
-                    <span>
-                      {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-                      Subir imagen
+          </div>
+
+          {/* Mobile App Icon Preview */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Ícono de app móvil:</Label>
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <div 
+                  className="h-16 w-16 rounded-2xl border-2 border-border overflow-hidden flex items-center justify-center"
+                  style={{ backgroundColor: settings.theme_color || "#F5A623" }}
+                >
+                  {settings.pwa_icon_192 ? (
+                    <img src={settings.pwa_icon_192} alt="PWA Icon" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-white text-2xl font-bold">
+                      {(settings.platform_name || "U")[0]}
                     </span>
-                  </Button>
-                </Label>
+                  )}
+                </div>
+                <span className="text-[10px] text-muted-foreground mt-1 block">iOS/Android</span>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Primary Color */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Palette className="h-4 w-4" />
-            Color Primario
-          </CardTitle>
-          <CardDescription>
-            Color principal de la marca (botones, enlaces, acentos)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <input
-              type="color"
-              value={settings.primary_color}
-              onChange={(e) => setSettings(prev => ({ ...prev, primary_color: e.target.value }))}
-              className="h-10 w-14 rounded border border-border cursor-pointer"
-            />
-            <Input
-              value={settings.primary_color}
-              onChange={(e) => setSettings(prev => ({ ...prev, primary_color: e.target.value }))}
-              placeholder="#F5A623"
-              className="max-w-32"
-            />
-            <div 
-              className="h-10 flex-1 rounded-lg"
-              style={{ backgroundColor: settings.primary_color }}
-            />
+          {/* Social Share Preview */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Compartir en redes sociales:</Label>
+            <div className="border rounded-lg overflow-hidden max-w-sm">
+              <div className="h-32 bg-muted flex items-center justify-center">
+                {settings.og_image_url ? (
+                  <img src={settings.og_image_url} alt="OG Image" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-muted-foreground text-sm">Sin imagen OG</span>
+                )}
+              </div>
+              <div className="p-2 bg-card border-t">
+                <p className="text-xs text-muted-foreground uppercase">tudominio.com</p>
+                <p className="text-sm font-medium truncate">{settings.platform_name || "Tu Plataforma"}</p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Save Button */}
-      <div className="flex justify-end">
-        <Button onClick={saveSettings} disabled={saving}>
+      <div className="flex justify-end sticky bottom-4">
+        <Button onClick={saveSettings} disabled={saving} size="lg" className="shadow-lg">
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
           ) : (
             <Save className="h-4 w-4 mr-2" />
           )}
-          Guardar Cambios
+          Guardar Cambios de Branding
         </Button>
-      </div>
-
-      {/* Info Note */}
-      <div className="p-4 rounded-lg bg-muted/50 border text-sm text-muted-foreground">
-        <p className="font-medium text-foreground mb-1">Nota:</p>
-        <p>
-          Los cambios de logo y favicon se aplicarán automáticamente en toda la plataforma. 
-          Para ver los cambios del favicon, puede ser necesario refrescar la página o limpiar la caché del navegador.
-        </p>
       </div>
     </div>
   );
