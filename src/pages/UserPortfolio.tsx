@@ -21,6 +21,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { TikTokFeed } from '@/components/content/TikTokFeed';
 import { BunnyVideoCard } from '@/components/content/BunnyVideoCard';
 import { MediaCard, type MediaItem } from '@/components/content/MediaCard';
+import { FullscreenVideoViewer } from '@/components/content/FullscreenVideoViewer';
+import { PortfolioVideoThumbnail } from '@/components/portfolio/PortfolioVideoThumbnail';
+import { PortfolioImageThumbnail } from '@/components/portfolio/PortfolioImageThumbnail';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { StoryViewer } from '@/components/portfolio/StoryViewer';
 import { StoryRing } from '@/components/portfolio/StoryRing';
@@ -120,6 +123,7 @@ export default function UserPortfolio() {
   const [selectedPost, setSelectedPost] = useState<PortfolioPost | null>(null);
   const [showTikTokView, setShowTikTokView] = useState(false);
   const [initialVideoIndex, setInitialVideoIndex] = useState(0);
+  const [showFullscreenViewer, setShowFullscreenViewer] = useState(false);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [showMediaUploader, setShowMediaUploader] = useState(false);
   const [uploaderType, setUploaderType] = useState<'post' | 'story'>('post');
@@ -1158,149 +1162,81 @@ export default function UserPortfolio() {
               )}
             </div>
           ) : isMobile ? (
-            // Mobile: Show mixed grid of all content
-            <div className="grid grid-cols-2 gap-3">
-              {allContent.map((item) => {
+            // Mobile: Show grid of thumbnails
+            <div className="grid grid-cols-3 gap-0.5">
+              {allContent.map((item, index) => {
                 if (item.mediaType === 'image' && item.mediaUrl) {
-                  const media: MediaItem[] = [{ url: item.mediaUrl, type: 'image' }];
                   return (
-                    <MediaCard
+                    <PortfolioImageThumbnail
                       key={item.id}
                       id={item.id}
+                      imageUrl={item.mediaUrl}
                       title={item.title}
-                      media={media}
-                      viewsCount={item.viewsCount}
-                      likesCount={item.likesCount}
-                      commentsCount={(item as any).commentsCount || 0}
-                      isLiked={item.isLiked}
-                      creatorId={resolvedUserId || undefined}
-                      creatorName={profile?.full_name}
-                      creatorAvatar={profile?.avatar_url}
-                      onLike={(e) => handlePostLike(item.id, e)}
-                      onView={() => handlePostView(item.id)}
-                      isPortfolioPost={(item as any).isPortfolioPost || false}
-                      onShare={() => {
+                      onClick={() => {
                         const post = posts.find(p => p.id === item.id);
-                        if (post) {
-                          const url = `${window.location.origin}/p/${resolvedUserId}`;
-                          if (navigator.share) {
-                            navigator.share({ title: post.caption || '', url });
-                          } else {
-                            navigator.clipboard.writeText(url);
-                            toast.success('Link copiado al portapapeles');
-                          }
-                        }
+                        if (post) setSelectedPost(post);
                       }}
                     />
                   );
                 }
                 
-                // Video content
-                const isPostVideo = item.type === 'post';
+                // Video content - find index in allVideos
+                const videoIndex = allVideos.findIndex(v => v.id === item.id);
                 return (
-                  <BunnyVideoCard
+                  <PortfolioVideoThumbnail
                     key={item.id}
                     id={item.id}
-                    title={item.title}
-                    caption={item.title}
-                    videoUrls={item.videoUrls}
                     thumbnailUrl={item.thumbnailUrl}
+                    title={item.title}
                     viewsCount={item.viewsCount}
-                    likesCount={item.likesCount}
-                    commentsCount={(item as any).commentsCount || 0}
-                    isLiked={item.isLiked}
-                    isPinned={item.isPinned}
-                    isOwner={isOwner && profileType === 'user'}
-                    showActions={true}
-                    onLike={isPostVideo ? (e) => handlePostLike(item.id, e) : (e) => handleLike(item.id, e)}
-                    onView={isPostVideo ? () => handlePostView(item.id) : () => handleView(item.id)}
-                    onShare={() => {
-                      const contentItem = content.find(c => c.id === item.id);
-                      if (contentItem) handleShare(contentItem);
+                    onClick={() => {
+                      if (videoIndex >= 0) {
+                        setInitialVideoIndex(videoIndex);
+                        setShowFullscreenViewer(true);
+                      }
                     }}
-                    onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
-                    isPortfolioPost={isPostVideo}
                   />
                 );
               })}
             </div>
           ) : (
-            // Desktop: Show mixed grid of all content
-            <VideoPlayerProvider>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                {allContent.map((item) => {
-                  if (item.mediaType === 'image' && item.mediaUrl) {
-                    const media: MediaItem[] = [{ url: item.mediaUrl, type: 'image' }];
-                    return (
-                      <MediaCard
-                        key={item.id}
-                        id={item.id}
-                        title={item.title}
-                        media={media}
-                        viewsCount={item.viewsCount}
-                        likesCount={item.likesCount}
-                        commentsCount={(item as any).commentsCount || 0}
-                        isLiked={item.isLiked}
-                        creatorId={resolvedUserId || undefined}
-                        creatorName={profile?.full_name}
-                        creatorAvatar={profile?.avatar_url}
-                        onLike={(e) => handlePostLike(item.id, e)}
-                        onView={() => handlePostView(item.id)}
-                        isPortfolioPost={(item as any).isPortfolioPost || false}
-                        onShare={() => {
-                          const post = posts.find(p => p.id === item.id);
-                          if (post) {
-                            const url = `${window.location.origin}/p/${resolvedUserId}`;
-                            if (navigator.share) {
-                              navigator.share({ title: post.caption || '', url });
-                            } else {
-                              navigator.clipboard.writeText(url);
-                              toast.success('Link copiado al portapapeles');
-                            }
-                          }
-                        }}
-                      />
-                    );
-                  }
-                  
-                  // Video content
-                  const isCreatorOfContent = isOwner && profileType === 'user' && userRoles.includes('creator') && item.type === 'work';
-                  const canChangeStatus = isCreatorOfContent && (item.status === 'assigned' || item.status === 'recording');
-                  const isPostVideo = item.type === 'post';
-
+            // Desktop: Show grid of thumbnails
+            <div className="grid grid-cols-3 gap-0.5">
+              {allContent.map((item, index) => {
+                if (item.mediaType === 'image' && item.mediaUrl) {
                   return (
-                    <BunnyVideoCard
+                    <PortfolioImageThumbnail
                       key={item.id}
                       id={item.id}
+                      imageUrl={item.mediaUrl}
                       title={item.title}
-                      caption={item.title}
-                      videoUrls={item.videoUrls}
-                      thumbnailUrl={item.thumbnailUrl}
-                      viewsCount={item.viewsCount}
-                      likesCount={item.likesCount}
-                      commentsCount={(item as any).commentsCount || 0}
-                      isLiked={item.isLiked}
-                      isPinned={item.isPinned}
-                      isOwner={isOwner && profileType === 'user'}
-                      isCreatorOwner={isCreatorOfContent}
-                      status={item.status}
-                      showActions={true}
-                      onLike={isPostVideo ? (e) => handlePostLike(item.id, e) : (e) => handleLike(item.id, e)}
-                      onView={isPostVideo ? () => handlePostView(item.id) : () => handleView(item.id)}
-                      onShare={() => {
-                        const contentItem = content.find(c => c.id === item.id);
-                        if (contentItem) handleShare(contentItem);
+                      onClick={() => {
+                        const post = posts.find(p => p.id === item.id);
+                        if (post) setSelectedPost(post);
                       }}
-                      onPin={isOwner && profileType === 'user' ? () => handlePin(item.id, item.type) : undefined}
-                      onApprove={isClientOwner && item.status === 'delivered' ? () => handleApproveContent(item.id) : undefined}
-                      onCreatorStatusChange={canChangeStatus ? (newStatus) => handleCreatorStatusChange(item.id, newStatus) : undefined}
-                      onSettingsUpdate={() => fetchData()}
-                      isPortfolioPost={isPostVideo}
                     />
                   );
-                })}
-              </div>
-            </VideoPlayerProvider>
+                }
+                
+                // Video content - find index in allVideos
+                const videoIndex = allVideos.findIndex(v => v.id === item.id);
+                return (
+                  <PortfolioVideoThumbnail
+                    key={item.id}
+                    id={item.id}
+                    thumbnailUrl={item.thumbnailUrl}
+                    title={item.title}
+                    viewsCount={item.viewsCount}
+                    onClick={() => {
+                      if (videoIndex >= 0) {
+                        setInitialVideoIndex(videoIndex);
+                        setShowFullscreenViewer(true);
+                      }
+                    }}
+                  />
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
@@ -1407,6 +1343,54 @@ export default function UserPortfolio() {
           onOpenChange={setShowFollowersDialog}
           userId={resolvedUserId}
           initialTab={followersDialogTab}
+        />
+      )}
+
+      {/* Fullscreen Video Viewer - TikTok style */}
+      {showFullscreenViewer && allVideos.length > 0 && (
+        <FullscreenVideoViewer
+          videos={allVideos.map(v => ({
+            id: v.id,
+            title: v.title,
+            videoUrls: v.videoUrls,
+            thumbnailUrl: v.thumbnailUrl,
+            viewsCount: v.viewsCount,
+            likesCount: v.likesCount,
+            isLiked: v.isLiked,
+            creatorId: resolvedUserId || undefined,
+            creatorName: profile?.full_name,
+          }))}
+          initialIndex={initialVideoIndex}
+          onClose={() => setShowFullscreenViewer(false)}
+          onLike={(id) => {
+            const item = allVideos.find(v => v.id === id);
+            if (item) {
+              if (item.type === 'post') {
+                handlePostLike(id);
+              } else {
+                handleLike(id);
+              }
+            }
+          }}
+          onView={(id) => {
+            const item = allVideos.find(v => v.id === id);
+            if (item) {
+              if (item.type === 'post') {
+                handlePostView(id);
+              } else {
+                handleView(id);
+              }
+            }
+          }}
+          onShare={(video) => {
+            const url = `${window.location.origin}/p/${resolvedUserId}`;
+            if (navigator.share) {
+              navigator.share({ title: video.title, url });
+            } else {
+              navigator.clipboard.writeText(url);
+              toast.success('Link copiado al portapapeles');
+            }
+          }}
         />
       )}
     </div>
