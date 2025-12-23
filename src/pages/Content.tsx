@@ -35,6 +35,7 @@ interface ContentItem {
   client: { name: string; logo_url: string | null } | null;
   creator: { full_name: string } | null;
   creator_id: string | null;
+  client_id: string | null;
   status: string;
   is_liked?: boolean;
 }
@@ -58,6 +59,7 @@ function getVideoUrls(item: ContentItem): string[] {
 const Content = () => {
   const { roles, user } = useAuth();
   const isAdmin = roles.includes('admin');
+  const isClient = roles.includes('client');
   const [content, setContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,6 +70,7 @@ const Content = () => {
   const [submitting, setSubmitting] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
   const [settingsContentId, setSettingsContentId] = useState<string | null>(null);
+  const [userClientIds, setUserClientIds] = useState<string[]>([]);
   
   // Viewer ID for likes tracking
   const [viewerId] = useState(() => {
@@ -77,6 +80,24 @@ const Content = () => {
     localStorage.setItem('content_viewer_id', newId);
     return newId;
   });
+
+  // Fetch user's associated client IDs if they are a client
+  useEffect(() => {
+    const fetchUserClientIds = async () => {
+      if (!user?.id || !isClient) return;
+      
+      const { data } = await supabase
+        .from('client_users')
+        .select('client_id')
+        .eq('user_id', user.id);
+      
+      if (data) {
+        setUserClientIds(data.map(d => d.client_id));
+      }
+    };
+    
+    fetchUserClientIds();
+  }, [user?.id, isClient]);
 
   useEffect(() => {
     fetchContent();
@@ -459,10 +480,11 @@ const Content = () => {
                       showActions={true}
                     />
                     
-                    {/* Controls overlay - Admin or Content Owner */}
+                    {/* Controls overlay - Admin, Content Owner, or Client Owner */}
                     {(() => {
-                      const isOwner = user?.id === item.creator_id;
-                      const canManage = isAdmin || isOwner;
+                      const isCreator = user?.id === item.creator_id;
+                      const isClientOwner = item.client_id ? userClientIds.includes(item.client_id) : false;
+                      const canManage = isAdmin || isCreator || isClientOwner;
                       
                       if (!canManage) return null;
                       
