@@ -20,6 +20,7 @@ import { ClientFinanceChart } from '@/components/dashboard/ClientFinanceChart';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { FullscreenContentViewer } from '@/components/content/FullscreenContentViewer';
 import { ReviewCard } from '@/components/content/ReviewCard';
+import { ContentVideoCard } from '@/components/content/ContentVideoCard';
 import { 
   LogOut, 
   Video, 
@@ -1280,6 +1281,8 @@ export default function ClientDashboard() {
                 })} 
                 onSelect={setSelectedContent}
                 onStatusChange={handleQuickStatusChange}
+                userId={user?.id}
+                onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
               />
             ) : (
               <Tabs defaultValue="all" className="w-full">
@@ -1291,16 +1294,16 @@ export default function ClientDashboard() {
                 </TabsList>
 
                 <TabsContent value="all">
-                  <ContentList items={content} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} />
+                  <ContentList items={content} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} />
                 </TabsContent>
                 <TabsContent value="progress">
-                  <ContentList items={inProgressContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} />
+                  <ContentList items={inProgressContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} />
                 </TabsContent>
                 <TabsContent value="approved">
-                  <ContentList items={approvedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} />
+                  <ContentList items={approvedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} />
                 </TabsContent>
                 <TabsContent value="published">
-                  <ContentList items={publishedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} />
+                  <ContentList items={publishedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} />
                 </TabsContent>
               </Tabs>
             )}
@@ -1768,88 +1771,16 @@ export default function ClientDashboard() {
 function ContentList({ 
   items, 
   onSelect, 
-  onStatusChange 
+  onStatusChange,
+  userId,
+  onUpdate
 }: { 
   items: Content[]; 
   onSelect: (c: Content) => void;
   onStatusChange?: (id: string, status: ContentStatus, notes?: string) => Promise<void>;
+  userId?: string;
+  onUpdate?: () => void;
 }) {
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  const handleQuickAction = async (
-    e: React.MouseEvent,
-    item: Content,
-    newStatus: ContentStatus,
-    actionLabel: string
-  ) => {
-    e.stopPropagation();
-    if (!onStatusChange) return;
-    
-    setLoadingId(item.id);
-    try {
-      await onStatusChange(item.id, newStatus);
-      toast({ 
-        title: actionLabel, 
-        description: `El contenido "${item.title}" ha sido actualizado` 
-      });
-    } catch (error) {
-      toast({ 
-        title: 'Error', 
-        description: 'No se pudo actualizar el estado', 
-        variant: 'destructive' 
-      });
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
-  // Determine which actions are available based on status
-  const getAvailableActions = (status: ContentStatus) => {
-    const actions: { status: ContentStatus; label: string; icon: any; color: string }[] = [];
-    
-    // Script pending can be approved
-    if (status === 'script_pending') {
-      actions.push({ 
-        status: 'script_approved', 
-        label: 'Aprobar Guión', 
-        icon: FileCheck, 
-        color: 'bg-success hover:bg-success/90 text-success-foreground' 
-      });
-    }
-    
-    // Delivered content can be approved or marked as issue
-    if (status === 'delivered') {
-      actions.push({ 
-        status: 'approved', 
-        label: 'Aprobar', 
-        icon: ThumbsUp, 
-        color: 'bg-success hover:bg-success/90 text-success-foreground' 
-      });
-      actions.push({ 
-        status: 'issue', 
-        label: 'Novedad', 
-        icon: AlertTriangle, 
-        color: 'bg-warning hover:bg-warning/90 text-warning-foreground' 
-      });
-    }
-    
-    // Issue content can be marked as corrected (by editor/admin, not client)
-    // Client sees issue and waits for correction
-    
-    // Corrected content can be approved by client
-    if (status === 'corrected') {
-      actions.push({ 
-        status: 'approved', 
-        label: 'Aprobar', 
-        icon: ThumbsUp, 
-        color: 'bg-success hover:bg-success/90 text-success-foreground' 
-      });
-    }
-    
-    return actions;
-  };
-
   if (items.length === 0) {
     return (
       <Card>
@@ -1862,56 +1793,16 @@ function ContentList({
   }
 
   return (
-    <div className="space-y-2">
-      {items.map(item => {
-        const actions = getAvailableActions(item.status);
-        const isLoading = loadingId === item.id;
-        
-        return (
-          <Card key={item.id} className="hover:bg-muted/50 transition-colors">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-3 cursor-pointer" onClick={() => onSelect(item)}>
-                <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                  {item.thumbnail_url ? (
-                    <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
-                  ) : (
-                    <Play className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">{item.creator?.full_name || 'Sin creador'}</p>
-                </div>
-                <Badge className={STATUS_COLORS[item.status]} variant="secondary">
-                  {STATUS_LABELS[item.status]}
-                </Badge>
-              </div>
-              
-              {/* Quick action buttons */}
-              {actions.length > 0 && onStatusChange && (
-                <div className="flex gap-2 mt-3 pt-3 border-t border-border/50">
-                  {actions.map(action => (
-                    <Button
-                      key={action.status}
-                      size="sm"
-                      className={cn("flex-1 h-8 text-xs", action.color)}
-                      onClick={(e) => handleQuickAction(e, item, action.status, action.label)}
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      ) : (
-                        <action.icon className="h-3 w-3 mr-1" />
-                      )}
-                      {action.label}
-                    </Button>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {items.map(item => (
+        <ContentVideoCard
+          key={item.id}
+          content={item}
+          userId={userId}
+          onStatusChange={onStatusChange}
+          onUpdate={onUpdate}
+        />
+      ))}
     </div>
   );
 }
