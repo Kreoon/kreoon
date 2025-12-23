@@ -156,17 +156,27 @@ export function ThumbnailSelector({
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const functionUrl = `${supabaseUrl}/functions/v1/bunny-thumbnail?content_id=${contentId}&video_id=${videoId}`;
       const response = await fetch(functionUrl);
-      
+
       if (!response.ok) {
-        throw new Error('Thumbnail not available');
+        const details = await response.text().catch(() => '');
+        const isNotReady = response.status === 404 && details.toLowerCase().includes('thumbnail');
+
+        toast({
+          title: isNotReady ? 'Miniatura aún no lista' : 'Error al obtener miniatura',
+          description: isNotReady
+            ? 'Bunny todavía no ha generado la miniatura. Espera 1–2 minutos y vuelve a intentar, o sube una imagen manualmente.'
+            : (details || 'No se pudo obtener la miniatura del video.'),
+          variant: 'destructive'
+        });
+        return;
       }
 
       const blob = await response.blob();
       const imageUrl = URL.createObjectURL(blob);
       setPreviewImage(imageUrl);
-      
+
       // Create a file from the blob for upload
-      const file = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+      const file = new File([blob], 'thumbnail.jpg', { type: blob.type || 'image/jpeg' });
       setPreviewFile(file);
 
       toast({
@@ -176,8 +186,8 @@ export function ThumbnailSelector({
     } catch (error) {
       console.error('Error fetching auto thumbnail:', error);
       toast({
-        title: 'Miniatura no disponible',
-        description: 'Bunny aún no ha generado la miniatura. Intenta subir una imagen manualmente.',
+        title: 'Error al obtener miniatura',
+        description: 'No se pudo obtener la miniatura. Intenta de nuevo o sube una imagen manualmente.',
         variant: 'destructive'
       });
     } finally {

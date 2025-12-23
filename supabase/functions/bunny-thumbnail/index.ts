@@ -19,6 +19,12 @@ function extractVideoId(videoUrl: string): string | null {
   return null
 }
 
+function extractLibraryId(videoUrl: string): string | null {
+  if (!videoUrl) return null
+  const match = videoUrl.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/[a-f0-9-]+/i)
+  return match?.[1] ?? null
+}
+
 async function fetchFirstOk(urls: string[]): Promise<Response | null> {
   for (const url of urls) {
     try {
@@ -81,9 +87,17 @@ Deno.serve(async (req) => {
     }
 
     // Try common Bunny thumbnail paths
+    const libraryId = urls.map((u) => extractLibraryId(u)).find(Boolean) as string | undefined
+
     const candidateUrls = [
+      // Mediadelivery embed thumbnail (often available even when CDN preview isn't)
+      ...(libraryId ? [`https://iframe.mediadelivery.net/embed/${libraryId}/${videoIdParam}/thumbnail.jpg`] : []),
+
+      // Bunny Stream CDN variants
       `https://${bunnyCdnHostname}/${videoIdParam}/thumbnail.jpg`,
       `https://${bunnyCdnHostname}/${videoIdParam}/thumbnail_1.jpg`,
+      `https://${bunnyCdnHostname}/${videoIdParam}/thumbnail_2.jpg`,
+      `https://${bunnyCdnHostname}/${videoIdParam}/preview.jpg`,
       `https://${bunnyCdnHostname}/${videoIdParam}/preview.webp`,
     ]
 
