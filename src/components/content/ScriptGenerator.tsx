@@ -233,13 +233,15 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
         console.log("n8n JSON response:", data);
         
         // Handle the segmented response structure from n8n
-        // Expected: { bloques_html: { guion, pautas_editor, pautas_trafficker, pautas_estratega } }
-        if (data.bloques_html) {
+        // Response comes as array: [{ bloques_html: { guion, pautas_editor, pautas_trafficker, pautas_estratega } }]
+        const responseData = Array.isArray(data) ? data[0] : data;
+        
+        if (responseData?.bloques_html) {
           generatedContent = {
-            script: data.bloques_html.guion || "",
-            editor_guidelines: data.bloques_html.pautas_editor || "",
-            strategist_guidelines: data.bloques_html.pautas_estratega || "",
-            trafficker_guidelines: data.bloques_html.pautas_trafficker || "",
+            script: responseData.bloques_html.guion || "",
+            editor_guidelines: responseData.bloques_html.pautas_editor || "",
+            strategist_guidelines: responseData.bloques_html.pautas_estratega || "",
+            trafficker_guidelines: responseData.bloques_html.pautas_trafficker || "",
           };
         } else if (typeof data === "string") {
           generatedContent.script = data;
