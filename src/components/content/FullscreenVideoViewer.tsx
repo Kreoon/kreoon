@@ -39,6 +39,9 @@ interface FullscreenVideoViewerProps {
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   onToggleVisibility?: (id: string, isPublic: boolean) => void;
+  onProfileClick?: (creatorId: string) => void;
+  onFollow?: (creatorId: string) => void;
+  isFollowing?: (creatorId: string) => boolean;
 }
 
 function formatCount(count: number): string {
@@ -77,7 +80,10 @@ export function FullscreenVideoViewer({
   isOwner,
   onEdit,
   onDelete,
-  onToggleVisibility
+  onToggleVisibility,
+  onProfileClick,
+  onFollow,
+  isFollowing
 }: FullscreenVideoViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [currentVariation, setCurrentVariation] = useState(0);
@@ -422,16 +428,33 @@ export function FullscreenVideoViewer({
         <div className="absolute bottom-32 right-3 flex flex-col items-center gap-5 z-30">
           {/* Creator Avatar with follow button */}
           <div className="relative mb-2">
-            <Avatar className="h-12 w-12 ring-2 ring-white shadow-lg">
-              <AvatarImage src={currentVideo.creatorAvatar} />
-              <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white text-sm font-bold">
-                {currentVideo.creatorName?.charAt(0)?.toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            {!isOwner && (
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                <Plus className="h-4 w-4 text-white" />
-              </div>
+            <button
+              onClick={() => {
+                if (currentVideo.creatorId && onProfileClick) {
+                  onClose();
+                  onProfileClick(currentVideo.creatorId);
+                }
+              }}
+              className="block"
+            >
+              <Avatar className="h-12 w-12 ring-2 ring-white shadow-lg cursor-pointer hover:ring-primary transition-all">
+                <AvatarImage src={currentVideo.creatorAvatar} />
+                <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white text-sm font-bold">
+                  {currentVideo.creatorName?.charAt(0)?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+            {!isOwner && currentVideo.creatorId && onFollow && (
+              <button 
+                onClick={() => onFollow(currentVideo.creatorId!)}
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors active:scale-90"
+              >
+                {isFollowing?.(currentVideo.creatorId) ? (
+                  <span className="text-white text-xs font-bold">✓</span>
+                ) : (
+                  <Plus className="h-4 w-4 text-white" />
+                )}
+              </button>
             )}
           </div>
 
@@ -498,9 +521,17 @@ export function FullscreenVideoViewer({
         <div className="absolute bottom-6 left-4 right-20 z-30">
           {/* Username */}
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-white font-bold text-base drop-shadow-lg">
+            <button 
+              onClick={() => {
+                if (currentVideo.creatorId && onProfileClick) {
+                  onClose();
+                  onProfileClick(currentVideo.creatorId);
+                }
+              }}
+              className="text-white font-bold text-base drop-shadow-lg hover:underline transition-all pointer-events-auto"
+            >
               @{currentVideo.creatorName || 'usuario'}
-            </span>
+            </button>
             {/* Verified badge could go here */}
           </div>
 

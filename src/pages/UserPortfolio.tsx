@@ -1462,6 +1462,35 @@ export default function UserPortfolio() {
           onEdit={handleEditContent}
           onDelete={handleDeleteContent}
           onToggleVisibility={handleToggleVisibility}
+          onProfileClick={(creatorId) => {
+            navigate(`/p/${creatorId}`);
+          }}
+          onFollow={async (creatorId) => {
+            if (!user) {
+              toast.error('Inicia sesión para seguir usuarios');
+              return;
+            }
+            if (user.id === creatorId) return;
+            
+            try {
+              const { data, error } = await supabase.rpc('toggle_follow', {
+                _following_id: creatorId,
+              });
+              if (error) throw error;
+              
+              const nowFollowing = data as boolean;
+              setIsFollowing(nowFollowing);
+              setFollowCounts(prev => ({
+                ...prev,
+                followers: prev.followers + (nowFollowing ? 1 : -1),
+              }));
+              toast.success(nowFollowing ? 'Siguiendo' : 'Dejaste de seguir');
+            } catch (error) {
+              console.error('Error toggling follow:', error);
+              toast.error('Error al seguir');
+            }
+          }}
+          isFollowing={() => isFollowing}
         />
       )}
     </div>
