@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.ghl-sync]
 verify_jwt = false
+
+[functions.bunny-portfolio-upload]
+verify_jwt = false
