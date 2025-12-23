@@ -58,6 +58,10 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
   const videoUrls = (content as any).video_urls || [];
   const hasMultipleVariants = videoUrls.length > 1;
   const currentVideoUrl = videoUrls[currentVariantIndex] || (content as any).video_url;
+  const bunnyEmbedUrl = (content as any).bunny_embed_url;
+  
+  // Determine if we should use embed or direct video
+  const useEmbed = bunnyEmbedUrl && !currentVideoUrl;
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -203,7 +207,15 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
       <CardContent className="p-0">
         {/* Video Section */}
         <div className="relative aspect-[9/16] max-h-[500px] bg-black">
-          {currentVideoUrl ? (
+          {useEmbed ? (
+            // Use Bunny embed iframe for CDN videos
+            <iframe
+              src={bunnyEmbedUrl}
+              className="w-full h-full"
+              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
+          ) : currentVideoUrl ? (
             <>
               <video
                 ref={videoRef}
