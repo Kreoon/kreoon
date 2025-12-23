@@ -1173,15 +1173,14 @@ export default function UserPortfolio() {
                       imageUrl={item.mediaUrl}
                       title={item.title}
                       onClick={() => {
-                        const post = posts.find(p => p.id === item.id);
-                        if (post) setSelectedPost(post);
+                        setInitialVideoIndex(index);
+                        setShowFullscreenViewer(true);
                       }}
                     />
                   );
                 }
                 
-                // Video content - find index in allVideos
-                const videoIndex = allVideos.findIndex(v => v.id === item.id);
+                // Video content
                 return (
                   <PortfolioVideoThumbnail
                     key={item.id}
@@ -1190,10 +1189,8 @@ export default function UserPortfolio() {
                     title={item.title}
                     viewsCount={item.viewsCount}
                     onClick={() => {
-                      if (videoIndex >= 0) {
-                        setInitialVideoIndex(videoIndex);
-                        setShowFullscreenViewer(true);
-                      }
+                      setInitialVideoIndex(index);
+                      setShowFullscreenViewer(true);
                     }}
                   />
                 );
@@ -1211,15 +1208,14 @@ export default function UserPortfolio() {
                       imageUrl={item.mediaUrl}
                       title={item.title}
                       onClick={() => {
-                        const post = posts.find(p => p.id === item.id);
-                        if (post) setSelectedPost(post);
+                        setInitialVideoIndex(index);
+                        setShowFullscreenViewer(true);
                       }}
                     />
                   );
                 }
                 
-                // Video content - find index in allVideos
-                const videoIndex = allVideos.findIndex(v => v.id === item.id);
+                // Video content
                 return (
                   <PortfolioVideoThumbnail
                     key={item.id}
@@ -1228,10 +1224,8 @@ export default function UserPortfolio() {
                     title={item.title}
                     viewsCount={item.viewsCount}
                     onClick={() => {
-                      if (videoIndex >= 0) {
-                        setInitialVideoIndex(videoIndex);
-                        setShowFullscreenViewer(true);
-                      }
+                      setInitialVideoIndex(index);
+                      setShowFullscreenViewer(true);
                     }}
                   />
                 );
@@ -1346,24 +1340,26 @@ export default function UserPortfolio() {
         />
       )}
 
-      {/* Fullscreen Video Viewer - TikTok style */}
-      {showFullscreenViewer && allVideos.length > 0 && (
+      {/* Fullscreen Content Viewer - TikTok style (handles both images and videos) */}
+      {showFullscreenViewer && allContent.length > 0 && (
         <FullscreenVideoViewer
-          videos={allVideos.map(v => ({
-            id: v.id,
-            title: v.title,
-            videoUrls: v.videoUrls,
-            thumbnailUrl: v.thumbnailUrl,
-            viewsCount: v.viewsCount,
-            likesCount: v.likesCount,
-            isLiked: v.isLiked,
+          videos={allContent.map(item => ({
+            id: item.id,
+            title: item.title,
+            videoUrls: item.videoUrls || [],
+            thumbnailUrl: item.thumbnailUrl,
+            viewsCount: item.viewsCount,
+            likesCount: item.likesCount,
+            isLiked: item.isLiked,
             creatorId: resolvedUserId || undefined,
             creatorName: profile?.full_name,
+            mediaType: item.mediaType,
+            mediaUrl: item.mediaUrl
           }))}
           initialIndex={initialVideoIndex}
           onClose={() => setShowFullscreenViewer(false)}
           onLike={(id) => {
-            const item = allVideos.find(v => v.id === id);
+            const item = allContent.find(v => v.id === id);
             if (item) {
               if (item.type === 'post') {
                 handlePostLike(id);
@@ -1373,7 +1369,7 @@ export default function UserPortfolio() {
             }
           }}
           onView={(id) => {
-            const item = allVideos.find(v => v.id === id);
+            const item = allContent.find(v => v.id === id);
             if (item) {
               if (item.type === 'post') {
                 handlePostView(id);

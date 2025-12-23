@@ -12,6 +12,8 @@ interface VideoItem {
   isLiked: boolean;
   creatorId?: string;
   creatorName?: string;
+  mediaType?: 'video' | 'image';
+  mediaUrl?: string;
 }
 
 interface FullscreenVideoViewerProps {
@@ -67,8 +69,10 @@ export function FullscreenVideoViewer({
   const viewTrackedRef = useRef<Set<string>>(new Set());
 
   const currentVideo = videos[currentIndex];
-  const currentVideoUrl = currentVideo?.videoUrls[currentVariation] || currentVideo?.videoUrls[0];
-  const hasMultipleVariations = currentVideo?.videoUrls.length > 1;
+  const isImage = currentVideo?.mediaType === 'image' || 
+    (!currentVideo?.videoUrls?.length && currentVideo?.mediaUrl);
+  const currentVideoUrl = currentVideo?.videoUrls?.[currentVariation] || currentVideo?.videoUrls?.[0];
+  const hasMultipleVariations = (currentVideo?.videoUrls?.length || 0) > 1;
 
   // Track view after 3 seconds
   useEffect(() => {
@@ -184,18 +188,31 @@ export function FullscreenVideoViewer({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Video Container */}
+      {/* Content Container */}
       <div className={cn(
         "flex-1 relative transition-transform duration-300",
         isTransitioning && "opacity-90"
       )}>
-        <iframe
-          key={`${currentVideo.id}-${currentVariation}`}
-          src={getEmbedUrl(currentVideoUrl, isMuted)}
-          className="w-full h-full border-0"
-          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-          allowFullScreen
-        />
+        {isImage ? (
+          // Image display
+          <div className="w-full h-full flex items-center justify-center">
+            <img
+              key={currentVideo.id}
+              src={currentVideo.mediaUrl || currentVideo.thumbnailUrl || ''}
+              alt={currentVideo.title}
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+        ) : (
+          // Video display
+          <iframe
+            key={`${currentVideo.id}-${currentVariation}`}
+            src={getEmbedUrl(currentVideoUrl, isMuted)}
+            className="w-full h-full border-0"
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+          />
+        )}
 
         {/* Close button */}
         <button
@@ -205,16 +222,18 @@ export function FullscreenVideoViewer({
           <X className="h-6 w-6" />
         </button>
 
-        {/* Mute toggle */}
-        <button
-          onClick={() => setIsMuted(!isMuted)}
-          className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
-        >
-          {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
-        </button>
+        {/* Mute toggle - only for videos */}
+        {!isImage && (
+          <button
+            onClick={() => setIsMuted(!isMuted)}
+            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+          >
+            {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+          </button>
+        )}
 
-        {/* Variation navigation (horizontal) */}
-        {hasMultipleVariations && (
+        {/* Variation navigation (horizontal) - only for videos with multiple variations */}
+        {!isImage && hasMultipleVariations && (
           <>
             <button
               onClick={goToPrevVariation}
@@ -327,7 +346,7 @@ export function FullscreenVideoViewer({
           )}
           <div className="flex items-center gap-3 text-white/60 text-xs mt-2">
             <span>{formatCount(currentVideo.viewsCount)} vistas</span>
-            {hasMultipleVariations && (
+            {!isImage && hasMultipleVariations && (
               <span className="text-primary">{currentVideo.videoUrls.length} variaciones</span>
             )}
           </div>
