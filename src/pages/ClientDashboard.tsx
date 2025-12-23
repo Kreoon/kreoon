@@ -21,6 +21,7 @@ import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { FullscreenContentViewer } from '@/components/content/FullscreenContentViewer';
 import { ReviewCard } from '@/components/content/ReviewCard';
 import { ContentVideoCard } from '@/components/content/ContentVideoCard';
+import { ScriptReviewCard } from '@/components/content/ScriptReviewCard';
 import { 
   LogOut, 
   Video, 
@@ -542,9 +543,13 @@ export default function ClientDashboard() {
   const getContentByStatus = (statuses: ContentStatus[]) => content.filter(c => statuses.includes(c.status));
 
   const inProgressContent = getContentByStatus(['draft', 'script_pending', 'script_approved', 'recording', 'editing', 'review']);
-  const reviewContent = getContentByStatus(['delivered', 'issue']); // Entregado y novedades para revisar
+  const scriptReviewContent = getContentByStatus(['script_pending']); // Guiones pendientes de aprobar
+  const videoReviewContent = getContentByStatus(['delivered', 'issue']); // Videos entregados y novedades
   const approvedContent = getContentByStatus(['approved', 'paid']);
   const publishedContent = content.filter(c => c.is_published);
+  
+  // Total pending review (scripts + videos)
+  const totalPendingReview = scriptReviewContent.length + videoReviewContent.length;
 
   // Financial Metrics
   const totalInvested = packages.reduce((sum, p) => sum + Number(p.paid_amount || 0), 0);
@@ -699,11 +704,11 @@ export default function ClientDashboard() {
             {/* Portfolio Button */}
             <PortfolioButton userId={clientInfo.id} />
 
-            {reviewContent.length > 0 && (
+            {totalPendingReview > 0 && (
               <Button size="sm" onClick={() => setActiveTab('review')} className="gap-1">
                 <Eye className="w-4 h-4" />
-                <span className="hidden sm:inline">{reviewContent.length} por revisar</span>
-                <span className="sm:hidden">{reviewContent.length}</span>
+                <span className="hidden sm:inline">{totalPendingReview} por revisar</span>
+                <span className="sm:hidden">{totalPendingReview}</span>
               </Button>
             )}
             <div className="hidden md:flex items-center gap-2 px-2 py-1 rounded-lg bg-success/10 border border-success/20">
@@ -719,7 +724,7 @@ export default function ClientDashboard() {
             { id: 'overview', label: 'Dashboard', icon: Home },
             { id: 'finance', label: 'Finanzas', icon: Wallet },
             { id: 'products', label: 'Productos', icon: Package, badge: products.length },
-            { id: 'review', label: 'Revisar', icon: Eye, badge: reviewContent.length },
+            { id: 'review', label: 'Revisar', icon: Eye, badge: totalPendingReview },
             { id: 'content', label: 'Contenido', icon: Video },
             { id: 'company', label: 'Empresa', icon: Building2 },
           ].map(tab => (
@@ -869,7 +874,7 @@ export default function ClientDashboard() {
             </div>
 
             {/* Pending Reviews Alert */}
-            {reviewContent.length > 0 && (
+            {totalPendingReview > 0 && (
               <Card className="border-orange-500/30 bg-orange-500/5">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -878,7 +883,11 @@ export default function ClientDashboard() {
                         <Eye className="h-5 w-5 text-orange-500" />
                       </div>
                       <div>
-                        <p className="font-medium text-sm">Tienes {reviewContent.length} contenido(s) por revisar</p>
+                        <p className="font-medium text-sm">
+                          Tienes {scriptReviewContent.length > 0 ? `${scriptReviewContent.length} guión(es)` : ''} 
+                          {scriptReviewContent.length > 0 && videoReviewContent.length > 0 ? ' y ' : ''}
+                          {videoReviewContent.length > 0 ? `${videoReviewContent.length} video(s)` : ''} por revisar
+                        </p>
                         <p className="text-xs text-muted-foreground">Revisa y aprueba tu contenido</p>
                       </div>
                     </div>
@@ -1197,17 +1206,70 @@ export default function ClientDashboard() {
 
         {/* Review Tab - Inline Cards */}
         {activeTab === 'review' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold mb-1">Contenido por Revisar</h2>
-                <p className="text-sm text-muted-foreground">
-                  {reviewContent.length} {reviewContent.length === 1 ? 'video' : 'videos'} pendientes de revisión
-                </p>
+          <div className="space-y-6">
+            {/* Scripts to Review */}
+            {scriptReviewContent.length > 0 && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Guiones por Aprobar
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {scriptReviewContent.length} {scriptReviewContent.length === 1 ? 'guión pendiente' : 'guiones pendientes'} de aprobación
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {scriptReviewContent.map((item) => (
+                    <ScriptReviewCard
+                      key={item.id}
+                      content={item}
+                      userId={user?.id}
+                      onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
+                    />
+                  ))}
+                </div>
               </div>
+            )}
+
+            {/* Videos to Review */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
+                    <Video className="h-5 w-5 text-info" />
+                    Videos por Revisar
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {videoReviewContent.length} {videoReviewContent.length === 1 ? 'video pendiente' : 'videos pendientes'} de revisión
+                  </p>
+                </div>
+              </div>
+
+              {videoReviewContent.length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <CheckCircle2 className="w-12 h-12 mx-auto text-success mb-4" />
+                    <h3 className="font-semibold mb-2">Todo al día</h3>
+                    <p className="text-sm text-muted-foreground">No hay videos pendientes de revisión</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {videoReviewContent.map((item) => (
+                    <ReviewCard
+                      key={item.id}
+                      content={item}
+                      userId={user?.id}
+                      onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
-            {reviewContent.length === 0 ? (
+            {/* Empty state when nothing to review */}
+            {totalPendingReview === 0 && (
               <Card>
                 <CardContent className="p-8 text-center">
                   <CheckCircle2 className="w-12 h-12 mx-auto text-success mb-4" />
@@ -1215,17 +1277,6 @@ export default function ClientDashboard() {
                   <p className="text-sm text-muted-foreground">No hay contenido pendiente de revisión</p>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {reviewContent.map((item) => (
-                  <ReviewCard
-                    key={item.id}
-                    content={item}
-                    userId={user?.id}
-                    onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
-                  />
-                ))}
-              </div>
             )}
           </div>
         )}
@@ -1707,9 +1758,9 @@ export default function ClientDashboard() {
       </Dialog>
 
       {/* Fullscreen Review Viewer */}
-      {showFullscreenReview && reviewContent.length > 0 && (
+      {showFullscreenReview && videoReviewContent.length > 0 && (
         <FullscreenContentViewer
-          items={reviewContent.map(c => ({
+          items={videoReviewContent.map(c => ({
             id: c.id,
             title: c.title,
             thumbnail_url: c.thumbnail_url,
