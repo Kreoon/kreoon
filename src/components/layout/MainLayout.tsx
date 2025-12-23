@@ -184,7 +184,7 @@ export function MainLayout({
                 </div>
                 <div>
                   <h1 className="text-sm font-bold text-sidebar-foreground">Portal Cliente</h1>
-                  <p className="text-xs text-sidebar-foreground/60">Creator Studio</p>
+                  <p className="text-xs text-sidebar-foreground/60">Creartor Studio</p>
                 </div>
               </div>
             </div>
@@ -353,7 +353,7 @@ export function MainLayout({
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
               <span className="text-sm font-bold text-primary-foreground">C</span>
             </div>
-            <span className="text-sm font-bold">Creator Studio</span>
+            <span className="text-sm font-bold">Creartor Studio</span>
           </div>
         </div>
         <div className="flex items-center gap-1">

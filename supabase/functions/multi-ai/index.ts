@@ -134,7 +134,7 @@ async function callOpenRouter(messages: Message[], model: string): Promise<AIRes
         "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
         "HTTP-Referer": "https://lovable.dev",
-        "X-Title": "Content Studio",
+        "X-Title": "Creartor Studio",
       },
       body: JSON.stringify({
         model,

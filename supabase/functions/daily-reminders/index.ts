@@ -193,7 +193,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       try {
         const { data, error } = await resend.emails.send({
-          from: "Content Studio <onboarding@resend.dev>",
+          from: "Creartor Studio <onboarding@resend.dev>",
           to: [emailData.user_email],
           subject: subject,
           html: html,
@@ -313,7 +313,7 @@ function generateEmailHtml(data: PendingContent): string {
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
         
         <p style="font-size: 12px; color: #999; text-align: center;">
-          Este es un recordatorio automático de Content Studio.<br>
+          Este es un recordatorio automático de Creartor Studio.<br>
           Por favor no respondas a este correo.
         </p>
       </div>

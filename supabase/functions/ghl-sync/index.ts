@@ -72,18 +72,18 @@ serve(async (req) => {
         
         // Contact fields - these are the main fields GHL uses for mapping
         firstName: 'Test',
-        lastName: 'ContentStudio',
-        name: 'Test ContentStudio',
-        email: 'test@contentstudio.ugc.com',
+        lastName: 'CreartorStudio',
+        name: 'Test CreartorStudio',
+        email: 'test@creartorstudio.ugc.com',
         phone: '+573001234567',
         companyName: 'UGC Colombia Test',
         
         // Source tracking
-        source: 'Content Studio',
+        source: 'Creartor Studio',
         type: 'contact',
         
         // Tags for segmentation
-        tags: ['Test Connection', 'Content Studio', 'UGC Colombia'],
+        tags: ['Test Connection', 'Creartor Studio', 'UGC Colombia'],
         
         // Timestamp
         timestamp: new Date().toISOString(),
@@ -107,8 +107,8 @@ serve(async (req) => {
         currency: 'COP',
         status: 'open',
         title: 'Test Contenido UGC',
-        body: 'Este es un mensaje de prueba desde Content Studio para verificar la conexión con Funnel ROI.',
-        notes: 'Conexión de prueba exitosa desde Content Studio'
+        body: 'Este es un mensaje de prueba desde Creartor Studio para verificar la conexión con Funnel ROI.',
+        notes: 'Conexión de prueba exitosa desde Creartor Studio'
       };
 
       console.log('[ghl-sync] Test payload:', JSON.stringify(testPayload));
@@ -154,7 +154,7 @@ serve(async (req) => {
     // Map the event to GHL format
     let ghlPayload: Record<string, any> = {
       locationId: locationId,
-      source: 'Content Studio - UGC Colombia',
+      source: 'Creartor Studio - UGC Colombia',
       timestamp: new Date().toISOString(),
     };
 

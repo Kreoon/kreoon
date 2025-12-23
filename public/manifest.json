@@ -1,6 +1,6 @@
 {
-  "name": "Creator Studio",
-  "short_name": "Creator Studio",
+  "name": "Creartor Studio",
+  "short_name": "Creartor Studio",
   "description": "Plataforma de gestión de contenido UGC",
   "start_url": "/",
   "display": "standalone",

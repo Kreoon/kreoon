@@ -103,7 +103,7 @@ serve(async (req) => {
           type: "recovery",
           email,
           options: {
-            redirectTo: `${req.headers.get("origin") || "https://creatorstudio.com"}/auth`
+            redirectTo: `${req.headers.get("origin") || "https://creartorstudio.com"}/auth`
           }
         });
 
