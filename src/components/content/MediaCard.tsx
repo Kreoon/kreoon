@@ -54,6 +54,7 @@ export function MediaCard({
   const [isMuted, setIsMuted] = useState(true);
   const [showFloatingHeart, setShowFloatingHeart] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const viewTracked = useRef(false);
 
   const currentMedia = media[currentIndex] || media[0];
   const hasMultiple = media.length > 1;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, forwardRef } from "react";
 import { Play, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface AutoPauseVideoProps {
   src: string;
