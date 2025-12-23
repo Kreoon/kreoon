@@ -61,6 +61,7 @@ interface ContentItem {
   creator_id: string | null;
   is_liked: boolean;
   is_pinned?: boolean;
+  is_published?: boolean;
   status?: string; // Content status for client approval
 }
 
@@ -110,6 +111,7 @@ export default function UserPortfolio() {
   
   // Check if current user is a client trying to access their own profile
   const isClientUser = roles.includes('client');
+  const isAdmin = roles.includes('admin');
   
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -154,7 +156,7 @@ export default function UserPortfolio() {
     return newId;
   });
 
-  const isOwner = user?.id === resolvedUserId;
+  const isOwner = user?.id === resolvedUserId || isAdmin;
   
   // Client users trying to access their own profile should be redirected to their company
   useEffect(() => {
@@ -317,7 +319,7 @@ export default function UserPortfolio() {
         // If viewing own profile, show all content; otherwise only published
         let creatorContentQuery = supabase
           .from('content')
-          .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id, status')
+          .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id, status, is_published')
           .eq('creator_id', id)
           .or('video_url.not.is.null,video_urls.not.is.null')
           .order('created_at', { ascending: false });
@@ -340,7 +342,7 @@ export default function UserPortfolio() {
         if (collabContentIds.length > 0) {
           let collabQuery = supabase
             .from('content')
-            .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id, status')
+            .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id, status, is_published')
             .in('id', collabContentIds)
             .or('video_url.not.is.null,video_urls.not.is.null')
             .order('created_at', { ascending: false });
@@ -439,7 +441,7 @@ export default function UserPortfolio() {
           // For clients, show approved/delivered content (not just is_published)
           const { data: clientContentData } = await supabase
             .from('content')
-            .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id, status')
+            .select('id, title, caption, thumbnail_url, video_url, video_urls, bunny_embed_url, views_count, likes_count, created_at, creator_id, status, is_published')
             .eq('client_id', id)
             .in('status', ['approved', 'delivered', 'paid'])
             .or('video_url.not.is.null,video_urls.not.is.null')
@@ -758,6 +760,7 @@ export default function UserPortfolio() {
       mediaType: 'video' as const,
       mediaUrl: null as string | null,
       isPinned: item.is_pinned || false,
+      isPublished: item.is_published ?? true,
       status: item.status,
       isCreatorOwner: isOwner && profileType === 'user' && isCreatorRole,
     }));
@@ -777,6 +780,7 @@ export default function UserPortfolio() {
       mediaType: 'video' as const,
       mediaUrl: item.media_url,
       isPinned: item.is_pinned || false,
+      isPublished: true, // Posts are always public
       status: undefined,
       isCreatorOwner: false,
       isPortfolioPost: true,
@@ -797,6 +801,7 @@ export default function UserPortfolio() {
       mediaType: 'image' as const,
       mediaUrl: item.media_url,
       isPinned: item.is_pinned || false,
+      isPublished: true, // Posts are always public
       status: undefined,
       isCreatorOwner: false,
       isPortfolioPost: true,
@@ -1419,7 +1424,7 @@ export default function UserPortfolio() {
             creatorAvatar: profile?.avatar_url || undefined,
             mediaType: item.mediaType,
             mediaUrl: item.mediaUrl,
-            isPublic: true,
+            isPublic: (item as any).isPublished ?? true,
             caption: (item as any).caption || item.title
           }))}
           initialIndex={initialVideoIndex}
