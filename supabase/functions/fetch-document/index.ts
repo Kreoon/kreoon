@@ -26,67 +26,181 @@ serve(async (req) => {
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    const isGoogleDoc = formattedUrl.includes("docs.google.com") || formattedUrl.includes("drive.google.com");
+    const isGoogleUrl = formattedUrl.includes("docs.google.com") || formattedUrl.includes("drive.google.com");
 
-    // Convert Google Drive/Docs links to export format
-    if (isGoogleDoc) {
-      // Handle Drive file links
-      if (formattedUrl.includes("drive.google.com") && formattedUrl.includes("/file/d/")) {
-        const fileIdMatch = formattedUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-        if (fileIdMatch) {
-          const fileId = fileIdMatch[1];
-          formattedUrl = `https://docs.google.com/document/d/${fileId}/export?format=txt`;
-        }
-      }
+    // Handle Google Drive/Docs links
+    if (isGoogleUrl) {
+      let fileId = "";
+      let isNativeGoogleDoc = false;
       
-      // Handle Google Docs links
-      if (formattedUrl.includes("docs.google.com/document")) {
-        const docIdMatch = formattedUrl.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
-        if (docIdMatch) {
-          const docId = docIdMatch[1];
-          formattedUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`;
+      // Extract file ID from various Google URL formats
+      if (formattedUrl.includes("/file/d/")) {
+        const match = formattedUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (match) fileId = match[1];
+      } else if (formattedUrl.includes("/document/d/")) {
+        const match = formattedUrl.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+        if (match) {
+          fileId = match[1];
+          isNativeGoogleDoc = true;
+        }
+      } else if (formattedUrl.includes("id=")) {
+        const match = formattedUrl.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match) fileId = match[1];
+      }
+
+      if (!fileId) {
+        console.log("Could not extract file ID from Google URL:", formattedUrl);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            content: "",
+            warning: "No se pudo extraer el ID del documento de Google.",
+            source: "google-direct",
+            url: formattedUrl,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("Extracted file ID:", fileId, "isNativeGoogleDoc:", isNativeGoogleDoc);
+
+      // For native Google Docs, use export as text
+      if (isNativeGoogleDoc) {
+        const exportUrl = `https://docs.google.com/document/d/${fileId}/export?format=txt`;
+        console.log("Fetching native Google Doc from:", exportUrl);
+
+        try {
+          const response = await fetch(exportUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            },
+          });
+
+          if (response.ok) {
+            const text = await response.text();
+            if (text && text.length > 0 && !text.startsWith("<!DOCTYPE")) {
+              console.log("Google Doc fetch successful, content length:", text.length);
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  content: text,
+                  source: "google-doc",
+                  url: formattedUrl,
+                }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+          }
+          console.log("Google Doc export failed, status:", response.status);
+        } catch (error) {
+          console.error("Google Doc fetch error:", error);
         }
       }
 
-      console.log("Fetching Google Doc from:", formattedUrl);
+      // For Drive files (PDFs, DOCs, etc.), try direct download link
+      const directDownloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+      console.log("Trying direct download for Drive file:", directDownloadUrl);
 
-      // Direct fetch for Google Docs
       try {
-        const directResponse = await fetch(formattedUrl, {
+        const response = await fetch(directDownloadUrl, {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
           },
         });
 
-        if (directResponse.ok) {
-          const text = await directResponse.text();
-          // Check if we got actual content (not an HTML error page)
-          if (text && text.length > 0 && !text.startsWith("<!DOCTYPE")) {
-            console.log("Google Doc fetch successful, content length:", text.length);
+        if (response.ok) {
+          const contentType = response.headers.get("content-type") || "";
+          console.log("Content-Type:", contentType);
+
+          // If it's HTML, it might be a confirmation page or error
+          if (contentType.includes("text/html")) {
+            const html = await response.text();
+            
+            // Check if it's a virus scan warning page (large files)
+            if (html.includes("confirm=") || html.includes("download_warning")) {
+              console.log("Detected download confirmation page, file may be too large");
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  content: "",
+                  warning: "El archivo es muy grande para descarga directa. Por favor usa un Google Doc nativo o copia el contenido manualmente.",
+                  source: "google-drive",
+                  url: formattedUrl,
+                }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+
+            // If it starts with doctype, it's probably an error page
+            if (html.startsWith("<!DOCTYPE") || html.includes("ServiceLogin")) {
+              console.log("Received error/login page instead of file content");
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  content: "",
+                  warning: "No se pudo acceder al archivo. Verifica que tenga permisos 'Cualquiera con el enlace'.",
+                  source: "google-drive",
+                  url: formattedUrl,
+                }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+
+            // It might be actual text content
+            console.log("Received HTML/text content, length:", html.length);
+            return new Response(
+              JSON.stringify({
+                success: true,
+                content: html,
+                source: "google-drive",
+                url: formattedUrl,
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+
+          // For PDFs and binary files, we can't extract text directly
+          if (contentType.includes("application/pdf") || 
+              contentType.includes("application/msword") ||
+              contentType.includes("application/vnd.openxmlformats")) {
+            console.log("Binary file detected:", contentType);
+            return new Response(
+              JSON.stringify({
+                success: true,
+                content: "",
+                warning: `Archivo ${contentType.includes("pdf") ? "PDF" : "Word"} detectado. Para mejor compatibilidad, convierte a Google Doc nativo o copia el contenido en un Google Doc.`,
+                source: "google-drive",
+                url: formattedUrl,
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+
+          // For text-based files
+          const text = await response.text();
+          if (text && text.length > 0) {
+            console.log("Drive file content fetched, length:", text.length);
             return new Response(
               JSON.stringify({
                 success: true,
                 content: text,
-                source: "google-direct",
+                source: "google-drive",
                 url: formattedUrl,
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           }
         }
-        
-        console.log("Google Doc fetch failed - document may not be public. Status:", directResponse.status);
-      } catch (directError) {
-        console.error("Google Doc direct fetch error:", directError);
+      } catch (error) {
+        console.error("Drive direct download error:", error);
       }
 
-      // Return success with empty content and warning (don't fail the request)
       return new Response(
         JSON.stringify({
           success: true,
           content: "",
-          warning: "No se pudo acceder al documento. Verifica que tenga permisos 'Cualquiera con el enlace'.",
-          source: "google-direct",
+          warning: "No se pudo acceder al documento. Para PDFs/DOCs, conviértelos a Google Docs nativos o copia el contenido.",
+          source: "google-drive",
           url: formattedUrl,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
