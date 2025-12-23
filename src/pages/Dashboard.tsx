@@ -962,7 +962,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Row 3: Status KPIs - In order: Pendientes → Grabación → Edición → Entregados → Aprobados → Novedad → Corregidos */}
+        {/* Row 3: Status KPIs - In order: Pendientes → Grabación → Edición → Entregados → Novedad → Corregidos → Aprobados */}
         <div className="grid grid-cols-7 gap-2">
           <div onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
             className="p-2 rounded-lg bg-muted/50 border border-border cursor-pointer hover:bg-muted transition-colors text-center">
@@ -988,12 +988,6 @@ export default function Dashboard() {
             <p className="text-lg font-bold text-primary">{content.filter(c => c.status === 'delivered').length}</p>
             <p className="text-[10px] text-muted-foreground">Entregados</p>
           </div>
-          <div onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
-            className="p-2 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors text-center">
-            <CheckCircle className="h-3 w-3 mx-auto text-success mb-0.5" />
-            <p className="text-lg font-bold text-success">{completed}</p>
-            <p className="text-[10px] text-muted-foreground">Aprobados</p>
-          </div>
           <div onClick={() => openKpiDialog('Con Novedad', content.filter(c => c.status === 'issue'))}
             className="p-2 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors text-center">
             <Activity className="h-3 w-3 mx-auto text-destructive mb-0.5" />
@@ -1005,6 +999,12 @@ export default function Dashboard() {
             <TrendingUp className="h-3 w-3 mx-auto text-amber-500 mb-0.5" />
             <p className="text-lg font-bold text-amber-500">{content.filter(c => c.status === 'corrected').length}</p>
             <p className="text-[10px] text-muted-foreground">Corregidos</p>
+          </div>
+          <div onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
+            className="p-2 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors text-center">
+            <CheckCircle className="h-3 w-3 mx-auto text-success mb-0.5" />
+            <p className="text-lg font-bold text-success">{completed}</p>
+            <p className="text-[10px] text-muted-foreground">Aprobados</p>
           </div>
         </div>
 
