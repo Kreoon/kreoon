@@ -102,18 +102,22 @@ export function FullscreenVideoViewer({
   const touchStartX = useRef(0);
   const viewTrackedRef = useRef<Set<string>>(new Set());
 
+  const PLAYER_ORIGIN = 'https://iframe.mediadelivery.net';
+
   const postToPlayer = useCallback((payload: any) => {
     const win = iframeRef.current?.contentWindow;
     if (!win) return;
 
-    // Bunny player implementations vary; send both object + JSON string for compatibility
+    // Bunny Stream embed uses Player.js compatible messages.
+    // Commands are sent as objects like: { api: 'mute' } / { api: 'unmute' } / { api: 'volume', set: 1 }
     try {
-      win.postMessage(payload, '*');
+      win.postMessage(payload, PLAYER_ORIGIN);
     } catch {
       // ignore
     }
+    // Some implementations expect JSON strings
     try {
-      win.postMessage(JSON.stringify(payload), '*');
+      win.postMessage(JSON.stringify(payload), PLAYER_ORIGIN);
     } catch {
       // ignore
     }
@@ -121,9 +125,9 @@ export function FullscreenVideoViewer({
 
   const applyMuteStateToPlayer = useCallback(
     (muted: boolean) => {
-      // Prefer mute/unmute, then setVolume as fallback
-      postToPlayer({ method: muted ? 'mute' : 'unmute' });
-      postToPlayer({ method: 'setVolume', value: muted ? 0 : 1 });
+      // Use Bunny Playback Control API / Player.js commands
+      postToPlayer({ api: muted ? 'mute' : 'unmute' });
+      postToPlayer({ api: 'volume', set: muted ? 0 : 1 });
     },
     [postToPlayer]
   );
