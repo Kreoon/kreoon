@@ -117,17 +117,39 @@ export function NotificationSettings() {
   };
 
   const handleRequestPushPermission = async () => {
-    const granted = await requestPermission();
-    if (granted) {
-      updatePreference('pushEnabled', true);
+    // Check if permission was previously denied
+    if (permission === 'denied') {
       toast({
-        title: "Notificaciones push activadas",
-        description: "Recibirás notificaciones en este dispositivo.",
+        title: "Permiso bloqueado",
+        description: "Las notificaciones fueron bloqueadas previamente. Para habilitarlas: 1) Haz clic en el icono de candado en la barra de direcciones, 2) Busca 'Notificaciones' y cambia a 'Permitir', 3) Recarga la página.",
+        variant: "destructive",
+        duration: 10000,
       });
-    } else {
+      return;
+    }
+
+    try {
+      const granted = await requestPermission();
+      if (granted) {
+        updatePreference('pushEnabled', true);
+        toast({
+          title: "Notificaciones push activadas",
+          description: "Recibirás notificaciones en este dispositivo.",
+        });
+      } else {
+        // User clicked "Block" or closed the prompt
+        toast({
+          title: "Permiso no concedido",
+          description: "Si rechazaste el permiso, puedes habilitarlo desde el icono de candado en la barra de direcciones → Notificaciones → Permitir.",
+          variant: "destructive",
+          duration: 8000,
+        });
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
       toast({
-        title: "Permiso denegado",
-        description: "Puedes habilitarlas desde la configuración del navegador.",
+        title: "Error al solicitar permisos",
+        description: "Ocurrió un error. Intenta recargar la página o verifica que estés en una conexión segura (HTTPS).",
         variant: "destructive",
       });
     }
@@ -166,6 +188,19 @@ export function NotificationSettings() {
               <p className="text-muted-foreground">
                 Tu navegador no soporta notificaciones push
               </p>
+            </div>
+          ) : permission === 'denied' ? (
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-center space-y-3">
+              <BellRing className="h-8 w-8 mx-auto text-destructive" />
+              <p className="text-sm font-medium text-destructive">
+                Las notificaciones están bloqueadas
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Para habilitarlas, haz clic en el icono de candado 🔒 en la barra de direcciones del navegador, busca "Notificaciones" y cámbialo a "Permitir".
+              </p>
+              <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+                Recargar página después de permitir
+              </Button>
             </div>
           ) : permission !== 'granted' ? (
             <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 text-center space-y-3">
