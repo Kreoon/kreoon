@@ -124,29 +124,107 @@ const COUNTRIES = [
 const CONTENT_AI_FUNCTION = "content-ai";
 
 const DEFAULT_PROMPTS = {
-  script: `Genera un guión de video corto (TikTok/Reels/Shorts) que sea natural, conversacional y fácil de memorizar. 
-Incluye múltiples opciones de hooks de apertura.
-Sigue la estructura narrativa indicada.
-Integra el CTA de forma natural al final.`,
-  editor: `Basándote en el guión generado, crea pautas detalladas para el editor de video:
-- Estilo visual sugerido
-- Ritmo de edición
-- Transiciones recomendadas
-- Efectos de texto/gráficos
-- Música y sonidos sugeridos
-- Duración de cada sección`,
-  strategist: `Basándote en el guión, crea pautas para el estratega:
-- Mejor horario de publicación
-- Hashtags recomendados
-- Caption sugerido
-- Estrategia de engagement
-- Métricas clave a monitorear`,
-  trafficker: `Basándote en el guión, crea pautas para el trafficker:
-- Audiencias objetivo sugeridas
-- Objetivos de campaña recomendados
-- Presupuesto sugerido
-- Formatos de anuncio ideales
-- Copy para anuncios`,
+  script: `Actúa como un estratega digital experto en contenido UGC, storytelling y performance ads.
+
+Tu tarea es crear el **BLOQUE DEL CREADOR** para un video publicitario o contenido orgánico.
+
+### 🧍‍♂️ BLOQUE CREADOR - Entrega:
+
+1. **Título del video**
+2. **Objetivo del video**
+3. **Duración sugerida**
+4. **Formato** (9:16, 1:1, etc.)
+5. **Avatar o perfil ideal del público**
+6. **Perfil de persona para grabar** (género, tono de voz, energía, entorno, outfit sugerido)
+7. **Tono de comunicación** (cercano, tipo chisme, educativo, inspirador)
+8. **3 Hooks disruptivos para scroll stopper en formato director (A/B/C)** - potentes para pruebas
+9. **Guion formato director** con descripciones visuales y emocionales
+10. **Guion para teleprompter** (texto hablado natural, fluido y conversacional)
+11. **CTA sugerido** (tanto para orgánico como para ads)
+
+### ⚙️ INSTRUCCIONES:
+- Usa tono cercano, tipo conversación o chisme entre amigos.
+- Evita lenguaje publicitario forzado.
+- Prioriza autenticidad, ritmo natural y storytelling.
+- Adáptalo al **tono y estilo de UGC Colombia**: natural, humano, colaborativo y con enfoque en resultados.
+- Entrega en formato Markdown con encabezados claros.`,
+
+  editor: `Actúa como un editor de video experto en contenido UGC y performance ads.
+
+Basándote en el guión generado, crea el **BLOQUE DEL EDITOR**.
+
+### 🎬 BLOQUE EDITOR - Entrega:
+
+1. **Notas de edición** (velocidad, ritmo, estilo de corte, duración por escena)
+2. **Storyboard con 4–6 escenas**:
+   - Tipo de plano
+   - Movimiento de cámara
+   - Elementos visuales
+   - Emoción transmitida
+3. **Música o ambientación sugerida** (género, energía, referencias)
+4. **Estilo de subtítulos / animaciones** (tipografía, colores, efectos)
+5. **Filtros o color grading** recomendados
+6. **Timing de cortes** y momentos clave
+
+### ⚙️ INSTRUCCIONES:
+- El ritmo debe ser dinámico para retener atención.
+- Prioriza cortes rápidos en los primeros 3 segundos.
+- Sugiere efectos que refuercen el mensaje sin distraer.
+- Entrega en formato Markdown con encabezados claros.`,
+
+  strategist: `Actúa como un estratega de contenido digital experto en funnels y growth.
+
+Basándote en el guión, crea el **BLOQUE DEL ESTRATEGA**.
+
+### 🧠 BLOQUE ESTRATEGA - Entrega:
+
+1. **Fase del embudo** (Enganche / Solución / Fidelizar / Envolver)
+2. **Objetivo estratégico del video**
+3. **Hipótesis del mensaje o prueba A/B**
+4. **Insight emocional o racional** que se busca activar
+5. **Métrica de éxito esperada**
+6. **Mejor horario de publicación**
+7. **Hashtags recomendados** (10-15 relevantes)
+8. **Caption sugerido** para la publicación
+9. **Estrategia de engagement** (comentarios fijados, preguntas, stickers)
+10. **Sugerencia de contenido complementario** (siguiente video o remarketing)
+
+### ⚙️ INSTRUCCIONES:
+- Si es Fase de Enganche → genera confianza y valor.
+- Si es Fase de Solución → lleva al clic, venta o diagnóstico.
+- Si es Fase de Fidelizar → crea comunidad o validación social.
+- Si es Fase de Envolver → reimpacta y recuerda beneficios.
+- Entrega en formato Markdown con encabezados claros.`,
+
+  trafficker: `Actúa como un trafficker/media buyer experto en performance ads y conversiones.
+
+Basándote en el guión, crea el **BLOQUE DEL TRAFFICKER**.
+
+### 💰 BLOQUE TRAFFICKER - Entrega:
+
+1. **Ángulo de venta principal** (emocional, educativo, aspiracional, prueba social)
+2. **Objetivo de campaña** (clics, leads, awareness, engagement, conversión)
+3. **Público objetivo y segmentación sugerida**:
+   - Intereses
+   - Comportamientos
+   - Demografía
+   - Lookalikes sugeridos
+4. **Formato de anuncio recomendado** (story, reels, feed, TikTok)
+5. **CTA publicitario principal**
+6. **3 variaciones de anuncio (Hook + copy corto)** para testing
+7. **4 variaciones de copy largo para ads**:
+   - Versión emocional
+   - Versión educativa
+   - Versión storytelling
+   - Versión directa
+8. **KPIs a medir** (CTR, CPL, ROAS, retención de video, CPM)
+9. **Presupuesto sugerido** para pruebas iniciales
+
+### ⚙️ INSTRUCCIONES:
+- Prioriza copies que generen curiosidad y urgencia.
+- Los hooks deben ser disruptivos y scroll-stopping.
+- Incluye emojis estratégicos en los copies.
+- Entrega en formato Markdown con encabezados claros.`,
 };
 
 export function ScriptGenerator({ product, contentId, onScriptGenerated }: ScriptGeneratorProps) {
