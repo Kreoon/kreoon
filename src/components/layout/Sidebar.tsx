@@ -159,17 +159,17 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           {!collapsed && (
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <span className="text-lg font-bold text-primary-foreground">U</span>
+                <span className="text-lg font-bold text-primary-foreground">C</span>
               </div>
               <div>
-                <h1 className="text-sm font-bold text-sidebar-foreground">UGC Colombia</h1>
-                <p className="text-xs text-sidebar-foreground/60">Content Agency</p>
+                <h1 className="text-sm font-bold text-sidebar-foreground">Creator Studio</h1>
+                <p className="text-xs text-sidebar-foreground/60">by UGC Colombia</p>
               </div>
             </div>
           )}
           {collapsed && (
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">U</span>
+              <span className="text-lg font-bold text-primary-foreground">C</span>
             </div>
           )}
         </div>

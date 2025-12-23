@@ -67,7 +67,7 @@ export default function PendingAccess() {
     if (!whatsappNumber) return;
     
     const message = encodeURIComponent(
-      `¡Hola! 👋\n\nMe acabo de registrar en UGC Colombia y quiero solicitar acceso.\n\n` +
+      `¡Hola! 👋\n\nMe acabo de registrar en Creator Studio y quiero solicitar acceso.\n\n` +
       `📧 Mi correo: ${user?.email}\n` +
       `👤 Mi nombre: ${user?.user_metadata?.full_name || 'No especificado'}\n\n` +
       `Me gustaría ser parte del equipo como:\n` +

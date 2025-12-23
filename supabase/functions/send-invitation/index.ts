@@ -58,9 +58,9 @@ serve(async (req) => {
 
     // Send email with Resend
     const emailResponse = await resend.emails.send({
-      from: "Content Studio <noreply@ugccolombia.co>",
+      from: "Creator Studio <noreply@creatorstudio.com>",
       to: [email],
-      subject: `Invitación a Content Studio - ${ROLE_LABELS[role]}`,
+      subject: `Invitación a Creator Studio - ${ROLE_LABELS[role]}`,
       html: `
         <!DOCTYPE html>
         <html>

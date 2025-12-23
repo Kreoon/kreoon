@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'UGC Colombia',
-        short_name: 'UGC',
+        name: 'Creator Studio',
+        short_name: 'Creator Studio',
         description: 'Plataforma de gestión de contenido UGC',
         theme_color: '#F5A623',
         background_color: '#0D0D0D',

@@ -22,7 +22,7 @@ interface BrandingSettings {
 }
 
 const DEFAULT_SETTINGS: BrandingSettings = {
-  platform_name: "UGC Colombia",
+  platform_name: "Creator Studio",
   logo_url: "",
   logo_dark_url: "",
   favicon_url: "",
