@@ -26,6 +26,33 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+// Convert Bunny CDN URLs to embeddable iframe URLs (same pattern as TikTokFeed/Portfolio)
+function getEmbedUrl(url: string, muted: boolean): string {
+  if (!url) return '';
+  
+  // Already an embed URL
+  if (url.includes('iframe.mediadelivery.net')) {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}autoplay=false&muted=${muted}&loop=true&preload=true`;
+  }
+  
+  // Convert CDN URL to embed URL
+  const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
+  if (cdnMatch) {
+    const [, libraryId, videoId] = cdnMatch;
+    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&muted=${muted}&loop=true&preload=true`;
+  }
+  
+  // Return original URL if not a Bunny URL
+  return url;
+}
+
+// Check if URL is a Bunny video URL that should use iframe
+function isBunnyUrl(url: string): boolean {
+  if (!url) return false;
+  return url.includes('iframe.mediadelivery.net') || url.includes('b-cdn.net');
+}
+
 interface ReviewCardProps {
   content: Content;
   onApprove?: () => void;
@@ -57,11 +84,10 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
 
   const videoUrls = (content as any).video_urls || [];
   const hasMultipleVariants = videoUrls.length > 1;
-  const currentVideoUrl = videoUrls[currentVariantIndex] || (content as any).video_url;
-  const bunnyEmbedUrl = (content as any).bunny_embed_url;
+  const currentVideoUrl = videoUrls[currentVariantIndex] || (content as any).video_url || (content as any).bunny_embed_url;
   
-  // Determine if we should use embed or direct video
-  const useEmbed = bunnyEmbedUrl && !currentVideoUrl;
+  // Use iframe embed for Bunny videos (same as portfolio)
+  const shouldUseEmbed = isBunnyUrl(currentVideoUrl);
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -207,14 +233,24 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
       <CardContent className="p-0">
         {/* Video Section */}
         <div className="relative aspect-[9/16] max-h-[500px] bg-black">
-          {useEmbed ? (
-            // Use Bunny embed iframe for CDN videos
-            <iframe
-              src={bunnyEmbedUrl}
-              className="w-full h-full"
-              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-            />
+          {shouldUseEmbed && currentVideoUrl ? (
+            // Use Bunny embed iframe for CDN videos (same style as portfolio)
+            <>
+              <iframe
+                src={getEmbedUrl(currentVideoUrl, muted)}
+                className="w-full h-full border-0"
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+              />
+              
+              {/* Volume toggle for iframe */}
+              <button
+                onClick={() => setMuted(!muted)}
+                className="absolute top-16 right-3 z-30 p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+              >
+                {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+              </button>
+            </>
           ) : currentVideoUrl ? (
             <>
               <video
