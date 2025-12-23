@@ -808,11 +808,10 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   <h4 className="font-medium">Miniatura del Contenido</h4>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Selecciona un frame del video o sube una imagen personalizada para usar como miniatura
+                  La miniatura se genera automáticamente al subir el video. También puedes subir una imagen personalizada.
                 </p>
                 <ThumbnailSelector
                   contentId={content.id}
-                  videoUrl={formData.video_urls.find(url => url) || ''}
                   currentThumbnail={content.thumbnail_url}
                   onThumbnailChange={() => onUpdate?.()}
                   disabled={!editMode && !isAdmin}
