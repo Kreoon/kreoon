@@ -93,12 +93,12 @@ export function ThumbnailSelector({
         throw new Error('No image to upload');
       }
       
-      // Upload to storage
-      const fileName = `thumbnails/${contentId}-${Date.now()}.jpg`;
+      // Upload to storage - use dedicated content-thumbnails bucket
+      const fileName = `${contentId}-${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage
-        .from('portfolio')
+        .from('content-thumbnails')
         .upload(fileName, blob, {
-          contentType: 'image/jpeg',
+          contentType: blob.type || 'image/jpeg',
           upsert: true
         });
 
@@ -106,7 +106,7 @@ export function ThumbnailSelector({
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('portfolio')
+        .from('content-thumbnails')
         .getPublicUrl(fileName);
 
       // Update content with new thumbnail
