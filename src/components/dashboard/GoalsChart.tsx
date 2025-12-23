@@ -25,19 +25,28 @@ interface GoalsChartProps {
   title: string;
   startMonth?: number;
   endMonth?: number;
+  year?: number;
 }
 
 const MONTHS_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-export function GoalsChart({ goals, actuals, metric, title, startMonth = 1, endMonth = 12 }: GoalsChartProps) {
+export function GoalsChart({ goals, actuals, metric, title, startMonth = 1, endMonth = 12, year }: GoalsChartProps) {
   const chartData = useMemo(() => {
-    const currentYear = new Date().getFullYear();
+    // Use provided year, or find the max year from goals, or current year
+    let targetYear = year;
+    if (!targetYear && goals.length > 0) {
+      targetYear = Math.max(...goals.map(g => g.year));
+    }
+    if (!targetYear) {
+      targetYear = new Date().getFullYear();
+    }
+    
     const data = [];
     
     // Filter by month range
     for (let month = startMonth; month <= endMonth; month++) {
-      const goal = goals.find(g => g.period_type === 'month' && g.period_value === month && g.year === currentYear);
-      const actual = actuals.find(a => a.month === month && a.year === currentYear);
+      const goal = goals.find(g => g.period_type === 'month' && g.period_value === month && g.year === targetYear);
+      const actual = actuals.find(a => a.month === month && a.year === targetYear);
       
       let goalValue = 0;
       let actualValue = 0;
@@ -62,7 +71,7 @@ export function GoalsChart({ goals, actuals, metric, title, startMonth = 1, endM
     }
     
     return data;
-  }, [goals, actuals, metric, startMonth, endMonth]);
+  }, [goals, actuals, metric, startMonth, endMonth, year]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
