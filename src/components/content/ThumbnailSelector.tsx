@@ -24,6 +24,56 @@ function extractVideoId(url: string): string | null {
   return null;
 }
 
+function cssHslVar(name: string, fallback = '0 0% 50%') {
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  return raw || fallback;
+}
+
+async function generateFallbackThumbnailBlob(opts: { label?: string }): Promise<Blob> {
+  const width = 1280;
+  const height = 720;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas no soportado');
+
+  const bg = `hsl(${cssHslVar('--background', '0 0% 98%')})`;
+  const fg = `hsl(${cssHslVar('--foreground', '0 0% 10%')})`;
+  const primary = `hsl(${cssHslVar('--primary', '222.2 47.4% 11.2%')})`;
+
+  // Background
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+
+  // Accent ribbon
+  ctx.fillStyle = primary;
+  ctx.globalAlpha = 0.12;
+  ctx.fillRect(0, height * 0.62, width, height * 0.38);
+  ctx.globalAlpha = 1;
+
+  // Text
+  ctx.fillStyle = fg;
+  ctx.font = '700 56px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Miniatura', width / 2, height / 2 - 20);
+
+  ctx.globalAlpha = 0.8;
+  ctx.font = '500 28px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillText(opts.label || 'Generada automáticamente', width / 2, height / 2 + 40);
+  ctx.globalAlpha = 1;
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('No se pudo generar la imagen'))), 'image/jpeg', 0.9);
+  });
+
+  return blob;
+}
+
 export function ThumbnailSelector({
   contentId,
   videoUrl,
@@ -77,13 +127,43 @@ export function ThumbnailSelector({
     reader.readAsDataURL(file);
   };
 
+  const uploadThumbnailBlob = async (blob: Blob) => {
+    // Upload to storage - use dedicated content-thumbnails bucket
+    const fileName = `${contentId}-${Date.now()}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from('content-thumbnails')
+      .upload(fileName, blob, {
+        contentType: blob.type || 'image/jpeg',
+        upsert: true,
+      });
+
+    if (uploadError) throw uploadError;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('content-thumbnails')
+      .getPublicUrl(fileName);
+
+    // Update content with new thumbnail
+    const { error: updateError } = await supabase
+      .from('content')
+      .update({ thumbnail_url: publicUrl })
+      .eq('id', contentId);
+
+    if (updateError) throw updateError;
+
+    onThumbnailChange?.(publicUrl);
+
+    return publicUrl;
+  };
+
   const uploadThumbnail = async () => {
     if (!previewFile && !previewImage) return;
-    
+
     setUploading(true);
     try {
       let blob: Blob;
-      
+
       if (previewFile) {
         blob = previewFile;
       } else if (previewImage) {
@@ -92,37 +172,14 @@ export function ThumbnailSelector({
       } else {
         throw new Error('No image to upload');
       }
-      
-      // Upload to storage - use dedicated content-thumbnails bucket
-      const fileName = `${contentId}-${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('content-thumbnails')
-        .upload(fileName, blob, {
-          contentType: blob.type || 'image/jpeg',
-          upsert: true
-        });
 
-      if (uploadError) throw uploadError;
+      await uploadThumbnailBlob(blob);
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('content-thumbnails')
-        .getPublicUrl(fileName);
-
-      // Update content with new thumbnail
-      const { error: updateError } = await supabase
-        .from('content')
-        .update({ thumbnail_url: publicUrl })
-        .eq('id', contentId);
-
-      if (updateError) throw updateError;
-
-      onThumbnailChange?.(publicUrl);
       toast({
         title: 'Miniatura actualizada',
-        description: 'La miniatura se guardó correctamente'
+        description: 'La miniatura se guardó correctamente',
       });
-      
+
       setPreviewImage(null);
       setPreviewFile(null);
       if (fileInputRef.current) {
@@ -133,7 +190,7 @@ export function ThumbnailSelector({
       toast({
         title: 'Error al guardar',
         description: 'No se pudo guardar la miniatura',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setUploading(false);
@@ -161,12 +218,22 @@ export function ThumbnailSelector({
         const details = await response.text().catch(() => '');
         const isNotReady = response.status === 404 && details.toLowerCase().includes('thumbnail');
 
+        if (isNotReady) {
+          // Fallback: generate a thumbnail immediately so the UI is never blocked by processing
+          const blob = await generateFallbackThumbnailBlob({ label: 'Video aún procesando' });
+          await uploadThumbnailBlob(blob);
+
+          toast({
+            title: 'Miniatura creada',
+            description: 'Bunny aún no la generaba, así que se creó una miniatura automática.',
+          });
+          return;
+        }
+
         toast({
-          title: isNotReady ? 'Miniatura aún no lista' : 'Error al obtener miniatura',
-          description: isNotReady
-            ? 'Bunny todavía no ha generado la miniatura. Espera 1–2 minutos y vuelve a intentar, o sube una imagen manualmente.'
-            : (details || 'No se pudo obtener la miniatura del video.'),
-          variant: 'destructive'
+          title: 'Error al obtener miniatura',
+          description: details || 'No se pudo obtener la miniatura del video.',
+          variant: 'destructive',
         });
         return;
       }
@@ -185,11 +252,20 @@ export function ThumbnailSelector({
       });
     } catch (error) {
       console.error('Error fetching auto thumbnail:', error);
-      toast({
-        title: 'Error al obtener miniatura',
-        description: 'No se pudo obtener la miniatura. Intenta de nuevo o sube una imagen manualmente.',
-        variant: 'destructive'
-      });
+      try {
+        const blob = await generateFallbackThumbnailBlob({ label: 'Error al obtener miniatura' });
+        await uploadThumbnailBlob(blob);
+        toast({
+          title: 'Miniatura creada',
+          description: 'Se creó una miniatura automática como respaldo.',
+        });
+      } catch {
+        toast({
+          title: 'Error al obtener miniatura',
+          description: 'No se pudo obtener ni generar la miniatura. Sube una imagen manualmente.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setFetchingAuto(false);
     }
