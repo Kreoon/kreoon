@@ -7,23 +7,83 @@ const corsHeaders = {
 
 interface ContentAIRequest {
   action: "generate_script" | "analyze_content" | "chat" | "improve_script";
-  data: {
-    // For generate_script
+  ai_provider?: "lovable" | "openai" | "anthropic";
+  ai_model?: string;
+  data?: {
     client_name?: string;
     product?: string;
     objective?: string;
     duration?: string;
     tone?: string;
-    // For analyze_content
     script?: string;
     video_url?: string;
-    // For chat
     messages?: Array<{ role: string; content: string }>;
-    // For improve_script
     original_script?: string;
     feedback?: string;
   };
+  prompt?: string;
+  product?: any;
+  script_params?: any;
+  generation_type?: string;
 }
+
+// AI Provider configurations
+type AIProvider = "lovable" | "openai" | "anthropic";
+
+interface AIConfig {
+  url: string;
+  getHeaders: (apiKey: string) => Record<string, string>;
+  getBody: (model: string, systemPrompt: string, userPrompt: string) => any;
+  extractContent: (data: any) => string;
+}
+
+const AI_PROVIDERS: Record<AIProvider, AIConfig> = {
+  lovable: {
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    getHeaders: (apiKey) => ({
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    }),
+    getBody: (model, systemPrompt, userPrompt) => ({
+      model: model || "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+    extractContent: (data) => data.choices?.[0]?.message?.content || "",
+  },
+  openai: {
+    url: "https://api.openai.com/v1/chat/completions",
+    getHeaders: (apiKey) => ({
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    }),
+    getBody: (model, systemPrompt, userPrompt) => ({
+      model: model || "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+    extractContent: (data) => data.choices?.[0]?.message?.content || "",
+  },
+  anthropic: {
+    url: "https://api.anthropic.com/v1/messages",
+    getHeaders: (apiKey) => ({
+      "x-api-key": apiKey,
+      "Content-Type": "application/json",
+      "anthropic-version": "2023-06-01",
+    }),
+    getBody: (model, systemPrompt, userPrompt) => ({
+      model: model || "claude-sonnet-4-20250514",
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
+    }),
+    extractContent: (data) => data.content?.[0]?.text || "",
+  },
+};
 
 const SYSTEM_PROMPTS = {
   generate_script: `Eres un experto guionista de contenido para redes sociales y marketing digital. 
@@ -72,26 +132,39 @@ Mantén la esencia del mensaje original mientras optimizas:
 Devuelve el guion mejorado con el mismo formato y marcas de tiempo.`,
 };
 
-async function callAI(systemPrompt: string, userPrompt: string): Promise<string> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  
-  if (!LOVABLE_API_KEY) {
-    throw new Error("LOVABLE_API_KEY not configured");
+function getApiKey(provider: AIProvider): string {
+  switch (provider) {
+    case "lovable":
+      return Deno.env.get("LOVABLE_API_KEY") || "";
+    case "openai":
+      return Deno.env.get("OPENAI_API_KEY") || "";
+    case "anthropic":
+      return Deno.env.get("ANTHROPIC_API_KEY") || "";
+    default:
+      return "";
+  }
+}
+
+async function callAI(
+  systemPrompt: string,
+  userPrompt: string,
+  provider: AIProvider = "lovable",
+  model?: string
+): Promise<string> {
+  const apiKey = getApiKey(provider);
+
+  if (!apiKey) {
+    throw new Error(`API key for ${provider} not configured`);
   }
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const config = AI_PROVIDERS[provider];
+
+  console.log(`Calling AI provider: ${provider}, model: ${model || "default"}`);
+
+  const response = await fetch(config.url, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
+    headers: config.getHeaders(apiKey),
+    body: JSON.stringify(config.getBody(model || "", systemPrompt, userPrompt)),
   });
 
   if (!response.ok) {
@@ -102,12 +175,12 @@ async function callAI(systemPrompt: string, userPrompt: string): Promise<string>
       throw new Error("Payment required");
     }
     const errorText = await response.text();
-    console.error("AI Error:", errorText);
-    throw new Error(`AI request failed: ${response.status}`);
+    console.error(`AI Error (${provider}):`, errorText);
+    throw new Error(`AI request failed: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  return config.extractContent(data);
 }
 
 serve(async (req) => {
@@ -116,10 +189,19 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const { action, data, prompt, product, script_params } = body;
+    const body: ContentAIRequest = await req.json();
+    const { 
+      action, 
+      data, 
+      prompt, 
+      product, 
+      script_params,
+      ai_provider = "lovable",
+      ai_model,
+      generation_type
+    } = body;
 
-    console.log("Content AI Request:", { action });
+    console.log("Content AI Request:", { action, ai_provider, ai_model, generation_type });
 
     let result: string;
 
@@ -141,16 +223,46 @@ Formato de respuesta:
 - Usa formato Markdown
 - Separa claramente las secciones: HOOKS, DESARROLLO, CIERRE/CTA
 - Incluye indicaciones de tono/emoción entre corchetes [emocionado], [serio], etc.
-- Indica pausas cuando sean necesarias`;
+- Indica pausas cuando sean necesarias
 
-          result = await callAI(systemPrompt, prompt);
-          
+${generation_type === "editor" ? `
+IMPORTANTE: Estás generando PAUTAS PARA EL EDITOR DE VIDEO. Incluye:
+- Estilo visual sugerido
+- Ritmo de edición (cortes rápidos, transiciones suaves, etc.)
+- Transiciones específicas recomendadas
+- Efectos de texto y gráficos
+- Música y efectos de sonido sugeridos
+- Duración ideal de cada sección
+- Referencias visuales si aplica` : ""}
+
+${generation_type === "strategist" ? `
+IMPORTANTE: Estás generando PAUTAS PARA EL ESTRATEGA. Incluye:
+- Mejor horario de publicación según la audiencia objetivo
+- Hashtags recomendados (específicos y de tendencia)
+- Caption sugerido para la publicación
+- Estrategia de engagement (preguntas, CTAs en comentarios)
+- Métricas clave a monitorear
+- Estrategia de respuesta a comentarios
+- Plataformas ideales para este contenido` : ""}
+
+${generation_type === "trafficker" ? `
+IMPORTANTE: Estás generando PAUTAS PARA EL TRAFFICKER (Publicidad pagada). Incluye:
+- Audiencias objetivo sugeridas (intereses, demografía, comportamiento)
+- Objetivos de campaña recomendados (awareness, conversión, leads)
+- Presupuesto sugerido según el objetivo
+- Formatos de anuncio ideales
+- Copy para anuncios (headline, descripción, CTA)
+- Duración sugerida de la campaña
+- Estrategia de remarketing si aplica` : ""}`;
+
+          result = await callAI(systemPrompt, prompt, ai_provider as AIProvider, ai_model);
+
           return new Response(
             JSON.stringify({ success: true, script: result }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        
+
         // Legacy format
         const legacyPrompt = `Genera un guion de video para:
 
@@ -162,7 +274,7 @@ TONO: ${data?.tone || "Profesional y dinámico"}
 
 Genera un guion completo con timestamps, descripciones visuales y sugerencias de audio.`;
 
-        result = await callAI(SYSTEM_PROMPTS.generate_script, legacyPrompt);
+        result = await callAI(SYSTEM_PROMPTS.generate_script, legacyPrompt, ai_provider as AIProvider, ai_model);
         break;
       }
 
@@ -174,7 +286,7 @@ ${data?.video_url ? `VIDEO URL: ${data.video_url}` : ""}
 
 Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y sugerencias específicas de mejora.`;
 
-        result = await callAI(SYSTEM_PROMPTS.analyze_content, analyzePrompt);
+        result = await callAI(SYSTEM_PROMPTS.analyze_content, analyzePrompt, ai_provider as AIProvider, ai_model);
         break;
       }
 
@@ -183,24 +295,36 @@ Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y s
           throw new Error("Messages are required for chat");
         }
 
-        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-        if (!LOVABLE_API_KEY) {
-          throw new Error("LOVABLE_API_KEY not configured");
+        const apiKey = getApiKey(ai_provider as AIProvider);
+        if (!apiKey) {
+          throw new Error(`API key for ${ai_provider} not configured`);
         }
 
-        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
+        const config = AI_PROVIDERS[ai_provider as AIProvider];
+
+        // For chat, we need to handle the messages array differently
+        let chatBody: any;
+        if (ai_provider === "anthropic") {
+          chatBody = {
+            model: ai_model || "claude-sonnet-4-20250514",
+            max_tokens: 4096,
+            system: SYSTEM_PROMPTS.chat,
+            messages: data.messages,
+          };
+        } else {
+          chatBody = {
+            model: ai_model || (ai_provider === "openai" ? "gpt-4o" : "google/gemini-2.5-flash"),
             messages: [
               { role: "system", content: SYSTEM_PROMPTS.chat },
               ...data.messages,
             ],
-          }),
+          };
+        }
+
+        const response = await fetch(config.url, {
+          method: "POST",
+          headers: config.getHeaders(apiKey),
+          body: JSON.stringify(chatBody),
         });
 
         if (!response.ok) {
@@ -208,7 +332,7 @@ Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y s
         }
 
         const aiData = await response.json();
-        result = aiData.choices?.[0]?.message?.content || "";
+        result = config.extractContent(aiData);
         break;
       }
 
@@ -223,7 +347,7 @@ ${data?.feedback || "Hazlo más dinámico y atractivo"}
 
 Devuelve el guion mejorado manteniendo el mismo formato.`;
 
-        result = await callAI(SYSTEM_PROMPTS.improve_script, improvePrompt);
+        result = await callAI(SYSTEM_PROMPTS.improve_script, improvePrompt, ai_provider as AIProvider, ai_model);
         break;
       }
 
