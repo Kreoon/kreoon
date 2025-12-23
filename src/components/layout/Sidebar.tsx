@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
 
 interface NavItem {
   name: string;
@@ -200,6 +201,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             );
           })}
         </nav>
+
+        {/* Achievements Widget */}
+        <div className="border-t border-sidebar-border">
+          <SidebarAchievementsWidget collapsed={collapsed} />
+        </div>
 
         {/* User & Actions */}
         <div className="border-t border-sidebar-border p-3 space-y-2">
