@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, FileText, Search, Plus, Wand2 } from "lucide-react";
-
+import { Sparkles, FileText, Search, Plus, Wand2, Scroll } from "lucide-react";
+import { MedievalBanner } from "@/components/layout/MedievalBanner";
 const Scripts = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -19,22 +19,20 @@ const Scripts = () => {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
-          <div className="min-w-0">
-            <h1 className="text-lg md:text-xl font-bold text-foreground">Guiones con IA</h1>
-            <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Crea guiones potenciados con inteligencia artificial</p>
-          </div>
-          
-          <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm">
-            <Sparkles className="h-4 w-4" />
-            <span className="hidden sm:inline">Nuevo Guión IA</span>
-            <span className="sm:hidden">Nuevo</span>
-          </Button>
-        </div>
-      </header>
-
-      <div className="p-4 md:p-6">
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Medieval Banner */}
+        <MedievalBanner
+          icon={Scroll}
+          title="Scriptorium Mágico"
+          subtitle="Crea pergaminos con el poder de la magia arcana"
+          action={
+            <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm font-medieval">
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">Nuevo Pergamino</span>
+              <span className="sm:hidden">Nuevo</span>
+            </Button>
+          }
+        />
         {/* Search bar */}
         <div className="mb-6">
           <div className="relative w-full md:max-w-md">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye } from "lucide-react";
+import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye, Castle } from "lucide-react";
+import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { VipBadge } from "@/components/ui/vip-badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -353,29 +354,28 @@ const Clients = () => {
   return (
     <>
       <div className="min-h-screen">
-        <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
-            <div className="min-w-0">
-              <h1 className="text-lg md:text-xl font-bold text-foreground">Clientes</h1>
-              <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Gestiona las marcas y clientes</p>
-            </div>
-            
-            {isAdmin && (
-              <Button 
-                variant="glow" 
-                size="sm" 
-                className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0"
-                onClick={() => setNewClientOpen(true)}
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nuevo Cliente</span>
-                <span className="sm:hidden">Nuevo</span>
-              </Button>
-            )}
-          </div>
-        </header>
+        <div className="p-4 md:p-6 space-y-6">
+          {/* Medieval Banner */}
+          <MedievalBanner
+            icon={Castle}
+            title="Sala de los Mecenas"
+            subtitle="Gestiona las casas nobles y sus representantes"
+            action={
+              isAdmin && (
+                <Button 
+                  variant="glow" 
+                  size="sm" 
+                  className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0 font-medieval"
+                  onClick={() => setNewClientOpen(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Nuevo Mecenas</span>
+                  <span className="sm:hidden">Nuevo</span>
+                </Button>
+              )
+            }
+          />
 
-        <div className="p-4 md:p-6">
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
             <TabsList className="grid w-full max-w-md grid-cols-2">
