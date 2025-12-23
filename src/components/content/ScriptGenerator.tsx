@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
-  Video, ChevronDown, CheckCircle2, Bot
+  Video, ChevronDown, CheckCircle2, Bot, RefreshCw, FileSearch
 } from "lucide-react";
 
 interface Product {
@@ -40,6 +40,12 @@ interface ScriptGeneratorProps {
   onScriptGenerated: (content: GeneratedContent) => void;
 }
 
+interface DocumentContent {
+  brief: string;
+  onboarding: string;
+  research: string;
+}
+
 interface ScriptFormData {
   cta: string;
   sales_angle: string;
@@ -55,7 +61,6 @@ interface ScriptFormData {
   trafficker_prompt: string;
   reference_transcription: string;
   video_strategies: string;
-  // AI Selection
   ai_provider: "lovable" | "openai" | "anthropic";
   ai_model: string;
 }
@@ -66,7 +71,6 @@ interface GenerationStep {
   status: "pending" | "generating" | "done" | "error";
 }
 
-// AI Provider options
 const AI_PROVIDERS = [
   { 
     value: "lovable", 
@@ -114,14 +118,7 @@ const NARRATIVE_STRUCTURES = [
 ];
 
 const COUNTRIES = [
-  "México",
-  "Colombia",
-  "Argentina",
-  "España",
-  "Chile",
-  "Perú",
-  "Estados Unidos (Latino)",
-  "Otro",
+  "México", "Colombia", "Argentina", "España", "Chile", "Perú", "Estados Unidos (Latino)", "Otro",
 ];
 
 const CONTENT_AI_FUNCTION = "content-ai";
@@ -155,9 +152,19 @@ Integra el CTA de forma natural al final.`,
 export function ScriptGenerator({ product, contentId, onScriptGenerated }: ScriptGeneratorProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [loadingPrompts, setLoadingPrompts] = useState(false);
   const [newHook, setNewHook] = useState("");
   const [promptsOpen, setPromptsOpen] = useState(false);
   
+  // Document content from Drive
+  const [documentContent, setDocumentContent] = useState<DocumentContent>({
+    brief: "",
+    onboarding: "",
+    research: "",
+  });
+  const [docsLoaded, setDocsLoaded] = useState(false);
+
   const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([
     { key: "script", label: "Guión", status: "pending" },
     { key: "editor", label: "Pautas Editor", status: "pending" },
@@ -209,6 +216,151 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated }: Scrip
     }
   }, [product]);
 
+  // Fetch document from URL
+  const fetchDocument = async (url: string): Promise<string> => {
+    if (!url) return "";
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-document", {
+        body: { url },
+      });
+
+      if (error) {
+        console.error("Error fetching document:", error);
+        return "";
+      }
+
+      return data?.content || "";
+    } catch (error) {
+      console.error("Error fetching document:", error);
+      return "";
+    }
+  };
+
+  // Load all product documents
+  const loadProductDocuments = async () => {
+    if (!product) return;
+
+    setLoadingDocs(true);
+    try {
+      const [briefContent, onboardingContent, researchContent] = await Promise.all([
+        product.brief_url ? fetchDocument(product.brief_url) : Promise.resolve(""),
+        product.onboarding_url ? fetchDocument(product.onboarding_url) : Promise.resolve(""),
+        product.research_url ? fetchDocument(product.research_url) : Promise.resolve(""),
+      ]);
+
+      setDocumentContent({
+        brief: briefContent,
+        onboarding: onboardingContent,
+        research: researchContent,
+      });
+      setDocsLoaded(true);
+
+      const loadedCount = [briefContent, onboardingContent, researchContent].filter(c => c.length > 0).length;
+      
+      toast({
+        title: "Documentos cargados",
+        description: `Se cargaron ${loadedCount} documento(s) exitosamente`,
+      });
+    } catch (error) {
+      console.error("Error loading documents:", error);
+      toast({
+        title: "Error al cargar documentos",
+        description: "Algunos documentos no pudieron ser cargados",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  // Generate optimized prompts with AI
+  const generateOptimizedPrompts = async () => {
+    if (!product) return;
+
+    setLoadingPrompts(true);
+    try {
+      const contextInfo = `
+INFORMACIÓN DEL PRODUCTO:
+- Nombre: ${product.name}
+- Descripción: ${product.description || "No disponible"}
+- Estrategia: ${product.strategy || "No disponible"}
+- Investigación de mercado: ${product.market_research || "No disponible"}
+- Avatar ideal: ${product.ideal_avatar || "No disponible"}
+- Ángulos de venta: ${product.sales_angles?.join(", ") || "No definidos"}
+
+${documentContent.brief ? `BRIEF DEL CLIENTE:\n${documentContent.brief.substring(0, 2000)}` : ""}
+
+${documentContent.onboarding ? `ONBOARDING:\n${documentContent.onboarding.substring(0, 2000)}` : ""}
+
+${documentContent.research ? `INVESTIGACIÓN:\n${documentContent.research.substring(0, 2000)}` : ""}
+`;
+
+      const promptGenerationRequest = `
+Basándote en la siguiente información del producto y cliente, genera 4 prompts optimizados y específicos para generar contenido de alta calidad.
+
+${contextInfo}
+
+Genera prompts específicos para:
+1. GUIÓN: Un prompt detallado para generar guiones de video que conecten con el avatar ideal y usen los ángulos de venta del producto
+2. PAUTAS EDITOR: Un prompt para generar pautas de edición que reflejen la identidad visual del cliente
+3. PAUTAS ESTRATEGA: Un prompt para estrategia de publicación optimizada para el público objetivo
+4. PAUTAS TRAFFICKER: Un prompt para campañas de publicidad pagada que maximicen conversiones
+
+Responde SOLO en formato JSON con esta estructura exacta:
+{
+  "script_prompt": "...",
+  "editor_prompt": "...",
+  "strategist_prompt": "...",
+  "trafficker_prompt": "..."
+}
+`;
+
+      const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
+        body: {
+          action: "generate_script",
+          prompt: promptGenerationRequest,
+          product: { id: product.id, name: product.name },
+          ai_provider: formData.ai_provider,
+          ai_model: formData.ai_model,
+        },
+      });
+
+      if (error) throw new Error(error.message);
+
+      const responseText = data?.script || data?.result || "";
+      
+      // Parse JSON from response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsedPrompts = JSON.parse(jsonMatch[0]);
+        setFormData(prev => ({
+          ...prev,
+          script_prompt: parsedPrompts.script_prompt || prev.script_prompt,
+          editor_prompt: parsedPrompts.editor_prompt || prev.editor_prompt,
+          strategist_prompt: parsedPrompts.strategist_prompt || prev.strategist_prompt,
+          trafficker_prompt: parsedPrompts.trafficker_prompt || prev.trafficker_prompt,
+        }));
+        setPromptsOpen(true);
+        toast({
+          title: "Prompts generados",
+          description: "Se han creado prompts optimizados basados en la información del producto",
+        });
+      } else {
+        throw new Error("No se pudo parsear la respuesta de la IA");
+      }
+    } catch (error) {
+      console.error("Error generating prompts:", error);
+      toast({
+        title: "Error al generar prompts",
+        description: error instanceof Error ? error.message : "No se pudieron generar los prompts",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPrompts(false);
+    }
+  };
+
   const addHook = () => {
     if (newHook.trim() && formData.hooks.length < parseInt(formData.hooks_count)) {
       setFormData({
@@ -244,7 +396,7 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated }: Scrip
   const buildBaseContext = () => {
     const narrativeLabel = NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure;
     
-    return `PRODUCTO: ${product?.name}
+    let context = `PRODUCTO: ${product?.name}
 DESCRIPCIÓN: ${product?.description || 'No disponible'}
 CTA: ${formData.cta}
 ÁNGULO DE VENTA: ${formData.sales_angle}
@@ -262,16 +414,30 @@ ${product?.market_research || 'No disponible'}
 ${product?.sales_angles?.join(', ') || 'No definidos'}
 
 HOOKS SUGERIDOS:
-${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).join('\n') : 'Generar automáticamente'}
+${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).join('\n') : 'Generar automáticamente'}`;
 
-${formData.reference_transcription ? `TRANSCRIPCIÓN VIDEO DE REFERENCIA:\n${formData.reference_transcription}\n` : ''}
-${formData.video_strategies ? `ESTRATEGIAS/ESTRUCTURAS DE VIDEO A USAR:\n${formData.video_strategies}\n` : ''}
-${formData.additional_instructions ? `INSTRUCCIONES ADICIONALES:\n${formData.additional_instructions}` : ''}
+    // Add document content if loaded
+    if (documentContent.brief) {
+      context += `\n\n--- BRIEF DEL CLIENTE ---\n${documentContent.brief.substring(0, 3000)}`;
+    }
+    if (documentContent.onboarding) {
+      context += `\n\n--- ONBOARDING ---\n${documentContent.onboarding.substring(0, 3000)}`;
+    }
+    if (documentContent.research) {
+      context += `\n\n--- INVESTIGACIÓN ---\n${documentContent.research.substring(0, 3000)}`;
+    }
 
-DOCUMENTOS DEL PRODUCTO:
-${product?.brief_url ? `- Brief: ${product.brief_url}` : ''}
-${product?.onboarding_url ? `- Onboarding: ${product.onboarding_url}` : ''}
-${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
+    if (formData.reference_transcription) {
+      context += `\n\nTRANSCRIPCIÓN VIDEO DE REFERENCIA:\n${formData.reference_transcription}`;
+    }
+    if (formData.video_strategies) {
+      context += `\n\nESTRATEGIAS/ESTRUCTURAS DE VIDEO:\n${formData.video_strategies}`;
+    }
+    if (formData.additional_instructions) {
+      context += `\n\nINSTRUCCIONES ADICIONALES:\n${formData.additional_instructions}`;
+    }
+
+    return context;
   };
 
   const generateContent = async (
@@ -299,9 +465,6 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
           market_research: product?.market_research,
           ideal_avatar: product?.ideal_avatar,
           sales_angles: product?.sales_angles,
-          brief_url: product?.brief_url,
-          onboarding_url: product?.onboarding_url,
-          research_url: product?.research_url,
         },
         generation_type: type,
         ai_provider: formData.ai_provider,
@@ -351,31 +514,19 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
       generatedContent.script = await generateContent("script", formData.script_prompt);
       updateStepStatus("script", "done");
 
-      // Step 2: Generate Editor Guidelines (based on script)
+      // Step 2: Generate Editor Guidelines
       updateStepStatus("editor", "generating");
-      generatedContent.editor_guidelines = await generateContent(
-        "editor", 
-        formData.editor_prompt, 
-        generatedContent.script
-      );
+      generatedContent.editor_guidelines = await generateContent("editor", formData.editor_prompt, generatedContent.script);
       updateStepStatus("editor", "done");
 
-      // Step 3: Generate Strategist Guidelines (based on script)
+      // Step 3: Generate Strategist Guidelines
       updateStepStatus("strategist", "generating");
-      generatedContent.strategist_guidelines = await generateContent(
-        "strategist", 
-        formData.strategist_prompt, 
-        generatedContent.script
-      );
+      generatedContent.strategist_guidelines = await generateContent("strategist", formData.strategist_prompt, generatedContent.script);
       updateStepStatus("strategist", "done");
 
-      // Step 4: Generate Trafficker Guidelines (based on script)
+      // Step 4: Generate Trafficker Guidelines
       updateStepStatus("trafficker", "generating");
-      generatedContent.trafficker_guidelines = await generateContent(
-        "trafficker", 
-        formData.trafficker_prompt, 
-        generatedContent.script
-      );
+      generatedContent.trafficker_guidelines = await generateContent("trafficker", formData.trafficker_prompt, generatedContent.script);
       updateStepStatus("trafficker", "done");
 
       onScriptGenerated(generatedContent);
@@ -411,6 +562,8 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
     );
   }
 
+  const hasDocumentUrls = product.brief_url || product.onboarding_url || product.research_url;
+
   return (
     <div className="space-y-6 p-6 border rounded-lg bg-gradient-to-br from-primary/5 to-primary/10">
       <div className="flex items-center justify-between">
@@ -422,6 +575,56 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
           {currentProvider?.label}
         </Badge>
       </div>
+
+      {/* Document Loading Section */}
+      {hasDocumentUrls && (
+        <div className="p-4 rounded-lg bg-muted/50 border space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileSearch className="h-5 w-5 text-primary" />
+              <Label className="text-sm font-medium">Documentos del Producto</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              {docsLoaded && (
+                <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Cargados
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadProductDocuments}
+                disabled={loadingDocs}
+              >
+                {loadingDocs ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                <span className="ml-2">{docsLoaded ? "Recargar" : "Cargar Docs"}</span>
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {product.brief_url && (
+              <Badge variant={documentContent.brief ? "default" : "secondary"}>
+                Brief {documentContent.brief ? `(${Math.round(documentContent.brief.length / 100)}kb)` : ""}
+              </Badge>
+            )}
+            {product.onboarding_url && (
+              <Badge variant={documentContent.onboarding ? "default" : "secondary"}>
+                Onboarding {documentContent.onboarding ? `(${Math.round(documentContent.onboarding.length / 100)}kb)` : ""}
+              </Badge>
+            )}
+            {product.research_url && (
+              <Badge variant={documentContent.research ? "default" : "secondary"}>
+                Research {documentContent.research ? `(${Math.round(documentContent.research.length / 100)}kb)` : ""}
+              </Badge>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* AI Provider Selection */}
       <div className="p-4 rounded-lg bg-muted/50 border space-y-4">
@@ -501,14 +704,10 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
             </SelectTrigger>
             <SelectContent>
               {product.sales_angles?.map((angle, idx) => (
-                <SelectItem key={idx} value={angle}>
-                  {angle}
-                </SelectItem>
+                <SelectItem key={idx} value={angle}>{angle}</SelectItem>
               ))}
               {(!product.sales_angles || product.sales_angles.length === 0) && (
-                <div className="px-2 py-2 text-sm text-muted-foreground">
-                  No hay ángulos definidos en el producto
-                </div>
+                <div className="px-2 py-2 text-sm text-muted-foreground">No hay ángulos definidos</div>
               )}
             </SelectContent>
           </Select>
@@ -523,9 +722,7 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
             value={formData.hooks_count} 
             onValueChange={(v) => setFormData({ ...formData, hooks_count: v })}
           >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {[1, 2, 3, 4, 5].map(n => (
                 <SelectItem key={n} value={String(n)}>{n} Hook{n > 1 ? 's' : ''}</SelectItem>
@@ -543,14 +740,10 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
             value={formData.target_country} 
             onValueChange={(v) => setFormData({ ...formData, target_country: v })}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar país..." />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Seleccionar país..." /></SelectTrigger>
             <SelectContent>
               {COUNTRIES.map((country) => (
-                <SelectItem key={country} value={country}>
-                  {country}
-                </SelectItem>
+                <SelectItem key={country} value={country}>{country}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -565,14 +758,10 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
             value={formData.narrative_structure} 
             onValueChange={(v) => setFormData({ ...formData, narrative_structure: v })}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar estructura..." />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Seleccionar estructura..." /></SelectTrigger>
             <SelectContent>
               {NARRATIVE_STRUCTURES.map((structure) => (
-                <SelectItem key={structure.value} value={structure.value}>
-                  {structure.label}
-                </SelectItem>
+                <SelectItem key={structure.value} value={structure.value}>{structure.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -586,13 +775,13 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
           <Textarea
             value={formData.ideal_avatar}
             onChange={(e) => setFormData({ ...formData, ideal_avatar: e.target.value })}
-            placeholder="Describe al cliente ideal: edad, género, dolores, deseos..."
+            placeholder="Describe al cliente ideal..."
             rows={2}
           />
         </div>
       </div>
 
-      {/* Video Strategies Section */}
+      {/* Video Strategies */}
       <div className="space-y-2 pt-4 border-t">
         <Label className="flex items-center gap-2">
           <Video className="h-4 w-4" /> Estrategias / Estructuras de Video
@@ -600,12 +789,12 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
         <Textarea
           value={formData.video_strategies}
           onChange={(e) => setFormData({ ...formData, video_strategies: e.target.value })}
-          placeholder="Ej: POV, Storytime, ASMR, Unboxing, Tutorial rápido, Trend de TikTok..."
+          placeholder="Ej: POV, Storytime, ASMR, Unboxing, Tutorial rápido..."
           rows={2}
         />
       </div>
 
-      {/* Reference Transcription Section */}
+      {/* Reference Transcription */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2">
           <FileText className="h-4 w-4" /> Transcripción Video de Referencia (opcional)
@@ -613,7 +802,7 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
         <Textarea
           value={formData.reference_transcription}
           onChange={(e) => setFormData({ ...formData, reference_transcription: e.target.value })}
-          placeholder="Pega aquí la transcripción de un video de referencia que quieras usar como inspiración..."
+          placeholder="Pega aquí la transcripción de un video de referencia..."
           rows={3}
         />
       </div>
@@ -623,9 +812,6 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
         <Label className="flex items-center gap-2">
           <Sparkles className="h-4 w-4" /> Hooks Sugeridos (opcional)
         </Label>
-        <p className="text-xs text-muted-foreground">
-          Agrega ideas de hooks específicos o déjalo vacío para que la IA los genere
-        </p>
         
         <div className="flex gap-2">
           <Input
@@ -635,12 +821,7 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addHook())}
             disabled={formData.hooks.length >= parseInt(formData.hooks_count)}
           />
-          <Button 
-            type="button" 
-            onClick={addHook} 
-            variant="outline"
-            disabled={formData.hooks.length >= parseInt(formData.hooks_count)}
-          >
+          <Button type="button" onClick={addHook} variant="outline" disabled={formData.hooks.length >= parseInt(formData.hooks_count)}>
             <Plus className="h-4 w-4" />
           </Button>
         </div>
@@ -651,11 +832,7 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
               <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
                 <Badge variant="outline" className="shrink-0">{idx + 1}</Badge>
                 <span className="flex-1 text-sm">{hook}</span>
-                <button
-                  type="button"
-                  onClick={() => removeHook(idx)}
-                  className="p-1 hover:bg-destructive/20 rounded"
-                >
+                <button type="button" onClick={() => removeHook(idx)} className="p-1 hover:bg-destructive/20 rounded">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -670,66 +847,73 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
         <Textarea
           value={formData.additional_instructions}
           onChange={(e) => setFormData({ ...formData, additional_instructions: e.target.value })}
-          placeholder="Agrega cualquier indicación especial para este guión..."
+          placeholder="Agrega cualquier indicación especial..."
           rows={2}
         />
       </div>
 
       {/* Custom Prompts Section */}
       <Collapsible open={promptsOpen} onOpenChange={setPromptsOpen}>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline" className="w-full justify-between">
-            <span className="flex items-center gap-2">
-              <Settings2 className="h-4 w-4" />
-              Personalizar Prompts de IA
-            </span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${promptsOpen ? 'rotate-180' : ''}`} />
+        <div className="flex gap-2">
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="flex-1 justify-between">
+              <span className="flex items-center gap-2">
+                <Settings2 className="h-4 w-4" />
+                Personalizar Prompts de IA
+              </span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${promptsOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <Button
+            variant="secondary"
+            onClick={generateOptimizedPrompts}
+            disabled={loadingPrompts}
+            title="Generar prompts optimizados con IA"
+          >
+            {loadingPrompts ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Wand2 className="h-4 w-4" />
+            )}
+            <span className="ml-2 hidden sm:inline">Generar Prompts con IA</span>
           </Button>
-        </CollapsibleTrigger>
+        </div>
         <CollapsibleContent className="space-y-4 pt-4">
-          {/* Script Prompt */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Prompt para Guión</Label>
             <Textarea
               value={formData.script_prompt}
               onChange={(e) => setFormData({ ...formData, script_prompt: e.target.value })}
-              placeholder="Instrucciones para generar el guión..."
               rows={3}
               className="text-sm"
             />
           </div>
 
-          {/* Editor Prompt */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Prompt para Pautas del Editor</Label>
             <Textarea
               value={formData.editor_prompt}
               onChange={(e) => setFormData({ ...formData, editor_prompt: e.target.value })}
-              placeholder="Instrucciones para generar pautas de edición..."
               rows={3}
               className="text-sm"
             />
           </div>
 
-          {/* Strategist Prompt */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Prompt para Pautas del Estratega</Label>
             <Textarea
               value={formData.strategist_prompt}
               onChange={(e) => setFormData({ ...formData, strategist_prompt: e.target.value })}
-              placeholder="Instrucciones para generar pautas de estrategia..."
               rows={3}
               className="text-sm"
             />
           </div>
 
-          {/* Trafficker Prompt */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Prompt para Pautas del Trafficker</Label>
             <Textarea
               value={formData.trafficker_prompt}
               onChange={(e) => setFormData({ ...formData, trafficker_prompt: e.target.value })}
-              placeholder="Instrucciones para generar pautas de tráfico pagado..."
               rows={3}
               className="text-sm"
             />
@@ -754,21 +938,13 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
       {/* Generation Progress */}
       {loading && (
         <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
-          <p className="text-sm font-medium mb-3">Progreso de generación ({currentProvider?.label}):</p>
+          <p className="text-sm font-medium mb-3">Progreso ({currentProvider?.label}):</p>
           {generationSteps.map((step) => (
             <div key={step.key} className="flex items-center gap-3">
-              {step.status === "pending" && (
-                <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
-              )}
-              {step.status === "generating" && (
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              )}
-              {step.status === "done" && (
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-              )}
-              {step.status === "error" && (
-                <X className="h-5 w-5 text-destructive" />
-              )}
+              {step.status === "pending" && <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />}
+              {step.status === "generating" && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+              {step.status === "done" && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+              {step.status === "error" && <X className="h-5 w-5 text-destructive" />}
               <span className={`text-sm ${step.status === "generating" ? "text-primary font-medium" : ""}`}>
                 {step.label}
               </span>
@@ -778,12 +954,7 @@ ${product?.research_url ? `- Research: ${product.research_url}` : ''}`;
       )}
 
       {/* Generate Button */}
-      <Button 
-        onClick={handleGenerate} 
-        disabled={loading}
-        className="w-full"
-        size="lg"
-      >
+      <Button onClick={handleGenerate} disabled={loading} className="w-full" size="lg">
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
