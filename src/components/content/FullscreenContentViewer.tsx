@@ -65,20 +65,27 @@ export function FullscreenContentViewer({
   const [showComments, setShowComments] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showFeedbackInput, setShowFeedbackInput] = useState(false);
+  const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const currentItem = items[currentIndex];
 
-  const getVideoUrl = (item: ContentItem): string | null => {
-    if (item.video_urls && item.video_urls.length > 0) return item.video_urls[0];
-    if (item.video_url) return item.video_url;
-    return null;
+  const getVideoUrls = (item: ContentItem): string[] => {
+    if (item.video_urls && item.video_urls.length > 0) return item.video_urls;
+    if (item.video_url) return [item.video_url];
+    return [];
   };
+
+  const videoUrls = getVideoUrls(currentItem);
+  const currentVideoUrl = videoUrls[currentVariantIndex] || null;
+  const hasMultipleVariants = videoUrls.length > 1;
 
   const goToNext = () => {
     if (currentIndex < items.length - 1) {
       setCurrentIndex(prev => prev + 1);
+      setCurrentVariantIndex(0);
       setFeedback('');
       setShowFeedbackInput(false);
     }
@@ -87,6 +94,7 @@ export function FullscreenContentViewer({
   const goToPrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
+      setCurrentVariantIndex(0);
       setFeedback('');
       setShowFeedbackInput(false);
     }
@@ -142,6 +150,18 @@ export function FullscreenContentViewer({
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle shortcuts if textarea is focused
+      const isTextareaFocused = document.activeElement === textareaRef.current;
+      
+      if (isTextareaFocused) {
+        // Only allow Escape when typing
+        if (e.key === 'Escape') {
+          setShowFeedbackInput(false);
+          textareaRef.current?.blur();
+        }
+        return;
+      }
+      
       switch (e.key) {
         case 'ArrowUp':
           e.preventDefault();
@@ -150,6 +170,18 @@ export function FullscreenContentViewer({
         case 'ArrowDown':
           e.preventDefault();
           goToNext();
+          break;
+        case 'ArrowLeft':
+          if (hasMultipleVariants && currentVariantIndex > 0) {
+            e.preventDefault();
+            setCurrentVariantIndex(prev => prev - 1);
+          }
+          break;
+        case 'ArrowRight':
+          if (hasMultipleVariants && currentVariantIndex < videoUrls.length - 1) {
+            e.preventDefault();
+            setCurrentVariantIndex(prev => prev + 1);
+          }
           break;
         case 'Escape':
           onClose();
@@ -245,10 +277,10 @@ export function FullscreenContentViewer({
               allow="autoplay; fullscreen"
               allowFullScreen
             />
-          ) : getVideoUrl(currentItem) ? (
+          ) : currentVideoUrl ? (
             <video
               ref={videoRef}
-              src={getVideoUrl(currentItem)!}
+              src={currentVideoUrl}
               autoPlay
               loop
               muted={muted}
@@ -266,6 +298,29 @@ export function FullscreenContentViewer({
             <div className="text-white/50 flex flex-col items-center gap-2">
               <VideoIcon className="h-16 w-16" />
               <span>Sin video disponible</span>
+            </div>
+          )}
+          
+          {/* Variant selector */}
+          {hasMultipleVariants && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full z-20">
+              <button
+                onClick={() => setCurrentVariantIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentVariantIndex === 0}
+                className="text-white disabled:opacity-30"
+              >
+                <ChevronUp className="h-4 w-4 rotate-[-90deg]" />
+              </button>
+              <span className="text-white text-sm font-medium min-w-[80px] text-center">
+                Variante {currentVariantIndex + 1} / {videoUrls.length}
+              </span>
+              <button
+                onClick={() => setCurrentVariantIndex(prev => Math.min(videoUrls.length - 1, prev + 1))}
+                disabled={currentVariantIndex === videoUrls.length - 1}
+                className="text-white disabled:opacity-30"
+              >
+                <ChevronDown className="h-4 w-4 rotate-[-90deg]" />
+              </button>
             </div>
           )}
         </div>
@@ -342,11 +397,13 @@ export function FullscreenContentViewer({
             {showFeedbackInput ? (
               <div className="bg-black/90 backdrop-blur-xl p-4 space-y-3">
                 <Textarea
+                  ref={textareaRef}
                   placeholder="Escribe tus comentarios o correcciones..."
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                   rows={2}
+                  autoFocus
                 />
                 <div className="flex gap-2">
                   {onApprove && (
