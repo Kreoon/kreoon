@@ -71,8 +71,9 @@ const COUNTRIES = [
   "Otro",
 ];
 
-// n8n Webhook URL - Production
-const N8N_WEBHOOK_URL = "https://n8n.infinygroup.com/webhook/Creartorstudioguionizadorproyectos";
+// Generación de guiones vía backend (IA)
+const CONTENT_AI_FUNCTION = "content-ai";
+
 
 export function ScriptGenerator({ product, contentId, onScriptGenerated }: ScriptGeneratorProps) {
   const { toast } = useToast();
@@ -174,12 +175,11 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
 
     setLoading(true);
     try {
-      // Prepare complete payload for n8n webhook - same format as StrategistScriptForm
       const payload = {
         // Content info
         content_id: contentId || null,
         timestamp: new Date().toISOString(),
-        
+
         // Product information (complete)
         product: {
           id: product.id,
@@ -193,7 +193,7 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
           onboarding_url: product.onboarding_url || null,
           research_url: product.research_url || null,
         },
-        
+
         // Script parameters from the form
         script_params: {
           cta: formData.cta,
@@ -202,82 +202,65 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
           ideal_avatar: formData.ideal_avatar,
           target_country: formData.target_country,
           narrative_structure: formData.narrative_structure,
-          narrative_structure_label: NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure,
+          narrative_structure_label:
+            NARRATIVE_STRUCTURES.find((s) => s.value === formData.narrative_structure)?.label ||
+            formData.narrative_structure,
           additional_instructions: formData.additional_instructions,
           hooks: formData.hooks,
         },
-        
-        // Pre-built prompt for convenience
+
+        // Prompt final
         prompt: buildPrompt(),
       };
 
-      console.log("Sending to n8n via proxy:", payload);
+      console.log("Sending to content-ai:", payload);
 
-      // Use Edge Function proxy to avoid CORS issues
-      const { data: proxyResponse, error: proxyError } = await supabase.functions.invoke('n8n-proxy', {
+      const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
         body: {
-          webhookUrl: N8N_WEBHOOK_URL,
-          payload: payload,
+          action: "generate_script",
+          prompt: payload.prompt,
+          product: payload.product,
+          script_params: payload.script_params,
         },
       });
 
-      console.log("Proxy response:", proxyResponse);
-      
-      if (proxyError) {
-        console.error("Proxy error:", proxyError);
-        throw new Error(`Error en proxy: ${proxyError.message}`);
+      if (error) {
+        console.error("content-ai error:", error);
+        throw new Error(error.message);
       }
 
-      if (!proxyResponse) {
-        throw new Error("El proxy devolvió una respuesta vacía");
+      if (!data) {
+        throw new Error("La IA devolvió una respuesta vacía");
       }
 
-      if (proxyResponse.error) {
-        throw new Error(proxyResponse.error);
+      if (data.error) {
+        throw new Error(data.error);
       }
 
-      // Get the response data
-      let generatedContent: GeneratedContent = { script: "" };
-      
-      // Handle the response - proxy returns the JSON directly
-      const data = proxyResponse;
-      console.log("n8n JSON response:", data);
-      
-      // Handle the segmented response structure from n8n
-      // Response comes as array: [{ bloques_html: { guion, pautas_editor, pautas_trafficker, pautas_estratega } }]
-      const responseData = Array.isArray(data) ? data[0] : data;
-      
-      if (responseData?.bloques_html) {
-        generatedContent = {
-          script: responseData.bloques_html.guion || "",
-          editor_guidelines: responseData.bloques_html.pautas_editor || "",
-          strategist_guidelines: responseData.bloques_html.pautas_estratega || "",
-          trafficker_guidelines: responseData.bloques_html.pautas_trafficker || "",
-        };
-      } else if (typeof data === "string") {
-        generatedContent.script = data;
-      } else if (data.script) {
-        generatedContent.script = data.script;
-      } else if (data.guion) {
-        generatedContent.script = data.guion;
-      } else {
-        generatedContent.script = JSON.stringify(data, null, 2);
-      }
+      const scriptText: string = data.script || data.result || "";
+
+      const generatedContent: GeneratedContent = {
+        script: scriptText,
+        editor_guidelines: "",
+        strategist_guidelines: "",
+        trafficker_guidelines: "",
+      };
 
       if (generatedContent.script) {
         onScriptGenerated(generatedContent);
-        toast({ 
+        toast({
           title: "Contenido generado exitosamente",
-          description: "Guión y pautas asignados a sus respectivos bloques"
+          description: "Guión generado con IA",
         });
       } else {
-        throw new Error("No se recibió respuesta del webhook");
+        throw new Error("No se recibió el guión de la IA");
       }
     } catch (error) {
       console.error("Error:", error);
       toast({
         title: "Error al generar",
-        description: error instanceof Error ? error.message : "No se pudo conectar con n8n. Intenta de nuevo.",
+        description:
+          error instanceof Error ? error.message : "No se pudo generar el guión. Intenta de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -304,8 +287,8 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
           Formulario de Guión
         </h4>
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
-            n8n
+          <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+            IA
           </Badge>
         </div>
       </div>
@@ -497,7 +480,7 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Generando guión via n8n...
+            Generando guión con IA...
           </>
         ) : (
           <>
