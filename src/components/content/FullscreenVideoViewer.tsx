@@ -483,12 +483,11 @@ export function FullscreenVideoViewer({
                 <button 
                   className="p-2 text-white/90 hover:text-white transition-colors"
                   data-no-swipe="true"
-                  onClick={(e) => e.stopPropagation()}
                 >
                   <MoreVertical className="h-6 w-6 drop-shadow-lg" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48" data-no-swipe="true">
+              <DropdownMenuContent align="end" className="w-48 z-[200] bg-popover text-popover-foreground border border-border shadow-lg" data-no-swipe="true">
                 {onEdit && (
                   <DropdownMenuItem onClick={() => onEdit(currentVideo.id)}>
                     <Pencil className="h-4 w-4 mr-2" />
