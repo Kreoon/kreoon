@@ -302,7 +302,7 @@ export function CreatorEditorForm({ open, onOpenChange, profile, onSuccess }: Cr
                     <div className="space-y-0.5">
                       <FormLabel className="flex items-center gap-2 text-base">
                         <Star className="h-4 w-4 text-primary" />
-                        Embajador UGC Colombia
+                        Embajador Creator Studio
                       </FormLabel>
                       <p className="text-xs text-muted-foreground">
                         Los embajadores reciben contenido exclusivo de la marca

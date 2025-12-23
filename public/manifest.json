@@ -1,6 +1,6 @@
 {
-  "name": "UGC Colombia",
-  "short_name": "UGC",
+  "name": "Creator Studio",
+  "short_name": "Creator Studio",
   "description": "Plataforma de gestión de contenido UGC",
   "start_url": "/",
   "display": "standalone",
