@@ -97,10 +97,11 @@ export function FullscreenVideoViewer({
     const newMuted = !isMuted;
     setIsMuted(newMuted);
     
-    // Send message to Bunny player iframe
+    // Send message to Bunny player iframe using their API format
     if (iframeRef.current?.contentWindow) {
+      // Bunny.net uses 'method' property for player actions
       iframeRef.current.contentWindow.postMessage(
-        { event: newMuted ? 'mute' : 'unmute' },
+        JSON.stringify({ method: newMuted ? 'mute' : 'unmute' }),
         '*'
       );
     }
