@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
-  MessageSquare, ListOrdered, Plus, X, Wand2 
+  MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
+  Video, ChevronDown, CheckCircle2
 } from "lucide-react";
 
 interface Product {
@@ -47,6 +49,21 @@ interface ScriptFormData {
   narrative_structure: string;
   additional_instructions: string;
   hooks: string[];
+  // New fields for custom prompts
+  script_prompt: string;
+  editor_prompt: string;
+  strategist_prompt: string;
+  trafficker_prompt: string;
+  // Reference video transcription
+  reference_transcription: string;
+  // Video strategies
+  video_strategies: string;
+}
+
+interface GenerationStep {
+  key: "script" | "editor" | "strategist" | "trafficker";
+  label: string;
+  status: "pending" | "generating" | "done" | "error";
 }
 
 const NARRATIVE_STRUCTURES = [
@@ -71,15 +88,47 @@ const COUNTRIES = [
   "Otro",
 ];
 
-// Generación de guiones vía backend (IA)
 const CONTENT_AI_FUNCTION = "content-ai";
 
+const DEFAULT_PROMPTS = {
+  script: `Genera un guión de video corto (TikTok/Reels/Shorts) que sea natural, conversacional y fácil de memorizar. 
+Incluye múltiples opciones de hooks de apertura.
+Sigue la estructura narrativa indicada.
+Integra el CTA de forma natural al final.`,
+  editor: `Basándote en el guión generado, crea pautas detalladas para el editor de video:
+- Estilo visual sugerido
+- Ritmo de edición
+- Transiciones recomendadas
+- Efectos de texto/gráficos
+- Música y sonidos sugeridos
+- Duración de cada sección`,
+  strategist: `Basándote en el guión, crea pautas para el estratega:
+- Mejor horario de publicación
+- Hashtags recomendados
+- Caption sugerido
+- Estrategia de engagement
+- Métricas clave a monitorear`,
+  trafficker: `Basándote en el guión, crea pautas para el trafficker:
+- Audiencias objetivo sugeridas
+- Objetivos de campaña recomendados
+- Presupuesto sugerido
+- Formatos de anuncio ideales
+- Copy para anuncios`,
+};
 
 export function ScriptGenerator({ product, contentId, onScriptGenerated }: ScriptGeneratorProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [newHook, setNewHook] = useState("");
+  const [promptsOpen, setPromptsOpen] = useState(false);
   
+  const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([
+    { key: "script", label: "Guión", status: "pending" },
+    { key: "editor", label: "Pautas Editor", status: "pending" },
+    { key: "strategist", label: "Pautas Estratega", status: "pending" },
+    { key: "trafficker", label: "Pautas Trafficker", status: "pending" },
+  ]);
+
   const [formData, setFormData] = useState<ScriptFormData>({
     cta: "",
     sales_angle: "",
@@ -89,12 +138,19 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated }: Scrip
     narrative_structure: "",
     additional_instructions: "",
     hooks: [],
+    // Custom prompts with defaults
+    script_prompt: DEFAULT_PROMPTS.script,
+    editor_prompt: DEFAULT_PROMPTS.editor,
+    strategist_prompt: DEFAULT_PROMPTS.strategist,
+    trafficker_prompt: DEFAULT_PROMPTS.trafficker,
+    // New fields
+    reference_transcription: "",
+    video_strategies: "",
   });
 
   // Pre-fill avatar from product if available
   useEffect(() => {
     if (product?.ideal_avatar) {
-      // Strip HTML tags for display
       const strippedAvatar = product.ideal_avatar.replace(/<[^>]*>/g, '').substring(0, 200);
       setFormData(prev => ({
         ...prev,
@@ -120,22 +176,31 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated }: Scrip
     });
   };
 
-  const buildPrompt = () => {
-    return `Genera un guión de video para el siguiente contexto:
+  const updateStepStatus = (key: string, status: GenerationStep["status"]) => {
+    setGenerationSteps(prev => 
+      prev.map(step => step.key === key ? { ...step, status } : step)
+    );
+  };
 
-PRODUCTO: ${product?.name}
+  const resetSteps = () => {
+    setGenerationSteps([
+      { key: "script", label: "Guión", status: "pending" },
+      { key: "editor", label: "Pautas Editor", status: "pending" },
+      { key: "strategist", label: "Pautas Estratega", status: "pending" },
+      { key: "trafficker", label: "Pautas Trafficker", status: "pending" },
+    ]);
+  };
+
+  const buildBaseContext = () => {
+    const narrativeLabel = NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure;
+    
+    return `PRODUCTO: ${product?.name}
 DESCRIPCIÓN: ${product?.description || 'No disponible'}
-CTA (Llamado a la acción): ${formData.cta}
+CTA: ${formData.cta}
 ÁNGULO DE VENTA: ${formData.sales_angle}
-ESTRUCTURA NARRATIVA: ${NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure}
+ESTRUCTURA NARRATIVA: ${narrativeLabel}
 PAÍS OBJETIVO: ${formData.target_country}
 AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
-
-HOOKS SUGERIDOS (${formData.hooks_count}):
-${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).join('\n') : 'Generar hooks automáticamente'}
-
-INSTRUCCIONES ADICIONALES:
-${formData.additional_instructions || 'Ninguna'}
 
 ESTRATEGIA DEL PRODUCTO:
 ${product?.strategy || 'No disponible'}
@@ -146,12 +211,49 @@ ${product?.market_research || 'No disponible'}
 ÁNGULOS DE VENTA DISPONIBLES:
 ${product?.sales_angles?.join(', ') || 'No definidos'}
 
-Por favor genera un guión completo con:
-1. ${formData.hooks_count} opciones de hooks de apertura
-2. Desarrollo del contenido siguiendo la estructura ${NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label}
-3. Cierre con el CTA: ${formData.cta}
+HOOKS SUGERIDOS:
+${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).join('\n') : 'Generar automáticamente'}
 
-El guión debe ser natural, conversacional y optimizado para video corto (TikTok/Reels/Shorts).`;
+${formData.reference_transcription ? `TRANSCRIPCIÓN VIDEO DE REFERENCIA:\n${formData.reference_transcription}\n` : ''}
+${formData.video_strategies ? `ESTRATEGIAS/ESTRUCTURAS DE VIDEO A USAR:\n${formData.video_strategies}\n` : ''}
+${formData.additional_instructions ? `INSTRUCCIONES ADICIONALES:\n${formData.additional_instructions}` : ''}`;
+  };
+
+  const generateContent = async (
+    type: "script" | "editor" | "strategist" | "trafficker",
+    customPrompt: string,
+    previousScript?: string
+  ): Promise<string> => {
+    const baseContext = buildBaseContext();
+    
+    let fullPrompt = `${customPrompt}\n\n---\nCONTEXTO:\n${baseContext}`;
+    
+    if (previousScript && type !== "script") {
+      fullPrompt += `\n\n---\nGUIÓN GENERADO:\n${previousScript}`;
+    }
+
+    const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
+      body: {
+        action: "generate_script",
+        prompt: fullPrompt,
+        product: {
+          id: product?.id,
+          name: product?.name,
+          description: product?.description,
+          strategy: product?.strategy,
+          market_research: product?.market_research,
+          ideal_avatar: product?.ideal_avatar,
+          sales_angles: product?.sales_angles,
+        },
+        generation_type: type,
+      },
+    });
+
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error("Respuesta vacía de la IA");
+    if (data.error) throw new Error(data.error);
+
+    return data.script || data.result || "";
   };
 
   const handleGenerate = async () => {
@@ -174,93 +276,63 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
     }
 
     setLoading(true);
+    resetSteps();
+
+    const generatedContent: GeneratedContent = {
+      script: "",
+      editor_guidelines: "",
+      strategist_guidelines: "",
+      trafficker_guidelines: "",
+    };
+
     try {
-      const payload = {
-        // Content info
-        content_id: contentId || null,
-        timestamp: new Date().toISOString(),
+      // Step 1: Generate Script
+      updateStepStatus("script", "generating");
+      generatedContent.script = await generateContent("script", formData.script_prompt);
+      updateStepStatus("script", "done");
 
-        // Product information (complete)
-        product: {
-          id: product.id,
-          name: product.name,
-          description: product.description || null,
-          strategy: product.strategy || null,
-          market_research: product.market_research || null,
-          ideal_avatar: product.ideal_avatar || null,
-          sales_angles: product.sales_angles || [],
-          brief_url: product.brief_url || null,
-          onboarding_url: product.onboarding_url || null,
-          research_url: product.research_url || null,
-        },
+      // Step 2: Generate Editor Guidelines (based on script)
+      updateStepStatus("editor", "generating");
+      generatedContent.editor_guidelines = await generateContent(
+        "editor", 
+        formData.editor_prompt, 
+        generatedContent.script
+      );
+      updateStepStatus("editor", "done");
 
-        // Script parameters from the form
-        script_params: {
-          cta: formData.cta,
-          sales_angle: formData.sales_angle,
-          hooks_count: parseInt(formData.hooks_count),
-          ideal_avatar: formData.ideal_avatar,
-          target_country: formData.target_country,
-          narrative_structure: formData.narrative_structure,
-          narrative_structure_label:
-            NARRATIVE_STRUCTURES.find((s) => s.value === formData.narrative_structure)?.label ||
-            formData.narrative_structure,
-          additional_instructions: formData.additional_instructions,
-          hooks: formData.hooks,
-        },
+      // Step 3: Generate Strategist Guidelines (based on script)
+      updateStepStatus("strategist", "generating");
+      generatedContent.strategist_guidelines = await generateContent(
+        "strategist", 
+        formData.strategist_prompt, 
+        generatedContent.script
+      );
+      updateStepStatus("strategist", "done");
 
-        // Prompt final
-        prompt: buildPrompt(),
-      };
+      // Step 4: Generate Trafficker Guidelines (based on script)
+      updateStepStatus("trafficker", "generating");
+      generatedContent.trafficker_guidelines = await generateContent(
+        "trafficker", 
+        formData.trafficker_prompt, 
+        generatedContent.script
+      );
+      updateStepStatus("trafficker", "done");
 
-      console.log("Sending to content-ai:", payload);
-
-      const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
-        body: {
-          action: "generate_script",
-          prompt: payload.prompt,
-          product: payload.product,
-          script_params: payload.script_params,
-        },
+      onScriptGenerated(generatedContent);
+      
+      toast({
+        title: "Contenido generado exitosamente",
+        description: "Guión y todas las pautas han sido generadas",
       });
-
-      if (error) {
-        console.error("content-ai error:", error);
-        throw new Error(error.message);
-      }
-
-      if (!data) {
-        throw new Error("La IA devolvió una respuesta vacía");
-      }
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      const scriptText: string = data.script || data.result || "";
-
-      const generatedContent: GeneratedContent = {
-        script: scriptText,
-        editor_guidelines: "",
-        strategist_guidelines: "",
-        trafficker_guidelines: "",
-      };
-
-      if (generatedContent.script) {
-        onScriptGenerated(generatedContent);
-        toast({
-          title: "Contenido generado exitosamente",
-          description: "Guión generado con IA",
-        });
-      } else {
-        throw new Error("No se recibió el guión de la IA");
-      }
     } catch (error) {
       console.error("Error:", error);
+      const currentStep = generationSteps.find(s => s.status === "generating");
+      if (currentStep) {
+        updateStepStatus(currentStep.key, "error");
+      }
       toast({
         title: "Error al generar",
-        description:
-          error instanceof Error ? error.message : "No se pudo generar el guión. Intenta de nuevo.",
+        description: error instanceof Error ? error.message : "No se pudo completar la generación",
         variant: "destructive",
       });
     } finally {
@@ -286,11 +358,9 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
           <Wand2 className="h-5 w-5 text-primary" />
           Formulario de Guión
         </h4>
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-            IA
-          </Badge>
-        </div>
+        <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+          IA Secuencial
+        </Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -346,11 +416,9 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">1 Hook</SelectItem>
-              <SelectItem value="2">2 Hooks</SelectItem>
-              <SelectItem value="3">3 Hooks</SelectItem>
-              <SelectItem value="4">4 Hooks</SelectItem>
-              <SelectItem value="5">5 Hooks</SelectItem>
+              {[1, 2, 3, 4, 5].map(n => (
+                <SelectItem key={n} value={String(n)}>{n} Hook{n > 1 ? 's' : ''}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -413,6 +481,32 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
         </div>
       </div>
 
+      {/* Video Strategies Section */}
+      <div className="space-y-2 pt-4 border-t">
+        <Label className="flex items-center gap-2">
+          <Video className="h-4 w-4" /> Estrategias / Estructuras de Video
+        </Label>
+        <Textarea
+          value={formData.video_strategies}
+          onChange={(e) => setFormData({ ...formData, video_strategies: e.target.value })}
+          placeholder="Ej: POV, Storytime, ASMR, Unboxing, Tutorial rápido, Trend de TikTok..."
+          rows={2}
+        />
+      </div>
+
+      {/* Reference Transcription Section */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <FileText className="h-4 w-4" /> Transcripción Video de Referencia (opcional)
+        </Label>
+        <Textarea
+          value={formData.reference_transcription}
+          onChange={(e) => setFormData({ ...formData, reference_transcription: e.target.value })}
+          placeholder="Pega aquí la transcripción de un video de referencia que quieras usar como inspiración..."
+          rows={3}
+        />
+      </div>
+
       {/* Hooks personalizados */}
       <div className="space-y-3 pt-4 border-t">
         <Label className="flex items-center gap-2">
@@ -470,7 +564,109 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
         />
       </div>
 
-      {/* Botón Generar */}
+      {/* Custom Prompts Section */}
+      <Collapsible open={promptsOpen} onOpenChange={setPromptsOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between">
+            <span className="flex items-center gap-2">
+              <Settings2 className="h-4 w-4" />
+              Personalizar Prompts de IA
+            </span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${promptsOpen ? 'rotate-180' : ''}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-4 pt-4">
+          {/* Script Prompt */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Prompt para Guión</Label>
+            <Textarea
+              value={formData.script_prompt}
+              onChange={(e) => setFormData({ ...formData, script_prompt: e.target.value })}
+              placeholder="Instrucciones para generar el guión..."
+              rows={3}
+              className="text-sm"
+            />
+          </div>
+
+          {/* Editor Prompt */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Prompt para Pautas del Editor</Label>
+            <Textarea
+              value={formData.editor_prompt}
+              onChange={(e) => setFormData({ ...formData, editor_prompt: e.target.value })}
+              placeholder="Instrucciones para generar pautas de edición..."
+              rows={3}
+              className="text-sm"
+            />
+          </div>
+
+          {/* Strategist Prompt */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Prompt para Pautas del Estratega</Label>
+            <Textarea
+              value={formData.strategist_prompt}
+              onChange={(e) => setFormData({ ...formData, strategist_prompt: e.target.value })}
+              placeholder="Instrucciones para generar pautas de estrategia..."
+              rows={3}
+              className="text-sm"
+            />
+          </div>
+
+          {/* Trafficker Prompt */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Prompt para Pautas del Trafficker</Label>
+            <Textarea
+              value={formData.trafficker_prompt}
+              onChange={(e) => setFormData({ ...formData, trafficker_prompt: e.target.value })}
+              placeholder="Instrucciones para generar pautas de tráfico pagado..."
+              rows={3}
+              className="text-sm"
+            />
+          </div>
+
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setFormData(prev => ({
+              ...prev,
+              script_prompt: DEFAULT_PROMPTS.script,
+              editor_prompt: DEFAULT_PROMPTS.editor,
+              strategist_prompt: DEFAULT_PROMPTS.strategist,
+              trafficker_prompt: DEFAULT_PROMPTS.trafficker,
+            }))}
+          >
+            Restaurar prompts por defecto
+          </Button>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Generation Progress */}
+      {loading && (
+        <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
+          <p className="text-sm font-medium mb-3">Progreso de generación:</p>
+          {generationSteps.map((step) => (
+            <div key={step.key} className="flex items-center gap-3">
+              {step.status === "pending" && (
+                <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
+              )}
+              {step.status === "generating" && (
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              )}
+              {step.status === "done" && (
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              )}
+              {step.status === "error" && (
+                <X className="h-5 w-5 text-destructive" />
+              )}
+              <span className={`text-sm ${step.status === "generating" ? "text-primary font-medium" : ""}`}>
+                {step.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Generate Button */}
       <Button 
         onClick={handleGenerate} 
         disabled={loading}
@@ -480,12 +676,12 @@ El guión debe ser natural, conversacional y optimizado para video corto (TikTok
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Generando guión con IA...
+            Generando contenido...
           </>
         ) : (
           <>
             <Wand2 className="h-4 w-4 mr-2" />
-            Generar Guión con IA
+            Generar Todo con IA
           </>
         )}
       </Button>
