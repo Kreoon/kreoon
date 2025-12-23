@@ -18,6 +18,7 @@ import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/da
 import { useNavigate } from 'react-router-dom';
 import { ClientFinanceChart } from '@/components/dashboard/ClientFinanceChart';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
+import { FullscreenContentViewer } from '@/components/content/FullscreenContentViewer';
 import { 
   LogOut, 
   Video, 
@@ -53,7 +54,8 @@ import {
   ShoppingBag,
   FolderOpen,
   AlertTriangle,
-  FileCheck
+  FileCheck,
+  Maximize2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -231,6 +233,8 @@ export default function ClientDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [stageFilter, setStageFilter] = useState<string | null>(null);
+  const [showFullscreenReview, setShowFullscreenReview] = useState(false);
+  const [fullscreenStartIndex, setFullscreenStartIndex] = useState(0);
   
   // Edit company state
   const [isEditingCompany, setIsEditingCompany] = useState(false);
@@ -1189,12 +1193,26 @@ export default function ClientDashboard() {
           </div>
         )}
 
-        {/* Review Tab */}
+        {/* Review Tab - TikTok Style */}
         {activeTab === 'review' && (
           <div className="space-y-4">
-            <div>
-              <h2 className="text-lg font-bold mb-1">Contenido por Revisar</h2>
-              <p className="text-sm text-muted-foreground">Revisa y aprueba tu contenido</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold mb-1">Contenido por Revisar</h2>
+                <p className="text-sm text-muted-foreground">Revisa y aprueba tu contenido</p>
+              </div>
+              {reviewContent.length > 0 && (
+                <Button 
+                  onClick={() => {
+                    setFullscreenStartIndex(0);
+                    setShowFullscreenReview(true);
+                  }}
+                  className="gap-2"
+                >
+                  <Maximize2 className="h-4 w-4" />
+                  Ver todos
+                </Button>
+              )}
             </div>
 
             {reviewContent.length === 0 ? (
@@ -1206,31 +1224,54 @@ export default function ClientDashboard() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-3">
-                {reviewContent.map(item => (
-                  <Card key={item.id} className="overflow-hidden">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                          {item.thumbnail_url ? (
-                            <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
-                          ) : (
-                            <Video className="h-6 w-6 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm line-clamp-2">{item.title}</h4>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Creador: {item.creator?.full_name || 'Sin asignar'}
-                          </p>
-                        </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {reviewContent.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="group relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer bg-muted border-2 border-transparent hover:border-primary/50 transition-all"
+                    onClick={() => {
+                      setFullscreenStartIndex(index);
+                      setShowFullscreenReview(true);
+                    }}
+                  >
+                    {/* Thumbnail */}
+                    {item.thumbnail_url ? (
+                      <img 
+                        src={item.thumbnail_url} 
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-muted">
+                        <Video className="h-10 w-10 text-muted-foreground" />
                       </div>
-                      <Button className="w-full" onClick={() => setSelectedContent(item)}>
-                        <Eye className="w-4 h-4 mr-2" />
-                        Revisar y Aprobar
-                      </Button>
-                    </CardContent>
-                  </Card>
+                    )}
+
+                    {/* Overlay gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+                    {/* Status badge */}
+                    <div className="absolute top-2 left-2">
+                      <Badge className={cn("text-xs", STATUS_COLORS[item.status])}>
+                        {STATUS_LABELS[item.status]}
+                      </Badge>
+                    </div>
+
+                    {/* Play icon on hover */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="h-14 w-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <Play className="h-7 w-7 text-white fill-white" />
+                      </div>
+                    </div>
+
+                    {/* Bottom info */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <p className="text-white text-sm font-medium line-clamp-2">{item.title}</p>
+                      <p className="text-white/70 text-xs mt-1">
+                        {item.creator?.full_name || 'Sin creador'}
+                      </p>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -1710,6 +1751,64 @@ export default function ClientDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Fullscreen Review Viewer */}
+      {showFullscreenReview && reviewContent.length > 0 && (
+        <FullscreenContentViewer
+          items={reviewContent.map(c => ({
+            id: c.id,
+            title: c.title,
+            thumbnail_url: c.thumbnail_url,
+            video_url: c.video_url,
+            video_urls: c.video_urls,
+            bunny_embed_url: c.bunny_embed_url,
+            status: c.status,
+            creator: c.creator,
+            script: c.script,
+            description: c.description
+          }))}
+          initialIndex={fullscreenStartIndex}
+          onClose={() => setShowFullscreenReview(false)}
+          onApprove={async (item, feedbackText) => {
+            await supabase
+              .from('content')
+              .update({ 
+                status: 'approved' as ContentStatus,
+                approved_at: new Date().toISOString(),
+                approved_by: user?.id
+              })
+              .eq('id', item.id);
+            
+            if (feedbackText) {
+              await supabase.from('content_comments').insert({
+                content_id: item.id,
+                user_id: user?.id,
+                comment: `Aprobado: ${feedbackText}`
+              });
+            }
+            
+            toast({ title: 'Contenido aprobado', description: 'El contenido ha sido aprobado exitosamente' });
+            if (selectedClientId) fetchClientData(selectedClientId);
+          }}
+          onReject={async (item, feedbackText) => {
+            await supabase
+              .from('content')
+              .update({ status: 'issue' as ContentStatus, notes: feedbackText })
+              .eq('id', item.id);
+            
+            await supabase.from('content_comments').insert({
+              content_id: item.id,
+              user_id: user?.id,
+              comment: `Correcciones solicitadas: ${feedbackText}`
+            });
+            
+            toast({ title: 'Enviado a corrección', description: 'El editor realizará los cambios solicitados' });
+            if (selectedClientId) fetchClientData(selectedClientId);
+          }}
+          showActions={true}
+          mode="review"
+        />
+      )}
     </div>
   );
 }

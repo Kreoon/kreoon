@@ -12,9 +12,7 @@ import {
   X,
   CheckCircle2,
   Building2,
-  Video as VideoIcon,
-  Volume2,
-  VolumeX
+  Video as VideoIcon
 } from 'lucide-react';
 import {
   Select,
@@ -23,12 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { FullscreenContentViewer } from '@/components/content/FullscreenContentViewer';
 
 interface ContentItem {
   id: string;
@@ -60,8 +55,8 @@ export default function ClientPortfolio() {
   const [client, setClient] = useState<ClientInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
-  const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
-  const [previewMuted, setPreviewMuted] = useState(true);
+  const [showFullscreenViewer, setShowFullscreenViewer] = useState(false);
+  const [fullscreenStartIndex, setFullscreenStartIndex] = useState(0);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -346,7 +341,9 @@ export default function ClientPortfolio() {
                   if (isSelecting) {
                     toggleSelection(item.id);
                   } else {
-                    setSelectedContent(item);
+                    const itemIndex = filteredContent.findIndex(c => c.id === item.id);
+                    setFullscreenStartIndex(itemIndex >= 0 ? itemIndex : 0);
+                    setShowFullscreenViewer(true);
                   }
                 }}
               >
@@ -410,68 +407,28 @@ export default function ClientPortfolio() {
         )}
       </main>
 
-      {/* Video Preview Dialog */}
-      <Dialog open={!!selectedContent} onOpenChange={() => setSelectedContent(null)}>
-        <DialogContent className="max-w-4xl bg-zinc-900 border-white/10 p-0 overflow-hidden">
-          {selectedContent && (
-            <div className="flex flex-col">
-              {/* Video */}
-              <div className="relative aspect-video bg-black">
-                {selectedContent.bunny_embed_url ? (
-                  <iframe
-                    src={`${selectedContent.bunny_embed_url}?autoplay=true&muted=${previewMuted}&controls=false`}
-                    className="w-full h-full"
-                    allow="autoplay; fullscreen"
-                    allowFullScreen
-                  />
-                ) : getVideoUrl(selectedContent) ? (
-                  <video
-                    src={getVideoUrl(selectedContent)!}
-                    autoPlay
-                    muted={previewMuted}
-                    playsInline
-                    controls={false}
-                    className="w-full h-full"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white/50">
-                    No hay video disponible
-                  </div>
-                )}
-
-                {/* Volume toggle (only control shown) */}
-                {(selectedContent.bunny_embed_url || getVideoUrl(selectedContent)) && (
-                  <button
-                    onClick={() => setPreviewMuted((v) => !v)}
-                    className="absolute top-3 right-3 z-20 p-2.5 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
-                  >
-                    {previewMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                  </button>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="p-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-white font-semibold">{selectedContent.title}</h3>
-                  {selectedContent.approved_at && (
-                    <p className="text-white/50 text-sm">
-                      Aprobado el {new Date(selectedContent.approved_at).toLocaleDateString('es-ES')}
-                    </p>
-                  )}
-                </div>
-                <Button 
-                  onClick={() => handleSingleDownload(selectedContent)}
-                  className="gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Descargar
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Fullscreen Video Viewer */}
+      {showFullscreenViewer && filteredContent.length > 0 && (
+        <FullscreenContentViewer
+          items={filteredContent.map(c => ({
+            id: c.id,
+            title: c.title,
+            thumbnail_url: c.thumbnail_url,
+            video_url: c.video_url,
+            video_urls: c.video_urls,
+            bunny_embed_url: c.bunny_embed_url,
+            status: 'approved' as any
+          }))}
+          initialIndex={fullscreenStartIndex}
+          onClose={() => setShowFullscreenViewer(false)}
+          onDownload={(item) => {
+            const contentItem = filteredContent.find(c => c.id === item.id);
+            if (contentItem) handleSingleDownload(contentItem);
+          }}
+          showActions={false}
+          mode="view"
+        />
+      )}
     </div>
   );
 }
