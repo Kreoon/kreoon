@@ -52,6 +52,22 @@ function extractVideoId(url: string): string | null {
   return null;
 }
 
+// Check if URL is a Bunny video (embed or CDN) vs a native video file
+function isBunnyVideoUrl(url: string): boolean {
+  if (!url) return false;
+  return url.includes('iframe.mediadelivery.net') || url.includes('b-cdn.net');
+}
+
+// Check if URL is a direct video file (mp4, mov, webm, etc.)
+function isNativeVideoUrl(url: string): boolean {
+  if (!url) return false;
+  // Check for common video extensions or Supabase storage URLs
+  const videoExtensions = ['.mp4', '.mov', '.webm', '.m4v', '.avi', '.mkv'];
+  const lowerUrl = url.toLowerCase();
+  return videoExtensions.some(ext => lowerUrl.includes(ext)) || 
+         (url.includes('supabase.co/storage') && !url.includes('.jpg') && !url.includes('.png') && !url.includes('.jpeg'));
+}
+
 function isValidImageUrl(url: string | null | undefined): boolean {
   if (!url) return false;
   // Sometimes we stored an embed URL by mistake; that's not an image.
@@ -114,11 +130,15 @@ export function BunnyVideoCard({
   const [showComments, setShowComments] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const viewTracked = useRef(false);
   const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentVideoUrl = videoUrls[currentIndex] || videoUrls[0];
   const hasMultiple = videoUrls.length > 1;
+
+  // Determine if current video is a native video file (not Bunny)
+  const isNativeVideo = isNativeVideoUrl(currentVideoUrl) && !isBunnyVideoUrl(currentVideoUrl);
 
   // Load thumbnail for current video
   useEffect(() => {
@@ -260,6 +280,10 @@ export function BunnyVideoCard({
       viewTracked.current = false;
       if (viewTimerRef.current) {
         clearTimeout(viewTimerRef.current);
+      }
+      // Pause native video when stopping
+      if (videoRef.current) {
+        videoRef.current.pause();
       }
     }
   }, [isPlaying]);
@@ -480,28 +504,52 @@ export function BunnyVideoCard({
           </>
         ) : (
           <>
-            {/* Bunny iframe player */}
-            <iframe
-              ref={iframeRef}
-              src={getEmbedUrl(currentVideoUrl)}
-              className="w-full h-full border-0"
-              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen={isAdmin}
-              loading="lazy"
-            />
+            {/* Video Player - Native video or Bunny iframe */}
+            {isNativeVideo ? (
+              // Native video player for mp4, mov, webm, etc.
+              <video
+                ref={videoRef}
+                src={currentVideoUrl}
+                className="w-full h-full object-cover"
+                autoPlay
+                loop
+                muted={isMuted}
+                playsInline
+                onClick={handleStop}
+              />
+            ) : (
+              // Bunny iframe player
+              <iframe
+                ref={iframeRef}
+                src={getEmbedUrl(currentVideoUrl)}
+                className="w-full h-full border-0"
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen={isAdmin}
+                loading="lazy"
+              />
+            )}
 
-            {/* Tap anywhere to pause/stop (no native controls) */}
-            <div 
-              className="absolute inset-0 cursor-pointer" 
-              onClick={handleStop}
-            />
+            {/* Tap anywhere to pause/stop (no native controls) - only for iframe */}
+            {!isNativeVideo && (
+              <div 
+                className="absolute inset-0 cursor-pointer" 
+                onClick={handleStop}
+              />
+            )}
 
             {/* Volume toggle (only visible control) */}
             <div className="absolute top-3 right-3 z-20">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsMuted((v) => !v);
+                  setIsMuted((v) => {
+                    const newMuted = !v;
+                    // Sync with native video element if present
+                    if (videoRef.current) {
+                      videoRef.current.muted = newMuted;
+                    }
+                    return newMuted;
+                  });
                 }}
                 className="p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
               >
