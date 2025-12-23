@@ -15,8 +15,11 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        glow: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_30px_hsl(var(--primary)/0.6)] active:scale-[0.98]",
+        glow: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_35px_hsl(var(--primary)/0.6)] active:scale-[0.98] animate-golden-pulse",
         success: "bg-success text-success-foreground hover:bg-success/90 shadow-md hover:shadow-lg",
+        torch: "bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 text-white shadow-[0_0_25px_hsl(25_90%_50%/0.5)] hover:shadow-[0_0_40px_hsl(25_90%_50%/0.7)] animate-torch-glow active:scale-[0.98]",
+        medieval: "bg-gradient-to-b from-primary to-primary/80 text-primary-foreground border-2 border-primary/50 shadow-emboss hover:from-primary/90 hover:to-primary/70 active:scale-[0.98]",
+        royal: "bg-gradient-to-r from-gold-dark via-gold to-gold-light text-primary-foreground shadow-[0_4px_20px_hsl(38_75%_50%/0.4)] hover:shadow-[0_6px_30px_hsl(38_75%_50%/0.6)] active:scale-[0.98] font-medieval",
       },
       size: {
         default: "h-10 px-5 py-2",
