@@ -56,10 +56,22 @@ export function MediaUploader({
 
     const isImage = selectedFile.type.startsWith('image/');
     const isVideo = selectedFile.type.startsWith('video/');
-    
+
     if (!isImage && !isVideo) {
       toast.error('Solo se permiten imágenes y videos');
       return;
+    }
+
+    // Para que se reproduzca tipo TikTok en todos los navegadores, limitamos a MP4/WebM
+    if (isVideo) {
+      const ext = (selectedFile.name.split('.').pop() || '').toLowerCase();
+      const allowed = ['mp4', 'webm'];
+      if (!allowed.includes(ext)) {
+        toast.error('Formato de video no compatible. Sube MP4 (H.264) o WebM');
+        // Limpia el input para permitir re-seleccionar el mismo archivo
+        e.currentTarget.value = '';
+        return;
+      }
     }
 
     if (selectedFile.size > 50 * 1024 * 1024) {
@@ -71,7 +83,7 @@ export function MediaUploader({
     setPreview(URL.createObjectURL(selectedFile));
     setThumbnail(null);
     setCustomThumbnailFile(null);
-    
+
     if (isVideo) {
       setShowThumbnailSelector(false);
     }
@@ -586,7 +598,7 @@ export function MediaUploader({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,video/*"
+            accept="image/*,video/mp4,video/webm"
             onChange={handleFileSelect}
             className="hidden"
           />

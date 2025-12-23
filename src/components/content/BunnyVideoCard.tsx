@@ -128,6 +128,7 @@ export function BunnyVideoCard({
   const [showFloatingHeart, setShowFloatingHeart] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [nativeVideoError, setNativeVideoError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -139,6 +140,11 @@ export function BunnyVideoCard({
 
   // Determine if current video is a native video file (not Bunny)
   const isNativeVideo = isNativeVideoUrl(currentVideoUrl) && !isBunnyVideoUrl(currentVideoUrl);
+
+  // Reset native video error when switching videos
+  useEffect(() => {
+    setNativeVideoError(false);
+  }, [currentVideoUrl]);
 
   // Load thumbnail for current video
   useEffect(() => {
@@ -508,17 +514,45 @@ export function BunnyVideoCard({
             {isNativeVideo ? (
               // Native video player for mp4, mov, webm, etc.
               <div className="absolute inset-0 bg-black flex items-center justify-center">
-                <video
-                  ref={videoRef}
-                  src={currentVideoUrl}
-                  className="w-full h-full object-contain"
-                  autoPlay
-                  loop
-                  muted={isMuted}
-                  playsInline
-                  onClick={handleStop}
-                  style={{ backgroundColor: 'black' }}
-                />
+                {nativeVideoError ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 px-6 text-center">
+                    <p className="text-sm text-white/80">
+                      Este video no se puede reproducir en el navegador.
+                    </p>
+                    <p className="text-xs text-white/60">
+                      Sube el video en formato MP4 (H.264) o WebM.
+                    </p>
+                    <a
+                      href={currentVideoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs underline text-white/80 hover:text-white"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Descargar video
+                    </a>
+                  </div>
+                ) : (
+                  <video
+                    ref={videoRef}
+                    src={currentVideoUrl}
+                    className="w-full h-full object-contain"
+                    autoPlay
+                    loop
+                    muted={isMuted}
+                    playsInline
+                    onClick={handleStop}
+                    onError={() => setNativeVideoError(true)}
+                    onLoadedMetadata={(e) => {
+                      // Algunos .mov con codec no soportado “cargan” audio pero el track de video queda inválido.
+                      const el = e.currentTarget;
+                      if (!el.videoWidth || !el.videoHeight) {
+                        setNativeVideoError(true);
+                      }
+                    }}
+                    style={{ backgroundColor: 'black' }}
+                  />
+                )}
               </div>
             ) : (
               // Bunny iframe player
