@@ -8,11 +8,38 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PendingAccess() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, roles, loading, rolesLoaded } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingWhatsapp, setLoadingWhatsapp] = useState(true);
+
+  // If user has roles, redirect to their dashboard
+  useEffect(() => {
+    if (!loading && rolesLoaded && roles.length > 0) {
+      // User has roles, shouldn't be here
+      if (roles.includes('admin')) {
+        navigate('/', { replace: true });
+      } else if (roles.includes('creator')) {
+        navigate('/creator-dashboard', { replace: true });
+      } else if (roles.includes('editor')) {
+        navigate('/editor-dashboard', { replace: true });
+      } else if (roles.includes('client')) {
+        navigate('/client-dashboard', { replace: true });
+      } else if (roles.includes('strategist')) {
+        navigate('/strategist-dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [loading, rolesLoaded, roles, navigate]);
+
+  // If no user, redirect to auth
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth', { replace: true });
+    }
+  }, [loading, user, navigate]);
 
   useEffect(() => {
     const fetchWhatsappNumber = async () => {
@@ -29,7 +56,7 @@ export default function PendingAccess() {
         console.error('Error fetching WhatsApp number:', error);
         setWhatsappNumber('573113842399'); // Fallback
       } finally {
-        setLoading(false);
+        setLoadingWhatsapp(false);
       }
     };
 
@@ -61,6 +88,24 @@ export default function PendingAccess() {
       description: 'Has cerrado sesión correctamente'
     });
   };
+
+  // Show loading while checking auth state
+  if (loading || !rolesLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Don't render if user should be elsewhere
+  if (!user || roles.length > 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">

@@ -86,6 +86,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/no-company" replace />;
   }
 
+  // Client users without an associated company cannot access the app
+  if (isClient && !clientHasCompany) {
+    return <Navigate to="/no-company" replace />;
+  }
+
   // Check if user has the required role
   if (allowedRoles && allowedRoles.length > 0) {
     const hasAllowedRole = allowedRoles.some(role => roles.includes(role));
