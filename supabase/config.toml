@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.security-check]
 verify_jwt = false
+
+[functions.bunny-thumbnail]
+verify_jwt = false
