@@ -8,6 +8,7 @@ import { ContentSettingsDialog } from '@/components/content/ContentSettingsDialo
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { CommentsSection } from './CommentsSection';
 import { PortfolioCommentsSection } from './PortfolioCommentsSection';
+import { ExpandableText } from '@/components/ui/expandable-text';
 
 export interface BunnyVideoCardProps {
   id: string;
@@ -678,7 +679,11 @@ export function BunnyVideoCard({
           </button>
         )}
         {(caption || title) && (
-          <p className="text-white/80 text-xs line-clamp-2 mt-0.5">{caption || title}</p>
+          <ExpandableText 
+            text={caption || title} 
+            className="text-white/80 text-xs mt-0.5"
+            maxLines={2}
+          />
         )}
         
         {/* Owner controls */}

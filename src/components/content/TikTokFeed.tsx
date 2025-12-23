@@ -3,6 +3,7 @@ import { Heart, MessageSquare, Share2, Play, Pause, ChevronLeft, ChevronRight, C
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { ParsedText } from '@/components/ui/parsed-text';
+import { ExpandableText } from '@/components/ui/expandable-text';
 
 interface VideoItem {
   id: string;
@@ -386,7 +387,7 @@ function TikTokVideoCard({
             <span className="text-white font-bold text-sm drop-shadow-lg">@{video.creatorName.replace(/\s+/g, '').toLowerCase()}</span>
           )}
         </div>
-        <ParsedText text={video.title} className="text-white text-sm line-clamp-2 drop-shadow-lg" />
+        <ExpandableText text={video.title} className="text-white text-sm drop-shadow-lg" maxLines={2} />
         {video.clientName && (
           <p className="text-white/80 text-xs mt-1 drop-shadow-lg">🏢 {video.clientName}</p>
         )}
