@@ -27,6 +27,7 @@ import { StoryRing } from '@/components/portfolio/StoryRing';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
 import { ProfileEditor } from '@/components/portfolio/ProfileEditor';
 import { FollowButton } from '@/components/portfolio/FollowButton';
+import { FollowersDialog } from '@/components/portfolio/FollowersDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { ParsedText } from '@/components/ui/parsed-text';
@@ -125,6 +126,8 @@ export default function UserPortfolio() {
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
+  const [showFollowersDialog, setShowFollowersDialog] = useState(false);
+  const [followersDialogTab, setFollowersDialogTab] = useState<'followers' | 'following'>('followers');
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [allUsersWithStories, setAllUsersWithStories] = useState<Array<{
     id: string;
@@ -1083,18 +1086,30 @@ export default function UserPortfolio() {
                 </div>
                 {profileType === 'user' && (
                   <>
-                    <div className="text-center">
+                    <button 
+                      onClick={() => {
+                        setFollowersDialogTab('followers');
+                        setShowFollowersDialog(true);
+                      }}
+                      className="text-center hover:opacity-80 transition-opacity"
+                    >
                       <span className="block text-lg md:text-xl font-bold text-white">
                         {followCounts.followers.toLocaleString()}
                       </span>
                       <span className="text-xs text-white/50">seguidores</span>
-                    </div>
-                    <div className="text-center">
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setFollowersDialogTab('following');
+                        setShowFollowersDialog(true);
+                      }}
+                      className="text-center hover:opacity-80 transition-opacity"
+                    >
                       <span className="block text-lg md:text-xl font-bold text-white">
                         {followCounts.following.toLocaleString()}
                       </span>
                       <span className="text-xs text-white/50">siguiendo</span>
-                    </div>
+                    </button>
                   </>
                 )}
                 <div className="text-center">
@@ -1382,6 +1397,16 @@ export default function UserPortfolio() {
           open={showProfileEditor}
           onOpenChange={setShowProfileEditor}
           onSave={fetchData}
+        />
+      )}
+
+      {/* Followers/Following Dialog */}
+      {resolvedUserId && (
+        <FollowersDialog
+          open={showFollowersDialog}
+          onOpenChange={setShowFollowersDialog}
+          userId={resolvedUserId}
+          initialTab={followersDialogTab}
         />
       )}
     </div>
