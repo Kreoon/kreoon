@@ -11,7 +11,8 @@ import {
   UsersRound,
   LogOut,
   Kanban,
-  RefreshCw
+  RefreshCw,
+  Trophy
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ const adminNavigation: NavItem[] = [
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
   { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients" },
   { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team" },
+  { name: "Sistema UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
