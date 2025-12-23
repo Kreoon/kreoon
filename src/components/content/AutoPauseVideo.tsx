@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, forwardRef } from "react";
-import { Play } from "lucide-react";
+import { Play, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AutoPauseVideoProps {
@@ -219,6 +219,41 @@ export const AutoPauseVideo = forwardRef<HTMLDivElement, AutoPauseVideoProps>(
 
 AutoPauseVideo.displayName = "AutoPauseVideo";
 
+function VolumeToggle({
+  overlayTargetRef,
+  initialMuted,
+}: {
+  overlayTargetRef: React.RefObject<HTMLVideoElement>;
+  initialMuted: boolean;
+}) {
+  const [isMuted, setIsMuted] = useState(initialMuted);
+
+  useEffect(() => {
+    const el = overlayTargetRef.current;
+    if (!el) return;
+    el.muted = isMuted;
+    if (!isMuted) {
+      // Ensure volume isn't zero when unmuting
+      if (el.volume === 0) el.volume = 1;
+    }
+  }, [isMuted, overlayTargetRef]);
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsMuted((v) => !v);
+      }}
+      className="absolute top-2 right-2 z-20 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+      aria-label={isMuted ? "Activar volumen" : "Silenciar"}
+    >
+      {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+    </button>
+  );
+}
+
+
 // Separate component for native video elements with pause control
 interface AutoPauseNativeVideoProps {
   src: string;
@@ -278,16 +313,18 @@ const AutoPauseNativeVideo = forwardRef<HTMLDivElement, AutoPauseNativeVideoProp
     }, [autoPlay]);
 
     return (
-      <div ref={setRefs} className={className} style={style}>
+      <div ref={setRefs} className={cn('relative', className)} style={style}>
         <video
           ref={videoRef}
           src={src}
           className="w-full h-full object-contain"
-          controls
           playsInline
           muted={muted}
           loop={loop}
         />
+
+        {/* Volume toggle (only control shown) */}
+        <VolumeToggle overlayTargetRef={videoRef} initialMuted={!!muted} />
       </div>
     );
   }
