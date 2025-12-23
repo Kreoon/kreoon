@@ -24,8 +24,10 @@ import {
   DollarSign,
   CreditCard,
   TrendingUp,
-  Play
+  Play,
+  Sword
 } from 'lucide-react';
+import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { cn } from '@/lib/utils';
 
 // Premium Stats Card Component
@@ -135,29 +137,28 @@ export default function CreatorDashboard() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold">Panel de Creador</h1>
-          <p className="text-sm text-muted-foreground">Bienvenido, {profile?.full_name}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {showAmbassadorBadge && (
-            <AmbassadorBadge size="md" variant="glow" />
-          )}
-
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-            <DollarSign className="w-4 h-4 text-success" />
-            <span className="font-semibold text-success text-sm">
-              ${pendingPayment.toLocaleString()}
-            </span>
-            <span className="text-xs text-muted-foreground hidden sm:inline">pendiente</span>
+    <div className="space-y-4 p-4 md:p-6">
+      {/* Medieval Banner */}
+      <MedievalBanner
+        icon={Sword}
+        title="Armería del Guerrero"
+        subtitle={`Bienvenido, ${profile?.full_name}`}
+        action={
+          <div className="flex flex-wrap items-center gap-3">
+            {showAmbassadorBadge && (
+              <AmbassadorBadge size="md" variant="glow" />
+            )}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
+              <DollarSign className="w-4 h-4 text-success" />
+              <span className="font-semibold text-success text-sm">
+                ${pendingPayment.toLocaleString()}
+              </span>
+              <span className="text-xs text-muted-foreground hidden sm:inline">pendiente</span>
+            </div>
+            {user && <PortfolioButton userId={user.id} />}
           </div>
-
-          {user && <PortfolioButton userId={user.id} />}
-        </div>
-      </div>
+        }
+      />
 
       {/* Dashboard Content */}
       <div className="space-y-6">

@@ -22,8 +22,10 @@ import {
   Play,
   Clock,
   TrendingUp,
-  Send
+  Send,
+  Scroll
 } from 'lucide-react';
+import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 
@@ -241,17 +243,13 @@ export default function StrategistDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <Lightbulb className="w-6 h-6 text-orange-500" />
-            Panel de Estratega
-          </h1>
-          <p className="text-sm text-muted-foreground">Bienvenido, {profile?.full_name}</p>
-        </div>
-      </div>
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Medieval Banner */}
+      <MedievalBanner
+        icon={Scroll}
+        title="Torre del Estratega"
+        subtitle={`Bienvenido, ${profile?.full_name}`}
+      />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">

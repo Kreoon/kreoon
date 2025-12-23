@@ -6,7 +6,8 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Plus, Play, Eye, Heart, ExternalLink } from "lucide-react";
+import { Search, Plus, Play, Eye, Heart, ExternalLink, Film } from "lucide-react";
+import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -265,62 +266,63 @@ const Content = () => {
   return (
     <VideoPlayerProvider>
       <div className="min-h-screen">
-        <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex h-14 md:h-16 items-center justify-between px-4 md:px-6 gap-2">
-            <div className="min-w-0">
-              <h1 className="text-lg md:text-xl font-bold text-foreground">Galería de Videos</h1>
-              <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Videos finales y portafolio público</p>
-            </div>
-            
-            {isAdmin && (
-              <Dialog open={newVideoOpen} onOpenChange={setNewVideoOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0">
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">Nuevo Video</span>
-                    <span className="sm:hidden">Nuevo</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-[95vw] sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Agregar Video al Portafolio</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Título del video</Label>
-                      <Input
-                        id="title"
-                        placeholder="Ej: Testimonial Cliente X"
-                        value={newVideoTitle}
-                        onChange={(e) => setNewVideoTitle(e.target.value)}
-                      />
+        <div className="p-4 md:p-6 space-y-6">
+          {/* Medieval Banner */}
+          <MedievalBanner
+            icon={Film}
+            title="Galería de Reliquias"
+            subtitle="Videos finales y portafolio público del reino"
+            action={
+              isAdmin && (
+                <Dialog open={newVideoOpen} onOpenChange={setNewVideoOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0 font-medieval">
+                      <Plus className="h-4 w-4" />
+                      <span className="hidden sm:inline">Nueva Reliquia</span>
+                      <span className="sm:hidden">Nuevo</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-[95vw] sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Agregar Video al Portafolio</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="title">Título del video</Label>
+                        <Input
+                          id="title"
+                          placeholder="Ej: Testimonial Cliente X"
+                          value={newVideoTitle}
+                          onChange={(e) => setNewVideoTitle(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="url">URL del video (Bunny)</Label>
+                        <Input
+                          id="url"
+                          placeholder="https://iframe.mediadelivery.net/embed/..."
+                          value={newVideoUrl}
+                          onChange={(e) => setNewVideoUrl(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Soporta URLs de Bunny Stream embed o CDN directo
+                        </p>
+                      </div>
+                      <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
+                        <Button variant="outline" onClick={() => setNewVideoOpen(false)}>
+                          Cancelar
+                        </Button>
+                        <Button onClick={handleAddVideo} disabled={submitting}>
+                          {submitting ? 'Agregando...' : 'Agregar y Publicar'}
+                        </Button>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="url">URL del video (Bunny)</Label>
-                      <Input
-                        id="url"
-                        placeholder="https://iframe.mediadelivery.net/embed/..."
-                        value={newVideoUrl}
-                        onChange={(e) => setNewVideoUrl(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Soporta URLs de Bunny Stream embed o CDN directo
-                      </p>
-                    </div>
-                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
-                      <Button variant="outline" onClick={() => setNewVideoOpen(false)}>
-                        Cancelar
-                      </Button>
-                      <Button onClick={handleAddVideo} disabled={submitting}>
-                        {submitting ? 'Agregando...' : 'Agregar y Publicar'}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
-        </header>
+                  </DialogContent>
+                </Dialog>
+              )
+            }
+          />
+        </div>
 
         {/* Admin Metrics Dashboard */}
         {isAdmin && (

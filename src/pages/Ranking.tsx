@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Settings, Users, History, Sword, Shield, Castle, Swords, Award } from 'lucide-react';
+import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { cn } from '@/lib/utils';
 import { UPSettingsPanel } from '@/components/points/UPSettingsPanel';
 import { UPManualAdjustment } from '@/components/points/UPManualAdjustment';
@@ -86,37 +87,19 @@ export default function RankingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header Medieval */}
-      <div className="relative overflow-hidden rounded-lg bg-gradient-stone p-6 border-2 border-primary/30">
-        <div className="absolute inset-0 bg-primary/5 opacity-50"></div>
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-primary/30 border-2 border-primary/50 emboss animate-torch">
-              <Castle className="h-8 w-8 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-medieval font-bold text-primary-foreground">
-                Salón de la Gloria
-              </h1>
-              <p className="text-sm text-primary-foreground/70 font-body">
-                Orden de los Caballeros Creadores — Sistema de Honor UP
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {!isSystemEnabled() && (
-              <Badge variant="destructive" className="font-medieval">⚠️ Orden Suspendida</Badge>
-            )}
-            {currentUserRank && (
-              <Badge className="text-sm px-3 py-1 font-medieval level-gold" variant="outline">
-                <Sword className="w-3 h-3 mr-1" />
-                Rango #{currentUserRank}
-              </Badge>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Medieval Banner */}
+      <MedievalBanner
+        icon={Castle}
+        title="Salón de la Gloria"
+        subtitle="Orden de los Caballeros Creadores — Sistema de Honor UP"
+        badge={!isSystemEnabled() ? { text: "⚠️ Orden Suspendida", variant: "destructive" as const } : undefined}
+        action={currentUserRank ? (
+          <Badge className="text-sm px-3 py-1 font-medieval level-gold" variant="outline">
+            <Sword className="w-3 h-3 mr-1" />
+            Rango #{currentUserRank}
+          </Badge>
+        ) : undefined}
+      />
 
       {/* Tabs for Admin */}
       {isAdmin ? (
