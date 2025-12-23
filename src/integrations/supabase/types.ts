@@ -1565,6 +1565,39 @@ export type Database = {
         }
         Relationships: []
       }
+      up_settings: {
+        Row: {
+          category: string
+          description: string | null
+          id: string
+          key: string
+          label: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          category?: string
+          description?: string | null
+          id?: string
+          key: string
+          label: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          category?: string
+          description?: string | null
+          id?: string
+          key?: string
+          label?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       user_points: {
         Row: {
           consecutive_on_time: number
@@ -1815,6 +1848,7 @@ export type Database = {
           following_count: number
         }[]
       }
+      get_up_setting: { Args: { setting_key: string }; Returns: Json }
       get_user_referral_code: { Args: { _user_id: string }; Returns: string }
       get_user_roles: {
         Args: { _user_id: string }
