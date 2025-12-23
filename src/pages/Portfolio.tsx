@@ -551,6 +551,43 @@ export default function Portfolio() {
     }
   };
 
+  // Handle follow/unfollow from fullscreen viewer
+  const handleFollowFromViewer = async (creatorId: string) => {
+    if (!user) {
+      toast.error('Inicia sesión para seguir usuarios');
+      return;
+    }
+    if (user.id === creatorId) return;
+
+    try {
+      const { data, error } = await supabase.rpc('toggle_follow', {
+        _following_id: creatorId,
+      });
+
+      if (error) throw error;
+
+      const isNowFollowing = data as boolean;
+      setFollowingIds(prev => 
+        isNowFollowing 
+          ? [...prev, creatorId]
+          : prev.filter(id => id !== creatorId)
+      );
+      
+      toast.success(isNowFollowing ? 'Siguiendo' : 'Dejaste de seguir');
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+      toast.error('Error al seguir');
+    }
+  };
+
+  const isFollowingUser = useCallback((creatorId: string) => {
+    return followingIds.includes(creatorId);
+  }, [followingIds]);
+
+  const handleProfileClick = (creatorId: string) => {
+    navigate(`/p/${creatorId}`);
+  };
+
   // Refresh feed with new AI recommendations
   const handleRefreshFeed = async () => {
     if (refreshing) return;
@@ -799,7 +836,7 @@ export default function Portfolio() {
                 isLiked: item.is_liked,
                 creatorId: item.creator_id || undefined,
                 creatorName: item.creator?.full_name,
-                creatorAvatar: item.creator?.avatar_url,
+                creatorAvatar: item.creator?.avatar_url || undefined,
                 mediaType: item.media_type,
                 mediaUrl: item.media_url,
                 caption: (item as any).caption || item.title
@@ -812,6 +849,9 @@ export default function Portfolio() {
                 const item = currentContent.find(v => v.id === video.id);
                 if (item) handleShare(item);
               }}
+              onProfileClick={handleProfileClick}
+              onFollow={handleFollowFromViewer}
+              isFollowing={isFollowingUser}
             />
           )}
 
@@ -945,7 +985,7 @@ export default function Portfolio() {
               isLiked: item.is_liked,
               creatorId: item.creator_id || undefined,
               creatorName: item.creator?.full_name,
-              creatorAvatar: item.creator?.avatar_url,
+              creatorAvatar: item.creator?.avatar_url || undefined,
               mediaType: (item as any).media_type,
               mediaUrl: (item as any).media_url,
               caption: (item as any).caption || item.title
@@ -958,6 +998,9 @@ export default function Portfolio() {
               const item = currentContent.find(v => v.id === video.id);
               if (item) handleShare(item);
             }}
+            onProfileClick={handleProfileClick}
+            onFollow={handleFollowFromViewer}
+            isFollowing={isFollowingUser}
           />
         )}
 
