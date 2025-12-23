@@ -594,21 +594,23 @@ export function BunnyVideoCard({
               className="text-xs text-muted-foreground line-clamp-2" 
             />
           )}
-          {isOwner && onPin && (
+          {isOwner && (
             <div className="flex items-center gap-3 mt-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPin();
-                }}
-                className={cn(
-                  "flex items-center gap-1 text-xs transition-colors",
-                  isPinned ? "text-primary" : "text-muted-foreground hover:text-primary"
-                )}
-              >
-                <Pin className="h-3 w-3" />
-                <span>{isPinned ? 'Quitar fijado' : 'Fijar'}</span>
-              </button>
+              {onPin && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPin();
+                  }}
+                  className={cn(
+                    "flex items-center gap-1 text-xs transition-colors",
+                    isPinned ? "text-primary" : "text-muted-foreground hover:text-primary"
+                  )}
+                >
+                  <Pin className="h-3 w-3" />
+                  <span>{isPinned ? 'Quitar fijado' : 'Fijar'}</span>
+                </button>
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
