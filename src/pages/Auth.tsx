@@ -689,10 +689,10 @@ export default function Auth() {
         <section className="py-12 md:py-20 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              Contenido UGC de <span className="text-transparent bg-clip-text bg-gradient-gold">Alta Calidad</span>
+              Contenido de <span className="text-transparent bg-clip-text bg-gradient-gold">Alta Calidad</span>
             </h2>
             <p className="text-lg md:text-xl text-white/60 mb-8 max-w-2xl mx-auto">
-              Descubre nuestro portafolio de videos creados por los mejores creadores de Colombia. 
+              Descubre nuestro portafolio de videos creados por los mejores creadores. 
               Únete como creador, editor o cliente.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -767,7 +767,7 @@ export default function Auth() {
                 </div>
                 <h4 className="text-white font-semibold mb-2">Creadores</h4>
                 <p className="text-white/60 text-sm">
-                  Graba contenido UGC auténtico y recibe pago por cada video aprobado
+                  Graba contenido auténtico y recibe pago por cada video aprobado
                 </p>
               </div>
               <div className="text-center p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all">

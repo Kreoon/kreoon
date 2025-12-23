@@ -15,7 +15,7 @@ const creators: Creator[] = [
     id: "1", 
     name: "María García", 
     avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    role: "Creadora UGC",
+    role: "Creadora",
     videosCompleted: 24,
     rating: 4.9,
     trend: 12
@@ -33,7 +33,7 @@ const creators: Creator[] = [
     id: "3", 
     name: "Ana Martínez", 
     avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-    role: "Creadora UGC",
+    role: "Creadora",
     videosCompleted: 15,
     rating: 4.7,
     trend: 15

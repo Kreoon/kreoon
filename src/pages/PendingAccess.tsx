@@ -133,7 +133,7 @@ export default function PendingAccess() {
               Para activar tu cuenta, escríbenos por WhatsApp indicando qué rol deseas:
             </p>
             <ul className="text-sm text-left space-y-1 text-muted-foreground pl-4">
-              <li>• <strong>Creador:</strong> Graba contenido UGC</li>
+              <li>• <strong>Creador:</strong> Graba contenido para marcas</li>
               <li>• <strong>Editor:</strong> Edita videos profesionalmente</li>
               <li>• <strong>Cliente:</strong> Contrata creadores para tu marca</li>
             </ul>
