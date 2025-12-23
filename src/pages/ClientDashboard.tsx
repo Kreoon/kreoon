@@ -695,8 +695,83 @@ export default function ClientDashboard() {
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="text-lg font-bold truncate">{clientInfo.name}</h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">Portal de Cliente</p>
+              {userClients.length > 1 ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowClientSelector(!showClientSelector)}
+                    className="flex items-center gap-2 hover:bg-muted/50 rounded-lg px-2 py-1 -mx-2 transition-colors"
+                  >
+                    <h1 className="text-lg font-bold truncate">{clientInfo.name}</h1>
+                    <svg 
+                      className={cn("h-4 w-4 text-muted-foreground transition-transform", showClientSelector && "rotate-180")}
+                      xmlns="http://www.w3.org/2000/svg" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  
+                  {showClientSelector && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setShowClientSelector(false)} 
+                      />
+                      <div className="absolute top-full left-0 mt-2 z-50 w-64 bg-popover border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                        <div className="p-2 border-b border-border/50 bg-muted/30">
+                          <p className="text-xs font-medium text-muted-foreground px-2">Cambiar empresa</p>
+                        </div>
+                        <div className="p-2 max-h-64 overflow-y-auto">
+                          {userClients.map(client => (
+                            <button
+                              key={client.id}
+                              onClick={() => {
+                                localStorage.setItem('selectedClientId', client.id);
+                                setSelectedClientId(client.id);
+                                setShowClientSelector(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left",
+                                client.id === clientInfo.id 
+                                  ? "bg-primary/10 text-primary" 
+                                  : "hover:bg-muted"
+                              )}
+                            >
+                              {client.logo_url ? (
+                                <img src={client.logo_url} alt={client.name} className="h-8 w-8 rounded-lg object-cover" />
+                              ) : (
+                                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                  <Building2 className="h-4 w-4 text-primary" />
+                                </div>
+                              )}
+                              <span className={cn(
+                                "font-medium text-sm truncate",
+                                client.id === clientInfo.id && "text-primary"
+                              )}>
+                                {client.name}
+                              </span>
+                              {client.id === clientInfo.id && (
+                                <CheckCircle2 className="h-4 w-4 text-primary ml-auto shrink-0" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  <p className="text-xs text-muted-foreground hidden sm:block">Portal de Cliente • {userClients.length} empresas</p>
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-lg font-bold truncate">{clientInfo.name}</h1>
+                  <p className="text-xs text-muted-foreground hidden sm:block">Portal de Cliente</p>
+                </>
+              )}
             </div>
           </div>
           
