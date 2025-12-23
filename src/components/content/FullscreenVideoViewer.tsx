@@ -482,9 +482,13 @@ export function FullscreenVideoViewer({
           {showManageMenu && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button 
+                <button
+                  type="button"
                   className="p-2 text-white/90 hover:text-white transition-colors"
                   data-no-swipe="true"
+                  onPointerDownCapture={(e) => e.stopPropagation()}
+                  onClickCapture={(e) => e.stopPropagation()}
+                  onTouchStartCapture={(e) => e.stopPropagation()}
                 >
                   <MoreVertical className="h-6 w-6 drop-shadow-lg" />
                 </button>
