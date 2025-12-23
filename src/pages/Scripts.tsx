@@ -59,7 +59,7 @@ const Scripts = () => {
                   Generador de Guiones IA
                 </h3>
                 <p className="text-xs md:text-sm text-muted-foreground mb-4">
-                  Crea guiones profesionales basados en investigación de mercado, tendencias y mejores prácticas de UGC.
+                  Crea guiones profesionales basados en investigación de mercado, tendencias y mejores prácticas.
                 </p>
                 <Button variant="default" size="sm" className="gap-2 text-xs md:text-sm">
                   <Sparkles className="h-4 w-4" />

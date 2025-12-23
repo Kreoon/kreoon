@@ -96,8 +96,8 @@ serve(async (req) => {
           user_id: 'test-user-456',
           content_id: 'test-content-789',
           test_connection: true,
-          instagram: '@test_ugc',
-          tiktok: '@test_ugc',
+          instagram: '@test_creartor',
+          tiktok: '@test_creartor',
           city: 'Bogotá',
           country: 'Colombia'
         },
@@ -106,7 +106,7 @@ serve(async (req) => {
         monetaryValue: 1000000,
         currency: 'COP',
         status: 'open',
-        title: 'Test Contenido UGC',
+        title: 'Test Contenido',
         body: 'Este es un mensaje de prueba desde Creartor Studio para verificar la conexión con Funnel ROI.',
         notes: 'Conexión de prueba exitosa desde Creartor Studio'
       };
