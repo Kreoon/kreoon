@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, Upload, Loader2, Check, X, Image, RefreshCw } from 'lucide-react';
+import { Upload, Loader2, Check, X, Image, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ThumbnailSelectorProps {
@@ -25,31 +24,6 @@ function extractVideoId(url: string): string | null {
   return null;
 }
 
-// Convert embed URL to direct video URL for frame capture
-function getDirectVideoUrl(url: string): string | null {
-  if (!url) return null;
-  
-  // Extract library ID and video ID from embed URL
-  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
-  if (embedMatch) {
-    const [, libraryId, videoId] = embedMatch;
-    return `https://vz-${libraryId}.b-cdn.net/${videoId}/play_720p.mp4`;
-  }
-  
-  // Already a direct URL
-  if (url.includes('b-cdn.net') && url.includes('.mp4')) {
-    return url;
-  }
-  
-  return url;
-}
-
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
 export function ThumbnailSelector({
   contentId,
   videoUrl,
@@ -60,80 +34,17 @@ export function ThumbnailSelector({
 }: ThumbnailSelectorProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  const [mode, setMode] = useState<'view' | 'capture' | 'uploading'>('view');
   const [uploading, setUploading] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const [videoDuration, setVideoDuration] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [capturedFrame, setCapturedFrame] = useState<string | null>(null);
-  const [previewThumbnail, setPreviewThumbnail] = useState<string | null>(null);
-  
-  const directVideoUrl = getDirectVideoUrl(videoUrl);
+  const [fetchingAuto, setFetchingAuto] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
 
-  // Load video for frame capture
-  const loadVideo = useCallback(() => {
-    if (!directVideoUrl || !videoRef.current) return;
-    
-    setVideoLoaded(false);
-    setVideoError(false);
-    videoRef.current.src = directVideoUrl;
-    videoRef.current.load();
-  }, [directVideoUrl]);
-
+  // Clear preview when dialog closes or content changes
   useEffect(() => {
-    if (mode === 'capture') {
-      loadVideo();
-    }
-  }, [mode, loadVideo]);
-
-  const handleVideoLoaded = () => {
-    if (videoRef.current) {
-      setVideoDuration(videoRef.current.duration);
-      setVideoLoaded(true);
-      // Seek to first second for initial frame
-      videoRef.current.currentTime = 1;
-    }
-  };
-
-  const handleVideoError = () => {
-    setVideoError(true);
-    setVideoLoaded(false);
-    toast({
-      title: 'Error al cargar video',
-      description: 'No se pudo cargar el video para captura de frame',
-      variant: 'destructive'
-    });
-  };
-
-  const handleTimeChange = (value: number[]) => {
-    const time = value[0];
-    setCurrentTime(time);
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-    }
-  };
-
-  const captureFrame = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-    setCapturedFrame(dataUrl);
-    setPreviewThumbnail(dataUrl);
-  };
+    setPreviewImage(null);
+    setPreviewFile(null);
+  }, [contentId]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -157,24 +68,30 @@ export function ThumbnailSelector({
       return;
     }
 
+    // Show preview
     const reader = new FileReader();
     reader.onloadend = () => {
-      const result = reader.result as string;
-      setCapturedFrame(result);
-      setPreviewThumbnail(result);
-      setMode('capture');
+      setPreviewImage(reader.result as string);
+      setPreviewFile(file);
     };
     reader.readAsDataURL(file);
   };
 
   const uploadThumbnail = async () => {
-    if (!capturedFrame) return;
+    if (!previewFile && !previewImage) return;
     
     setUploading(true);
     try {
-      // Convert base64 to blob
-      const response = await fetch(capturedFrame);
-      const blob = await response.blob();
+      let blob: Blob;
+      
+      if (previewFile) {
+        blob = previewFile;
+      } else if (previewImage) {
+        const response = await fetch(previewImage);
+        blob = await response.blob();
+      } else {
+        throw new Error('No image to upload');
+      }
       
       // Upload to storage
       const fileName = `thumbnails/${contentId}-${Date.now()}.jpg`;
@@ -206,9 +123,11 @@ export function ThumbnailSelector({
         description: 'La miniatura se guardó correctamente'
       });
       
-      setMode('view');
-      setCapturedFrame(null);
-      setPreviewThumbnail(null);
+      setPreviewImage(null);
+      setPreviewFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error) {
       console.error('Error uploading thumbnail:', error);
       toast({
@@ -221,11 +140,54 @@ export function ThumbnailSelector({
     }
   };
 
-  const cancelCapture = () => {
-    setMode('view');
-    setCapturedFrame(null);
-    setPreviewThumbnail(null);
-    setVideoLoaded(false);
+  const fetchAutoThumbnail = async () => {
+    const videoId = extractVideoId(videoUrl);
+    if (!videoId) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo extraer el ID del video',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setFetchingAuto(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const functionUrl = `${supabaseUrl}/functions/v1/bunny-thumbnail?content_id=${contentId}&video_id=${videoId}`;
+      const response = await fetch(functionUrl);
+      
+      if (!response.ok) {
+        throw new Error('Thumbnail not available');
+      }
+
+      const blob = await response.blob();
+      const imageUrl = URL.createObjectURL(blob);
+      setPreviewImage(imageUrl);
+      
+      // Create a file from the blob for upload
+      const file = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+      setPreviewFile(file);
+
+      toast({
+        title: 'Miniatura obtenida',
+        description: 'Haz clic en Guardar para confirmar'
+      });
+    } catch (error) {
+      console.error('Error fetching auto thumbnail:', error);
+      toast({
+        title: 'Miniatura no disponible',
+        description: 'Bunny aún no ha generado la miniatura. Intenta subir una imagen manualmente.',
+        variant: 'destructive'
+      });
+    } finally {
+      setFetchingAuto(false);
+    }
+  };
+
+  const cancelPreview = () => {
+    setPreviewImage(null);
+    setPreviewFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -261,18 +223,8 @@ export function ThumbnailSelector({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setMode('capture')}
-          disabled={disabled || !videoUrl}
-        >
-          <Camera className="h-3 w-3 mr-1" />
-          Capturar
-        </Button>
-        
-        <Button
-          variant="outline"
-          size="sm"
           onClick={() => fileInputRef.current?.click()}
-          disabled={disabled}
+          disabled={disabled || uploading}
         >
           <Upload className="h-3 w-3 mr-1" />
           Subir
@@ -291,175 +243,89 @@ export function ThumbnailSelector({
         onChange={handleFileSelect}
         disabled={disabled || uploading}
       />
-      <canvas ref={canvasRef} className="hidden" />
       
-      {mode === 'view' && (
-        <div className="space-y-3">
-          {/* Current thumbnail preview */}
-          <div className="relative aspect-video rounded-lg overflow-hidden bg-muted border">
-            {currentThumbnail ? (
-              <img 
-                src={currentThumbnail} 
-                alt="Miniatura actual" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <Image className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Sin miniatura</p>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Action buttons */}
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setMode('capture')}
-              disabled={disabled || !videoUrl}
-              className="flex-1"
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              Capturar frame
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={disabled}
-              className="flex-1"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Subir imagen
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {mode === 'capture' && (
-        <div className="space-y-4">
-          {/* Video preview for frame selection */}
-          <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
-            {previewThumbnail ? (
-              <img 
-                src={previewThumbnail} 
-                alt="Preview" 
-                className="w-full h-full object-contain"
-              />
-            ) : videoError ? (
-              <div className="w-full h-full flex items-center justify-center text-white">
-                <div className="text-center">
-                  <X className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Error al cargar video</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={loadVideo}
-                    className="mt-2 text-white/70 hover:text-white"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-1" />
-                    Reintentar
-                  </Button>
-                </div>
-              </div>
-            ) : !videoLoaded ? (
-              <div className="w-full h-full flex items-center justify-center text-white">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : (
-              <video
-                ref={videoRef}
-                className="w-full h-full object-contain"
-                onLoadedMetadata={handleVideoLoaded}
-                onError={handleVideoError}
-                muted
-                playsInline
-                crossOrigin="anonymous"
-              />
-            )}
-            
-            {/* Hidden video for initial load */}
-            {!previewThumbnail && !videoLoaded && !videoError && (
-              <video
-                ref={videoRef}
-                className="hidden"
-                onLoadedMetadata={handleVideoLoaded}
-                onError={handleVideoError}
-                muted
-                playsInline
-                crossOrigin="anonymous"
-              />
-            )}
-          </div>
-          
-          {/* Time slider */}
-          {videoLoaded && !previewThumbnail && videoDuration > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Selecciona el frame</span>
-                <span>{formatTime(currentTime)} / {formatTime(videoDuration)}</span>
-              </div>
-              <Slider
-                value={[currentTime]}
-                min={0}
-                max={videoDuration}
-                step={0.1}
-                onValueChange={handleTimeChange}
-                disabled={!videoLoaded}
-              />
+      {/* Current or preview thumbnail */}
+      <div className="relative aspect-video rounded-lg overflow-hidden bg-muted border">
+        {previewImage ? (
+          <img 
+            src={previewImage} 
+            alt="Preview" 
+            className="w-full h-full object-cover"
+          />
+        ) : currentThumbnail ? (
+          <img 
+            src={currentThumbnail} 
+            alt="Miniatura actual" 
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <Image className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Sin miniatura</p>
             </div>
-          )}
-          
-          {/* Action buttons */}
-          <div className="flex gap-2">
+          </div>
+        )}
+        
+        {/* Uploading overlay */}
+        {(uploading || fetchingAuto) && (
+          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+      </div>
+      
+      {/* Action buttons */}
+      {previewImage ? (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={cancelPreview}
+            disabled={uploading}
+            className="flex-1"
+          >
+            <X className="h-4 w-4 mr-2" />
+            Cancelar
+          </Button>
+          <Button
+            onClick={uploadThumbnail}
+            disabled={uploading}
+            className="flex-1"
+          >
+            {uploading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Check className="h-4 w-4 mr-2" />
+            )}
+            Guardar
+          </Button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          {videoUrl && (
             <Button
               variant="outline"
-              onClick={cancelCapture}
-              disabled={uploading}
+              onClick={fetchAutoThumbnail}
+              disabled={disabled || fetchingAuto}
               className="flex-1"
             >
-              <X className="h-4 w-4 mr-2" />
-              Cancelar
+              {fetchingAuto ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Obtener de video
             </Button>
-            
-            {!previewThumbnail ? (
-              <Button
-                onClick={captureFrame}
-                disabled={!videoLoaded || uploading}
-                className="flex-1"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Capturar
-              </Button>
-            ) : (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setCapturedFrame(null);
-                    setPreviewThumbnail(null);
-                  }}
-                  disabled={uploading}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Otro frame
-                </Button>
-                <Button
-                  onClick={uploadThumbnail}
-                  disabled={uploading}
-                  className="flex-1"
-                >
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Check className="h-4 w-4 mr-2" />
-                  )}
-                  Guardar
-                </Button>
-              </>
-            )}
-          </div>
+          )}
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled || uploading}
+            className="flex-1"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Subir imagen
+          </Button>
         </div>
       )}
     </div>
