@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Heart, MessageSquare, Share2, Volume2, VolumeX, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, Globe, Lock } from 'lucide-react';
+import { X, Heart, MessageCircle, Share2, Volume2, VolumeX, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2, Globe, Lock, Bookmark, Plus, Music2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface VideoItem {
   id: string;
@@ -19,9 +20,11 @@ interface VideoItem {
   isLiked: boolean;
   creatorId?: string;
   creatorName?: string;
+  creatorAvatar?: string;
   mediaType?: 'video' | 'image';
   mediaUrl?: string;
   isPublic?: boolean;
+  caption?: string;
 }
 
 interface FullscreenVideoViewerProps {
@@ -81,6 +84,7 @@ export function FullscreenVideoViewer({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'up' | 'down' | null>(null);
+  const [showFullCaption, setShowFullCaption] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
@@ -126,6 +130,11 @@ export function FullscreenVideoViewer({
       document.body.style.overflow = '';
     };
   }, []);
+
+  // Reset caption on video change
+  useEffect(() => {
+    setShowFullCaption(false);
+  }, [currentIndex]);
 
   const goToNext = useCallback(() => {
     if (currentIndex < videos.length - 1 && !isTransitioning) {
@@ -184,11 +193,9 @@ export function FullscreenVideoViewer({
     
     // Only apply visual feedback for vertical swipes
     if (Math.abs(diffY) > Math.abs(diffX)) {
-      // Limit the offset for visual feedback (max 150px)
       const maxOffset = 150;
       const dampedOffset = Math.sign(diffY) * Math.min(Math.abs(diffY) * 0.5, maxOffset);
       
-      // Check if we can navigate in this direction
       const canGoNext = currentIndex < videos.length - 1;
       const canGoPrev = currentIndex > 0;
       
@@ -196,7 +203,6 @@ export function FullscreenVideoViewer({
         setSwipeOffset(dampedOffset);
         setSwipeDirection(diffY > 0 ? 'up' : 'down');
       } else {
-        // Resistance when can't go further
         setSwipeOffset(dampedOffset * 0.2);
         setSwipeDirection(diffY > 0 ? 'up' : 'down');
       }
@@ -213,33 +219,32 @@ export function FullscreenVideoViewer({
     
     const minSwipeDistance = 50;
     
-    // Reset visual feedback
     setSwipeOffset(0);
     setSwipeDirection(null);
 
-    // Determine if it's more of a vertical or horizontal swipe
     if (Math.abs(diffY) > Math.abs(diffX)) {
-      // Vertical swipe
       if (Math.abs(diffY) > minSwipeDistance) {
         if (diffY > 0) {
-          goToNext(); // Swipe up = next video
+          goToNext();
         } else {
-          goToPrev(); // Swipe down = previous video
+          goToPrev();
         }
       }
     } else {
-      // Horizontal swipe for variations
       if (Math.abs(diffX) > minSwipeDistance && hasMultipleVariations) {
         if (diffX > 0) {
-          goToNextVariation(); // Swipe left = next variation
+          goToNextVariation();
         } else {
-          goToPrevVariation(); // Swipe right = previous variation
+          goToPrevVariation();
         }
       }
     }
   };
 
   if (!currentVideo) return null;
+
+  const displayCaption = currentVideo.caption || currentVideo.title;
+  const shouldTruncateCaption = displayCaption.length > 80;
 
   return (
     <div 
@@ -249,30 +254,27 @@ export function FullscreenVideoViewer({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Content Container with swipe animation */}
+      {/* Full screen video/content container */}
       <div 
         className={cn(
-          "flex-1 relative",
+          "absolute inset-0",
           !touchActive && "transition-all duration-300 ease-out",
           isTransitioning && "opacity-90"
         )}
         style={{
-          transform: `translateY(${-swipeOffset}px) scale(${1 - Math.abs(swipeOffset) * 0.0005})`,
+          transform: `translateY(${-swipeOffset}px) scale(${1 - Math.abs(swipeOffset) * 0.0003})`,
         }}
       >
         {isImage ? (
-          // Image display - contained within viewport
-          <div className="w-full h-full flex items-center justify-center p-4">
+          <div className="w-full h-full flex items-center justify-center">
             <img
               key={currentVideo.id}
               src={currentVideo.mediaUrl || currentVideo.thumbnailUrl || ''}
               alt={currentVideo.title}
-              className="max-w-full max-h-full w-auto h-auto object-contain"
-              style={{ maxHeight: 'calc(100vh - 120px)' }}
+              className="w-full h-full object-cover"
             />
           </div>
         ) : (
-          // Video display
           <iframe
             key={`${currentVideo.id}-${currentVariation}`}
             src={getEmbedUrl(currentVideoUrl, isMuted)}
@@ -282,7 +284,7 @@ export function FullscreenVideoViewer({
           />
         )}
 
-        {/* Touch overlay to capture swipes - positioned over content but under controls */}
+        {/* Touch overlay */}
         <div 
           className="absolute inset-0 z-10"
           onTouchStart={handleTouchStart}
@@ -291,32 +293,36 @@ export function FullscreenVideoViewer({
           style={{ touchAction: 'none' }}
         />
 
-        {/* Close button */}
+        {/* Top gradient for better visibility */}
+        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/40 to-transparent z-20 pointer-events-none" />
+        
+        {/* Bottom gradient for text readability */}
+        <div className="absolute bottom-0 left-0 right-0 h-72 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-20 pointer-events-none" />
+
+        {/* Close button - minimal style */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 z-30 p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+          className="absolute top-4 left-4 z-30 p-2 text-white/90 hover:text-white transition-colors"
         >
-          <X className="h-6 w-6" />
+          <X className="h-7 w-7 drop-shadow-lg" />
         </button>
 
         {/* Top right controls */}
-        <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
-          {/* Mute toggle - only for videos */}
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-3">
           {!isImage && (
             <button
               onClick={() => setIsMuted(!isMuted)}
-              className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+              className="p-2 text-white/90 hover:text-white transition-colors"
             >
-              {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+              {isMuted ? <VolumeX className="h-6 w-6 drop-shadow-lg" /> : <Volume2 className="h-6 w-6 drop-shadow-lg" />}
             </button>
           )}
 
-          {/* Owner menu */}
           {isOwner && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors">
-                  <MoreVertical className="h-6 w-6" />
+                <button className="p-2 text-white/90 hover:text-white transition-colors">
+                  <MoreVertical className="h-6 w-6 drop-shadow-lg" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -358,171 +364,235 @@ export function FullscreenVideoViewer({
           )}
         </div>
 
-        {/* Variation navigation (horizontal) - only for videos with multiple variations */}
+        {/* Variation indicator - top center */}
+        {!isImage && hasMultipleVariations && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
+            {currentVideo.videoUrls.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentVariation(idx)}
+                className={cn(
+                  "h-1 rounded-full transition-all duration-300",
+                  idx === currentVariation 
+                    ? "bg-white w-8" 
+                    : "bg-white/40 w-4 hover:bg-white/60"
+                )}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Variation navigation arrows - only for videos with multiple variations */}
         {!isImage && hasMultipleVariations && (
           <>
             <button
               onClick={goToPrevVariation}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 text-white/70 hover:text-white transition-colors hidden md:block"
             >
-              <ChevronLeft className="h-6 w-6" />
+              <ChevronLeft className="h-8 w-8 drop-shadow-lg" />
             </button>
             <button
               onClick={goToNextVariation}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+              className="absolute right-20 top-1/2 -translate-y-1/2 z-30 p-2 text-white/70 hover:text-white transition-colors hidden md:block"
             >
-              <ChevronRight className="h-6 w-6" />
+              <ChevronRight className="h-8 w-8 drop-shadow-lg" />
             </button>
-            
-            {/* Variation indicator */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
-              {currentVideo.videoUrls.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentVariation(idx)}
-                  className={cn(
-                    "w-2 h-2 rounded-full transition-all",
-                    idx === currentVariation 
-                      ? "bg-white w-6" 
-                      : "bg-white/50 hover:bg-white/80"
-                  )}
-                />
-              ))}
-            </div>
           </>
         )}
 
-        {/* Video navigation hints */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30 hidden md:flex">
+        {/* TikTok-style right sidebar actions */}
+        <div className="absolute bottom-32 right-3 flex flex-col items-center gap-5 z-30">
+          {/* Creator Avatar with follow button */}
+          <div className="relative mb-2">
+            <Avatar className="h-12 w-12 ring-2 ring-white shadow-lg">
+              <AvatarImage src={currentVideo.creatorAvatar} />
+              <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white text-sm font-bold">
+                {currentVideo.creatorName?.charAt(0)?.toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            {!isOwner && (
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                <Plus className="h-4 w-4 text-white" />
+              </div>
+            )}
+          </div>
+
+          {/* Like button */}
+          {onLike && (
+            <button
+              onClick={() => onLike(currentVideo.id)}
+              className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
+            >
+              <div className={cn(
+                "transition-all",
+                currentVideo.isLiked && "animate-[pulse_0.3s_ease-in-out]"
+              )}>
+                <Heart 
+                  className={cn(
+                    "h-8 w-8 drop-shadow-lg transition-colors",
+                    currentVideo.isLiked ? "text-red-500 fill-red-500" : "text-white"
+                  )} 
+                />
+              </div>
+              <span className="text-white text-xs font-semibold drop-shadow-lg">{formatCount(currentVideo.likesCount)}</span>
+            </button>
+          )}
+          
+          {/* Comment button */}
+          {onComment && (
+            <button
+              onClick={() => onComment(currentVideo.id)}
+              className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
+            >
+              <MessageCircle className="h-8 w-8 text-white drop-shadow-lg" />
+              <span className="text-white text-xs font-semibold drop-shadow-lg">0</span>
+            </button>
+          )}
+          
+          {/* Bookmark button */}
+          <button
+            className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
+          >
+            <Bookmark className="h-8 w-8 text-white drop-shadow-lg" />
+            <span className="text-white text-xs font-semibold drop-shadow-lg">{formatCount(currentVideo.viewsCount)}</span>
+          </button>
+          
+          {/* Share button */}
+          {onShare && (
+            <button
+              onClick={() => onShare(currentVideo)}
+              className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
+            >
+              <Share2 className="h-8 w-8 text-white drop-shadow-lg" />
+              <span className="text-white text-xs font-semibold drop-shadow-lg">Compartir</span>
+            </button>
+          )}
+
+          {/* Spinning music disc - TikTok style */}
+          <div className="mt-2">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center animate-[spin_3s_linear_infinite] shadow-lg border-2 border-gray-700">
+              <div className="w-4 h-4 rounded-full bg-gradient-to-br from-gray-600 to-gray-800" />
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom left - Creator info and caption (TikTok style) */}
+        <div className="absolute bottom-6 left-4 right-20 z-30">
+          {/* Username */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-white font-bold text-base drop-shadow-lg">
+              @{currentVideo.creatorName || 'usuario'}
+            </span>
+            {/* Verified badge could go here */}
+          </div>
+
+          {/* Caption with "...more" */}
+          <div className="pointer-events-auto">
+            {showFullCaption ? (
+              <p 
+                className="text-white text-sm drop-shadow-lg cursor-pointer"
+                onClick={() => setShowFullCaption(false)}
+              >
+                {displayCaption}
+              </p>
+            ) : (
+              <p className="text-white text-sm drop-shadow-lg">
+                {shouldTruncateCaption ? (
+                  <>
+                    {displayCaption.slice(0, 80)}
+                    <button 
+                      onClick={() => setShowFullCaption(true)}
+                      className="text-white/70 ml-1 font-medium"
+                    >
+                      ...más
+                    </button>
+                  </>
+                ) : (
+                  displayCaption
+                )}
+              </p>
+            )}
+          </div>
+
+          {/* Music/Sound info - TikTok style */}
+          {!isImage && (
+            <div className="flex items-center gap-2 mt-3">
+              <Music2 className="h-4 w-4 text-white" />
+              <div className="overflow-hidden max-w-[200px]">
+                <p className="text-white text-xs whitespace-nowrap animate-[marquee_10s_linear_infinite]">
+                  Sonido original - {currentVideo.creatorName || 'usuario'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Variation count */}
+          {hasMultipleVariations && (
+            <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-white/10 backdrop-blur-sm rounded-full">
+              <span className="text-white/90 text-xs">{currentVariation + 1}/{currentVideo.videoUrls.length} variaciones</span>
+            </div>
+          )}
+        </div>
+
+        {/* Video navigation hints - desktop only */}
+        <div className="absolute right-20 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 hidden md:flex">
           <button
             onClick={goToPrev}
             disabled={currentIndex === 0}
             className={cn(
-              "p-2 rounded-full bg-black/50 backdrop-blur-sm text-white transition-colors",
-              currentIndex === 0 ? "opacity-30 cursor-not-allowed" : "hover:bg-black/70"
+              "p-2 text-white/70 transition-all",
+              currentIndex === 0 ? "opacity-20 cursor-not-allowed" : "hover:text-white hover:scale-110"
             )}
           >
-            <ChevronUp className="h-5 w-5" />
+            <ChevronUp className="h-8 w-8 drop-shadow-lg" />
           </button>
           <button
             onClick={goToNext}
             disabled={currentIndex === videos.length - 1}
             className={cn(
-              "p-2 rounded-full bg-black/50 backdrop-blur-sm text-white transition-colors",
-              currentIndex === videos.length - 1 ? "opacity-30 cursor-not-allowed" : "hover:bg-black/70"
+              "p-2 text-white/70 transition-all",
+              currentIndex === videos.length - 1 ? "opacity-20 cursor-not-allowed" : "hover:text-white hover:scale-110"
             )}
           >
-            <ChevronDown className="h-5 w-5" />
+            <ChevronDown className="h-8 w-8 drop-shadow-lg" />
           </button>
         </div>
 
-        {/* Actions sidebar (TikTok style) */}
-        <div className="absolute bottom-24 right-4 flex flex-col gap-4 z-30">
-          {onLike && (
-            <button
-              onClick={() => onLike(currentVideo.id)}
-              className="flex flex-col items-center gap-1"
-            >
-              <div className={cn(
-                "p-3 rounded-full transition-all active:scale-90",
-                currentVideo.isLiked 
-                  ? "bg-red-500 text-white" 
-                  : "bg-black/50 backdrop-blur-sm text-white hover:bg-black/70"
-              )}>
-                <Heart className="h-7 w-7" fill={currentVideo.isLiked ? "currentColor" : "none"} />
-              </div>
-              <span className="text-white text-xs font-medium">{formatCount(currentVideo.likesCount)}</span>
-            </button>
-          )}
-          
-          {onComment && (
-            <button
-              onClick={() => onComment(currentVideo.id)}
-              className="flex flex-col items-center gap-1"
-            >
-              <div className="p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors active:scale-90">
-                <MessageSquare className="h-7 w-7" />
-              </div>
-              <span className="text-white text-xs font-medium">Comentar</span>
-            </button>
-          )}
-          
-          {onShare && (
-            <button
-              onClick={() => onShare(currentVideo)}
-              className="flex flex-col items-center gap-1"
-            >
-              <div className="p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors active:scale-90">
-                <Share2 className="h-7 w-7" />
-              </div>
-              <span className="text-white text-xs font-medium">Compartir</span>
-            </button>
-          )}
-        </div>
-
-        {/* Video info */}
-        <div className="absolute bottom-4 left-4 right-20 z-30 pointer-events-none">
-          <h2 className="text-white font-bold text-lg mb-1 line-clamp-2 drop-shadow-lg">
-            {currentVideo.title}
-          </h2>
-          {currentVideo.creatorName && (
-            <div className="flex items-center gap-2 text-white/80 text-sm">
-              <span>@{currentVideo.creatorName}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-3 text-white/60 text-xs mt-2">
-            <span>{formatCount(currentVideo.viewsCount)} vistas</span>
-            {!isImage && hasMultipleVariations && (
-              <span className="text-primary">{currentVideo.videoUrls.length} variaciones</span>
-            )}
-          </div>
-        </div>
-
-        {/* Progress indicator */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+        {/* Progress bar */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/20 z-30">
           <div 
-            className="h-full bg-primary transition-all duration-300"
+            className="h-full bg-white transition-all duration-300"
             style={{ width: `${((currentIndex + 1) / videos.length) * 100}%` }}
           />
         </div>
       </div>
 
-      {/* Next/Prev video preview hints during swipe */}
+      {/* Swipe hints during drag */}
       {swipeDirection === 'up' && currentIndex < videos.length - 1 && (
         <div 
-          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none transition-opacity duration-150 md:hidden"
+          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary/30 to-transparent pointer-events-none transition-opacity duration-150 z-40 md:hidden"
           style={{ 
             height: Math.min(Math.abs(swipeOffset) * 2, 200),
-            opacity: Math.min(Math.abs(swipeOffset) / 100, 0.8)
+            opacity: Math.min(Math.abs(swipeOffset) / 80, 1)
           }}
         >
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-xs flex flex-col items-center">
-            <ChevronUp className="h-5 w-5 animate-bounce" />
-            <span className="font-medium">Siguiente video</span>
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white text-sm flex flex-col items-center">
+            <ChevronUp className="h-6 w-6 animate-bounce" />
           </div>
         </div>
       )}
       
       {swipeDirection === 'down' && currentIndex > 0 && (
         <div 
-          className="absolute top-0 left-0 right-0 bg-gradient-to-b from-primary/20 to-transparent pointer-events-none transition-opacity duration-150 md:hidden"
+          className="absolute top-0 left-0 right-0 bg-gradient-to-b from-primary/30 to-transparent pointer-events-none transition-opacity duration-150 z-40 md:hidden"
           style={{ 
             height: Math.min(Math.abs(swipeOffset) * 2, 200),
-            opacity: Math.min(Math.abs(swipeOffset) / 100, 0.8)
+            opacity: Math.min(Math.abs(swipeOffset) / 80, 1)
           }}
         >
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/80 text-xs flex flex-col items-center">
-            <span className="font-medium">Video anterior</span>
-            <ChevronDown className="h-5 w-5 animate-bounce" />
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 text-white text-sm flex flex-col items-center">
+            <ChevronDown className="h-6 w-6 animate-bounce" />
           </div>
-        </div>
-      )}
-
-      {/* Swipe hint (mobile only) - only show when not swiping */}
-      {!touchActive && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/40 text-xs flex flex-col items-center gap-1 md:hidden animate-pulse">
-          <ChevronUp className="h-4 w-4" />
-          <span>Desliza para navegar</span>
         </div>
       )}
     </div>

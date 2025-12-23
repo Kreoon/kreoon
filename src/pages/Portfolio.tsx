@@ -799,8 +799,10 @@ export default function Portfolio() {
                 isLiked: item.is_liked,
                 creatorId: item.creator_id || undefined,
                 creatorName: item.creator?.full_name,
+                creatorAvatar: item.creator?.avatar_url,
                 mediaType: item.media_type,
-                mediaUrl: item.media_url
+                mediaUrl: item.media_url,
+                caption: (item as any).caption || item.title
               }))}
               initialIndex={initialVideoIndex}
               onClose={() => setShowFullscreenViewer(false)}
@@ -943,8 +945,10 @@ export default function Portfolio() {
               isLiked: item.is_liked,
               creatorId: item.creator_id || undefined,
               creatorName: item.creator?.full_name,
+              creatorAvatar: item.creator?.avatar_url,
               mediaType: (item as any).media_type,
-              mediaUrl: (item as any).media_url
+              mediaUrl: (item as any).media_url,
+              caption: (item as any).caption || item.title
             }))}
             initialIndex={initialVideoIndex}
             onClose={() => setShowFullscreenViewer(false)}

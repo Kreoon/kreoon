@@ -103,6 +103,10 @@ export default {
         shimmer: {
           "100%": { transform: "translateX(100%)" },
         },
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-100%)" },
+        },
         "torch-flicker": {
           "0%, 100%": { 
             filter: "brightness(1)",
@@ -194,6 +198,7 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 2s infinite",
+        marquee: "marquee 10s linear infinite",
         "torch-flicker": "torch-flicker 2s ease-in-out infinite",
         "torch-glow": "torch-glow 3s ease-in-out infinite",
         "ember-float": "ember-float 2s ease-out infinite",

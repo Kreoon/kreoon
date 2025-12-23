@@ -1416,9 +1416,11 @@ export default function UserPortfolio() {
             isLiked: item.isLiked,
             creatorId: resolvedUserId || undefined,
             creatorName: profile?.full_name,
+            creatorAvatar: profile?.avatar_url || undefined,
             mediaType: item.mediaType,
             mediaUrl: item.mediaUrl,
-            isPublic: true // Posts are always public, for content we could track this
+            isPublic: true,
+            caption: (item as any).caption || item.title
           }))}
           initialIndex={initialVideoIndex}
           onClose={() => setShowFullscreenViewer(false)}
