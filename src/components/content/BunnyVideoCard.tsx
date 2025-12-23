@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Heart, Eye, Share2, MessageSquare, ChevronLeft, ChevronRight, Pin, Settings, Check, Video, Circle, Volume2, VolumeX } from 'lucide-react';
+import { Play, Heart, Eye, Share2, MessageCircle, ChevronLeft, ChevronRight, Pin, Settings, Check, Video, Circle, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { ParsedText } from '@/components/ui/parsed-text';
 import { ContentSettingsDialog } from '@/components/content/ContentSettingsDialog';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { CommentsSection } from './CommentsSection';
+import { PortfolioCommentsSection } from './PortfolioCommentsSection';
 
 export interface BunnyVideoCardProps {
   id: string;
@@ -15,6 +17,7 @@ export interface BunnyVideoCardProps {
   thumbnailUrl?: string | null;
   viewsCount: number;
   likesCount: number;
+  commentsCount?: number;
   isLiked: boolean;
   isPinned?: boolean;
   creatorId?: string;
@@ -26,7 +29,6 @@ export interface BunnyVideoCardProps {
   onLike?: (e?: React.MouseEvent) => void;
   onView?: () => void;
   onShare?: () => void;
-  onComment?: () => void;
   onPin?: () => void;
   onApprove?: () => void; // Client approval action
   onCreatorStatusChange?: (newStatus: 'recording' | 'recorded') => void; // Creator status change
@@ -36,6 +38,7 @@ export interface BunnyVideoCardProps {
   className?: string;
   hideControls?: boolean; // Hide play/pause/mute controls (for portfolio/auth pages)
   alwaysShowActions?: boolean; // Always show social actions without hover
+  isPortfolioPost?: boolean; // For comments system
 }
 
 function extractVideoId(url: string): string | null {
@@ -75,6 +78,7 @@ export function BunnyVideoCard({
   thumbnailUrl,
   viewsCount,
   likesCount,
+  commentsCount = 0,
   isLiked,
   isPinned = false,
   creatorId,
@@ -86,7 +90,6 @@ export function BunnyVideoCard({
   onLike,
   onView,
   onShare,
-  onComment,
   onPin,
   onApprove,
   onCreatorStatusChange,
@@ -95,7 +98,8 @@ export function BunnyVideoCard({
   onOpenFullscreen,
   className,
   hideControls = false,
-  alwaysShowActions = false
+  alwaysShowActions = false,
+  isPortfolioPost = false
 }: BunnyVideoCardProps) {
   const navigate = useNavigate();
   const { isPlaying, play, stop } = useVideoPlayback(id);
@@ -107,6 +111,7 @@ export function BunnyVideoCard({
   const [resolvedThumbnail, setResolvedThumbnail] = useState<string | null>(null);
   const [showFloatingHeart, setShowFloatingHeart] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const viewTracked = useRef(false);
@@ -450,16 +455,16 @@ export function BunnyVideoCard({
                     <span className="text-white text-xs font-medium">{formatCount(likesCount)}</span>
                   </button>
                 )}
-                {onComment && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onComment(); }}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
-                      <MessageSquare className="h-7 w-7" />
-                    </div>
-                  </button>
-                )}
+                {/* Comments button */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
+                    <MessageCircle className="h-7 w-7" />
+                  </div>
+                  <span className="text-white text-xs font-medium">{formatCount(commentsCount)}</span>
+                </button>
                 {onShare && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onShare(); }}
@@ -523,16 +528,16 @@ export function BunnyVideoCard({
                     <span className="text-white text-xs font-medium">{formatCount(likesCount)}</span>
                   </button>
                 )}
-                {onComment && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onComment(); }}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
-                      <MessageSquare className="h-7 w-7" />
-                    </div>
-                  </button>
-                )}
+                {/* Comments button */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
+                    <MessageCircle className="h-7 w-7" />
+                  </div>
+                  <span className="text-white text-xs font-medium">{formatCount(commentsCount)}</span>
+                </button>
                 {onShare && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onShare(); }}
@@ -572,120 +577,111 @@ export function BunnyVideoCard({
         )}
       </div>
 
-      {/* Info section */}
-      {(creatorName || caption || title) && (
-        <div className="p-3 bg-card space-y-1">
-          {creatorName && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (creatorId) {
-                  navigate(`/p/${creatorId}`);
-                }
-              }}
-              className="font-medium text-sm text-card-foreground hover:text-primary transition-colors truncate text-left block"
-            >
-              @{creatorName}
-            </button>
-          )}
-          {(caption || title) && (
-            <ParsedText 
-              text={caption || title} 
-              className="text-xs text-muted-foreground line-clamp-2" 
-            />
-          )}
-          {isOwner && (
-            <div className="flex items-center gap-3 mt-2">
-              {onPin && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPin();
-                  }}
-                  className={cn(
-                    "flex items-center gap-1 text-xs transition-colors",
-                    isPinned ? "text-primary" : "text-muted-foreground hover:text-primary"
-                  )}
-                >
-                  <Pin className="h-3 w-3" />
-                  <span>{isPinned ? 'Quitar fijado' : 'Fijar'}</span>
-                </button>
-              )}
+      {/* Caption/Creator info - TikTok style overlay */}
+      <div className="p-3 bg-gradient-to-t from-black/80 to-transparent absolute bottom-0 left-0 right-0 z-5">
+        {creatorName && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (creatorId) {
+                navigate(`/p/${creatorId}`);
+              }
+            }}
+            className="text-white text-sm font-semibold hover:underline truncate block"
+          >
+            @{creatorName.replace(/\s+/g, '').toLowerCase()}
+          </button>
+        )}
+        {(caption || title) && (
+          <p className="text-white/80 text-xs line-clamp-2 mt-0.5">{caption || title}</p>
+        )}
+        
+        {/* Owner controls */}
+        {isOwner && (
+          <div className="flex items-center gap-3 mt-2">
+            {onPin && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowSettings(true);
+                  onPin();
                 }}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                className={cn(
+                  "flex items-center gap-1 text-xs transition-colors",
+                  isPinned ? "text-primary" : "text-white/60 hover:text-primary"
+                )}
               >
-                <Settings className="h-3 w-3" />
-                <span>Configuración</span>
+                <Pin className="h-3 w-3" />
+                <span>{isPinned ? 'Quitar' : 'Fijar'}</span>
               </button>
-            </div>
-          )}
-          {/* Client approval button */}
-          {onApprove && status === 'delivered' && (
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onApprove();
+                setShowSettings(true);
               }}
-              className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors"
+              className="flex items-center gap-1 text-xs text-white/60 hover:text-primary transition-colors"
             >
-              <Check className="h-3.5 w-3.5" />
-              <span>Aprobar contenido</span>
+              <Settings className="h-3 w-3" />
             </button>
-          )}
-          {status === 'approved' && (
-            <div className="flex items-center gap-1.5 mt-2 text-green-400 text-xs">
-              <Check className="h-3.5 w-3.5" />
-              <span>Aprobado</span>
-            </div>
-          )}
-          
-          {/* Creator status change buttons */}
-          {isCreatorOwner && onCreatorStatusChange && (
-            <div className="mt-2 space-y-1.5">
-              {status === 'assigned' && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCreatorStatusChange('recording');
-                  }}
-                  className="flex items-center gap-1.5 w-full px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg text-xs font-medium transition-colors"
-                >
-                  <Circle className="h-3.5 w-3.5 fill-current animate-pulse" />
-                  <span>Iniciar Grabación</span>
-                </button>
-              )}
-              {status === 'recording' && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCreatorStatusChange('recorded');
-                  }}
-                  className="flex items-center gap-1.5 w-full px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors"
-                >
-                  <Video className="h-3.5 w-3.5" />
-                  <span>Marcar como Grabado</span>
-                </button>
-              )}
-              {status === 'recorded' && (
-                <div className="flex items-center gap-1.5 text-green-400 text-xs">
-                  <Video className="h-3.5 w-3.5" />
-                  <span>Grabado</span>
-                </div>
-              )}
-              {status === 'recording' && (
-                <div className="flex items-center gap-1.5 text-blue-400 text-xs">
-                  <Circle className="h-3 w-3 fill-current animate-pulse" />
-                  <span>En Grabación</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+        
+        {/* Client approval button */}
+        {onApprove && status === 'delivered' && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onApprove();
+            }}
+            className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors"
+          >
+            <Check className="h-3.5 w-3.5" />
+            <span>Aprobar</span>
+          </button>
+        )}
+        {status === 'approved' && (
+          <div className="flex items-center gap-1.5 mt-2 text-green-400 text-xs">
+            <Check className="h-3.5 w-3.5" />
+            <span>Aprobado</span>
+          </div>
+        )}
+        
+        {/* Creator status change buttons */}
+        {isCreatorOwner && onCreatorStatusChange && (
+          <div className="mt-2">
+            {status === 'assigned' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreatorStatusChange('recording');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg text-xs font-medium transition-colors"
+              >
+                <Circle className="h-3.5 w-3.5 fill-current animate-pulse" />
+                <span>Iniciar Grabación</span>
+              </button>
+            )}
+            {status === 'recording' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreatorStatusChange('recorded');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors"
+              >
+                <Video className="h-3.5 w-3.5" />
+                <span>Marcar como Grabado</span>
+              </button>
+            )}
+            {status === 'recorded' && (
+              <div className="flex items-center gap-1.5 text-green-400 text-xs">
+                <Video className="h-3.5 w-3.5" />
+                <span>Grabado</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Settings Dialog */}
       {isOwner && (
@@ -698,6 +694,25 @@ export function BunnyVideoCard({
           }}
         />
       )}
+
+      {/* Comments Drawer */}
+      <Drawer open={showComments} onOpenChange={setShowComments}>
+        <DrawerContent className="h-[70vh] bg-zinc-900 border-none">
+          {isPortfolioPost ? (
+            <PortfolioCommentsSection
+              postId={id}
+              isOpen={showComments}
+              onClose={() => setShowComments(false)}
+            />
+          ) : (
+            <CommentsSection
+              contentId={id}
+              isOpen={showComments}
+              onClose={() => setShowComments(false)}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
