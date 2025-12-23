@@ -9,11 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Loader2, Save, ExternalLink, CheckCircle2, XCircle, 
   Bot, Video, Music, Mail, Webhook, Cloud, Key, Info,
-  Sparkles, Zap, MessageSquare, Image
+  Sparkles, Zap, MessageSquare, Image, AlertTriangle, Settings2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 
 interface IntegrationConfig {
   key: string;
@@ -33,7 +34,55 @@ interface IntegrationCategory {
   integrations: IntegrationConfig[];
 }
 
+// Webhooks activos del sistema que tienen versión test y producción
+interface SystemWebhook {
+  key: string;
+  label: string;
+  description: string;
+  testUrl: string;
+  productionUrlKey: string;
+  usedIn: string[];
+  docsUrl?: string;
+}
+
+const SYSTEM_WEBHOOKS: SystemWebhook[] = [
+  {
+    key: "n8n_script_generator",
+    label: "n8n - Generador de Scripts",
+    description: "Webhook de n8n para generación de scripts con IA. Usado en ScriptGenerator y StrategistScriptForm.",
+    testUrl: "https://n8n.infinygroup.com/webhook-test/787fcfa6-f590-458f-94b6-7b9f0ecd1be7",
+    productionUrlKey: "n8n_script_generator_prod_url",
+    usedIn: ["ScriptGenerator.tsx", "StrategistScriptForm.tsx"],
+    docsUrl: "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/"
+  },
+  {
+    key: "n8n_drive_upload",
+    label: "n8n - Notificación Drive Upload",
+    description: "Webhook para notificar cuando se sube un video a Google Drive. Dispara el procesamiento automático.",
+    testUrl: "",
+    productionUrlKey: "n8n_drive_upload_prod_url",
+    usedIn: ["notify-drive-upload (Edge Function)"],
+    docsUrl: "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/"
+  },
+  {
+    key: "bunny_callback",
+    label: "Bunny - Callback Webhook",
+    description: "URL de callback para recibir actualizaciones del procesamiento de videos desde n8n.",
+    testUrl: "",
+    productionUrlKey: "bunny_callback_url",
+    usedIn: ["bunny-webhook (Edge Function)"],
+    docsUrl: "https://docs.bunny.net/docs/stream-webhook"
+  }
+];
+
 const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
+  {
+    id: "system",
+    title: "Webhooks del Sistema",
+    description: "Webhooks activos en la plataforma con toggle test/producción",
+    icon: Settings2,
+    integrations: []
+  },
   {
     id: "ai",
     title: "Inteligencia Artificial",
@@ -84,6 +133,14 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
         placeholder: "hf_...",
         isSecret: true,
         docsUrl: "https://huggingface.co/settings/tokens"
+      },
+      {
+        key: "lovable_ai_enabled",
+        label: "Lovable AI (Integrado)",
+        description: "IA integrada en la plataforma. No requiere API Key. Soporta Gemini, GPT-5 y más.",
+        type: "config",
+        placeholder: "Habilitado por defecto",
+        isSecret: false
       }
     ]
   },
@@ -133,6 +190,14 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
         type: "config",
         placeholder: "my-zone.b-cdn.net",
         isSecret: false
+      },
+      {
+        key: "google_drive_folder_id",
+        label: "Google Drive Folder ID",
+        description: "ID de la carpeta de Google Drive para subir videos raw.",
+        type: "config",
+        placeholder: "1abc123...",
+        isSecret: false
       }
     ]
   },
@@ -162,24 +227,24 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
       {
         key: "elevenlabs_api_key",
         label: "ElevenLabs API Key",
-        description: "Para generación de voz y text-to-speech.",
+        description: "Para generación de voz con IA (text-to-speech).",
         type: "api_key",
-        placeholder: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        placeholder: "xi-...",
         isSecret: true,
-        docsUrl: "https://elevenlabs.io/app/settings/api-keys"
+        docsUrl: "https://elevenlabs.io/docs/api-reference"
       }
     ]
   },
   {
     id: "communication",
     title: "Comunicación",
-    description: "Email, SMS y notificaciones",
+    description: "Servicios de email, SMS y notificaciones",
     icon: Mail,
     integrations: [
       {
         key: "resend_api_key",
         label: "Resend API Key",
-        description: "Para envío de emails transaccionales.",
+        description: "Para envío de emails transaccionales (invitaciones, recordatorios).",
         type: "api_key",
         placeholder: "re_...",
         isSecret: true,
@@ -187,8 +252,8 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
       },
       {
         key: "resend_from_email",
-        label: "Email Remitente",
-        description: "Email verificado desde donde se envían los correos.",
+        label: "Resend From Email",
+        description: "Email remitente verificado en Resend.",
         type: "config",
         placeholder: "noreply@tudominio.com",
         isSecret: false
@@ -196,7 +261,7 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
       {
         key: "twilio_account_sid",
         label: "Twilio Account SID",
-        description: "Para SMS y WhatsApp Business.",
+        description: "SID de cuenta de Twilio para SMS.",
         type: "config",
         placeholder: "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
         isSecret: false,
@@ -209,19 +274,36 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
         type: "api_key",
         placeholder: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
         isSecret: true
+      },
+      {
+        key: "push_notification_key",
+        label: "Push Notification Key (VAPID)",
+        description: "Clave pública VAPID para notificaciones push web.",
+        type: "config",
+        placeholder: "BEl62i...",
+        isSecret: false
       }
     ]
   },
   {
     id: "webhooks",
-    title: "Webhooks y Automatización",
-    description: "Webhooks, n8n, Zapier y automatizaciones",
+    title: "Webhooks Externos",
+    description: "Webhooks de terceros, n8n, Zapier y automatizaciones",
     icon: Webhook,
     integrations: [
       {
+        key: "n8n_base_url",
+        label: "n8n Base URL",
+        description: "URL base de tu instancia de n8n.",
+        type: "config",
+        placeholder: "https://n8n.tudominio.com",
+        isSecret: false,
+        docsUrl: "https://docs.n8n.io/"
+      },
+      {
         key: "n8n_webhook_url",
-        label: "n8n Webhook URL",
-        description: "URL del webhook de n8n para automatizaciones.",
+        label: "n8n Webhook URL (General)",
+        description: "URL del webhook general de n8n para automatizaciones.",
         type: "webhook",
         placeholder: "https://n8n.tudominio.com/webhook/xxxxx",
         isSecret: false,
@@ -287,6 +369,15 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
         placeholder: "XXXXXXXXXXXXXXXXX",
         isSecret: false,
         docsUrl: "https://ads.tiktok.com/help/article/tiktok-pixel"
+      },
+      {
+        key: "hotjar_id",
+        label: "Hotjar ID",
+        description: "ID de Hotjar para heatmaps y grabaciones.",
+        type: "config",
+        placeholder: "1234567",
+        isSecret: false,
+        docsUrl: "https://www.hotjar.com/"
       }
     ]
   }
@@ -296,7 +387,8 @@ export function IntegrationsSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<Record<string, string>>({});
-  const [activeTab, setActiveTab] = useState("ai");
+  const [webhookModes, setWebhookModes] = useState<Record<string, "test" | "production">>({});
+  const [activeTab, setActiveTab] = useState("system");
 
   useEffect(() => {
     loadSettings();
@@ -304,22 +396,45 @@ export function IntegrationsSettings() {
 
   const loadSettings = async () => {
     try {
+      // Get all non-secret keys from categories
       const allKeys = INTEGRATION_CATEGORIES.flatMap(cat => 
         cat.integrations.filter(i => !i.isSecret).map(i => i.key)
       );
 
+      // Add system webhook production URLs
+      const webhookProdKeys = SYSTEM_WEBHOOKS.map(w => w.productionUrlKey);
+      const webhookModeKeys = SYSTEM_WEBHOOKS.map(w => `${w.key}_mode`);
+      
+      const allSettingsKeys = [...allKeys, ...webhookProdKeys, ...webhookModeKeys];
+
       const { data, error } = await supabase
         .from("app_settings")
         .select("key, value")
-        .in("key", allKeys);
+        .in("key", allSettingsKeys);
 
       if (error) throw error;
 
       const loadedSettings: Record<string, string> = {};
+      const loadedModes: Record<string, "test" | "production"> = {};
+      
       data?.forEach((item) => {
-        loadedSettings[item.key] = item.value;
+        if (item.key.endsWith("_mode")) {
+          const webhookKey = item.key.replace("_mode", "");
+          loadedModes[webhookKey] = item.value as "test" | "production";
+        } else {
+          loadedSettings[item.key] = item.value;
+        }
       });
+      
+      // Default all webhooks to test mode if not set
+      SYSTEM_WEBHOOKS.forEach(w => {
+        if (!loadedModes[w.key]) {
+          loadedModes[w.key] = "test";
+        }
+      });
+      
       setSettings(loadedSettings);
+      setWebhookModes(loadedModes);
     } catch (error) {
       console.error("Error loading settings:", error);
     } finally {
@@ -330,24 +445,42 @@ export function IntegrationsSettings() {
   const saveSettings = async () => {
     setSaving(true);
     try {
+      // Save regular integration settings
       const nonSecretSettings = Object.entries(settings).filter(([key]) => {
         const integration = INTEGRATION_CATEGORIES
           .flatMap(cat => cat.integrations)
           .find(i => i.key === key);
-        return integration && !integration.isSecret;
+        // Include if it's a regular integration OR a system webhook production URL
+        const isSystemWebhookProdUrl = SYSTEM_WEBHOOKS.some(w => w.productionUrlKey === key);
+        return (integration && !integration.isSecret) || isSystemWebhookProdUrl;
       });
 
       for (const [key, value] of nonSecretSettings) {
         const integration = INTEGRATION_CATEGORIES
           .flatMap(cat => cat.integrations)
           .find(i => i.key === key);
+        const systemWebhook = SYSTEM_WEBHOOKS.find(w => w.productionUrlKey === key);
 
         const { error } = await supabase
           .from("app_settings")
           .upsert({
             key,
             value: value || "",
-            description: integration?.label || key,
+            description: integration?.label || systemWebhook?.label || key,
+            updated_at: new Date().toISOString()
+          }, { onConflict: "key" });
+
+        if (error) throw error;
+      }
+
+      // Save webhook modes
+      for (const [key, mode] of Object.entries(webhookModes)) {
+        const { error } = await supabase
+          .from("app_settings")
+          .upsert({
+            key: `${key}_mode`,
+            value: mode,
+            description: `Modo de webhook: ${key}`,
             updated_at: new Date().toISOString()
           }, { onConflict: "key" });
 
@@ -361,6 +494,21 @@ export function IntegrationsSettings() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const toggleWebhookMode = (webhookKey: string) => {
+    setWebhookModes(prev => ({
+      ...prev,
+      [webhookKey]: prev[webhookKey] === "test" ? "production" : "test"
+    }));
+  };
+
+  const getActiveWebhookUrl = (webhook: SystemWebhook) => {
+    const mode = webhookModes[webhook.key] || "test";
+    if (mode === "test") {
+      return webhook.testUrl;
+    }
+    return settings[webhook.productionUrlKey] || "";
   };
 
   const testWebhook = async (url: string, label: string) => {
@@ -385,6 +533,119 @@ export function IntegrationsSettings() {
     } catch (error) {
       toast.error("Error al enviar webhook de prueba");
     }
+  };
+
+  const renderSystemWebhook = (webhook: SystemWebhook) => {
+    const mode = webhookModes[webhook.key] || "test";
+    const isProduction = mode === "production";
+    const productionUrl = settings[webhook.productionUrlKey] || "";
+    const activeUrl = getActiveWebhookUrl(webhook);
+    const hasProductionUrl = Boolean(productionUrl);
+
+    return (
+      <div key={webhook.key} className="border rounded-lg p-4 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Label className="text-sm font-medium">{webhook.label}</Label>
+              <Badge 
+                variant={isProduction ? "default" : "secondary"}
+                className={isProduction ? "bg-green-600" : "bg-amber-500"}
+              >
+                {isProduction ? "Producción" : "Test"}
+              </Badge>
+              {isProduction && !hasProductionUrl && (
+                <Badge variant="destructive" className="text-xs">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  Sin URL
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{webhook.description}</p>
+            <div className="flex flex-wrap gap-1 mt-2">
+              {webhook.usedIn.map((file, idx) => (
+                <Badge key={idx} variant="outline" className="text-xs font-mono">
+                  {file}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {webhook.docsUrl && (
+              <Button variant="ghost" size="icon" asChild>
+                <a href={webhook.docsUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Mode Toggle */}
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <span className={`text-sm ${!isProduction ? "font-medium" : "text-muted-foreground"}`}>
+              Test
+            </span>
+            <Switch 
+              checked={isProduction}
+              onCheckedChange={() => toggleWebhookMode(webhook.key)}
+            />
+            <span className={`text-sm ${isProduction ? "font-medium" : "text-muted-foreground"}`}>
+              Producción
+            </span>
+          </div>
+          {activeUrl && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => testWebhook(activeUrl, webhook.label)}
+            >
+              <Zap className="h-4 w-4 mr-1" />
+              Test
+            </Button>
+          )}
+        </div>
+
+        {/* URLs */}
+        <div className="space-y-3">
+          {/* Test URL (read-only) */}
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">URL de Test (hardcoded)</Label>
+            <div className="flex gap-2">
+              <Input
+                value={webhook.testUrl || "(No configurado en código)"}
+                readOnly
+                disabled={isProduction}
+                className={`flex-1 font-mono text-xs ${isProduction ? "opacity-50" : ""}`}
+              />
+            </div>
+          </div>
+
+          {/* Production URL (editable) */}
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">URL de Producción</Label>
+            <Input
+              value={productionUrl}
+              onChange={(e) => setSettings(prev => ({ 
+                ...prev, 
+                [webhook.productionUrlKey]: e.target.value 
+              }))}
+              placeholder="https://n8n.tudominio.com/webhook/production-xxxxx"
+              className={`font-mono text-xs ${!isProduction ? "opacity-50" : ""}`}
+            />
+          </div>
+        </div>
+
+        {/* Active URL Display */}
+        <div className="p-2 bg-primary/5 rounded border border-primary/20">
+          <p className="text-xs text-muted-foreground mb-1">URL Activa:</p>
+          <code className="text-xs font-mono break-all">
+            {activeUrl || "(Sin URL configurada)"}
+          </code>
+        </div>
+      </div>
+    );
   };
 
   const renderIntegration = (integration: IntegrationConfig) => {
@@ -486,7 +747,7 @@ export function IntegrationsSettings() {
       </Alert>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 h-auto">
           {INTEGRATION_CATEGORIES.map((category) => (
             <TabsTrigger 
               key={category.id} 
@@ -499,7 +760,46 @@ export function IntegrationsSettings() {
           ))}
         </TabsList>
 
-        {INTEGRATION_CATEGORIES.map((category) => (
+        {/* System Webhooks Tab - Special rendering */}
+        <TabsContent value="system" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings2 className="h-5 w-5" />
+                Webhooks del Sistema
+              </CardTitle>
+              <CardDescription>
+                Webhooks activos en la plataforma. Alterna entre modo Test y Producción fácilmente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  <strong>Importante:</strong> Los webhooks en modo Test usan URLs hardcodeadas en el código. 
+                  Para producción, configura las URLs correspondientes y activa el modo Producción.
+                </AlertDescription>
+              </Alert>
+              
+              {SYSTEM_WEBHOOKS.map(renderSystemWebhook)}
+
+              <Separator className="my-6" />
+
+              <div className="p-4 bg-muted/30 rounded-lg">
+                <h4 className="font-medium text-sm mb-2">¿Cómo funciona?</h4>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>• <strong>Modo Test:</strong> Usa la URL hardcodeada en el código (ideal para desarrollo)</li>
+                  <li>• <strong>Modo Producción:</strong> Usa la URL configurada aquí (para ambiente productivo)</li>
+                  <li>• Los cambios se guardan al hacer clic en "Guardar Configuración"</li>
+                  <li>• Los componentes que usan estos webhooks leerán automáticamente la URL activa</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Other category tabs */}
+        {INTEGRATION_CATEGORIES.filter(cat => cat.id !== "system").map((category) => (
           <TabsContent key={category.id} value={category.id} className="mt-6">
             <Card>
               <CardHeader>
@@ -523,29 +823,76 @@ export function IntegrationsSettings() {
           <CardTitle className="text-base">Estado de Integraciones</CardTitle>
           <CardDescription>Resumen rápido de servicios configurados</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {INTEGRATION_CATEGORIES.flatMap(cat => cat.integrations)
-              .filter(i => !i.isSecret)
-              .slice(0, 8)
-              .map(integration => {
-                const isConfigured = Boolean(settings[integration.key]);
+        <CardContent className="space-y-4">
+          {/* System Webhooks Status */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Webhooks del Sistema</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {SYSTEM_WEBHOOKS.map(webhook => {
+                const mode = webhookModes[webhook.key] || "test";
+                const isProduction = mode === "production";
+                const hasProductionUrl = Boolean(settings[webhook.productionUrlKey]);
+                const isReady = !isProduction || hasProductionUrl;
+                
                 return (
                   <div 
-                    key={integration.key}
+                    key={webhook.key}
                     className={`flex items-center gap-2 p-2 rounded-lg border text-sm ${
-                      isConfigured ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800" : "bg-muted/50"
+                      isReady 
+                        ? isProduction 
+                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
+                          : "bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800"
+                        : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
                     }`}
                   >
-                    {isConfigured ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                    {isReady ? (
+                      isProduction ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                      )
                     ) : (
-                      <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <XCircle className="h-4 w-4 text-red-500 shrink-0" />
                     )}
-                    <span className="truncate">{integration.label.split(" ")[0]}</span>
+                    <span className="truncate flex-1">{webhook.label.replace("n8n - ", "")}</span>
+                    <Badge variant="outline" className="text-xs shrink-0">
+                      {isProduction ? "Prod" : "Test"}
+                    </Badge>
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Other Integrations Status */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Otras Integraciones</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {INTEGRATION_CATEGORIES.filter(cat => cat.id !== "system")
+                .flatMap(cat => cat.integrations)
+                .filter(i => !i.isSecret)
+                .slice(0, 8)
+                .map(integration => {
+                  const isConfigured = Boolean(settings[integration.key]);
+                  return (
+                    <div 
+                      key={integration.key}
+                      className={`flex items-center gap-2 p-2 rounded-lg border text-sm ${
+                        isConfigured ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800" : "bg-muted/50"
+                      }`}
+                    >
+                      {isConfigured ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                      )}
+                      <span className="truncate">{integration.label.split(" ")[0]}</span>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         </CardContent>
       </Card>
