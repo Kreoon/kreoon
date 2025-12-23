@@ -79,6 +79,8 @@ export function FullscreenVideoViewer({
   const [currentVariation, setCurrentVariation] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState<'up' | 'down' | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
@@ -159,29 +161,61 @@ export function FullscreenVideoViewer({
     }
   }, [hasMultipleVariations, currentVideo]);
 
-  // Touch handlers for swipe
+  // Touch handlers for swipe with dynamic feedback
   const [touchActive, setTouchActive] = useState(false);
+  
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     setTouchActive(true);
+    setSwipeOffset(0);
+    setSwipeDirection(null);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    // Prevent default to avoid scrolling issues
-    if (touchActive) {
-      e.preventDefault();
+    if (!touchActive) return;
+    
+    e.preventDefault();
+    
+    const currentY = e.touches[0].clientY;
+    const currentX = e.touches[0].clientX;
+    const diffY = touchStartY.current - currentY;
+    const diffX = touchStartX.current - currentX;
+    
+    // Only apply visual feedback for vertical swipes
+    if (Math.abs(diffY) > Math.abs(diffX)) {
+      // Limit the offset for visual feedback (max 150px)
+      const maxOffset = 150;
+      const dampedOffset = Math.sign(diffY) * Math.min(Math.abs(diffY) * 0.5, maxOffset);
+      
+      // Check if we can navigate in this direction
+      const canGoNext = currentIndex < videos.length - 1;
+      const canGoPrev = currentIndex > 0;
+      
+      if ((diffY > 0 && canGoNext) || (diffY < 0 && canGoPrev)) {
+        setSwipeOffset(dampedOffset);
+        setSwipeDirection(diffY > 0 ? 'up' : 'down');
+      } else {
+        // Resistance when can't go further
+        setSwipeOffset(dampedOffset * 0.2);
+        setSwipeDirection(diffY > 0 ? 'up' : 'down');
+      }
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     setTouchActive(false);
+    
     const touchEndY = e.changedTouches[0].clientY;
     const touchEndX = e.changedTouches[0].clientX;
     const diffY = touchStartY.current - touchEndY;
     const diffX = touchStartX.current - touchEndX;
     
     const minSwipeDistance = 50;
+    
+    // Reset visual feedback
+    setSwipeOffset(0);
+    setSwipeDirection(null);
 
     // Determine if it's more of a vertical or horizontal swipe
     if (Math.abs(diffY) > Math.abs(diffX)) {
@@ -215,11 +249,17 @@ export function FullscreenVideoViewer({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Content Container */}
-      <div className={cn(
-        "flex-1 relative transition-transform duration-300",
-        isTransitioning && "opacity-90"
-      )}>
+      {/* Content Container with swipe animation */}
+      <div 
+        className={cn(
+          "flex-1 relative",
+          !touchActive && "transition-all duration-300 ease-out",
+          isTransitioning && "opacity-90"
+        )}
+        style={{
+          transform: `translateY(${-swipeOffset}px) scale(${1 - Math.abs(swipeOffset) * 0.0005})`,
+        }}
+      >
         {isImage ? (
           // Image display - contained within viewport
           <div className="w-full h-full flex items-center justify-center p-4">
@@ -447,11 +487,44 @@ export function FullscreenVideoViewer({
         </div>
       </div>
 
-      {/* Swipe hint (mobile only) */}
-      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/40 text-xs flex flex-col items-center gap-1 md:hidden animate-pulse">
-        <ChevronUp className="h-4 w-4" />
-        <span>Desliza para navegar</span>
-      </div>
+      {/* Next/Prev video preview hints during swipe */}
+      {swipeDirection === 'up' && currentIndex < videos.length - 1 && (
+        <div 
+          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none transition-opacity duration-150 md:hidden"
+          style={{ 
+            height: Math.min(Math.abs(swipeOffset) * 2, 200),
+            opacity: Math.min(Math.abs(swipeOffset) / 100, 0.8)
+          }}
+        >
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-xs flex flex-col items-center">
+            <ChevronUp className="h-5 w-5 animate-bounce" />
+            <span className="font-medium">Siguiente video</span>
+          </div>
+        </div>
+      )}
+      
+      {swipeDirection === 'down' && currentIndex > 0 && (
+        <div 
+          className="absolute top-0 left-0 right-0 bg-gradient-to-b from-primary/20 to-transparent pointer-events-none transition-opacity duration-150 md:hidden"
+          style={{ 
+            height: Math.min(Math.abs(swipeOffset) * 2, 200),
+            opacity: Math.min(Math.abs(swipeOffset) / 100, 0.8)
+          }}
+        >
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/80 text-xs flex flex-col items-center">
+            <span className="font-medium">Video anterior</span>
+            <ChevronDown className="h-5 w-5 animate-bounce" />
+          </div>
+        </div>
+      )}
+
+      {/* Swipe hint (mobile only) - only show when not swiping */}
+      {!touchActive && (
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/40 text-xs flex flex-col items-center gap-1 md:hidden animate-pulse">
+          <ChevronUp className="h-4 w-4" />
+          <span>Desliza para navegar</span>
+        </div>
+      )}
     </div>
   );
 }
