@@ -381,6 +381,7 @@ export function FullscreenVideoViewer({
 
   const displayCaption = currentVideo.caption || currentVideo.title;
   const shouldTruncateCaption = displayCaption.length > 80;
+  const effectiveMuted = isMuted || !audioUnlocked;
 
   return (
     <div 
@@ -414,8 +415,8 @@ export function FullscreenVideoViewer({
           <div className="w-full h-full relative" onClick={handleVideoAreaClick}>
             <iframe
               ref={iframeRef}
-              key={`${currentVideo.id}-${currentVariation}`}
-              src={getEmbedUrl(currentVideoUrl, !audioUnlocked)}
+              key={`${currentVideo.id}-${currentVariation}-${effectiveMuted ? 'muted' : 'unmuted'}`}
+              src={getEmbedUrl(currentVideoUrl, effectiveMuted)}
               className="w-full h-full border-0"
               allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
               allowFullScreen
