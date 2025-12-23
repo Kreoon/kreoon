@@ -811,13 +811,15 @@ export default function ClientDashboard() {
                   </div>
                 </div>
                 <Progress value={overallProgress} className="h-3" />
-                <div className="flex justify-between mt-3">
+                <div className="flex justify-between mt-3 gap-1">
                   {[
                     { id: 'inicio', label: 'Inicio', statuses: ['draft', 'script_pending'], count: content.filter(c => ['draft', 'script_pending'].includes(c.status)).length },
                     { id: 'guion', label: 'Guión', statuses: ['script_approved', 'assigned'], count: content.filter(c => ['script_approved', 'assigned'].includes(c.status)).length },
                     { id: 'grabacion', label: 'Grabación', statuses: ['recording', 'recorded'], count: content.filter(c => ['recording', 'recorded'].includes(c.status)).length },
                     { id: 'edicion', label: 'Edición', statuses: ['editing', 'review'], count: content.filter(c => ['editing', 'review'].includes(c.status)).length },
-                    { id: 'entrega', label: 'Entrega', statuses: ['delivered', 'approved', 'paid'], count: content.filter(c => ['delivered', 'approved', 'paid'].includes(c.status)).length },
+                    { id: 'correccion', label: 'Corrección', statuses: ['issue'], count: content.filter(c => ['issue'].includes(c.status)).length },
+                    { id: 'entrega', label: 'Entrega', statuses: ['delivered', 'corrected'], count: content.filter(c => ['delivered', 'corrected'].includes(c.status)).length },
+                    { id: 'aprobado', label: 'Aprobado', statuses: ['approved', 'paid'], count: content.filter(c => ['approved', 'paid'].includes(c.status)).length },
                   ].map((stage) => (
                     <button
                       key={stage.id}
@@ -1291,7 +1293,9 @@ export default function ClientDashboard() {
                     stageFilter === 'inicio' ? 'Inicio' :
                     stageFilter === 'guion' ? 'Guión' :
                     stageFilter === 'grabacion' ? 'Grabación' :
-                    stageFilter === 'edicion' ? 'Edición' : 'Entrega'
+                    stageFilter === 'edicion' ? 'Edición' :
+                    stageFilter === 'correccion' ? 'Corrección' :
+                    stageFilter === 'entrega' ? 'Entrega' : 'Aprobado'
                   }` : 'Todo el Contenido'}
                 </h2>
                 <p className="text-sm text-muted-foreground">
@@ -1302,7 +1306,9 @@ export default function ClientDashboard() {
                           guion: ['script_approved', 'assigned'],
                           grabacion: ['recording', 'recorded'],
                           edicion: ['editing', 'review'],
-                          entrega: ['delivered', 'approved', 'paid']
+                          correccion: ['issue'],
+                          entrega: ['delivered', 'corrected'],
+                          aprobado: ['approved', 'paid']
                         };
                         return stageStatuses[stageFilter]?.includes(c.status);
                       }).length} videos en esta etapa`
@@ -1326,10 +1332,12 @@ export default function ClientDashboard() {
                     guion: ['script_approved', 'assigned'],
                     grabacion: ['recording', 'recorded'],
                     edicion: ['editing', 'review'],
-                    entrega: ['delivered', 'approved', 'paid']
+                    correccion: ['issue'],
+                    entrega: ['delivered', 'corrected'],
+                    aprobado: ['approved', 'paid']
                   };
                   return stageStatuses[stageFilter]?.includes(c.status);
-                })} 
+                })}
                 onSelect={setSelectedContent}
                 onStatusChange={handleQuickStatusChange}
                 userId={user?.id}
