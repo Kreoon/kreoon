@@ -164,7 +164,7 @@ export function ThumbnailSelector({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex items-center gap-2">
       <input
         ref={fileInputRef}
         type="file"
@@ -174,70 +174,45 @@ export function ThumbnailSelector({
         disabled={disabled || uploading}
       />
       
-      {/* Current or preview thumbnail */}
-      <div className="relative aspect-video rounded-lg overflow-hidden bg-muted border">
-        {previewImage ? (
-          <img 
-            src={previewImage} 
-            alt="Preview" 
-            className="w-full h-full object-cover"
-          />
-        ) : currentThumbnail ? (
-          <img 
-            src={currentThumbnail} 
-            alt="Miniatura actual" 
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <Image className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Miniatura automática al subir video</p>
-            </div>
-          </div>
-        )}
-        
-        {/* Uploading overlay */}
-        {uploading && (
-          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        )}
-      </div>
-      
-      {/* Action buttons */}
       {previewImage ? (
-        <div className="flex gap-2">
+        <>
+          <div className="relative w-12 h-12 rounded overflow-hidden border">
+            <img 
+              src={previewImage} 
+              alt="Preview" 
+              className="w-full h-full object-cover"
+            />
+          </div>
           <Button
             variant="outline"
+            size="sm"
             onClick={cancelPreview}
             disabled={uploading}
-            className="flex-1"
           >
-            <X className="h-4 w-4 mr-2" />
+            <X className="h-3 w-3 mr-1" />
             Cancelar
           </Button>
           <Button
+            size="sm"
             onClick={uploadThumbnail}
             disabled={uploading}
-            className="flex-1"
           >
             {uploading ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
             ) : (
-              <Check className="h-4 w-4 mr-2" />
+              <Check className="h-3 w-3 mr-1" />
             )}
             Guardar
           </Button>
-        </div>
+        </>
       ) : (
         <Button
           variant="outline"
+          size="sm"
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || uploading}
-          className="w-full"
         >
-          <Upload className="h-4 w-4 mr-2" />
+          <Upload className="h-3 w-3 mr-1" />
           {currentThumbnail ? 'Cambiar miniatura' : 'Subir miniatura'}
         </Button>
       )}
