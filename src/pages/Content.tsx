@@ -34,6 +34,7 @@ interface ContentItem {
   created_at: string;
   client: { name: string; logo_url: string | null } | null;
   creator: { full_name: string } | null;
+  creator_id: string | null;
   status: string;
   is_liked?: boolean;
 }
@@ -55,7 +56,7 @@ function getVideoUrls(item: ContentItem): string[] {
 }
 
 const Content = () => {
-  const { roles } = useAuth();
+  const { roles, user } = useAuth();
   const isAdmin = roles.includes('admin');
   const [content, setContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -458,59 +459,74 @@ const Content = () => {
                       showActions={true}
                     />
                     
-                    {/* Admin controls overlay */}
-                    {isAdmin && (
-                      <>
-                        <div className="absolute top-2 left-2 z-20 flex items-center gap-2">
-                          <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
-                            {item.is_published ? 'Publicado' : 'Privado'}
-                          </Badge>
-                        </div>
-                        
-                        {/* 3-dot menu for settings */}
-                        <div className="absolute top-2 right-2 z-20">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 bg-black/60 hover:bg-black/80 text-white rounded-full"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem onClick={() => setSettingsContentId(item.id)}>
-                                <Settings className="h-4 w-4 mr-2" />
-                                Configuración
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => togglePublish(item.id, item.is_published)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                {item.is_published ? 'Ocultar del portafolio' : 'Publicar en portafolio'}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <a 
-                                  href={videoUrls[0]}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                    {/* Controls overlay - Admin or Content Owner */}
+                    {(() => {
+                      const isOwner = user?.id === item.creator_id;
+                      const canManage = isAdmin || isOwner;
+                      
+                      if (!canManage) return null;
+                      
+                      return (
+                        <>
+                          {/* Status badge - only for admin */}
+                          {isAdmin && (
+                            <div className="absolute top-2 left-2 z-20 flex items-center gap-2">
+                              <Badge variant={item.is_published ? "default" : "secondary"} className="text-xs">
+                                {item.is_published ? 'Publicado' : 'Privado'}
+                              </Badge>
+                            </div>
+                          )}
+                          
+                          {/* 3-dot menu for settings */}
+                          <div className="absolute top-2 right-2 z-20">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 bg-black/60 hover:bg-black/80 text-white rounded-full"
                                 >
-                                  <ExternalLink className="h-4 w-4 mr-2" />
-                                  Ver video original
-                                </a>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                        
-                        <div className="absolute bottom-20 left-2 z-20 flex items-center gap-2">
-                          <Switch
-                            checked={item.is_published}
-                            onCheckedChange={() => togglePublish(item.id, item.is_published)}
-                            className="data-[state=checked]:bg-primary"
-                          />
-                        </div>
-                      </>
-                    )}
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => setSettingsContentId(item.id)}>
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Configuración
+                                </DropdownMenuItem>
+                                {isAdmin && (
+                                  <DropdownMenuItem onClick={() => togglePublish(item.id, item.is_published)}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    {item.is_published ? 'Ocultar del portafolio' : 'Publicar en portafolio'}
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem asChild>
+                                  <a 
+                                    href={videoUrls[0]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <ExternalLink className="h-4 w-4 mr-2" />
+                                    Ver video original
+                                  </a>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          
+                          {/* Publish toggle - only for admin */}
+                          {isAdmin && (
+                            <div className="absolute bottom-20 left-2 z-20 flex items-center gap-2">
+                              <Switch
+                                checked={item.is_published}
+                                onCheckedChange={() => togglePublish(item.id, item.is_published)}
+                                className="data-[state=checked]:bg-primary"
+                              />
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 );
               })}
