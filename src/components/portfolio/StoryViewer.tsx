@@ -347,19 +347,29 @@ export function StoryViewer({
         onTouchStart={handleTouchStart}
       >
         {isVideo ? (
-          <video
-            ref={videoRef}
-            src={currentStory.media_url}
-            className="w-full h-full object-contain"
-            autoPlay
-            playsInline
-            onEnded={handleVideoEnded}
-            onLoadedMetadata={() => {
-              // Reset progress when video loads to recalculate duration
-              setProgress(0);
-              startTimeRef.current = Date.now();
-            }}
-          />
+          currentStory.media_url.includes('iframe.mediadelivery.net/embed') ? (
+            <iframe
+              src={currentStory.media_url}
+              className="w-full h-full border-0"
+              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              loading="lazy"
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={currentStory.media_url}
+              className="w-full h-full object-contain"
+              autoPlay
+              playsInline
+              onEnded={handleVideoEnded}
+              onLoadedMetadata={() => {
+                // Reset progress when video loads to recalculate duration
+                setProgress(0);
+                startTimeRef.current = Date.now();
+              }}
+            />
+          )
         ) : (
           <img
             src={currentStory.media_url}
