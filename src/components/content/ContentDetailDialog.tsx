@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RichTextEditor, RichTextViewer } from "@/components/ui/rich-text-editor";
+import { ScriptViewer } from "@/components/content/ScriptViewer";
 import { ProductSelector } from "@/components/products/ProductSelector";
 import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
 import { StrategistScriptForm } from "@/components/content/StrategistScriptForm";
@@ -1046,13 +1047,18 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   className="min-h-[250px]"
                 />
               ) : formData.script || content.script ? (
-                <RichTextViewer 
+                <ScriptViewer 
                   content={formData.script || content.script || ''} 
-                  className="min-h-[100px] max-h-[400px] overflow-y-auto"
+                  maxHeight="max-h-[500px]"
+                  className="mt-2"
                 />
               ) : (
-                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground italic">Sin guión disponible</p>
+                <div className="min-h-[100px] rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/20 flex items-center justify-center">
+                  <div className="text-center space-y-2 p-8">
+                    <div className="text-3xl">📝</div>
+                    <p className="text-sm text-muted-foreground">Sin guión disponible</p>
+                    <p className="text-xs text-muted-foreground/70">Genera un guión con IA o escribe uno manualmente</p>
+                  </div>
                 </div>
               )}
               

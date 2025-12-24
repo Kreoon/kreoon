@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { RichTextViewer } from '@/components/ui/rich-text-editor';
+import { ScriptViewer, ScriptPreview } from '@/components/content/ScriptViewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
@@ -225,9 +226,9 @@ export function ScriptReviewCard({ content, onUpdate, userId }: ScriptReviewCard
                 onClick={() => setShowScriptModal(true)}
                 className="cursor-pointer hover:opacity-80 transition-opacity"
               >
-                <ScrollArea className={cn("rounded-lg bg-background/50 p-3", showFullScript ? "max-h-80" : "max-h-32")}>
-                  <RichTextViewer content={content.script} className="text-sm" />
-                </ScrollArea>
+                <div className={cn("rounded-lg bg-background/50 p-3", showFullScript ? "max-h-80 overflow-y-auto" : "max-h-36 overflow-hidden")}>
+                  <ScriptPreview content={content.script} />
+                </div>
               </div>
             ) : (
               <div className="p-4 text-center text-muted-foreground text-sm bg-background/50 rounded-lg">
@@ -408,7 +409,7 @@ export function ScriptReviewCard({ content, onUpdate, userId }: ScriptReviewCard
                 </div>
                 <div className="p-5">
                   {content.script ? (
-                    <RichTextViewer content={content.script} className="text-base leading-relaxed prose prose-sm max-w-none dark:prose-invert" />
+                    <ScriptViewer content={content.script} maxHeight="max-h-[600px]" />
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />

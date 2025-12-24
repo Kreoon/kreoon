@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AutoPauseVideo } from "@/components/content/AutoPauseVideo";
 import { RichTextViewer } from "@/components/ui/rich-text-editor";
+import { ScriptViewer } from "@/components/content/ScriptViewer";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -311,12 +312,10 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="rounded-lg border bg-muted/30 p-4">
-                      <RichTextViewer 
-                        content={content.script} 
-                        className="prose prose-sm dark:prose-invert max-w-none"
-                      />
-                    </div>
+                    <ScriptViewer 
+                      content={content.script} 
+                      maxHeight="max-h-[500px]"
+                    />
                   </CardContent>
                 </Card>
               ) : (

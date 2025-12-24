@@ -216,7 +216,28 @@ export function RichTextViewer({ content, className }: { content: string; classN
   }
 
   return (
-    <div className={cn("rounded-lg border bg-card p-5 leading-7 text-base prose prose-sm max-w-none", className)}>
+    <div className={cn(
+      "rounded-lg border bg-card p-5 leading-7 text-base",
+      // Enhanced prose styling for script content
+      "prose prose-sm dark:prose-invert max-w-none",
+      // Headers
+      "[&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-3 [&_h2]:text-foreground",
+      "[&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-foreground",
+      "[&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-3 [&_h4]:mb-2",
+      // Paragraphs with generous spacing
+      "[&_p]:leading-relaxed [&_p]:mb-4 [&_p]:last:mb-0",
+      // Emphasis styling (tone indicators)
+      "[&_em]:text-muted-foreground [&_em]:font-medium [&_em]:text-xs [&_em]:uppercase [&_em]:tracking-wide [&_em]:bg-muted/60 [&_em]:px-2 [&_em]:py-1 [&_em]:rounded [&_em]:not-italic [&_em]:inline-block [&_em]:mb-2",
+      // Strong styling
+      "[&_strong]:font-bold [&_strong]:text-foreground",
+      // Lists with good spacing
+      "[&_ul]:space-y-2 [&_ul]:pl-4 [&_ul]:mb-4 [&_ul]:list-disc",
+      "[&_ol]:space-y-2 [&_ol]:pl-4 [&_ol]:mb-4 [&_ol]:list-decimal",
+      "[&_li]:leading-relaxed [&_li]:pl-1",
+      // Underline for CTAs
+      "[&_u]:underline [&_u]:decoration-2 [&_u]:underline-offset-4 [&_u]:decoration-primary",
+      className
+    )}>
       <EditorContent editor={editor} />
     </div>
   );
