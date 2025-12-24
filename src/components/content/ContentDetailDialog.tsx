@@ -755,11 +755,12 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         <div className="overflow-y-auto max-h-[calc(90vh-200px)] p-4 sm:p-6">
           <Tabs defaultValue="video">
             <TabsList className={`grid w-full h-auto gap-1 mb-6 ${
-              isClient ? 'grid-cols-1' : 
-              isAdmin ? 'grid-cols-3 sm:grid-cols-6' : 
-              (isCreator || isEditor) ? 'grid-cols-3' : 'grid-cols-3'
+              isClient ? 'grid-cols-2' : 
+              isAdmin ? 'grid-cols-4 sm:grid-cols-7' : 
+              (isCreator || isEditor) ? 'grid-cols-4' : 'grid-cols-4'
             }`}>
               <TabsTrigger value="video" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Video</TabsTrigger>
+              <TabsTrigger value="guion" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Guión</TabsTrigger>
               {(isCreator || isEditor || isAdmin) && <TabsTrigger value="material" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Material</TabsTrigger>}
               {(isCreator || isEditor || isAdmin) && <TabsTrigger value="general" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">General</TabsTrigger>}
               {isAdmin && <TabsTrigger value="equipo" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Equipo</TabsTrigger>}
@@ -976,10 +977,13 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </div>
               </div>
             </div>
+          </TabsContent>
 
-            {/* Section 2: Strategist Script Form - Full Width (Only for strategist/admin) */}
+          {/* Guión Tab - Script generation and all blocks */}
+          <TabsContent value="guion" className="space-y-6 mt-4">
+            {/* Section 1: Strategist Script Form - Full Width (Only for strategist/admin) */}
             {canEditVideoTab && !isClient && (
-              <div className="space-y-4 pt-6 border-t">
+              <div className="space-y-4">
                 {/* Product Selector */}
                 <div className="space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
@@ -1031,222 +1035,253 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
             )}
 
-            {/* Section 3: Script Editor/Viewer */}
-            <div className="space-y-3 pt-6 border-t">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4" /> Guión
-                </h4>
+            {/* Inner Tabs for the 6 blocks */}
+            <Tabs defaultValue="creador" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-1 mb-4">
+                <TabsTrigger value="creador" className="text-xs px-2 py-1.5 gap-1">
+                  <FileText className="h-3 w-3" />
+                  <span className="hidden sm:inline">Creador</span>
+                  <span className="sm:hidden">🎥</span>
+                </TabsTrigger>
+                <TabsTrigger value="editor" className="text-xs px-2 py-1.5 gap-1">
+                  <Video className="h-3 w-3" />
+                  <span className="hidden sm:inline">Editor</span>
+                  <span className="sm:hidden">✂️</span>
+                </TabsTrigger>
+                <TabsTrigger value="trafficker" className="text-xs px-2 py-1.5 gap-1">
+                  <Megaphone className="h-3 w-3" />
+                  <span className="hidden sm:inline">Trafficker</span>
+                  <span className="sm:hidden">💰</span>
+                </TabsTrigger>
+                <TabsTrigger value="estratega" className="text-xs px-2 py-1.5 gap-1">
+                  <Target className="h-3 w-3" />
+                  <span className="hidden sm:inline">Estratega</span>
+                  <span className="sm:hidden">🧠</span>
+                </TabsTrigger>
+                <TabsTrigger value="disenador" className="text-xs px-2 py-1.5 gap-1">
+                  <Image className="h-3 w-3" />
+                  <span className="hidden sm:inline">Diseñador</span>
+                  <span className="sm:hidden">🎨</span>
+                </TabsTrigger>
+                <TabsTrigger value="admin" className="text-xs px-2 py-1.5 gap-1">
+                  <Calendar className="h-3 w-3" />
+                  <span className="hidden sm:inline">Admin</span>
+                  <span className="sm:hidden">📋</span>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Block 1: Creador (Script) */}
+              <TabsContent value="creador" className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-purple-500" /> 🧍‍♂️ Bloque Creador (Guión)
+                  </h4>
+                  {content.script_approved_at && (
+                    <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Aprobado {format(new Date(content.script_approved_at), "d MMM, HH:mm", { locale: es })}
+                    </Badge>
+                  )}
+                </div>
                 
-                {/* Script Approval Status Badge */}
-                {content.script_approved_at && (
-                  <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Aprobado {format(new Date(content.script_approved_at), "d MMM, HH:mm", { locale: es })}
-                  </Badge>
+                {editMode && canEditVideoTab ? (
+                  <RichTextEditor
+                    content={formData.script || ''}
+                    onChange={(html) => setFormData({ ...formData, script: html })}
+                    placeholder="Escribe el guión aquí..."
+                    className="min-h-[300px]"
+                  />
+                ) : formData.script || content.script ? (
+                  <ScriptViewer 
+                    content={formData.script || content.script || ''} 
+                    maxHeight="max-h-[500px]"
+                  />
+                ) : (
+                  <div className="min-h-[150px] rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/20 flex items-center justify-center">
+                    <div className="text-center space-y-2 p-8">
+                      <div className="text-3xl">📝</div>
+                      <p className="text-sm text-muted-foreground">Sin guión disponible</p>
+                      <p className="text-xs text-muted-foreground/70">Genera un guión con IA o escribe uno manualmente</p>
+                    </div>
+                  </div>
                 )}
-              </div>
-              
-              {editMode && canEditVideoTab ? (
-                <RichTextEditor
-                  content={formData.script || ''}
-                  onChange={(html) => setFormData({ ...formData, script: html })}
-                  placeholder="Escribe el guión aquí..."
-                  className="min-h-[250px]"
-                />
-              ) : formData.script || content.script ? (
-                <ScriptViewer 
-                  content={formData.script || content.script || ''} 
-                  maxHeight="max-h-[500px]"
-                  className="mt-2"
-                />
-              ) : (
-                <div className="min-h-[100px] rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/20 flex items-center justify-center">
-                  <div className="text-center space-y-2 p-8">
-                    <div className="text-3xl">📝</div>
-                    <p className="text-sm text-muted-foreground">Sin guión disponible</p>
-                    <p className="text-xs text-muted-foreground/70">Genera un guión con IA o escribe uno manualmente</p>
-                  </div>
-                </div>
-              )}
-              
-              {/* Script Approval Checkbox - Only for Clients */}
-              {isClient && content.script && !content.script_approved_at && (
-                <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-success/5 to-success/10 mt-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-success/10">
-                      <CheckCircle className="h-4 w-4 text-success" />
+                
+                {/* Script Approval for Clients */}
+                {isClient && content.script && !content.script_approved_at && (
+                  <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-success/5 to-success/10 mt-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-success/10">
+                        <CheckCircle className="h-4 w-4 text-success" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Aprobar Guión</p>
+                        <p className="text-xs text-muted-foreground">
+                          Al aprobar, el contenido pasará automáticamente al estado "Guión Aprobado"
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">Aprobar Guión</p>
-                      <p className="text-xs text-muted-foreground">
-                        Al aprobar, el contenido pasará automáticamente al estado "Guión Aprobado"
-                      </p>
-                    </div>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="bg-success hover:bg-success/90"
+                      onClick={async () => {
+                        setLoading(true);
+                        try {
+                          const { error } = await supabase
+                            .from('content')
+                            .update({ 
+                              script_approved_at: new Date().toISOString(),
+                              script_approved_by: user?.id 
+                            })
+                            .eq('id', content.id);
+                          if (error) throw error;
+                          toast({ 
+                            title: "Guión aprobado", 
+                            description: "El contenido ahora está en estado 'Guión Aprobado'" 
+                          });
+                          onUpdate?.();
+                        } catch (error) {
+                          toast({ title: "Error al aprobar guión", variant: "destructive" });
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Aprobar
+                    </Button>
                   </div>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="bg-success hover:bg-success/90"
-                    onClick={async () => {
-                      setLoading(true);
-                      try {
-                        const { error } = await supabase
-                          .from('content')
-                          .update({ 
-                            script_approved_at: new Date().toISOString(),
-                            script_approved_by: user?.id 
-                          })
-                          .eq('id', content.id);
-                        if (error) throw error;
-                        toast({ 
-                          title: "Guión aprobado", 
-                          description: "El contenido ahora está en estado 'Guión Aprobado'" 
-                        });
-                        onUpdate?.();
-                      } catch (error) {
-                        toast({ title: "Error al aprobar guión", variant: "destructive" });
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                    disabled={loading}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Aprobar
-                  </Button>
-                </div>
-              )}
-              
-              {/* Already approved message for clients */}
-              {isClient && content.script_approved_at && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm">
-                  <CheckCircle className="h-4 w-4" />
-                  <span>Guión aprobado el {format(new Date(content.script_approved_at), "d 'de' MMMM, yyyy 'a las' HH:mm", { locale: es })}</span>
-                </div>
-              )}
-            </div>
+                )}
+                
+                {isClient && content.script_approved_at && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Guión aprobado el {format(new Date(content.script_approved_at), "d 'de' MMMM, yyyy 'a las' HH:mm", { locale: es })}</span>
+                  </div>
+                )}
+              </TabsContent>
 
-            {/* Section 4: Guidelines for different roles - Visible for all, editable by admin/strategist */}
-            {/* Pautas para el Editor */}
-            <div className="space-y-3 pt-6 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <Clipboard className="h-4 w-4 text-blue-500" /> 🎬 Bloque Editor
-              </h4>
-              {editMode && canEditVideoTab ? (
-                <RichTextEditor
-                  content={formData.editor_guidelines || ''}
-                  onChange={(html) => setFormData({ ...formData, editor_guidelines: html })}
-                  placeholder="Instrucciones específicas para el editor: estilo de edición, música, ritmo, efectos, etc."
-                  className="min-h-[150px]"
-                />
-              ) : formData.editor_guidelines || (content as any).editor_guidelines ? (
-                <RichTextViewer 
-                  content={formData.editor_guidelines || (content as any).editor_guidelines} 
-                  className="min-h-[100px] max-h-[300px] overflow-y-auto"
-                />
-              ) : (
-                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground italic">Sin pautas para el editor</p>
-                </div>
-              )}
-            </div>
+              {/* Block 2: Editor */}
+              <TabsContent value="editor" className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Clipboard className="h-4 w-4 text-blue-500" /> 🎬 Bloque Editor
+                </h4>
+                {editMode && canEditVideoTab ? (
+                  <RichTextEditor
+                    content={formData.editor_guidelines || ''}
+                    onChange={(html) => setFormData({ ...formData, editor_guidelines: html })}
+                    placeholder="Instrucciones específicas para el editor: estilo de edición, música, ritmo, efectos, etc."
+                    className="min-h-[300px]"
+                  />
+                ) : formData.editor_guidelines || (content as any).editor_guidelines ? (
+                  <RichTextViewer 
+                    content={formData.editor_guidelines || (content as any).editor_guidelines} 
+                    className="min-h-[100px] max-h-[500px] overflow-y-auto"
+                  />
+                ) : (
+                  <div className="min-h-[150px] rounded-md border bg-muted/30 flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground italic">Sin pautas para el editor</p>
+                  </div>
+                )}
+              </TabsContent>
 
-            {/* Pautas para el Estratega */}
-            <div className="space-y-3 pt-6 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <Target className="h-4 w-4 text-purple-500" /> 🧠 Bloque Estratega
-              </h4>
-              {editMode && canEditVideoTab ? (
-                <RichTextEditor
-                  content={formData.strategist_guidelines || ''}
-                  onChange={(html) => setFormData({ ...formData, strategist_guidelines: html })}
-                  placeholder="Estrategia de contenido, objetivos, métricas a seguir, ajustes de copy, etc."
-                  className="min-h-[150px]"
-                />
-              ) : formData.strategist_guidelines || (content as any).strategist_guidelines ? (
-                <RichTextViewer 
-                  content={formData.strategist_guidelines || (content as any).strategist_guidelines} 
-                  className="min-h-[100px] max-h-[300px] overflow-y-auto"
-                />
-              ) : (
-                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground italic">Sin pautas para el estratega</p>
-                </div>
-              )}
-            </div>
+              {/* Block 3: Trafficker */}
+              <TabsContent value="trafficker" className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Megaphone className="h-4 w-4 text-green-500" /> 💰 Bloque Trafficker
+                </h4>
+                {editMode && canEditVideoTab ? (
+                  <RichTextEditor
+                    content={formData.trafficker_guidelines || ''}
+                    onChange={(html) => setFormData({ ...formData, trafficker_guidelines: html })}
+                    placeholder="Indicaciones de pauta: público objetivo, presupuesto sugerido, plataformas, segmentación, etc."
+                    className="min-h-[300px]"
+                  />
+                ) : formData.trafficker_guidelines || (content as any).trafficker_guidelines ? (
+                  <RichTextViewer 
+                    content={formData.trafficker_guidelines || (content as any).trafficker_guidelines} 
+                    className="min-h-[100px] max-h-[500px] overflow-y-auto"
+                  />
+                ) : (
+                  <div className="min-h-[150px] rounded-md border bg-muted/30 flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground italic">Sin pautas para el trafficker</p>
+                  </div>
+                )}
+              </TabsContent>
 
-            {/* Pautas para el Trafficker */}
-            <div className="space-y-3 pt-6 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <Megaphone className="h-4 w-4 text-green-500" /> 💰 Bloque Trafficker
-              </h4>
-              {editMode && canEditVideoTab ? (
-                <RichTextEditor
-                  content={formData.trafficker_guidelines || ''}
-                  onChange={(html) => setFormData({ ...formData, trafficker_guidelines: html })}
-                  placeholder="Indicaciones de pauta: público objetivo, presupuesto sugerido, plataformas, segmentación, etc."
-                  className="min-h-[150px]"
-                />
-              ) : formData.trafficker_guidelines || (content as any).trafficker_guidelines ? (
-                <RichTextViewer 
-                  content={formData.trafficker_guidelines || (content as any).trafficker_guidelines} 
-                  className="min-h-[100px] max-h-[300px] overflow-y-auto"
-                />
-              ) : (
-                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground italic">Sin pautas para el trafficker</p>
-                </div>
-              )}
-            </div>
+              {/* Block 4: Estratega */}
+              <TabsContent value="estratega" className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Target className="h-4 w-4 text-purple-500" /> 🧠 Bloque Estratega
+                </h4>
+                {editMode && canEditVideoTab ? (
+                  <RichTextEditor
+                    content={formData.strategist_guidelines || ''}
+                    onChange={(html) => setFormData({ ...formData, strategist_guidelines: html })}
+                    placeholder="Estrategia de contenido, objetivos, métricas a seguir, ajustes de copy, etc."
+                    className="min-h-[300px]"
+                  />
+                ) : formData.strategist_guidelines || (content as any).strategist_guidelines ? (
+                  <RichTextViewer 
+                    content={formData.strategist_guidelines || (content as any).strategist_guidelines} 
+                    className="min-h-[100px] max-h-[500px] overflow-y-auto"
+                  />
+                ) : (
+                  <div className="min-h-[150px] rounded-md border bg-muted/30 flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground italic">Sin pautas para el estratega</p>
+                  </div>
+                )}
+              </TabsContent>
 
-            {/* Pautas para el Diseñador */}
-            <div className="space-y-3 pt-6 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <Image className="h-4 w-4 text-pink-500" /> 🎨 Bloque Diseñador
-              </h4>
-              {editMode && canEditVideoTab ? (
-                <RichTextEditor
-                  content={formData.designer_guidelines || ''}
-                  onChange={(html) => setFormData({ ...formData, designer_guidelines: html })}
-                  placeholder="Lineamiento gráfico, look & feel, elementos visuales, branding, etc."
-                  className="min-h-[150px]"
-                />
-              ) : formData.designer_guidelines || (content as any).designer_guidelines ? (
-                <RichTextViewer 
-                  content={formData.designer_guidelines || (content as any).designer_guidelines} 
-                  className="min-h-[100px] max-h-[300px] overflow-y-auto"
-                />
-              ) : (
-                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground italic">Sin pautas para el diseñador</p>
-                </div>
-              )}
-            </div>
+              {/* Block 5: Diseñador */}
+              <TabsContent value="disenador" className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Image className="h-4 w-4 text-pink-500" /> 🎨 Bloque Diseñador
+                </h4>
+                {editMode && canEditVideoTab ? (
+                  <RichTextEditor
+                    content={formData.designer_guidelines || ''}
+                    onChange={(html) => setFormData({ ...formData, designer_guidelines: html })}
+                    placeholder="Lineamiento gráfico, look & feel, elementos visuales, branding, etc."
+                    className="min-h-[300px]"
+                  />
+                ) : formData.designer_guidelines || (content as any).designer_guidelines ? (
+                  <RichTextViewer 
+                    content={formData.designer_guidelines || (content as any).designer_guidelines} 
+                    className="min-h-[100px] max-h-[500px] overflow-y-auto"
+                  />
+                ) : (
+                  <div className="min-h-[150px] rounded-md border bg-muted/30 flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground italic">Sin pautas para el diseñador</p>
+                  </div>
+                )}
+              </TabsContent>
 
-            {/* Pautas para Admin/PM */}
-            <div className="space-y-3 pt-6 border-t">
-              <h4 className="font-medium flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-orange-500" /> 📋 Bloque Admin / PM
-              </h4>
-              {editMode && canEditVideoTab ? (
-                <RichTextEditor
-                  content={formData.admin_guidelines || ''}
-                  onChange={(html) => setFormData({ ...formData, admin_guidelines: html })}
-                  placeholder="Cronograma, responsables, entregables, checklist de revisión, etc."
-                  className="min-h-[150px]"
-                />
-              ) : formData.admin_guidelines || (content as any).admin_guidelines ? (
-                <RichTextViewer 
-                  content={formData.admin_guidelines || (content as any).admin_guidelines} 
-                  className="min-h-[100px] max-h-[300px] overflow-y-auto"
-                />
-              ) : (
-                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground italic">Sin pautas para admin/PM</p>
-                </div>
-              )}
-            </div>
+              {/* Block 6: Admin/PM */}
+              <TabsContent value="admin" className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-orange-500" /> 📋 Bloque Admin / PM
+                </h4>
+                {editMode && canEditVideoTab ? (
+                  <RichTextEditor
+                    content={formData.admin_guidelines || ''}
+                    onChange={(html) => setFormData({ ...formData, admin_guidelines: html })}
+                    placeholder="Cronograma, responsables, entregables, checklist de revisión, etc."
+                    className="min-h-[300px]"
+                  />
+                ) : formData.admin_guidelines || (content as any).admin_guidelines ? (
+                  <RichTextViewer 
+                    content={formData.admin_guidelines || (content as any).admin_guidelines} 
+                    className="min-h-[100px] max-h-[500px] overflow-y-auto"
+                  />
+                ) : (
+                  <div className="min-h-[150px] rounded-md border bg-muted/30 flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground italic">Sin pautas para admin/PM</p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* General Tab - Creator, Editor, Admin only */}
