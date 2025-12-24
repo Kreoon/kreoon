@@ -35,6 +35,12 @@ REGLAS OBLIGATORIAS:
    - Composición específica
    - Sin listas largas en el prompt final
 
+5. RESPETAR ORIENTACIÓN Y FORMATO:
+   - Si el formato es VERTICAL (9:16), el prompt DEBE comenzar con instrucciones claras de que la imagen es VERTICAL/PORTRAIT
+   - SIEMPRE incluir en el final_prompt las dimensiones exactas y la orientación
+   - Para formato vertical, enfatizar que la ALTURA es mayor que el ANCHO
+   - Incluir frases como "vertical portrait orientation", "taller than wide", "9:16 aspect ratio" al inicio del prompt
+
 RESPONDE ÚNICAMENTE CON JSON VÁLIDO, sin texto adicional antes o después.`;
 
 interface BuildPromptRequest {
@@ -124,17 +130,23 @@ ${data.includeText ? `Texto: "${data.thumbnailText}"
 Idioma: ${data.textLanguage}
 Zona: ${data.textZone}` : 'Sin texto overlay'}
 
-=== FORMATO DE SALIDA ===
+=== FORMATO DE SALIDA (MUY IMPORTANTE) ===
 Dimensiones: ${width}x${height}
-Orientación: ${orientation}
+Orientación: ${orientation.toUpperCase()}
 Aspect ratio: ${aspectRatio}
 Plataformas objetivo: ${orientation === 'vertical' ? 'TikTok, Reels, Shorts' : orientation === 'square' ? 'Instagram Feed' : 'YouTube'}
+
+${orientation === 'vertical' ? `⚠️ CRÍTICO: La imagen DEBE ser VERTICAL (portrait). 
+El ALTO (${height}px) debe ser MAYOR que el ANCHO (${width}px).
+El prompt DEBE comenzar especificando "vertical portrait orientation" o "9:16 aspect ratio".
+NO generar imagen horizontal bajo ninguna circunstancia.` : ''}
 
 === IMÁGENES DISPONIBLES ===
 Imagen de referencia (persona/creador): ${data.hasReferenceImage ? 'SÍ - Será proporcionada' : 'NO - Describir personaje genérico'}
 Imagen del producto: ${data.hasProductImage ? 'SÍ - Será proporcionada' : 'NO - No incluir producto específico'}
 
-GENERA EL JSON ESTRUCTURADO CON EL PROMPT COMPLETO.`;
+GENERA EL JSON ESTRUCTURADO CON EL PROMPT COMPLETO.
+${orientation === 'vertical' ? 'RECUERDA: El final_prompt DEBE empezar indicando que es formato VERTICAL/PORTRAIT.' : ''}`;
 
     // Call GPT to build the prompt
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

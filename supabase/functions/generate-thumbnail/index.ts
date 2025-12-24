@@ -139,8 +139,45 @@ serve(async (req) => {
     console.log("Parsed format:", format, "->", width, "x", height, "aspect:", aspectRatio);
 
     // Clean the prompt for image generation (remove HTML/noise)
-    const cleanedPrompt = cleanPromptForImageGen(prompt);
+    let cleanedPrompt = cleanPromptForImageGen(prompt);
+    
+    // FORCE ORIENTATION IN PROMPT - Critical for AI to respect dimensions
+    const isVertical = height > width;
+    const isSquare = height === width;
+    
+    // Build strong orientation prefix
+    let orientationPrefix = "";
+    if (isVertical) {
+      orientationPrefix = `CRITICAL FORMAT REQUIREMENT: Generate a VERTICAL image with PORTRAIT orientation (taller than wide). 
+The image MUST be in ${aspectRatio} aspect ratio (${width}x${height} pixels).
+The HEIGHT must be GREATER than the WIDTH. This is for TikTok/Reels/Shorts format.
+DO NOT generate a horizontal or landscape image under any circumstances.
+
+`;
+    } else if (isSquare) {
+      orientationPrefix = `CRITICAL FORMAT REQUIREMENT: Generate a SQUARE image with 1:1 aspect ratio (${width}x${height} pixels).
+Width and height must be equal.
+
+`;
+    } else {
+      orientationPrefix = `CRITICAL FORMAT REQUIREMENT: Generate a HORIZONTAL image with LANDSCAPE orientation (wider than tall).
+The image MUST be in ${aspectRatio} aspect ratio (${width}x${height} pixels).
+
+`;
+    }
+    
+    // Prepend orientation requirements to the prompt
+    cleanedPrompt = orientationPrefix + cleanedPrompt;
+    
+    // Also append a reminder at the end
+    if (isVertical) {
+      cleanedPrompt += `
+
+REMINDER: This image MUST be VERTICAL/PORTRAIT orientation (${aspectRatio}, ${width}x${height}). Height > Width. NOT horizontal.`;
+    }
+    
     console.log("Cleaned prompt length:", cleanedPrompt.length);
+    console.log("Orientation enforced:", isVertical ? "VERTICAL" : isSquare ? "SQUARE" : "HORIZONTAL");
 
     let imageData: string | null = null;
 
@@ -303,33 +340,57 @@ serve(async (req) => {
       throw new Error("No image was generated");
     }
 
-    // Post-generation validation for Gemini: ensure orientation matches requested format (best-effort)
-    if (aiProvider !== "openai") {
-      const dims = getPngDimensionsFromDataUrl(imageData);
-      if (dims) {
-        console.log("Generated image dimensions:", dims.width, "x", dims.height);
-        const shouldBeVertical = height > width;
-        if (shouldBeVertical && dims.width >= dims.height) {
-          console.warn("Image came back non-vertical; will use first result anyway");
-        }
+    // Post-generation validation: check if AI respected the requested dimensions
+    const dims = getPngDimensionsFromDataUrl(imageData);
+    let needsNormalization = false;
+    
+    if (dims) {
+      console.log("Generated image dimensions:", dims.width, "x", dims.height);
+      console.log("Requested dimensions:", width, "x", height);
+      
+      const shouldBeVertical = height > width;
+      const isVertical = dims.height > dims.width;
+      
+      if (shouldBeVertical && !isVertical) {
+        console.warn("⚠️ AI returned HORIZONTAL image when VERTICAL was requested. Will normalize.");
+        needsNormalization = true;
+      } else if (!shouldBeVertical && isVertical && height !== width) {
+        console.warn("⚠️ AI returned VERTICAL image when HORIZONTAL was requested. Will normalize.");
+        needsNormalization = true;
+      } else if (dims.width !== width || dims.height !== height) {
+        console.log("Image dimensions don't match exactly, will normalize to requested size.");
+        needsNormalization = true;
+      } else {
+        console.log("✅ AI generated image with correct orientation and dimensions!");
       }
+    } else {
+      console.log("Could not parse image dimensions, will normalize to be safe.");
+      needsNormalization = true;
     }
 
-    console.log("Image generated successfully, normalizing size and uploading to storage...");
+    console.log("Uploading to storage...");
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Force output size to the requested dimensions (fixes providers returning wrong orientation/size)
-    const normalizedBytes = await normalizeToSizePngBytes(imageData, width, height);
+    // Only normalize if needed (fallback when AI ignores format instructions)
+    let finalBytes: Uint8Array;
+    if (needsNormalization) {
+      console.log("Normalizing image to", width, "x", height, "...");
+      finalBytes = await normalizeToSizePngBytes(imageData, width, height);
+    } else {
+      // Use original image
+      const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
+      finalBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+    }
 
     const fileName = `ai-thumbnail-${contentId}-${Date.now()}.png`;
 
     const { error: uploadError } = await supabase.storage
       .from("content-thumbnails")
-      .upload(fileName, normalizedBytes, {
+      .upload(fileName, finalBytes, {
         contentType: "image/png",
         upsert: true,
       });
