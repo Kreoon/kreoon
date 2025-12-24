@@ -3,6 +3,7 @@ import { X, ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, Music } fr
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Slider } from '@/components/ui/slider';
+import { useHLSPlayer, getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 
 interface Story {
   id: string;
@@ -28,6 +29,102 @@ interface StoryViewerProps {
 const IMAGE_DURATION = 10000; // 10 seconds for images
 const MAX_VIDEO_DURATION = 60000; // 1 minute max for videos
 
+// Sub-component for HLS video playback in stories
+function StoryVideoPlayer({
+  mediaUrl,
+  isPaused,
+  isMuted,
+  volume,
+  onEnded,
+  onLoadedMetadata
+}: {
+  mediaUrl: string;
+  isPaused: boolean;
+  isMuted: boolean;
+  volume: number;
+  onEnded: () => void;
+  onLoadedMetadata: (duration: number) => void;
+}) {
+  const {
+    videoRef,
+    isLoading,
+    error,
+    play,
+    pause,
+    setMuted
+  } = useHLSPlayer(mediaUrl, {
+    autoPlay: true,
+    muted: isMuted,
+    loop: false
+  });
+
+  // Get thumbnail for poster
+  const bunnyUrls = getBunnyVideoUrls(mediaUrl);
+  const posterUrl = bunnyUrls?.thumbnail || null;
+
+  // Sync pause state
+  useEffect(() => {
+    if (isPaused) {
+      pause();
+    } else {
+      play();
+    }
+  }, [isPaused, play, pause]);
+
+  // Sync mute state
+  useEffect(() => {
+    setMuted(isMuted);
+  }, [isMuted, setMuted]);
+
+  // Sync volume
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume;
+    }
+  }, [volume, videoRef]);
+
+  // Handle video end and metadata
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleEnded = () => onEnded();
+    const handleMetadata = () => {
+      const duration = video.duration * 1000; // Convert to ms
+      onLoadedMetadata(duration);
+    };
+
+    video.addEventListener('ended', handleEnded);
+    video.addEventListener('loadedmetadata', handleMetadata);
+
+    return () => {
+      video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('loadedmetadata', handleMetadata);
+    };
+  }, [onEnded, onLoadedMetadata, videoRef]);
+
+  return (
+    <div className="w-full h-full relative">
+      <video
+        ref={videoRef}
+        playsInline
+        poster={posterUrl || undefined}
+        className="w-full h-full object-contain"
+      />
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        </div>
+      )}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm">
+          Error loading video
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function StoryViewer({
   stories,
   userName,
@@ -45,23 +142,21 @@ export function StoryViewer({
   const [isMusicMuted, setIsMusicMuted] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(false);
   
-  const videoRef = useRef<HTMLVideoElement>(null);
   const musicRef = useRef<HTMLAudioElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
 
   const currentStory = stories[currentIndex];
   const isVideo = currentStory?.media_type === 'video';
   
   // Calculate duration based on media type
   const getStoryDuration = useCallback(() => {
-    if (isVideo && videoRef.current) {
-      // Use actual video duration, capped at 1 minute
-      const videoDuration = videoRef.current.duration * 1000;
-      return Math.min(videoDuration || MAX_VIDEO_DURATION, MAX_VIDEO_DURATION);
+    if (isVideo && videoDuration) {
+      return Math.min(videoDuration, MAX_VIDEO_DURATION);
     }
     return IMAGE_DURATION;
-  }, [isVideo]);
+  }, [isVideo, videoDuration]);
 
   // Initialize volumes from story data
   useEffect(() => {
@@ -72,13 +167,12 @@ export function StoryViewer({
     }
   }, [currentStory]);
 
-  // Apply volume changes to audio elements
+  // Apply volume changes to music
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.volume = isVideoMuted ? 0 : videoVolume;
-      videoRef.current.muted = isVideoMuted;
+    if (musicRef.current) {
+      musicRef.current.volume = isMusicMuted ? 0 : musicVolume;
     }
-  }, [videoVolume, isVideoMuted]);
+  }, [musicVolume, isMusicMuted]);
 
   useEffect(() => {
     if (musicRef.current) {
@@ -164,13 +258,6 @@ export function StoryViewer({
 
   const togglePause = () => {
     setIsPaused(!isPaused);
-    if (videoRef.current) {
-      if (isPaused) {
-        videoRef.current.play();
-      } else {
-        videoRef.current.pause();
-      }
-    }
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -347,29 +434,18 @@ export function StoryViewer({
         onTouchStart={handleTouchStart}
       >
         {isVideo ? (
-          currentStory.media_url.includes('iframe.mediadelivery.net/embed') ? (
-            <iframe
-              src={currentStory.media_url}
-              className="w-full h-full border-0"
-              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              loading="lazy"
-            />
-          ) : (
-            <video
-              ref={videoRef}
-              src={currentStory.media_url}
-              className="w-full h-full object-contain"
-              autoPlay
-              playsInline
-              onEnded={handleVideoEnded}
-              onLoadedMetadata={() => {
-                // Reset progress when video loads to recalculate duration
-                setProgress(0);
-                startTimeRef.current = Date.now();
-              }}
-            />
-          )
+          <StoryVideoPlayer
+            mediaUrl={currentStory.media_url}
+            isPaused={isPaused}
+            isMuted={isVideoMuted}
+            volume={videoVolume}
+            onEnded={handleVideoEnded}
+            onLoadedMetadata={(duration) => {
+              setVideoDuration(duration);
+              setProgress(0);
+              startTimeRef.current = Date.now();
+            }}
+          />
         ) : (
           <img
             src={currentStory.media_url}
