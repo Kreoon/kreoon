@@ -80,25 +80,33 @@ export function FullscreenVideoViewer({
 }: FullscreenVideoViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [currentVariation, setCurrentVariation] = useState(0);
-  // Use global mute state - audio ON by default
+  // Audio unlocked state - starts muted, unmutes after first user interaction
   const { isGlobalMuted, setGlobalMuted } = useGlobalMute();
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'up' | 'down' | null>(null);
   const [showFullCaption, setShowFullCaption] = useState(false);
-  const [userStartedPlayback, setUserStartedPlayback] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HLSVideoPlayerRef>(null);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const viewTrackedRef = useRef<Set<string>>(new Set());
 
-  // Toggle mute using global state
+  // Toggle mute - unlocks audio on first unmute
   const toggleMute = useCallback(() => {
-    const newMuted = !isGlobalMuted;
-    setGlobalMuted(newMuted);
-    playerRef.current?.setMuted(newMuted);
-  }, [isGlobalMuted, setGlobalMuted]);
+    if (!audioUnlocked) {
+      // First unmute - unlock audio
+      setAudioUnlocked(true);
+      setGlobalMuted(false);
+      playerRef.current?.setMuted(false);
+    } else {
+      // Toggle between muted/unmuted
+      const newMuted = !isGlobalMuted;
+      setGlobalMuted(newMuted);
+      playerRef.current?.setMuted(newMuted);
+    }
+  }, [audioUnlocked, isGlobalMuted, setGlobalMuted]);
 
   const currentVideo = videos[currentIndex];
   const canManageCurrent = !!currentVideo && (canManageVideo ? canManageVideo(currentVideo) : !!isOwner);
@@ -110,27 +118,26 @@ export function FullscreenVideoViewer({
   const hasMultipleVariations = (currentVideo?.videoUrls?.length || 0) > 1;
   const thumbnailUrl = currentVideo?.thumbnailUrl || (currentVideoUrl ? getBunnyThumbnail(currentVideoUrl) : null);
 
-  // Sync mute state when video changes - with delay to wait for new player
+  // Sync mute state when video changes
   useEffect(() => {
-    // Immediate sync for existing player
+    const muted = !audioUnlocked || isGlobalMuted;
     if (playerRef.current) {
-      playerRef.current.setMuted(isGlobalMuted);
+      playerRef.current.setMuted(muted);
     }
-    // Also sync after a short delay to catch newly mounted players
     const timer = setTimeout(() => {
       if (playerRef.current) {
-        playerRef.current.setMuted(isGlobalMuted);
+        playerRef.current.setMuted(muted);
       }
     }, 100);
     return () => clearTimeout(timer);
-  }, [currentIndex, currentVariation, isGlobalMuted]);
+  }, [currentIndex, currentVariation, audioUnlocked, isGlobalMuted]);
 
   // Handle video loaded - sync mute state
   const handleVideoLoadComplete = useCallback(() => {
     if (playerRef.current) {
-      playerRef.current.setMuted(isGlobalMuted);
+      playerRef.current.setMuted(!audioUnlocked || isGlobalMuted);
     }
-  }, [isGlobalMuted]);
+  }, [audioUnlocked, isGlobalMuted]);
 
   // Track view after 3 seconds
   useEffect(() => {
@@ -307,13 +314,10 @@ export function FullscreenVideoViewer({
   const displayCaption = currentVideo.caption || currentVideo.title;
   const shouldTruncateCaption = displayCaption.length > 80;
 
-  // Handle video play - sync mute state and mark as started
+  // Handle video play - no action needed, autoplay handles it
   const handleVideoPlay = useCallback(() => {
-    setUserStartedPlayback(true);
-    if (!isGlobalMuted) {
-      playerRef.current?.setMuted(false);
-    }
-  }, [isGlobalMuted]);
+    // Video started playing
+  }, []);
 
   return (
     <div 
@@ -350,12 +354,12 @@ export function FullscreenVideoViewer({
               key={`${currentVideo.id}-${currentVariation}`}
               src={currentVideoUrl}
               poster={thumbnailUrl || undefined}
-              autoPlay={userStartedPlayback}
-              muted={isGlobalMuted}
+              autoPlay={true}
+              muted={!audioUnlocked || isGlobalMuted}
               loop={true}
               aspectRatio="auto"
+              objectFit="contain"
               className="w-full h-full"
-              requireInteraction={!userStartedPlayback}
               onLoadComplete={handleVideoLoadComplete}
               onPlay={handleVideoPlay}
             />
@@ -391,7 +395,7 @@ export function FullscreenVideoViewer({
               data-no-swipe="true"
               className="p-2 text-white/90 hover:text-white transition-colors"
             >
-              {isGlobalMuted ? <VolumeX className="h-6 w-6 drop-shadow-lg" /> : <Volume2 className="h-6 w-6 drop-shadow-lg" />}
+              {audioUnlocked && !isGlobalMuted ? <Volume2 className="h-6 w-6 drop-shadow-lg" /> : <VolumeX className="h-6 w-6 drop-shadow-lg" />}
             </button>
           )}
 

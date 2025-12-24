@@ -93,8 +93,8 @@ export function useHLSPlayer(
   options: UseHLSPlayerOptions = {}
 ) {
   const {
-    autoPlay = false, // NO autoplay by default - requires user interaction
-    muted = false, // Audio ACTIVE by default
+    autoPlay = true, // Autoplay when entering viewport
+    muted = true, // Start MUTED for autoplay compatibility
     loop = true,
     poster
   } = options;
