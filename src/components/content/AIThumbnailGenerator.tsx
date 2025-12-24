@@ -106,24 +106,110 @@ export function AIThumbnailGenerator({
   const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(null);
   const [step, setStep] = useState<"config" | "prompt" | "result">("config");
 
-  // Extract script info for prompt
+  // INTELLIGENT SCRIPT PARSER - Extract structured data from script
   const extractScriptInfo = () => {
     const script = scriptContext.script || "";
+    const cleanScript = script.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
     
-    // Try to extract hooks from script
-    const hooksMatch = script.match(/🔥\s*HOOKS?.*?(?=🎥|$)/is);
-    const hooks = hooksMatch ? hooksMatch[0] : "";
+    // 1. Extract MAIN HOOK (first/strongest hook)
+    let mainHook = "";
+    const hooksSection = cleanScript.match(/🔥\s*HOOKS?[^🎥🎬]*([\s\S]*?)(?=🎥|🎬|GUION|$)/i);
+    if (hooksSection) {
+      const hookLines = hooksSection[1].split('\n').filter(line => {
+        const trimmed = line.trim();
+        return trimmed.length > 10 && !trimmed.startsWith('Hook') && !trimmed.match(/^\d+\./);
+      });
+      // Get the first substantial hook
+      mainHook = hookLines[0]?.replace(/^[-•*]\s*/, '').trim() || "";
+    }
+    // Fallback: try to find quoted hooks
+    if (!mainHook) {
+      const quotedHook = cleanScript.match(/"([^"]{15,100})"/);
+      mainHook = quotedHook?.[1] || "";
+    }
     
-    // Try to extract main emotion
-    const emotionMatch = script.match(/emoción[^:]*:\s*([^\n]+)/i);
-    const emotion = emotionMatch ? emotionMatch[1].trim() : "impacto";
+    // 2. Extract DOMINANT EMOTION
+    let dominantEmotion = "frustration, curiosity";
+    const emotionPatterns = [
+      /emoci[óo]n(?:\s+dominante)?[:\s]+([^\n.]+)/i,
+      /transmitir[:\s]+([^\n.]+)/i,
+      /sentir[:\s]+([^\n.]+)/i,
+      /genera(?:r)?[:\s]+([^\n.]+)/i
+    ];
+    for (const pattern of emotionPatterns) {
+      const match = cleanScript.match(pattern);
+      if (match) {
+        dominantEmotion = match[1].replace(/<[^>]*>/g, '').trim().slice(0, 50);
+        break;
+      }
+    }
     
-    // Get main topic
-    const topicMatch = script.match(/trata sobre[^:]*:\s*([^\n]+)/i) || 
-                       script.match(/tema[^:]*:\s*([^\n]+)/i);
-    const topic = topicMatch ? topicMatch[1].trim() : scriptContext.productName || "el producto";
+    // 3. Extract KEY VISUAL SCENE from director's script
+    let keyVisualScene = "";
+    const scenePatterns = [
+      /🎬[^:]*:?\s*([\s\S]*?)(?=🎤|CTA|CIERRE|$)/i,
+      /ESCENA[^:]*:?\s*([^\n]+)/i,
+      /plano[^:]*:?\s*([^\n]+)/i,
+      /visual[^:]*:?\s*([^\n]+)/i
+    ];
+    for (const pattern of scenePatterns) {
+      const match = cleanScript.match(pattern);
+      if (match && match[1].trim().length > 20) {
+        // Get first meaningful line of the scene
+        const sceneLine = match[1].split('\n').find(l => l.trim().length > 20);
+        keyVisualScene = sceneLine?.replace(/^[-•*]\s*/, '').trim().slice(0, 150) || "";
+        break;
+      }
+    }
+    // Fallback: use first action description
+    if (!keyVisualScene) {
+      const actionMatch = cleanScript.match(/(?:persona|creador|presentador)[^.]*(?:mirando|hablando|mostrando|señalando)[^.]+/i);
+      keyVisualScene = actionMatch?.[0]?.trim() || "Person looking at camera with engaged expression";
+    }
     
-    return { hooks, emotion, topic };
+    // 4. Extract VIDEO OBJECTIVE/INTENT
+    let videoObjective = contentType === 'ads' ? "Generate purchase intent" : "Build connection and engagement";
+    const objectivePatterns = [
+      /objetivo[:\s]+([^\n]+)/i,
+      /meta[:\s]+([^\n]+)/i,
+      /busca(?:mos)?[:\s]+([^\n]+)/i,
+      /prop[óo]sito[:\s]+([^\n]+)/i
+    ];
+    for (const pattern of objectivePatterns) {
+      const match = cleanScript.match(pattern);
+      if (match) {
+        videoObjective = match[1].trim().slice(0, 80);
+        break;
+      }
+    }
+    
+    // 5. Extract TOPIC (what the video is about)
+    let topic = scriptContext.productName || "the product";
+    const topicPatterns = [
+      /trata sobre[:\s]+([^\n]+)/i,
+      /tema[:\s]+([^\n]+)/i,
+      /producto[:\s]+([^\n]+)/i,
+      /sobre[:\s]+([^\n]{10,60})/i
+    ];
+    for (const pattern of topicPatterns) {
+      const match = cleanScript.match(pattern);
+      if (match && !match[1].match(/\d+\s*segundos/)) {
+        topic = match[1].trim().slice(0, 60);
+        break;
+      }
+    }
+    // Use sales angle as fallback
+    if (topic === "the product" && scriptContext.salesAngle) {
+      topic = scriptContext.salesAngle.slice(0, 60);
+    }
+    
+    return { 
+      mainHook, 
+      dominantEmotion, 
+      keyVisualScene, 
+      videoObjective,
+      topic 
+    };
   };
 
   const handleImageUpload = (file: File, type: "reference" | "example" | "product") => {
@@ -169,34 +255,17 @@ export function AIThumbnailGenerator({
     return productRole;
   };
 
-  // Clean prompt - remove HTML and excessive formatting
-  const cleanPromptText = (text: string): string => {
-    // Remove HTML tags
-    let cleaned = text.replace(/<[^>]*>/g, '');
-    // Remove markdown
-    cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1');
-    cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1');
-    // Normalize whitespace
-    cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
-    return cleaned;
-  };
-
   // Summarize avatar to 1 line
   const summarizeAvatar = (avatar: string | null | undefined): string => {
     if (!avatar) return "Digital entrepreneur LATAM (27-40 years)";
-    // Extract first sentence or first 100 chars
-    const firstSentence = avatar.split(/[.!?]/)[0];
+    // Clean HTML and extract first sentence
+    const cleaned = avatar.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ');
+    const firstSentence = cleaned.split(/[.!?]/)[0];
     return firstSentence.slice(0, 100).trim();
   };
 
-  // Summarize emotion to 1-2 words
-  const summarizeEmotion = (emotion: string): string => {
-    const words = emotion.toLowerCase().split(/[\s,→]+/).filter(Boolean);
-    return words.slice(0, 2).join(", ");
-  };
-
   const generatePrompt = () => {
-    const { emotion, topic } = extractScriptInfo();
+    const { mainHook, dominantEmotion, keyVisualScene, videoObjective, topic } = extractScriptInfo();
     const zone = TEXT_ZONES.find(z => z.value === textZone);
     const role = PRODUCT_ROLES.find(r => r.value === productRole);
     const visibility = PRODUCT_VISIBILITY.find(v => v.value === productVisibility);
@@ -219,21 +288,19 @@ export function AIThumbnailGenerator({
       }
     }
 
-    // Summarized values for cleaner prompt
-    const cleanTopic = cleanPromptText(topic);
-    const cleanEmotion = summarizeEmotion(emotion);
+    // Summarize avatar for cleaner prompt
     const cleanAvatar = summarizeAvatar(scriptContext.idealAvatar);
 
-    // Determine product composition
+    // Determine product composition based on role
     const getProductComposition = () => {
-      if (!productImage) return '';
-      if (productRole === 'protagonist') return 'Product is PROTAGONIST (40-60% of frame), person is secondary (20-30%)';
-      if (productRole === 'secondary') return 'Person is PROTAGONIST (50-60% of frame), product is secondary (15-30%)';
-      return 'Product is CONTEXTUAL (in background), person is main focus (60-70%)';
+      if (!productImage) return '- Subject occupies 60-70% of the frame';
+      if (productRole === 'protagonist') return '- Product is PROTAGONIST (40-60% of frame)\n- Person is secondary (20-30% of frame)';
+      if (productRole === 'secondary') return '- Person is PROTAGONIST (50-60% of frame)\n- Product is secondary (15-30% of frame)';
+      return '- Person is main focus (60-70% of frame)\n- Product is contextual (in background)';
     };
 
-    // CLEAN, OPTIMIZED PROMPT FOR GEMINI (no HTML, no excessive text)
-    let prompt = `Create a vertical social media thumbnail.
+    // BUILD INTELLIGENT PROMPT CONNECTED TO SCRIPT
+    let prompt = `Create a vertical social media thumbnail based on the generated video script.
 
 FORMAT (MANDATORY):
 - Aspect ratio: ${outputFormat}
@@ -241,32 +308,35 @@ FORMAT (MANDATORY):
 - Orientation: ${outputFormat === "16:9" ? "Horizontal" : outputFormat === "1:1" ? "Square" : "Vertical"}
 - Mobile-first composition
 
-CONTENT:
-- Topic: ${cleanTopic}
-- Emotion: ${cleanEmotion}
+SCRIPT CONTEXT:
+${mainHook ? `- Main hook from script: "${mainHook}"` : `- Topic: ${topic}`}
+- Core emotion to transmit: ${dominantEmotion}
+- Video intent: ${videoObjective}
 - Content type: ${contentType === 'ads' ? 'paid social ad' : 'organic content'}
 
 CHARACTER:
 ${referenceImage ? `- Based on reference image provided
-- Maintain general traits, do not replicate exact identity` : `- Person representing target avatar`}
-- Expression matching emotion: ${cleanEmotion}
-- Looking at camera
-- Natural, authentic look
+- Maintain general physical traits, do not replicate exact identity` : `- Person representing target avatar: ${cleanAvatar}`}
+- Facial expression aligned with emotion: ${dominantEmotion}
+- Natural UGC look
+- Looking at camera or reacting to the situation described in the script
 
 COMPOSITION:
-${productImage ? getProductComposition() : '- Subject occupies 60-70% of the frame'}
-- Background: contextual, slightly blurred
+${getProductComposition()}
+${keyVisualScene ? `- Scene inspired by this script moment: "${keyVisualScene}"` : '- Contextual background related to the topic'}
+- Background: contextual to the script (home office, workspace, daily environment)
 - Strong lighting on face
-- Clear single focal point
+- One clear focal point
 - Rule of thirds
+- Safe margins (10-15%)
 
 ${productImage ? `PRODUCT:
-- Use EXACT product image provided
-- Role: ${role?.label}
+- Use EXACT product image provided by user
+- Role: ${role?.label} (${role?.description})
 - Visibility: ${visibility?.label}
-- Maintain product shape and colors
-- ${showBrand ? 'Show brand/logo if visible' : 'Brand/logo not required'}
-- Do NOT invent or alter product` : ''}
+- Maintain original shape, colors and branding
+- ${showBrand ? 'Show brand/logo if visible' : 'Brand/logo can be partially obscured'}
+- Do NOT invent, modify or stylize the product` : ''}
 
 ${includeText && formattedText ? `TEXT OVERLAY (VERY IMPORTANT):
 - Exact text: "${formattedText}"
@@ -277,26 +347,27 @@ ${includeText && formattedText ? `TEXT OVERLAY (VERY IMPORTANT):
 - Position: ${zone?.label.toLowerCase()} safe area
 - Maintain 10-15% margin from all edges
 - Text must be fully visible and readable on mobile
-- Do NOT cut any letters` : `NO TEXT OVERLAY.
-Do NOT add any text to this image.`}
+- Do NOT cut any letters` : `TEXT OVERLAY:
+- NONE
+- Do NOT add any text to the image`}
 
 STYLE:
 - UGC style
 - High contrast
-- Scroll-stopper look
+- Scroll-stopper aesthetic
 - Realistic lighting
+- Professional but authentic
 - No stock photo look
 
 AVOID:
 - Horizontal format
-- Cropped text
-- Text touching edges
-- Small fonts
-- Flyer or banner look
-- White plain backgrounds
-${productImage ? `- Invented products
-- Altered product colors
-- Generic mockups` : ''}`;
+- Any text or typography (unless specified above)
+- Cropped subjects
+- Visual clutter
+- Flyer or banner style
+- Plain white backgrounds
+${productImage ? `- Generic mockups
+- Altered product colors or shapes` : ''}`;
 
     setGeneratedPrompt(prompt);
     setIsPromptVisible(true);
