@@ -20,6 +20,7 @@ import { BunnyStorageUploader } from "@/components/content/BunnyStorageUploader"
 import { CollaboratorSelector } from "@/components/content/CollaboratorSelector";
 import { RawVideoUploader } from "@/components/content/RawVideoUploader";
 import { ThumbnailSelector } from "@/components/content/ThumbnailSelector";
+import { AIThumbnailGenerator } from "@/components/content/AIThumbnailGenerator";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -802,22 +803,40 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
             )}
 
-            {/* Thumbnail Selector - Always visible for Admin */}
+            {/* Thumbnail Section - Admin only */}
             {isAdmin && (
-              <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
-                <div className="flex items-center gap-2">
-                  <Image className="h-4 w-4 text-primary" />
-                  <h4 className="font-medium">Miniatura del Contenido</h4>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Sube una imagen personalizada o quita la miniatura actual. Si no hay miniatura, se mostrará un fondo negro con icono de play.
-                </p>
-                <ThumbnailSelector
+              <div className="space-y-4">
+                {/* AI Thumbnail Generator */}
+                <AIThumbnailGenerator
                   contentId={content.id}
                   currentThumbnail={content.thumbnail_url}
-                  onThumbnailChange={() => onUpdate?.()}
-                  disabled={false}
+                  scriptContext={{
+                    script: content.script,
+                    salesAngle: content.sales_angle,
+                    idealAvatar: selectedProduct?.ideal_avatar,
+                    hooksCount: formData.hooks_count,
+                    productName: selectedProduct?.name || content.product,
+                    clientName: content.client?.name,
+                  }}
+                  onThumbnailGenerated={() => onUpdate?.()}
                 />
+
+                {/* Manual Thumbnail Selector */}
+                <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <Image className="h-4 w-4 text-primary" />
+                    <h4 className="font-medium">Subir Miniatura Manual</h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    O sube una imagen personalizada manualmente.
+                  </p>
+                  <ThumbnailSelector
+                    contentId={content.id}
+                    currentThumbnail={content.thumbnail_url}
+                    onThumbnailChange={() => onUpdate?.()}
+                    disabled={false}
+                  />
+                </div>
               </div>
             )}
 
