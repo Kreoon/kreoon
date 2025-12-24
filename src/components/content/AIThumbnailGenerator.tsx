@@ -50,6 +50,17 @@ const TEXT_ZONES = [
   { value: "inferior", label: "Inferior", description: "65-85% desde arriba" },
 ];
 
+const OUTPUT_FORMATS = [
+  { value: "9:16", label: "Vertical 9:16", description: "1080x1920 - Recomendado para TikTok, Reels, Shorts", recommended: true },
+  { value: "1:1", label: "Cuadrado 1:1", description: "1080x1080 - Feed de Instagram", recommended: false },
+  { value: "16:9", label: "Horizontal 16:9", description: "1920x1080 - YouTube thumbnails", recommended: false },
+];
+
+const CONTENT_TYPES = [
+  { value: "organic", label: "Orgánico", description: "Contenido natural para feed" },
+  { value: "ads", label: "Ads/Paid", description: "Anuncios pagados" },
+];
+
 export function AIThumbnailGenerator({ 
   contentId, 
   currentThumbnail, 
@@ -69,6 +80,8 @@ export function AIThumbnailGenerator({
   const [highlightStyle, setHighlightStyle] = useState("emocion");
   const [textZone, setTextZone] = useState("superior");
   const [forceSafeZone, setForceSafeZone] = useState(true);
+  const [outputFormat, setOutputFormat] = useState("9:16");
+  const [contentType, setContentType] = useState("organic");
   
   // Generation state
   const [generatedPrompt, setGeneratedPrompt] = useState("");
@@ -122,6 +135,15 @@ export function AIThumbnailGenerator({
     const { hooks, emotion, topic } = extractScriptInfo();
     const highlight = HIGHLIGHT_OPTIONS.find(h => h.value === highlightStyle);
     const zone = TEXT_ZONES.find(z => z.value === textZone);
+    const format = OUTPUT_FORMATS.find(f => f.value === outputFormat);
+    
+    // Get resolution based on format
+    const resolutions: Record<string, { w: number; h: number }> = {
+      "9:16": { w: 1080, h: 1920 },
+      "1:1": { w: 1080, h: 1080 },
+      "16:9": { w: 1920, h: 1080 },
+    };
+    const res = resolutions[outputFormat] || resolutions["9:16"];
     
     // Validate and format text - auto-split if too long
     let formattedText = thumbnailText;
@@ -133,55 +155,98 @@ export function AIThumbnailGenerator({
       }
     }
     
-    let prompt = `Genera una miniatura vertical 9:16 (1080x1920) para un video de redes sociales, optimizada para TikTok, Reels y Shorts.
+    // Structured prompt following professional prompt engineering
+    let prompt = `═══════════════════════════════════════
+1️⃣ OUTPUT FORMAT (MANDATORY API PARAMETERS)
+═══════════════════════════════════════
+Aspect ratio: ${outputFormat}
+Resolution: ${res.w}x${res.h}
+Orientation: ${outputFormat === "16:9" ? "Horizontal" : outputFormat === "1:1" ? "Square" : "Vertical"}
+Usage: Mobile-first (TikTok, Reels, Shorts)
+Safe area: ${forceSafeZone ? "10-15% internal margin on all edges" : "Standard margins"}
+No cropping of text or main subject allowed.
 
-TEMA DEL VIDEO: ${topic}${scriptContext.salesAngle ? ` - Ángulo: ${scriptContext.salesAngle}` : ''}
-EMOCIÓN PRINCIPAL: ${emotion} → identificación → ${highlight?.label.toLowerCase() || 'curiosidad'}
-PÚBLICO OBJETIVO: ${scriptContext.idealAvatar || 'Emprendedor digital LATAM (27-40 años)'}
+═══════════════════════════════════════
+2️⃣ CONTENT CONTEXT
+═══════════════════════════════════════
+Thumbnail for a short-form social media video.
+Topic: ${topic}${scriptContext.salesAngle ? ` - Sales angle: ${scriptContext.salesAngle}` : ''}
+Emotion to transmit: ${emotion} → identification → ${highlight?.label.toLowerCase() || 'curiosity'}
+Target audience: ${scriptContext.idealAvatar || 'Digital entrepreneur LATAM (27-40 years)'}
+Content type: ${contentType === 'ads' ? 'Paid advertisement' : 'Organic content'}
 
-COMPOSICIÓN OBLIGATORIA:
-- Formato ESTRICTO vertical 9:16 (1080x1920)
-- Personaje/elemento principal ocupando 60-70% del encuadre
-- Fondo contextual ligeramente desenfocado para destacar elemento principal
-${forceSafeZone ? '- RESPETAR MÁRGENES DE SEGURIDAD (10-15% del canvas en todos los bordes)' : ''}
+═══════════════════════════════════════
+3️⃣ CHARACTER / VISUAL REFERENCE
+═══════════════════════════════════════
+${referenceImage ? `Main character based on user reference image.
+- Maintain general physical traits, posture and style.
+- Do NOT replicate exact identity.
+- Facial expression aligned with the emotion: ${emotion}
+- Looking at camera or toward the main element of interest.` : `Main character:
+- Person that represents the target avatar.
+- Expression matching the emotion: ${emotion}
+- Authentic look, NOT stock photo style.
+- Natural lighting on face.`}
 
-${referenceImage ? `PERSONAJE PRINCIPAL:
-- Basado en la imagen de referencia proporcionada
-- Mantener rasgos generales, expresión y estilo
-- Mirando a cámara o hacia el elemento de interés
-- NO copiar identidad exacta, solo estilo y pose` : `PERSONAJE:
-- Persona que represente al avatar objetivo
-- Expresión acorde a la emoción: ${emotion}
-- Look auténtico, NO stock genérico`}
+═══════════════════════════════════════
+4️⃣ VISUAL COMPOSITION
+═══════════════════════════════════════
+- Subject occupies 60-70% of the frame
+- Background slightly blurred or contextual (related to topic)
+- High contrast lighting on face/main subject
+- Clear focal point
+- Rule of thirds composition
+${forceSafeZone ? '- ALL important elements within 10-15% safe margin' : ''}
 
-${includeText && formattedText ? `TEXTO EN MINIATURA (CRÍTICO - SEGUIR EXACTAMENTE):
-- Texto EXACTO: "${formattedText}"
-- Idioma: ${TEXT_LANGUAGES.find(l => l.value === textLanguage)?.label || 'Español'}
-- MÁXIMO 5 palabras visibles por línea
-- Usar caja de texto sólida o semi-transparente detrás del texto
-- Ubicación: zona ${zone?.label.toLowerCase()} del canvas (${zone?.description})
-${forceSafeZone ? '- NUNCA colocar texto en los bordes - mantener dentro de zona segura (10-15% margen)' : ''}
-- Tipografía GRUESA, BOLD, alto contraste
-- Color blanco o amarillo brillante con sombra negra suave
-- El texto debe ser 100% visible y legible en mobile
-- NO cortar letras bajo ninguna circunstancia` : `Sin texto superpuesto en la imagen.`}
+═══════════════════════════════════════
+5️⃣ TEXT OVERLAY ${includeText && formattedText ? '(CRITICAL - FOLLOW EXACTLY)' : '(NONE)'}
+═══════════════════════════════════════
+${includeText && formattedText ? `Text overlay MANDATORY rules:
+- Exact text: "${formattedText}"
+- Language: ${TEXT_LANGUAGES.find(l => l.value === textLanguage)?.label || 'Spanish'}
+- Maximum 3-5 words per line
+- Display inside a solid or semi-transparent text box
+- Centered horizontally
+- Position: ${zone?.label.toUpperCase()} zone (${zone?.description})
+${forceSafeZone ? '- Text MUST be inside safe area (10-15% margin from edges)' : ''}
+- Bold/heavy typography, high contrast
+- White or bright yellow color with soft black shadow
+- Must be 100% visible and readable on mobile screens
+- DO NOT cut any letters under any circumstance` : `No text overlay in this image.
+DO NOT add any text to the thumbnail.`}
 
-ESTILO VISUAL OBLIGATORIO:
-- UGC profesional, look real (NO stock genérico)
-- Iluminación fuerte en el punto focal
-- Alto contraste
-- Colores vibrantes pero naturales
+═══════════════════════════════════════
+6️⃣ VISUAL STYLE
+═══════════════════════════════════════
+- UGC style (User Generated Content)
+- Professional but natural/authentic
+- Scroll-stopper thumbnail aesthetic
+- Realistic professional lighting
+- No stock photo look
+- High contrast colors
+- Vibrant but natural tones
 
-EVITAR ESTRICTAMENTE:
-- Texto tocando o cerca de los bordes
-- Texto pequeño o difícil de leer
-- Más de una frase o texto largo
-- Fondos blancos puros o planos
-- Estilo banner, flyer o corporativo
-- Elementos que distraigan del mensaje principal
-- Formato horizontal o cuadrado
+═══════════════════════════════════════
+7️⃣ NEGATIVE PROMPT (STRICTLY AVOID)
+═══════════════════════════════════════
+AVOID:
+- Horizontal format (unless specifically requested)
+- Cropped or cut text
+- Text touching or near edges
+- Small typography
+- Overloaded/cluttered elements
+- Flyer, banner or corporate style
+- Plain white backgrounds
+- Generic stock photo aesthetics
+- Multiple text blocks
+- Watermarks or logos
+- Low contrast images
+- Blurry main subject
 
-REGLA DE ORO: La miniatura debe entenderse en 1 segundo, funcionar sin contexto adicional y provocar curiosidad inmediata.`;
+═══════════════════════════════════════
+🎯 GOLDEN RULE
+═══════════════════════════════════════
+The thumbnail must be understood in 1 second, work without additional context, and provoke immediate curiosity. It should stop the scroll.`;
 
     setGeneratedPrompt(prompt);
     setIsPromptVisible(true);
@@ -475,6 +540,66 @@ REGLA DE ORO: La miniatura debe entenderse en 1 segundo, funcionar sin contexto 
                   ))}
                 </RadioGroup>
               </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Section 3: Output Format */}
+          <Collapsible defaultOpen>
+            <CollapsibleTrigger className="flex items-center gap-2 w-full text-left font-medium text-sm hover:text-primary transition-colors">
+              <Palette className="h-4 w-4" />
+              📐 Formato de Salida
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-3 space-y-3">
+              {/* Output Format Selector */}
+              <div className="space-y-2">
+                <Label className="text-xs">Formato de imagen</Label>
+                <RadioGroup
+                  value={outputFormat}
+                  onValueChange={setOutputFormat}
+                  className="space-y-2"
+                >
+                  {OUTPUT_FORMATS.map(format => (
+                    <div key={format.value} className={`flex items-center space-x-2 p-2 rounded-md border ${format.recommended ? 'border-primary/50 bg-primary/5' : 'border-border'}`}>
+                      <RadioGroupItem value={format.value} id={`format-${format.value}`} />
+                      <Label htmlFor={`format-${format.value}`} className="cursor-pointer flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{format.label}</span>
+                          {format.recommended && (
+                            <Badge variant="default" className="text-[10px] px-1.5 py-0">Recomendado</Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{format.description}</p>
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {/* Content Type Selector */}
+              <div className="space-y-2">
+                <Label className="text-xs">Tipo de contenido</Label>
+                <div className="flex gap-2">
+                  {CONTENT_TYPES.map(type => (
+                    <Button
+                      key={type.value}
+                      variant={contentType === type.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setContentType(type.value)}
+                      className="flex-1"
+                    >
+                      {type.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Safe Zone Info */}
+              {outputFormat === "9:16" && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-green-500/10 text-green-700 dark:text-green-400 p-2 rounded border border-green-500/20">
+                  <Check className="h-3 w-3" />
+                  Formato optimizado para TikTok, Reels y Shorts
+                </div>
+              )}
             </CollapsibleContent>
           </Collapsible>
 
