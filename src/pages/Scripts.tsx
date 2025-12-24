@@ -1,124 +1,248 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Sparkles, FileText, Search, Plus, Wand2, Scroll } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Search, FileText, Video, BarChart3, Brain, Palette, Calendar,
+  Scroll, RefreshCw 
+} from "lucide-react";
 import { MedievalBanner } from "@/components/layout/MedievalBanner";
+import { ScriptBlockCard } from "@/components/scripts/ScriptBlockCard";
+import { ScriptDetailPanel } from "@/components/scripts/ScriptDetailPanel";
+import { cn } from "@/lib/utils";
+
+type BlockType = 'creator' | 'editor' | 'trafficker' | 'strategist' | 'designer' | 'admin';
+
+const tabConfig: { id: BlockType; label: string; icon: typeof FileText; shortLabel: string }[] = [
+  { id: 'creator', label: 'Creador', shortLabel: 'Creador', icon: FileText },
+  { id: 'editor', label: 'Editor', shortLabel: 'Editor', icon: Video },
+  { id: 'trafficker', label: 'Trafficker', shortLabel: 'Traffic', icon: BarChart3 },
+  { id: 'strategist', label: 'Estratega', shortLabel: 'Estrat.', icon: Brain },
+  { id: 'designer', label: 'Diseñador', shortLabel: 'Diseño', icon: Palette },
+  { id: 'admin', label: 'Admin / PM', shortLabel: 'Admin', icon: Calendar },
+];
+
 const Scripts = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<BlockType>('creator');
+  const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
 
-  // Mock data for scripts
-  const scripts = [
-    { title: "Guión Video Skincare Routine", client: "BeautyBrand Co", date: "Hace 2 días" },
-    { title: "Script Unboxing Tech", client: "GadgetWorld", date: "Hace 5 días" },
-    { title: "Guión Tutorial Maquillaje", client: "Cosmetics Plus", date: "Hace 1 semana" },
-  ];
+  // Fetch content with scripts
+  const { data: contents, isLoading, refetch } = useQuery({
+    queryKey: ['scripts-content'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('content')
+        .select(`
+          id,
+          title,
+          status,
+          created_at,
+          script,
+          editor_guidelines,
+          strategist_guidelines,
+          trafficker_guidelines,
+          designer_guidelines,
+          admin_guidelines,
+          client:clients(name, logo_url),
+          product:products(name)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const filteredScripts = scripts.filter(script =>
-    script.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    script.client.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter contents based on search
+  const filteredContents = useMemo(() => {
+    if (!contents) return [];
+    
+    const term = searchTerm.toLowerCase();
+    return contents.filter(content => 
+      content.title.toLowerCase().includes(term) ||
+      content.client?.name?.toLowerCase().includes(term) ||
+      content.product?.name?.toLowerCase().includes(term)
+    );
+  }, [contents, searchTerm]);
+
+  // Get selected content
+  const selectedContent = useMemo(() => {
+    if (!selectedContentId || !contents) return null;
+    return contents.find(c => c.id === selectedContentId) || null;
+  }, [selectedContentId, contents]);
+
+  // Get field based on block type
+  const getBlockField = (blockType: BlockType): string => {
+    switch (blockType) {
+      case 'creator': return 'script';
+      case 'editor': return 'editor_guidelines';
+      case 'trafficker': return 'trafficker_guidelines';
+      case 'strategist': return 'strategist_guidelines';
+      case 'designer': return 'designer_guidelines';
+      case 'admin': return 'admin_guidelines';
+    }
+  };
+
+  // Filter contents that have content for current tab
+  const contentsWithBlock = useMemo(() => {
+    const field = getBlockField(activeTab);
+    return filteredContents.filter(c => !!(c as any)[field]);
+  }, [filteredContents, activeTab]);
+
+  const contentsWithoutBlock = useMemo(() => {
+    const field = getBlockField(activeTab);
+    return filteredContents.filter(c => !(c as any)[field]);
+  }, [filteredContents, activeTab]);
 
   return (
     <div className="min-h-screen">
-      <div className="p-4 md:p-6 space-y-6">
-        {/* Medieval Banner */}
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        {/* Header */}
         <MedievalBanner
           icon={Scroll}
-          title="Scriptorium Mágico"
-          subtitle="Crea pergaminos con el poder de la magia arcana"
+          title="Scriptorium"
+          subtitle="Gestiona y visualiza todos los bloques de guiones"
           action={
-            <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm font-medieval">
-              <Sparkles className="h-4 w-4" />
-              <span className="hidden sm:inline">Nuevo Pergamino</span>
-              <span className="sm:hidden">Nuevo</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => refetch()}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">Actualizar</span>
             </Button>
           }
         />
-        {/* Search bar */}
-        <div className="mb-6">
-          <div className="relative w-full md:max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input 
-              type="text"
-              placeholder="Buscar guiones..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-9 md:h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
+
+        {/* Search */}
+        <div className="relative w-full md:max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input 
+            type="text"
+            placeholder="Buscar por título, cliente o producto..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-          {/* AI Script Generator Card */}
-          <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-4 md:p-6">
-            <div className="flex items-start gap-3 md:gap-4">
-              <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
-                <Wand2 className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base md:text-lg font-semibold text-foreground mb-2">
-                  Generador de Guiones IA
-                </h3>
-                <p className="text-xs md:text-sm text-muted-foreground mb-4">
-                  Crea guiones profesionales basados en investigación de mercado, tendencias y mejores prácticas.
-                </p>
-                <Button variant="default" size="sm" className="gap-2 text-xs md:text-sm">
-                  <Sparkles className="h-4 w-4" />
-                  Empezar a Crear
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Market Research Card */}
-          <div className="rounded-xl border border-border bg-card p-4 md:p-6">
-            <div className="flex items-start gap-3 md:gap-4">
-              <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl bg-info/10 flex-shrink-0">
-                <Search className="h-5 w-5 md:h-6 md:w-6 text-info" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base md:text-lg font-semibold text-card-foreground mb-2">
-                  Investigación de Mercado
-                </h3>
-                <p className="text-xs md:text-sm text-muted-foreground mb-4">
-                  Analiza tendencias, competencia y audiencia para crear contenido más efectivo.
-                </p>
-                <Button variant="outline" size="sm" className="gap-2 text-xs md:text-sm">
-                  <Plus className="h-4 w-4" />
-                  Nueva Investigación
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Scripts */}
-        <div className="rounded-xl border border-border bg-card p-4 md:p-6">
-          <h3 className="text-base md:text-lg font-semibold text-card-foreground mb-4">Guiones Recientes</h3>
-          
-          <div className="space-y-2 md:space-y-3">
-            {filteredScripts.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">No se encontraron guiones</p>
-            ) : (
-              filteredScripts.map((script, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center justify-between p-3 md:p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as BlockType)} className="w-full">
+          <TabsList className="w-full flex-wrap h-auto gap-1 p-1 bg-muted/50">
+            {tabConfig.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <TabsTrigger 
+                  key={tab.id} 
+                  value={tab.id}
+                  className="flex-1 min-w-[80px] gap-1.5 data-[state=active]:shadow-sm py-2"
                 >
-                  <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-                    <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg bg-muted flex-shrink-0">
-                      <FileText className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm md:text-base font-medium text-card-foreground truncate">{script.title}</p>
-                      <p className="text-xs md:text-sm text-muted-foreground">{script.client}</p>
-                    </div>
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden text-xs">{tab.shortLabel}</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+
+          {/* Content area - List + Detail panel */}
+          <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ minHeight: '600px' }}>
+            {/* Left: Content list */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  {contentsWithBlock.length + contentsWithoutBlock.length} contenidos
+                </h3>
+              </div>
+
+              <ScrollArea className="h-[550px] pr-2">
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} className="h-[120px] w-full rounded-lg" />
+                    ))}
                   </div>
-                  <span className="text-xs md:text-sm text-muted-foreground flex-shrink-0 ml-2">{script.date}</span>
-                </div>
-              ))
-            )}
+                ) : filteredContents.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Search className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                    <p>No se encontraron contenidos</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Contents with block generated */}
+                    {contentsWithBlock.length > 0 && (
+                      <>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                          Con bloque generado ({contentsWithBlock.length})
+                        </p>
+                        {contentsWithBlock.map((content) => (
+                          <ScriptBlockCard
+                            key={content.id}
+                            content={content as any}
+                            blockType={activeTab}
+                            onClick={() => setSelectedContentId(content.id)}
+                            isSelected={selectedContentId === content.id}
+                          />
+                        ))}
+                      </>
+                    )}
+
+                    {/* Separator */}
+                    {contentsWithBlock.length > 0 && contentsWithoutBlock.length > 0 && (
+                      <div className="py-2" />
+                    )}
+
+                    {/* Contents without block */}
+                    {contentsWithoutBlock.length > 0 && (
+                      <>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                          Sin bloque ({contentsWithoutBlock.length})
+                        </p>
+                        {contentsWithoutBlock.map((content) => (
+                          <ScriptBlockCard
+                            key={content.id}
+                            content={content as any}
+                            blockType={activeTab}
+                            onClick={() => setSelectedContentId(content.id)}
+                            isSelected={selectedContentId === content.id}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+
+            {/* Right: Detail panel */}
+            <div className="hidden lg:block h-[600px]">
+              <ScriptDetailPanel
+                content={selectedContent as any}
+                blockType={activeTab}
+                onClose={() => setSelectedContentId(null)}
+              />
+            </div>
           </div>
-        </div>
+        </Tabs>
+
+        {/* Mobile detail panel (full screen modal) */}
+        {selectedContentId && (
+          <div className="lg:hidden fixed inset-0 z-50 bg-background p-4">
+            <div className="h-full">
+              <ScriptDetailPanel
+                content={selectedContent as any}
+                blockType={activeTab}
+                onClose={() => setSelectedContentId(null)}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
