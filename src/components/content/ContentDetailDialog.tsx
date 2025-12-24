@@ -753,16 +753,16 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
         {/* Content Area with Tabs */}
         <div className="overflow-y-auto max-h-[calc(90vh-200px)] p-4 sm:p-6">
-          <Tabs defaultValue="video">
+          <Tabs defaultValue="scripts">
             <TabsList className={`grid w-full h-auto gap-1 mb-6 ${
               isClient ? 'grid-cols-2' : 
               isAdmin ? 'grid-cols-4 sm:grid-cols-7' : 
               (isCreator || isEditor) ? 'grid-cols-4' : 'grid-cols-4'
             }`}>
-              <TabsTrigger value="video" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Video</TabsTrigger>
-              <TabsTrigger value="guion" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Guión</TabsTrigger>
+              <TabsTrigger value="scripts" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Scripts</TabsTrigger>
               {(isCreator || isEditor || isAdmin) && <TabsTrigger value="material" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Material</TabsTrigger>}
               {(isCreator || isEditor || isAdmin) && <TabsTrigger value="general" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">General</TabsTrigger>}
+              <TabsTrigger value="video" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Video</TabsTrigger>
               {isAdmin && <TabsTrigger value="equipo" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Equipo</TabsTrigger>}
               {isAdmin && <TabsTrigger value="fechas" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Fechas</TabsTrigger>}
               {isAdmin && <TabsTrigger value="pagos" className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">Pagos</TabsTrigger>}
@@ -979,8 +979,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             </div>
           </TabsContent>
 
-          {/* Guión Tab - Script generation and all blocks */}
-          <TabsContent value="guion" className="space-y-6 mt-4">
+          {/* Scripts Tab - Script generation and all blocks */}
+          <TabsContent value="scripts" className="space-y-6 mt-4">
             {/* Section 1: Strategist Script Form - Full Width (Only for strategist/admin) */}
             {canEditVideoTab && !isClient && (
               <div className="space-y-4">
