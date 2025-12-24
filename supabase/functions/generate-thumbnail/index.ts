@@ -181,7 +181,7 @@ REMINDER: This image MUST be VERTICAL/PORTRAIT orientation (${aspectRatio}, ${wi
 
     let imageData: string | null = null;
 
-    // ============ OPENAI GPT-IMAGE-1 ============
+    // ============ OPENAI MODELS (gpt-image-1, dall-e-3, dall-e-2) ============
     if (aiProvider === "openai") {
       if (!OPENAI_API_KEY) {
         return new Response(
@@ -190,10 +190,50 @@ REMINDER: This image MUST be VERTICAL/PORTRAIT orientation (${aspectRatio}, ${wi
         );
       }
 
-      console.log("Using OpenAI gpt-image-1 for generation...");
+      const modelToUse = aiModel || "gpt-image-1";
+      console.log("Using OpenAI model:", modelToUse);
 
-      // Use dimensions directly - format is already WxH
-      const openaiSize = `${width}x${height}`;
+      // Determine size based on model
+      let openaiSize: string;
+      
+      if (modelToUse === "dall-e-3") {
+        // DALL-E 3 supports: 1024x1024, 1792x1024, 1024x1792
+        if (width === 1024 && height === 1792) {
+          openaiSize = "1024x1792";
+        } else if (width === 1792 && height === 1024) {
+          openaiSize = "1792x1024";
+        } else {
+          openaiSize = "1024x1024";
+        }
+      } else if (modelToUse === "dall-e-2") {
+        // DALL-E 2 supports: 256x256, 512x512, 1024x1024
+        openaiSize = "1024x1024";
+      } else {
+        // gpt-image-1 supports: 1024x1024, 1536x1024, 1024x1536, auto
+        if (format === "auto") {
+          openaiSize = "auto";
+        } else {
+          openaiSize = `${width}x${height}`;
+        }
+      }
+
+      console.log("OpenAI size:", openaiSize);
+
+      // Build request body based on model
+      const requestBody: any = {
+        model: modelToUse,
+        prompt: cleanedPrompt,
+        n: 1,
+        size: openaiSize,
+      };
+
+      // Add quality parameter based on model
+      if (modelToUse === "gpt-image-1") {
+        requestBody.quality = "high";
+      } else if (modelToUse === "dall-e-3") {
+        requestBody.quality = "hd";
+        requestBody.style = "vivid";
+      }
 
       const openaiResponse = await fetch("https://api.openai.com/v1/images/generations", {
         method: "POST",
@@ -201,19 +241,13 @@ REMINDER: This image MUST be VERTICAL/PORTRAIT orientation (${aspectRatio}, ${wi
           "Authorization": `Bearer ${OPENAI_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: "gpt-image-1",
-          prompt: cleanedPrompt,
-          n: 1,
-          size: openaiSize,
-          quality: "high",
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!openaiResponse.ok) {
         const errorText = await openaiResponse.text();
         console.error("OpenAI API error:", openaiResponse.status, errorText);
-        throw new Error(`OpenAI API error: ${openaiResponse.status}`);
+        throw new Error(`OpenAI API error: ${openaiResponse.status} - ${errorText}`);
       }
 
       const openaiData = await openaiResponse.json();
@@ -222,10 +256,10 @@ REMINDER: This image MUST be VERTICAL/PORTRAIT orientation (${aspectRatio}, ${wi
       if (b64Image) {
         imageData = `data:image/png;base64,${b64Image}`;
       } else {
-        // URL response
+        // URL response (DALL-E models return URLs by default)
         const imageUrl = openaiData.data?.[0]?.url;
         if (imageUrl) {
-          // Download and convert to base64
+          console.log("Downloading image from OpenAI URL...");
           const imgResp = await fetch(imageUrl);
           const imgBuffer = await imgResp.arrayBuffer();
           const base64 = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
