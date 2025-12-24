@@ -161,251 +161,15 @@ export function AIThumbnailGenerator({
 
   // Generation state
   const [generatedPrompt, setGeneratedPrompt] = useState("");
+  const [promptJson, setPromptJson] = useState<any>(null);
   const [isPromptVisible, setIsPromptVisible] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isBuildingPrompt, setIsBuildingPrompt] = useState(false);
   const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(null);
   const [step, setStep] = useState<"config" | "prompt" | "result">("config");
 
-  // ========================================
-  // IMAGE CONTEXT BUILDER - Normalizes script data for thumbnail generation
-  // ========================================
-  const buildImageContext = () => {
-    const script = scriptContext.script || "";
-    
-    // STEP 1: DEEP CLEAN - Remove ALL noise, labels, metadata, and broken fragments
-    const deepClean = (text: string): string => {
-      if (!text) return "";
-      return text
-        // Remove HTML tags completely
-        .replace(/<[^>]*>/g, ' ')
-        // Remove HTML entities
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&[a-z]+;/gi, ' ')
-        .replace(/&#?\w+;/gi, ' ')
-        // Remove metadata labels like [Tipo: X], [Hook A], etc.
-        .replace(/\[Tipo:[^\]]*\]/gi, '')
-        .replace(/\[Hook[^\]]*\]/gi, '')
-        .replace(/\[Opción[^\]]*\]/gi, '')
-        .replace(/\[[^\]]{0,30}\]/g, '') // Any short bracket content
-        // Remove label prefixes
-        .replace(/^(Hook\s*[A-C]|Opción\s*\d+|Variante\s*\d+)[:\s-]*/gim, '')
-        .replace(/^(Tipo|Emoción|Visual|Escena)[:\s-]*/gim, '')
-        .replace(/a transmitir[:\s]*/gi, '')
-        .replace(/del video[:\s]*/gi, '')
-        .replace(/qué se ve[:\s]*/gi, '')
-        // Remove internal emojis (keep ones at start for parsing)
-        .replace(/[🎯🧴🔥📐⚠️🎨✅❌👉🧠🏁💡📦🎤🎬🎥💰🚀✨🔴🟢🔵⭐️💎🏆🥇🥈🥉]/g, '')
-        // Remove decorative characters
-        .replace(/[═─│┌┐└┘├┤┬┴┼]/g, '')
-        .replace(/[*_]{2,}/g, '') // Bold/italic markdown
-        .replace(/^\s*[-•*]\s*/gm, '') // Bullet points
-        .replace(/^\s*\d+[.)]\s*/gm, '') // Numbered lists
-        // Clean truncated text indicators
-        .replace(/\.{3,}$/g, '')
-        .replace(/…$/g, '')
-        // Normalize whitespace
-        .replace(/\n{2,}/g, '\n')
-        .replace(/[ \t]+/g, ' ')
-        .trim();
-    };
-    
-    // Additional cleaner for final output (removes any remaining noise)
-    const finalClean = (text: string): string => {
-      return deepClean(text)
-        .replace(/^[:\s-]+/, '') // Remove leading punctuation
-        .replace(/[:\s-]+$/, '') // Remove trailing punctuation
-        .replace(/\s+/g, ' ')
-        .trim();
-    };
-    
-    const cleanScript = deepClean(script);
-    
-    // STEP 2: Extract MAIN HOOK (the actual hook text, not labels)
-    let mainHook = "";
-    
-    // Pattern 1: Look for quoted content (most reliable - actual hook text)
-    const allQuotes = cleanScript.match(/"([^"]{15,150})"/g) || [];
-    if (allQuotes.length > 0) {
-      // Get the first good quote that's not metadata
-      for (const quote of allQuotes) {
-        const cleaned = quote.replace(/"/g, '').trim();
-        if (cleaned.length > 15 && !cleaned.match(/^(tipo|hook|opción)/i)) {
-          mainHook = cleaned;
-          break;
-        }
-      }
-    }
-    
-    // Pattern 2: Look for hooks section
-    if (!mainHook) {
-      const hooksMatch = cleanScript.match(/HOOKS?\s*([\s\S]*?)(?=GUION|FORMATO|ESCENA|$)/i);
-      if (hooksMatch) {
-        const hookLines = hooksMatch[1].split('\n')
-          .map(l => finalClean(l))
-          .filter(l => l.length > 20 && l.length < 150)
-          .filter(l => !l.match(/^(hook|tipo|opción|variante|disruptivo|emocional|curiosidad)/i));
-        
-        if (hookLines.length > 0) {
-          mainHook = hookLines[0];
-        }
-      }
-    }
-    
-    // Pattern 3: Use sales angle as fallback
-    if (!mainHook && scriptContext.salesAngle) {
-      mainHook = finalClean(scriptContext.salesAngle).slice(0, 100);
-    }
-    
-    // Pattern 4: Last resort - generate from product
-    if (!mainHook) {
-      const productName = scriptContext.productName || "este producto";
-      mainHook = `Descubre por qué ${productName} está cambiando todo`;
-    }
-    
-    // STEP 3: Extract DOMINANT EMOTION (1-3 words max, clean)
-    let dominantEmotion = "";
-    
-    // Look for explicit emotion in script
-    const emotionPatterns = [
-      /emoción[:\s]+([a-záéíóúñ\s]{3,25})/i,
-      /transmitir[:\s]+([a-záéíóúñ\s]{3,25})/i,
-      /sentimiento[:\s]+([a-záéíóúñ\s]{3,25})/i,
-    ];
-    
-    for (const pattern of emotionPatterns) {
-      const match = cleanScript.match(pattern);
-      if (match) {
-        const emotion = finalClean(match[1]);
-        if (emotion.length >= 3 && emotion.length <= 30) {
-          dominantEmotion = emotion;
-          break;
-        }
-      }
-    }
-    
-    // Infer emotion from keywords if not found
-    if (!dominantEmotion) {
-      const emotionKeywords = [
-        { pattern: /frustrac|agotad|cansad/i, emotion: "frustración" },
-        { pattern: /dolor|sufr|problem/i, emotion: "dolor empático" },
-        { pattern: /miedo|temo|preocup/i, emotion: "preocupación" },
-        { pattern: /esperanza|ilusión|sueño/i, emotion: "esperanza" },
-        { pattern: /curiosidad|intriga|descubr/i, emotion: "curiosidad" },
-        { pattern: /confianza|segur|tranquil/i, emotion: "confianza" },
-        { pattern: /empat[íi]a|conexi|entend/i, emotion: "empatía" },
-        { pattern: /sorpresa|asombr|increíble/i, emotion: "sorpresa" },
-        { pattern: /urgen|ahora|últim/i, emotion: "urgencia" },
-        { pattern: /alegr|feliz|content/i, emotion: "alegría" },
-      ];
-      
-      const foundEmotions: string[] = [];
-      for (const { pattern, emotion } of emotionKeywords) {
-        if (pattern.test(cleanScript)) {
-          foundEmotions.push(emotion);
-          if (foundEmotions.length >= 2) break;
-        }
-      }
-      dominantEmotion = foundEmotions.length > 0 ? foundEmotions.join(" y ") : "curiosidad genuina";
-    }
-    
-    // STEP 4: Extract KEY VISUAL SCENE (one complete, clear description)
-    let keyVisualScene = "";
-    
-    // Look for director's format or visual descriptions
-    const scenePatterns = [
-      /(?:FORMATO\s*DIRECTOR|GUION\s*DIRECTOR)[:\s]*([\s\S]*?)(?=CTA|CIERRE|---|\n\n\n|$)/i,
-      /(?:visual|plano|escena)[:\s]*([^\n]{30,200})/i,
-      /(?:se ve|aparece|muestra)[:\s]*([^\n]{30,200})/i,
-    ];
-    
-    for (const pattern of scenePatterns) {
-      const match = cleanScript.match(pattern);
-      if (match) {
-        const sceneText = finalClean(match[1]);
-        // Get first complete sentence/description
-        const firstScene = sceneText.split(/[.\n]/).find(s => s.trim().length > 25);
-        if (firstScene) {
-          keyVisualScene = finalClean(firstScene).slice(0, 150);
-          break;
-        }
-      }
-    }
-    
-    // Create descriptive fallback based on emotion and content
-    if (!keyVisualScene) {
-      const hasProduct = productImage !== null;
-      const productName = scriptContext.productName || "el producto";
-      
-      const emotionExpressions: Record<string, string> = {
-        "frustración": "expresión de frustración reflexiva, ceño ligeramente fruncido",
-        "dolor empático": "mirada empática y comprensiva hacia la cámara",
-        "curiosidad": "expresión intrigada con una leve sonrisa",
-        "confianza": "postura segura y mirada directa a cámara",
-        "sorpresa": "ojos abiertos con expresión de descubrimiento",
-        "urgencia": "expresión seria y enfocada",
-        "esperanza": "sonrisa suave y mirada esperanzadora",
-        "empatía": "expresión cálida y comprensiva",
-      };
-      
-      const expression = emotionExpressions[dominantEmotion.split(" ")[0]] || "expresión natural y auténtica mirando a cámara";
-      
-      keyVisualScene = hasProduct 
-        ? `Persona en home office con ${expression}, ${productName} visible en el escritorio`
-        : `Persona con ${expression}, fondo de espacio de trabajo natural`;
-    }
-    
-    // STEP 5: Extract VIDEO OBJECTIVE (clear single purpose)
-    let videoObjective = "";
-    
-    const objectivePatterns = [
-      /objetivo[:\s]+([^\n]{15,120})/i,
-      /meta[:\s]+([^\n]{15,120})/i,
-      /propósito[:\s]+([^\n]{15,120})/i,
-      /busca(?:mos)?[:\s]+([^\n]{15,120})/i,
-    ];
-    
-    for (const pattern of objectivePatterns) {
-      const match = cleanScript.match(pattern);
-      if (match) {
-        const obj = finalClean(match[1]);
-        if (obj.length >= 15) {
-          videoObjective = obj.slice(0, 100);
-          break;
-        }
-      }
-    }
-    
-    if (!videoObjective) {
-      videoObjective = contentType === 'ads' 
-        ? "Generar interés y deseo de conocer más sobre el producto"
-        : "Conectar emocionalmente y generar identificación con la audiencia";
-    }
-    
-    // STEP 6: Determine TOPIC
-    let topic = "";
-    if (scriptContext.productName) {
-      topic = finalClean(scriptContext.productName).slice(0, 60);
-    } else if (scriptContext.salesAngle) {
-      topic = finalClean(scriptContext.salesAngle).slice(0, 60);
-    } else {
-      topic = "el producto/servicio";
-    }
-    
-    // BUILD FINAL CONTEXT OBJECT
-    const imageContext = { 
-      mainHook: finalClean(mainHook).slice(0, 120),
-      dominantEmotion: finalClean(dominantEmotion).slice(0, 40),
-      keyVisualScene: finalClean(keyVisualScene).slice(0, 180),
-      videoObjective: finalClean(videoObjective).slice(0, 120),
-      topic: finalClean(topic).slice(0, 60),
-      contentType
-    };
-    
-    // LOG FOR DEBUGGING
-    console.log("🎨 IMAGE CONTEXT BUILDER - Final context:", JSON.stringify(imageContext, null, 2));
-    
-    return imageContext;
-  };
+  // Note: Image context building is now handled by GPT in the build-image-prompt edge function
+  // This ensures clean, normalized prompts with full project context
 
   const handleImageUpload = (file: File, type: "reference" | "example" | "product") => {
     if (!file.type.startsWith("image/")) {
@@ -459,96 +223,70 @@ export function AIThumbnailGenerator({
     return firstSentence.slice(0, 100).trim();
   };
 
-  const generatePrompt = () => {
-    // Use the IMAGE CONTEXT BUILDER to get clean, normalized data
-    const { mainHook, dominantEmotion, keyVisualScene, videoObjective, topic } = buildImageContext();
+  const generatePrompt = async () => {
+    setIsBuildingPrompt(true);
     
-    const zone = TEXT_ZONES.find(z => z.value === textZone);
-    const role = PRODUCT_ROLES.find(r => r.value === productRole);
-    const visibility = PRODUCT_VISIBILITY.find(v => v.value === productVisibility);
-    
-    // Validate and format text - auto-split if too long (max 5 words per line)
-    let formattedText = thumbnailText.toUpperCase();
-    if (includeText && thumbnailText) {
-      const words = thumbnailText.trim().split(/\s+/);
-      if (words.length > 5) {
-        const midpoint = Math.ceil(words.length / 2);
-        formattedText = words.slice(0, midpoint).join(' ').toUpperCase() + '\n' + words.slice(midpoint).join(' ').toUpperCase();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: "Debes iniciar sesión", variant: "destructive" });
+        return;
       }
+
+      // Call GPT to build the prompt with all context
+      const { data, error } = await supabase.functions.invoke('build-image-prompt', {
+        body: {
+          // Script context
+          script: scriptContext.script,
+          salesAngle: scriptContext.salesAngle,
+          idealAvatar: scriptContext.idealAvatar,
+          productName: scriptContext.productName,
+          clientName: scriptContext.clientName,
+          hooksCount: scriptContext.hooksCount,
+          
+          // Form inputs
+          contentType,
+          productRole,
+          productVisibility,
+          showBrand,
+          includeText,
+          thumbnailText,
+          textLanguage,
+          textZone,
+          highlightStyle,
+          
+          // Format
+          outputFormat,
+          
+          // Image flags
+          hasReferenceImage: !!referenceImage,
+          hasProductImage: !!productImage
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.final_prompt) {
+        setGeneratedPrompt(data.final_prompt);
+        setPromptJson(data);
+        setIsPromptVisible(true);
+        setStep("prompt");
+        
+        console.log("🎨 GPT PROMPT BUILDER - Full JSON:", JSON.stringify(data, null, 2));
+        toast({ title: "Prompt generado por IA", description: "Revisa y edita si es necesario" });
+      } else if (data?.error) {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error building prompt:', error);
+      toast({ 
+        title: "Error al generar prompt", 
+        description: error instanceof Error ? error.message : "No se pudo generar el prompt",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsBuildingPrompt(false);
     }
-
-    // Summarize avatar for cleaner prompt
-    const cleanAvatar = summarizeAvatar(scriptContext.idealAvatar);
-
-    // Determine product composition based on role
-    const getProductComposition = () => {
-      if (!productImage) return '- Subject occupies 60-70% of the frame';
-      if (productRole === 'protagonist') return '- Product is PROTAGONIST (40-60% of frame)\n- Person is secondary (20-30% of frame)';
-      if (productRole === 'secondary') return '- Person is PROTAGONIST (50-60% of frame)\n- Product is secondary (15-30% of frame)';
-      return '- Person is main focus (60-70% of frame)\n- Product is contextual (in background)';
-    };
-
-    // BUILD CLEAN PROMPT - Creative instructions only, no format specs (handled by backend)
-    let prompt = `Create a social media thumbnail composed for a mobile-first experience.
-
-SCRIPT CONTEXT:
-- Main hook: "${mainHook}"
-- Core emotion: ${dominantEmotion}
-- Video intent: ${videoObjective}
-- Content type: ${contentType === 'ads' ? 'paid social ad' : 'organic content'}
-
-CHARACTER:
-${referenceImage ? `- Based on reference image provided
-- Maintain general physical traits, do not replicate exact identity` : `- Person representing: ${cleanAvatar}`}
-- Facial expression: ${dominantEmotion}
-- Natural UGC aesthetic
-- Looking at camera
-
-COMPOSITION:
-${getProductComposition()}
-- Scene: "${keyVisualScene}"
-- Background: contextual environment (home office, workspace, daily setting)
-- Strong lighting on face
-- One clear focal point
-- Rule of thirds
-- Safe margins (10-15%)
-
-${productImage ? `PRODUCT:
-- Use EXACT product image provided
-- Role: ${role?.label} (${role?.description})
-- Visibility: ${visibility?.label}
-- Maintain original shape, colors and branding
-- ${showBrand ? 'Show brand/logo if visible' : 'Brand/logo can be partially obscured'}
-- Do NOT modify or stylize the product` : ''}
-
-${includeText && formattedText ? `TEXT OVERLAY:
-- Exact text: "${formattedText}"
-- Language: ${TEXT_LANGUAGES.find(l => l.value === textLanguage)?.label || 'Spanish'}
-- Bold heavy typography
-- Inside solid or semi-transparent black text box
-- Position: ${zone?.label.toLowerCase()} safe area
-- Centered horizontally
-- 10-15% margin from edges
-- Must be fully visible and readable on mobile` : `TEXT OVERLAY:
-- NONE - Do NOT add any text`}
-
-STYLE:
-- UGC aesthetic
-- High contrast
-- Scroll-stopper composition
-- Realistic lighting
-- Professional but authentic
-
-AVOID:
-- Cropped subjects
-- Visual clutter
-- Stock photo look
-- Plain white backgrounds
-${productImage ? `- Altered product colors or shapes` : ''}`;
-
-    setGeneratedPrompt(prompt);
-    setIsPromptVisible(true);
-    setStep("prompt");
   };
 
   const generateThumbnail = async () => {
@@ -633,6 +371,7 @@ ${productImage ? `- Altered product colors or shapes` : ''}`;
   const resetGenerator = () => {
     setStep("config");
     setGeneratedPrompt("");
+    setPromptJson(null);
     setGeneratedThumbnail(null);
     setIsPromptVisible(false);
   };
@@ -1040,9 +779,19 @@ ${productImage ? `- Altered product colors or shapes` : ''}`;
             onClick={generatePrompt}
             className="w-full"
             variant="secondary"
+            disabled={isBuildingPrompt}
           >
-            <Sparkles className="h-4 w-4 mr-2" />
-            Generar Prompt
+            {isBuildingPrompt ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                GPT está construyendo el prompt...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Generar Prompt con IA
+              </>
+            )}
           </Button>
         </div>
       )}
@@ -1050,9 +799,26 @@ ${productImage ? `- Altered product colors or shapes` : ''}`;
       {/* Step 2: Review Prompt */}
       {step === "prompt" && (
         <div className="space-y-4">
+          {/* JSON Preview Toggle */}
+          {promptJson && (
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center gap-2 w-full text-left font-medium text-xs hover:text-primary transition-colors text-muted-foreground">
+                <Eye className="h-3 w-3" />
+                Ver JSON estructurado completo
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <div className="bg-muted/50 rounded-md p-2 max-h-[200px] overflow-auto">
+                  <pre className="text-[10px] font-mono text-muted-foreground whitespace-pre-wrap">
+                    {JSON.stringify(promptJson, null, 2)}
+                  </pre>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Prompt generado</Label>
+              <Label className="text-sm font-medium">Prompt final (generado por GPT)</Label>
               <Badge variant="secondary" className="text-xs">Editable</Badge>
             </div>
             <Textarea
@@ -1079,12 +845,12 @@ ${productImage ? `- Altered product colors or shapes` : ''}`;
               {isGenerating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generando...
+                  Generando imagen...
                 </>
               ) : (
                 <>
                   <Wand2 className="h-4 w-4 mr-2" />
-                  Generar Miniatura con IA
+                  Generar Miniatura
                 </>
               )}
             </Button>
