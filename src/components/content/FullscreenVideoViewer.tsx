@@ -329,6 +329,15 @@ export function FullscreenVideoViewer({
   const displayCaption = currentVideo.caption || currentVideo.title;
   const shouldTruncateCaption = displayCaption.length > 80;
   const effectiveMuted = isGlobalMuted || !audioUnlocked;
+  // Autoplay with sound is often blocked on mobile; start muted and unmute once playing.
+  const startMutedForAutoplay = effectiveMuted || (!isGlobalMuted && audioUnlocked);
+
+  const handleVideoPlay = useCallback(() => {
+    if (!isGlobalMuted && audioUnlocked) {
+      // Unmute after playback has started (avoids autoplay policy blocks)
+      playerRef.current?.setMuted(false);
+    }
+  }, [isGlobalMuted, audioUnlocked]);
 
   return (
     <div 
@@ -366,11 +375,12 @@ export function FullscreenVideoViewer({
               src={currentVideoUrl}
               poster={thumbnailUrl || undefined}
               autoPlay={true}
-              muted={isGlobalMuted}
+              muted={startMutedForAutoplay}
               loop={true}
               aspectRatio="auto"
               className="w-full h-full"
               onLoadComplete={handleVideoLoadComplete}
+              onPlay={handleVideoPlay}
             />
             
             {/* Audio unlock hint overlay */}
