@@ -40,10 +40,35 @@ function getDimensionsFromFormat(format: string): { width: number; height: numbe
   return formats[format] || formats["9:16"];
 }
 
-// Extract aspect ratio from prompt
+// Extract aspect ratio from prompt (legacy; prompt no longer controls format)
 function extractAspectRatio(prompt: string): string {
   const match = prompt.match(/Aspect ratio:\s*(\d+:\d+)/i);
   return match ? match[1] : "9:16";
+}
+
+// Parse PNG dimensions from base64 data URL
+function getPngDimensionsFromDataUrl(dataUrl: string): { width: number; height: number } | null {
+  try {
+    const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+    const bytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+
+    // PNG signature (8 bytes) then IHDR chunk:
+    // length(4) + type(4) + width(4) + height(4)
+    // IHDR starts at byte 12 (8 sig + 4 len)
+    const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47;
+    if (!isPng) return null;
+
+    // Find IHDR type at 12..16
+    const type = String.fromCharCode(bytes[12], bytes[13], bytes[14], bytes[15]);
+    if (type !== "IHDR") return null;
+
+    const dv = new DataView(bytes.buffer);
+    const width = dv.getUint32(16, false);
+    const height = dv.getUint32(20, false);
+    return { width, height };
+  } catch {
+    return null;
+  }
 }
 
 serve(async (req) => {
@@ -73,27 +98,19 @@ serve(async (req) => {
     console.log("Has product image:", !!productImage);
     console.log("Requested format:", outputFormat);
 
-    // Get dimensions based on format - FORCE width/height properly
-    const format = outputFormat || extractAspectRatio(prompt);
+    // FORCE format ONLY from request (prompt never overrides)
+    const format = typeof outputFormat === "string" && outputFormat.trim() ? outputFormat.trim() : "9:16";
     const dimensions = getDimensionsFromFormat(format);
-    
-    console.log("Using dimensions:", dimensions.width, "x", dimensions.height);
-    console.log("Aspect ratio:", format);
 
-    // Clean the prompt for image generation
+    console.log("Forcing dimensions:", dimensions.width, "x", dimensions.height);
+    console.log("Forcing aspect ratio:", format);
+
+    // Clean the prompt for image generation (remove HTML/noise)
     const cleanedPrompt = cleanPromptForImageGen(prompt);
     console.log("Cleaned prompt length:", cleanedPrompt.length);
 
-    // Build optimized prompt for Gemini
-    const optimizedPrompt = `Create a vertical social media thumbnail.
-
-FORMAT (MANDATORY):
-- Aspect ratio: ${format}
-- Resolution: ${dimensions.width}x${dimensions.height}
-- Orientation: ${dimensions.height > dimensions.width ? 'Vertical' : dimensions.height === dimensions.width ? 'Square' : 'Horizontal'}
-- Mobile-first composition
-
-${cleanedPrompt}`;
+    // Keep the prompt CREATIVE only. All technical output control happens via generation_config.
+    const optimizedPrompt = cleanedPrompt;
 
     // Build messages for the AI
     const messages: any[] = [];
@@ -180,11 +197,53 @@ ${cleanedPrompt}`;
     console.log("AI response received");
 
     // Extract the generated image
-    const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
+    let imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
     if (!imageData) {
       console.error("No image in response:", JSON.stringify(data).slice(0, 500));
       throw new Error("No image was generated");
+    }
+
+    // Post-generation validation: ensure orientation matches requested format (best-effort)
+    const dims = getPngDimensionsFromDataUrl(imageData);
+    if (dims) {
+      console.log("Generated image dimensions:", dims.width, "x", dims.height);
+      const shouldBeVertical = format === "9:16";
+      if (shouldBeVertical && dims.width >= dims.height) {
+        console.warn("Image came back non-vertical; retrying once with forced vertical generation_config");
+        // Retry once
+        const retryResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-image-preview",
+            messages,
+            modalities: ["image", "text"],
+            generation_config: {
+              image_format: "png",
+              aspect_ratio: format,
+              image_size: {
+                width: dimensions.width,
+                height: dimensions.height,
+              },
+            },
+          }),
+        });
+
+        if (retryResp.ok) {
+          const retryData = await retryResp.json();
+          const retryImage = retryData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+          if (retryImage) {
+            console.log("Retry succeeded");
+            imageData = retryImage;
+          }
+        } else {
+          console.warn("Retry failed; continuing with first image");
+        }
+      }
     }
 
     console.log("Image generated successfully, uploading to storage...");
