@@ -19,8 +19,8 @@ interface HLSVideoPlayerProps {
   className?: string;
   aspectRatio?: '9:16' | '16:9' | '1:1' | 'auto';
   showControls?: boolean;
-  /** If true, video waits for user tap to start (required for unmuted autoplay on mobile) */
-  requireInteraction?: boolean;
+  /** Use object-contain instead of object-cover to avoid cropping */
+  objectFit?: 'cover' | 'contain';
   onPlay?: () => void;
   onPause?: () => void;
   onError?: (error: string) => void;
@@ -33,13 +33,13 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
     {
       src,
       poster,
-      autoPlay = false, // Changed: don't autoplay by default
-      muted = false, // Changed: audio ON by default
+      autoPlay = true, // Autoplay when in viewport
+      muted = true, // Start muted for autoplay compatibility
       loop = true,
       className,
       aspectRatio = '9:16',
       showControls = false,
-      requireInteraction = true, // New: wait for user tap by default
+      objectFit = 'cover',
       onPlay,
       onPause,
       onError,
@@ -49,10 +49,6 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
     ref
   ) {
     const [showPoster, setShowPoster] = useState(true);
-    const [hasInteracted, setHasInteracted] = useState(!requireInteraction);
-    
-    // Only autoplay if user has interacted (or interaction not required)
-    const effectiveAutoPlay = autoPlay && hasInteracted;
     
     const {
       videoRef,
@@ -65,25 +61,11 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
       pause,
       toggleMute,
       setMuted
-    } = useHLSPlayer(src, { autoPlay: effectiveAutoPlay, muted, loop, poster });
-
-    // Handle user tap to start video
-    const handleTapToPlay = useCallback(() => {
-      if (!hasInteracted) {
-        setHasInteracted(true);
-        // Small delay to ensure state is updated before playing
-        setTimeout(() => {
-          play();
-        }, 50);
-      }
-    }, [hasInteracted, play]);
+    } = useHLSPlayer(src, { autoPlay, muted, loop, poster });
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
-      play: () => {
-        setHasInteracted(true);
-        play();
-      },
+      play,
       pause,
       toggleMute,
       setMuted
@@ -124,13 +106,10 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
     }[aspectRatio];
 
     const posterUrl = poster || thumbnailUrl;
-    const showPlayButton = !hasInteracted && !isPlaying;
+    const objectFitClass = objectFit === 'contain' ? 'object-contain' : 'object-cover';
 
     return (
-      <div 
-        className={cn('relative overflow-hidden bg-black', aspectClass, className)}
-        onClick={handleTapToPlay}
-      >
+      <div className={cn('relative overflow-hidden bg-black', aspectClass, className)}>
         {/* Video Element */}
         <video
           ref={videoRef}
@@ -138,7 +117,8 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
           preload="metadata"
           poster={posterUrl || undefined}
           className={cn(
-            'w-full h-full object-cover',
+            'w-full h-full',
+            objectFitClass,
             showPoster && posterUrl && 'opacity-0'
           )}
           controls={showControls}
@@ -150,23 +130,14 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
             <img
               src={posterUrl}
               alt="Video thumbnail"
-              className="w-full h-full object-cover"
+              className={cn('w-full h-full', objectFitClass)}
               onError={() => setShowPoster(false)}
             />
           </div>
         )}
 
-        {/* Play Button Overlay - shown until user interacts */}
-        {showPlayButton && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer">
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-6 transition-transform hover:scale-110">
-              <Play className="h-12 w-12 text-white fill-white" />
-            </div>
-          </div>
-        )}
-
         {/* Loading Indicator */}
-        {isLoading && hasInteracted && (
+        {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <Loader2 className="h-10 w-10 text-white animate-spin" />
           </div>

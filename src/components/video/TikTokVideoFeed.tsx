@@ -66,8 +66,8 @@ function FloatingHeartAnimation({ x, y, onComplete }: { x: number; y: number; on
 function VideoCard({
   video,
   isActive,
-  sessionStarted,
-  onSessionStart,
+  audioUnlocked,
+  onUnlockAudio,
   onLike,
   onView,
   onShare,
@@ -76,10 +76,10 @@ function VideoCard({
 }: {
   video: VideoItem;
   isActive: boolean;
-  /** True when user has interacted with any video in the feed */
-  sessionStarted: boolean;
-  /** Callback to notify parent that user started the session */
-  onSessionStart: () => void;
+  /** True when user has unlocked audio (first unmute) */
+  audioUnlocked: boolean;
+  /** Callback to notify parent that user unlocked audio */
+  onUnlockAudio: () => void;
   onLike?: () => void;
   onView?: () => void;
   onShare?: () => void;
@@ -100,26 +100,26 @@ function VideoCard({
   const hasMultiple = video.videoUrls.length > 1;
   const thumbnailUrl = video.thumbnailUrl || getBunnyThumbnail(currentVideoUrl);
 
-  // Control playback and sync mute based on active state and session
+  // Control playback based on viewport visibility
   useEffect(() => {
-    // Only autoplay if session has started (user interacted with any video)
-    if (isActive && sessionStarted) {
+    if (isActive) {
       playerRef.current?.play();
+      // Sync mute state - unmuted if audio was unlocked
       setTimeout(() => {
-        playerRef.current?.setMuted(isGlobalMuted);
+        playerRef.current?.setMuted(!audioUnlocked);
       }, 50);
-    } else if (!isActive) {
+    } else {
       playerRef.current?.pause();
       viewTrackedRef.current = false;
     }
-  }, [isActive, isGlobalMuted, sessionStarted]);
+  }, [isActive, audioUnlocked]);
 
-  // Handle video loaded - sync mute state
+  // Handle video loaded - sync mute state based on audio unlock status
   const handleVideoLoadComplete = useCallback(() => {
     if (playerRef.current) {
-      playerRef.current.setMuted(isGlobalMuted);
+      playerRef.current.setMuted(!audioUnlocked);
     }
-  }, [isGlobalMuted]);
+  }, [audioUnlocked]);
 
   // Track view after 3 seconds
   useEffect(() => {
@@ -160,33 +160,31 @@ function VideoCard({
       return;
     }
 
-    // Single tap = start playback (first time) or toggle play/pause
+    // Single tap = toggle play/pause
     setTimeout(() => {
       if (Date.now() - lastTapRef.current >= 280) {
-        if (!sessionStarted) {
-          // First interaction - start session and playback with audio
-          onSessionStart();
-          playerRef.current?.play();
+        // Toggle play/pause
+        if (isActive) {
+          playerRef.current?.pause();
         } else {
-          // Toggle play/pause
-          if (isActive) {
-            playerRef.current?.pause();
-          } else {
-            playerRef.current?.play();
-          }
+          playerRef.current?.play();
         }
         setShowPlayIcon(true);
         setTimeout(() => setShowPlayIcon(false), 600);
       }
     }, 300);
-  }, [video.isLiked, onLike, isActive, spawnFloatingHeart, sessionStarted, onSessionStart]);
+  }, [video.isLiked, onLike, isActive, spawnFloatingHeart]);
 
   const handleMuteToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    const newMuted = !isGlobalMuted;
-    setGlobalMuted(newMuted);
+    if (!audioUnlocked) {
+      // First unmute - unlock audio for all videos
+      onUnlockAudio();
+    }
+    const newMuted = audioUnlocked; // Toggle: if unlocked (unmuted), mute it; if not unlocked (muted), unmute it
     playerRef.current?.setMuted(newMuted);
-  }, [isGlobalMuted, setGlobalMuted]);
+    setGlobalMuted(newMuted);
+  }, [audioUnlocked, onUnlockAudio, setGlobalMuted]);
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -218,19 +216,13 @@ function VideoCard({
         ref={playerRef}
         src={currentVideoUrl}
         poster={thumbnailUrl || undefined}
-        autoPlay={sessionStarted && isActive}
-        muted={isGlobalMuted}
+        autoPlay={isActive}
+        muted={!audioUnlocked}
         loop={true}
         aspectRatio="auto"
+        objectFit="contain"
         className="absolute inset-0 w-full h-full"
-        requireInteraction={!sessionStarted}
         onLoadComplete={handleVideoLoadComplete}
-        onPlay={() => {
-          onSessionStart();
-          if (!isGlobalMuted) {
-            playerRef.current?.setMuted(false);
-          }
-        }}
       />
 
       {/* Play/Pause indicator */}
@@ -250,7 +242,7 @@ function VideoCard({
         onClick={handleMuteToggle}
         className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
       >
-        {isGlobalMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+        {audioUnlocked ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />}
       </button>
 
       {/* Carousel navigation */}
@@ -377,11 +369,11 @@ export function TikTokVideoFeed({
 }: TikTokVideoFeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  // Track if user has started playback session (any video tapped)
-  const [sessionStarted, setSessionStarted] = useState(false);
+  // Track if user has unlocked audio (first unmute)
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
 
-  const handleSessionStart = useCallback(() => {
-    setSessionStarted(true);
+  const handleUnlockAudio = useCallback(() => {
+    setAudioUnlocked(true);
   }, []);
 
   // IntersectionObserver for detecting active video
@@ -433,8 +425,8 @@ export function TikTokVideoFeed({
           <VideoCard
             video={video}
             isActive={index === activeIndex}
-            sessionStarted={sessionStarted}
-            onSessionStart={handleSessionStart}
+            audioUnlocked={audioUnlocked}
+            onUnlockAudio={handleUnlockAudio}
             onLike={onLike ? () => onLike(video.id) : undefined}
             onView={onView ? () => onView(video.id) : undefined}
             onShare={onShare ? () => onShare(video) : undefined}
