@@ -50,36 +50,49 @@ const TEXT_ZONES = [
   { value: "inferior", label: "Inferior", description: "65-85% desde arriba" },
 ];
 
-const OUTPUT_FORMATS = [
-  { value: "9:16", label: "Vertical 9:16", description: "1080x1920 - Recomendado para TikTok, Reels, Shorts", recommended: true },
-  { value: "1:1", label: "Cuadrado 1:1", description: "1080x1080 - Feed de Instagram", recommended: false },
-  { value: "16:9", label: "Horizontal 16:9", description: "1920x1080 - YouTube thumbnails", recommended: false },
-];
-
+// Format options per AI provider - each API has different supported sizes
 const AI_MODELS = [
   { 
     value: "gemini-flash-image", 
-    label: "Gemini Flash (Rápido)", 
-    description: "google/gemini-2.5-flash-image-preview - Rápido y eficiente",
+    label: "Gemini Flash", 
+    description: "Rápido y eficiente",
     provider: "gemini",
     model: "google/gemini-2.5-flash-image-preview",
-    recommended: true 
+    recommended: true,
+    formats: [
+      { value: "1080x1920", label: "Vertical 9:16", description: "1080×1920 - TikTok, Reels, Shorts", recommended: true },
+      { value: "1080x1080", label: "Cuadrado 1:1", description: "1080×1080 - Feed Instagram", recommended: false },
+      { value: "1920x1080", label: "Horizontal 16:9", description: "1920×1080 - YouTube", recommended: false },
+      { value: "1024x1024", label: "Cuadrado HD", description: "1024×1024 - Alta calidad", recommended: false },
+    ]
   },
   { 
     value: "gemini-pro-image", 
     label: "Gemini Pro", 
-    description: "google/gemini-3-pro-image-preview - Próxima generación",
+    description: "Próxima generación, mayor calidad",
     provider: "gemini",
     model: "google/gemini-3-pro-image-preview",
-    recommended: false 
+    recommended: false,
+    formats: [
+      { value: "1080x1920", label: "Vertical 9:16", description: "1080×1920 - TikTok, Reels, Shorts", recommended: true },
+      { value: "1080x1080", label: "Cuadrado 1:1", description: "1080×1080 - Feed Instagram", recommended: false },
+      { value: "1920x1080", label: "Horizontal 16:9", description: "1920×1080 - YouTube", recommended: false },
+      { value: "1024x1024", label: "Cuadrado HD", description: "1024×1024 - Alta calidad", recommended: false },
+    ]
   },
   { 
     value: "gpt-image", 
     label: "GPT Image", 
-    description: "gpt-image-1 - Alta calidad y control",
+    description: "OpenAI - Alta calidad y control",
     provider: "openai",
     model: "gpt-image-1",
-    recommended: false 
+    recommended: false,
+    formats: [
+      { value: "1024x1536", label: "Vertical 2:3", description: "1024×1536 - Formato vertical", recommended: true },
+      { value: "1024x1024", label: "Cuadrado 1:1", description: "1024×1024 - Feed", recommended: false },
+      { value: "1536x1024", label: "Horizontal 3:2", description: "1536×1024 - Paisaje", recommended: false },
+      { value: "auto", label: "Auto", description: "OpenAI elige el mejor tamaño", recommended: false },
+    ]
   },
 ];
 
@@ -123,9 +136,28 @@ export function AIThumbnailGenerator({
   const [highlightStyle, setHighlightStyle] = useState("emocion");
   const [textZone, setTextZone] = useState("superior");
   const [forceSafeZone, setForceSafeZone] = useState(true);
-  const [outputFormat, setOutputFormat] = useState("9:16");
-  const [contentType, setContentType] = useState("organic");
   const [selectedAiModel, setSelectedAiModel] = useState("gemini-flash-image");
+  const [outputFormat, setOutputFormat] = useState("1080x1920"); // Default to vertical
+  const [contentType, setContentType] = useState("organic");
+
+  // Get current model config and available formats
+  const currentModelConfig = AI_MODELS.find(m => m.value === selectedAiModel) || AI_MODELS[0];
+  const availableFormats = currentModelConfig.formats;
+
+  // Reset format when model changes if current format is not available
+  const handleModelChange = (modelValue: string) => {
+    const newModel = AI_MODELS.find(m => m.value === modelValue);
+    if (newModel) {
+      setSelectedAiModel(modelValue);
+      // Check if current format exists in new model
+      const formatExists = newModel.formats.some(f => f.value === outputFormat);
+      if (!formatExists) {
+        // Set to first recommended format or first format
+        const recommendedFormat = newModel.formats.find(f => f.recommended) || newModel.formats[0];
+        setOutputFormat(recommendedFormat.value);
+      }
+    }
+  };
 
   // Generation state
   const [generatedPrompt, setGeneratedPrompt] = useState("");
@@ -824,20 +856,49 @@ ${productImage ? `- Altered product colors or shapes` : ''}`;
               📐 Formato de Salida
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 space-y-3">
-              {/* Output Format Selector */}
+              {/* AI Model Selector */}
               <div className="space-y-2">
-                <Label className="text-xs">Formato de imagen</Label>
+                <Label className="text-xs font-medium">🤖 Modelo de IA</Label>
+                <RadioGroup
+                  value={selectedAiModel}
+                  onValueChange={handleModelChange}
+                  className="space-y-2"
+                >
+                  {AI_MODELS.map(model => (
+                    <div key={model.value} className={`flex items-center space-x-2 p-2 rounded-md border ${model.recommended ? 'border-primary/50 bg-primary/5' : 'border-border'}`}>
+                      <RadioGroupItem value={model.value} id={`model-${model.value}`} />
+                      <Label htmlFor={`model-${model.value}`} className="cursor-pointer flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{model.label}</span>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {model.provider === 'gemini' ? 'Gemini' : 'OpenAI'}
+                          </Badge>
+                          {model.recommended && (
+                            <Badge variant="default" className="text-[10px] px-1.5 py-0">Recomendado</Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{model.description}</p>
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {/* Output Format Selector - Dynamic based on selected model */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">📐 Tamaño de imagen ({currentModelConfig.label})</Label>
                 <RadioGroup
                   value={outputFormat}
                   onValueChange={setOutputFormat}
                   className="space-y-2"
                 >
-                  {OUTPUT_FORMATS.map(format => (
+                  {availableFormats.map(format => (
                     <div key={format.value} className={`flex items-center space-x-2 p-2 rounded-md border ${format.recommended ? 'border-primary/50 bg-primary/5' : 'border-border'}`}>
                       <RadioGroupItem value={format.value} id={`format-${format.value}`} />
                       <Label htmlFor={`format-${format.value}`} className="cursor-pointer flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">{format.label}</span>
+                          <code className="text-[10px] bg-muted px-1 rounded">{format.value}</code>
                           {format.recommended && (
                             <Badge variant="default" className="text-[10px] px-1.5 py-0">Recomendado</Badge>
                           )}
@@ -868,42 +929,12 @@ ${productImage ? `- Altered product colors or shapes` : ''}`;
               </div>
 
               {/* Safe Zone Info */}
-              {outputFormat === "9:16" && (
+              {outputFormat.includes('1920') || outputFormat === '1024x1536' ? (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground bg-green-500/10 text-green-700 dark:text-green-400 p-2 rounded border border-green-500/20">
                   <Check className="h-3 w-3" />
-                  Formato optimizado para TikTok, Reels y Shorts
+                  Formato vertical optimizado para TikTok, Reels y Shorts
                 </div>
-              )}
-
-              {/* AI Model Selector */}
-              <div className="space-y-2 pt-3 border-t border-border/50">
-                <Label className="text-xs font-medium flex items-center gap-1">
-                  🤖 Modelo de IA
-                </Label>
-                <RadioGroup
-                  value={selectedAiModel}
-                  onValueChange={setSelectedAiModel}
-                  className="space-y-2"
-                >
-                  {AI_MODELS.map(model => (
-                    <div key={model.value} className={`flex items-center space-x-2 p-2 rounded-md border ${model.recommended ? 'border-primary/50 bg-primary/5' : 'border-border'}`}>
-                      <RadioGroupItem value={model.value} id={`model-${model.value}`} />
-                      <Label htmlFor={`model-${model.value}`} className="cursor-pointer flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{model.label}</span>
-                          {model.recommended && (
-                            <Badge variant="default" className="text-[10px] px-1.5 py-0">Recomendado</Badge>
-                          )}
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {model.provider === 'gemini' ? 'Gemini' : 'GPT'}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{model.description}</p>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
+              ) : null}
             </CollapsibleContent>
           </Collapsible>
 
