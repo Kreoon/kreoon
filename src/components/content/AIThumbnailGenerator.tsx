@@ -52,27 +52,15 @@ const TEXT_ZONES = [
 
 // Format options per AI provider - each API has different supported sizes
 const AI_MODELS = [
+  // ========== GEMINI MODELS (Lovable AI - No API key needed) ==========
   { 
-    value: "gemini-flash-image", 
-    label: "Gemini Flash", 
-    description: "Rápido y eficiente",
-    provider: "gemini",
-    model: "google/gemini-2.5-flash-image-preview",
-    recommended: true,
-    formats: [
-      { value: "1080x1920", label: "Vertical 9:16", description: "1080×1920 - TikTok, Reels, Shorts", recommended: true },
-      { value: "1080x1080", label: "Cuadrado 1:1", description: "1080×1080 - Feed Instagram", recommended: false },
-      { value: "1920x1080", label: "Horizontal 16:9", description: "1920×1080 - YouTube", recommended: false },
-      { value: "1024x1024", label: "Cuadrado HD", description: "1024×1024 - Alta calidad", recommended: false },
-    ]
-  },
-  { 
-    value: "gemini-pro-image", 
-    label: "Gemini Pro", 
-    description: "Próxima generación, mayor calidad",
+    value: "gemini-3-pro-image", 
+    label: "🥇 Gemini 3 Pro Image", 
+    description: "Más avanzado - Nueva generación",
     provider: "gemini",
     model: "google/gemini-3-pro-image-preview",
-    recommended: false,
+    recommended: true,
+    tier: "premium",
     formats: [
       { value: "1080x1920", label: "Vertical 9:16", description: "1080×1920 - TikTok, Reels, Shorts", recommended: true },
       { value: "1080x1080", label: "Cuadrado 1:1", description: "1080×1080 - Feed Instagram", recommended: false },
@@ -81,17 +69,49 @@ const AI_MODELS = [
     ]
   },
   { 
-    value: "gpt-image", 
-    label: "GPT Image", 
-    description: "OpenAI - Alta calidad y control",
+    value: "gemini-flash-image", 
+    label: "⚡ Gemini Flash Image", 
+    description: "Rápido y eficiente (Nano Banana)",
+    provider: "gemini",
+    model: "google/gemini-2.5-flash-image-preview",
+    recommended: false,
+    tier: "fast",
+    formats: [
+      { value: "1080x1920", label: "Vertical 9:16", description: "1080×1920 - TikTok, Reels, Shorts", recommended: true },
+      { value: "1080x1080", label: "Cuadrado 1:1", description: "1080×1080 - Feed Instagram", recommended: false },
+      { value: "1920x1080", label: "Horizontal 16:9", description: "1920×1080 - YouTube", recommended: false },
+      { value: "1024x1024", label: "Cuadrado HD", description: "1024×1024 - Alta calidad", recommended: false },
+    ]
+  },
+  
+  // ========== OPENAI MODELS (Requires OPENAI_API_KEY) ==========
+  { 
+    value: "gpt-image-1", 
+    label: "🎨 GPT Image 1", 
+    description: "OpenAI más avanzado - Control total de tamaño",
     provider: "openai",
     model: "gpt-image-1",
     recommended: false,
+    tier: "premium",
     formats: [
       { value: "1024x1536", label: "Vertical 2:3", description: "1024×1536 - Formato vertical", recommended: true },
       { value: "1024x1024", label: "Cuadrado 1:1", description: "1024×1024 - Feed", recommended: false },
       { value: "1536x1024", label: "Horizontal 3:2", description: "1536×1024 - Paisaje", recommended: false },
       { value: "auto", label: "Auto", description: "OpenAI elige el mejor tamaño", recommended: false },
+    ]
+  },
+  { 
+    value: "dall-e-3", 
+    label: "🖼️ DALL-E 3", 
+    description: "OpenAI - Excelente calidad artística",
+    provider: "openai",
+    model: "dall-e-3",
+    recommended: false,
+    tier: "quality",
+    formats: [
+      { value: "1024x1792", label: "Vertical", description: "1024×1792 - Formato vertical", recommended: true },
+      { value: "1024x1024", label: "Cuadrado", description: "1024×1024 - Feed", recommended: false },
+      { value: "1792x1024", label: "Horizontal", description: "1792×1024 - Paisaje", recommended: false },
     ]
   },
 ];
@@ -136,7 +156,7 @@ export function AIThumbnailGenerator({
   const [highlightStyle, setHighlightStyle] = useState("emocion");
   const [textZone, setTextZone] = useState("superior");
   const [forceSafeZone, setForceSafeZone] = useState(true);
-  const [selectedAiModel, setSelectedAiModel] = useState("gemini-flash-image");
+  const [selectedAiModel, setSelectedAiModel] = useState("gemini-3-pro-image");
   const [outputFormat, setOutputFormat] = useState("1080x1920"); // Default to vertical
   const [contentType, setContentType] = useState("organic");
 
