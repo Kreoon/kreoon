@@ -56,6 +56,33 @@ const OUTPUT_FORMATS = [
   { value: "16:9", label: "Horizontal 16:9", description: "1920x1080 - YouTube thumbnails", recommended: false },
 ];
 
+const AI_MODELS = [
+  { 
+    value: "gemini-flash-image", 
+    label: "Gemini Flash (Rápido)", 
+    description: "google/gemini-2.5-flash-image-preview - Rápido y eficiente",
+    provider: "gemini",
+    model: "google/gemini-2.5-flash-image-preview",
+    recommended: true 
+  },
+  { 
+    value: "gemini-pro-image", 
+    label: "Gemini Pro", 
+    description: "google/gemini-3-pro-image-preview - Próxima generación",
+    provider: "gemini",
+    model: "google/gemini-3-pro-image-preview",
+    recommended: false 
+  },
+  { 
+    value: "gpt-image", 
+    label: "GPT Image", 
+    description: "gpt-image-1 - Alta calidad y control",
+    provider: "openai",
+    model: "gpt-image-1",
+    recommended: false 
+  },
+];
+
 const CONTENT_TYPES = [
   { value: "organic", label: "Orgánico", description: "Contenido natural para feed" },
   { value: "ads", label: "Ads/Paid", description: "Anuncios pagados" },
@@ -98,7 +125,8 @@ export function AIThumbnailGenerator({
   const [forceSafeZone, setForceSafeZone] = useState(true);
   const [outputFormat, setOutputFormat] = useState("9:16");
   const [contentType, setContentType] = useState("organic");
-  
+  const [selectedAiModel, setSelectedAiModel] = useState("gemini-flash-image");
+
   // Generation state
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isPromptVisible, setIsPromptVisible] = useState(false);
@@ -383,14 +411,19 @@ ${productImage ? `- Generic mockups
         return;
       }
 
-      // Call edge function with ALL parameters including format
+      // Get selected model config
+      const modelConfig = AI_MODELS.find(m => m.value === selectedAiModel) || AI_MODELS[0];
+
+      // Call edge function with ALL parameters including format and model
       const { data, error } = await supabase.functions.invoke('generate-thumbnail', {
         body: { 
           prompt: generatedPrompt,
           referenceImage: referenceImage,
           productImage: productImage,
           contentId,
-          outputFormat: outputFormat // Force format in API
+          outputFormat: outputFormat,
+          aiProvider: modelConfig.provider,
+          aiModel: modelConfig.model
         }
       });
 
@@ -808,6 +841,36 @@ ${productImage ? `- Generic mockups
                   Formato optimizado para TikTok, Reels y Shorts
                 </div>
               )}
+
+              {/* AI Model Selector */}
+              <div className="space-y-2 pt-3 border-t border-border/50">
+                <Label className="text-xs font-medium flex items-center gap-1">
+                  🤖 Modelo de IA
+                </Label>
+                <RadioGroup
+                  value={selectedAiModel}
+                  onValueChange={setSelectedAiModel}
+                  className="space-y-2"
+                >
+                  {AI_MODELS.map(model => (
+                    <div key={model.value} className={`flex items-center space-x-2 p-2 rounded-md border ${model.recommended ? 'border-primary/50 bg-primary/5' : 'border-border'}`}>
+                      <RadioGroupItem value={model.value} id={`model-${model.value}`} />
+                      <Label htmlFor={`model-${model.value}`} className="cursor-pointer flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{model.label}</span>
+                          {model.recommended && (
+                            <Badge variant="default" className="text-[10px] px-1.5 py-0">Recomendado</Badge>
+                          )}
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {model.provider === 'gemini' ? 'Gemini' : 'GPT'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{model.description}</p>
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
             </CollapsibleContent>
           </Collapsible>
 
