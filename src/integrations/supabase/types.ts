@@ -1324,6 +1324,7 @@ export type Database = {
       }
       products: {
         Row: {
+          brief_file_url: string | null
           brief_url: string | null
           client_id: string
           created_at: string
@@ -1332,13 +1333,16 @@ export type Database = {
           ideal_avatar: string | null
           market_research: string | null
           name: string
+          onboarding_file_url: string | null
           onboarding_url: string | null
+          research_file_url: string | null
           research_url: string | null
           sales_angles: string[] | null
           strategy: string | null
           updated_at: string
         }
         Insert: {
+          brief_file_url?: string | null
           brief_url?: string | null
           client_id: string
           created_at?: string
@@ -1347,13 +1351,16 @@ export type Database = {
           ideal_avatar?: string | null
           market_research?: string | null
           name: string
+          onboarding_file_url?: string | null
           onboarding_url?: string | null
+          research_file_url?: string | null
           research_url?: string | null
           sales_angles?: string[] | null
           strategy?: string | null
           updated_at?: string
         }
         Update: {
+          brief_file_url?: string | null
           brief_url?: string | null
           client_id?: string
           created_at?: string
@@ -1362,7 +1369,9 @@ export type Database = {
           ideal_avatar?: string | null
           market_research?: string | null
           name?: string
+          onboarding_file_url?: string | null
           onboarding_url?: string | null
+          research_file_url?: string | null
           research_url?: string | null
           sales_angles?: string[] | null
           strategy?: string | null
