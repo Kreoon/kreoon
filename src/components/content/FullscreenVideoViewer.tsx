@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { HLSVideoPlayer, HLSVideoPlayerRef, getBunnyThumbnail } from '@/components/video/HLSVideoPlayer';
 
 interface VideoItem {
   id: string;
@@ -56,25 +57,7 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-function getEmbedUrl(url: string, startMuted: boolean = true): string {
-  if (!url) return '';
-  
-  const mutedParam = startMuted ? 'true' : 'false';
-  
-  if (url.includes('iframe.mediadelivery.net')) {
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}autoplay=true&muted=${mutedParam}&loop=true&preload=true`;
-  }
-  
-  const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
-  if (cdnMatch) {
-    const [, libraryId, videoId] = cdnMatch;
-    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=${mutedParam}&loop=true&preload=true`;
-  }
-  
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}autoplay=true&muted=${mutedParam}&loop=true`;
-}
+// Removed iframe-based getEmbedUrl - now using HLS player
 
 export function FullscreenVideoViewer({
   videos,
@@ -105,77 +88,12 @@ export function FullscreenVideoViewer({
   const [swipeDirection, setSwipeDirection] = useState<'up' | 'down' | null>(null);
   const [showFullCaption, setShowFullCaption] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const playerRef = useRef<HLSVideoPlayerRef>(null);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const viewTrackedRef = useRef<Set<string>>(new Set());
 
-  const PLAYER_ORIGIN = 'https://iframe.mediadelivery.net';
-
-  const postToPlayer = useCallback((payload: any) => {
-    const win = iframeRef.current?.contentWindow;
-    if (!win) return;
-
-    // Send as object
-    try {
-      win.postMessage(payload, PLAYER_ORIGIN);
-    } catch {
-      // ignore
-    }
-    // Send as JSON string
-    try {
-      win.postMessage(JSON.stringify(payload), PLAYER_ORIGIN);
-    } catch {
-      // ignore
-    }
-    // Also try wildcard origin for compatibility
-    try {
-      win.postMessage(payload, '*');
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const applyMuteStateToPlayer = useCallback(
-    (muted: boolean) => {
-      // Multiple command formats for Bunny/Player.js compatibility
-      if (muted) {
-        postToPlayer({ api: 'mute' });
-        postToPlayer({ event: 'command', func: 'mute' });
-        postToPlayer({ api: 'volume', set: 0 });
-        postToPlayer({ event: 'command', func: 'setVolume', args: [0] });
-      } else {
-        postToPlayer({ api: 'unmute' });
-        postToPlayer({ event: 'command', func: 'unmute' });
-        postToPlayer({ api: 'volume', set: 1 });
-        postToPlayer({ event: 'command', func: 'setVolume', args: [1] });
-        postToPlayer({ api: 'play' });
-        postToPlayer({ event: 'command', func: 'play' });
-      }
-    },
-    [postToPlayer]
-  );
-
-  // Apply mute state with retries (iframe may not be ready immediately)
-  const applyMuteStateWithRetry = useCallback((muted: boolean) => {
-    applyMuteStateToPlayer(muted);
-    // Retry after short delays
-    setTimeout(() => applyMuteStateToPlayer(muted), 150);
-    setTimeout(() => applyMuteStateToPlayer(muted), 400);
-    setTimeout(() => applyMuteStateToPlayer(muted), 800);
-  }, [applyMuteStateToPlayer]);
-
-  // Unlock audio on first user interaction
-  const unlockAudio = useCallback(() => {
-    if (!audioUnlocked) {
-      setAudioUnlocked(true);
-      setIsMuted(false);
-      setShowAudioHint(false);
-      applyMuteStateWithRetry(false);
-    }
-  }, [audioUnlocked, applyMuteStateWithRetry]);
-
-  // Toggle mute using postMessage to avoid reloading the video
+  // Toggle mute using HLS player ref
   const toggleMute = useCallback(() => {
     const newMuted = !isMuted;
     setIsMuted(newMuted);
@@ -183,8 +101,18 @@ export function FullscreenVideoViewer({
     if (!audioUnlocked) {
       setAudioUnlocked(true);
     }
-    applyMuteStateWithRetry(newMuted);
-  }, [applyMuteStateWithRetry, isMuted, audioUnlocked]);
+    playerRef.current?.setMuted(newMuted);
+  }, [isMuted, audioUnlocked]);
+
+  // Unlock audio on first user interaction
+  const unlockAudio = useCallback(() => {
+    if (!audioUnlocked) {
+      setAudioUnlocked(true);
+      setIsMuted(false);
+      setShowAudioHint(false);
+      playerRef.current?.setMuted(false);
+    }
+  }, [audioUnlocked]);
 
   const currentVideo = videos[currentIndex];
   const canManageCurrent = !!currentVideo && (canManageVideo ? canManageVideo(currentVideo) : !!isOwner);
@@ -194,6 +122,14 @@ export function FullscreenVideoViewer({
     (!currentVideo?.videoUrls?.length && currentVideo?.mediaUrl);
   const currentVideoUrl = currentVideo?.videoUrls?.[currentVariation] || currentVideo?.videoUrls?.[0];
   const hasMultipleVariations = (currentVideo?.videoUrls?.length || 0) > 1;
+  const thumbnailUrl = currentVideo?.thumbnailUrl || (currentVideoUrl ? getBunnyThumbnail(currentVideoUrl) : null);
+
+  // Sync mute state when video changes
+  useEffect(() => {
+    if (playerRef.current) {
+      playerRef.current.setMuted(isMuted);
+    }
+  }, [currentIndex, currentVariation, isMuted]);
 
   // Track view after 3 seconds
   useEffect(() => {
@@ -234,13 +170,6 @@ export function FullscreenVideoViewer({
   useEffect(() => {
     setShowFullCaption(false);
   }, [currentIndex]);
-
-  // Re-apply audio state when video changes
-  useEffect(() => {
-    if (audioUnlocked && !isMuted) {
-      applyMuteStateWithRetry(false);
-    }
-  }, [currentIndex, currentVariation, audioUnlocked, isMuted, applyMuteStateWithRetry]);
 
   const goToNext = useCallback(() => {
     if (currentIndex < videos.length - 1 && !isTransitioning) {
@@ -415,21 +344,16 @@ export function FullscreenVideoViewer({
           </div>
         ) : (
           <div className="w-full h-full relative" onClick={handleVideoAreaClick}>
-            <iframe
-              ref={iframeRef}
-              key={`${currentVideo.id}-${currentVariation}-${effectiveMuted ? 'muted' : 'unmuted'}`}
-              src={getEmbedUrl(currentVideoUrl, effectiveMuted)}
-              className="w-full h-full border-0"
-              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              onLoad={() => {
-                // Apply mute state after iframe loads
-                setTimeout(() => {
-                  if (audioUnlocked && !isMuted) {
-                    applyMuteStateWithRetry(false);
-                  }
-                }, 200);
-              }}
+            <HLSVideoPlayer
+              ref={playerRef}
+              key={`${currentVideo.id}-${currentVariation}`}
+              src={currentVideoUrl}
+              poster={thumbnailUrl || undefined}
+              autoPlay={true}
+              muted={isMuted}
+              loop={true}
+              aspectRatio="auto"
+              className="w-full h-full"
             />
             
             {/* Audio unlock hint overlay */}
