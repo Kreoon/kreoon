@@ -30,20 +30,28 @@ function cleanPromptForImageGen(rawPrompt: string): string {
   return cleaned.trim();
 }
 
-// Parse aspect ratio and get dimensions
-function getDimensionsFromFormat(format: string): { width: number; height: number } {
-  const formats: Record<string, { width: number; height: number }> = {
-    "9:16": { width: 1080, height: 1920 },
-    "1:1": { width: 1080, height: 1080 },
-    "16:9": { width: 1920, height: 1080 },
+// Parse format string and get dimensions
+function parseOutputFormat(format: string): { width: number; height: number; aspectRatio: string } {
+  // Handle direct dimension formats like "1080x1920", "1024x1536"
+  const dimMatch = format.match(/^(\d+)x(\d+)$/);
+  if (dimMatch) {
+    const width = parseInt(dimMatch[1], 10);
+    const height = parseInt(dimMatch[2], 10);
+    // Derive aspect ratio
+    const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+    const divisor = gcd(width, height);
+    const aspectRatio = `${width / divisor}:${height / divisor}`;
+    return { width, height, aspectRatio };
+  }
+  
+  // Handle ratio formats like "9:16", "1:1", "16:9"
+  const ratioFormats: Record<string, { width: number; height: number; aspectRatio: string }> = {
+    "9:16": { width: 1080, height: 1920, aspectRatio: "9:16" },
+    "1:1": { width: 1080, height: 1080, aspectRatio: "1:1" },
+    "16:9": { width: 1920, height: 1080, aspectRatio: "16:9" },
   };
-  return formats[format] || formats["9:16"];
-}
-
-// Extract aspect ratio from prompt (legacy; prompt no longer controls format)
-function extractAspectRatio(prompt: string): string {
-  const match = prompt.match(/Aspect ratio:\s*(\d+:\d+)/i);
-  return match ? match[1] : "9:16";
+  
+  return ratioFormats[format] || { width: 1080, height: 1920, aspectRatio: "9:16" };
 }
 
 // Parse PNG dimensions from base64 data URL
@@ -98,12 +106,11 @@ serve(async (req) => {
     console.log("AI Provider:", aiProvider || "gemini");
     console.log("AI Model:", aiModel || "google/gemini-2.5-flash-image-preview");
 
-    // FORCE format ONLY from request (prompt never overrides)
-    const format = typeof outputFormat === "string" && outputFormat.trim() ? outputFormat.trim() : "9:16";
-    const dimensions = getDimensionsFromFormat(format);
+    // Parse format from request (accepts "1080x1920" or "9:16" style)
+    const format = typeof outputFormat === "string" && outputFormat.trim() ? outputFormat.trim() : "1080x1920";
+    const { width, height, aspectRatio } = parseOutputFormat(format);
 
-    console.log("Forcing dimensions:", dimensions.width, "x", dimensions.height);
-    console.log("Forcing aspect ratio:", format);
+    console.log("Parsed format:", format, "->", width, "x", height, "aspect:", aspectRatio);
 
     // Clean the prompt for image generation (remove HTML/noise)
     const cleanedPrompt = cleanPromptForImageGen(prompt);
@@ -122,13 +129,8 @@ serve(async (req) => {
 
       console.log("Using OpenAI gpt-image-1 for generation...");
 
-      // Map format to OpenAI size
-      const sizeMap: Record<string, string> = {
-        "9:16": "1024x1536",
-        "1:1": "1024x1024",
-        "16:9": "1536x1024",
-      };
-      const openaiSize = sizeMap[format] || "1024x1536";
+      // Use dimensions directly - format is already WxH
+      const openaiSize = `${width}x${height}`;
 
       const openaiResponse = await fetch("https://api.openai.com/v1/images/generations", {
         method: "POST",
@@ -235,10 +237,10 @@ serve(async (req) => {
           modalities: ["image", "text"],
           generation_config: {
             image_format: "png",
-            aspect_ratio: format,
+            aspect_ratio: aspectRatio,
             image_size: {
-              width: dimensions.width,
-              height: dimensions.height
+              width: width,
+              height: height
             }
           }
         }),
@@ -280,7 +282,7 @@ serve(async (req) => {
       const dims = getPngDimensionsFromDataUrl(imageData);
       if (dims) {
         console.log("Generated image dimensions:", dims.width, "x", dims.height);
-        const shouldBeVertical = format === "9:16";
+        const shouldBeVertical = height > width;
         if (shouldBeVertical && dims.width >= dims.height) {
           console.warn("Image came back non-vertical; will use first result anyway");
         }
@@ -323,8 +325,9 @@ serve(async (req) => {
       JSON.stringify({ 
         thumbnail_url: urlData.publicUrl,
         message: "Thumbnail generated successfully",
-        dimensions: dimensions,
-        format: format
+        dimensions: { width, height },
+        format: format,
+        aspectRatio: aspectRatio
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
