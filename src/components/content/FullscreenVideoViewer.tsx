@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { HLSVideoPlayer, HLSVideoPlayerRef, getBunnyThumbnail } from '@/components/video/HLSVideoPlayer';
+import { useGlobalMute } from '@/contexts/VideoPlayerContext';
 
 interface VideoItem {
   id: string;
@@ -79,8 +80,8 @@ export function FullscreenVideoViewer({
 }: FullscreenVideoViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [currentVariation, setCurrentVariation] = useState(0);
-  // Start with audio OFF, user must interact to enable
-  const [isMuted, setIsMuted] = useState(true);
+  // Use global mute state
+  const { isGlobalMuted, setGlobalMuted } = useGlobalMute();
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [showAudioHint, setShowAudioHint] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -93,26 +94,26 @@ export function FullscreenVideoViewer({
   const touchStartX = useRef(0);
   const viewTrackedRef = useRef<Set<string>>(new Set());
 
-  // Toggle mute using HLS player ref
+  // Toggle mute using global state
   const toggleMute = useCallback(() => {
-    const newMuted = !isMuted;
-    setIsMuted(newMuted);
+    const newMuted = !isGlobalMuted;
+    setGlobalMuted(newMuted);
     setShowAudioHint(false);
     if (!audioUnlocked) {
       setAudioUnlocked(true);
     }
     playerRef.current?.setMuted(newMuted);
-  }, [isMuted, audioUnlocked]);
+  }, [isGlobalMuted, setGlobalMuted, audioUnlocked]);
 
   // Unlock audio on first user interaction
   const unlockAudio = useCallback(() => {
     if (!audioUnlocked) {
       setAudioUnlocked(true);
-      setIsMuted(false);
+      setGlobalMuted(false);
       setShowAudioHint(false);
       playerRef.current?.setMuted(false);
     }
-  }, [audioUnlocked]);
+  }, [audioUnlocked, setGlobalMuted]);
 
   const currentVideo = videos[currentIndex];
   const canManageCurrent = !!currentVideo && (canManageVideo ? canManageVideo(currentVideo) : !!isOwner);
@@ -127,9 +128,9 @@ export function FullscreenVideoViewer({
   // Sync mute state when video changes
   useEffect(() => {
     if (playerRef.current) {
-      playerRef.current.setMuted(isMuted);
+      playerRef.current.setMuted(isGlobalMuted);
     }
-  }, [currentIndex, currentVariation, isMuted]);
+  }, [currentIndex, currentVariation, isGlobalMuted]);
 
   // Track view after 3 seconds
   useEffect(() => {
@@ -312,7 +313,7 @@ export function FullscreenVideoViewer({
 
   const displayCaption = currentVideo.caption || currentVideo.title;
   const shouldTruncateCaption = displayCaption.length > 80;
-  const effectiveMuted = isMuted || !audioUnlocked;
+  const effectiveMuted = isGlobalMuted || !audioUnlocked;
 
   return (
     <div 
@@ -350,7 +351,7 @@ export function FullscreenVideoViewer({
               src={currentVideoUrl}
               poster={thumbnailUrl || undefined}
               autoPlay={true}
-              muted={isMuted}
+              muted={isGlobalMuted}
               loop={true}
               aspectRatio="auto"
               className="w-full h-full"
@@ -399,7 +400,7 @@ export function FullscreenVideoViewer({
               data-no-swipe="true"
               className="p-2 text-white/90 hover:text-white transition-colors"
             >
-              {isMuted ? <VolumeX className="h-6 w-6 drop-shadow-lg" /> : <Volume2 className="h-6 w-6 drop-shadow-lg" />}
+              {isGlobalMuted ? <VolumeX className="h-6 w-6 drop-shadow-lg" /> : <Volume2 className="h-6 w-6 drop-shadow-lg" />}
             </button>
           )}
 

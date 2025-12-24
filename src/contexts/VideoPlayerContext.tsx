@@ -5,12 +5,17 @@ interface VideoPlayerContextType {
   playVideo: (id: string) => void;
   stopVideo: (id: string) => void;
   stopAll: () => void;
+  // Global mute state
+  isGlobalMuted: boolean;
+  setGlobalMuted: (muted: boolean) => void;
+  toggleGlobalMute: () => void;
 }
 
 const VideoPlayerContext = createContext<VideoPlayerContextType | undefined>(undefined);
 
 export function VideoPlayerProvider({ children }: { children: ReactNode }) {
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
+  const [isGlobalMuted, setIsGlobalMuted] = useState(true);
 
   const playVideo = useCallback((id: string) => {
     setCurrentPlayingId(id);
@@ -24,8 +29,24 @@ export function VideoPlayerProvider({ children }: { children: ReactNode }) {
     setCurrentPlayingId(null);
   }, []);
 
+  const setGlobalMuted = useCallback((muted: boolean) => {
+    setIsGlobalMuted(muted);
+  }, []);
+
+  const toggleGlobalMute = useCallback(() => {
+    setIsGlobalMuted(prev => !prev);
+  }, []);
+
   return (
-    <VideoPlayerContext.Provider value={{ currentPlayingId, playVideo, stopVideo, stopAll }}>
+    <VideoPlayerContext.Provider value={{ 
+      currentPlayingId, 
+      playVideo, 
+      stopVideo, 
+      stopAll,
+      isGlobalMuted,
+      setGlobalMuted,
+      toggleGlobalMute
+    }}>
       {children}
     </VideoPlayerContext.Provider>
   );
@@ -54,4 +75,10 @@ export function useVideoPlayback(videoId: string) {
   }, [videoId, stopVideo]);
   
   return { isPlaying, play, stop };
+}
+
+// Hook for global mute state
+export function useGlobalMute() {
+  const { isGlobalMuted, setGlobalMuted, toggleGlobalMute } = useVideoPlayer();
+  return { isGlobalMuted, setGlobalMuted, toggleGlobalMute };
 }
