@@ -164,7 +164,9 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     is_published: false,
     editor_guidelines: "",
     strategist_guidelines: "",
-    trafficker_guidelines: ""
+    trafficker_guidelines: "",
+    designer_guidelines: "",
+    admin_guidelines: ""
   });
 
   // Product data for script generation
@@ -219,7 +221,9 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         is_published: (content as any).is_published || false,
         editor_guidelines: (content as any).editor_guidelines || "",
         strategist_guidelines: (content as any).strategist_guidelines || "",
-        trafficker_guidelines: (content as any).trafficker_guidelines || ""
+        trafficker_guidelines: (content as any).trafficker_guidelines || "",
+        designer_guidelines: (content as any).designer_guidelines || "",
+        admin_guidelines: (content as any).admin_guidelines || ""
       });
       setCurrentStatus(content.status);
       fetchOptions();
@@ -420,7 +424,9 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
           is_published: formData.is_published,
           editor_guidelines: formData.editor_guidelines || null,
           strategist_guidelines: formData.strategist_guidelines || null,
-          trafficker_guidelines: formData.trafficker_guidelines || null
+          trafficker_guidelines: formData.trafficker_guidelines || null,
+          designer_guidelines: formData.designer_guidelines || null,
+          admin_guidelines: formData.admin_guidelines || null
         };
 
         if (formData.creator_id && !content.creator_id) {
@@ -1012,6 +1018,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       ...(generatedContent.editor_guidelines ? { editor_guidelines: generatedContent.editor_guidelines } : {}),
                       ...(generatedContent.strategist_guidelines ? { strategist_guidelines: generatedContent.strategist_guidelines } : {}),
                       ...(generatedContent.trafficker_guidelines ? { trafficker_guidelines: generatedContent.trafficker_guidelines } : {}),
+                      ...(generatedContent.designer_guidelines ? { designer_guidelines: generatedContent.designer_guidelines } : {}),
+                      ...(generatedContent.admin_guidelines ? { admin_guidelines: generatedContent.admin_guidelines } : {}),
                     }));
                     setEditMode(true);
                     toast({
@@ -1123,7 +1131,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             {/* Pautas para el Editor */}
             <div className="space-y-3 pt-6 border-t">
               <h4 className="font-medium flex items-center gap-2">
-                <Clipboard className="h-4 w-4 text-blue-500" /> Pautas para el Editor
+                <Clipboard className="h-4 w-4 text-blue-500" /> 🎬 Bloque Editor
               </h4>
               {editMode && canEditVideoTab ? (
                 <RichTextEditor
@@ -1147,7 +1155,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             {/* Pautas para el Estratega */}
             <div className="space-y-3 pt-6 border-t">
               <h4 className="font-medium flex items-center gap-2">
-                <Target className="h-4 w-4 text-purple-500" /> Pautas para el Estratega
+                <Target className="h-4 w-4 text-purple-500" /> 🧠 Bloque Estratega
               </h4>
               {editMode && canEditVideoTab ? (
                 <RichTextEditor
@@ -1171,7 +1179,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             {/* Pautas para el Trafficker */}
             <div className="space-y-3 pt-6 border-t">
               <h4 className="font-medium flex items-center gap-2">
-                <Megaphone className="h-4 w-4 text-green-500" /> Pautas para el Trafficker
+                <Megaphone className="h-4 w-4 text-green-500" /> 💰 Bloque Trafficker
               </h4>
               {editMode && canEditVideoTab ? (
                 <RichTextEditor
@@ -1188,6 +1196,54 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               ) : (
                 <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
                   <p className="text-sm text-muted-foreground italic">Sin pautas para el trafficker</p>
+                </div>
+              )}
+            </div>
+
+            {/* Pautas para el Diseñador */}
+            <div className="space-y-3 pt-6 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <Image className="h-4 w-4 text-pink-500" /> 🎨 Bloque Diseñador
+              </h4>
+              {editMode && canEditVideoTab ? (
+                <RichTextEditor
+                  content={formData.designer_guidelines || ''}
+                  onChange={(html) => setFormData({ ...formData, designer_guidelines: html })}
+                  placeholder="Lineamiento gráfico, look & feel, elementos visuales, branding, etc."
+                  className="min-h-[150px]"
+                />
+              ) : formData.designer_guidelines || (content as any).designer_guidelines ? (
+                <RichTextViewer 
+                  content={formData.designer_guidelines || (content as any).designer_guidelines} 
+                  className="min-h-[100px] max-h-[300px] overflow-y-auto"
+                />
+              ) : (
+                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
+                  <p className="text-sm text-muted-foreground italic">Sin pautas para el diseñador</p>
+                </div>
+              )}
+            </div>
+
+            {/* Pautas para Admin/PM */}
+            <div className="space-y-3 pt-6 border-t">
+              <h4 className="font-medium flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-orange-500" /> 📋 Bloque Admin / PM
+              </h4>
+              {editMode && canEditVideoTab ? (
+                <RichTextEditor
+                  content={formData.admin_guidelines || ''}
+                  onChange={(html) => setFormData({ ...formData, admin_guidelines: html })}
+                  placeholder="Cronograma, responsables, entregables, checklist de revisión, etc."
+                  className="min-h-[150px]"
+                />
+              ) : formData.admin_guidelines || (content as any).admin_guidelines ? (
+                <RichTextViewer 
+                  content={formData.admin_guidelines || (content as any).admin_guidelines} 
+                  className="min-h-[100px] max-h-[300px] overflow-y-auto"
+                />
+              ) : (
+                <div className="min-h-[100px] rounded-md border bg-muted/30 flex items-center justify-center">
+                  <p className="text-sm text-muted-foreground italic">Sin pautas para admin/PM</p>
                 </div>
               )}
             </div>

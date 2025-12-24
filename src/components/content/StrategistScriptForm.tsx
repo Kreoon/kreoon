@@ -32,6 +32,8 @@ interface GeneratedContent {
   editor_guidelines?: string;
   strategist_guidelines?: string;
   trafficker_guidelines?: string;
+  designer_guidelines?: string;
+  admin_guidelines?: string;
 }
 
 interface StrategistScriptFormProps {
@@ -66,7 +68,7 @@ interface ScriptFormData {
 }
 
 interface GenerationStep {
-  key: "script" | "editor" | "strategist" | "trafficker";
+  key: "script" | "editor" | "strategist" | "trafficker" | "designer" | "admin";
   label: string;
   status: "pending" | "generating" | "done" | "error";
 }
@@ -235,10 +237,12 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
   const [docsLoaded, setDocsLoaded] = useState(false);
 
   const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([
-    { key: "script", label: "Guión", status: "pending" },
-    { key: "editor", label: "Pautas Editor", status: "pending" },
-    { key: "strategist", label: "Pautas Estratega", status: "pending" },
-    { key: "trafficker", label: "Pautas Trafficker", status: "pending" },
+    { key: "script", label: "🧍‍♂️ Bloque Creador (Guión)", status: "pending" },
+    { key: "editor", label: "🎬 Bloque Editor", status: "pending" },
+    { key: "trafficker", label: "💰 Bloque Trafficker", status: "pending" },
+    { key: "strategist", label: "🧠 Bloque Estratega", status: "pending" },
+    { key: "designer", label: "🎨 Bloque Diseñador", status: "pending" },
+    { key: "admin", label: "📋 Bloque Admin/PM", status: "pending" },
   ]);
 
   const [formData, setFormData] = useState<ScriptFormData>({
@@ -500,10 +504,12 @@ Responde SOLO en formato JSON con esta estructura exacta:
 
   const resetSteps = () => {
     setGenerationSteps([
-      { key: "script", label: "Guión", status: "pending" },
-      { key: "editor", label: "Pautas Editor", status: "pending" },
-      { key: "strategist", label: "Pautas Estratega", status: "pending" },
-      { key: "trafficker", label: "Pautas Trafficker", status: "pending" },
+      { key: "script", label: "🧍‍♂️ Bloque Creador (Guión)", status: "pending" },
+      { key: "editor", label: "🎬 Bloque Editor", status: "pending" },
+      { key: "trafficker", label: "💰 Bloque Trafficker", status: "pending" },
+      { key: "strategist", label: "🧠 Bloque Estratega", status: "pending" },
+      { key: "designer", label: "🎨 Bloque Diseñador", status: "pending" },
+      { key: "admin", label: "📋 Bloque Admin/PM", status: "pending" },
     ]);
   };
 
@@ -555,7 +561,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
   };
 
   const generateContent = async (
-    type: "script" | "editor" | "strategist" | "trafficker",
+    type: "script" | "editor" | "strategist" | "trafficker" | "designer" | "admin",
     customPrompt: string,
     previousScript?: string
   ): Promise<string> => {
@@ -620,6 +626,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       editor_guidelines: "",
       strategist_guidelines: "",
       trafficker_guidelines: "",
+      designer_guidelines: "",
+      admin_guidelines: "",
     };
 
     const emitProgress = (patch: Partial<GeneratedContent>) => {
@@ -628,12 +636,14 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         editor: patch.editor_guidelines?.length,
         strategist: patch.strategist_guidelines?.length,
         trafficker: patch.trafficker_guidelines?.length,
+        designer: patch.designer_guidelines?.length,
+        admin: patch.admin_guidelines?.length,
       });
       onScriptGenerated({ ...generatedContent, ...patch });
     };
 
     try {
-      // Step 1: Generate Script
+      // Step 1: Generate Script (Bloque Creador)
       updateStepStatus("script", "generating");
       generatedContent.script = await generateContent("script", formData.script_prompt);
       updateStepStatus("script", "done");
@@ -645,17 +655,29 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       updateStepStatus("editor", "done");
       emitProgress({ editor_guidelines: generatedContent.editor_guidelines });
 
-      // Step 3: Generate Strategist Guidelines
+      // Step 3: Generate Trafficker Guidelines
+      updateStepStatus("trafficker", "generating");
+      generatedContent.trafficker_guidelines = await generateContent("trafficker", formData.trafficker_prompt, generatedContent.script);
+      updateStepStatus("trafficker", "done");
+      emitProgress({ trafficker_guidelines: generatedContent.trafficker_guidelines });
+
+      // Step 4: Generate Strategist Guidelines
       updateStepStatus("strategist", "generating");
       generatedContent.strategist_guidelines = await generateContent("strategist", formData.strategist_prompt, generatedContent.script);
       updateStepStatus("strategist", "done");
       emitProgress({ strategist_guidelines: generatedContent.strategist_guidelines });
 
-      // Step 4: Generate Trafficker Guidelines
-      updateStepStatus("trafficker", "generating");
-      generatedContent.trafficker_guidelines = await generateContent("trafficker", formData.trafficker_prompt, generatedContent.script);
-      updateStepStatus("trafficker", "done");
-      emitProgress({ trafficker_guidelines: generatedContent.trafficker_guidelines });
+      // Step 5: Generate Designer Guidelines
+      updateStepStatus("designer", "generating");
+      generatedContent.designer_guidelines = await generateContent("designer", "Genera pautas de diseño visual basadas en el guión", generatedContent.script);
+      updateStepStatus("designer", "done");
+      emitProgress({ designer_guidelines: generatedContent.designer_guidelines });
+
+      // Step 6: Generate Admin/PM Guidelines
+      updateStepStatus("admin", "generating");
+      generatedContent.admin_guidelines = await generateContent("admin", "Genera el cronograma y checklist de ejecución basado en el guión", generatedContent.script);
+      updateStepStatus("admin", "done");
+      emitProgress({ admin_guidelines: generatedContent.admin_guidelines });
 
       toast({
         title: "Contenido generado exitosamente",
