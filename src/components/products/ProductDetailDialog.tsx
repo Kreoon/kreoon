@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RichTextEditor, RichTextViewer } from "@/components/ui/rich-text-editor";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { ProductDocumentUploader } from "./ProductDocumentUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { 
-  Package, FileText, Users, Target, Save, ExternalLink, 
-  FolderOpen, File, Plus, X, Sparkles
+  Package, FileText, Users, Target, Save, 
+  File, FolderOpen, Plus, X, Sparkles
 } from "lucide-react";
 
 interface Product {
@@ -26,6 +27,9 @@ interface Product {
   brief_url: string | null;
   onboarding_url: string | null;
   research_url: string | null;
+  brief_file_url: string | null;
+  onboarding_file_url: string | null;
+  research_file_url: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -60,6 +64,9 @@ export function ProductDetailDialog({
     brief_url: "",
     onboarding_url: "",
     research_url: "",
+    brief_file_url: "",
+    onboarding_file_url: "",
+    research_file_url: "",
   });
 
   const isNew = !product;
@@ -76,6 +83,9 @@ export function ProductDetailDialog({
         brief_url: product.brief_url || "",
         onboarding_url: product.onboarding_url || "",
         research_url: product.research_url || "",
+        brief_file_url: product.brief_file_url || "",
+        onboarding_file_url: product.onboarding_file_url || "",
+        research_file_url: product.research_file_url || "",
       });
     } else {
       setFormData({
@@ -88,6 +98,9 @@ export function ProductDetailDialog({
         brief_url: "",
         onboarding_url: "",
         research_url: "",
+        brief_file_url: "",
+        onboarding_file_url: "",
+        research_file_url: "",
       });
     }
   }, [product, open]);
@@ -116,6 +129,9 @@ export function ProductDetailDialog({
         brief_url: formData.brief_url || null,
         onboarding_url: formData.onboarding_url || null,
         research_url: formData.research_url || null,
+        brief_file_url: formData.brief_file_url || null,
+        onboarding_file_url: formData.onboarding_file_url || null,
+        research_file_url: formData.research_file_url || null,
         client_id: targetClientId,
       };
 
@@ -277,71 +293,49 @@ export function ProductDetailDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="files" className="space-y-4 mt-4">
+          <TabsContent value="files" className="space-y-6 mt-4">
             <p className="text-sm text-muted-foreground">
-              Agrega enlaces a los documentos relacionados con este producto
+              Sube documentos directamente o agrega enlaces de Google Drive
             </p>
 
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <File className="h-4 w-4" /> Brief / Onboarding
-              </Label>
-              <Input
-                value={formData.brief_url}
-                onChange={(e) => setFormData({ ...formData, brief_url: e.target.value })}
-                placeholder="https://drive.google.com/..."
-                type="url"
-              />
-            </div>
+            <ProductDocumentUploader
+              label="Brief / Onboarding"
+              icon={<File className="h-4 w-4" />}
+              fileUrl={formData.brief_file_url}
+              driveUrl={formData.brief_url}
+              productId={product?.id}
+              productName={formData.name}
+              documentType="brief"
+              onFileUrlChange={(url) => setFormData({ ...formData, brief_file_url: url })}
+              onDriveUrlChange={(url) => setFormData({ ...formData, brief_url: url })}
+              disabled={!isAdmin}
+            />
 
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <FolderOpen className="h-4 w-4" /> Documentos de Onboarding
-              </Label>
-              <Input
-                value={formData.onboarding_url}
-                onChange={(e) => setFormData({ ...formData, onboarding_url: e.target.value })}
-                placeholder="https://drive.google.com/..."
-                type="url"
-              />
-            </div>
+            <ProductDocumentUploader
+              label="Documentos de Onboarding"
+              icon={<FolderOpen className="h-4 w-4" />}
+              fileUrl={formData.onboarding_file_url}
+              driveUrl={formData.onboarding_url}
+              productId={product?.id}
+              productName={formData.name}
+              documentType="onboarding"
+              onFileUrlChange={(url) => setFormData({ ...formData, onboarding_file_url: url })}
+              onDriveUrlChange={(url) => setFormData({ ...formData, onboarding_url: url })}
+              disabled={!isAdmin}
+            />
 
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <FileText className="h-4 w-4" /> Investigación / Recursos
-              </Label>
-              <Input
-                value={formData.research_url}
-                onChange={(e) => setFormData({ ...formData, research_url: e.target.value })}
-                placeholder="https://drive.google.com/..."
-                type="url"
-              />
-            </div>
-
-            {/* Preview links */}
-            <div className="pt-4 border-t space-y-2">
-              <h4 className="font-medium text-sm">Enlaces rápidos</h4>
-              <div className="grid gap-2">
-                {formData.brief_url && (
-                  <a href={formData.brief_url} target="_blank" rel="noopener noreferrer"
-                     className="flex items-center gap-2 text-sm text-primary hover:underline">
-                    <ExternalLink className="h-3 w-3" /> Abrir Brief
-                  </a>
-                )}
-                {formData.onboarding_url && (
-                  <a href={formData.onboarding_url} target="_blank" rel="noopener noreferrer"
-                     className="flex items-center gap-2 text-sm text-primary hover:underline">
-                    <ExternalLink className="h-3 w-3" /> Abrir Onboarding
-                  </a>
-                )}
-                {formData.research_url && (
-                  <a href={formData.research_url} target="_blank" rel="noopener noreferrer"
-                     className="flex items-center gap-2 text-sm text-primary hover:underline">
-                    <ExternalLink className="h-3 w-3" /> Abrir Investigación
-                  </a>
-                )}
-              </div>
-            </div>
+            <ProductDocumentUploader
+              label="Investigación / Recursos"
+              icon={<FileText className="h-4 w-4" />}
+              fileUrl={formData.research_file_url}
+              driveUrl={formData.research_url}
+              productId={product?.id}
+              productName={formData.name}
+              documentType="research"
+              onFileUrlChange={(url) => setFormData({ ...formData, research_file_url: url })}
+              onDriveUrlChange={(url) => setFormData({ ...formData, research_url: url })}
+              disabled={!isAdmin}
+            />
           </TabsContent>
         </Tabs>
 

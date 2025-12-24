@@ -309,6 +309,29 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
     }
   };
 
+  // Fetch content from uploaded file or fallback to Drive URL
+  const fetchDocumentContent = async (fileUrl: string | undefined, driveUrl: string | undefined): Promise<{ content: string; warning?: string; source?: string }> => {
+    // Priority: uploaded file > drive URL
+    if (fileUrl) {
+      try {
+        const response = await fetch(fileUrl);
+        if (response.ok) {
+          const text = await response.text();
+          return { content: text, source: "file" };
+        }
+      } catch (error) {
+        console.error("Error fetching uploaded file:", error);
+      }
+    }
+    
+    // Fallback to Drive URL
+    if (driveUrl) {
+      return { ...await fetchDocument(driveUrl), source: "drive" };
+    }
+    
+    return { content: "" };
+  };
+
   // Load all product documents
   const loadProductDocuments = async () => {
     if (!product) return;
@@ -317,16 +340,17 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
     const warnings: string[] = [];
     
     try {
+      // Check for uploaded files first, then fall back to Drive URLs
       const [briefResult, onboardingResult, researchResult] = await Promise.all([
-        product.brief_url ? fetchDocument(product.brief_url) : Promise.resolve({ content: "", warning: undefined }),
-        product.onboarding_url ? fetchDocument(product.onboarding_url) : Promise.resolve({ content: "", warning: undefined }),
-        product.research_url ? fetchDocument(product.research_url) : Promise.resolve({ content: "", warning: undefined }),
+        fetchDocumentContent((product as any).brief_file_url, product.brief_url || undefined),
+        fetchDocumentContent((product as any).onboarding_file_url, product.onboarding_url || undefined),
+        fetchDocumentContent((product as any).research_file_url, product.research_url || undefined),
       ]);
 
       // Collect warnings
-      if (product.brief_url && briefResult.warning) warnings.push(`Brief: ${briefResult.warning}`);
-      if (product.onboarding_url && onboardingResult.warning) warnings.push(`Onboarding: ${onboardingResult.warning}`);
-      if (product.research_url && researchResult.warning) warnings.push(`Research: ${researchResult.warning}`);
+      if (briefResult.warning) warnings.push(`Brief: ${briefResult.warning}`);
+      if (onboardingResult.warning) warnings.push(`Onboarding: ${onboardingResult.warning}`);
+      if (researchResult.warning) warnings.push(`Research: ${researchResult.warning}`);
 
       setDocumentContent({
         brief: briefResult.content,
@@ -336,18 +360,20 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated }: 
       setDocsLoaded(true);
 
       const loadedCount = [briefResult.content, onboardingResult.content, researchResult.content].filter(c => c.length > 0).length;
-      const totalDocs = [product.brief_url, product.onboarding_url, product.research_url].filter(Boolean).length;
+      const sources = [briefResult, onboardingResult, researchResult]
+        .filter(r => r.content)
+        .map(r => r.source === "file" ? "archivo" : "Drive");
       
       if (warnings.length > 0) {
         toast({
-          title: `${loadedCount}/${totalDocs} documentos cargados`,
+          title: `${loadedCount} documentos cargados`,
           description: warnings.join(". "),
           variant: loadedCount === 0 ? "destructive" : "default",
         });
-      } else {
+      } else if (loadedCount > 0) {
         toast({
           title: "Documentos cargados",
-          description: `Se cargaron ${loadedCount} documento(s) exitosamente`,
+          description: `Se cargaron ${loadedCount} documento(s) desde ${[...new Set(sources)].join(" y ")}`,
         });
       }
     } catch (error) {
