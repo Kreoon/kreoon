@@ -219,41 +219,93 @@ Tu trabajo es crear guiones que:
 - Estén optimizados para el país objetivo (usa expresiones locales cuando sea apropiado)
 - Sean fáciles de memorizar y grabar
 
-Formato de respuesta:
-- Usa formato Markdown
-- Separa claramente las secciones: HOOKS, DESARROLLO, CIERRE/CTA
-- Incluye indicaciones de tono/emoción entre corchetes [emocionado], [serio], etc.
-- Indica pausas cuando sean necesarias
+FORMATO DE RESPUESTA (CRÍTICO):
+- Devuelve **SOLO HTML** (sin Markdown, sin backticks, sin texto fuera de etiquetas)
+- Usa HTML semántico: <h2>, <h3>, <h4>, <p>, <ul>, <li>, <strong>, <em>
+- Las indicaciones de tono van entre corchetes y en cursiva: <p><em>[Serio, honesto, directo]</em></p>
+- El texto hablado va entre comillas dentro de <p>"..."</p>
 
 ${generation_type === "editor" ? `
-IMPORTANTE: Estás generando PAUTAS PARA EL EDITOR DE VIDEO. Incluye:
-- Estilo visual sugerido
-- Ritmo de edición (cortes rápidos, transiciones suaves, etc.)
-- Transiciones específicas recomendadas
-- Efectos de texto y gráficos
-- Música y efectos de sonido sugeridos
-- Duración ideal de cada sección
-- Referencias visuales si aplica` : ""}
+IMPORTANTE: Estás generando PAUTAS PARA EL EDITOR DE VIDEO.
+Devuelve HTML con esta estructura mínima (puedes ampliar con listas):
+<h2>🎬 Pautas de Edición</h2>
+<h3>📝 Notas Generales</h3>
+<ul>
+  <li><strong>Ritmo:</strong> ...</li>
+  <li><strong>Duración:</strong> ...</li>
+  <li><strong>Estilo de corte:</strong> ...</li>
+</ul>
+<h3>🎥 Storyboard</h3>
+<h4>Escena 1</h4>
+<ul>
+  <li><strong>Plano:</strong> ...</li>
+  <li><strong>Cámara:</strong> ...</li>
+  <li><strong>Visual:</strong> ...</li>
+  <li><strong>Emoción:</strong> ...</li>
+</ul>
+<h3>🎵 Música y Audio</h3>
+<p>...</p>
+<h3>✨ Efectos y Subtítulos</h3>
+<ul><li>...</li></ul>
+` : ""}
 
 ${generation_type === "strategist" ? `
-IMPORTANTE: Estás generando PAUTAS PARA EL ESTRATEGA. Incluye:
-- Mejor horario de publicación según la audiencia objetivo
-- Hashtags recomendados (específicos y de tendencia)
-- Caption sugerido para la publicación
-- Estrategia de engagement (preguntas, CTAs en comentarios)
-- Métricas clave a monitorear
-- Estrategia de respuesta a comentarios
-- Plataformas ideales para este contenido` : ""}
+IMPORTANTE: Estás generando PAUTAS PARA EL ESTRATEGA.
+Devuelve HTML con esta estructura mínima:
+<h2>🧠 Estrategia de Publicación</h2>
+<h3>📊 Análisis del Embudo</h3>
+<p><strong>Fase:</strong> ...</p>
+<p><strong>Objetivo:</strong> ...</p>
+<h3>🎯 Hipótesis y Testing</h3>
+<p>...</p>
+<h3>💡 Insight Principal</h3>
+<p><em>...</em></p>
+<h3>📅 Publicación</h3>
+<ul><li><strong>Mejor horario:</strong> ...</li><li><strong>Métrica clave:</strong> ...</li></ul>
+<h3>#️⃣ Hashtags</h3>
+<p>#hashtag1 #hashtag2 ...</p>
+<h3>📝 Caption Sugerido</h3>
+<p>...</p>
+<h3>💬 Estrategia de Engagement</h3>
+<ul><li>...</li></ul>
+` : ""}
 
 ${generation_type === "trafficker" ? `
-IMPORTANTE: Estás generando PAUTAS PARA EL TRAFFICKER (Publicidad pagada). Incluye:
-- Audiencias objetivo sugeridas (intereses, demografía, comportamiento)
-- Objetivos de campaña recomendados (awareness, conversión, leads)
-- Presupuesto sugerido según el objetivo
-- Formatos de anuncio ideales
-- Copy para anuncios (headline, descripción, CTA)
-- Duración sugerida de la campaña
-- Estrategia de remarketing si aplica` : ""}`;
+IMPORTANTE: Estás generando PAUTAS PARA EL TRAFFICKER (Publicidad pagada).
+Devuelve HTML con esta estructura mínima:
+<h2>💰 Pautas de Pauta Publicitaria</h2>
+<h3>🎯 Estrategia de Campaña</h3>
+<ul>
+  <li><strong>Ángulo:</strong> ...</li>
+  <li><strong>Objetivo:</strong> ...</li>
+  <li><strong>Formato:</strong> ...</li>
+</ul>
+<h3>👥 Segmentación</h3>
+<ul><li>Interés 1</li></ul>
+<h3>📢 CTA Principal</h3>
+<p><strong>"..."</strong></p>
+<h3>🔥 Variaciones de Anuncio</h3>
+<h4>Versión A</h4>
+<p><strong>Hook:</strong> "..."</p>
+<p><strong>Copy:</strong> ...</p>
+<h3>📊 KPIs y Presupuesto</h3>
+<ul><li><strong>CTR esperado:</strong> ...</li><li><strong>Presupuesto inicial:</strong> ...</li></ul>
+` : ""}
+
+${!generation_type || generation_type === "script" ? `
+IMPORTANTE: Estás generando EL GUIÓN.
+Devuelve HTML con esta estructura mínima:
+<h2>Guión para Redes Sociales</h2>
+<h3>🎯 HOOKS</h3>
+<p><em>[Indicación de tono]</em></p>
+<p>"..."</p>
+<h3>💬 DESARROLLO</h3>
+<p><em>[Indicación de tono]</em></p>
+<p>...</p>
+<h3>📢 CIERRE / CTA</h3>
+<p><em>[Indicación de tono]</em></p>
+<p>...</p>
+` : ""}`;
 
           result = await callAI(systemPrompt, prompt, ai_provider as AIProvider, ai_model);
 
