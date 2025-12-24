@@ -134,107 +134,153 @@ export function AIThumbnailGenerator({
   const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(null);
   const [step, setStep] = useState<"config" | "prompt" | "result">("config");
 
-  // INTELLIGENT SCRIPT PARSER - Extract structured data from script
-  const extractScriptInfo = () => {
+  // ========================================
+  // IMAGE CONTEXT BUILDER - Normalizes script data for thumbnail generation
+  // ========================================
+  const buildImageContext = () => {
     const script = scriptContext.script || "";
-    const cleanScript = script.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
     
-    // 1. Extract MAIN HOOK (first/strongest hook)
+    // STEP 1: Deep clean the script - remove ALL HTML, entities, and noise
+    const deepClean = (text: string): string => {
+      return text
+        .replace(/<[^>]*>/g, ' ')           // Remove HTML tags
+        .replace(/&nbsp;/g, ' ')            // Remove &nbsp;
+        .replace(/&[a-z]+;/gi, ' ')         // Remove other entities
+        .replace(/\[Tipo:[^\]]*\]/gi, '')   // Remove [Tipo: X] labels
+        .replace(/\[Hook[^\]]*\]/gi, '')    // Remove [Hook X] labels
+        .replace(/^(Hook\s*[A-C]|Opción\s*\d+)[:\s]*/gim, '') // Remove "Hook A:", "Opción 1:"
+        .replace(/✅|❌|⚠️/g, '')            // Remove checkmarks/warnings
+        .replace(/\s{2,}/g, ' ')            // Collapse whitespace
+        .trim();
+    };
+    
+    const cleanScript = deepClean(script);
+    
+    // STEP 2: Extract MAIN HOOK (the actual hook text, not labels)
     let mainHook = "";
-    const hooksSection = cleanScript.match(/🔥\s*HOOKS?[^🎥🎬]*([\s\S]*?)(?=🎥|🎬|GUION|$)/i);
-    if (hooksSection) {
-      const hookLines = hooksSection[1].split('\n').filter(line => {
-        const trimmed = line.trim();
-        return trimmed.length > 10 && !trimmed.startsWith('Hook') && !trimmed.match(/^\d+\./);
-      });
-      // Get the first substantial hook
-      mainHook = hookLines[0]?.replace(/^[-•*]\s*/, '').trim() || "";
+    
+    // Pattern 1: Look for hooks section with emojis
+    const hooksMatch = cleanScript.match(/🔥\s*HOOKS?\s*([\s\S]*?)(?=🎥|🎬|GUION|FORMATO|$)/i);
+    if (hooksMatch) {
+      const hooksText = hooksMatch[1];
+      // Find quoted content first (most reliable)
+      const quotedHooks = hooksText.match(/"([^"]{15,150})"/g);
+      if (quotedHooks && quotedHooks.length > 0) {
+        mainHook = quotedHooks[0].replace(/"/g, '').trim();
+      } else {
+        // Find lines that look like actual hooks (start with action words or emotional statements)
+        const hookLines = hooksText.split('\n')
+          .map(l => l.replace(/^[-•*\d.)\s]+/, '').trim())
+          .filter(l => l.length > 15 && l.length < 150)
+          .filter(l => !l.match(/^(hook|tipo|opción|variante)/i));
+        
+        if (hookLines.length > 0) {
+          mainHook = hookLines[0];
+        }
+      }
     }
-    // Fallback: try to find quoted hooks
+    
+    // Pattern 2: Fallback - any quoted sentence
     if (!mainHook) {
-      const quotedHook = cleanScript.match(/"([^"]{15,100})"/);
-      mainHook = quotedHook?.[1] || "";
+      const anyQuote = cleanScript.match(/"([^"]{15,150})"/);
+      if (anyQuote) mainHook = anyQuote[1];
     }
     
-    // 2. Extract DOMINANT EMOTION
-    let dominantEmotion = "frustration, curiosity";
-    const emotionPatterns = [
-      /emoci[óo]n(?:\s+dominante)?[:\s]+([^\n.]+)/i,
-      /transmitir[:\s]+([^\n.]+)/i,
-      /sentir[:\s]+([^\n.]+)/i,
-      /genera(?:r)?[:\s]+([^\n.]+)/i
+    // Pattern 3: Last resort - first substantial sentence
+    if (!mainHook && scriptContext.salesAngle) {
+      mainHook = deepClean(scriptContext.salesAngle).slice(0, 100);
+    }
+    
+    // STEP 3: Extract DOMINANT EMOTION (1-3 words max)
+    let dominantEmotion = "";
+    const emotionKeywords = [
+      { pattern: /frustrac/i, emotion: "frustración" },
+      { pattern: /dolor|sufr/i, emotion: "dolor" },
+      { pattern: /miedo|temo/i, emotion: "miedo" },
+      { pattern: /esperanza|ilusión/i, emotion: "esperanza" },
+      { pattern: /emocion/i, emotion: "emoción" },
+      { pattern: /curiosidad|intriga/i, emotion: "curiosidad" },
+      { pattern: /confianza|segur/i, emotion: "confianza" },
+      { pattern: /empat[íi]a|conexi/i, emotion: "empatía" },
+      { pattern: /sorpresa|asombr/i, emotion: "sorpresa" },
+      { pattern: /urgen/i, emotion: "urgencia" },
     ];
-    for (const pattern of emotionPatterns) {
-      const match = cleanScript.match(pattern);
-      if (match) {
-        dominantEmotion = match[1].replace(/<[^>]*>/g, '').trim().slice(0, 50);
-        break;
+    
+    // Check for explicit emotion mentions
+    const emotionMatch = cleanScript.match(/emoci[óo]n(?:\s+dominante)?[:\s]+([^\n,.]{3,30})/i);
+    if (emotionMatch) {
+      dominantEmotion = deepClean(emotionMatch[1]).slice(0, 30);
+    } else {
+      // Infer from keywords in script
+      const foundEmotions: string[] = [];
+      for (const { pattern, emotion } of emotionKeywords) {
+        if (pattern.test(cleanScript)) {
+          foundEmotions.push(emotion);
+          if (foundEmotions.length >= 2) break;
+        }
       }
+      dominantEmotion = foundEmotions.length > 0 ? foundEmotions.join(" + ") : "curiosidad";
     }
     
-    // 3. Extract KEY VISUAL SCENE from director's script
+    // STEP 4: Extract KEY VISUAL SCENE (one clear scene description)
     let keyVisualScene = "";
-    const scenePatterns = [
-      /🎬[^:]*:?\s*([\s\S]*?)(?=🎤|CTA|CIERRE|$)/i,
-      /ESCENA[^:]*:?\s*([^\n]+)/i,
-      /plano[^:]*:?\s*([^\n]+)/i,
-      /visual[^:]*:?\s*([^\n]+)/i
-    ];
-    for (const pattern of scenePatterns) {
-      const match = cleanScript.match(pattern);
-      if (match && match[1].trim().length > 20) {
-        // Get first meaningful line of the scene
-        const sceneLine = match[1].split('\n').find(l => l.trim().length > 20);
-        keyVisualScene = sceneLine?.replace(/^[-•*]\s*/, '').trim().slice(0, 150) || "";
-        break;
+    
+    // Look for director's format section
+    const directorMatch = cleanScript.match(/(?:🎬|FORMATO\s*DIRECTOR|GUION\s*DIRECTOR)\s*([\s\S]*?)(?=🎤|CTA|CIERRE|---|\n\n|$)/i);
+    if (directorMatch) {
+      const directorText = directorMatch[1];
+      // Find "visual" or "qué se ve" descriptions
+      const visualMatch = directorText.match(/(?:visual|qué\s*se\s*ve|plano)[:\s]*([^\n🎤]{20,200})/i);
+      if (visualMatch) {
+        keyVisualScene = deepClean(visualMatch[1]).slice(0, 150);
+      } else {
+        // Take first substantial line from director section
+        const firstLine = directorText.split('\n')
+          .map(l => deepClean(l))
+          .find(l => l.length > 25 && !l.match(/^(escena|bloque|\d+)/i));
+        if (firstLine) keyVisualScene = firstLine.slice(0, 150);
       }
     }
-    // Fallback: use first action description
+    
+    // Fallback: Create scene from context
     if (!keyVisualScene) {
-      const actionMatch = cleanScript.match(/(?:persona|creador|presentador)[^.]*(?:mirando|hablando|mostrando|señalando)[^.]+/i);
-      keyVisualScene = actionMatch?.[0]?.trim() || "Person looking at camera with engaged expression";
+      const hasProduct = productImage !== null;
+      const productName = scriptContext.productName || "el producto";
+      keyVisualScene = hasProduct 
+        ? `Persona mirando a cámara con expresión de ${dominantEmotion}, ${productName} visible sobre la mesa`
+        : `Persona mirando directamente a cámara con expresión de ${dominantEmotion}`;
     }
     
-    // 4. Extract VIDEO OBJECTIVE/INTENT
-    let videoObjective = contentType === 'ads' ? "Generate purchase intent" : "Build connection and engagement";
-    const objectivePatterns = [
-      /objetivo[:\s]+([^\n]+)/i,
-      /meta[:\s]+([^\n]+)/i,
-      /busca(?:mos)?[:\s]+([^\n]+)/i,
-      /prop[óo]sito[:\s]+([^\n]+)/i
-    ];
-    for (const pattern of objectivePatterns) {
-      const match = cleanScript.match(pattern);
-      if (match) {
-        videoObjective = match[1].trim().slice(0, 80);
-        break;
-      }
+    // STEP 5: Extract VIDEO OBJECTIVE (clear, single purpose)
+    let videoObjective = "";
+    
+    const objectiveMatch = cleanScript.match(/(?:objetivo|meta|propósito|intención)[:\s]+([^\n]{15,150})/i);
+    if (objectiveMatch) {
+      // Clean truncated text like "del video: Cambiar..."
+      let obj = objectiveMatch[1].replace(/^del\s*video[:\s]*/i, '').trim();
+      videoObjective = deepClean(obj).slice(0, 100);
+    } else {
+      // Infer from content type
+      videoObjective = contentType === 'ads' 
+        ? "Generar intención de compra y curiosidad por el producto"
+        : "Conectar emocionalmente y generar engagement";
     }
     
-    // 5. Extract TOPIC (what the video is about)
-    let topic = scriptContext.productName || "the product";
-    const topicPatterns = [
-      /trata sobre[:\s]+([^\n]+)/i,
-      /tema[:\s]+([^\n]+)/i,
-      /producto[:\s]+([^\n]+)/i,
-      /sobre[:\s]+([^\n]{10,60})/i
-    ];
-    for (const pattern of topicPatterns) {
-      const match = cleanScript.match(pattern);
-      if (match && !match[1].match(/\d+\s*segundos/)) {
-        topic = match[1].trim().slice(0, 60);
-        break;
-      }
-    }
-    // Use sales angle as fallback
-    if (topic === "the product" && scriptContext.salesAngle) {
-      topic = scriptContext.salesAngle.slice(0, 60);
+    // STEP 6: Determine TOPIC (what the video is about)
+    let topic = "";
+    if (scriptContext.productName) {
+      topic = deepClean(scriptContext.productName).slice(0, 60);
+    } else if (scriptContext.salesAngle) {
+      topic = deepClean(scriptContext.salesAngle).slice(0, 60);
+    } else {
+      topic = "el producto/servicio";
     }
     
+    // Return normalized, clean context
     return { 
-      mainHook, 
-      dominantEmotion, 
-      keyVisualScene, 
+      mainHook: mainHook || `Descubre ${topic}`,
+      dominantEmotion: dominantEmotion || "curiosidad",
+      keyVisualScene,
       videoObjective,
       topic 
     };
@@ -293,18 +339,12 @@ export function AIThumbnailGenerator({
   };
 
   const generatePrompt = () => {
-    const { mainHook, dominantEmotion, keyVisualScene, videoObjective, topic } = extractScriptInfo();
+    // Use the IMAGE CONTEXT BUILDER to get clean, normalized data
+    const { mainHook, dominantEmotion, keyVisualScene, videoObjective, topic } = buildImageContext();
+    
     const zone = TEXT_ZONES.find(z => z.value === textZone);
     const role = PRODUCT_ROLES.find(r => r.value === productRole);
     const visibility = PRODUCT_VISIBILITY.find(v => v.value === productVisibility);
-    
-    // Get resolution based on format
-    const resolutions: Record<string, { w: number; h: number }> = {
-      "9:16": { w: 1080, h: 1920 },
-      "1:1": { w: 1080, h: 1080 },
-      "16:9": { w: 1920, h: 1080 },
-    };
-    const res = resolutions[outputFormat] || resolutions["9:16"];
     
     // Validate and format text - auto-split if too long (max 5 words per line)
     let formattedText = thumbnailText.toUpperCase();
@@ -327,70 +367,63 @@ export function AIThumbnailGenerator({
       return '- Person is main focus (60-70% of frame)\n- Product is contextual (in background)';
     };
 
-    // BUILD INTELLIGENT PROMPT CONNECTED TO SCRIPT (CREATIVE ONLY; format is forced by backend)
+    // BUILD CLEAN PROMPT - Creative instructions only, no format specs (handled by backend)
     let prompt = `Create a social media thumbnail composed for a mobile-first experience.
 
 SCRIPT CONTEXT:
-
-SCRIPT CONTEXT:
-${mainHook ? `- Main hook from script: "${mainHook}"` : `- Topic: ${topic}`}
-- Core emotion to transmit: ${dominantEmotion}
+- Main hook: "${mainHook}"
+- Core emotion: ${dominantEmotion}
 - Video intent: ${videoObjective}
 - Content type: ${contentType === 'ads' ? 'paid social ad' : 'organic content'}
 
 CHARACTER:
 ${referenceImage ? `- Based on reference image provided
-- Maintain general physical traits, do not replicate exact identity` : `- Person representing target avatar: ${cleanAvatar}`}
-- Facial expression aligned with emotion: ${dominantEmotion}
-- Natural UGC look
-- Looking at camera or reacting to the situation described in the script
+- Maintain general physical traits, do not replicate exact identity` : `- Person representing: ${cleanAvatar}`}
+- Facial expression: ${dominantEmotion}
+- Natural UGC aesthetic
+- Looking at camera
 
 COMPOSITION:
 ${getProductComposition()}
-${keyVisualScene ? `- Scene inspired by this script moment: "${keyVisualScene}"` : '- Contextual background related to the topic'}
-- Background: contextual to the script (home office, workspace, daily environment)
+- Scene: "${keyVisualScene}"
+- Background: contextual environment (home office, workspace, daily setting)
 - Strong lighting on face
 - One clear focal point
 - Rule of thirds
 - Safe margins (10-15%)
 
 ${productImage ? `PRODUCT:
-- Use EXACT product image provided by user
+- Use EXACT product image provided
 - Role: ${role?.label} (${role?.description})
 - Visibility: ${visibility?.label}
 - Maintain original shape, colors and branding
 - ${showBrand ? 'Show brand/logo if visible' : 'Brand/logo can be partially obscured'}
-- Do NOT invent, modify or stylize the product` : ''}
+- Do NOT modify or stylize the product` : ''}
 
-${includeText && formattedText ? `TEXT OVERLAY (VERY IMPORTANT):
+${includeText && formattedText ? `TEXT OVERLAY:
 - Exact text: "${formattedText}"
 - Language: ${TEXT_LANGUAGES.find(l => l.value === textLanguage)?.label || 'Spanish'}
 - Bold heavy typography
-- Inside a solid or semi-transparent black text box
-- Text box centered horizontally
+- Inside solid or semi-transparent black text box
 - Position: ${zone?.label.toLowerCase()} safe area
-- Maintain 10-15% margin from all edges
-- Text must be fully visible and readable on mobile
-- Do NOT cut any letters` : `TEXT OVERLAY:
-- NONE
-- Do NOT add any text to the image`}
+- Centered horizontally
+- 10-15% margin from edges
+- Must be fully visible and readable on mobile` : `TEXT OVERLAY:
+- NONE - Do NOT add any text`}
 
 STYLE:
-- UGC style
+- UGC aesthetic
 - High contrast
-- Scroll-stopper aesthetic
+- Scroll-stopper composition
 - Realistic lighting
 - Professional but authentic
-- No stock photo look
 
 AVOID:
-- Any text or typography (unless specified above)
 - Cropped subjects
 - Visual clutter
-- Flyer or banner style
+- Stock photo look
 - Plain white backgrounds
-${productImage ? `- Generic mockups
-- Altered product colors or shapes` : ''}`;
+${productImage ? `- Altered product colors or shapes` : ''}`;
 
     setGeneratedPrompt(prompt);
     setIsPromptVisible(true);
