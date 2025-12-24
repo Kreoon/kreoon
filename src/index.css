@@ -724,3 +724,52 @@
     box-shadow: 0 0 50px 12px hsl(var(--primary) / 0.6);
   }
 }
+
+/* TikTok-style floating heart animation */
+@keyframes floating-heart {
+  0% {
+    opacity: 1;
+    transform: scale(0.5) translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-30px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) translateY(-80px);
+  }
+}
+
+.animate-floating-heart {
+  animation: floating-heart 1s ease-out forwards;
+}
+
+/* Scale in animation for play/pause icons */
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.6s ease-out forwards;
+}
+
+/* Hide scrollbar for TikTok feed */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
