@@ -299,14 +299,10 @@ export function AIThumbnailGenerator({
       return '- Person is main focus (60-70% of frame)\n- Product is contextual (in background)';
     };
 
-    // BUILD INTELLIGENT PROMPT CONNECTED TO SCRIPT
-    let prompt = `Create a vertical social media thumbnail based on the generated video script.
+    // BUILD INTELLIGENT PROMPT CONNECTED TO SCRIPT (CREATIVE ONLY; format is forced by backend)
+    let prompt = `Create a social media thumbnail composed for a mobile-first experience.
 
-FORMAT (MANDATORY):
-- Aspect ratio: ${outputFormat}
-- Resolution: ${res.w}x${res.h}
-- Orientation: ${outputFormat === "16:9" ? "Horizontal" : outputFormat === "1:1" ? "Square" : "Vertical"}
-- Mobile-first composition
+SCRIPT CONTEXT:
 
 SCRIPT CONTEXT:
 ${mainHook ? `- Main hook from script: "${mainHook}"` : `- Topic: ${topic}`}
@@ -360,7 +356,6 @@ STYLE:
 - No stock photo look
 
 AVOID:
-- Horizontal format
 - Any text or typography (unless specified above)
 - Cropped subjects
 - Visual clutter
