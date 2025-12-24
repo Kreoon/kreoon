@@ -494,6 +494,7 @@ export type Database = {
       }
       content: {
         Row: {
+          admin_guidelines: string | null
           approved_at: string | null
           approved_by: string | null
           bunny_embed_url: string | null
@@ -509,6 +510,7 @@ export type Database = {
           deadline: string | null
           delivered_at: string | null
           description: string | null
+          designer_guidelines: string | null
           drive_url: string | null
           editor_assigned_at: string | null
           editor_guidelines: string | null
@@ -549,6 +551,7 @@ export type Database = {
           views_count: number | null
         }
         Insert: {
+          admin_guidelines?: string | null
           approved_at?: string | null
           approved_by?: string | null
           bunny_embed_url?: string | null
@@ -564,6 +567,7 @@ export type Database = {
           deadline?: string | null
           delivered_at?: string | null
           description?: string | null
+          designer_guidelines?: string | null
           drive_url?: string | null
           editor_assigned_at?: string | null
           editor_guidelines?: string | null
@@ -604,6 +608,7 @@ export type Database = {
           views_count?: number | null
         }
         Update: {
+          admin_guidelines?: string | null
           approved_at?: string | null
           approved_by?: string | null
           bunny_embed_url?: string | null
@@ -619,6 +624,7 @@ export type Database = {
           deadline?: string | null
           delivered_at?: string | null
           description?: string | null
+          designer_guidelines?: string | null
           drive_url?: string | null
           editor_assigned_at?: string | null
           editor_guidelines?: string | null
