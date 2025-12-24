@@ -44,6 +44,12 @@ const TEXT_LANGUAGES = [
   { value: "pt", label: "Portugués" },
 ];
 
+const TEXT_ZONES = [
+  { value: "superior", label: "Superior", description: "15-35% desde arriba" },
+  { value: "centro", label: "Centro", description: "35-65% desde arriba" },
+  { value: "inferior", label: "Inferior", description: "65-85% desde arriba" },
+];
+
 export function AIThumbnailGenerator({ 
   contentId, 
   currentThumbnail, 
@@ -61,6 +67,8 @@ export function AIThumbnailGenerator({
   const [thumbnailText, setThumbnailText] = useState("");
   const [textLanguage, setTextLanguage] = useState("es");
   const [highlightStyle, setHighlightStyle] = useState("emocion");
+  const [textZone, setTextZone] = useState("superior");
+  const [forceSafeZone, setForceSafeZone] = useState(true);
   
   // Generation state
   const [generatedPrompt, setGeneratedPrompt] = useState("");
@@ -113,55 +121,67 @@ export function AIThumbnailGenerator({
   const generatePrompt = () => {
     const { hooks, emotion, topic } = extractScriptInfo();
     const highlight = HIGHLIGHT_OPTIONS.find(h => h.value === highlightStyle);
+    const zone = TEXT_ZONES.find(z => z.value === textZone);
     
-    let prompt = `Genera una miniatura vertical 9:16 para un video de redes sociales.
+    // Validate and format text - auto-split if too long
+    let formattedText = thumbnailText;
+    if (includeText && thumbnailText) {
+      const words = thumbnailText.trim().split(/\s+/);
+      if (words.length > 5) {
+        const midpoint = Math.ceil(words.length / 2);
+        formattedText = words.slice(0, midpoint).join(' ') + '\n' + words.slice(midpoint).join(' ');
+      }
+    }
+    
+    let prompt = `Genera una miniatura vertical 9:16 (1080x1920) para un video de redes sociales, optimizada para TikTok, Reels y Shorts.
 
-El contenido del video trata sobre: ${topic}${scriptContext.salesAngle ? ` con enfoque en ${scriptContext.salesAngle}` : ''}.
+TEMA DEL VIDEO: ${topic}${scriptContext.salesAngle ? ` - Ángulo: ${scriptContext.salesAngle}` : ''}
+EMOCIÓN PRINCIPAL: ${emotion} → identificación → ${highlight?.label.toLowerCase() || 'curiosidad'}
+PÚBLICO OBJETIVO: ${scriptContext.idealAvatar || 'Emprendedor digital LATAM (27-40 años)'}
 
-Emoción principal a transmitir: ${emotion} - ${highlight?.description || 'Conectar con el espectador'}.
+COMPOSICIÓN OBLIGATORIA:
+- Formato ESTRICTO vertical 9:16 (1080x1920)
+- Personaje/elemento principal ocupando 60-70% del encuadre
+- Fondo contextual ligeramente desenfocado para destacar elemento principal
+${forceSafeZone ? '- RESPETAR MÁRGENES DE SEGURIDAD (10-15% del canvas en todos los bordes)' : ''}
 
-Público objetivo: ${scriptContext.idealAvatar || 'Público general interesado en el producto'}.
-
-Estilo visual:
-- Natural, UGC, alta claridad
-- Iluminación fuerte y profesional
-- Enfoque en rostro o elemento principal
-- Fondo limpio o contextual relacionado al tema
-- Alto contraste para destacar en móvil
-
-${referenceImage ? `Personaje / referencia visual:
+${referenceImage ? `PERSONAJE PRINCIPAL:
 - Basado en la imagen de referencia proporcionada
-- Mantener rasgos generales, sin replicar identidad exacta
-- Adaptar pose y expresión al mensaje del video` : `Personaje:
-- Persona genérica que represente al avatar objetivo
-- Expresión facial acorde a la emoción: ${emotion}`}
+- Mantener rasgos generales, expresión y estilo
+- Mirando a cámara o hacia el elemento de interés
+- NO copiar identidad exacta, solo estilo y pose` : `PERSONAJE:
+- Persona que represente al avatar objetivo
+- Expresión acorde a la emoción: ${emotion}
+- Look auténtico, NO stock genérico`}
 
-${includeText && thumbnailText ? `Texto en miniatura:
-- Texto exacto: "${thumbnailText}"
+${includeText && formattedText ? `TEXTO EN MINIATURA (CRÍTICO - SEGUIR EXACTAMENTE):
+- Texto EXACTO: "${formattedText}"
 - Idioma: ${TEXT_LANGUAGES.find(l => l.value === textLanguage)?.label || 'Español'}
-- Tipografía grande, legible, alto contraste
-- No saturar la imagen con texto
-- Posición: parte superior o inferior, respetando regla de tercios` : `Sin texto superpuesto en la imagen.`}
+- MÁXIMO 5 palabras visibles por línea
+- Usar caja de texto sólida o semi-transparente detrás del texto
+- Ubicación: zona ${zone?.label.toLowerCase()} del canvas (${zone?.description})
+${forceSafeZone ? '- NUNCA colocar texto en los bordes - mantener dentro de zona segura (10-15% margen)' : ''}
+- Tipografía GRUESA, BOLD, alto contraste
+- Color blanco o amarillo brillante con sombra negra suave
+- El texto debe ser 100% visible y legible en mobile
+- NO cortar letras bajo ninguna circunstancia` : `Sin texto superpuesto en la imagen.`}
 
-Composición:
-- Pensada para móvil (vertical 9:16)
-- Regla de tercios
-- Espacio visual claro
-- Punto focal definido
+ESTILO VISUAL OBLIGATORIO:
+- UGC profesional, look real (NO stock genérico)
+- Iluminación fuerte en el punto focal
+- Alto contraste
+- Colores vibrantes pero naturales
 
-Estilo general:
-- Profesional pero accesible (UGC style)
-- Impactante y llamativo
-- Alineado al mensaje del guion
-- Scroll-stopper effect
+EVITAR ESTRICTAMENTE:
+- Texto tocando o cerca de los bordes
+- Texto pequeño o difícil de leer
+- Más de una frase o texto largo
+- Fondos blancos puros o planos
+- Estilo banner, flyer o corporativo
+- Elementos que distraigan del mensaje principal
+- Formato horizontal o cuadrado
 
-Evitar:
-- Texto pequeño o ilegible
-- Saturación excesiva de elementos
-- Elementos innecesarios o distractores
-- Formato horizontal
-- Imágenes genéricas de stock
-- Fondos blancos puros`;
+REGLA DE ORO: La miniatura debe entenderse en 1 segundo, funcionar sin contexto adicional y provocar curiosidad inmediata.`;
 
     setGeneratedPrompt(prompt);
     setIsPromptVisible(true);
@@ -400,6 +420,38 @@ Evitar:
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Text Zone Selector */}
+                  <div className="space-y-1">
+                    <Label className="text-xs">📐 Zona de texto</Label>
+                    <Select value={textZone} onValueChange={setTextZone}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TEXT_ZONES.map(zone => (
+                          <SelectItem key={zone.value} value={zone.value}>
+                            {zone.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground">
+                      {TEXT_ZONES.find(z => z.value === textZone)?.description}
+                    </p>
+                  </div>
+
+                  {/* Force Safe Zone Toggle */}
+                  <div className="flex items-center justify-between p-2 bg-primary/5 rounded-md border border-primary/20">
+                    <div>
+                      <Label className="text-xs font-medium">✅ Forzar zona segura</Label>
+                      <p className="text-[10px] text-muted-foreground">Mejor visibilidad en móvil</p>
+                    </div>
+                    <Switch
+                      checked={forceSafeZone}
+                      onCheckedChange={setForceSafeZone}
+                    />
                   </div>
                 </div>
               )}
