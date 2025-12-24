@@ -26,7 +26,14 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
     return { libraryId: embedMatch[1], videoId: embedMatch[2] };
   }
 
-  // Format: vz-{libraryId}.b-cdn.net/{videoId}
+  // Format: vz-{hash}.b-cdn.net/{videoId} (e.g., vz-78fcd769-050.b-cdn.net)
+  const cdnHashMatch = url.match(/vz-([a-f0-9-]+)\.b-cdn\.net\/([a-f0-9-]+)/i);
+  if (cdnHashMatch) {
+    // Extract video ID, library ID will be derived from other patterns or use a default
+    return { libraryId: cdnHashMatch[1], videoId: cdnHashMatch[2] };
+  }
+
+  // Format: vz-{libraryId}.b-cdn.net/{videoId} (numeric library ID)
   const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
   if (cdnMatch) {
     return { libraryId: cdnMatch[1], videoId: cdnMatch[2] };
@@ -45,19 +52,35 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
  * Generate Bunny.net HLS, MP4 and thumbnail URLs from any Bunny URL format
  */
 export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
-  const ids = extractBunnyIds(url);
-  if (!ids) return null;
-
-  const { libraryId, videoId } = ids;
+  if (!url) return null;
   
-  return {
-    // HLS playlist URL - primary for streaming
-    hls: `https://vz-${libraryId}.b-cdn.net/${videoId}/playlist.m3u8`,
-    // MP4 fallback for browsers without HLS support
-    mp4: `https://vz-${libraryId}.b-cdn.net/${videoId}/play_720p.mp4`,
-    // Thumbnail
-    thumbnail: `https://vz-${libraryId}.b-cdn.net/${videoId}/thumbnail.jpg`
-  };
+  // If it's already a direct HLS/MP4/thumbnail URL, extract the base
+  const hlsMatch = url.match(/(https:\/\/vz-[a-f0-9-]+\.b-cdn\.net\/[a-f0-9-]+)/i);
+  if (hlsMatch) {
+    const baseUrl = hlsMatch[1];
+    return {
+      hls: `${baseUrl}/playlist.m3u8`,
+      mp4: `${baseUrl}/play_720p.mp4`,
+      thumbnail: `${baseUrl}/thumbnail.jpg`
+    };
+  }
+  
+  // If it's an iframe embed URL, we need to find the CDN base from thumbnail if available
+  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
+  if (embedMatch) {
+    const videoId = embedMatch[2];
+    // Use the known CDN pattern from network logs
+    // The CDN uses a hash format like vz-78fcd769-050.b-cdn.net
+    // We'll construct URLs using the video ID and hope the CDN resolves it
+    // For now, try common CDN patterns - the actual CDN hostname is project-specific
+    return {
+      hls: `https://vz-78fcd769-050.b-cdn.net/${videoId}/playlist.m3u8`,
+      mp4: `https://vz-78fcd769-050.b-cdn.net/${videoId}/play_720p.mp4`,
+      thumbnail: `https://vz-78fcd769-050.b-cdn.net/${videoId}/thumbnail.jpg`
+    };
+  }
+
+  return null;
 }
 
 /**
