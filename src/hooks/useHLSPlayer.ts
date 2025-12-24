@@ -86,14 +86,15 @@ export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
 /**
  * Custom hook for HLS video playback with Bunny.net
  * Supports native HLS on Safari/iOS and hls.js for other browsers
+ * With MP4 fallback for maximum compatibility
  */
 export function useHLSPlayer(
   videoUrl: string | null,
   options: UseHLSPlayerOptions = {}
 ) {
   const {
-    autoPlay = true,
-    muted = true,
+    autoPlay = false, // NO autoplay by default - requires user interaction
+    muted = false, // Audio ACTIVE by default
     loop = true,
     poster
   } = options;
@@ -112,7 +113,7 @@ export function useHLSPlayer(
   const mp4Url = bunnyUrls?.mp4 || null;
   const thumbnailUrl = poster || bunnyUrls?.thumbnail || null;
 
-  // Initialize HLS player
+  // Initialize HLS player - setup only, no autoplay
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !hlsUrl) return;
@@ -121,27 +122,32 @@ export function useHLSPlayer(
     setError(null);
     fatalErrorCountRef.current = 0;
 
+    // Configure video element for mobile compatibility
+    video.playsInline = true;
+    video.loop = loop;
+    video.preload = 'metadata';
+    video.muted = currentMuted;
+
     // Check if browser natively supports HLS (Safari/iOS)
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = hlsUrl;
-      video.muted = currentMuted;
-      video.loop = loop;
-      video.playsInline = true;
       
-      if (autoPlay) {
-        video.play().catch(() => {
-          // Autoplay blocked, stay muted
-          video.muted = true;
-          setCurrentMuted(true);
-          video.play().catch(() => setError('Autoplay blocked'));
-        });
-      }
+      const handleCanPlay = () => {
+        setIsLoading(false);
+        if (autoPlay) {
+          playWithFallback(video);
+        }
+      };
       
-      setIsLoading(false);
-      return;
+      video.addEventListener('canplay', handleCanPlay, { once: true });
+      video.load();
+      
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+      };
     }
 
-    // Use hls.js for other browsers
+    // Use hls.js for other browsers (Chrome, Firefox, Edge, etc.)
     if (Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
@@ -149,7 +155,7 @@ export function useHLSPlayer(
         backBufferLength: 90,
         maxBufferLength: 30,
         maxMaxBufferLength: 60,
-        startLevel: -1, // Auto quality
+        startLevel: -1, // Auto quality selection
       });
 
       hlsRef.current = hls;
@@ -158,71 +164,47 @@ export function useHLSPlayer(
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setIsLoading(false);
-        video.muted = currentMuted;
-        video.loop = loop;
-        video.playsInline = true;
-        
         if (autoPlay) {
-          video.play().catch(() => {
-            video.muted = true;
-            setCurrentMuted(true);
-            video.play().catch(() => setError('Autoplay blocked'));
-          });
+          playWithFallback(video);
         }
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (!data.fatal) return;
 
-        // This sometimes fires mid-play even though playback continues; log for visibility.
-        console.warn('[HLS] fatal error', {
+        console.warn('[HLS] Fatal error:', {
           type: data.type,
           details: data.details,
           reason: data.reason,
-          response: (data as any).response,
-          url: (data as any).url,
         });
 
         fatalErrorCountRef.current += 1;
 
+        // Retry logic based on error type
         switch (data.type) {
-          case Hls.ErrorTypes.NETWORK_ERROR: {
-            // Retry a couple of times before surfacing an error
+          case Hls.ErrorTypes.NETWORK_ERROR:
             if (fatalErrorCountRef.current <= 3) {
               hls.startLoad();
               return;
             }
             break;
-          }
-          case Hls.ErrorTypes.MEDIA_ERROR: {
+          case Hls.ErrorTypes.MEDIA_ERROR:
             if (fatalErrorCountRef.current <= 3) {
               hls.recoverMediaError();
               return;
             }
             break;
-          }
-          default: {
-            // Try a soft restart first
+          default:
             if (fatalErrorCountRef.current <= 2) {
               hls.stopLoad();
               hls.startLoad();
               return;
             }
             break;
-          }
         }
 
-        // Final fallback
-        if (mp4Url) {
-          setError(null);
-          video.src = mp4Url;
-          video.muted = currentMuted;
-          video.loop = loop;
-          if (autoPlay) video.play().catch(() => {});
-          return;
-        }
-
-        setError('Video playback error');
+        // Fallback to MP4 after all retries exhausted
+        fallbackToMp4(video, mp4Url);
       });
 
       return () => {
@@ -232,31 +214,50 @@ export function useHLSPlayer(
     }
 
     // Fallback to MP4 for browsers without HLS support
-    if (mp4Url) {
-      video.src = mp4Url;
-      video.muted = currentMuted;
-      video.loop = loop;
-      video.playsInline = true;
-      setIsLoading(false);
-      
-      if (autoPlay) {
-        video.play().catch(() => {
-          video.muted = true;
-          setCurrentMuted(true);
-          video.play().catch(() => setError('Autoplay blocked'));
-        });
-      }
-    } else {
-      setError('HLS not supported');
-    }
-  }, [hlsUrl, mp4Url, autoPlay, loop, currentMuted]);
+    fallbackToMp4(video, mp4Url);
+  }, [hlsUrl, mp4Url, loop]); // Removed autoPlay and currentMuted from deps to prevent re-init
 
-  // If we successfully start playing again, clear any transient error.
+  // Helper: Play video with muted fallback for autoplay policy
+  const playWithFallback = useCallback((video: HTMLVideoElement) => {
+    video.muted = currentMuted;
+    video.play().catch(() => {
+      // Autoplay blocked - try muted
+      video.muted = true;
+      setCurrentMuted(true);
+      video.play().catch(() => {
+        console.warn('[HLS] Autoplay completely blocked');
+      });
+    });
+  }, [currentMuted]);
+
+  // Helper: Fallback to MP4 when HLS fails
+  const fallbackToMp4 = useCallback((video: HTMLVideoElement, mp4: string | null) => {
+    if (mp4) {
+      setError(null);
+      setIsLoading(true);
+      video.src = mp4;
+      video.load();
+      
+      const handleCanPlay = () => {
+        setIsLoading(false);
+        if (autoPlay) {
+          playWithFallback(video);
+        }
+      };
+      
+      video.addEventListener('canplay', handleCanPlay, { once: true });
+    } else {
+      setError('Video playback error');
+      setIsLoading(false);
+    }
+  }, [autoPlay, playWithFallback]);
+
+  // Clear error on successful playback
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const clearOnPlay = () => setError((prev) => (prev ? null : prev));
+    const clearOnPlay = () => setError(null);
     video.addEventListener('playing', clearOnPlay);
     video.addEventListener('canplay', clearOnPlay);
     return () => {
@@ -265,7 +266,7 @@ export function useHLSPlayer(
     };
   }, [hlsUrl]);
 
-  // Sync muted state
+  // Sync muted state to video element
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
@@ -273,7 +274,7 @@ export function useHLSPlayer(
     }
   }, [currentMuted]);
 
-  // Track play state
+  // Track play/pause state
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -288,15 +289,21 @@ export function useHLSPlayer(
         setIsPlaying(false);
       }
     };
+    const handleWaiting = () => setIsLoading(true);
+    const handlePlaying = () => setIsLoading(false);
 
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
     video.addEventListener('ended', handleEnded);
+    video.addEventListener('waiting', handleWaiting);
+    video.addEventListener('playing', handlePlaying);
 
     return () => {
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('waiting', handleWaiting);
+      video.removeEventListener('playing', handlePlaying);
     };
   }, [loop]);
 

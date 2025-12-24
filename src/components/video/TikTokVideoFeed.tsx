@@ -66,7 +66,8 @@ function FloatingHeartAnimation({ x, y, onComplete }: { x: number; y: number; on
 function VideoCard({
   video,
   isActive,
-  isFirstVideo,
+  sessionStarted,
+  onSessionStart,
   onLike,
   onView,
   onShare,
@@ -75,7 +76,10 @@ function VideoCard({
 }: {
   video: VideoItem;
   isActive: boolean;
-  isFirstVideo: boolean;
+  /** True when user has interacted with any video in the feed */
+  sessionStarted: boolean;
+  /** Callback to notify parent that user started the session */
+  onSessionStart: () => void;
   onLike?: () => void;
   onView?: () => void;
   onShare?: () => void;
@@ -87,7 +91,6 @@ function VideoCard({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [floatingHearts, setFloatingHearts] = useState<FloatingHeart[]>([]);
   const [showPlayIcon, setShowPlayIcon] = useState(false);
-  const [userStartedPlayback, setUserStartedPlayback] = useState(false);
   const playerRef = useRef<HLSVideoPlayerRef>(null);
   const viewTrackedRef = useRef(false);
   const heartIdRef = useRef(0);
@@ -97,10 +100,10 @@ function VideoCard({
   const hasMultiple = video.videoUrls.length > 1;
   const thumbnailUrl = video.thumbnailUrl || getBunnyThumbnail(currentVideoUrl);
 
-  // Control playback and sync mute based on active state
+  // Control playback and sync mute based on active state and session
   useEffect(() => {
-    // Only autoplay if user has started playback (after first interaction)
-    if (isActive && userStartedPlayback) {
+    // Only autoplay if session has started (user interacted with any video)
+    if (isActive && sessionStarted) {
       playerRef.current?.play();
       setTimeout(() => {
         playerRef.current?.setMuted(isGlobalMuted);
@@ -109,7 +112,7 @@ function VideoCard({
       playerRef.current?.pause();
       viewTrackedRef.current = false;
     }
-  }, [isActive, isGlobalMuted, userStartedPlayback]);
+  }, [isActive, isGlobalMuted, sessionStarted]);
 
   // Handle video loaded - sync mute state
   const handleVideoLoadComplete = useCallback(() => {
@@ -160,9 +163,9 @@ function VideoCard({
     // Single tap = start playback (first time) or toggle play/pause
     setTimeout(() => {
       if (Date.now() - lastTapRef.current >= 280) {
-        if (!userStartedPlayback) {
-          // First interaction - start playback with audio
-          setUserStartedPlayback(true);
+        if (!sessionStarted) {
+          // First interaction - start session and playback with audio
+          onSessionStart();
           playerRef.current?.play();
         } else {
           // Toggle play/pause
@@ -176,7 +179,7 @@ function VideoCard({
         setTimeout(() => setShowPlayIcon(false), 600);
       }
     }, 300);
-  }, [video.isLiked, onLike, isActive, spawnFloatingHeart, userStartedPlayback]);
+  }, [video.isLiked, onLike, isActive, spawnFloatingHeart, sessionStarted, onSessionStart]);
 
   const handleMuteToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -215,15 +218,15 @@ function VideoCard({
         ref={playerRef}
         src={currentVideoUrl}
         poster={thumbnailUrl || undefined}
-        autoPlay={userStartedPlayback && isActive}
+        autoPlay={sessionStarted && isActive}
         muted={isGlobalMuted}
         loop={true}
         aspectRatio="auto"
         className="absolute inset-0 w-full h-full"
-        requireInteraction={!userStartedPlayback}
+        requireInteraction={!sessionStarted}
         onLoadComplete={handleVideoLoadComplete}
         onPlay={() => {
-          setUserStartedPlayback(true);
+          onSessionStart();
           if (!isGlobalMuted) {
             playerRef.current?.setMuted(false);
           }
@@ -374,6 +377,12 @@ export function TikTokVideoFeed({
 }: TikTokVideoFeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  // Track if user has started playback session (any video tapped)
+  const [sessionStarted, setSessionStarted] = useState(false);
+
+  const handleSessionStart = useCallback(() => {
+    setSessionStarted(true);
+  }, []);
 
   // IntersectionObserver for detecting active video
   useEffect(() => {
@@ -424,7 +433,8 @@ export function TikTokVideoFeed({
           <VideoCard
             video={video}
             isActive={index === activeIndex}
-            isFirstVideo={index === 0}
+            sessionStarted={sessionStarted}
+            onSessionStart={handleSessionStart}
             onLike={onLike ? () => onLike(video.id) : undefined}
             onView={onView ? () => onView(video.id) : undefined}
             onShare={onShare ? () => onShare(video) : undefined}
