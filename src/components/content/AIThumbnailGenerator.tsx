@@ -172,17 +172,49 @@ export function AIThumbnailGenerator({
   const buildImageContext = () => {
     const script = scriptContext.script || "";
     
-    // STEP 1: Deep clean the script - remove ALL HTML, entities, and noise
+    // STEP 1: DEEP CLEAN - Remove ALL noise, labels, metadata, and broken fragments
     const deepClean = (text: string): string => {
+      if (!text) return "";
       return text
-        .replace(/<[^>]*>/g, ' ')           // Remove HTML tags
-        .replace(/&nbsp;/g, ' ')            // Remove &nbsp;
-        .replace(/&[a-z]+;/gi, ' ')         // Remove other entities
-        .replace(/\[Tipo:[^\]]*\]/gi, '')   // Remove [Tipo: X] labels
-        .replace(/\[Hook[^\]]*\]/gi, '')    // Remove [Hook X] labels
-        .replace(/^(Hook\s*[A-C]|Opción\s*\d+)[:\s]*/gim, '') // Remove "Hook A:", "Opción 1:"
-        .replace(/✅|❌|⚠️/g, '')            // Remove checkmarks/warnings
-        .replace(/\s{2,}/g, ' ')            // Collapse whitespace
+        // Remove HTML tags completely
+        .replace(/<[^>]*>/g, ' ')
+        // Remove HTML entities
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&[a-z]+;/gi, ' ')
+        .replace(/&#?\w+;/gi, ' ')
+        // Remove metadata labels like [Tipo: X], [Hook A], etc.
+        .replace(/\[Tipo:[^\]]*\]/gi, '')
+        .replace(/\[Hook[^\]]*\]/gi, '')
+        .replace(/\[Opción[^\]]*\]/gi, '')
+        .replace(/\[[^\]]{0,30}\]/g, '') // Any short bracket content
+        // Remove label prefixes
+        .replace(/^(Hook\s*[A-C]|Opción\s*\d+|Variante\s*\d+)[:\s-]*/gim, '')
+        .replace(/^(Tipo|Emoción|Visual|Escena)[:\s-]*/gim, '')
+        .replace(/a transmitir[:\s]*/gi, '')
+        .replace(/del video[:\s]*/gi, '')
+        .replace(/qué se ve[:\s]*/gi, '')
+        // Remove internal emojis (keep ones at start for parsing)
+        .replace(/[🎯🧴🔥📐⚠️🎨✅❌👉🧠🏁💡📦🎤🎬🎥💰🚀✨🔴🟢🔵⭐️💎🏆🥇🥈🥉]/g, '')
+        // Remove decorative characters
+        .replace(/[═─│┌┐└┘├┤┬┴┼]/g, '')
+        .replace(/[*_]{2,}/g, '') // Bold/italic markdown
+        .replace(/^\s*[-•*]\s*/gm, '') // Bullet points
+        .replace(/^\s*\d+[.)]\s*/gm, '') // Numbered lists
+        // Clean truncated text indicators
+        .replace(/\.{3,}$/g, '')
+        .replace(/…$/g, '')
+        // Normalize whitespace
+        .replace(/\n{2,}/g, '\n')
+        .replace(/[ \t]+/g, ' ')
+        .trim();
+    };
+    
+    // Additional cleaner for final output (removes any remaining noise)
+    const finalClean = (text: string): string => {
+      return deepClean(text)
+        .replace(/^[:\s-]+/, '') // Remove leading punctuation
+        .replace(/[:\s-]+$/, '') // Remove trailing punctuation
+        .replace(/\s+/g, ' ')
         .trim();
     };
     
@@ -191,20 +223,27 @@ export function AIThumbnailGenerator({
     // STEP 2: Extract MAIN HOOK (the actual hook text, not labels)
     let mainHook = "";
     
-    // Pattern 1: Look for hooks section with emojis
-    const hooksMatch = cleanScript.match(/🔥\s*HOOKS?\s*([\s\S]*?)(?=🎥|🎬|GUION|FORMATO|$)/i);
-    if (hooksMatch) {
-      const hooksText = hooksMatch[1];
-      // Find quoted content first (most reliable)
-      const quotedHooks = hooksText.match(/"([^"]{15,150})"/g);
-      if (quotedHooks && quotedHooks.length > 0) {
-        mainHook = quotedHooks[0].replace(/"/g, '').trim();
-      } else {
-        // Find lines that look like actual hooks (start with action words or emotional statements)
-        const hookLines = hooksText.split('\n')
-          .map(l => l.replace(/^[-•*\d.)\s]+/, '').trim())
-          .filter(l => l.length > 15 && l.length < 150)
-          .filter(l => !l.match(/^(hook|tipo|opción|variante)/i));
+    // Pattern 1: Look for quoted content (most reliable - actual hook text)
+    const allQuotes = cleanScript.match(/"([^"]{15,150})"/g) || [];
+    if (allQuotes.length > 0) {
+      // Get the first good quote that's not metadata
+      for (const quote of allQuotes) {
+        const cleaned = quote.replace(/"/g, '').trim();
+        if (cleaned.length > 15 && !cleaned.match(/^(tipo|hook|opción)/i)) {
+          mainHook = cleaned;
+          break;
+        }
+      }
+    }
+    
+    // Pattern 2: Look for hooks section
+    if (!mainHook) {
+      const hooksMatch = cleanScript.match(/HOOKS?\s*([\s\S]*?)(?=GUION|FORMATO|ESCENA|$)/i);
+      if (hooksMatch) {
+        const hookLines = hooksMatch[1].split('\n')
+          .map(l => finalClean(l))
+          .filter(l => l.length > 20 && l.length < 150)
+          .filter(l => !l.match(/^(hook|tipo|opción|variante|disruptivo|emocional|curiosidad)/i));
         
         if (hookLines.length > 0) {
           mainHook = hookLines[0];
@@ -212,38 +251,53 @@ export function AIThumbnailGenerator({
       }
     }
     
-    // Pattern 2: Fallback - any quoted sentence
-    if (!mainHook) {
-      const anyQuote = cleanScript.match(/"([^"]{15,150})"/);
-      if (anyQuote) mainHook = anyQuote[1];
-    }
-    
-    // Pattern 3: Last resort - first substantial sentence
+    // Pattern 3: Use sales angle as fallback
     if (!mainHook && scriptContext.salesAngle) {
-      mainHook = deepClean(scriptContext.salesAngle).slice(0, 100);
+      mainHook = finalClean(scriptContext.salesAngle).slice(0, 100);
     }
     
-    // STEP 3: Extract DOMINANT EMOTION (1-3 words max)
+    // Pattern 4: Last resort - generate from product
+    if (!mainHook) {
+      const productName = scriptContext.productName || "este producto";
+      mainHook = `Descubre por qué ${productName} está cambiando todo`;
+    }
+    
+    // STEP 3: Extract DOMINANT EMOTION (1-3 words max, clean)
     let dominantEmotion = "";
-    const emotionKeywords = [
-      { pattern: /frustrac/i, emotion: "frustración" },
-      { pattern: /dolor|sufr/i, emotion: "dolor" },
-      { pattern: /miedo|temo/i, emotion: "miedo" },
-      { pattern: /esperanza|ilusión/i, emotion: "esperanza" },
-      { pattern: /emocion/i, emotion: "emoción" },
-      { pattern: /curiosidad|intriga/i, emotion: "curiosidad" },
-      { pattern: /confianza|segur/i, emotion: "confianza" },
-      { pattern: /empat[íi]a|conexi/i, emotion: "empatía" },
-      { pattern: /sorpresa|asombr/i, emotion: "sorpresa" },
-      { pattern: /urgen/i, emotion: "urgencia" },
+    
+    // Look for explicit emotion in script
+    const emotionPatterns = [
+      /emoción[:\s]+([a-záéíóúñ\s]{3,25})/i,
+      /transmitir[:\s]+([a-záéíóúñ\s]{3,25})/i,
+      /sentimiento[:\s]+([a-záéíóúñ\s]{3,25})/i,
     ];
     
-    // Check for explicit emotion mentions
-    const emotionMatch = cleanScript.match(/emoci[óo]n(?:\s+dominante)?[:\s]+([^\n,.]{3,30})/i);
-    if (emotionMatch) {
-      dominantEmotion = deepClean(emotionMatch[1]).slice(0, 30);
-    } else {
-      // Infer from keywords in script
+    for (const pattern of emotionPatterns) {
+      const match = cleanScript.match(pattern);
+      if (match) {
+        const emotion = finalClean(match[1]);
+        if (emotion.length >= 3 && emotion.length <= 30) {
+          dominantEmotion = emotion;
+          break;
+        }
+      }
+    }
+    
+    // Infer emotion from keywords if not found
+    if (!dominantEmotion) {
+      const emotionKeywords = [
+        { pattern: /frustrac|agotad|cansad/i, emotion: "frustración" },
+        { pattern: /dolor|sufr|problem/i, emotion: "dolor empático" },
+        { pattern: /miedo|temo|preocup/i, emotion: "preocupación" },
+        { pattern: /esperanza|ilusión|sueño/i, emotion: "esperanza" },
+        { pattern: /curiosidad|intriga|descubr/i, emotion: "curiosidad" },
+        { pattern: /confianza|segur|tranquil/i, emotion: "confianza" },
+        { pattern: /empat[íi]a|conexi|entend/i, emotion: "empatía" },
+        { pattern: /sorpresa|asombr|increíble/i, emotion: "sorpresa" },
+        { pattern: /urgen|ahora|últim/i, emotion: "urgencia" },
+        { pattern: /alegr|feliz|content/i, emotion: "alegría" },
+      ];
+      
       const foundEmotions: string[] = [];
       for (const { pattern, emotion } of emotionKeywords) {
         if (pattern.test(cleanScript)) {
@@ -251,71 +305,106 @@ export function AIThumbnailGenerator({
           if (foundEmotions.length >= 2) break;
         }
       }
-      dominantEmotion = foundEmotions.length > 0 ? foundEmotions.join(" + ") : "curiosidad";
+      dominantEmotion = foundEmotions.length > 0 ? foundEmotions.join(" y ") : "curiosidad genuina";
     }
     
-    // STEP 4: Extract KEY VISUAL SCENE (one clear scene description)
+    // STEP 4: Extract KEY VISUAL SCENE (one complete, clear description)
     let keyVisualScene = "";
     
-    // Look for director's format section
-    const directorMatch = cleanScript.match(/(?:🎬|FORMATO\s*DIRECTOR|GUION\s*DIRECTOR)\s*([\s\S]*?)(?=🎤|CTA|CIERRE|---|\n\n|$)/i);
-    if (directorMatch) {
-      const directorText = directorMatch[1];
-      // Find "visual" or "qué se ve" descriptions
-      const visualMatch = directorText.match(/(?:visual|qué\s*se\s*ve|plano)[:\s]*([^\n🎤]{20,200})/i);
-      if (visualMatch) {
-        keyVisualScene = deepClean(visualMatch[1]).slice(0, 150);
-      } else {
-        // Take first substantial line from director section
-        const firstLine = directorText.split('\n')
-          .map(l => deepClean(l))
-          .find(l => l.length > 25 && !l.match(/^(escena|bloque|\d+)/i));
-        if (firstLine) keyVisualScene = firstLine.slice(0, 150);
+    // Look for director's format or visual descriptions
+    const scenePatterns = [
+      /(?:FORMATO\s*DIRECTOR|GUION\s*DIRECTOR)[:\s]*([\s\S]*?)(?=CTA|CIERRE|---|\n\n\n|$)/i,
+      /(?:visual|plano|escena)[:\s]*([^\n]{30,200})/i,
+      /(?:se ve|aparece|muestra)[:\s]*([^\n]{30,200})/i,
+    ];
+    
+    for (const pattern of scenePatterns) {
+      const match = cleanScript.match(pattern);
+      if (match) {
+        const sceneText = finalClean(match[1]);
+        // Get first complete sentence/description
+        const firstScene = sceneText.split(/[.\n]/).find(s => s.trim().length > 25);
+        if (firstScene) {
+          keyVisualScene = finalClean(firstScene).slice(0, 150);
+          break;
+        }
       }
     }
     
-    // Fallback: Create scene from context
+    // Create descriptive fallback based on emotion and content
     if (!keyVisualScene) {
       const hasProduct = productImage !== null;
       const productName = scriptContext.productName || "el producto";
+      
+      const emotionExpressions: Record<string, string> = {
+        "frustración": "expresión de frustración reflexiva, ceño ligeramente fruncido",
+        "dolor empático": "mirada empática y comprensiva hacia la cámara",
+        "curiosidad": "expresión intrigada con una leve sonrisa",
+        "confianza": "postura segura y mirada directa a cámara",
+        "sorpresa": "ojos abiertos con expresión de descubrimiento",
+        "urgencia": "expresión seria y enfocada",
+        "esperanza": "sonrisa suave y mirada esperanzadora",
+        "empatía": "expresión cálida y comprensiva",
+      };
+      
+      const expression = emotionExpressions[dominantEmotion.split(" ")[0]] || "expresión natural y auténtica mirando a cámara";
+      
       keyVisualScene = hasProduct 
-        ? `Persona mirando a cámara con expresión de ${dominantEmotion}, ${productName} visible sobre la mesa`
-        : `Persona mirando directamente a cámara con expresión de ${dominantEmotion}`;
+        ? `Persona en home office con ${expression}, ${productName} visible en el escritorio`
+        : `Persona con ${expression}, fondo de espacio de trabajo natural`;
     }
     
-    // STEP 5: Extract VIDEO OBJECTIVE (clear, single purpose)
+    // STEP 5: Extract VIDEO OBJECTIVE (clear single purpose)
     let videoObjective = "";
     
-    const objectiveMatch = cleanScript.match(/(?:objetivo|meta|propósito|intención)[:\s]+([^\n]{15,150})/i);
-    if (objectiveMatch) {
-      // Clean truncated text like "del video: Cambiar..."
-      let obj = objectiveMatch[1].replace(/^del\s*video[:\s]*/i, '').trim();
-      videoObjective = deepClean(obj).slice(0, 100);
-    } else {
-      // Infer from content type
-      videoObjective = contentType === 'ads' 
-        ? "Generar intención de compra y curiosidad por el producto"
-        : "Conectar emocionalmente y generar engagement";
+    const objectivePatterns = [
+      /objetivo[:\s]+([^\n]{15,120})/i,
+      /meta[:\s]+([^\n]{15,120})/i,
+      /propósito[:\s]+([^\n]{15,120})/i,
+      /busca(?:mos)?[:\s]+([^\n]{15,120})/i,
+    ];
+    
+    for (const pattern of objectivePatterns) {
+      const match = cleanScript.match(pattern);
+      if (match) {
+        const obj = finalClean(match[1]);
+        if (obj.length >= 15) {
+          videoObjective = obj.slice(0, 100);
+          break;
+        }
+      }
     }
     
-    // STEP 6: Determine TOPIC (what the video is about)
+    if (!videoObjective) {
+      videoObjective = contentType === 'ads' 
+        ? "Generar interés y deseo de conocer más sobre el producto"
+        : "Conectar emocionalmente y generar identificación con la audiencia";
+    }
+    
+    // STEP 6: Determine TOPIC
     let topic = "";
     if (scriptContext.productName) {
-      topic = deepClean(scriptContext.productName).slice(0, 60);
+      topic = finalClean(scriptContext.productName).slice(0, 60);
     } else if (scriptContext.salesAngle) {
-      topic = deepClean(scriptContext.salesAngle).slice(0, 60);
+      topic = finalClean(scriptContext.salesAngle).slice(0, 60);
     } else {
       topic = "el producto/servicio";
     }
     
-    // Return normalized, clean context
-    return { 
-      mainHook: mainHook || `Descubre ${topic}`,
-      dominantEmotion: dominantEmotion || "curiosidad",
-      keyVisualScene,
-      videoObjective,
-      topic 
+    // BUILD FINAL CONTEXT OBJECT
+    const imageContext = { 
+      mainHook: finalClean(mainHook).slice(0, 120),
+      dominantEmotion: finalClean(dominantEmotion).slice(0, 40),
+      keyVisualScene: finalClean(keyVisualScene).slice(0, 180),
+      videoObjective: finalClean(videoObjective).slice(0, 120),
+      topic: finalClean(topic).slice(0, 60),
+      contentType
     };
+    
+    // LOG FOR DEBUGGING
+    console.log("🎨 IMAGE CONTEXT BUILDER - Final context:", JSON.stringify(imageContext, null, 2));
+    
+    return imageContext;
   };
 
   const handleImageUpload = (file: File, type: "reference" | "example" | "product") => {
