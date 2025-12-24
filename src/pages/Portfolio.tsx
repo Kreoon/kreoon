@@ -810,6 +810,7 @@ export default function Portfolio() {
                   <PortfolioVideoThumbnail
                     key={item.id}
                     id={item.id}
+                    videoUrl={videoUrls[0]}
                     thumbnailUrl={item.thumbnail_url}
                     title={item.title}
                     viewsCount={item.views_count}
@@ -960,6 +961,7 @@ export default function Portfolio() {
                 <PortfolioVideoThumbnail
                   key={item.id}
                   id={item.id}
+                  videoUrl={videoUrls[0]}
                   thumbnailUrl={item.thumbnail_url}
                   title={item.title}
                   viewsCount={item.views_count}

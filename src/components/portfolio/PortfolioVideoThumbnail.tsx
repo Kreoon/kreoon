@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Play, Eye } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 
 interface PortfolioVideoThumbnailProps {
   id: string;
+  videoUrl?: string;
   thumbnailUrl?: string | null;
   title?: string;
   viewsCount: number;
@@ -18,6 +20,7 @@ function formatCount(count: number): string {
 
 export function PortfolioVideoThumbnail({
   id,
+  videoUrl,
   thumbnailUrl,
   title,
   viewsCount,
@@ -25,6 +28,10 @@ export function PortfolioVideoThumbnail({
 }: PortfolioVideoThumbnailProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+
+  // Get Bunny thumbnail if not provided
+  const bunnyUrls = videoUrl ? getBunnyVideoUrls(videoUrl) : null;
+  const effectiveThumbnailUrl = thumbnailUrl || bunnyUrls?.thumbnail;
 
   return (
     <div
@@ -35,9 +42,9 @@ export function PortfolioVideoThumbnail({
       )}
     >
       {/* Thumbnail */}
-      {thumbnailUrl && !imageError ? (
+      {effectiveThumbnailUrl && !imageError ? (
         <img
-          src={thumbnailUrl}
+          src={effectiveThumbnailUrl}
           alt={title || 'Video'}
           className={cn(
             "w-full h-full object-cover transition-opacity duration-300",
@@ -53,7 +60,7 @@ export function PortfolioVideoThumbnail({
       )}
 
       {/* Loading skeleton */}
-      {!imageLoaded && thumbnailUrl && !imageError && (
+      {!imageLoaded && effectiveThumbnailUrl && !imageError && (
         <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
       )}
 
