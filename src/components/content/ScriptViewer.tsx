@@ -1,33 +1,40 @@
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { useMemo, useState } from "react";
+import { MonitorPlay } from "lucide-react";
+import { TeleprompterMode } from "./TeleprompterMode";
 
 interface ScriptViewerProps {
   content: string;
   className?: string;
   maxHeight?: string;
   compact?: boolean;
+  showTeleprompterButton?: boolean;
 }
 
-// Parse HTML and detect script sections (HOOKS, DESARROLLO, CIERRE/CTA)
-function parseScriptSections(html: string): { type: 'hooks' | 'desarrollo' | 'cierre' | 'other' | 'title'; content: string }[] {
+type SectionType = 'hooks' | 'desarrollo' | 'cierre' | 'teleprompter' | 'info' | 'other' | 'title';
+
+// Parse HTML and detect script sections
+function parseScriptSections(html: string): { type: SectionType; content: string }[] {
   if (!html || html.trim() === '') return [];
   
-  const sections: { type: 'hooks' | 'desarrollo' | 'cierre' | 'other' | 'title'; content: string }[] = [];
+  const sections: { type: SectionType; content: string }[] = [];
   
-  // Create a temporary div to parse HTML
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const body = doc.body;
   
-  let currentSection: { type: 'hooks' | 'desarrollo' | 'cierre' | 'other' | 'title'; content: string } | null = null;
+  let currentSection: { type: SectionType; content: string } | null = null;
   
-  const detectSectionType = (text: string): 'hooks' | 'desarrollo' | 'cierre' | 'title' | 'other' | null => {
+  const detectSectionType = (text: string): SectionType | null => {
     const lowerText = text.toLowerCase();
     if (lowerText.includes('hook')) return 'hooks';
-    if (lowerText.includes('desarrollo') || lowerText.includes('cuerpo') || lowerText.includes('desarrollo')) return 'desarrollo';
-    if (lowerText.includes('cierre') || lowerText.includes('cta') || lowerText.includes('llamada a la acción') || lowerText.includes('call to action')) return 'cierre';
-    if (lowerText.includes('guión') || lowerText.includes('guion') || lowerText.includes('script')) return 'title';
+    if (lowerText.includes('desarrollo') || lowerText.includes('escena') || lowerText.includes('derrotero')) return 'desarrollo';
+    if (lowerText.includes('teleprompter')) return 'teleprompter';
+    if (lowerText.includes('cierre') || lowerText.includes('cta final')) return 'cierre';
+    if (lowerText.includes('información') || lowerText.includes('avatar') || lowerText.includes('perfil') || lowerText.includes('tono')) return 'info';
+    if (lowerText.includes('guión') || lowerText.includes('guion') || lowerText.includes('script') || lowerText.includes('bloque creador')) return 'title';
     return null;
   };
 
@@ -39,21 +46,17 @@ function parseScriptSections(html: string): { type: 'hooks' | 'desarrollo' | 'ci
       const tagName = element.tagName.toLowerCase();
       const textContent = element.textContent || '';
       
-      // Check if this is a section header
       if (tagName === 'h2' || tagName === 'h3' || tagName === 'h4') {
         const sectionType = detectSectionType(textContent);
         if (sectionType) {
-          // Save previous section
           if (currentSection && currentSection.content.trim()) {
             sections.push(currentSection);
           }
-          // Start new section
           currentSection = { type: sectionType, content: element.outerHTML };
           return;
         }
       }
       
-      // Add to current section or create 'other' section
       if (currentSection) {
         currentSection.content += element.outerHTML;
       } else {
@@ -68,7 +71,6 @@ function parseScriptSections(html: string): { type: 'hooks' | 'desarrollo' | 'ci
     }
   });
   
-  // Push last section
   if (currentSection && currentSection.content.trim()) {
     sections.push(currentSection);
   }
@@ -76,7 +78,14 @@ function parseScriptSections(html: string): { type: 'hooks' | 'desarrollo' | 'ci
   return sections;
 }
 
-const sectionConfig = {
+const sectionConfig: Record<SectionType, {
+  icon: string;
+  label: string;
+  gradient: string;
+  borderColor: string;
+  iconBg: string;
+  textColor: string;
+}> = {
   title: {
     icon: '📜',
     label: 'Guión',
@@ -93,17 +102,33 @@ const sectionConfig = {
     iconBg: 'bg-amber-500/20',
     textColor: 'text-amber-700 dark:text-amber-300',
   },
+  info: {
+    icon: '📋',
+    label: 'INFORMACIÓN',
+    gradient: 'from-slate-500/20 to-gray-500/20',
+    borderColor: 'border-slate-500/30',
+    iconBg: 'bg-slate-500/20',
+    textColor: 'text-slate-700 dark:text-slate-300',
+  },
   desarrollo: {
-    icon: '💬',
-    label: 'DESARROLLO',
+    icon: '🎬',
+    label: 'DESARROLLO / ESCENAS',
     gradient: 'from-blue-500/20 to-cyan-500/20',
     borderColor: 'border-blue-500/30',
     iconBg: 'bg-blue-500/20',
     textColor: 'text-blue-700 dark:text-blue-300',
   },
+  teleprompter: {
+    icon: '🎙️',
+    label: 'TELEPROMPTER',
+    gradient: 'from-indigo-500/20 to-violet-500/20',
+    borderColor: 'border-indigo-500/30',
+    iconBg: 'bg-indigo-500/20',
+    textColor: 'text-indigo-700 dark:text-indigo-300',
+  },
   cierre: {
     icon: '📢',
-    label: 'CIERRE / CTA',
+    label: 'CTA FINAL',
     gradient: 'from-green-500/20 to-emerald-500/20',
     borderColor: 'border-green-500/30',
     iconBg: 'bg-green-500/20',
@@ -124,30 +149,31 @@ function ScriptSection({
   content, 
   compact 
 }: { 
-  type: keyof typeof sectionConfig; 
+  type: SectionType; 
   content: string;
   compact?: boolean;
 }) {
   const config = sectionConfig[type];
   
-  // Remove the header from content since we're displaying it separately
   const cleanContent = useMemo(() => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(content, 'text/html');
     const body = doc.body;
     
-    // Remove h2, h3, h4 that match section headers
     const headers = body.querySelectorAll('h2, h3, h4');
     headers.forEach((header) => {
       const text = header.textContent?.toLowerCase() || '';
       if (
         text.includes('hook') || 
         text.includes('desarrollo') || 
+        text.includes('escena') ||
         text.includes('cierre') || 
         text.includes('cta') ||
+        text.includes('teleprompter') ||
         text.includes('guión') ||
         text.includes('guion') ||
-        text.includes('script')
+        text.includes('script') ||
+        text.includes('bloque creador')
       ) {
         header.remove();
       }
@@ -164,13 +190,11 @@ function ScriptSection({
         config.borderColor
       )}
     >
-      {/* Gradient background */}
       <div className={cn(
         "absolute inset-0 bg-gradient-to-br opacity-60",
         config.gradient
       )} />
       
-      {/* Section header */}
       <div className={cn(
         "relative flex items-center gap-3 px-4 py-3 border-b",
         config.borderColor,
@@ -190,28 +214,19 @@ function ScriptSection({
         </span>
       </div>
       
-      {/* Section content */}
       <div 
         className={cn(
           "relative p-4",
           compact ? "text-sm" : "text-base",
-          // Rich prose styling
           "prose prose-sm dark:prose-invert max-w-none",
-          // Headers
           "[&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2",
           "[&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-2",
           "[&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-2 [&_h4]:mb-1",
-          // Paragraphs with good spacing
           "[&_p]:leading-relaxed [&_p]:mb-3 [&_p]:last:mb-0",
-          // Emphasis and strong
           "[&_em]:text-muted-foreground [&_em]:font-medium [&_em]:not-italic [&_em]:text-xs [&_em]:uppercase [&_em]:tracking-wide [&_em]:bg-muted/50 [&_em]:px-2 [&_em]:py-0.5 [&_em]:rounded",
           "[&_strong]:font-bold [&_strong]:text-foreground",
-          // Quoted text (spoken text)
-          "[&_p]:has-[text-content*='\"']):font-medium",
-          // Lists
           "[&_ul]:space-y-1 [&_ul]:pl-4 [&_ul]:mb-3",
           "[&_li]:leading-relaxed",
-          // Underline for CTAs
           "[&_u]:underline [&_u]:decoration-2 [&_u]:underline-offset-2 [&_u]:decoration-primary",
         )}
         dangerouslySetInnerHTML={{ __html: cleanContent }}
@@ -220,7 +235,14 @@ function ScriptSection({
   );
 }
 
-export function ScriptViewer({ content, className, maxHeight = "max-h-[600px]", compact = false }: ScriptViewerProps) {
+export function ScriptViewer({ 
+  content, 
+  className, 
+  maxHeight = "max-h-[600px]", 
+  compact = false,
+  showTeleprompterButton = true 
+}: ScriptViewerProps) {
+  const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const sections = useMemo(() => parseScriptSections(content), [content]);
   
   if (!content || content.trim() === '' || content === '<p></p>') {
@@ -238,41 +260,64 @@ export function ScriptViewer({ content, className, maxHeight = "max-h-[600px]", 
       </div>
     );
   }
-  
-  // If we couldn't parse sections, show as single block
-  if (sections.length === 0) {
-    return (
-      <ScrollArea className={cn(maxHeight, className)}>
-        <div 
-          className={cn(
-            "p-5 rounded-xl border bg-card",
-            "prose prose-sm dark:prose-invert max-w-none",
-            "[&_p]:leading-relaxed [&_p]:mb-3",
-            "[&_strong]:font-bold",
-            "[&_em]:text-muted-foreground"
-          )}
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
-      </ScrollArea>
-    );
-  }
 
   return (
-    <ScrollArea className={cn(maxHeight, className)}>
-      <div className={cn(
-        "space-y-4 p-1",
-        compact ? "space-y-3" : "space-y-5"
-      )}>
-        {sections.map((section, index) => (
-          <ScriptSection 
-            key={`${section.type}-${index}`}
-            type={section.type}
-            content={section.content}
-            compact={compact}
-          />
-        ))}
+    <>
+      <div className="space-y-4">
+        {/* Teleprompter button */}
+        {showTeleprompterButton && (
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTeleprompterOpen(true)}
+              className="gap-2"
+            >
+              <MonitorPlay className="h-4 w-4" />
+              Modo Teleprompter
+            </Button>
+          </div>
+        )}
+        
+        {sections.length === 0 ? (
+          <ScrollArea className={cn(maxHeight, className)}>
+            <div 
+              className={cn(
+                "p-5 rounded-xl border bg-card",
+                "prose prose-sm dark:prose-invert max-w-none",
+                "[&_p]:leading-relaxed [&_p]:mb-3",
+                "[&_strong]:font-bold",
+                "[&_em]:text-muted-foreground"
+              )}
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+          </ScrollArea>
+        ) : (
+          <ScrollArea className={cn(maxHeight, className)}>
+            <div className={cn(
+              "space-y-4 p-1",
+              compact ? "space-y-3" : "space-y-5"
+            )}>
+              {sections.map((section, index) => (
+                <ScriptSection 
+                  key={`${section.type}-${index}`}
+                  type={section.type}
+                  content={section.content}
+                  compact={compact}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        )}
       </div>
-    </ScrollArea>
+
+      {/* Teleprompter Modal */}
+      <TeleprompterMode
+        content={content}
+        isOpen={teleprompterOpen}
+        onClose={() => setTeleprompterOpen(false)}
+      />
+    </>
   );
 }
 
@@ -288,13 +333,11 @@ export function ScriptPreview({ content, className }: { content: string; classNa
     );
   }
 
-  // Show a compact summary with section indicators
   const sectionIndicators = sections
     .filter(s => s.type !== 'other' && s.type !== 'title')
     .map(s => sectionConfig[s.type].icon)
     .join(' ');
 
-  // Get first bit of actual content
   const parser = new DOMParser();
   const doc = parser.parseFromString(content, 'text/html');
   const textContent = doc.body.textContent || '';

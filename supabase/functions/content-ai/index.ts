@@ -515,10 +515,16 @@ Devuelve HTML con esta estructura:
 </div>`;
 
     default:
-      // Script completo para el CREADOR
+      // Script completo para el CREADOR - DERROTERO POR ESCENAS
       return `
 📦 GENERANDO: BLOQUE CREADOR 🎥
-Contenido claro para quien graba.
+Guion estructurado por escenas, listo para grabar.
+
+⚠️ INSTRUCCIONES CRÍTICAS:
+- Genera EXACTAMENTE la cantidad de hooks indicada en el prompt (ni más, ni menos)
+- Los hooks deben ser SCROLL STOPPERS reales, no frases genéricas
+- El guion debe ser un DERROTERO POR ESCENAS, no texto continuo
+- El texto del teleprompter debe poder leerse DIRECTAMENTE en cámara
 
 Devuelve HTML con esta estructura COMPLETA:
 
@@ -527,14 +533,15 @@ Devuelve HTML con esta estructura COMPLETA:
   
   <h3>📋 Información del Video</h3>
   <ul>
-    <li><strong>Título del video:</strong> [Título descriptivo]</li>
-    <li><strong>Objetivo del video:</strong> [Qué debe lograr este contenido]</li>
+    <li><strong>Título del video:</strong> [Título descriptivo basado en el ángulo de venta]</li>
+    <li><strong>Objetivo del video:</strong> [Qué debe lograr este contenido según el CTA]</li>
     <li><strong>Duración sugerida:</strong> [XX-XX segundos]</li>
-    <li><strong>Formato:</strong> [9:16 / 1:1 / 16:9]</li>
+    <li><strong>Formato:</strong> [9:16 vertical]</li>
+    <li><strong>Ángulo de venta:</strong> [El ángulo seleccionado en el formulario]</li>
   </ul>
   
   <h3>👤 Avatar del Público</h3>
-  <p>[Descripción del público objetivo al que le hablas]</p>
+  <p>[Descripción del público objetivo según el avatar configurado - dolores, deseos, objeciones]</p>
   
   <h3>🎭 Perfil de Quien Graba</h3>
   <ul>
@@ -548,54 +555,92 @@ Devuelve HTML con esta estructura COMPLETA:
   <p><em>[Ej: Cercano, tipo chisme / Educativo y claro / Inspirador y motivacional]</em></p>
   
   <h3>🔥 HOOKS</h3>
-  <p><em>Los hooks están pensados como scroll stoppers, no frases genéricas.</em></p>
+  <p><em>⚠️ IMPORTANTE: Genera EXACTAMENTE [X] hooks según lo configurado. Cada hook debe ser un scroll stopper real.</em></p>
   
-  <h4>Hook A</h4>
-  <p><em>[Indicación de tono y energía]</em></p>
+  <h4>🎯 Hook 1</h4>
+  <p><em>[Tipo: Emocional/Disruptivo/Educativo/Directo]</em></p>
+  <p><strong>"[Texto exacto del hook - máximo 10 palabras, impactante]"</strong></p>
+  
+  <h4>🎯 Hook 2</h4>
+  <p><em>[Tipo: diferente al anterior]</em></p>
   <p><strong>"[Texto exacto del hook]"</strong></p>
   
-  <h4>Hook B</h4>
-  <p><em>[Indicación de tono y energía]</em></p>
-  <p><strong>"[Texto exacto del hook]"</strong></p>
+  [Continuar con la cantidad EXACTA de hooks configurada...]
   
-  <h4>Hook C</h4>
-  <p><em>[Indicación de tono y energía]</em></p>
-  <p><strong>"[Texto exacto del hook]"</strong></p>
+  <h3>🎬 DESARROLLO - DERROTERO POR ESCENAS</h3>
+  <p><em>Guía visual escena por escena para producción real.</em></p>
   
-  [Agregar más hooks según la cantidad configurada...]
+  <h4>📍 Escena 1 - Hook / Apertura</h4>
+  <ul>
+    <li><strong>⏱️ Duración:</strong> 0-3 segundos</li>
+    <li><strong>🎥 Qué se ve (visual):</strong> [Descripción precisa del plano, movimiento, elementos]</li>
+    <li><strong>💬 Qué se dice:</strong> "[Texto exacto hablado]"</li>
+    <li><strong>💭 Emoción a transmitir:</strong> [Curiosidad/Sorpresa/Urgencia/...]</li>
+    <li><strong>📝 Nota de dirección:</strong> [Indicación para el creador]</li>
+  </ul>
   
-  <h3>🎬 Guión Formato Director</h3>
-  <p><em>Describe qué se ve, qué emoción transmitir, ritmo y energía por momento.</em></p>
+  <h4>📍 Escena 2 - Problema / Conexión</h4>
+  <ul>
+    <li><strong>⏱️ Duración:</strong> 3-12 segundos</li>
+    <li><strong>🎥 Qué se ve (visual):</strong> [Descripción precisa]</li>
+    <li><strong>💬 Qué se dice:</strong> "[Texto exacto hablado]"</li>
+    <li><strong>💭 Emoción a transmitir:</strong> [Empatía/Identificación/...]</li>
+    <li><strong>📝 Nota de dirección:</strong> [Indicación para el creador]</li>
+  </ul>
   
-  <h4>Apertura (0-3s)</h4>
-  <p><strong>Visual:</strong> [Lo que se ve en cámara]</p>
-  <p><strong>Emoción:</strong> [Lo que debe transmitir]</p>
-  <p><strong>Ritmo:</strong> [Rápido/Medio/Lento]</p>
+  <h4>📍 Escena 3 - Solución / Producto</h4>
+  <ul>
+    <li><strong>⏱️ Duración:</strong> 12-30 segundos</li>
+    <li><strong>🎥 Qué se ve (visual):</strong> [Descripción precisa]</li>
+    <li><strong>💬 Qué se dice:</strong> "[Texto exacto hablado]"</li>
+    <li><strong>💭 Emoción a transmitir:</strong> [Alivio/Esperanza/Confianza/...]</li>
+    <li><strong>📝 Nota de dirección:</strong> [Indicación para el creador]</li>
+  </ul>
   
-  <h4>Desarrollo (3-40s)</h4>
-  <p><strong>Visual:</strong> [Lo que se ve en cámara]</p>
-  <p><strong>Emoción:</strong> [Lo que debe transmitir]</p>
-  <p><strong>Ritmo:</strong> [Rápido/Medio/Lento]</p>
+  <h4>📍 Escena 4 - Beneficios / Demostración</h4>
+  <ul>
+    <li><strong>⏱️ Duración:</strong> 30-45 segundos</li>
+    <li><strong>🎥 Qué se ve (visual):</strong> [Descripción precisa]</li>
+    <li><strong>💬 Qué se dice:</strong> "[Texto exacto hablado]"</li>
+    <li><strong>💭 Emoción a transmitir:</strong> [Deseo/Convicción/...]</li>
+    <li><strong>📝 Nota de dirección:</strong> [Indicación para el creador]</li>
+  </ul>
   
-  <h4>Cierre (40-60s)</h4>
-  <p><strong>Visual:</strong> [Lo que se ve en cámara]</p>
-  <p><strong>Emoción:</strong> [Lo que debe transmitir]</p>
-  <p><strong>Ritmo:</strong> [Rápido/Medio/Lento]</p>
+  <h4>📍 Escena 5 - Cierre / CTA</h4>
+  <ul>
+    <li><strong>⏱️ Duración:</strong> 45-60 segundos</li>
+    <li><strong>🎥 Qué se ve (visual):</strong> [Descripción precisa]</li>
+    <li><strong>💬 Qué se dice:</strong> "[CTA literal configurado por el usuario]"</li>
+    <li><strong>💭 Emoción a transmitir:</strong> [Urgencia/Motivación/Acción/...]</li>
+    <li><strong>📝 Nota de dirección:</strong> [Indicación para el creador]</li>
+  </ul>
   
-  <h3>🎙️ Guión para Teleprompter</h3>
-  <p><em>Texto hablado, natural, conversacional, sin lenguaje publicitario forzado.</em></p>
+  [Agregar más escenas si la estructura narrativa lo requiere...]
   
-  <div class="teleprompter-text">
-    <p>[Texto completo que debe decir el creador, con pausas naturales indicadas con "..."]</p>
+  <h3>🎙️ GUIÓN PARA TELEPROMPTER</h3>
+  <p><em>Texto fluido para leer directamente en cámara. Sin cortes, natural y conversacional.</em></p>
+  
+  <div class="teleprompter-text" data-teleprompter="true">
+    <p>[HOOK PRINCIPAL]</p>
+    
+    <p>[Texto de la Escena 1 - transición natural a...]</p>
+    
+    <p>[Texto de la Escena 2 - pausa natural...]</p>
+    
+    <p>[Texto de la Escena 3 - énfasis en beneficios...]</p>
+    
+    <p>[Texto de la Escena 4 - construye hacia el cierre...]</p>
+    
+    <p>[CTA FINAL - usa el CTA literal del formulario]</p>
   </div>
   
-  <h3>👉 CTA Sugerido</h3>
+  <h3>👉 CTA FINAL</h3>
   
-  <h4>Para Orgánico:</h4>
-  <p><strong><u>"[CTA natural para contenido orgánico]"</u></strong></p>
+  <h4>🌱 Para Orgánico:</h4>
+  <p><strong><u>"[CTA suave y natural, basado en el CTA configurado]"</u></strong></p>
   
-  <h4>Para Ads:</h4>
-  <p><strong><u>"[CTA directo para publicidad]"</u></strong></p>
+  <h4>💰 Para Ads:</h4>
+  <p><strong><u>"[CTA directo y urgente, basado en el CTA configurado]"</u></strong></p>
 </div>`;
   }
 }
