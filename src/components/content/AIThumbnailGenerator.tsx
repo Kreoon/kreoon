@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Image, Upload, Sparkles, Loader2, Wand2, Edit3, 
-  Check, RefreshCw, Download, X, Eye, Palette
+  Check, RefreshCw, Download, X, Eye, Palette, Package
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -61,6 +61,17 @@ const CONTENT_TYPES = [
   { value: "ads", label: "Ads/Paid", description: "Anuncios pagados" },
 ];
 
+const PRODUCT_ROLES = [
+  { value: "protagonist", label: "Protagonista", description: "Producto ocupa 40-60% del encuadre" },
+  { value: "secondary", label: "Secundario", description: "Producto ocupa 15-30% del encuadre" },
+  { value: "contextual", label: "Contextual", description: "Producto en background" },
+];
+
+const PRODUCT_VISIBILITY = [
+  { value: "full", label: "Completo", description: "Producto 100% visible" },
+  { value: "partial", label: "Parcial", description: "Parte del producto visible" },
+];
+
 export function AIThumbnailGenerator({ 
   contentId, 
   currentThumbnail, 
@@ -70,10 +81,15 @@ export function AIThumbnailGenerator({
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const exampleInputRef = useRef<HTMLInputElement>(null);
+  const productInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [exampleImage, setExampleImage] = useState<string | null>(null);
+  const [productImage, setProductImage] = useState<string | null>(null);
+  const [productRole, setProductRole] = useState("secondary");
+  const [productVisibility, setProductVisibility] = useState("full");
+  const [showBrand, setShowBrand] = useState(true);
   const [includeText, setIncludeText] = useState(false);
   const [thumbnailText, setThumbnailText] = useState("");
   const [textLanguage, setTextLanguage] = useState("es");
@@ -110,7 +126,7 @@ export function AIThumbnailGenerator({
     return { hooks, emotion, topic };
   };
 
-  const handleImageUpload = (file: File, type: "reference" | "example") => {
+  const handleImageUpload = (file: File, type: "reference" | "example" | "product") => {
     if (!file.type.startsWith("image/")) {
       toast({ title: "Archivo no válido", description: "Solo se permiten imágenes", variant: "destructive" });
       return;
@@ -124,6 +140,8 @@ export function AIThumbnailGenerator({
     reader.onloadend = () => {
       if (type === "reference") {
         setReferenceImage(reader.result as string);
+      } else if (type === "product") {
+        setProductImage(reader.result as string);
       } else {
         setExampleImage(reader.result as string);
       }
@@ -131,11 +149,33 @@ export function AIThumbnailGenerator({
     reader.readAsDataURL(file);
   };
 
+  // Determine product role based on script context
+  const determineAutoProductRole = () => {
+    const script = scriptContext.script || "";
+    const lowerScript = script.toLowerCase();
+    
+    // Pain/problem hook → person first, product secondary
+    if (lowerScript.includes("dolor") || lowerScript.includes("problema") || lowerScript.includes("frustración")) {
+      return "secondary";
+    }
+    // Solution hook → product protagonist
+    if (lowerScript.includes("solución") || lowerScript.includes("descubrí") || lowerScript.includes("esto funciona")) {
+      return "protagonist";
+    }
+    // Educational → product contextual
+    if (lowerScript.includes("educativo") || lowerScript.includes("tutorial") || lowerScript.includes("cómo")) {
+      return "contextual";
+    }
+    return productRole;
+  };
+
   const generatePrompt = () => {
     const { hooks, emotion, topic } = extractScriptInfo();
     const highlight = HIGHLIGHT_OPTIONS.find(h => h.value === highlightStyle);
     const zone = TEXT_ZONES.find(z => z.value === textZone);
     const format = OUTPUT_FORMATS.find(f => f.value === outputFormat);
+    const role = PRODUCT_ROLES.find(r => r.value === productRole);
+    const visibility = PRODUCT_VISIBILITY.find(v => v.value === productVisibility);
     
     // Get resolution based on format
     const resolutions: Record<string, { w: number; h: number }> = {
@@ -154,6 +194,37 @@ export function AIThumbnailGenerator({
         formattedText = words.slice(0, midpoint).join(' ') + '\n' + words.slice(midpoint).join(' ');
       }
     }
+
+    // Determine composition percentages based on product role
+    const getCompositionRules = () => {
+      if (!productImage) return '';
+      
+      if (productRole === 'protagonist') {
+        return `
+COMBINED COMPOSITION (PERSON + PRODUCT):
+- Product is PROTAGONIST → Product occupies 40-60% of the frame
+- Person occupies 20-30% of the frame (supporting role)
+- Product is the main focal point
+- Avoid visual competition between face and product
+- Clear hierarchy: product first, person second`;
+      } else if (productRole === 'secondary') {
+        return `
+COMBINED COMPOSITION (PERSON + PRODUCT):
+- Person is PROTAGONIST → Person occupies 50-60% of the frame
+- Product occupies 15-30% of the frame (secondary role)
+- Person is the main focal point
+- Product visible but not competing for attention
+- Clear hierarchy: person first, product second`;
+      } else {
+        return `
+COMBINED COMPOSITION (PERSON + PRODUCT):
+- Product is CONTEXTUAL → Product in background or environment
+- Person occupies 60-70% of the frame (main focus)
+- Product visible as context/environment element
+- Product should be recognizable but not prominent
+- Clear hierarchy: person only focal point`;
+      }
+    };
     
     // Structured prompt following professional prompt engineering
     let prompt = `═══════════════════════════════════════
@@ -188,15 +259,48 @@ ${referenceImage ? `Main character based on user reference image.
 - Authentic look, NOT stock photo style.
 - Natural lighting on face.`}
 
+${productImage ? `═══════════════════════════════════════
+🧴 PRODUCT / OBJECT REFERENCE (CRITICAL)
+═══════════════════════════════════════
+Product reference:
+- Use the EXACT product image provided by the user as visual reference
+- Maintain product shape, proportions and main visual identity
+- Do NOT redesign or alter the product
+- No fictional variations or inventions
+
+Product placement rules:
+- Role: ${role?.label.toUpperCase()} (${role?.description})
+- Visibility: ${visibility?.label.toUpperCase()} (${visibility?.description})
+- Position according to rule of thirds
+${productVisibility === 'full' ? '- Product must be FULLY visible, no cropping' : '- Partial view acceptable, but product must be recognizable'}
+${showBrand ? '- Brand/logo must be visible if present on product' : '- Brand/logo can be partially obscured or not emphasized'}
+
+Lighting and focus:
+- Product must be sharp and clearly visible
+- Lighting consistent with the main subject
+- Avoid reflections, blur or distortion on product
+
+CRITICAL PRODUCT RULES:
+- Do NOT invent products
+- Do NOT alter real product colors
+- Do NOT change logos or branding
+- Do NOT use generic stock products
+- Use ONLY the provided product reference
+${getCompositionRules()}` : ''}
+
 ═══════════════════════════════════════
 4️⃣ VISUAL COMPOSITION
 ═══════════════════════════════════════
-- Subject occupies 60-70% of the frame
+${productImage && productRole === 'protagonist' ? 
+  `- Product is the main focal point (40-60% of frame)
+- Person in supporting role (20-30% of frame)` : 
+  `- Subject occupies 60-70% of the frame`}
 - Background slightly blurred or contextual (related to topic)
-- High contrast lighting on face/main subject
-- Clear focal point
+- High contrast lighting on main subject
+- Clear focal point (ONE main element)
 - Rule of thirds composition
 ${forceSafeZone ? '- ALL important elements within 10-15% safe margin' : ''}
+- Avoid visual competition between elements
 
 ═══════════════════════════════════════
 5️⃣ TEXT OVERLAY ${includeText && formattedText ? '(CRITICAL - FOLLOW EXACTLY)' : '(NONE)'}
@@ -239,14 +343,18 @@ AVOID:
 - Plain white backgrounds
 - Generic stock photo aesthetics
 - Multiple text blocks
-- Watermarks or logos
+- Watermarks or logos (unless specified)
 - Low contrast images
 - Blurry main subject
+${productImage ? `- Invented or altered products
+- Generic product mockups
+- Changed product colors
+- Cropped products (if visibility is "full")` : ''}
 
 ═══════════════════════════════════════
 🎯 GOLDEN RULE
 ═══════════════════════════════════════
-The thumbnail must be understood in 1 second, work without additional context, and provoke immediate curiosity. It should stop the scroll.`;
+The thumbnail must be understood in 1 second, work without additional context, and provoke immediate curiosity. It should stop the scroll.${productImage ? ' Person + product + text must work together strategically.' : ''}`;
 
     setGeneratedPrompt(prompt);
     setIsPromptVisible(true);
@@ -436,6 +544,96 @@ The thumbnail must be understood in 1 second, work without additional context, a
                     </Button>
                   )}
                 </div>
+              </div>
+
+              {/* Product Image */}
+              <div className="space-y-2 col-span-full">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                  🧴 Foto del producto (Opcional)
+                </Label>
+                <p className="text-xs text-muted-foreground/70">
+                  Imagen real del producto para incluir en la miniatura
+                </p>
+                <input
+                  ref={productInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], "product")}
+                />
+                {productImage ? (
+                  <div className="space-y-3">
+                    <div className="relative w-full aspect-square max-w-[120px] rounded-lg overflow-hidden border border-primary/30">
+                      <img src={productImage} alt="Product" className="w-full h-full object-cover" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => setProductImage(null)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    {/* Product Role Selector */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Rol del producto en la miniatura</Label>
+                      <RadioGroup
+                        value={productRole}
+                        onValueChange={setProductRole}
+                        className="space-y-1"
+                      >
+                        {PRODUCT_ROLES.map(role => (
+                          <div key={role.value} className="flex items-center space-x-2">
+                            <RadioGroupItem value={role.value} id={`role-${role.value}`} />
+                            <Label htmlFor={`role-${role.value}`} className="cursor-pointer text-xs">
+                              <span className="font-medium">{role.label}</span>
+                              <span className="text-muted-foreground ml-1">- {role.description}</span>
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+
+                    {/* Product Visibility */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">¿El producto debe verse:</Label>
+                      <RadioGroup
+                        value={productVisibility}
+                        onValueChange={setProductVisibility}
+                        className="flex gap-4"
+                      >
+                        {PRODUCT_VISIBILITY.map(vis => (
+                          <div key={vis.value} className="flex items-center space-x-2">
+                            <RadioGroupItem value={vis.value} id={`vis-${vis.value}`} />
+                            <Label htmlFor={`vis-${vis.value}`} className="cursor-pointer text-xs">
+                              {vis.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+
+                    {/* Show Brand Toggle */}
+                    <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                      <Label className="text-xs">¿Mostrar marca/logo?</Label>
+                      <Switch
+                        checked={showBrand}
+                        onCheckedChange={setShowBrand}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => productInputRef.current?.click()}
+                    className="w-full border-dashed border-primary/30"
+                  >
+                    <Upload className="h-3 w-3 mr-1" />
+                    Subir foto de producto
+                  </Button>
+                )}
               </div>
             </CollapsibleContent>
           </Collapsible>
