@@ -158,6 +158,26 @@ export default function UserPortfolio() {
     return newId;
   });
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [savedContentItems, setSavedContentItems] = useState<Array<{
+    id: string;
+    title: string;
+    videoUrls: string[];
+    thumbnailUrl: string | null;
+    viewsCount: number;
+    likesCount: number;
+    isLiked: boolean;
+    createdAt: string;
+    type: 'work' | 'post';
+    mediaType: 'video' | 'image';
+    mediaUrl: string | null;
+    isPinned: boolean;
+    isPublished: boolean;
+    status?: string;
+    isSaved: boolean;
+    creatorId?: string;
+    creatorName?: string;
+    creatorAvatar?: string;
+  }>>([]);
   const [activeTab, setActiveTab] = useState<'content' | 'saved'>('content');
 
   const isOwner = user?.id === resolvedUserId || isAdmin;
@@ -514,30 +534,121 @@ export default function UserPortfolio() {
     }
   };
 
-  // Fetch saved content IDs for current user
+  // Fetch saved content IDs and full content data for current user
   const fetchSavedContent = useCallback(async () => {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
+      // First fetch saved_content records
+      const { data: savedData, error: savedError } = await supabase
         .from('saved_content')
         .select('content_id, post_id')
         .eq('user_id', user.id);
       
-      if (error) throw error;
+      if (savedError) throw savedError;
       
-      const ids = new Set<string>();
-      (data || []).forEach(item => {
-        if (item.content_id) ids.add(item.content_id);
-        if (item.post_id) ids.add(item.post_id);
-      });
+      const contentIds = (savedData || []).filter(s => s.content_id).map(s => s.content_id as string);
+      const postIds = (savedData || []).filter(s => s.post_id).map(s => s.post_id as string);
+      
+      // Store IDs for quick lookup
+      const ids = new Set<string>([...contentIds, ...postIds]);
       setSavedIds(ids);
+      
+      // Now fetch full content data for saved items
+      const savedItems: typeof savedContentItems = [];
+      
+      // Fetch content items
+      if (contentIds.length > 0) {
+        const { data: contentData } = await supabase
+          .from('content')
+          .select('id, title, caption, thumbnail_url, video_url, video_urls, views_count, likes_count, created_at, creator_id, is_published, status')
+          .in('id', contentIds);
+        
+        for (const item of (contentData || [])) {
+          let creatorName = '';
+          let creatorAvatar = '';
+          if (item.creator_id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url')
+              .eq('id', item.creator_id)
+              .maybeSingle();
+            creatorName = profile?.full_name || '';
+            creatorAvatar = profile?.avatar_url || '';
+          }
+          savedItems.push({
+            id: item.id,
+            title: item.caption?.replace('[PINNED]', '').trim() || item.title,
+            videoUrls: item.video_urls?.length ? item.video_urls : (item.video_url ? [item.video_url] : []),
+            thumbnailUrl: item.thumbnail_url,
+            viewsCount: item.views_count || 0,
+            likesCount: item.likes_count || 0,
+            isLiked: false,
+            createdAt: item.created_at || '',
+            type: 'work',
+            mediaType: 'video',
+            mediaUrl: null,
+            isPinned: false,
+            isPublished: item.is_published ?? true,
+            status: item.status || undefined,
+            isSaved: true,
+            creatorId: item.creator_id || undefined,
+            creatorName,
+            creatorAvatar,
+          });
+        }
+      }
+      
+      // Fetch portfolio posts
+      if (postIds.length > 0) {
+        const { data: postData } = await supabase
+          .from('portfolio_posts')
+          .select('id, media_url, media_type, thumbnail_url, caption, views_count, likes_count, created_at, user_id')
+          .in('id', postIds);
+        
+        for (const item of (postData || [])) {
+          let creatorName = '';
+          let creatorAvatar = '';
+          if (item.user_id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url')
+              .eq('id', item.user_id)
+              .maybeSingle();
+            creatorName = profile?.full_name || '';
+            creatorAvatar = profile?.avatar_url || '';
+          }
+          savedItems.push({
+            id: item.id,
+            title: item.caption || '',
+            videoUrls: item.media_type === 'video' ? [item.media_url] : [],
+            thumbnailUrl: item.media_type === 'image' ? item.media_url : item.thumbnail_url,
+            viewsCount: item.views_count || 0,
+            likesCount: item.likes_count || 0,
+            isLiked: false,
+            createdAt: item.created_at,
+            type: 'post',
+            mediaType: item.media_type as 'video' | 'image',
+            mediaUrl: item.media_url,
+            isPinned: false,
+            isPublished: true,
+            isSaved: true,
+            creatorId: item.user_id,
+            creatorName,
+            creatorAvatar,
+          });
+        }
+      }
+      
+      // Sort by date
+      savedItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setSavedContentItems(savedItems);
     } catch (error) {
       console.error('Error fetching saved content:', error);
     }
   }, [user]);
 
-  // Fetch saved content when user logs in
+  // Fetch saved content when user logs in and is on their own profile
   useEffect(() => {
     if (user && isOwner) {
       fetchSavedContent();
@@ -892,10 +1003,10 @@ export default function UserPortfolio() {
     return allContent.filter(item => item.mediaType === 'video');
   }, [allContent]);
 
-  // Saved content - filter allContent to only show saved items
+  // Saved content - use the full saved content items from any user
   const savedContent = useMemo(() => {
-    return allContent.filter(item => savedIds.has(item.id));
-  }, [allContent, savedIds]);
+    return savedContentItems;
+  }, [savedContentItems]);
 
   // Current display content based on active tab
   const displayContent = activeTab === 'saved' ? savedContent : allContent;

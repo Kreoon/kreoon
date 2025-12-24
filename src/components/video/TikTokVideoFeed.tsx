@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { HLSVideoPlayer, HLSVideoPlayerRef, getBunnyThumbnail } from './HLSVideoPlayer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ExpandableText } from '@/components/ui/expandable-text';
+import { useGlobalMute } from '@/contexts/VideoPlayerContext';
 
 interface VideoItem {
   id: string;
@@ -79,7 +80,8 @@ function VideoCard({
   onComment?: () => void;
   onProfileClick?: () => void;
 }) {
-  const [isMuted, setIsMuted] = useState(true);
+  // Use global mute state
+  const { isGlobalMuted, setGlobalMuted } = useGlobalMute();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [floatingHearts, setFloatingHearts] = useState<FloatingHeart[]>([]);
   const [showPlayIcon, setShowPlayIcon] = useState(false);
@@ -157,12 +159,10 @@ function VideoCard({
 
   const handleMuteToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsMuted(prev => {
-      const newMuted = !prev;
-      playerRef.current?.setMuted(newMuted);
-      return newMuted;
-    });
-  }, []);
+    const newMuted = !isGlobalMuted;
+    setGlobalMuted(newMuted);
+    playerRef.current?.setMuted(newMuted);
+  }, [isGlobalMuted, setGlobalMuted]);
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -195,7 +195,7 @@ function VideoCard({
         src={currentVideoUrl}
         poster={thumbnailUrl || undefined}
         autoPlay={isActive}
-        muted={isMuted}
+        muted={isGlobalMuted}
         loop={true}
         aspectRatio="auto"
         className="absolute inset-0 w-full h-full"
@@ -218,7 +218,7 @@ function VideoCard({
         onClick={handleMuteToggle}
         className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
       >
-        {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+        {isGlobalMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
       </button>
 
       {/* Carousel navigation */}
