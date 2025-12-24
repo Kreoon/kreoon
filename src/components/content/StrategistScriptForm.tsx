@@ -124,29 +124,98 @@ const COUNTRIES = [
 const CONTENT_AI_FUNCTION = "content-ai";
 
 const DEFAULT_PROMPTS = {
-  script: `Genera un guión de video corto (TikTok/Reels/Shorts) que sea natural, conversacional y fácil de memorizar. 
-Incluye múltiples opciones de hooks de apertura.
-Sigue la estructura narrativa indicada.
-Integra el CTA de forma natural al final.`,
-  editor: `Basándote en el guión generado, crea pautas detalladas para el editor de video:
-- Estilo visual sugerido
-- Ritmo de edición
-- Transiciones recomendadas
-- Efectos de texto/gráficos
-- Música y sonidos sugeridos
-- Duración de cada sección`,
-  strategist: `Basándote en el guión, crea pautas para el estratega:
-- Mejor horario de publicación
-- Hashtags recomendados
-- Caption sugerido
-- Estrategia de engagement
-- Métricas clave a monitorear`,
-  trafficker: `Basándote en el guión, crea pautas para el trafficker:
-- Audiencias objetivo sugeridas
-- Objetivos de campaña recomendados
-- Presupuesto sugerido
-- Formatos de anuncio ideales
-- Copy para anuncios`,
+  script: `Genera un guión de video corto (TikTok/Reels/Shorts) que sea natural, conversacional y fácil de memorizar.
+
+IMPORTANTE: Entrega el contenido en formato HTML estructurado y limpio.
+
+Formato de entrega:
+<h2>Guión para Redes Sociales</h2>
+
+<h3>🎯 HOOKS</h3>
+<p><em>[Indicación de tono]</em></p>
+<p>"Texto del hook..."</p>
+
+<h3>💬 DESARROLLO</h3>
+<p><em>[Indicación de tono]</em></p>
+<p>Texto del desarrollo...</p>
+
+<h3>📢 CIERRE / CTA</h3>
+<p><em>[Indicación de tono]</em></p>
+<p>Texto del cierre...</p>
+
+Usa emojis en encabezados, indicaciones de tono en cursiva con <em>, y textos hablados entre comillas.`,
+
+  editor: `Basándote en el guión, crea pautas de edición en formato HTML:
+
+<h2>🎬 Pautas de Edición</h2>
+
+<h3>📝 Notas Generales</h3>
+<ul>
+  <li><strong>Ritmo:</strong> Descripción</li>
+  <li><strong>Duración:</strong> XX segundos</li>
+</ul>
+
+<h3>🎥 Storyboard</h3>
+<h4>Escena 1</h4>
+<ul>
+  <li><strong>Plano:</strong> Tipo</li>
+  <li><strong>Visual:</strong> Elementos</li>
+</ul>
+
+<h3>🎵 Música y Audio</h3>
+<p>Sugerencias de música...</p>
+
+Usa etiquetas HTML semánticas y emojis en encabezados.`,
+
+  strategist: `Basándote en el guión, crea pautas de estrategia en formato HTML:
+
+<h2>🧠 Estrategia de Publicación</h2>
+
+<h3>📊 Análisis</h3>
+<p><strong>Fase:</strong> Nombre</p>
+<p><strong>Objetivo:</strong> Descripción</p>
+
+<h3>📅 Publicación</h3>
+<ul>
+  <li><strong>Mejor horario:</strong> Día y hora</li>
+</ul>
+
+<h3>#️⃣ Hashtags</h3>
+<p>#hashtag1 #hashtag2...</p>
+
+<h3>📝 Caption Sugerido</h3>
+<p>Texto del caption...</p>
+
+Usa etiquetas HTML semánticas y emojis.`,
+
+  trafficker: `Basándote en el guión, crea pautas de pauta publicitaria en formato HTML:
+
+<h2>💰 Pautas Publicitarias</h2>
+
+<h3>🎯 Estrategia</h3>
+<ul>
+  <li><strong>Ángulo:</strong> Tipo</li>
+  <li><strong>Objetivo:</strong> Meta</li>
+</ul>
+
+<h3>👥 Segmentación</h3>
+<p>Audiencias objetivo...</p>
+
+<h3>📢 CTA Principal</h3>
+<p><strong>"Texto del CTA"</strong></p>
+
+<h3>🔥 Variaciones de Anuncio</h3>
+<h4>Versión A</h4>
+<p><strong>Hook:</strong> "Texto"</p>
+<p><strong>Copy:</strong> Texto...</p>
+
+<h3>📊 KPIs</h3>
+<ul>
+  <li><strong>CTR:</strong> X%</li>
+  <li><strong>Presupuesto:</strong> $X/día</li>
+</ul>
+
+Usa etiquetas HTML semánticas y emojis estratégicos.`,
 };
 
 export function StrategistScriptForm({ product, contentId, onScriptGenerated }: StrategistScriptFormProps) {
