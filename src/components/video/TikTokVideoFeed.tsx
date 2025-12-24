@@ -66,6 +66,7 @@ function FloatingHeartAnimation({ x, y, onComplete }: { x: number; y: number; on
 function VideoCard({
   video,
   isActive,
+  isFirstVideo,
   onLike,
   onView,
   onShare,
@@ -74,6 +75,7 @@ function VideoCard({
 }: {
   video: VideoItem;
   isActive: boolean;
+  isFirstVideo: boolean;
   onLike?: () => void;
   onView?: () => void;
   onShare?: () => void;
@@ -85,6 +87,7 @@ function VideoCard({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [floatingHearts, setFloatingHearts] = useState<FloatingHeart[]>([]);
   const [showPlayIcon, setShowPlayIcon] = useState(false);
+  const [userStartedPlayback, setUserStartedPlayback] = useState(false);
   const playerRef = useRef<HLSVideoPlayerRef>(null);
   const viewTrackedRef = useRef(false);
   const heartIdRef = useRef(0);
@@ -96,17 +99,17 @@ function VideoCard({
 
   // Control playback and sync mute based on active state
   useEffect(() => {
-    if (isActive) {
+    // Only autoplay if user has started playback (after first interaction)
+    if (isActive && userStartedPlayback) {
       playerRef.current?.play();
-      // Sync mute state when becoming active
       setTimeout(() => {
         playerRef.current?.setMuted(isGlobalMuted);
       }, 50);
-    } else {
+    } else if (!isActive) {
       playerRef.current?.pause();
       viewTrackedRef.current = false;
     }
-  }, [isActive, isGlobalMuted]);
+  }, [isActive, isGlobalMuted, userStartedPlayback]);
 
   // Handle video loaded - sync mute state
   const handleVideoLoadComplete = useCallback(() => {
@@ -154,19 +157,26 @@ function VideoCard({
       return;
     }
 
-    // Single tap = toggle play/pause with visual feedback
+    // Single tap = start playback (first time) or toggle play/pause
     setTimeout(() => {
       if (Date.now() - lastTapRef.current >= 280) {
-        if (isActive) {
-          playerRef.current?.pause();
-        } else {
+        if (!userStartedPlayback) {
+          // First interaction - start playback with audio
+          setUserStartedPlayback(true);
           playerRef.current?.play();
+        } else {
+          // Toggle play/pause
+          if (isActive) {
+            playerRef.current?.pause();
+          } else {
+            playerRef.current?.play();
+          }
         }
         setShowPlayIcon(true);
         setTimeout(() => setShowPlayIcon(false), 600);
       }
     }, 300);
-  }, [video.isLiked, onLike, isActive, spawnFloatingHeart]);
+  }, [video.isLiked, onLike, isActive, spawnFloatingHeart, userStartedPlayback]);
 
   const handleMuteToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -205,13 +215,15 @@ function VideoCard({
         ref={playerRef}
         src={currentVideoUrl}
         poster={thumbnailUrl || undefined}
-        autoPlay={isActive}
+        autoPlay={userStartedPlayback && isActive}
         muted={isGlobalMuted}
         loop={true}
         aspectRatio="auto"
         className="absolute inset-0 w-full h-full"
+        requireInteraction={!userStartedPlayback}
         onLoadComplete={handleVideoLoadComplete}
         onPlay={() => {
+          setUserStartedPlayback(true);
           if (!isGlobalMuted) {
             playerRef.current?.setMuted(false);
           }
@@ -412,6 +424,7 @@ export function TikTokVideoFeed({
           <VideoCard
             video={video}
             isActive={index === activeIndex}
+            isFirstVideo={index === 0}
             onLike={onLike ? () => onLike(video.id) : undefined}
             onView={onView ? () => onView(video.id) : undefined}
             onShare={onShare ? () => onShare(video) : undefined}

@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useEffect, useState } from 'react';
+import { forwardRef, useImperativeHandle, useEffect, useState, useCallback } from 'react';
 import { Play, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHLSPlayer, getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
@@ -19,6 +19,8 @@ interface HLSVideoPlayerProps {
   className?: string;
   aspectRatio?: '9:16' | '16:9' | '1:1' | 'auto';
   showControls?: boolean;
+  /** If true, video waits for user tap to start (required for unmuted autoplay on mobile) */
+  requireInteraction?: boolean;
   onPlay?: () => void;
   onPause?: () => void;
   onError?: (error: string) => void;
@@ -31,12 +33,13 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
     {
       src,
       poster,
-      autoPlay = true,
-      muted = true,
+      autoPlay = false, // Changed: don't autoplay by default
+      muted = false, // Changed: audio ON by default
       loop = true,
       className,
       aspectRatio = '9:16',
       showControls = false,
+      requireInteraction = true, // New: wait for user tap by default
       onPlay,
       onPause,
       onError,
@@ -46,6 +49,10 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
     ref
   ) {
     const [showPoster, setShowPoster] = useState(true);
+    const [hasInteracted, setHasInteracted] = useState(!requireInteraction);
+    
+    // Only autoplay if user has interacted (or interaction not required)
+    const effectiveAutoPlay = autoPlay && hasInteracted;
     
     const {
       videoRef,
@@ -58,11 +65,25 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
       pause,
       toggleMute,
       setMuted
-    } = useHLSPlayer(src, { autoPlay, muted, loop, poster });
+    } = useHLSPlayer(src, { autoPlay: effectiveAutoPlay, muted, loop, poster });
+
+    // Handle user tap to start video
+    const handleTapToPlay = useCallback(() => {
+      if (!hasInteracted) {
+        setHasInteracted(true);
+        // Small delay to ensure state is updated before playing
+        setTimeout(() => {
+          play();
+        }, 50);
+      }
+    }, [hasInteracted, play]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
-      play,
+      play: () => {
+        setHasInteracted(true);
+        play();
+      },
       pause,
       toggleMute,
       setMuted
@@ -74,9 +95,11 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
         onLoadStart?.();
       } else {
         onLoadComplete?.();
-        setShowPoster(false);
+        if (isPlaying) {
+          setShowPoster(false);
+        }
       }
-    }, [isLoading, onLoadStart, onLoadComplete]);
+    }, [isLoading, onLoadStart, onLoadComplete, isPlaying]);
 
     useEffect(() => {
       if (isPlaying) {
@@ -101,9 +124,13 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
     }[aspectRatio];
 
     const posterUrl = poster || thumbnailUrl;
+    const showPlayButton = !hasInteracted && !isPlaying;
 
     return (
-      <div className={cn('relative overflow-hidden bg-black', aspectClass, className)}>
+      <div 
+        className={cn('relative overflow-hidden bg-black', aspectClass, className)}
+        onClick={handleTapToPlay}
+      >
         {/* Video Element */}
         <video
           ref={videoRef}
@@ -129,8 +156,17 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
           </div>
         )}
 
+        {/* Play Button Overlay - shown until user interacts */}
+        {showPlayButton && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer">
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-6 transition-transform hover:scale-110">
+              <Play className="h-12 w-12 text-white fill-white" />
+            </div>
+          </div>
+        )}
+
         {/* Loading Indicator */}
-        {isLoading && (
+        {isLoading && hasInteracted && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <Loader2 className="h-10 w-10 text-white animate-spin" />
           </div>
