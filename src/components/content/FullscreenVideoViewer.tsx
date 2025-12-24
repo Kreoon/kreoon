@@ -86,6 +86,7 @@ export function FullscreenVideoViewer({
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'up' | 'down' | null>(null);
   const [showFullCaption, setShowFullCaption] = useState(false);
+  const [userStartedPlayback, setUserStartedPlayback] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HLSVideoPlayerRef>(null);
   const touchStartY = useRef(0);
@@ -306,8 +307,9 @@ export function FullscreenVideoViewer({
   const displayCaption = currentVideo.caption || currentVideo.title;
   const shouldTruncateCaption = displayCaption.length > 80;
 
-  // Handle video play - sync mute state
+  // Handle video play - sync mute state and mark as started
   const handleVideoPlay = useCallback(() => {
+    setUserStartedPlayback(true);
     if (!isGlobalMuted) {
       playerRef.current?.setMuted(false);
     }
@@ -348,11 +350,12 @@ export function FullscreenVideoViewer({
               key={`${currentVideo.id}-${currentVariation}`}
               src={currentVideoUrl}
               poster={thumbnailUrl || undefined}
-              autoPlay={true}
+              autoPlay={userStartedPlayback}
               muted={isGlobalMuted}
               loop={true}
               aspectRatio="auto"
               className="w-full h-full"
+              requireInteraction={!userStartedPlayback}
               onLoadComplete={handleVideoLoadComplete}
               onPlay={handleVideoPlay}
             />
