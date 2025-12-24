@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,6 +78,31 @@ function getPngDimensionsFromDataUrl(dataUrl: string): { width: number; height: 
   } catch {
     return null;
   }
+}
+
+// Force the generated image into the requested dimensions (cover + center crop)
+async function normalizeToSizePngBytes(
+  dataUrl: string,
+  targetWidth: number,
+  targetHeight: number
+): Promise<Uint8Array> {
+  const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+  const bytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+
+  const img = await Image.decode(bytes);
+
+  // cover resize
+  const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
+  const resizedW = Math.round(img.width * scale);
+  const resizedH = Math.round(img.height * scale);
+  const resized = img.resize(resizedW, resizedH);
+
+  // center crop
+  const x = Math.max(0, Math.floor((resized.width - targetWidth) / 2));
+  const y = Math.max(0, Math.floor((resized.height - targetHeight) / 2));
+  const cropped = resized.crop(x, y, targetWidth, targetHeight);
+
+  return await cropped.encode();
 }
 
 serve(async (req) => {
@@ -289,22 +315,21 @@ serve(async (req) => {
       }
     }
 
-    console.log("Image generated successfully, uploading to storage...");
+    console.log("Image generated successfully, normalizing size and uploading to storage...");
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Convert base64 to blob and upload to Supabase storage
-    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
-    const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-    
+    // Force output size to the requested dimensions (fixes providers returning wrong orientation/size)
+    const normalizedBytes = await normalizeToSizePngBytes(imageData, width, height);
+
     const fileName = `ai-thumbnail-${contentId}-${Date.now()}.png`;
-    
+
     const { error: uploadError } = await supabase.storage
       .from("content-thumbnails")
-      .upload(fileName, binaryData, {
+      .upload(fileName, normalizedBytes, {
         contentType: "image/png",
         upsert: true,
       });
