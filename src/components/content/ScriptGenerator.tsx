@@ -128,6 +128,8 @@ const DEFAULT_PROMPTS = {
 
 Tu tarea es crear el **BLOQUE DEL CREADOR** para un video publicitario o contenido orgánico.
 
+IMPORTANTE: Debes entregar el contenido en formato HTML limpio y estructurado, listo para ser usado por creadores de contenido.
+
 ### 🧍‍♂️ BLOQUE CREADOR - Entrega:
 
 1. **Título del video**
@@ -147,11 +149,39 @@ Tu tarea es crear el **BLOQUE DEL CREADOR** para un video publicitario o conteni
 - Evita lenguaje publicitario forzado.
 - Prioriza autenticidad, ritmo natural y storytelling.
 - Adáptalo al **tono y estilo de UGC Colombia**: natural, humano, colaborativo y con enfoque en resultados.
-- Entrega en formato Markdown con encabezados claros.`,
+
+### 📋 FORMATO DE ENTREGA (HTML):
+Entrega el contenido en HTML estructurado siguiendo este formato exacto:
+
+<h2>Guión para Redes Sociales</h2>
+
+<h3>🎯 HOOKS</h3>
+<p><em>[Indicación de tono: Serio, honesto, directo, etc.]</em></p>
+<p>"Texto del hook aquí..."</p>
+
+<h3>💬 DESARROLLO</h3>
+<p><em>[Indicación de tono: Cercano, empático]</em></p>
+<p>Texto del desarrollo aquí con nombre del avatar...</p>
+
+<p><em>[Indicación de tono: Emocionado]</em></p>
+<p>Continuación del desarrollo...</p>
+
+<h3>📢 CIERRE / CTA</h3>
+<p><em>[Indicación de tono: Inspirador]</em></p>
+<p>Texto del cierre con llamada a la acción...</p>
+
+IMPORTANTE:
+- Usa etiquetas HTML semánticas: <h2>, <h3>, <p>, <em>, <strong>, <ul>, <li>
+- Incluye emojis relevantes en los encabezados (🎯, 💬, 📢, 🎬, etc.)
+- Las indicaciones de tono van entre corchetes y en cursiva con <em>
+- Los textos hablados van entre comillas
+- Mantén el formato limpio y fácil de leer`,
 
   editor: `Actúa como un editor de video experto en contenido UGC y performance ads.
 
 Basándote en el guión generado, crea el **BLOQUE DEL EDITOR**.
+
+IMPORTANTE: Debes entregar el contenido en formato HTML limpio y estructurado.
 
 ### 🎬 BLOQUE EDITOR - Entrega:
 
@@ -170,11 +200,49 @@ Basándote en el guión generado, crea el **BLOQUE DEL EDITOR**.
 - El ritmo debe ser dinámico para retener atención.
 - Prioriza cortes rápidos en los primeros 3 segundos.
 - Sugiere efectos que refuercen el mensaje sin distraer.
-- Entrega en formato Markdown con encabezados claros.`,
+
+### 📋 FORMATO DE ENTREGA (HTML):
+Entrega el contenido en HTML estructurado siguiendo este formato:
+
+<h2>🎬 Pautas de Edición</h2>
+
+<h3>📝 Notas Generales</h3>
+<ul>
+  <li><strong>Ritmo:</strong> Descripción del ritmo</li>
+  <li><strong>Duración:</strong> XX segundos</li>
+  <li><strong>Estilo de corte:</strong> Descripción</li>
+</ul>
+
+<h3>🎥 Storyboard</h3>
+<h4>Escena 1: Nombre</h4>
+<ul>
+  <li><strong>Plano:</strong> Tipo de plano</li>
+  <li><strong>Cámara:</strong> Movimiento</li>
+  <li><strong>Visual:</strong> Elementos</li>
+  <li><strong>Emoción:</strong> Sentimiento</li>
+</ul>
+
+<h3>🎵 Música y Audio</h3>
+<p>Descripción de la música sugerida...</p>
+
+<h3>✨ Efectos y Subtítulos</h3>
+<ul>
+  <li>Tipografía sugerida</li>
+  <li>Colores recomendados</li>
+  <li>Efectos de texto</li>
+</ul>
+
+IMPORTANTE:
+- Usa etiquetas HTML semánticas
+- Incluye emojis en encabezados
+- Usa listas <ul><li> para elementos enumerados
+- Usa <strong> para destacar conceptos clave`,
 
   strategist: `Actúa como un estratega de contenido digital experto en funnels y growth.
 
 Basándote en el guión, crea el **BLOQUE DEL ESTRATEGA**.
+
+IMPORTANTE: Debes entregar el contenido en formato HTML limpio y estructurado.
 
 ### 🧠 BLOQUE ESTRATEGA - Entrega:
 
@@ -194,11 +262,51 @@ Basándote en el guión, crea el **BLOQUE DEL ESTRATEGA**.
 - Si es Fase de Solución → lleva al clic, venta o diagnóstico.
 - Si es Fase de Fidelizar → crea comunidad o validación social.
 - Si es Fase de Envolver → reimpacta y recuerda beneficios.
-- Entrega en formato Markdown con encabezados claros.`,
+
+### 📋 FORMATO DE ENTREGA (HTML):
+Entrega el contenido en HTML estructurado siguiendo este formato:
+
+<h2>🧠 Estrategia de Publicación</h2>
+
+<h3>📊 Análisis del Embudo</h3>
+<p><strong>Fase:</strong> Nombre de la fase</p>
+<p><strong>Objetivo:</strong> Descripción del objetivo</p>
+
+<h3>🎯 Hipótesis y Testing</h3>
+<p>Descripción de la hipótesis A/B...</p>
+
+<h3>💡 Insight Principal</h3>
+<p><em>Insight emocional o racional a activar...</em></p>
+
+<h3>📅 Publicación</h3>
+<ul>
+  <li><strong>Mejor horario:</strong> Día y hora</li>
+  <li><strong>Métrica clave:</strong> KPI esperado</li>
+</ul>
+
+<h3>#️⃣ Hashtags</h3>
+<p>#hashtag1 #hashtag2 #hashtag3...</p>
+
+<h3>📝 Caption Sugerido</h3>
+<p>Texto del caption con emojis...</p>
+
+<h3>💬 Estrategia de Engagement</h3>
+<ul>
+  <li>Comentario fijado sugerido</li>
+  <li>Preguntas para generar interacción</li>
+</ul>
+
+IMPORTANTE:
+- Usa etiquetas HTML semánticas
+- Incluye emojis relevantes
+- Los hashtags van juntos en un párrafo
+- El caption debe ser copiable directamente`,
 
   trafficker: `Actúa como un trafficker/media buyer experto en performance ads y conversiones.
 
 Basándote en el guión, crea el **BLOQUE DEL TRAFFICKER**.
+
+IMPORTANTE: Debes entregar el contenido en formato HTML limpio y estructurado.
 
 ### 💰 BLOQUE TRAFFICKER - Entrega:
 
@@ -224,7 +332,52 @@ Basándote en el guión, crea el **BLOQUE DEL TRAFFICKER**.
 - Prioriza copies que generen curiosidad y urgencia.
 - Los hooks deben ser disruptivos y scroll-stopping.
 - Incluye emojis estratégicos en los copies.
-- Entrega en formato Markdown con encabezados claros.`,
+
+### 📋 FORMATO DE ENTREGA (HTML):
+Entrega el contenido en HTML estructurado siguiendo este formato:
+
+<h2>💰 Pautas de Pauta Publicitaria</h2>
+
+<h3>🎯 Estrategia de Campaña</h3>
+<ul>
+  <li><strong>Ángulo:</strong> Tipo de ángulo</li>
+  <li><strong>Objetivo:</strong> Objetivo de campaña</li>
+  <li><strong>Formato:</strong> Formato recomendado</li>
+</ul>
+
+<h3>👥 Segmentación</h3>
+<h4>Intereses</h4>
+<ul>
+  <li>Interés 1</li>
+  <li>Interés 2</li>
+</ul>
+<h4>Demografía</h4>
+<p>Edad, género, ubicación...</p>
+
+<h3>📢 CTA Principal</h3>
+<p><strong>"Texto del CTA aquí"</strong></p>
+
+<h3>🔥 Variaciones de Anuncio</h3>
+<h4>Versión A</h4>
+<p><strong>Hook:</strong> "Texto del hook"</p>
+<p><strong>Copy:</strong> Texto del copy...</p>
+
+<h4>Versión B</h4>
+<p><strong>Hook:</strong> "Texto del hook"</p>
+<p><strong>Copy:</strong> Texto del copy...</p>
+
+<h3>📊 KPIs y Presupuesto</h3>
+<ul>
+  <li><strong>CTR esperado:</strong> X%</li>
+  <li><strong>CPL objetivo:</strong> $X</li>
+  <li><strong>Presupuesto inicial:</strong> $X/día</li>
+</ul>
+
+IMPORTANTE:
+- Usa etiquetas HTML semánticas
+- Los copies deben ser copiables directamente
+- Incluye emojis estratégicos
+- Formatea las variaciones claramente`,
 };
 
 export function ScriptGenerator({ product, contentId, onScriptGenerated }: ScriptGeneratorProps) {
