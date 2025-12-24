@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.fetch-document]
 verify_jwt = false
+
+[functions.cleanup-expired-stories]
+verify_jwt = false
