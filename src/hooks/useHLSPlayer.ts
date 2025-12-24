@@ -100,6 +100,7 @@ export function useHLSPlayer(
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const fatalErrorCountRef = useRef(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -118,6 +119,7 @@ export function useHLSPlayer(
 
     setIsLoading(true);
     setError(null);
+    fatalErrorCountRef.current = 0;
 
     // Check if browser natively supports HLS (Safari/iOS)
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -170,27 +172,57 @@ export function useHLSPlayer(
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
+        if (!data.fatal) return;
+
+        // This sometimes fires mid-play even though playback continues; log for visibility.
+        console.warn('[HLS] fatal error', {
+          type: data.type,
+          details: data.details,
+          reason: data.reason,
+          response: (data as any).response,
+          url: (data as any).url,
+        });
+
+        fatalErrorCountRef.current += 1;
+
+        switch (data.type) {
+          case Hls.ErrorTypes.NETWORK_ERROR: {
+            // Retry a couple of times before surfacing an error
+            if (fatalErrorCountRef.current <= 3) {
               hls.startLoad();
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
+              return;
+            }
+            break;
+          }
+          case Hls.ErrorTypes.MEDIA_ERROR: {
+            if (fatalErrorCountRef.current <= 3) {
               hls.recoverMediaError();
-              break;
-            default:
-              // Try MP4 fallback
-              if (mp4Url) {
-                video.src = mp4Url;
-                video.muted = currentMuted;
-                video.loop = loop;
-                if (autoPlay) video.play().catch(() => {});
-              } else {
-                setError('Video playback error');
-              }
-              break;
+              return;
+            }
+            break;
+          }
+          default: {
+            // Try a soft restart first
+            if (fatalErrorCountRef.current <= 2) {
+              hls.stopLoad();
+              hls.startLoad();
+              return;
+            }
+            break;
           }
         }
+
+        // Final fallback
+        if (mp4Url) {
+          setError(null);
+          video.src = mp4Url;
+          video.muted = currentMuted;
+          video.loop = loop;
+          if (autoPlay) video.play().catch(() => {});
+          return;
+        }
+
+        setError('Video playback error');
       });
 
       return () => {
@@ -218,6 +250,20 @@ export function useHLSPlayer(
       setError('HLS not supported');
     }
   }, [hlsUrl, mp4Url, autoPlay, loop, currentMuted]);
+
+  // If we successfully start playing again, clear any transient error.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const clearOnPlay = () => setError((prev) => (prev ? null : prev));
+    video.addEventListener('playing', clearOnPlay);
+    video.addEventListener('canplay', clearOnPlay);
+    return () => {
+      video.removeEventListener('playing', clearOnPlay);
+      video.removeEventListener('canplay', clearOnPlay);
+    };
+  }, [hlsUrl]);
 
   // Sync muted state
   useEffect(() => {

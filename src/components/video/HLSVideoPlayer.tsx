@@ -137,7 +137,7 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
         )}
 
         {/* Error State */}
-        {error && (
+        {error && !isPlaying && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60">
             <div className="text-center text-white/80">
               <Play className="h-12 w-12 mx-auto mb-2 opacity-50" />
