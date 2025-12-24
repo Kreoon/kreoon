@@ -169,11 +169,35 @@ export function AIThumbnailGenerator({
     return productRole;
   };
 
+  // Clean prompt - remove HTML and excessive formatting
+  const cleanPromptText = (text: string): string => {
+    // Remove HTML tags
+    let cleaned = text.replace(/<[^>]*>/g, '');
+    // Remove markdown
+    cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1');
+    cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1');
+    // Normalize whitespace
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+    return cleaned;
+  };
+
+  // Summarize avatar to 1 line
+  const summarizeAvatar = (avatar: string | null | undefined): string => {
+    if (!avatar) return "Digital entrepreneur LATAM (27-40 years)";
+    // Extract first sentence or first 100 chars
+    const firstSentence = avatar.split(/[.!?]/)[0];
+    return firstSentence.slice(0, 100).trim();
+  };
+
+  // Summarize emotion to 1-2 words
+  const summarizeEmotion = (emotion: string): string => {
+    const words = emotion.toLowerCase().split(/[\s,→]+/).filter(Boolean);
+    return words.slice(0, 2).join(", ");
+  };
+
   const generatePrompt = () => {
-    const { hooks, emotion, topic } = extractScriptInfo();
-    const highlight = HIGHLIGHT_OPTIONS.find(h => h.value === highlightStyle);
+    const { emotion, topic } = extractScriptInfo();
     const zone = TEXT_ZONES.find(z => z.value === textZone);
-    const format = OUTPUT_FORMATS.find(f => f.value === outputFormat);
     const role = PRODUCT_ROLES.find(r => r.value === productRole);
     const visibility = PRODUCT_VISIBILITY.find(v => v.value === productVisibility);
     
@@ -185,176 +209,94 @@ export function AIThumbnailGenerator({
     };
     const res = resolutions[outputFormat] || resolutions["9:16"];
     
-    // Validate and format text - auto-split if too long
-    let formattedText = thumbnailText;
+    // Validate and format text - auto-split if too long (max 5 words per line)
+    let formattedText = thumbnailText.toUpperCase();
     if (includeText && thumbnailText) {
       const words = thumbnailText.trim().split(/\s+/);
       if (words.length > 5) {
         const midpoint = Math.ceil(words.length / 2);
-        formattedText = words.slice(0, midpoint).join(' ') + '\n' + words.slice(midpoint).join(' ');
+        formattedText = words.slice(0, midpoint).join(' ').toUpperCase() + '\n' + words.slice(midpoint).join(' ').toUpperCase();
       }
     }
 
-    // Determine composition percentages based on product role
-    const getCompositionRules = () => {
+    // Summarized values for cleaner prompt
+    const cleanTopic = cleanPromptText(topic);
+    const cleanEmotion = summarizeEmotion(emotion);
+    const cleanAvatar = summarizeAvatar(scriptContext.idealAvatar);
+
+    // Determine product composition
+    const getProductComposition = () => {
       if (!productImage) return '';
-      
-      if (productRole === 'protagonist') {
-        return `
-COMBINED COMPOSITION (PERSON + PRODUCT):
-- Product is PROTAGONIST → Product occupies 40-60% of the frame
-- Person occupies 20-30% of the frame (supporting role)
-- Product is the main focal point
-- Avoid visual competition between face and product
-- Clear hierarchy: product first, person second`;
-      } else if (productRole === 'secondary') {
-        return `
-COMBINED COMPOSITION (PERSON + PRODUCT):
-- Person is PROTAGONIST → Person occupies 50-60% of the frame
-- Product occupies 15-30% of the frame (secondary role)
-- Person is the main focal point
-- Product visible but not competing for attention
-- Clear hierarchy: person first, product second`;
-      } else {
-        return `
-COMBINED COMPOSITION (PERSON + PRODUCT):
-- Product is CONTEXTUAL → Product in background or environment
-- Person occupies 60-70% of the frame (main focus)
-- Product visible as context/environment element
-- Product should be recognizable but not prominent
-- Clear hierarchy: person only focal point`;
-      }
+      if (productRole === 'protagonist') return 'Product is PROTAGONIST (40-60% of frame), person is secondary (20-30%)';
+      if (productRole === 'secondary') return 'Person is PROTAGONIST (50-60% of frame), product is secondary (15-30%)';
+      return 'Product is CONTEXTUAL (in background), person is main focus (60-70%)';
     };
-    
-    // Structured prompt following professional prompt engineering
-    let prompt = `═══════════════════════════════════════
-1️⃣ OUTPUT FORMAT (MANDATORY API PARAMETERS)
-═══════════════════════════════════════
-Aspect ratio: ${outputFormat}
-Resolution: ${res.w}x${res.h}
-Orientation: ${outputFormat === "16:9" ? "Horizontal" : outputFormat === "1:1" ? "Square" : "Vertical"}
-Usage: Mobile-first (TikTok, Reels, Shorts)
-Safe area: ${forceSafeZone ? "10-15% internal margin on all edges" : "Standard margins"}
-No cropping of text or main subject allowed.
 
-═══════════════════════════════════════
-2️⃣ CONTENT CONTEXT
-═══════════════════════════════════════
-Thumbnail for a short-form social media video.
-Topic: ${topic}${scriptContext.salesAngle ? ` - Sales angle: ${scriptContext.salesAngle}` : ''}
-Emotion to transmit: ${emotion} → identification → ${highlight?.label.toLowerCase() || 'curiosity'}
-Target audience: ${scriptContext.idealAvatar || 'Digital entrepreneur LATAM (27-40 years)'}
-Content type: ${contentType === 'ads' ? 'Paid advertisement' : 'Organic content'}
+    // CLEAN, OPTIMIZED PROMPT FOR GEMINI (no HTML, no excessive text)
+    let prompt = `Create a vertical social media thumbnail.
 
-═══════════════════════════════════════
-3️⃣ CHARACTER / VISUAL REFERENCE
-═══════════════════════════════════════
-${referenceImage ? `Main character based on user reference image.
-- Maintain general physical traits, posture and style.
-- Do NOT replicate exact identity.
-- Facial expression aligned with the emotion: ${emotion}
-- Looking at camera or toward the main element of interest.` : `Main character:
-- Person that represents the target avatar.
-- Expression matching the emotion: ${emotion}
-- Authentic look, NOT stock photo style.
-- Natural lighting on face.`}
+FORMAT (MANDATORY):
+- Aspect ratio: ${outputFormat}
+- Resolution: ${res.w}x${res.h}
+- Orientation: ${outputFormat === "16:9" ? "Horizontal" : outputFormat === "1:1" ? "Square" : "Vertical"}
+- Mobile-first composition
 
-${productImage ? `═══════════════════════════════════════
-🧴 PRODUCT / OBJECT REFERENCE (CRITICAL)
-═══════════════════════════════════════
-Product reference:
-- Use the EXACT product image provided by the user as visual reference
-- Maintain product shape, proportions and main visual identity
-- Do NOT redesign or alter the product
-- No fictional variations or inventions
+CONTENT:
+- Topic: ${cleanTopic}
+- Emotion: ${cleanEmotion}
+- Content type: ${contentType === 'ads' ? 'paid social ad' : 'organic content'}
 
-Product placement rules:
-- Role: ${role?.label.toUpperCase()} (${role?.description})
-- Visibility: ${visibility?.label.toUpperCase()} (${visibility?.description})
-- Position according to rule of thirds
-${productVisibility === 'full' ? '- Product must be FULLY visible, no cropping' : '- Partial view acceptable, but product must be recognizable'}
-${showBrand ? '- Brand/logo must be visible if present on product' : '- Brand/logo can be partially obscured or not emphasized'}
+CHARACTER:
+${referenceImage ? `- Based on reference image provided
+- Maintain general traits, do not replicate exact identity` : `- Person representing target avatar`}
+- Expression matching emotion: ${cleanEmotion}
+- Looking at camera
+- Natural, authentic look
 
-Lighting and focus:
-- Product must be sharp and clearly visible
-- Lighting consistent with the main subject
-- Avoid reflections, blur or distortion on product
+COMPOSITION:
+${productImage ? getProductComposition() : '- Subject occupies 60-70% of the frame'}
+- Background: contextual, slightly blurred
+- Strong lighting on face
+- Clear single focal point
+- Rule of thirds
 
-CRITICAL PRODUCT RULES:
-- Do NOT invent products
-- Do NOT alter real product colors
-- Do NOT change logos or branding
-- Do NOT use generic stock products
-- Use ONLY the provided product reference
-${getCompositionRules()}` : ''}
+${productImage ? `PRODUCT:
+- Use EXACT product image provided
+- Role: ${role?.label}
+- Visibility: ${visibility?.label}
+- Maintain product shape and colors
+- ${showBrand ? 'Show brand/logo if visible' : 'Brand/logo not required'}
+- Do NOT invent or alter product` : ''}
 
-═══════════════════════════════════════
-4️⃣ VISUAL COMPOSITION
-═══════════════════════════════════════
-${productImage && productRole === 'protagonist' ? 
-  `- Product is the main focal point (40-60% of frame)
-- Person in supporting role (20-30% of frame)` : 
-  `- Subject occupies 60-70% of the frame`}
-- Background slightly blurred or contextual (related to topic)
-- High contrast lighting on main subject
-- Clear focal point (ONE main element)
-- Rule of thirds composition
-${forceSafeZone ? '- ALL important elements within 10-15% safe margin' : ''}
-- Avoid visual competition between elements
-
-═══════════════════════════════════════
-5️⃣ TEXT OVERLAY ${includeText && formattedText ? '(CRITICAL - FOLLOW EXACTLY)' : '(NONE)'}
-═══════════════════════════════════════
-${includeText && formattedText ? `Text overlay MANDATORY rules:
+${includeText && formattedText ? `TEXT OVERLAY (VERY IMPORTANT):
 - Exact text: "${formattedText}"
 - Language: ${TEXT_LANGUAGES.find(l => l.value === textLanguage)?.label || 'Spanish'}
-- Maximum 3-5 words per line
-- Display inside a solid or semi-transparent text box
-- Centered horizontally
-- Position: ${zone?.label.toUpperCase()} zone (${zone?.description})
-${forceSafeZone ? '- Text MUST be inside safe area (10-15% margin from edges)' : ''}
-- Bold/heavy typography, high contrast
-- White or bright yellow color with soft black shadow
-- Must be 100% visible and readable on mobile screens
-- DO NOT cut any letters under any circumstance` : `No text overlay in this image.
-DO NOT add any text to the thumbnail.`}
+- Bold heavy typography
+- Inside a solid or semi-transparent black text box
+- Text box centered horizontally
+- Position: ${zone?.label.toLowerCase()} safe area
+- Maintain 10-15% margin from all edges
+- Text must be fully visible and readable on mobile
+- Do NOT cut any letters` : `NO TEXT OVERLAY.
+Do NOT add any text to this image.`}
 
-═══════════════════════════════════════
-6️⃣ VISUAL STYLE
-═══════════════════════════════════════
-- UGC style (User Generated Content)
-- Professional but natural/authentic
-- Scroll-stopper thumbnail aesthetic
-- Realistic professional lighting
+STYLE:
+- UGC style
+- High contrast
+- Scroll-stopper look
+- Realistic lighting
 - No stock photo look
-- High contrast colors
-- Vibrant but natural tones
 
-═══════════════════════════════════════
-7️⃣ NEGATIVE PROMPT (STRICTLY AVOID)
-═══════════════════════════════════════
 AVOID:
-- Horizontal format (unless specifically requested)
-- Cropped or cut text
-- Text touching or near edges
-- Small typography
-- Overloaded/cluttered elements
-- Flyer, banner or corporate style
-- Plain white backgrounds
-- Generic stock photo aesthetics
-- Multiple text blocks
-- Watermarks or logos (unless specified)
-- Low contrast images
-- Blurry main subject
-${productImage ? `- Invented or altered products
-- Generic product mockups
-- Changed product colors
-- Cropped products (if visibility is "full")` : ''}
-
-═══════════════════════════════════════
-🎯 GOLDEN RULE
-═══════════════════════════════════════
-The thumbnail must be understood in 1 second, work without additional context, and provoke immediate curiosity. It should stop the scroll.${productImage ? ' Person + product + text must work together strategically.' : ''}`;
+- Horizontal format
+- Cropped text
+- Text touching edges
+- Small fonts
+- Flyer or banner look
+- White plain backgrounds
+${productImage ? `- Invented products
+- Altered product colors
+- Generic mockups` : ''}`;
 
     setGeneratedPrompt(prompt);
     setIsPromptVisible(true);
@@ -375,12 +317,14 @@ The thumbnail must be understood in 1 second, work without additional context, a
         return;
       }
 
-      // Call edge function to generate thumbnail
+      // Call edge function with ALL parameters including format
       const { data, error } = await supabase.functions.invoke('generate-thumbnail', {
         body: { 
           prompt: generatedPrompt,
           referenceImage: referenceImage,
-          contentId
+          productImage: productImage,
+          contentId,
+          outputFormat: outputFormat // Force format in API
         }
       });
 
