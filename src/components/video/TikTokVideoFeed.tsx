@@ -94,15 +94,26 @@ function VideoCard({
   const hasMultiple = video.videoUrls.length > 1;
   const thumbnailUrl = video.thumbnailUrl || getBunnyThumbnail(currentVideoUrl);
 
-  // Control playback based on active state
+  // Control playback and sync mute based on active state
   useEffect(() => {
     if (isActive) {
       playerRef.current?.play();
+      // Sync mute state when becoming active
+      setTimeout(() => {
+        playerRef.current?.setMuted(isGlobalMuted);
+      }, 50);
     } else {
       playerRef.current?.pause();
       viewTrackedRef.current = false;
     }
-  }, [isActive]);
+  }, [isActive, isGlobalMuted]);
+
+  // Handle video loaded - sync mute state
+  const handleVideoLoadComplete = useCallback(() => {
+    if (playerRef.current) {
+      playerRef.current.setMuted(isGlobalMuted);
+    }
+  }, [isGlobalMuted]);
 
   // Track view after 3 seconds
   useEffect(() => {
@@ -199,6 +210,7 @@ function VideoCard({
         loop={true}
         aspectRatio="auto"
         className="absolute inset-0 w-full h-full"
+        onLoadComplete={handleVideoLoadComplete}
       />
 
       {/* Play/Pause indicator */}
