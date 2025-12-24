@@ -125,12 +125,27 @@ export function FullscreenVideoViewer({
   const hasMultipleVariations = (currentVideo?.videoUrls?.length || 0) > 1;
   const thumbnailUrl = currentVideo?.thumbnailUrl || (currentVideoUrl ? getBunnyThumbnail(currentVideoUrl) : null);
 
-  // Sync mute state when video changes
+  // Sync mute state when video changes - with delay to wait for new player
   useEffect(() => {
+    // Immediate sync for existing player
     if (playerRef.current) {
       playerRef.current.setMuted(isGlobalMuted);
     }
+    // Also sync after a short delay to catch newly mounted players
+    const timer = setTimeout(() => {
+      if (playerRef.current) {
+        playerRef.current.setMuted(isGlobalMuted);
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, [currentIndex, currentVariation, isGlobalMuted]);
+
+  // Handle video loaded - sync mute state
+  const handleVideoLoadComplete = useCallback(() => {
+    if (playerRef.current) {
+      playerRef.current.setMuted(isGlobalMuted);
+    }
+  }, [isGlobalMuted]);
 
   // Track view after 3 seconds
   useEffect(() => {
@@ -355,6 +370,7 @@ export function FullscreenVideoViewer({
               loop={true}
               aspectRatio="auto"
               className="w-full h-full"
+              onLoadComplete={handleVideoLoadComplete}
             />
             
             {/* Audio unlock hint overlay */}
