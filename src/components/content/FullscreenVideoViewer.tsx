@@ -80,10 +80,8 @@ export function FullscreenVideoViewer({
 }: FullscreenVideoViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [currentVariation, setCurrentVariation] = useState(0);
-  // Use global mute state
+  // Use global mute state - audio ON by default
   const { isGlobalMuted, setGlobalMuted } = useGlobalMute();
-  const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const [showAudioHint, setShowAudioHint] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'up' | 'down' | null>(null);
@@ -98,22 +96,8 @@ export function FullscreenVideoViewer({
   const toggleMute = useCallback(() => {
     const newMuted = !isGlobalMuted;
     setGlobalMuted(newMuted);
-    setShowAudioHint(false);
-    if (!audioUnlocked) {
-      setAudioUnlocked(true);
-    }
     playerRef.current?.setMuted(newMuted);
-  }, [isGlobalMuted, setGlobalMuted, audioUnlocked]);
-
-  // Unlock audio on first user interaction
-  const unlockAudio = useCallback(() => {
-    if (!audioUnlocked) {
-      setAudioUnlocked(true);
-      setGlobalMuted(false);
-      setShowAudioHint(false);
-      playerRef.current?.setMuted(false);
-    }
-  }, [audioUnlocked, setGlobalMuted]);
+  }, [isGlobalMuted, setGlobalMuted]);
 
   const currentVideo = videos[currentIndex];
   const canManageCurrent = !!currentVideo && (canManageVideo ? canManageVideo(currentVideo) : !!isOwner);
@@ -317,27 +301,17 @@ export function FullscreenVideoViewer({
     }
   };
 
-  // Handle tap on video area to unlock audio
-  const handleVideoAreaClick = useCallback(() => {
-    if (!audioUnlocked) {
-      unlockAudio();
-    }
-  }, [audioUnlocked, unlockAudio]);
-
   if (!currentVideo) return null;
 
   const displayCaption = currentVideo.caption || currentVideo.title;
   const shouldTruncateCaption = displayCaption.length > 80;
-  const effectiveMuted = isGlobalMuted || !audioUnlocked;
-  // Autoplay with sound is often blocked on mobile; start muted and unmute once playing.
-  const startMutedForAutoplay = effectiveMuted || (!isGlobalMuted && audioUnlocked);
 
+  // Handle video play - sync mute state
   const handleVideoPlay = useCallback(() => {
-    if (!isGlobalMuted && audioUnlocked) {
-      // Unmute after playback has started (avoids autoplay policy blocks)
+    if (!isGlobalMuted) {
       playerRef.current?.setMuted(false);
     }
-  }, [isGlobalMuted, audioUnlocked]);
+  }, [isGlobalMuted]);
 
   return (
     <div 
@@ -368,32 +342,20 @@ export function FullscreenVideoViewer({
             />
           </div>
         ) : (
-          <div className="w-full h-full relative" onClick={handleVideoAreaClick}>
+          <div className="w-full h-full relative">
             <HLSVideoPlayer
               ref={playerRef}
               key={`${currentVideo.id}-${currentVariation}`}
               src={currentVideoUrl}
               poster={thumbnailUrl || undefined}
               autoPlay={true}
-              muted={startMutedForAutoplay}
+              muted={isGlobalMuted}
               loop={true}
               aspectRatio="auto"
               className="w-full h-full"
               onLoadComplete={handleVideoLoadComplete}
               onPlay={handleVideoPlay}
             />
-            
-            {/* Audio unlock hint overlay */}
-            {!audioUnlocked && showAudioHint && !isImage && (
-              <div 
-                className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
-              >
-                <div className="bg-black/60 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 animate-pulse">
-                  <VolumeX className="h-6 w-6 text-white" />
-                  <span className="text-white font-medium">Toca para activar sonido</span>
-                </div>
-              </div>
-            )}
           </div>
         )}
 

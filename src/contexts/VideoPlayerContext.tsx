@@ -15,7 +15,7 @@ const VideoPlayerContext = createContext<VideoPlayerContextType | undefined>(und
 
 export function VideoPlayerProvider({ children }: { children: ReactNode }) {
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
-  const [isGlobalMuted, setIsGlobalMuted] = useState(true);
+  const [isGlobalMuted, setIsGlobalMuted] = useState(false); // Audio ON by default
 
   const playVideo = useCallback((id: string) => {
     setCurrentPlayingId(id);

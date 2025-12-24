@@ -206,8 +206,7 @@ function VideoCard({
         src={currentVideoUrl}
         poster={thumbnailUrl || undefined}
         autoPlay={isActive}
-        // Autoplay with sound can be blocked; start muted and unmute once playing if user enabled sound
-        muted={isGlobalMuted || (!isGlobalMuted && isActive)}
+        muted={isGlobalMuted}
         loop={true}
         aspectRatio="auto"
         className="absolute inset-0 w-full h-full"
