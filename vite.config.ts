@@ -67,7 +67,8 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       devOptions: {
-        enabled: true
+        // Disable SW in preview/dev to avoid controller changes that look like a reload on tab switch.
+        enabled: mode === 'production'
       }
     })
   ].filter(Boolean),
