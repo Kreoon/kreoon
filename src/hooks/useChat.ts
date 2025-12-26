@@ -45,7 +45,7 @@ export interface ChatUser {
 }
 
 export function useChat() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<ChatConversation | null>(null);
@@ -54,6 +54,7 @@ export function useChat() {
   const [loading, setLoading] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [orgMemberIds, setOrgMemberIds] = useState<string[]>([]);
 
   // Fetch user roles
   useEffect(() => {
@@ -67,6 +68,27 @@ export function useChat() {
     };
     fetchRoles();
   }, [user?.id]);
+
+  // Fetch organization members for chat filtering
+  useEffect(() => {
+    const fetchOrgMembers = async () => {
+      if (!profile?.current_organization_id) {
+        setOrgMemberIds([]);
+        return;
+      }
+      
+      const { data } = await supabase
+        .from('organization_members')
+        .select('user_id')
+        .eq('organization_id', profile.current_organization_id);
+      
+      if (data) {
+        setOrgMemberIds(data.map(m => m.user_id));
+      }
+    };
+    
+    fetchOrgMembers();
+  }, [profile?.current_organization_id]);
 
   const isAdmin = userRoles.includes('admin');
   // Fetch all conversations for the current user
@@ -172,19 +194,26 @@ export function useChat() {
     }
   }, []);
 
-  // Fetch available users to chat with
+  // Fetch available users to chat with (filtered by organization)
   const fetchAvailableUsers = useCallback(async () => {
     if (!user?.id) return;
 
     try {
-      const { data: allProfiles } = await supabase
+      let profilesQuery = supabase
         .from('profiles')
         .select('id, full_name, avatar_url')
         .neq('id', user.id);
+      
+      // Filter by organization members if we have org member IDs
+      if (orgMemberIds.length > 0) {
+        profilesQuery = profilesQuery.in('id', orgMemberIds);
+      }
+
+      const { data: allProfiles } = await profilesQuery;
 
       if (!allProfiles) return;
 
-      // Get roles for all users
+      // Get roles for filtered users
       const { data: allRoles } = await supabase
         .from('user_roles')
         .select('user_id, role');
@@ -209,7 +238,7 @@ export function useChat() {
     } catch (error) {
       console.error('Error fetching users:', error);
     }
-  }, [user?.id]);
+  }, [user?.id, orgMemberIds]);
 
   // Send a message
   const sendMessage = useCallback(async (content: string) => {

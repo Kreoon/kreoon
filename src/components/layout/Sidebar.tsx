@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   LayoutDashboard, 
   Users, 
@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
@@ -31,8 +32,10 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   tourId: string;
   isDynamic?: boolean;
+  platformRootOnly?: boolean; // Only show for platform root admin
 }
 
+// Full admin navigation - platform root sees all, org owner sees filtered
 const adminNavigation: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
@@ -40,7 +43,7 @@ const adminNavigation: NavItem[] = [
   { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
   { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients" },
-  { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team" },
+  { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", platformRootOnly: true },
   { name: "Sistema UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
@@ -80,6 +83,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const navigate = useNavigate();
   const { signOut, profile, user, isAdmin, isEditor, isCreator, isStrategist, isClient, roles: realRoles } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin, impersonationTarget } = useImpersonation();
+  const { isPlatformRoot } = useOrgOwner();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
 
@@ -140,18 +144,29 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     }
   }, [activeIsClient, user, isImpersonating, impersonationTarget]);
 
-  // Determinar navegación según rol efectivo (prioridad: admin > strategist > editor > creator > client)
-  const navigation = activeIsAdmin 
-    ? adminNavigation 
-    : activeIsStrategist 
-    ? strategistNavigation 
-    : activeIsEditor 
-    ? editorNavigation 
-    : activeIsCreator 
-    ? creatorNavigation 
-    : activeIsClient 
-    ? clientNavigation 
-    : adminNavigation;
+  // Filter navigation based on platform root vs org owner
+  const filteredNavigation = useMemo(() => {
+    let baseNav = activeIsAdmin 
+      ? adminNavigation 
+      : activeIsStrategist 
+      ? strategistNavigation 
+      : activeIsEditor 
+      ? editorNavigation 
+      : activeIsCreator 
+      ? creatorNavigation 
+      : activeIsClient 
+      ? clientNavigation 
+      : adminNavigation;
+
+    // For org owners (not platform root), filter out platformRootOnly items
+    if (!isPlatformRoot) {
+      baseNav = baseNav.filter(item => !item.platformRootOnly);
+    }
+
+    return baseNav;
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot]);
+
+  const navigation = filteredNavigation;
 
   const userId = user?.id || '';
 
