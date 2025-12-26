@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Bell, MessageCircle, Briefcase, Eye, Building2, Shield, User, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -427,7 +428,12 @@ export function IntegratedNotificationHeader({
         </span>
       </Button>
 
-      {/* Root Mode Button - only for root admin */}
+      {/* Root Org Switcher - only for root admin */}
+      {isRootAdmin && (
+        <RootOrgSwitcher />
+      )}
+
+      {/* Root Mode Button - only for root admin when inside an org */}
       {isRootAdmin && !isImpersonating && (
         <RootModePopover />
       )}
