@@ -13,6 +13,8 @@ interface ChatMessage {
 }
 
 // Register custom service worker for push notifications
+// IMPORTANT: register it under a non-root scope so it does NOT control the app pages
+// (controlling the page can feel like a "reload" on updates).
 const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
   const sw = getServiceWorker();
   if (!sw) {
@@ -21,14 +23,24 @@ const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null
   }
 
   try {
+    // Cleanup legacy registration that previously used scope '/' (it caused full-page reload feelings)
+    try {
+      const regs = await sw.getRegistrations();
+      await Promise.all(
+        regs
+          .filter((r) => r.active?.scriptURL?.includes('/push-sw.js') && r.scope === `${window.location.origin}/`)
+          .map((r) => r.unregister())
+      );
+    } catch {
+      // ignore
+    }
+
     // Register custom SW from public folder (separate from PWA SW)
+    // Use a dedicated scope so it won't take over the whole app.
     const registration = await sw.register('/push-sw.js', {
-      scope: '/'
+      scope: '/push/',
     });
-    console.log('[Notifications] Service worker registered:', registration.scope);
-    
-    // Wait for it to be ready
-    await sw.ready;
+    console.log('[Notifications] Push SW registered:', registration.scope);
     return registration;
   } catch (error) {
     console.error('[Notifications] SW registration failed:', error);
@@ -45,7 +57,7 @@ const getServiceWorker = (): ServiceWorkerContainer | null => {
 };
 
 // Set app badge count
-const setAppBadge = async (count: number) => {
+const setAppBadge = async (count: number, registration?: ServiceWorkerRegistration | null) => {
   try {
     // Try native Badge API first (works on supported browsers/PWAs)
     if ('setAppBadge' in navigator) {
@@ -58,51 +70,47 @@ const setAppBadge = async (count: number) => {
       return;
     }
 
-    // Fallback: send to service worker
-    const sw = getServiceWorker();
-    if (sw) {
-      const registration = await sw.ready;
-      registration.active?.postMessage({
-        type: count > 0 ? 'SET_BADGE' : 'CLEAR_BADGE',
-        count
-      });
-    }
+    // Fallback: send to our push SW (if available)
+    registration?.active?.postMessage({
+      type: count > 0 ? 'SET_BADGE' : 'CLEAR_BADGE',
+      count,
+    });
   } catch (error) {
     console.warn('[Badge] Could not set badge:', error);
   }
 };
 
-// Show notification via service worker (works in background)
-const showPushNotification = async (title: string, body: string, tag?: string) => {
+// Show notification (foreground) using the push SW registration if available.
+// Background notifications are handled by the push event inside the SW.
+const showPushNotification = async (
+  title: string,
+  body: string,
+  tag?: string,
+  registration?: ServiceWorkerRegistration | null
+) => {
   try {
-    const sw = getServiceWorker();
-    if (!sw) {
-      throw new Error('Service worker not available');
+    if (registration) {
+      await registration.showNotification(title, {
+        body,
+        icon: '/pwa-192x192.png',
+        badge: '/pwa-192x192.png',
+        tag: tag || 'chat-' + Date.now(),
+        data: { url: '/' },
+        requireInteraction: true,
+      });
+      return;
     }
-    
-    const registration = await sw.ready;
-    
-    // Send message to SW to show notification
-    registration.active?.postMessage({
-      type: 'SHOW_NOTIFICATION',
-      title,
-      body,
-      tag: tag || 'chat-' + Date.now(),
-      data: { url: '/' }
-    });
 
-    console.log('[Notifications] Sent to SW:', title);
-  } catch (error) {
-    console.warn('[Notifications] Could not show via SW:', error);
-    
     // Fallback to regular Notification API
     if (Notification.permission === 'granted') {
       new Notification(title, {
         body,
         icon: '/pwa-192x192.png',
-        tag: tag || 'chat-' + Date.now()
+        tag: tag || 'chat-' + Date.now(),
       });
     }
+  } catch (error) {
+    console.warn('[Notifications] Could not show notification:', error);
   }
 };
 
@@ -178,7 +186,7 @@ export function useChatNotifications(
 
   // Update badge when unread count changes
   useEffect(() => {
-    setAppBadge(unreadCount);
+    setAppBadge(unreadCount, swRegistration.current);
   }, [unreadCount]);
 
   // Fetch initial unread count
@@ -266,12 +274,13 @@ export function useChatNotifications(
 
             const senderName = sender?.full_name || 'Usuario';
 
-            // Show push notification via service worker (works in background!)
-            await showPushNotification(
-              `💬 ${senderName}`,
-              newMessage.content,
-              `chat-${newMessage.conversation_id}`
-            );
+             // Show push notification (foreground)
+             await showPushNotification(
+               `💬 ${senderName}`,
+               newMessage.content,
+               `chat-${newMessage.conversation_id}`,
+               swRegistration.current
+             );
 
             // Also show toast if window is visible
             if (!document.hidden) {
