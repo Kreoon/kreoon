@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog, Building2, UserCog } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog, Building2, UserCog, Landmark } from "lucide-react";
 import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
@@ -20,6 +20,7 @@ import { PlatformSecurityPanel } from "@/components/settings/PlatformSecurityPan
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { OrganizationManagement } from "@/components/settings/OrganizationManagement";
 import { UserOrganizationAssignment } from "@/components/settings/UserOrganizationAssignment";
+import { OrganizationRegistrations } from "@/components/settings/OrganizationRegistrations";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -62,7 +63,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'organizaciones' | 'asignar-usuarios';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'organizaciones' | 'asignar-usuarios' | 'gestion-orgs';
 
 const settingsSections = [
   { 
@@ -211,6 +212,15 @@ const Settings = () => {
     ...settingsSections,
     ...(isRoot ? [
       {
+        id: 'gestion-orgs' as const,
+        icon: Landmark,
+        title: "Gestión de Organizaciones",
+        description: "Administra todas las organizaciones y asigna propietarios",
+        adminOnly: false,
+        rootOnly: true,
+        hideForClients: false
+      },
+      {
         id: 'usuarios' as const,
         icon: Users,
         title: "Usuarios",
@@ -257,6 +267,8 @@ const Settings = () => {
         return <OrganizationManagement />;
       case 'asignar-usuarios':
         return <UserOrganizationAssignment />;
+      case 'gestion-orgs':
+        return <OrganizationRegistrations />;
       case 'app-settings':
         return <AppSettingsManagement />;
       case 'gestion-usuarios':
