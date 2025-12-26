@@ -238,6 +238,9 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
   const [selectedChangeTypes, setSelectedChangeTypes] = useState<string[]>([]);
   const [changeDescription, setChangeDescription] = useState('');
   const [expandedScenes, setExpandedScenes] = useState<number[]>([]);
+  const [isEditingScript, setIsEditingScript] = useState(false);
+  const [editedScript, setEditedScript] = useState('');
+  const [savingScript, setSavingScript] = useState(false);
 
   const isApproved = content.status === 'script_approved' || content.script_approved_at;
   const scriptVersion = (content as any).script_version || 1;
@@ -413,6 +416,81 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
       toast({ title: 'Error al aprobar guión', variant: 'destructive' });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleStartEditing = () => {
+    // Convert HTML to plain text for editing
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content.script || '', 'text/html');
+    setEditedScript(doc.body.textContent || content.script || '');
+    setIsEditingScript(true);
+  };
+
+  const handleCancelEditing = () => {
+    setIsEditingScript(false);
+    setEditedScript('');
+  };
+
+  const handleSaveScript = async () => {
+    if (!userId || !editedScript.trim()) return;
+    setSavingScript(true);
+    try {
+      // Convert plain text back to HTML with paragraphs
+      const htmlScript = editedScript
+        .split('\n\n')
+        .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+        .join('');
+
+      const { error } = await supabase
+        .from('content')
+        .update({ 
+          script: htmlScript,
+          script_version: scriptVersion + 1
+        })
+        .eq('id', content.id);
+
+      if (error) throw error;
+
+      // Create a comment logging the edit
+      await supabase
+        .from('content_comments')
+        .insert({
+          content_id: content.id,
+          user_id: userId,
+          comment: `El cliente ha editado el guión (versión ${scriptVersion + 1})`,
+          comment_type: 'general'
+        });
+
+      // Send notification to strategist if assigned
+      if (content.strategist_id) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: content.strategist_id,
+            type: 'script_edited',
+            title: 'Guión editado por cliente',
+            message: `El cliente ha editado el guión del proyecto "${content.title}"`,
+            link: `/content/${content.id}`
+          });
+      }
+
+      toast({ 
+        title: 'Guión actualizado', 
+        description: content.strategist_id 
+          ? 'Se ha notificado al estratega del cambio' 
+          : 'Los cambios han sido guardados'
+      });
+      
+      setIsEditingScript(false);
+      setEditedScript('');
+      fetchComments();
+      onUpdate?.();
+    } catch (error) {
+      console.error('Error saving script:', error);
+      toast({ title: 'Error al guardar guión', variant: 'destructive' });
+    } finally {
+      setSavingScript(false);
     }
   };
 
@@ -620,14 +698,63 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                 <>
                   {/* Single unified script container */}
                   <div className="border rounded-xl overflow-hidden bg-card">
+                    <div className="flex items-center justify-between p-3 border-b bg-muted/30">
+                      <span className="text-sm font-medium">Contenido del guión</span>
+                      {!isApproved && !isEditingScript && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleStartEditing}
+                          className="gap-1.5"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                          Editar guión
+                        </Button>
+                      )}
+                      {isEditingScript && (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCancelEditing}
+                            disabled={savingScript}
+                          >
+                            <X className="h-3.5 w-3.5 mr-1" />
+                            Cancelar
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleSaveScript}
+                            disabled={savingScript || !editedScript.trim()}
+                            className="gap-1.5"
+                          >
+                            {savingScript ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            )}
+                            Guardar
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                     <div className="p-5 sm:p-6">
-                      <div 
-                        className="prose prose-sm dark:prose-invert max-w-none script-content"
-                        dangerouslySetInnerHTML={{ __html: content.script }}
-                        style={{
-                          lineHeight: '1.8',
-                        }}
-                      />
+                      {isEditingScript ? (
+                        <Textarea
+                          value={editedScript}
+                          onChange={(e) => setEditedScript(e.target.value)}
+                          className="min-h-[400px] font-mono text-sm"
+                          placeholder="Escribe el guión aquí..."
+                        />
+                      ) : (
+                        <div 
+                          className="prose prose-sm dark:prose-invert max-w-none script-content"
+                          dangerouslySetInnerHTML={{ __html: content.script }}
+                          style={{
+                            lineHeight: '1.8',
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
 
