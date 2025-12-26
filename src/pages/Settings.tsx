@@ -24,6 +24,7 @@ import { OrganizationRegistrations } from "@/components/settings/OrganizationReg
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Sparkles, Play } from "lucide-react";
 
 const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
@@ -63,191 +64,175 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'organizaciones' | 'asignar-usuarios' | 'gestion-orgs';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'asignar-usuarios' | 'gestion-orgs';
 
-const settingsSections = [
+interface SettingsSectionItem {
+  id: SettingsSection;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+}
+
+// Base sections available to all users
+const baseSections: SettingsSectionItem[] = [
   { 
-    id: 'perfil' as const,
+    id: 'perfil',
     icon: User, 
     title: "Perfil", 
     description: "Gestiona tu información personal y preferencias de cuenta",
-    adminOnly: false,
-    rootOnly: false,
-    hideForClients: false
   },
   { 
-    id: 'organizaciones' as const,
-    icon: Building2, 
-    title: "Organizaciones", 
-    description: "Gestiona tus organizaciones y equipos multi-tenant",
-    adminOnly: true,
-    rootOnly: false,
-    hideForClients: true
-  },
-  { 
-    id: 'asignar-usuarios' as const,
-    icon: UserCog, 
-    title: "Asignar Usuarios", 
-    description: "Asigna creadores, editores y marcas a organizaciones",
-    adminOnly: true,
-    rootOnly: false,
-    hideForClients: true
-  },
-  { 
-    id: 'referidos' as const,
-    icon: Share2, 
-    title: "Referidos", 
-    description: "Refiere usuarios y gana comisiones",
-    adminOnly: false,
-    rootOnly: false
-  },
-  {
-    id: 'permisos' as const,
-    icon: Lock, 
-    title: "Permisos", 
-    description: "Gestiona los permisos de acceso para cada rol",
-    adminOnly: true,
-    rootOnly: false
-  },
-  { 
-    id: 'planes' as const,
-    icon: Crown, 
-    title: "Planes y Comisiones", 
-    description: "Gestiona comisiones de referidos",
-    adminOnly: true,
-    rootOnly: false
-  },
-  { 
-    id: 'monedas' as const,
-    icon: Coins, 
-    title: "Monedas", 
-    description: "Gestiona tasas de cambio y transferencias USD/COP",
-    adminOnly: true,
-    rootOnly: false
-  },
-  { 
-    id: 'app-settings' as const,
-    icon: Settings2, 
-    title: "Configuración General", 
-    description: "WhatsApp de empresa y otras configuraciones",
-    adminOnly: true,
-    rootOnly: false
-  },
-  {
-    id: 'historial' as const,
-    icon: History, 
-    title: "Historial de Actividad", 
-    description: "Ver registro de todas las acciones en la plataforma",
-    adminOnly: true,
-    rootOnly: false
-  },
-  { 
-    id: 'gestion-usuarios' as const,
-    icon: CreditCard, 
-    title: "Gestión de Usuarios y Planes", 
-    description: "Asigna planes y cobra a usuarios",
-    adminOnly: false,
-    rootOnly: true
-  },
-  { 
-    id: 'notificaciones' as const,
+    id: 'notificaciones',
     icon: Bell, 
     title: "Notificaciones", 
     description: "Configura cómo y cuándo recibir alertas",
-    adminOnly: false,
-    rootOnly: false
   },
   { 
-    id: 'seguridad' as const,
+    id: 'seguridad',
     icon: Shield, 
     title: "Mi Seguridad", 
     description: "Contraseña, 2FA y seguridad de tu cuenta",
-    adminOnly: false,
-    rootOnly: false
   },
   { 
-    id: 'seguridad-plataforma' as const,
-    icon: ShieldCheck, 
-    title: "Seguridad Plataforma", 
-    description: "Políticas de seguridad y gestión de usuarios",
-    adminOnly: true,
-    rootOnly: false
-  },
-  { 
-    id: 'apariencia' as const,
-    icon: Palette, 
-    title: "Apariencia", 
-    description: "Tema, colores y personalización visual",
-    adminOnly: false,
-    rootOnly: false,
-    hideForClients: true
-  },
-  { 
-    id: 'integraciones' as const,
-    icon: Globe, 
-    title: "Integraciones", 
-    description: "Conecta con otras plataformas y servicios",
-    adminOnly: true,
-    rootOnly: false
-  },
-  { 
-    id: 'tour' as const,
+    id: 'tour',
     icon: HelpCircle, 
     title: "Tour Guiado", 
     description: "Vuelve a ver el tour de introducción a la plataforma",
-    adminOnly: false,
-    rootOnly: false
   },
+];
+
+// Sections for org owners (not platform root)
+const orgOwnerSections: SettingsSectionItem[] = [
+  { 
+    id: 'mi-organizacion',
+    icon: Building2, 
+    title: "Mi Organización", 
+    description: "Datos y configuración de tu organización",
+  },
+  { 
+    id: 'historial',
+    icon: History, 
+    title: "Historial de Actividad", 
+    description: "Ver registro de acciones en tu organización",
+  },
+];
+
+// Sections ONLY for platform root admin
+const platformRootSections: SettingsSectionItem[] = [
+  { 
+    id: 'gestion-orgs',
+    icon: Landmark,
+    title: "Gestión de Organizaciones",
+    description: "Administra todas las organizaciones y asigna propietarios",
+  },
+  { 
+    id: 'asignar-usuarios',
+    icon: UserCog, 
+    title: "Asignar Usuarios", 
+    description: "Asigna creadores, editores y marcas a organizaciones",
+  },
+  { 
+    id: 'usuarios',
+    icon: Users,
+    title: "Usuarios",
+    description: "Gestiona usuarios, contraseñas y accesos",
+  },
+  { 
+    id: 'referidos',
+    icon: Share2, 
+    title: "Referidos", 
+    description: "Gestiona sistema de referidos",
+  },
+  {
+    id: 'permisos',
+    icon: Lock, 
+    title: "Permisos", 
+    description: "Gestiona los permisos de acceso para cada rol",
+  },
+  { 
+    id: 'planes',
+    icon: Crown, 
+    title: "Planes y Comisiones", 
+    description: "Gestiona comisiones de referidos",
+  },
+  { 
+    id: 'gestion-usuarios',
+    icon: CreditCard, 
+    title: "Gestión de Usuarios y Planes", 
+    description: "Asigna planes y cobra a usuarios",
+  },
+  { 
+    id: 'monedas',
+    icon: Coins, 
+    title: "Monedas", 
+    description: "Gestiona tasas de cambio y transferencias USD/COP",
+  },
+  { 
+    id: 'app-settings',
+    icon: Settings2, 
+    title: "Configuración General", 
+    description: "WhatsApp de empresa y otras configuraciones",
+  },
+  { 
+    id: 'historial',
+    icon: History, 
+    title: "Historial de Actividad", 
+    description: "Ver registro de todas las acciones en la plataforma",
+  },
+  { 
+    id: 'seguridad-plataforma',
+    icon: ShieldCheck, 
+    title: "Seguridad Plataforma", 
+    description: "Políticas de seguridad y gestión de usuarios",
+  },
+  { 
+    id: 'apariencia',
+    icon: Palette, 
+    title: "Apariencia", 
+    description: "Tema, colores y personalización visual",
+  },
+  { 
+    id: 'integraciones',
+    icon: Globe, 
+    title: "Integraciones", 
+    description: "Conecta con otras plataformas y servicios",
+  },
+  {
+    id: 'root-admin',
+    icon: Trash2,
+    title: "Eliminar Entidades",
+    description: "Elimina cualquier cosa de la plataforma",
+  }
 ];
 
 const Settings = () => {
   const { isAdmin, isClient, profile } = useAuth();
   const { resetTour } = useTour();
+  const { isOrgOwner, isPlatformRoot, loading: orgLoading } = useOrgOwner();
   const [activeSection, setActiveSection] = useState<SettingsSection>('main');
 
-  const isRoot = profile?.email === ROOT_EMAIL;
-
-  // Build sections dynamically - add user management only for root
-  const allSections = [
-    ...settingsSections,
-    ...(isRoot ? [
-      {
-        id: 'gestion-orgs' as const,
-        icon: Landmark,
-        title: "Gestión de Organizaciones",
-        description: "Administra todas las organizaciones y asigna propietarios",
-        adminOnly: false,
-        rootOnly: true,
-        hideForClients: false
-      },
-      {
-        id: 'usuarios' as const,
-        icon: Users,
-        title: "Usuarios",
-        description: "Gestiona usuarios, contraseñas y accesos",
-        adminOnly: false,
-        rootOnly: true,
-        hideForClients: false
-      },
-      {
-        id: 'root-admin' as const,
-        icon: Trash2,
-        title: "Eliminar Entidades",
-        description: "Elimina cualquier cosa de la plataforma",
-        adminOnly: false,
-        rootOnly: true,
-        hideForClients: false
-      }
-    ] : [])
-  ];
-
-  // Filter sections based on user role
-  const visibleSections = allSections.filter(s => {
-    if (s.rootOnly && !isRoot) return false;
-    if (s.adminOnly && !isAdmin) return false;
-    if (s.hideForClients && isClient) return false;
-    return true;
-  });
+  // Build sections dynamically based on role
+  const visibleSections = (() => {
+    const sections = [...baseSections];
+    
+    if (isPlatformRoot) {
+      // Platform root sees all platform-level management
+      sections.push(...platformRootSections);
+    } else if (isOrgOwner) {
+      // Org owners see their org management + org-scoped historial
+      sections.push(...orgOwnerSections);
+    } else if (isAdmin) {
+      // Regular admins see org management
+      sections.push(...orgOwnerSections);
+    }
+    
+    // Hide some sections from clients
+    if (isClient) {
+      return sections.filter(s => !['apariencia'].includes(s.id));
+    }
+    
+    return sections;
+  })();
 
   const renderContent = () => {
     switch (activeSection) {
@@ -263,7 +248,7 @@ const Settings = () => {
         return <CurrencyManagement />;
       case 'historial':
         return <AuditLogPanel />;
-      case 'organizaciones':
+      case 'mi-organizacion':
         return <OrganizationManagement />;
       case 'asignar-usuarios':
         return <UserOrganizationAssignment />;
