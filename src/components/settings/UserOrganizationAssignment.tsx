@@ -127,28 +127,45 @@ export function UserOrganizationAssignment() {
   };
 
   const handleAssignToOrg = async () => {
-    if (!selectedUser || !selectedOrgId) return;
+    if (!selectedUser || !selectedOrgId) {
+      toast.error('Selecciona un usuario y una organización');
+      return;
+    }
 
     setIsAssigning(true);
 
     try {
       // Check if already a member
-      const { data: existingMember } = await supabase
+      const { data: existingMember, error: checkError } = await supabase
         .from('organization_members')
         .select('id')
         .eq('organization_id', selectedOrgId)
         .eq('user_id', selectedUser.id)
-        .single();
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking membership:', checkError);
+        toast.error(`Error verificando membresía: ${checkError.message}`);
+        setIsAssigning(false);
+        return;
+      }
 
       if (existingMember) {
         // Update role
-        await supabase
+        const { error: updateError } = await supabase
           .from('organization_members')
           .update({ role: selectedRole })
           .eq('id', existingMember.id);
+
+        if (updateError) {
+          console.error('Error updating member:', updateError);
+          toast.error(`Error actualizando rol: ${updateError.message}`);
+          setIsAssigning(false);
+          return;
+        }
       } else {
         // Add as member
-        await supabase
+        const { error: insertError } = await supabase
           .from('organization_members')
           .insert({
             organization_id: selectedOrgId,
@@ -156,13 +173,27 @@ export function UserOrganizationAssignment() {
             role: selectedRole,
             is_owner: false,
           });
+
+        if (insertError) {
+          console.error('Error inserting member:', insertError);
+          toast.error(`Error asignando usuario: ${insertError.message}`);
+          setIsAssigning(false);
+          return;
+        }
       }
 
       // Update current org in profile
-      await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({ current_organization_id: selectedOrgId })
         .eq('id', selectedUser.id);
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        toast.error(`Error actualizando perfil: ${profileError.message}`);
+        setIsAssigning(false);
+        return;
+      }
 
       toast.success(`${selectedUser.full_name} asignado a la organización`);
       setShowAssignDialog(false);
@@ -170,7 +201,7 @@ export function UserOrganizationAssignment() {
       fetchData();
     } catch (error) {
       console.error('Error assigning user:', error);
-      toast.error('Error al asignar usuario');
+      toast.error('Error inesperado al asignar usuario');
     } finally {
       setIsAssigning(false);
     }
