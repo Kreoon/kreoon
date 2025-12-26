@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -64,14 +65,34 @@ const ENTITY_ICONS: Record<string, React.ReactNode> = {
 
 export function AuditLogPanel() {
   const { isAdmin } = useAuth();
+  const { isPlatformRoot, currentOrgId, isOrgOwner } = useOrgOwner();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [actionFilter, setActionFilter] = useState<string>('all');
+  const [orgMemberIds, setOrgMemberIds] = useState<string[]>([]);
+
+  // Fetch org member IDs for filtering (only for org owners, not platform root)
+  useEffect(() => {
+    const fetchOrgMembers = async () => {
+      if (!isPlatformRoot && currentOrgId) {
+        const { data } = await supabase
+          .from('organization_members')
+          .select('user_id')
+          .eq('organization_id', currentOrgId);
+        
+        if (data) {
+          setOrgMemberIds(data.map(m => m.user_id));
+        }
+      }
+    };
+    
+    fetchOrgMembers();
+  }, [isPlatformRoot, currentOrgId]);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin || isOrgOwner) {
       fetchLogs();
       
       // Subscribe to realtime updates
@@ -95,7 +116,7 @@ export function AuditLogPanel() {
         supabase.removeChannel(channel);
       };
     }
-  }, [isAdmin]);
+  }, [isAdmin, isOrgOwner]);
 
   const fetchUserForLog = async (log: AuditLog) => {
     const { data: profile } = await supabase
@@ -159,6 +180,13 @@ export function AuditLogPanel() {
   };
 
   const filteredLogs = logs.filter(log => {
+    // For org owners (not platform root), filter by org members
+    if (!isPlatformRoot && orgMemberIds.length > 0) {
+      if (!orgMemberIds.includes(log.user_id)) {
+        return false;
+      }
+    }
+
     const matchesSearch = 
       searchTerm === '' ||
       log.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -172,7 +200,8 @@ export function AuditLogPanel() {
     return matchesSearch && matchesEntity && matchesAction;
   });
 
-  if (!isAdmin) {
+  // Check access - allow both admins and org owners
+  if (!isAdmin && !isOrgOwner) {
     return (
       <Card className="border-destructive/50">
         <CardContent className="flex items-center justify-center py-10">
