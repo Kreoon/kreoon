@@ -61,22 +61,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('[auth] state change', event);
 
-      // Some browsers can emit transient events on tab focus where nextSession is null.
-      // Avoid treating that as a real sign-out to prevent full-screen "reload" flashes.
+      // CRITICAL: Ignore any event that is purely a token refresh / visibility focus, 
+      // when the user ID hasn't changed. This prevents global loading spinners that 
+      // feel like a full-page reload on tab switch.
+      const nextUserId = nextSession?.user?.id ?? null;
+      const currentUserId = userIdRef.current;
+      const userChanged = nextUserId !== currentUserId;
+
+      // If there is no session AND the event is NOT an explicit sign-out, ignore.
+      // Browsers (especially mobile) can emit transient null session events on focus.
       if (!nextSession && event !== 'SIGNED_OUT') {
         return;
       }
 
-      const nextUserId = nextSession?.user?.id ?? null;
-      const currentUserId = userIdRef.current;
-      const userChanged = nextUserId !== currentUserId;
+      // If the same user and roles are already loaded, skip blocking UI entirely.
+      // Just silently refresh profile/roles in background if needed.
+      if (!userChanged && rolesLoadedRef.current && nextSession?.user) {
+        // Silently refresh user data without any loading state change
+        setSession(nextSession);
+        setUser(nextSession.user);
+        window.setTimeout(() => {
+          fetchUserData(nextSession.user.id, true); // silent = true
+        }, 0);
+        return;
+      }
 
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
 
       if (nextSession?.user) {
-        // Only block the UI (ProtectedRoute spinner) when the *user actually changed* or
-        // we are still bootstrapping roles for the first time.
+        // Only block the UI when the user *actually changed* or first bootstrap.
         const shouldBlockUi = userChanged || !rolesLoadedRef.current;
 
         if (shouldBlockUi) {
@@ -84,9 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRolesLoaded(false);
         }
 
-        // Always refresh user data, but do it in the background when already bootstrapped.
         window.setTimeout(() => {
-          fetchUserData(nextSession.user.id);
+          fetchUserData(nextSession.user.id, !shouldBlockUi);
         }, 0);
       } else {
         setProfile(null);
@@ -130,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string, silent = false) => {
     try {
       const [profileResult, rolesResult] = await Promise.all([
         // Profile row might not exist (or RLS could block); don't hard-fail auth boot.
@@ -150,8 +163,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('[auth] Error fetching user data:', error);
     } finally {
-      setRolesLoaded(true);
-      setLoading(false);
+      if (!silent) {
+        setRolesLoaded(true);
+        setLoading(false);
+      } else {
+        // On silent refresh, just mark roles as loaded if they weren't.
+        if (!rolesLoadedRef.current) {
+          setRolesLoaded(true);
+          setLoading(false);
+        }
+      }
     }
   };
 
