@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, MessageCircle, Briefcase } from "lucide-react";
+import { Bell, MessageCircle, Briefcase, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -42,6 +43,7 @@ export function IntegratedNotificationHeader({
   sidebarCollapsed = false 
 }: IntegratedNotificationHeaderProps) {
   const { user, profile } = useAuth();
+  const { isRootAdmin, isImpersonating } = useImpersonation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { playNotificationSound, playChatSound, playUrgentSound } = useNotificationSound();
@@ -208,6 +210,19 @@ export function IntegratedNotificationHeader({
           @{profile?.username || profile?.full_name?.split(' ')[0]?.toLowerCase() || 'usuario'}
         </span>
       </Button>
+
+      {/* Root Mode Button - only for root admin */}
+      {isRootAdmin && !isImpersonating && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/settings')}
+          className="gap-2 border-amber-500 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600"
+        >
+          <Eye className="h-4 w-4" />
+          <span className="hidden sm:inline">Modo Root</span>
+        </Button>
+      )}
 
       {/* Portfolio Button */}
       <Button

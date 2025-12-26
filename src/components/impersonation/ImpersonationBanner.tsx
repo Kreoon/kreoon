@@ -3,58 +3,72 @@ import { useImpersonation, useImpersonationData, ImpersonationTarget } from '@/c
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, EyeOff, Building2, User, Shield, AlertTriangle, Settings2 } from 'lucide-react';
+import { Eye, EyeOff, Building2, User, Shield, AlertTriangle, Settings2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AppRole } from '@/types/database';
+import { useNavigate } from 'react-router-dom';
 
-const ROLE_OPTIONS: { value: AppRole; label: string }[] = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'strategist', label: 'Estratega' },
-  { value: 'creator', label: 'Creador' },
-  { value: 'editor', label: 'Editor' },
-  { value: 'client', label: 'Cliente' },
-  { value: 'ambassador', label: 'Embajador' },
+const ROLE_OPTIONS: { value: AppRole; label: string; defaultRoute: string }[] = [
+  { value: 'admin', label: 'Admin', defaultRoute: '/' },
+  { value: 'strategist', label: 'Estratega', defaultRoute: '/strategist-dashboard' },
+  { value: 'creator', label: 'Creador', defaultRoute: '/creator-dashboard' },
+  { value: 'editor', label: 'Editor', defaultRoute: '/editor-dashboard' },
+  { value: 'client', label: 'Cliente', defaultRoute: '/client-dashboard' },
+  { value: 'ambassador', label: 'Embajador', defaultRoute: '/creator-dashboard' },
 ];
 
 export function ImpersonationBanner() {
   const { isImpersonating, impersonationTarget, stopImpersonation, startImpersonation } = useImpersonation();
   const { clients, users } = useImpersonationData();
   const [isEditing, setIsEditing] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState<Partial<ImpersonationTarget>>({});
+  const navigate = useNavigate();
 
   if (!isImpersonating) return null;
 
   const { clientId, clientName, role, userId, userName } = impersonationTarget;
 
+  // Track pending changes
+  const currentClientId = pendingChanges.clientId !== undefined ? pendingChanges.clientId : clientId;
+  const currentRole = pendingChanges.role !== undefined ? pendingChanges.role : role;
+  const currentUserId = pendingChanges.userId !== undefined ? pendingChanges.userId : userId;
+
+  const hasPendingChanges = Object.keys(pendingChanges).length > 0;
+
   const handleClientChange = (value: string) => {
     const newClientId = value === '__none__' ? null : value;
     const newClientName = newClientId ? clients.find(c => c.id === newClientId)?.name || null : null;
-    
-    const newTarget: ImpersonationTarget = {
-      ...impersonationTarget,
-      clientId: newClientId,
-      clientName: newClientName,
-    };
-    startImpersonation(newTarget);
+    setPendingChanges(prev => ({ ...prev, clientId: newClientId, clientName: newClientName }));
   };
 
   const handleRoleChange = (value: string) => {
-    const newTarget: ImpersonationTarget = {
-      ...impersonationTarget,
-      role: value as AppRole,
-    };
-    startImpersonation(newTarget);
+    setPendingChanges(prev => ({ ...prev, role: value as AppRole }));
   };
 
   const handleUserChange = (value: string) => {
     const newUserId = value === '__none__' ? null : value;
     const newUserName = newUserId ? users.find(u => u.id === newUserId)?.full_name || null : null;
-    
+    setPendingChanges(prev => ({ ...prev, userId: newUserId, userName: newUserName }));
+  };
+
+  const handleApplyChanges = async () => {
     const newTarget: ImpersonationTarget = {
-      ...impersonationTarget,
-      userId: newUserId,
-      userName: newUserName,
+      clientId: pendingChanges.clientId !== undefined ? pendingChanges.clientId : clientId,
+      clientName: pendingChanges.clientName !== undefined ? pendingChanges.clientName : clientName,
+      role: pendingChanges.role !== undefined ? pendingChanges.role : role,
+      userId: pendingChanges.userId !== undefined ? pendingChanges.userId : userId,
+      userName: pendingChanges.userName !== undefined ? pendingChanges.userName : userName,
     };
-    startImpersonation(newTarget);
+    
+    await startImpersonation(newTarget);
+    setPendingChanges({});
+    setIsEditing(false);
+
+    // Navigate to the appropriate dashboard for the role
+    const roleConfig = ROLE_OPTIONS.find(r => r.value === newTarget.role);
+    if (roleConfig) {
+      navigate(roleConfig.defaultRoute);
+    }
   };
 
   return (
@@ -135,7 +149,7 @@ export function ImpersonationBanner() {
               {/* Client selector */}
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-amber-900" />
-                <Select value={clientId || '__none__'} onValueChange={handleClientChange}>
+                <Select value={currentClientId || '__none__'} onValueChange={handleClientChange}>
                   <SelectTrigger className="w-[160px] h-8 bg-amber-100 border-amber-300 text-amber-900 text-sm">
                     <SelectValue placeholder="Sin negocio" />
                   </SelectTrigger>
@@ -153,7 +167,7 @@ export function ImpersonationBanner() {
               {/* Role selector */}
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-amber-900" />
-                <Select value={role || ''} onValueChange={handleRoleChange}>
+                <Select value={currentRole || ''} onValueChange={handleRoleChange}>
                   <SelectTrigger className="w-[130px] h-8 bg-amber-100 border-amber-300 text-amber-900 text-sm">
                     <SelectValue placeholder="Rol" />
                   </SelectTrigger>
@@ -170,7 +184,7 @@ export function ImpersonationBanner() {
               {/* User selector */}
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-amber-900" />
-                <Select value={userId || '__none__'} onValueChange={handleUserChange}>
+                <Select value={currentUserId || '__none__'} onValueChange={handleUserChange}>
                   <SelectTrigger className="w-[180px] h-8 bg-amber-100 border-amber-300 text-amber-900 text-sm">
                     <SelectValue placeholder="Usuario genérico" />
                   </SelectTrigger>
@@ -184,6 +198,18 @@ export function ImpersonationBanner() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Apply button */}
+              {hasPendingChanges && (
+                <Button
+                  onClick={handleApplyChanges}
+                  size="sm"
+                  className="h-8 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Check className="h-4 w-4 mr-1" />
+                  Aplicar
+                </Button>
+              )}
             </div>
           )}
         </div>
