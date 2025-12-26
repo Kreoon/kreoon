@@ -28,9 +28,11 @@ import {
   Trash2,
   ExternalLink,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  FileText
 } from 'lucide-react';
 import type { AppRole } from '@/types/database';
+import { OrganizationProfileEditor } from './OrganizationProfileEditor';
 
 const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Administrador',
@@ -239,8 +241,12 @@ export function OrganizationManagement() {
 
       {/* Current Organization Management */}
       {currentOrg && (
-        <Tabs defaultValue="members" className="space-y-4">
+        <Tabs defaultValue="profile" className="space-y-4">
           <TabsList>
+            <TabsTrigger value="profile" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Perfil
+            </TabsTrigger>
             <TabsTrigger value="members" className="gap-2">
               <Users className="h-4 w-4" />
               Miembros
@@ -254,6 +260,14 @@ export function OrganizationManagement() {
               Configuración
             </TabsTrigger>
           </TabsList>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-4">
+            <OrganizationProfileEditor 
+              organizationId={currentOrg.id} 
+              isRootAdmin={isAdmin}
+            />
+          </TabsContent>
 
           {/* Members Tab */}
           <TabsContent value="members" className="space-y-4">
