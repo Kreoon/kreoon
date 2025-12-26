@@ -191,12 +191,12 @@ export function ImpersonationPanel() {
                   <Building2 className="h-3.5 w-3.5" />
                   Negocio (opcional)
                 </Label>
-                <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <Select value={selectedClientId || '__none__'} onValueChange={(v) => setSelectedClientId(v === '__none__' ? '' : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sin negocio (vista neutra)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sin negocio (vista neutra)</SelectItem>
+                    <SelectItem value="__none__">Sin negocio (vista neutra)</SelectItem>
                     {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}
@@ -249,12 +249,12 @@ export function ImpersonationPanel() {
                   />
                 </div>
 
-                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                <Select value={selectedUserId || '__none__'} onValueChange={(v) => setSelectedUserId(v === '__none__' ? '' : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Rol genérico (sin identidad)" />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
-                    <SelectItem value="">Rol genérico (sin identidad)</SelectItem>
+                    <SelectItem value="__none__">Rol genérico (sin identidad)</SelectItem>
                     {filteredUsers.slice(0, 50).map((user) => (
                       <SelectItem key={user.id} value={user.id}>
                         <div className="flex items-center gap-2">
