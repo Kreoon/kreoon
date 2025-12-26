@@ -256,11 +256,36 @@ export default function ClientDashboard() {
     }
   }, [user]);
 
+  // Listen for client switching without full page reload
+  useEffect(() => {
+    const handleClientSelected = () => {
+      const nextClientId = localStorage.getItem('selectedClientId');
+      if (nextClientId && nextClientId !== selectedClientId) {
+        setSelectedClientId(nextClientId);
+        setShowClientSelector(false);
+      }
+    };
+
+    const onCustom = () => handleClientSelected();
+    window.addEventListener('client-selected', onCustom as EventListener);
+
+    // Also react to localStorage changes coming from other tabs/windows
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'selectedClientId') handleClientSelected();
+    };
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('client-selected', onCustom as EventListener);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, [selectedClientId]);
+
   // Memoized callback for real-time content updates
   const handleRealtimeContentChange = useCallback(() => {
     if (selectedClientId) {
-      // Silently refetch content data when realtime update comes
-      fetchClientData(selectedClientId);
+      // Silently refetch content data when realtime update comes (avoid UI flicker)
+      fetchClientData(selectedClientId, { silent: true });
     }
   }, [selectedClientId]);
 
@@ -340,9 +365,11 @@ export default function ClientDashboard() {
     }
   };
 
-  const fetchClientData = async (clientId: string) => {
+  const fetchClientData = async (clientId: string, options?: { silent?: boolean }) => {
     if (!user || !clientId) return;
-    setLoading(true);
+    const silent = options?.silent ?? false;
+
+    if (!silent) setLoading(true);
 
     try {
       const { data: clientData } = await supabase
@@ -371,16 +398,16 @@ export default function ClientDashboard() {
 
         if (contentError) {
           console.error('Error fetching content:', contentError);
-          setContent([]);
+          if (!silent) setContent([]);
         } else {
           // Obtener perfiles de creadores y editores
           const contentItems = contentData || [];
           const creatorIds = [...new Set(contentItems.filter(c => c.creator_id).map(c => c.creator_id))];
           const editorIds = [...new Set(contentItems.filter(c => c.editor_id).map(c => c.editor_id))];
-          
+
           let creatorMap = new Map();
           let editorMap = new Map();
-          
+
           if (creatorIds.length > 0) {
             const { data: creators } = await supabase
               .from('profiles')
@@ -388,7 +415,7 @@ export default function ClientDashboard() {
               .in('id', creatorIds);
             creators?.forEach(c => creatorMap.set(c.id, c));
           }
-          
+
           if (editorIds.length > 0) {
             const { data: editors } = await supabase
               .from('profiles')
@@ -396,13 +423,13 @@ export default function ClientDashboard() {
               .in('id', editorIds);
             editors?.forEach(e => editorMap.set(e.id, e));
           }
-          
+
           const contentWithProfiles = contentItems.map(item => ({
             ...item,
             creator: item.creator_id ? creatorMap.get(item.creator_id) : null,
             editor: item.editor_id ? editorMap.get(item.editor_id) : null
           }));
-          
+
           setContent(contentWithProfiles as unknown as Content[]);
         }
 
@@ -426,7 +453,7 @@ export default function ClientDashboard() {
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 

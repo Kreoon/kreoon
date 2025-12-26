@@ -109,24 +109,7 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Handle install
-self.addEventListener('install', (event) => {
-  console.log('[SW] Service worker installed');
-  self.skipWaiting();
-});
+// Note: This service worker is only for push notifications/badges.
+// We intentionally do NOT call skipWaiting() or clients.claim() to avoid unexpected
+// controller takeovers that can feel like a full reload.
 
-// Handle activate
-self.addEventListener('activate', (event) => {
-  console.log('[SW] Service worker activated');
-  event.waitUntil(
-    Promise.all([
-      clients.claim(),
-      // Clean old caches
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
-        );
-      })
-    ])
-  );
-});

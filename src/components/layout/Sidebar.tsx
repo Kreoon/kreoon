@@ -278,9 +278,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         open={showClientSelector}
         onOpenChange={setShowClientSelector}
         onSelectClient={(clientId) => {
-          // Store selected client and refresh
+          // Store selection and notify current session (no full reload)
           localStorage.setItem('selectedClientId', clientId);
-          window.location.reload();
+          window.dispatchEvent(new CustomEvent('client-selected', { detail: { clientId } }));
+          setShowClientSelector(false);
+          navigate('/client-dashboard', { replace: true });
         }}
       />
     </aside>
