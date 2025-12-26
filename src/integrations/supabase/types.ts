@@ -393,6 +393,7 @@ export type Database = {
           main_contact: string | null
           name: string
           notes: string | null
+          organization_id: string | null
           portfolio_url: string | null
           profile_completed: boolean | null
           tiktok: string | null
@@ -423,6 +424,7 @@ export type Database = {
           main_contact?: string | null
           name: string
           notes?: string | null
+          organization_id?: string | null
           portfolio_url?: string | null
           profile_completed?: boolean | null
           tiktok?: string | null
@@ -453,6 +455,7 @@ export type Database = {
           main_contact?: string | null
           name?: string
           notes?: string | null
+          organization_id?: string | null
           portfolio_url?: string | null
           profile_completed?: boolean | null
           tiktok?: string | null
@@ -461,7 +464,15 @@ export type Database = {
           username?: string | null
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_followers: {
         Row: {
@@ -528,6 +539,7 @@ export type Database = {
           is_published: boolean | null
           likes_count: number | null
           notes: string | null
+          organization_id: string | null
           paid_at: string | null
           product: string | null
           product_id: string | null
@@ -588,6 +600,7 @@ export type Database = {
           is_published?: boolean | null
           likes_count?: number | null
           notes?: string | null
+          organization_id?: string | null
           paid_at?: string | null
           product?: string | null
           product_id?: string | null
@@ -648,6 +661,7 @@ export type Database = {
           is_published?: boolean | null
           likes_count?: number | null
           notes?: string | null
+          organization_id?: string | null
           paid_at?: string | null
           product?: string | null
           product_id?: string | null
@@ -679,6 +693,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
@@ -1107,6 +1128,174 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          organization_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          organization_id: string
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          organization_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_members: {
+        Row: {
+          id: string
+          invited_by: string | null
+          is_owner: boolean | null
+          joined_at: string | null
+          organization_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          invited_by?: string | null
+          is_owner?: boolean | null
+          joined_at?: string | null
+          organization_id: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          invited_by?: string | null
+          is_owner?: boolean | null
+          joined_at?: string | null
+          organization_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_statuses: {
+        Row: {
+          color: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          label: string
+          organization_id: string
+          sort_order: number
+          status_key: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+          organization_id: string
+          sort_order?: number
+          status_key: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          organization_id?: string
+          sort_order?: number
+          status_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_statuses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          default_role: Database["public"]["Enums"]["app_role"] | null
+          description: string | null
+          id: string
+          is_registration_open: boolean | null
+          logo_url: string | null
+          name: string
+          registration_link: string | null
+          settings: Json | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          default_role?: Database["public"]["Enums"]["app_role"] | null
+          description?: string | null
+          id?: string
+          is_registration_open?: boolean | null
+          logo_url?: string | null
+          name: string
+          registration_link?: string | null
+          settings?: Json | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          default_role?: Database["public"]["Enums"]["app_role"] | null
+          description?: string | null
+          id?: string
+          is_registration_open?: boolean | null
+          logo_url?: string | null
+          name?: string
+          registration_link?: string | null
+          settings?: Json | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -1419,6 +1608,7 @@ export type Database = {
           bio: string | null
           city: string | null
           created_at: string | null
+          current_organization_id: string | null
           document_number: string | null
           document_type: string | null
           editor_completed_count: number | null
@@ -1445,6 +1635,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string | null
+          current_organization_id?: string | null
           document_number?: string | null
           document_type?: string | null
           editor_completed_count?: number | null
@@ -1471,6 +1662,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string | null
+          current_organization_id?: string | null
           document_number?: string | null
           document_type?: string | null
           editor_completed_count?: number | null
@@ -1490,7 +1682,15 @@ export type Database = {
           updated_at?: string | null
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_current_organization_id_fkey"
+            columns: ["current_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rate_limits: {
         Row: {
@@ -2071,7 +2271,9 @@ export type Database = {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
         Returns: string
       }
+      generate_org_slug: { Args: { org_name: string }; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
+      generate_registration_link: { Args: { _org_id: string }; Returns: string }
       generate_username_from_name: {
         Args: { full_name: string }
         Returns: string
@@ -2096,6 +2298,16 @@ export type Database = {
         }[]
       }
       get_up_setting: { Args: { setting_key: string }; Returns: Json }
+      get_user_organizations: {
+        Args: { _user_id: string }
+        Returns: {
+          is_owner: boolean
+          organization_id: string
+          organization_name: string
+          organization_slug: string
+          user_role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       get_user_referral_code: { Args: { _user_id: string }; Returns: string }
       get_user_roles: {
         Args: { _user_id: string }
@@ -2130,6 +2342,14 @@ export type Database = {
       }
       is_following: { Args: { _following_id: string }; Returns: boolean }
       is_following_company: { Args: { _company_id: string }; Returns: boolean }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_org_owner: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       log_activity: {
         Args: {
           _action: string
