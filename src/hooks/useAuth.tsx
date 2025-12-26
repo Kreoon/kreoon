@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Keep latest values accessible inside auth listeners (effect has [] deps).
   const userIdRef = useRef<string | null>(null);
   const rolesLoadedRef = useRef<boolean>(false);
+  const bootstrappedRef = useRef<boolean>(false);
 
   useEffect(() => {
     userIdRef.current = user?.id ?? null;
@@ -61,12 +62,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('[auth] state change', event);
 
-      // CRITICAL: Ignore any event that is purely a token refresh / visibility focus, 
-      // when the user ID hasn't changed. This prevents global loading spinners that 
-      // feel like a full-page reload on tab switch.
+      // CRITICAL: Treat same-user events (often triggered on tab focus / token refresh)
+      // as a silent refresh. We should never re-block the entire UI in that case.
       const nextUserId = nextSession?.user?.id ?? null;
       const currentUserId = userIdRef.current;
       const userChanged = nextUserId !== currentUserId;
+      const sameUser = !!nextUserId && nextUserId === currentUserId;
 
       // If there is no session AND the event is NOT an explicit sign-out, ignore.
       // Browsers (especially mobile) can emit transient null session events on focus.
@@ -74,14 +75,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // If the same user and roles are already loaded, skip blocking UI entirely.
-      // Just silently refresh profile/roles in background if needed.
-      if (!userChanged && rolesLoadedRef.current && nextSession?.user) {
-        // Silently refresh user data without any loading state change
+      // If we already bootstrapped and it's the same user, never show global loading.
+      // Just keep session/user in sync and refresh profile/roles in the background.
+      if (sameUser && bootstrappedRef.current && nextSession?.user) {
         setSession(nextSession);
         setUser(nextSession.user);
         window.setTimeout(() => {
-          fetchUserData(nextSession.user.id, true); // silent = true
+          fetchUserData(nextSession.user.id, true);
         }, 0);
         return;
       }
@@ -90,8 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(nextSession?.user ?? null);
 
       if (nextSession?.user) {
-        // Only block the UI when the user *actually changed* or first bootstrap.
-        const shouldBlockUi = userChanged || !rolesLoadedRef.current;
+        // Only block the UI on first bootstrap or when the user actually changes.
+        const shouldBlockUi = userChanged && !bootstrappedRef.current ? true : userChanged;
 
         if (shouldBlockUi) {
           setLoading(true);
@@ -163,6 +163,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('[auth] Error fetching user data:', error);
     } finally {
+      bootstrappedRef.current = true;
+
       if (!silent) {
         setRolesLoaded(true);
         setLoading(false);
