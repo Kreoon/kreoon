@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AchievementNotificationProvider } from "@/components/points/AchievementNotificationProvider";
+import { UnsavedChangesProvider } from "@/contexts/UnsavedChangesContext";
 import Dashboard from "./pages/Dashboard";
 import ContentBoard from "./pages/ContentBoard";
 import Auth from "./pages/Auth";
@@ -61,9 +62,10 @@ function AppContent() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AchievementNotificationProvider>
-          <TooltipProvider delayDuration={0}>
-            <Toaster />
+        <UnsavedChangesProvider>
+          <AchievementNotificationProvider>
+            <TooltipProvider delayDuration={0}>
+              <Toaster />
             <Sonner />
             <Routes>
               <Route path="/portfolio" element={<Portfolio />} />
@@ -92,10 +94,11 @@ function AppContent() {
               <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
               <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
               <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor', 'ambassador']}><MainLayout><Ranking /></MainLayout></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </TooltipProvider>
-        </AchievementNotificationProvider>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </TooltipProvider>
+          </AchievementNotificationProvider>
+        </UnsavedChangesProvider>
       </AuthProvider>
     </BrowserRouter>
   );

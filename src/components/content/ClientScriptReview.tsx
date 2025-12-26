@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Content, ContentStatus } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,13 +43,19 @@ import {
   Image,
   Type,
   CheckSquare,
-  History
+  History,
+  Save,
+  Cloud
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAutoSave } from '@/hooks/useAutoSave';
+import { useDraftManager } from '@/hooks/useDraftManager';
+import { useUnsavedChangesSafe } from '@/contexts/UnsavedChangesContext';
+import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
 
 interface ClientScriptReviewProps {
   content: Content;
@@ -241,6 +247,56 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
   const [isEditingScript, setIsEditingScript] = useState(false);
   const [editedScript, setEditedScript] = useState('');
   const [savingScript, setSavingScript] = useState(false);
+  const [showDraftHistory, setShowDraftHistory] = useState(false);
+
+  // Unsaved changes system
+  const { markAsChanged, markAsSaved, registerSaveHandler, unregisterSaveHandler } = useUnsavedChangesSafe();
+  const scriptKey = `script_${content.id}`;
+
+  // Draft manager for script versions
+  const {
+    drafts,
+    saveDraft,
+    restoreDraft,
+    clearDrafts,
+    hasDrafts,
+    getLatestDraft
+  } = useDraftManager<string>({
+    entityType: 'script',
+    entityId: content.id,
+    maxDrafts: 5,
+  });
+
+  // Restore draft on mount if available
+  useEffect(() => {
+    if (open && hasDrafts && !isEditingScript) {
+      const latestDraft = getLatestDraft();
+      if (latestDraft) {
+        // Check if draft is newer than current content
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content.script || '', 'text/html');
+        const currentText = doc.body.textContent || '';
+        if (latestDraft !== currentText && latestDraft.length > currentText.length) {
+          toast({
+            title: 'Borrador disponible',
+            description: 'Se encontró un borrador guardado automáticamente',
+            action: (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditedScript(latestDraft);
+                  setIsEditingScript(true);
+                }}
+              >
+                Restaurar
+              </Button>
+            ),
+          });
+        }
+      }
+    }
+  }, [open, hasDrafts]);
 
   const isApproved = content.status === 'script_approved' || content.script_approved_at;
   const scriptVersion = (content as any).script_version || 1;
@@ -423,13 +479,29 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
     // Convert HTML to plain text for editing
     const parser = new DOMParser();
     const doc = parser.parseFromString(content.script || '', 'text/html');
-    setEditedScript(doc.body.textContent || content.script || '');
+    const initialText = doc.body.textContent || content.script || '';
+    setEditedScript(initialText);
     setIsEditingScript(true);
+    // Save initial draft
+    saveDraft(initialText);
   };
 
   const handleCancelEditing = () => {
+    // Save current work as draft before canceling
+    if (editedScript.trim()) {
+      saveDraft(editedScript);
+    }
     setIsEditingScript(false);
     setEditedScript('');
+    markAsSaved(scriptKey);
+  };
+
+  // Track changes for unsaved changes system
+  const handleScriptChange = (value: string) => {
+    setEditedScript(value);
+    markAsChanged(scriptKey);
+    // Auto-save draft every change (debounced in useDraftManager via localStorage)
+    saveDraft(value);
   };
 
   const handleSaveScript = async () => {
@@ -484,6 +556,8 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
       
       setIsEditingScript(false);
       setEditedScript('');
+      markAsSaved(scriptKey);
+      clearDrafts(); // Clear drafts after successful save
       fetchComments();
       onUpdate?.();
     } catch (error) {
@@ -742,7 +816,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                       {isEditingScript ? (
                         <Textarea
                           value={editedScript}
-                          onChange={(e) => setEditedScript(e.target.value)}
+                          onChange={(e) => handleScriptChange(e.target.value)}
                           className="min-h-[400px] font-mono text-sm"
                           placeholder="Escribe el guión aquí..."
                         />
