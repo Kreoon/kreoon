@@ -3,6 +3,7 @@ import { Content, ContentStatus } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,20 @@ import {
   Edit3,
   Lock,
   Clock,
-  X
+  X,
+  Scissors,
+  Target,
+  Megaphone,
+  Palette,
+  ClipboardList,
+  Play,
+  Zap,
+  Users,
+  TrendingUp,
+  Image,
+  Type,
+  CheckSquare,
+  History
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -68,14 +82,12 @@ interface ScriptScene {
 function parseScriptToScenes(script: string | null): ScriptScene[] {
   if (!script) return [];
 
-  // Create a temporary DOM element to parse HTML
   const parser = new DOMParser();
   const doc = parser.parseFromString(script, 'text/html');
   const text = doc.body.textContent || '';
   
   const scenes: ScriptScene[] = [];
   
-  // Try to find scene patterns
   const scenePattern = /escena\s*(\d+)[^a-z]*([^]*?)(?=escena\s*\d+|cierre|cta|llamada|$)/gi;
   const matches = [...text.matchAll(scenePattern)];
   
@@ -94,9 +106,7 @@ function parseScriptToScenes(script: string | null): ScriptScene[] {
     });
   }
   
-  // If no scenes found, try to parse by sections
   if (scenes.length === 0) {
-    // Look for hook section
     const hookSection = extractSection(text, ['hooks', '🎯 hooks', 'ganchos']);
     if (hookSection && hookSection.length > 20) {
       scenes.push({
@@ -108,7 +118,6 @@ function parseScriptToScenes(script: string | null): ScriptScene[] {
       });
     }
     
-    // Look for main development
     const developSection = extractSection(text, ['desarrollo', '💬', 'guión principal', 'cuerpo']);
     if (developSection && developSection.length > 20) {
       scenes.push({
@@ -120,7 +129,6 @@ function parseScriptToScenes(script: string | null): ScriptScene[] {
       });
     }
     
-    // Look for CTA
     const ctaSection = extractSection(text, ['cta', '📢', 'cierre', 'llamada a la acción']);
     if (ctaSection && ctaSection.length > 10) {
       scenes.push({
@@ -134,7 +142,6 @@ function parseScriptToScenes(script: string | null): ScriptScene[] {
     }
   }
   
-  // If still no scenes, create a single scene from the content
   if (scenes.length === 0 && text.length > 50) {
     scenes.push({
       id: 1,
@@ -148,7 +155,6 @@ function parseScriptToScenes(script: string | null): ScriptScene[] {
   return scenes;
 }
 
-// Helper to extract a section from text
 function extractSection(text: string, startMarkers: string[]): string {
   const lowerText = text.toLowerCase();
   let start = -1;
@@ -163,7 +169,6 @@ function extractSection(text: string, startMarkers: string[]): string {
   
   if (start === -1) return '';
   
-  // Find next section marker or end
   const endMarkers = ['escena', 'visual:', 'voz:', 'emoción:', 'cta', 'hooks', 'desarrollo', '🎯', '💬', '📢'];
   let end = text.length;
   
@@ -177,6 +182,40 @@ function extractSection(text: string, startMarkers: string[]): string {
   return text.slice(start, end).trim().replace(/^[:\s\-]+/, '').trim();
 }
 
+// Parse HTML content to structured list items
+function parseGuidelinesToItems(html: string | null): string[] {
+  if (!html) return [];
+  
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const items: string[] = [];
+  
+  // Extract list items
+  doc.querySelectorAll('li').forEach(li => {
+    const text = li.textContent?.trim();
+    if (text) items.push(text);
+  });
+  
+  // If no list items, try paragraphs
+  if (items.length === 0) {
+    doc.querySelectorAll('p').forEach(p => {
+      const text = p.textContent?.trim();
+      if (text && text.length > 10) items.push(text);
+    });
+  }
+  
+  // Fallback to text content split by newlines
+  if (items.length === 0) {
+    const text = doc.body.textContent || '';
+    text.split('\n').forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed.length > 10) items.push(trimmed);
+    });
+  }
+  
+  return items.slice(0, 10);
+}
+
 const changeRequestOptions = [
   { id: 'hooks', label: 'Cambiar hooks/apertura' },
   { id: 'tone', label: 'Ajustar tono' },
@@ -188,6 +227,7 @@ const changeRequestOptions = [
 
 export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChange }: ClientScriptReviewProps) {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('guion');
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -202,10 +242,13 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
   const isApproved = content.status === 'script_approved' || content.script_approved_at;
   const scriptVersion = (content as any).script_version || 1;
 
-  // Parse script into scenes
   const scenes = useMemo(() => parseScriptToScenes(content.script), [content.script]);
+  const editorItems = useMemo(() => parseGuidelinesToItems(content.editor_guidelines), [content.editor_guidelines]);
+  const strategistItems = useMemo(() => parseGuidelinesToItems(content.strategist_guidelines), [content.strategist_guidelines]);
+  const traffickerItems = useMemo(() => parseGuidelinesToItems(content.trafficker_guidelines), [content.trafficker_guidelines]);
+  const designerItems = useMemo(() => parseGuidelinesToItems((content as any).designer_guidelines), [(content as any).designer_guidelines]);
+  const adminItems = useMemo(() => parseGuidelinesToItems((content as any).admin_guidelines), [(content as any).admin_guidelines]);
 
-  // Expand all scenes by default
   useEffect(() => {
     if (scenes.length > 0 && expandedScenes.length === 0) {
       setExpandedScenes(scenes.map(s => s.id));
@@ -398,6 +441,34 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
     );
   };
 
+  // Info Card Component for role tabs
+  const InfoCard = ({ icon: Icon, title, items, emptyText, color }: { 
+    icon: any; 
+    title: string; 
+    items: string[]; 
+    emptyText: string;
+    color: string;
+  }) => (
+    <div className={cn("rounded-xl border p-4", color)}>
+      <div className="flex items-center gap-2 mb-3">
+        <Icon className="h-5 w-5" />
+        <h4 className="font-semibold">{title}</h4>
+      </div>
+      {items.length > 0 ? (
+        <ul className="space-y-2">
+          {items.map((item, idx) => (
+            <li key={idx} className="text-sm flex items-start gap-2">
+              <span className="text-muted-foreground mt-1">•</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground italic">{emptyText}</p>
+      )}
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[95vh] p-0 overflow-hidden flex flex-col">
@@ -481,9 +552,59 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
               </div>
             </div>
           </div>
+
+          {/* Tabs Navigation */}
+          <div className="px-4 sm:px-5 pb-0">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full justify-start gap-1 bg-transparent border-b rounded-none h-auto p-0 overflow-x-auto">
+                <TabsTrigger 
+                  value="guion" 
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-2 px-3"
+                >
+                  <FileText className="h-4 w-4 mr-1.5" />
+                  Guion
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="editor" 
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-2 px-3"
+                >
+                  <Scissors className="h-4 w-4 mr-1.5" />
+                  Editor
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="estratega" 
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-2 px-3"
+                >
+                  <Target className="h-4 w-4 mr-1.5" />
+                  Estratega
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="trafficker" 
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-2 px-3"
+                >
+                  <Megaphone className="h-4 w-4 mr-1.5" />
+                  Trafficker
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="diseno" 
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-2 px-3"
+                >
+                  <Palette className="h-4 w-4 mr-1.5" />
+                  Diseño
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="admin" 
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-2 px-3"
+                >
+                  <ClipboardList className="h-4 w-4 mr-1.5" />
+                  Admin
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
 
-        {/* Scrollable Script Container - Single unified view */}
+        {/* Tab Content with Scroll */}
         <div 
           className="flex-1 overflow-y-auto"
           style={{ 
@@ -492,217 +613,385 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
             scrollbarColor: 'hsl(var(--muted-foreground)) transparent'
           }}
         >
-          <div className="p-4 sm:p-6 space-y-4">
-            {scenes.length > 0 ? (
-              scenes.map((scene, idx) => (
-                <Collapsible
-                  key={scene.id}
-                  open={expandedScenes.includes(scene.id)}
-                  onOpenChange={() => toggleScene(scene.id)}
-                  className="border rounded-xl overflow-hidden bg-card"
-                >
-                  {/* Scene Header */}
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-transparent data-[state=open]:border-border">
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "flex items-center justify-center w-10 h-10 rounded-lg font-bold text-lg",
-                          scene.isCTA 
-                            ? "bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600" 
-                            : idx === 0 
-                              ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-600"
-                              : "bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600"
-                        )}>
-                          {scene.id}
-                        </div>
-                        <div className="text-left">
-                          <h3 className="font-semibold text-base">
-                            ESCENA {scene.id} · {scene.title}
-                          </h3>
-                          <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
-                            {scene.dialogue.slice(0, 50)}...
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getSceneComments(scene.id).length > 0 && (
-                          <Badge variant="secondary" className="text-xs">
-                            <MessageCircle className="h-3 w-3 mr-1" />
-                            {getSceneComments(scene.id).length}
-                          </Badge>
-                        )}
-                        {expandedScenes.includes(scene.id) ? (
-                          <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent>
-                    <div className="p-4 space-y-4">
-                      {/* Visual - Light blue background */}
-                      <div className="bg-sky-50 dark:bg-sky-950/30 rounded-lg p-4 border border-sky-200/50 dark:border-sky-800/50">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-lg">🎥</span>
-                          <span className="font-semibold text-sky-700 dark:text-sky-300 text-sm uppercase tracking-wide">Qué se ve</span>
-                        </div>
-                        <p className="text-sm leading-relaxed">{scene.visual}</p>
-                      </div>
-
-                      {/* Dialogue - Light green background */}
-                      <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-4 border border-emerald-200/50 dark:border-emerald-800/50">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-lg">🗣</span>
-                          <span className="font-semibold text-emerald-700 dark:text-emerald-300 text-sm uppercase tracking-wide">Qué se dice</span>
-                        </div>
-                        <p className="text-sm leading-relaxed whitespace-pre-line">{scene.dialogue}</p>
-                      </div>
-
-                      {/* Emotion - Small, subtle */}
-                      <div className="flex items-center gap-2 px-2">
-                        <span className="text-base">😶</span>
-                        <span className="text-xs text-muted-foreground uppercase tracking-wide">Emoción:</span>
-                        <span className="text-sm text-muted-foreground italic">{scene.emotion}</span>
-                      </div>
-
-                      {/* Separator */}
-                      <div className="border-t border-dashed pt-3">
-                        {/* Scene Comments */}
-                        {getSceneComments(scene.id).length > 0 && (
-                          <div className="space-y-2 mb-3">
-                            {getSceneComments(scene.id).map((comment) => (
-                              <div key={comment.id} className="flex items-start gap-2 bg-muted/50 rounded-lg p-2">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarImage src={comment.profile?.avatar_url} />
-                                  <AvatarFallback className="text-xs">
-                                    {comment.profile?.full_name?.charAt(0) || 'U'}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs font-medium">{comment.profile?.full_name}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground">{comment.comment}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Comment Button/Input */}
-                        {activeCommentScene === scene.id ? (
-                          <div className="flex gap-2">
-                            <Textarea
-                              placeholder={`Comentar escena ${scene.id}...`}
-                              value={newComment}
-                              onChange={(e) => setNewComment(e.target.value)}
-                              className="min-h-[60px] text-sm flex-1"
-                              rows={2}
-                              autoFocus
-                            />
-                            <div className="flex flex-col gap-1">
-                              <Button
-                                size="icon"
-                                onClick={() => handleAddSceneComment(scene.id)}
-                                disabled={submitting || !newComment.trim()}
-                              >
-                                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => {
-                                  setActiveCommentScene(null);
-                                  setNewComment('');
-                                }}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+            {/* GUION TAB - Complete Script */}
+            <TabsContent value="guion" className="m-0 p-4 sm:p-6 space-y-4">
+              {scenes.length > 0 ? (
+                <>
+                  {scenes.map((scene, idx) => (
+                    <Collapsible
+                      key={scene.id}
+                      open={expandedScenes.includes(scene.id)}
+                      onOpenChange={() => toggleScene(scene.id)}
+                      className="border rounded-xl overflow-hidden bg-card"
+                    >
+                      <CollapsibleTrigger className="w-full">
+                        <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-transparent data-[state=open]:border-border">
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "flex items-center justify-center w-10 h-10 rounded-lg font-bold text-lg",
+                              scene.isCTA 
+                                ? "bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600" 
+                                : idx === 0 
+                                  ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-600"
+                                  : "bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600"
+                            )}>
+                              {scene.id}
+                            </div>
+                            <div className="text-left">
+                              <h3 className="font-semibold text-base">
+                                ESCENA {scene.id} · {scene.title}
+                              </h3>
+                              <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
+                                {scene.dialogue.slice(0, 50)}...
+                              </p>
                             </div>
                           </div>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setActiveCommentScene(scene.id)}
-                            className="text-xs text-muted-foreground hover:text-foreground w-full justify-start"
-                          >
-                            <MessageCircle className="h-3 w-3 mr-1.5" />
-                            Comentar esta escena
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              ))
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-1">No hay guión disponible</p>
-                <p className="text-sm">El guión aún no ha sido generado para este contenido.</p>
-              </div>
-            )}
-
-            {/* General Comments Section */}
-            {scenes.length > 0 && (
-              <div className="border-t pt-6 mt-6">
-                <h3 className="font-semibold text-base mb-4 flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4" />
-                  Comentarios Generales
-                </h3>
-
-                {/* Existing General Comments */}
-                {getGeneralComments().length > 0 && (
-                  <div className="space-y-3 mb-4">
-                    {getGeneralComments().map((comment) => (
-                      <div key={comment.id} className="flex items-start gap-3 bg-muted/30 rounded-lg p-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={comment.profile?.avatar_url} />
-                          <AvatarFallback className="text-xs">
-                            {comment.profile?.full_name?.charAt(0) || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium">{comment.profile?.full_name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {format(new Date(comment.created_at), "d 'de' MMMM, HH:mm", { locale: es })}
-                            </span>
+                          <div className="flex items-center gap-2">
+                            {getSceneComments(scene.id).length > 0 && (
+                              <Badge variant="secondary" className="text-xs">
+                                <MessageCircle className="h-3 w-3 mr-1" />
+                                {getSceneComments(scene.id).length}
+                              </Badge>
+                            )}
+                            {expandedScenes.includes(scene.id) ? (
+                              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                            )}
                           </div>
-                          <p className="text-sm">{comment.comment}</p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      </CollapsibleTrigger>
+                      
+                      <CollapsibleContent>
+                        <div className="p-4 space-y-4">
+                          {/* Visual */}
+                          <div className="bg-sky-50 dark:bg-sky-950/30 rounded-lg p-4 border border-sky-200/50 dark:border-sky-800/50">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-lg">🎥</span>
+                              <span className="font-semibold text-sky-700 dark:text-sky-300 text-sm uppercase tracking-wide">Qué se ve</span>
+                            </div>
+                            <p className="text-sm leading-relaxed">{scene.visual}</p>
+                          </div>
 
-                {/* Add General Comment */}
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="Escribe un comentario general sobre el guión..."
-                    value={generalComment}
-                    onChange={(e) => setGeneralComment(e.target.value)}
-                    className="min-h-[80px] text-sm"
-                    rows={3}
-                  />
-                  <Button
-                    size="icon"
-                    onClick={handleAddGeneralComment}
-                    disabled={submitting || !generalComment.trim()}
-                    className="shrink-0 h-10 w-10"
-                  >
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  </Button>
+                          {/* Dialogue */}
+                          <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-4 border border-emerald-200/50 dark:border-emerald-800/50">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-lg">🗣</span>
+                              <span className="font-semibold text-emerald-700 dark:text-emerald-300 text-sm uppercase tracking-wide">Qué se dice</span>
+                            </div>
+                            <p className="text-sm leading-relaxed whitespace-pre-line">{scene.dialogue}</p>
+                          </div>
+
+                          {/* Emotion */}
+                          <div className="flex items-center gap-2 px-2">
+                            <span className="text-base">😶</span>
+                            <span className="text-xs text-muted-foreground uppercase tracking-wide">Emoción:</span>
+                            <span className="text-sm text-muted-foreground italic">{scene.emotion}</span>
+                          </div>
+
+                          {/* Scene Comments */}
+                          <div className="border-t border-dashed pt-3">
+                            {getSceneComments(scene.id).length > 0 && (
+                              <div className="space-y-2 mb-3">
+                                {getSceneComments(scene.id).map((comment) => (
+                                  <div key={comment.id} className="flex items-start gap-2 bg-muted/50 rounded-lg p-2">
+                                    <Avatar className="h-6 w-6">
+                                      <AvatarImage src={comment.profile?.avatar_url} />
+                                      <AvatarFallback className="text-xs">
+                                        {comment.profile?.full_name?.charAt(0) || 'U'}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-medium">{comment.profile?.full_name}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
+                                        </span>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">{comment.comment}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {activeCommentScene === scene.id ? (
+                              <div className="flex gap-2">
+                                <Textarea
+                                  placeholder={`Comentar escena ${scene.id}...`}
+                                  value={newComment}
+                                  onChange={(e) => setNewComment(e.target.value)}
+                                  className="min-h-[60px] text-sm flex-1"
+                                  rows={2}
+                                  autoFocus
+                                />
+                                <div className="flex flex-col gap-1">
+                                  <Button
+                                    size="icon"
+                                    onClick={() => handleAddSceneComment(scene.id)}
+                                    disabled={submitting || !newComment.trim()}
+                                  >
+                                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setActiveCommentScene(null);
+                                      setNewComment('');
+                                    }}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setActiveCommentScene(scene.id)}
+                                className="text-xs text-muted-foreground hover:text-foreground w-full justify-start"
+                              >
+                                <MessageCircle className="h-3 w-3 mr-1.5" />
+                                Comentar esta escena
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
+
+                  {/* General Comments */}
+                  <div className="border-t pt-6 mt-6">
+                    <h3 className="font-semibold text-base mb-4 flex items-center gap-2">
+                      <MessageCircle className="h-4 w-4" />
+                      Comentarios Generales
+                    </h3>
+
+                    {getGeneralComments().length > 0 && (
+                      <div className="space-y-3 mb-4">
+                        {getGeneralComments().map((comment) => (
+                          <div key={comment.id} className="flex items-start gap-3 bg-muted/30 rounded-lg p-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={comment.profile?.avatar_url} />
+                              <AvatarFallback className="text-xs">
+                                {comment.profile?.full_name?.charAt(0) || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-medium">{comment.profile?.full_name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(comment.created_at), "d 'de' MMMM, HH:mm", { locale: es })}
+                                </span>
+                              </div>
+                              <p className="text-sm">{comment.comment}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Textarea
+                        placeholder="Escribe un comentario general sobre el guión..."
+                        value={generalComment}
+                        onChange={(e) => setGeneralComment(e.target.value)}
+                        className="min-h-[80px] text-sm"
+                        rows={3}
+                      />
+                      <Button
+                        size="icon"
+                        onClick={handleAddGeneralComment}
+                        disabled={submitting || !generalComment.trim()}
+                        className="shrink-0 h-10 w-10"
+                      >
+                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-1">No hay guión disponible</p>
+                  <p className="text-sm">El guión aún no ha sido generado para este contenido.</p>
                 </div>
+              )}
+            </TabsContent>
+
+            {/* EDITOR TAB */}
+            <TabsContent value="editor" className="m-0 p-4 sm:p-6 space-y-4">
+              <div className="grid gap-4">
+                <InfoCard
+                  icon={Play}
+                  title="Timeline por escenas"
+                  items={editorItems.filter(i => i.toLowerCase().includes('escena') || i.toLowerCase().includes('tiempo'))}
+                  emptyText="No hay información de timeline disponible"
+                  color="bg-violet-50/50 dark:bg-violet-950/20 border-violet-200/50 dark:border-violet-800/50"
+                />
+                <InfoCard
+                  icon={Zap}
+                  title="Ritmo y transiciones"
+                  items={editorItems.filter(i => i.toLowerCase().includes('ritmo') || i.toLowerCase().includes('transición') || i.toLowerCase().includes('corte'))}
+                  emptyText="No hay indicaciones de ritmo"
+                  color="bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-800/50"
+                />
+                <InfoCard
+                  icon={Scissors}
+                  title="Indicaciones de edición"
+                  items={editorItems.length > 0 ? editorItems : []}
+                  emptyText="Las indicaciones de edición se generarán junto con el guión"
+                  color="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200/50 dark:border-blue-800/50"
+                />
               </div>
-            )}
-          </div>
+            </TabsContent>
+
+            {/* ESTRATEGA TAB */}
+            <TabsContent value="estratega" className="m-0 p-4 sm:p-6 space-y-4">
+              <div className="grid gap-4">
+                <InfoCard
+                  icon={Target}
+                  title="Objetivo del video"
+                  items={strategistItems.filter(i => i.toLowerCase().includes('objetivo') || i.toLowerCase().includes('meta'))}
+                  emptyText="No hay objetivo definido"
+                  color="bg-rose-50/50 dark:bg-rose-950/20 border-rose-200/50 dark:border-rose-800/50"
+                />
+                <InfoCard
+                  icon={Users}
+                  title="Nivel de conciencia del avatar"
+                  items={strategistItems.filter(i => i.toLowerCase().includes('avatar') || i.toLowerCase().includes('audiencia') || i.toLowerCase().includes('conciencia'))}
+                  emptyText="No hay información del avatar"
+                  color="bg-cyan-50/50 dark:bg-cyan-950/20 border-cyan-200/50 dark:border-cyan-800/50"
+                />
+                <InfoCard
+                  icon={Target}
+                  title="Intención estratégica"
+                  items={strategistItems.length > 0 ? strategistItems : []}
+                  emptyText="La estrategia se generará junto con el guión"
+                  color="bg-purple-50/50 dark:bg-purple-950/20 border-purple-200/50 dark:border-purple-800/50"
+                />
+              </div>
+            </TabsContent>
+
+            {/* TRAFFICKER TAB */}
+            <TabsContent value="trafficker" className="m-0 p-4 sm:p-6 space-y-4">
+              <div className="grid gap-4">
+                <InfoCard
+                  icon={Megaphone}
+                  title="Tipo de creatividad"
+                  items={traffickerItems.filter(i => i.toLowerCase().includes('ugc') || i.toLowerCase().includes('founder') || i.toLowerCase().includes('educativo'))}
+                  emptyText="No hay tipo definido"
+                  color="bg-orange-50/50 dark:bg-orange-950/20 border-orange-200/50 dark:border-orange-800/50"
+                />
+                <InfoCard
+                  icon={TrendingUp}
+                  title="Uso recomendado (TOF/MOF/BOF)"
+                  items={traffickerItems.filter(i => i.toLowerCase().includes('tof') || i.toLowerCase().includes('mof') || i.toLowerCase().includes('bof') || i.toLowerCase().includes('funnel'))}
+                  emptyText="No hay recomendación de funnel"
+                  color="bg-teal-50/50 dark:bg-teal-950/20 border-teal-200/50 dark:border-teal-800/50"
+                />
+                <InfoCard
+                  icon={Megaphone}
+                  title="Indicaciones para pauta"
+                  items={traffickerItems.length > 0 ? traffickerItems : []}
+                  emptyText="Las indicaciones de pauta se generarán junto con el guión"
+                  color="bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200/50 dark:border-indigo-800/50"
+                />
+              </div>
+            </TabsContent>
+
+            {/* DISEÑO TAB */}
+            <TabsContent value="diseno" className="m-0 p-4 sm:p-6 space-y-4">
+              <div className="grid gap-4">
+                <InfoCard
+                  icon={Palette}
+                  title="Estilo visual y mood"
+                  items={designerItems.filter(i => i.toLowerCase().includes('estilo') || i.toLowerCase().includes('mood') || i.toLowerCase().includes('visual'))}
+                  emptyText="No hay estilo definido"
+                  color="bg-pink-50/50 dark:bg-pink-950/20 border-pink-200/50 dark:border-pink-800/50"
+                />
+                <InfoCard
+                  icon={Image}
+                  title="Miniatura recomendada"
+                  items={designerItems.filter(i => i.toLowerCase().includes('miniatura') || i.toLowerCase().includes('thumbnail'))}
+                  emptyText="No hay recomendación de miniatura"
+                  color="bg-fuchsia-50/50 dark:bg-fuchsia-950/20 border-fuchsia-200/50 dark:border-fuchsia-800/50"
+                />
+                <InfoCard
+                  icon={Type}
+                  title="Colores y tipografía"
+                  items={designerItems.filter(i => i.toLowerCase().includes('color') || i.toLowerCase().includes('tipografía') || i.toLowerCase().includes('fuente'))}
+                  emptyText="No hay indicaciones de color/tipografía"
+                  color="bg-lime-50/50 dark:bg-lime-950/20 border-lime-200/50 dark:border-lime-800/50"
+                />
+                <InfoCard
+                  icon={Palette}
+                  title="Indicaciones de diseño"
+                  items={designerItems.length > 0 ? designerItems : []}
+                  emptyText="Las indicaciones de diseño se generarán junto con el guión"
+                  color="bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-800/50"
+                />
+              </div>
+            </TabsContent>
+
+            {/* ADMIN TAB */}
+            <TabsContent value="admin" className="m-0 p-4 sm:p-6 space-y-4">
+              <div className="grid gap-4">
+                {/* Status Card */}
+                <div className="rounded-xl border p-4 bg-slate-50/50 dark:bg-slate-950/20 border-slate-200/50 dark:border-slate-800/50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckSquare className="h-5 w-5" />
+                    <h4 className="font-semibold">Estado del guión</h4>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Versión</span>
+                      <Badge variant="outline">v{scriptVersion}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Estado</span>
+                      <Badge className={isApproved ? "bg-green-500" : "bg-amber-500"}>
+                        {isApproved ? "Aprobado" : "En revisión"}
+                      </Badge>
+                    </div>
+                    {content.script_approved_at && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Aprobado el</span>
+                        <span className="text-sm">{format(new Date(content.script_approved_at), "d 'de' MMMM, HH:mm", { locale: es })}</span>
+                      </div>
+                    )}
+                    {content.deadline && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Fecha de entrega</span>
+                        <span className="text-sm">{format(new Date(content.deadline), "d 'de' MMMM", { locale: es })}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <InfoCard
+                  icon={History}
+                  title="Historial de cambios"
+                  items={((content as any).change_requests || []).map((r: any) => 
+                    `${format(new Date(r.requestedAt), "d/MM")} - ${r.types?.join(', ') || 'Cambios solicitados'}`
+                  )}
+                  emptyText="No hay historial de cambios"
+                  color="bg-gray-50/50 dark:bg-gray-950/20 border-gray-200/50 dark:border-gray-800/50"
+                />
+
+                <InfoCard
+                  icon={ClipboardList}
+                  title="Indicaciones administrativas"
+                  items={adminItems.length > 0 ? adminItems : []}
+                  emptyText="Las indicaciones administrativas se generarán junto con el guión"
+                  color="bg-zinc-50/50 dark:bg-zinc-950/20 border-zinc-200/50 dark:border-zinc-800/50"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Change Request Modal */}
