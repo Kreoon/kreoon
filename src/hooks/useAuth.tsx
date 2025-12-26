@@ -61,8 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('[auth] state change', event);
 
-      // If the user hasn't actually changed, don't force ProtectedRoute back into spinner.
-      // (The auth client can emit events again on tab focus / token refresh.)
+      // Some browsers can emit transient events on tab focus where nextSession is null.
+      // Avoid treating that as a real sign-out to prevent full-screen "reload" flashes.
+      if (!nextSession && event !== 'SIGNED_OUT') {
+        return;
+      }
+
       const nextUserId = nextSession?.user?.id ?? null;
       const currentUserId = userIdRef.current;
       const userChanged = nextUserId !== currentUserId;
@@ -71,14 +75,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(nextSession?.user ?? null);
 
       if (nextSession?.user) {
-        if (userChanged || !rolesLoadedRef.current) {
+        // Only block the UI (ProtectedRoute spinner) when the *user actually changed* or
+        // we are still bootstrapping roles for the first time.
+        const shouldBlockUi = userChanged || !rolesLoadedRef.current;
+
+        if (shouldBlockUi) {
           setLoading(true);
           setRolesLoaded(false);
-          // IMPORTANT: defer any other Supabase calls to avoid auth deadlocks (especially on mobile)
-          window.setTimeout(() => {
-            fetchUserData(nextSession.user.id);
-          }, 0);
         }
+
+        // Always refresh user data, but do it in the background when already bootstrapped.
+        window.setTimeout(() => {
+          fetchUserData(nextSession.user.id);
+        }, 0);
       } else {
         setProfile(null);
         setRoles([]);
