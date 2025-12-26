@@ -64,10 +64,12 @@ export function ImpersonationBanner() {
     setPendingChanges({});
     setIsEditing(false);
 
-    // Navigate to the appropriate dashboard for the role
+    // Force page reload to apply new impersonation context
     const roleConfig = ROLE_OPTIONS.find(r => r.value === newTarget.role);
     if (roleConfig) {
-      navigate(roleConfig.defaultRoute);
+      window.location.href = roleConfig.defaultRoute;
+    } else {
+      window.location.reload();
     }
   };
 
