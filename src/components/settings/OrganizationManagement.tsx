@@ -381,10 +381,10 @@ export function OrganizationManagement() {
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Link2 className="h-4 w-4" />
-                  Link de Registro Público
+                  URL de Acceso a la Organización
                 </CardTitle>
                 <CardDescription>
-                  Permite que nuevos usuarios se registren directamente en tu organización
+                  Comparte este link para que usuarios puedan iniciar sesión o registrarse en tu organización
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -392,7 +392,7 @@ export function OrganizationManagement() {
                   <div className="space-y-0.5">
                     <Label>Registro abierto</Label>
                     <p className="text-sm text-muted-foreground">
-                      Permitir que cualquiera se una con el link
+                      Permitir que nuevos usuarios se registren
                     </p>
                   </div>
                   <Switch
@@ -401,23 +401,24 @@ export function OrganizationManagement() {
                   />
                 </div>
 
-                {currentOrg.registration_link ? (
-                  <div className="flex gap-2">
-                    <Input
-                      value={`${window.location.origin}/register/${currentOrg.registration_link}`}
-                      readOnly
-                      className="font-mono text-sm"
-                    />
-                    <Button variant="outline" size="icon" onClick={copyRegistrationLink}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <Button variant="outline" onClick={handleGenerateLink} className="gap-2">
-                    <Link2 className="h-4 w-4" />
-                    Generar Link de Registro
+                <div className="flex gap-2">
+                  <Input
+                    value={`${window.location.origin}/org/${currentOrg.slug}`}
+                    readOnly
+                    className="font-mono text-sm"
+                  />
+                  <Button variant="outline" size="icon" onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/org/${currentOrg.slug}`);
+                    toast.success('Link copiado al portapapeles');
+                  }}>
+                    <Copy className="h-4 w-4" />
                   </Button>
-                )}
+                  <Button variant="outline" size="icon" onClick={() => {
+                    window.open(`/org/${currentOrg.slug}`, '_blank');
+                  }}>
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </div>
 
                 <div className="space-y-2">
                   <Label>Rol por defecto para nuevos registros</Label>
