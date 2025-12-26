@@ -2,8 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AchievementNotificationProvider } from "@/components/points/AchievementNotificationProvider";
 import { UnsavedChangesProvider } from "@/contexts/UnsavedChangesContext";
@@ -62,6 +63,42 @@ function ProfileRedirect() {
   return <Navigate to={`/p/${user.id}`} replace />;
 }
 
+function AppRoutes() {
+  const { impersonationKey } = useImpersonation();
+  
+  return (
+    <Routes key={impersonationKey}>
+      <Route path="/portfolio" element={<Portfolio />} />
+      <Route path="/portfolio/:clientId" element={<ClientPortfolio />} />
+      <Route path="/p/:id" element={<UserPortfolio />} />
+      <Route path="/@:id" element={<UserPortfolio />} />
+      <Route path="/empresa/:id" element={<CompanyPortfolio />} />
+      <Route path="/empresa/@:id" element={<CompanyPortfolio />} />
+      <Route path="/profile" element={<ProfileRedirect />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/no-company" element={<NoCompany />} />
+      <Route path="/pending-access" element={<PendingAccess />} />
+      <Route path="/up-documentation" element={<UPDocumentation />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'ambassador']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'creator']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
+      <Route path="/content" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
+      <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Creators /></MainLayout></ProtectedRoute>} />
+      <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
+      <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
+      <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
+      <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
+      <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor', 'ambassador']}><MainLayout><Ranking /></MainLayout></ProtectedRoute>} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
 function AppContent() {
   return (
     <BrowserRouter>
@@ -72,36 +109,8 @@ function AppContent() {
               <TooltipProvider delayDuration={0}>
                 <ImpersonationBanner />
                 <Toaster />
-              <Sonner />
-              <Routes>
-                <Route path="/portfolio" element={<Portfolio />} />
-                <Route path="/portfolio/:clientId" element={<ClientPortfolio />} />
-                <Route path="/p/:id" element={<UserPortfolio />} />
-                <Route path="/@:id" element={<UserPortfolio />} />
-                <Route path="/empresa/:id" element={<CompanyPortfolio />} />
-                <Route path="/empresa/@:id" element={<CompanyPortfolio />} />
-                <Route path="/profile" element={<ProfileRedirect />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/no-company" element={<NoCompany />} />
-                <Route path="/pending-access" element={<PendingAccess />} />
-                <Route path="/up-documentation" element={<UPDocumentation />} />
-                <Route path="/unauthorized" element={<Unauthorized />} />
-                <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'ambassador']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-                <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'creator']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
-                <Route path="/content" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
-                <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Creators /></MainLayout></ProtectedRoute>} />
-                <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
-                <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
-                <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
-                <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
-                <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
-                <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
-                <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
-                <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
-                <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor', 'ambassador']}><MainLayout><Ranking /></MainLayout></ProtectedRoute>} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <Sonner />
+                <AppRoutes />
               </TooltipProvider>
             </AchievementNotificationProvider>
           </UnsavedChangesProvider>
