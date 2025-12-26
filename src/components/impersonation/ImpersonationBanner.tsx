@@ -64,12 +64,15 @@ export function ImpersonationBanner() {
     setPendingChanges({});
     setIsEditing(false);
 
-    // Force page reload to apply new impersonation context
+    // Navigate to the appropriate dashboard for the role
     const roleConfig = ROLE_OPTIONS.find(r => r.value === newTarget.role);
     if (roleConfig) {
-      window.location.href = roleConfig.defaultRoute;
-    } else {
-      window.location.reload();
+      // Use navigate with state to force re-render
+      navigate(roleConfig.defaultRoute, { replace: true });
+      // Small timeout then navigate again to force component remount
+      setTimeout(() => {
+        navigate(roleConfig.defaultRoute, { replace: true });
+      }, 50);
     }
   };
 

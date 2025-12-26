@@ -30,6 +30,9 @@ interface ImpersonationContextType {
   // Read-only mode when impersonating
   isReadOnlyMode: boolean;
   
+  // Key that changes when impersonation changes - use for forcing re-renders
+  impersonationKey: number;
+  
   // Actions
   startImpersonation: (target: ImpersonationTarget) => Promise<void>;
   stopImpersonation: () => void;
@@ -62,6 +65,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
   const { user, profile, roles: realRoles } = useAuth();
   
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [impersonationKey, setImpersonationKey] = useState(0);
   const [impersonationTarget, setImpersonationTarget] = useState<ImpersonationTarget>({
     clientId: null,
     clientName: null,
@@ -117,6 +121,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
 
     setImpersonationTarget(target);
     setIsImpersonating(true);
+    setImpersonationKey(prev => prev + 1); // Increment key to force re-renders
     
     // Store in session storage for persistence during page refresh
     sessionStorage.setItem('impersonation', JSON.stringify(target));
@@ -204,6 +209,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       effectiveClientId,
       effectiveUserId,
       isReadOnlyMode,
+      impersonationKey,
       startImpersonation,
       stopImpersonation,
       canPerformAction,
