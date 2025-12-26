@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Content, ContentStatus } from '@/types/database';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 
 interface UseContentOptions {
   userId?: string;
@@ -8,12 +9,14 @@ interface UseContentOptions {
   clientId?: string;
   creatorId?: string;
   editorId?: string;
+  organizationId?: string;
 }
 
 export function useContent(userId?: string, role?: 'creator' | 'editor' | 'client' | 'admin') {
   const [content, setContent] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isPlatformRoot, currentOrgId } = useOrgOwner();
 
   const fetchContent = useCallback(async () => {
     try {
@@ -25,6 +28,11 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
           client:clients(*)
         `)
         .order('created_at', { ascending: false });
+
+      // Filter by organization if not platform root
+      if (!isPlatformRoot && currentOrgId) {
+        query = query.eq('organization_id', currentOrgId);
+      }
 
       if (role === 'creator' && userId) {
         query = query.eq('creator_id', userId);
@@ -73,7 +81,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     } finally {
       setLoading(false);
     }
-  }, [userId, role]);
+  }, [userId, role, isPlatformRoot, currentOrgId]);
 
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus) => {
     const { error } = await supabase
@@ -155,6 +163,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
   const [content, setContent] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isPlatformRoot, currentOrgId } = useOrgOwner();
 
   const fetchContent = useCallback(async () => {
     try {
@@ -166,6 +175,11 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
           client:clients(*)
         `)
         .order('created_at', { ascending: false });
+
+      // Filter by organization if not platform root
+      if (!isPlatformRoot && currentOrgId) {
+        query = query.eq('organization_id', currentOrgId);
+      }
 
       // Aplicar filtros
       if (options.clientId) {
@@ -226,7 +240,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [options.userId, options.role, options.clientId, options.creatorId, options.editorId]);
+  }, [options.userId, options.role, options.clientId, options.creatorId, options.editorId, isPlatformRoot, currentOrgId]);
 
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus) => {
     const { error } = await supabase

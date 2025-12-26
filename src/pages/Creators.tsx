@@ -5,6 +5,7 @@ import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CreatorDetailDialog } from "@/components/team/CreatorDetailDialog";
@@ -34,8 +35,9 @@ interface Creator {
 }
 
 const Creators = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { toast } = useToast();
+  const { isPlatformRoot, currentOrgId } = useOrgOwner();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,11 +46,33 @@ const Creators = () => {
   const fetchCreators = async () => {
     setLoading(true);
     try {
+      // If not platform root and has org, filter by organization members
+      let orgMemberIds: string[] = [];
+      if (!isPlatformRoot && currentOrgId) {
+        const { data: orgMembers } = await supabase
+          .from('organization_members')
+          .select('user_id')
+          .eq('organization_id', currentOrgId);
+        orgMemberIds = orgMembers?.map(m => m.user_id) || [];
+      }
+
       // Get creators and editors
-      const { data: roles } = await supabase
+      let rolesQuery = supabase
         .from('user_roles')
         .select('user_id, role')
         .in('role', ['creator', 'editor']);
+      
+      // Filter by org members if not platform root
+      if (!isPlatformRoot && currentOrgId && orgMemberIds.length > 0) {
+        rolesQuery = rolesQuery.in('user_id', orgMemberIds);
+      } else if (!isPlatformRoot && currentOrgId && orgMemberIds.length === 0) {
+        // No members in org, return empty
+        setCreators([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: roles } = await rolesQuery;
 
       if (!roles?.length) {
         setCreators([]);
@@ -120,7 +144,7 @@ const Creators = () => {
 
   useEffect(() => {
     fetchCreators();
-  }, []);
+  }, [isPlatformRoot, currentOrgId]);
 
   const handleDelete = async (creatorId: string, creatorName: string) => {
     try {

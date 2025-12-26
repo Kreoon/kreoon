@@ -11,6 +11,7 @@ import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { VideoPlayerProvider, useVideoPlayer } from "@/contexts/VideoPlayerContext";
 import { BunnyVideoCard } from "@/components/content/BunnyVideoCard";
 import { FullscreenVideoViewer } from "@/components/content/FullscreenVideoViewer";
@@ -58,6 +59,7 @@ function getVideoUrls(item: ContentItem): string[] {
 
 const Content = () => {
   const { roles, user } = useAuth();
+  const { isPlatformRoot, currentOrgId } = useOrgOwner();
   const isAdmin = roles.includes('admin');
   const isClient = roles.includes('client');
   const [content, setContent] = useState<ContentItem[]>([]);
@@ -101,11 +103,11 @@ const Content = () => {
 
   useEffect(() => {
     fetchContent();
-  }, []);
+  }, [isPlatformRoot, currentOrgId]);
 
   const fetchContent = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('content')
         .select(`
           id,
@@ -119,10 +121,18 @@ const Content = () => {
           created_at,
           status,
           client_id,
-          creator_id
+          creator_id,
+          organization_id
         `)
         .or('video_url.not.is.null,video_urls.not.is.null')
         .order('created_at', { ascending: false });
+      
+      // Filter by organization if not platform root
+      if (!isPlatformRoot && currentOrgId) {
+        query = query.eq('organization_id', currentOrgId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
