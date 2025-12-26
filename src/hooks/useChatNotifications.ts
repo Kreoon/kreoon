@@ -21,8 +21,8 @@ const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null
   }
 
   try {
-    // Register custom SW from public folder
-    const registration = await sw.register('/sw.js', {
+    // Register custom SW from public folder (separate from PWA SW)
+    const registration = await sw.register('/push-sw.js', {
       scope: '/'
     });
     console.log('[Notifications] Service worker registered:', registration.scope);

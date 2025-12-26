@@ -14,7 +14,9 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // Avoid "auto reload" on tab/window focus when a new service worker is detected.
+      // We'll prompt the user instead (prevents disruptive full-page refreshes).
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
         name: 'Creartor Studio',
@@ -42,6 +44,9 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
+        // Prevent immediate takeover (and reload) on updates.
+        skipWaiting: false,
+        clientsClaim: false,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
         runtimeCaching: [
