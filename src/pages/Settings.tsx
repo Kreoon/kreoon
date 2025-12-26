@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog, Eye } from "lucide-react";
 import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
@@ -18,6 +18,7 @@ import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { PlatformSecurityPanel } from "@/components/settings/PlatformSecurityPanel";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
+import { ImpersonationPanel } from "@/components/impersonation/ImpersonationPanel";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { Sparkles, Play } from "lucide-react";
@@ -59,7 +60,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'impersonation';
 
 const settingsSections = [
   { 
@@ -176,6 +177,14 @@ const settingsSections = [
     adminOnly: false,
     rootOnly: false
   },
+  { 
+    id: 'impersonation' as const,
+    icon: Eye, 
+    title: "Modo Root", 
+    description: "Visualiza la plataforma como cualquier usuario o rol",
+    adminOnly: false,
+    rootOnly: true
+  },
 ];
 
 const Settings = () => {
@@ -252,6 +261,8 @@ const Settings = () => {
         return <RootAdminPanel />;
       case 'tour':
         return <TourSection onStartTour={() => { resetTour(); setActiveSection('main'); }} />;
+      case 'impersonation':
+        return <ImpersonationPanel />;
       default:
         return null;
     }
