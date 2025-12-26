@@ -1,11 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Content, ContentStatus } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -17,30 +14,22 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { 
   FileText,
   CheckCircle2,
   MessageCircle,
-  User,
   Loader2,
   Send,
   Calendar,
   Package,
-  Target,
   ChevronDown,
   ChevronUp,
-  Sparkles,
   Edit3,
   Lock,
   Clock,
-  Lightbulb,
-  Film,
-  BarChart3,
-  Megaphone,
-  Palette,
-  ClipboardList,
-  TrendingUp
+  X
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -66,269 +55,130 @@ interface Comment {
   profile?: { full_name: string; avatar_url?: string };
 }
 
-// Structured script data interface
-interface StructuredScript {
-  hooks: { id: number; text: string; type?: string }[];
-  body: { scene: number; visual: string; voice: string; emotion: string }[];
-  ctas: { organic: string; ads: string };
-  editing: { pace: string; style: string; subtitles: string; music: string; colorGrading?: string };
-  strategy: { objective: string; emotion: string; funnelStage: string; insight?: string };
-  trafficker: { objective: string; format: string; kpis: string[]; audience?: string; copies?: string[] };
-  design: { colors: string[]; textHierarchy: string; elements?: string[]; ctaPosition?: string };
-  admin: { deadline: string; deliverables: string[]; status: string; timeline?: string };
+interface ScriptScene {
+  id: number;
+  title: string;
+  visual: string;
+  dialogue: string;
+  emotion: string;
+  isCTA?: boolean;
 }
 
-// Smart parser that extracts structured data from HTML content
-function parseStructuredScript(
-  script: string | null,
-  editorGuidelines: string | null,
-  strategistGuidelines: string | null,
-  traffickerGuidelines: string | null,
-  designerGuidelines: string | null,
-  adminGuidelines: string | null,
-  content: Content
-): StructuredScript {
-  const result: StructuredScript = {
-    hooks: [],
-    body: [],
-    ctas: { organic: '', ads: '' },
-    editing: { pace: '', style: '', subtitles: '', music: '' },
-    strategy: { objective: '', emotion: '', funnelStage: '' },
-    trafficker: { objective: '', format: '', kpis: [] },
-    design: { colors: [], textHierarchy: '' },
-    admin: { deadline: '', deliverables: [], status: 'pendiente' }
-  };
+// Parse script content into scenes
+function parseScriptToScenes(script: string | null): ScriptScene[] {
+  if (!script) return [];
 
-  // Helper to extract text content from HTML
-  const extractText = (html: string | null): string => {
-    if (!html) return '';
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    return doc.body.textContent || '';
-  };
-
-  // Helper to find content between markers
-  const extractSection = (text: string, startMarkers: string[], endMarkers?: string[]): string => {
-    const lowerText = text.toLowerCase();
-    let start = -1;
-    
-    for (const marker of startMarkers) {
-      const idx = lowerText.indexOf(marker.toLowerCase());
-      if (idx !== -1) {
-        start = idx + marker.length;
-        break;
-      }
-    }
-    
-    if (start === -1) return '';
-    
-    let end = text.length;
-    if (endMarkers) {
-      for (const marker of endMarkers) {
-        const idx = lowerText.indexOf(marker.toLowerCase(), start);
-        if (idx !== -1 && idx < end) {
-          end = idx;
-        }
-      }
-    }
-    
-    return text.slice(start, end).trim();
-  };
-
-  // Parse hooks from script
-  if (script) {
-    const scriptText = extractText(script);
-    
-    // Look for hook patterns
-    const hookPatterns = [
-      /hook\s*(\d+)[:\s]*[""]?([^""]+)[""]?/gi,
-      /🎯[^:]*:\s*[""]?([^""]+)[""]?/gi,
-      /opción\s*(\d+)[:\s]*[""]?([^""]+)[""]?/gi,
-    ];
-    
-    for (const pattern of hookPatterns) {
-      const matches = [...scriptText.matchAll(pattern)];
-      if (matches.length > 0) {
-        matches.forEach((match, idx) => {
-          const hookText = match[2] || match[1];
-          if (hookText && hookText.length > 10) {
-            result.hooks.push({
-              id: result.hooks.length + 1,
-              text: hookText.trim().replace(/^[""]|[""]$/g, ''),
-              type: 'captura'
-            });
-          }
-        });
-        break;
-      }
-    }
-
-    // If no hooks found via patterns, try to find hook section
-    if (result.hooks.length === 0) {
-      const hooksSection = extractSection(scriptText, ['hooks', '🎯', 'gancho'], ['desarrollo', 'escena', 'guión']);
-      if (hooksSection) {
-        const lines = hooksSection.split('\n').filter(l => l.trim().length > 15);
-        lines.slice(0, 5).forEach((line, idx) => {
-          const cleanLine = line.replace(/^[\d\.\-\*•]+\s*/, '').replace(/^hook\s*\d*[:\s]*/i, '').trim();
-          if (cleanLine.length > 10) {
-            result.hooks.push({ id: idx + 1, text: cleanLine, type: 'captura' });
-          }
-        });
-      }
-    }
-
-    // Parse scenes/body
-    const scenePattern = /escena\s*(\d+)[:\s]*([^]*?)(?=escena\s*\d+|cierre|cta|$)/gi;
-    const sceneMatches = [...scriptText.matchAll(scenePattern)];
-    
-    sceneMatches.forEach((match) => {
+  // Create a temporary DOM element to parse HTML
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(script, 'text/html');
+  const text = doc.body.textContent || '';
+  
+  const scenes: ScriptScene[] = [];
+  
+  // Try to find scene patterns
+  const scenePattern = /escena\s*(\d+)[^a-z]*([^]*?)(?=escena\s*\d+|cierre|cta|llamada|$)/gi;
+  const matches = [...text.matchAll(scenePattern)];
+  
+  if (matches.length > 0) {
+    matches.forEach((match, idx) => {
       const sceneNum = parseInt(match[1]);
       const sceneContent = match[2] || '';
       
-      result.body.push({
-        scene: sceneNum,
-        visual: extractSection(sceneContent, ['visual:', 'se ve:', '🎥'], ['voz:', 'dice:', 'emoción:']) || 'Plano medio del creador',
-        voice: extractSection(sceneContent, ['voz:', 'dice:', '🎙️', 'diálogo:'], ['visual:', 'emoción:']) || sceneContent.slice(0, 200).trim(),
-        emotion: extractSection(sceneContent, ['emoción:', 'tono:', '😌'], ['visual:', 'voz:']) || 'Conversacional'
+      scenes.push({
+        id: sceneNum,
+        title: idx === 0 ? 'Apertura' : idx === matches.length - 1 ? 'Desarrollo final' : 'Desarrollo',
+        visual: extractSection(sceneContent, ['visual:', 'se ve:', '🎥']) || 'Plano del creador frente a cámara',
+        dialogue: extractSection(sceneContent, ['voz:', 'dice:', '🎙️', 'diálogo:', 'guión:']) || sceneContent.trim().slice(0, 300),
+        emotion: extractSection(sceneContent, ['emoción:', 'tono:', '😌', 'intención:']) || 'Conversacional'
       });
     });
-
-    // If no scenes found, create one from script content
-    if (result.body.length === 0 && scriptText.length > 50) {
-      const desarrolloSection = extractSection(scriptText, ['desarrollo', 'guión principal', 'script'], ['cta', 'cierre']);
-      result.body.push({
-        scene: 1,
-        visual: 'Creador frente a cámara',
-        voice: desarrolloSection.slice(0, 300) || scriptText.slice(100, 400),
-        emotion: 'Conversacional y cercano'
+  }
+  
+  // If no scenes found, try to parse by sections
+  if (scenes.length === 0) {
+    // Look for hook section
+    const hookSection = extractSection(text, ['hooks', '🎯 hooks', 'ganchos']);
+    if (hookSection && hookSection.length > 20) {
+      scenes.push({
+        id: 1,
+        title: 'Apertura (Hooks)',
+        visual: 'Plano cercano del creador, contacto visual directo',
+        dialogue: hookSection.slice(0, 400),
+        emotion: 'Disruptivo, atención inmediata'
       });
     }
-
-    // Parse CTAs
-    const ctaSection = extractSection(scriptText, ['cta', 'cierre', 'llamada a la acción', '📢'], []);
-    if (ctaSection) {
-      result.ctas.organic = extractSection(ctaSection, ['orgánico:', 'redes:'], ['ads:', 'paid:']) || ctaSection.slice(0, 150);
-      result.ctas.ads = extractSection(ctaSection, ['ads:', 'paid:', 'publicidad:'], []) || '';
-    }
-  }
-
-  // Parse editor guidelines
-  if (editorGuidelines) {
-    const editorText = extractText(editorGuidelines);
     
-    result.editing.pace = extractSection(editorText, ['ritmo:', 'pace:'], ['estilo:', 'style:']) || 
-                         (editorText.toLowerCase().includes('rápido') ? 'Rápido' : 
-                          editorText.toLowerCase().includes('dinámico') ? 'Dinámico' : 'Medio');
-    
-    result.editing.style = extractSection(editorText, ['estilo:', 'style:'], ['subtítulos:', 'música:']) ||
-                          (editorText.toLowerCase().includes('ugc') ? 'UGC' : 'Editorial');
-    
-    result.editing.subtitles = extractSection(editorText, ['subtítulos:', 'subtitles:'], ['música:', 'color:']) || 'Grandes y contrastados';
-    
-    result.editing.music = extractSection(editorText, ['música:', 'music:'], ['color:', 'ritmo:']) || 'Inspiradora y motivacional';
-    
-    result.editing.colorGrading = extractSection(editorText, ['color:', 'colorimetría:', 'grading:'], ['música:', 'subtítulos:']) || '';
-  }
-
-  // Parse strategist guidelines
-  if (strategistGuidelines) {
-    const stratText = extractText(strategistGuidelines);
-    
-    result.strategy.objective = extractSection(stratText, ['objetivo:', 'objective:'], ['emoción:', 'funnel:']) ||
-                               content.sales_angle || 'Generar engagement';
-    
-    result.strategy.emotion = extractSection(stratText, ['emoción:', 'emotion:', 'sentimiento:'], ['objetivo:', 'funnel:']) || 'Conexión emocional';
-    
-    result.strategy.funnelStage = extractSection(stratText, ['funnel:', 'etapa:', 'fase:'], ['objetivo:', 'emoción:']) || 'Consideración';
-    
-    result.strategy.insight = extractSection(stratText, ['insight:', 'hipótesis:'], ['objetivo:', 'emoción:']) || '';
-  }
-
-  // Parse trafficker guidelines
-  if (traffickerGuidelines) {
-    const traffText = extractText(traffickerGuidelines);
-    
-    result.trafficker.objective = extractSection(traffText, ['objetivo:', 'goal:'], ['formato:', 'kpi:']) || 'Conversiones';
-    
-    result.trafficker.format = extractSection(traffText, ['formato:', 'format:'], ['objetivo:', 'kpi:']) || 'Reels / Stories';
-    
-    const kpisSection = extractSection(traffText, ['kpi:', 'métricas:'], ['formato:', 'objetivo:']);
-    if (kpisSection) {
-      result.trafficker.kpis = kpisSection.split(/[,\n•\-]/).map(k => k.trim()).filter(k => k.length > 2);
-    } else {
-      result.trafficker.kpis = ['CTR', 'Retención', 'Conversiones'];
+    // Look for main development
+    const developSection = extractSection(text, ['desarrollo', '💬', 'guión principal', 'cuerpo']);
+    if (developSection && developSection.length > 20) {
+      scenes.push({
+        id: scenes.length + 1,
+        title: 'Desarrollo',
+        visual: 'Creador explicando con gestos naturales',
+        dialogue: developSection.slice(0, 500),
+        emotion: 'Educativo, cercano'
+      });
     }
     
-    result.trafficker.audience = extractSection(traffText, ['audiencia:', 'público:', 'target:'], ['formato:', 'objetivo:']) || '';
-    
-    // Extract copy variations if present
-    const copiesSection = extractSection(traffText, ['copys:', 'variaciones:', 'copies:'], []);
-    if (copiesSection) {
-      result.trafficker.copies = copiesSection.split('\n').filter(c => c.trim().length > 20).slice(0, 4);
+    // Look for CTA
+    const ctaSection = extractSection(text, ['cta', '📢', 'cierre', 'llamada a la acción']);
+    if (ctaSection && ctaSection.length > 10) {
+      scenes.push({
+        id: scenes.length + 1,
+        title: 'Cierre (CTA)',
+        visual: 'Plano cercano, mirada directa a cámara',
+        dialogue: ctaSection.slice(0, 300),
+        emotion: 'Motivacional, llamada a acción',
+        isCTA: true
+      });
     }
   }
-
-  // Parse designer guidelines
-  if (designerGuidelines) {
-    const designText = extractText(designerGuidelines);
-    
-    const colorsSection = extractSection(designText, ['colores:', 'paleta:', 'colors:'], ['tipografía:', 'elementos:']);
-    if (colorsSection) {
-      result.design.colors = colorsSection.split(/[,\n•\-]/).map(c => c.trim()).filter(c => c.length > 2);
-    } else {
-      result.design.colors = ['Colores de marca'];
-    }
-    
-    result.design.textHierarchy = extractSection(designText, ['jerarquía:', 'tipografía:', 'texto:'], ['colores:', 'elementos:']) || 'Headlines fuertes';
-    
-    const elementsSection = extractSection(designText, ['elementos:', 'assets:'], ['colores:', 'tipografía:']);
-    if (elementsSection) {
-      result.design.elements = elementsSection.split(/[,\n•\-]/).map(e => e.trim()).filter(e => e.length > 2);
-    }
-    
-    result.design.ctaPosition = extractSection(designText, ['cta:', 'botón:', 'posición:'], ['elementos:', 'colores:']) || '';
+  
+  // If still no scenes, create a single scene from the content
+  if (scenes.length === 0 && text.length > 50) {
+    scenes.push({
+      id: 1,
+      title: 'Contenido del video',
+      visual: 'Creador frente a cámara',
+      dialogue: text.slice(0, 600),
+      emotion: 'Conversacional'
+    });
   }
-
-  // Parse admin guidelines
-  if (adminGuidelines) {
-    const adminText = extractText(adminGuidelines);
-    
-    result.admin.deadline = content.deadline ? format(new Date(content.deadline), "d 'de' MMMM, yyyy", { locale: es }) : 
-                           extractSection(adminText, ['fecha:', 'deadline:', 'entrega:'], ['entregables:', 'status:']) || '';
-    
-    const deliverablesSection = extractSection(adminText, ['entregables:', 'deliverables:'], ['fecha:', 'status:']);
-    if (deliverablesSection) {
-      result.admin.deliverables = deliverablesSection.split(/[,\n•\-]/).map(d => d.trim()).filter(d => d.length > 2);
-    } else {
-      result.admin.deliverables = ['Video final', 'Copys', 'Thumbnails'];
-    }
-    
-    result.admin.status = content.status || 'pendiente';
-    
-    result.admin.timeline = extractSection(adminText, ['timeline:', 'cronograma:'], ['entregables:', 'fecha:']) || '';
-  } else {
-    // Default admin values
-    result.admin.deadline = content.deadline ? format(new Date(content.deadline), "d 'de' MMMM, yyyy", { locale: es }) : '';
-    result.admin.deliverables = ['Video final editado', 'Copys para redes'];
-    result.admin.status = content.status || 'pendiente';
-  }
-
-  return result;
+  
+  return scenes;
 }
 
-const sectionTabs = [
-  { id: 'hooks', label: 'Hooks', icon: Target },
-  { id: 'guion', label: 'Guión', icon: Film },
-  { id: 'cta', label: 'CTA', icon: Megaphone },
-  { id: 'edicion', label: 'Edición', icon: Edit3 },
-  { id: 'estrategia', label: 'Estrategia', icon: Lightbulb },
-  { id: 'trafficker', label: 'Trafficker', icon: TrendingUp },
-  { id: 'diseno', label: 'Diseño', icon: Palette },
-  { id: 'admin', label: 'Admin', icon: ClipboardList },
-];
+// Helper to extract a section from text
+function extractSection(text: string, startMarkers: string[]): string {
+  const lowerText = text.toLowerCase();
+  let start = -1;
+  
+  for (const marker of startMarkers) {
+    const idx = lowerText.indexOf(marker.toLowerCase());
+    if (idx !== -1) {
+      start = idx + marker.length;
+      break;
+    }
+  }
+  
+  if (start === -1) return '';
+  
+  // Find next section marker or end
+  const endMarkers = ['escena', 'visual:', 'voz:', 'emoción:', 'cta', 'hooks', 'desarrollo', '🎯', '💬', '📢'];
+  let end = text.length;
+  
+  for (const marker of endMarkers) {
+    const idx = lowerText.indexOf(marker.toLowerCase(), start + 10);
+    if (idx !== -1 && idx < end) {
+      end = idx;
+    }
+  }
+  
+  return text.slice(start, end).trim().replace(/^[:\s\-]+/, '').trim();
+}
 
 const changeRequestOptions = [
-  { id: 'hooks', label: 'Cambiar hooks' },
+  { id: 'hooks', label: 'Cambiar hooks/apertura' },
   { id: 'tone', label: 'Ajustar tono' },
   { id: 'cta', label: 'Modificar CTA' },
   { id: 'duration', label: 'Ajustar duración' },
@@ -338,30 +188,29 @@ const changeRequestOptions = [
 
 export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChange }: ClientScriptReviewProps) {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('hooks');
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [newComment, setNewComment] = useState('');
-  const [commentSection, setCommentSection] = useState<string | null>(null);
+  const [activeCommentScene, setActiveCommentScene] = useState<number | null>(null);
+  const [generalComment, setGeneralComment] = useState('');
   const [showChangeRequest, setShowChangeRequest] = useState(false);
   const [selectedChangeTypes, setSelectedChangeTypes] = useState<string[]>([]);
   const [changeDescription, setChangeDescription] = useState('');
-  const [expandedScenes, setExpandedScenes] = useState<number[]>([1]);
+  const [expandedScenes, setExpandedScenes] = useState<number[]>([]);
 
   const isApproved = content.status === 'script_approved' || content.script_approved_at;
   const scriptVersion = (content as any).script_version || 1;
 
-  // Parse structured data from all guidelines
-  const structuredData = useMemo(() => parseStructuredScript(
-    content.script,
-    content.editor_guidelines,
-    content.strategist_guidelines,
-    content.trafficker_guidelines,
-    (content as any).designer_guidelines || null,
-    (content as any).admin_guidelines || null,
-    content
-  ), [content]);
+  // Parse script into scenes
+  const scenes = useMemo(() => parseScriptToScenes(content.script), [content.script]);
+
+  // Expand all scenes by default
+  useEffect(() => {
+    if (scenes.length > 0 && expandedScenes.length === 0) {
+      setExpandedScenes(scenes.map(s => s.id));
+    }
+  }, [scenes]);
 
   const fetchComments = useCallback(async () => {
     setLoadingComments(true);
@@ -370,7 +219,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
         .from('content_comments')
         .select('*')
         .eq('content_id', content.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
       if (commentsData && commentsData.length > 0) {
         const userIds = [...new Set(commentsData.map(c => c.user_id))];
@@ -394,7 +243,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
     }
   }, [content.id]);
 
-  const handleAddComment = async (section?: string, sectionIndex?: number) => {
+  const handleAddSceneComment = async (sceneId: number) => {
     if (!userId || !newComment.trim()) return;
     setSubmitting(true);
     try {
@@ -404,13 +253,36 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
           content_id: content.id,
           user_id: userId,
           comment: newComment.trim(),
-          section: section || null,
-          section_index: sectionIndex || null,
-          comment_type: section ? 'section' : 'general'
+          section: 'scene',
+          section_index: sceneId,
+          comment_type: 'section'
         });
       if (error) throw error;
       setNewComment('');
-      setCommentSection(null);
+      setActiveCommentScene(null);
+      fetchComments();
+      toast({ title: 'Comentario agregado' });
+    } catch (error) {
+      toast({ title: 'Error al agregar comentario', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAddGeneralComment = async () => {
+    if (!userId || !generalComment.trim()) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('content_comments')
+        .insert({
+          content_id: content.id,
+          user_id: userId,
+          comment: generalComment.trim(),
+          comment_type: 'general'
+        });
+      if (error) throw error;
+      setGeneralComment('');
       fetchComments();
       toast({ title: 'Comentario agregado' });
     } catch (error) {
@@ -508,31 +380,30 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
     onOpenChange(isOpen);
   };
 
-  const getCommentsForSection = (section: string) => 
-    comments.filter(c => c.section === section);
+  const getSceneComments = (sceneId: number) => 
+    comments.filter(c => c.section === 'scene' && c.section_index === sceneId);
 
-  const toggleScene = (index: number) => {
+  const getGeneralComments = () => 
+    comments.filter(c => c.comment_type === 'general' || !c.section);
+
+  const toggleScene = (id: number) => {
     setExpandedScenes(prev => 
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
 
-  const renderInfoCard = (label: string, value: string, icon?: React.ReactNode) => (
-    <div className="bg-background/50 rounded-lg p-3">
-      <div className="flex items-center gap-2 mb-1">
-        {icon}
-        <span className="text-xs font-medium text-muted-foreground">{label}</span>
-      </div>
-      <p className="text-sm">{value || 'No especificado'}</p>
-    </div>
-  );
+  const toggleChangeType = (id: string) => {
+    setSelectedChangeTypes(prev => 
+      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] p-0 overflow-hidden flex flex-col">
-        {/* Fixed Header */}
+      <DialogContent className="max-w-4xl max-h-[95vh] p-0 overflow-hidden flex flex-col">
+        {/* Fixed Header with Actions */}
         <div className="sticky top-0 z-20 bg-background border-b shrink-0">
-          <div className="p-4 sm:p-6 pb-4">
+          <div className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -555,7 +426,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                   </Badge>
                   <Badge variant="outline" className="text-xs">v{scriptVersion}</Badge>
                 </div>
-                <DialogTitle className="text-lg sm:text-xl font-bold truncate">{content.title}</DialogTitle>
+                <DialogTitle className="text-lg font-bold truncate">{content.title}</DialogTitle>
                 
                 <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
                   {(content as any).client?.name && (
@@ -573,18 +444,18 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Fixed Action Buttons */}
               <div className="flex gap-2 shrink-0">
-                {!isApproved && (
+                {!isApproved ? (
                   <>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setShowChangeRequest(true)}
-                      className="gap-1 hidden sm:flex"
+                      className="gap-1"
                     >
                       <Edit3 className="h-4 w-4" />
-                      Solicitar cambios
+                      <span className="hidden sm:inline">Solicitar cambios</span>
                     </Button>
                     <Button
                       size="sm"
@@ -601,8 +472,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                       <span className="sm:hidden">Aprobar</span>
                     </Button>
                   </>
-                )}
-                {isApproved && (
+                ) : (
                   <div className="flex items-center gap-2 text-green-600 bg-green-50 dark:bg-green-950 px-3 py-2 rounded-lg">
                     <Lock className="h-4 w-4" />
                     <span className="text-sm font-medium hidden sm:inline">Guión bloqueado</span>
@@ -611,520 +481,293 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
               </div>
             </div>
           </div>
-
-          {/* Tabs - Scrollable on mobile */}
-          <div className="px-4 sm:px-6 overflow-x-auto">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="inline-flex w-auto min-w-full sm:grid sm:grid-cols-8 h-auto p-1">
-                {sectionTabs.map((tab) => (
-                  <TabsTrigger 
-                    key={tab.id} 
-                    value={tab.id} 
-                    className="gap-1 text-xs px-3 py-2 whitespace-nowrap"
-                  >
-                    <tab.icon className="h-3.5 w-3.5" />
-                    <span>{tab.label}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
         </div>
 
-        {/* Scrollable Content - Fixed height with internal scroll */}
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(95vh-200px)]">
-            <div className="p-4 sm:p-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                {/* HOOKS TAB */}
-                <TabsContent value="hooks" className="mt-0 space-y-3">
-                  {structuredData.hooks.length > 0 ? (
-                    structuredData.hooks.map((hook) => (
-                      <div 
-                        key={hook.id}
-                        className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-xl p-4 sm:p-5 border border-amber-500/20"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/20 text-amber-600 font-bold text-sm shrink-0">
-                            {hook.id}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm sm:text-base leading-relaxed font-medium">
-                              "{hook.text}"
-                            </p>
-                            {hook.type && (
-                              <Badge variant="outline" className="mt-2 text-xs">
-                                {hook.type}
-                              </Badge>
-                            )}
-                            
-                            {/* Per-hook comment */}
-                            <div className="mt-3 pt-3 border-t border-amber-500/20">
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setCommentSection(commentSection === `hook-${hook.id}` ? null : `hook-${hook.id}`)}
-                                  className="text-xs text-muted-foreground hover:text-foreground"
-                                >
-                                  <MessageCircle className="h-3 w-3 mr-1" />
-                                  Comentar
-                                </Button>
-                                {getCommentsForSection(`hooks`).filter(c => c.section_index === hook.id).length > 0 && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {getCommentsForSection(`hooks`).filter(c => c.section_index === hook.id).length} comentarios
-                                  </span>
-                                )}
-                              </div>
-                              
-                              {commentSection === `hook-${hook.id}` && (
-                                <div className="mt-2 flex gap-2">
-                                  <Textarea
-                                    placeholder={`Comentario sobre Hook ${hook.id}...`}
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                    className="min-h-[60px] text-sm"
-                                    rows={2}
-                                  />
-                                  <Button
-                                    size="icon"
-                                    onClick={() => handleAddComment('hooks', hook.id)}
-                                    disabled={submitting || !newComment.trim()}
-                                  >
-                                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
+        {/* Scrollable Script Container - Single unified view */}
+        <div 
+          className="flex-1 overflow-y-auto"
+          style={{ 
+            maxHeight: '70vh',
+            scrollbarWidth: 'auto',
+            scrollbarColor: 'hsl(var(--muted-foreground)) transparent'
+          }}
+        >
+          <div className="p-4 sm:p-6 space-y-4">
+            {scenes.length > 0 ? (
+              scenes.map((scene, idx) => (
+                <Collapsible
+                  key={scene.id}
+                  open={expandedScenes.includes(scene.id)}
+                  onOpenChange={() => toggleScene(scene.id)}
+                  className="border rounded-xl overflow-hidden bg-card"
+                >
+                  {/* Scene Header */}
+                  <CollapsibleTrigger className="w-full">
+                    <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-transparent data-[state=open]:border-border">
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "flex items-center justify-center w-10 h-10 rounded-lg font-bold text-lg",
+                          scene.isCTA 
+                            ? "bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600" 
+                            : idx === 0 
+                              ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-600"
+                              : "bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600"
+                        )}>
+                          {scene.id}
+                        </div>
+                        <div className="text-left">
+                          <h3 className="font-semibold text-base">
+                            ESCENA {scene.id} · {scene.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
+                            {scene.dialogue.slice(0, 50)}...
+                          </p>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Target className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                      <p>No hay hooks definidos aún</p>
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* GUIÓN TAB */}
-                <TabsContent value="guion" className="mt-0 space-y-3">
-                  {structuredData.body.length > 0 ? (
-                    structuredData.body.map((scene) => (
-                      <Collapsible
-                        key={scene.scene}
-                        open={expandedScenes.includes(scene.scene)}
-                        onOpenChange={() => toggleScene(scene.scene)}
-                      >
-                        <Card className="overflow-hidden">
-                          <CollapsibleTrigger className="w-full">
-                            <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                              <div className="flex items-center gap-3">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-500/20 text-blue-600">
-                                  <Film className="h-5 w-5" />
-                                </div>
-                                <div className="text-left">
-                                  <h4 className="font-semibold">Escena {scene.scene}</h4>
-                                  <p className="text-sm text-muted-foreground line-clamp-1">
-                                    {scene.voice.slice(0, 60)}...
-                                  </p>
-                                </div>
-                              </div>
-                              {expandedScenes.includes(scene.scene) ? (
-                                <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                              ) : (
-                                <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                              )}
-                            </div>
-                          </CollapsibleTrigger>
-                          
-                          <CollapsibleContent>
-                            <CardContent className="pt-0 pb-4 space-y-4">
-                              <div className="grid gap-3 sm:grid-cols-3">
-                                <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
-                                  <div className="flex items-center gap-2 mb-2 text-blue-600">
-                                    <Film className="h-4 w-4" />
-                                    <span className="font-medium text-sm">🎥 Qué se ve</span>
-                                  </div>
-                                  <p className="text-sm">{scene.visual}</p>
-                                </div>
-                                <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3">
-                                  <div className="flex items-center gap-2 mb-2 text-green-600">
-                                    <MessageCircle className="h-4 w-4" />
-                                    <span className="font-medium text-sm">🎙️ Qué se dice</span>
-                                  </div>
-                                  <p className="text-sm">{scene.voice}</p>
-                                </div>
-                                <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-3">
-                                  <div className="flex items-center gap-2 mb-2 text-purple-600">
-                                    <Sparkles className="h-4 w-4" />
-                                    <span className="font-medium text-sm">😌 Emoción</span>
-                                  </div>
-                                  <p className="text-sm">{scene.emotion}</p>
-                                </div>
-                              </div>
-                              
-                              {/* Per-scene comment */}
-                              <div className="pt-3 border-t">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setCommentSection(commentSection === `scene-${scene.scene}` ? null : `scene-${scene.scene}`)}
-                                  className="text-xs text-muted-foreground hover:text-foreground mb-2"
-                                >
-                                  <MessageCircle className="h-3 w-3 mr-1" />
-                                  Comentar esta escena
-                                </Button>
-                                
-                                {commentSection === `scene-${scene.scene}` && (
-                                  <div className="flex gap-2">
-                                    <Textarea
-                                      placeholder={`Comentario sobre Escena ${scene.scene}...`}
-                                      value={newComment}
-                                      onChange={(e) => setNewComment(e.target.value)}
-                                      className="min-h-[60px] text-sm"
-                                      rows={2}
-                                    />
-                                    <Button
-                                      size="icon"
-                                      onClick={() => handleAddComment('body', scene.scene)}
-                                      disabled={submitting || !newComment.trim()}
-                                    >
-                                      {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                            </CardContent>
-                          </CollapsibleContent>
-                        </Card>
-                      </Collapsible>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Film className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                      <p>No hay escenas definidas aún</p>
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* CTA TAB */}
-                <TabsContent value="cta" className="mt-0 space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl p-5 border border-green-500/20">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="p-2 rounded-lg bg-green-500/20">
-                          <Megaphone className="h-4 w-4 text-green-600" />
-                        </div>
-                        <h3 className="font-semibold text-green-700 dark:text-green-400">CTA Orgánico</h3>
+                      <div className="flex items-center gap-2">
+                        {getSceneComments(scene.id).length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            <MessageCircle className="h-3 w-3 mr-1" />
+                            {getSceneComments(scene.id).length}
+                          </Badge>
+                        )}
+                        {expandedScenes.includes(scene.id) ? (
+                          <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                        )}
                       </div>
-                      <p className="text-sm">
-                        {structuredData.ctas.organic || 'No hay CTA orgánico definido'}
-                      </p>
                     </div>
-                    
-                    <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-5 border border-purple-500/20">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="p-2 rounded-lg bg-purple-500/20">
-                          <BarChart3 className="h-4 w-4 text-purple-600" />
-                        </div>
-                        <h3 className="font-semibold text-purple-700 dark:text-purple-400">CTA Ads</h3>
-                      </div>
-                      <p className="text-sm">
-                        {structuredData.ctas.ads || 'No hay CTA para ads definido'}
-                      </p>
-                    </div>
-                  </div>
+                  </CollapsibleTrigger>
                   
-                  {/* Quick feedback buttons */}
-                  <div className="flex flex-wrap gap-2 pt-4 border-t">
-                    <Button variant="outline" size="sm" onClick={() => { setCommentSection('cta'); setNewComment('Cambiar CTA'); }}>
-                      Cambiar CTA
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => { setCommentSection('cta'); setNewComment('Probar uno más directo'); }}>
-                      Más directo
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => { setCommentSection('cta'); setNewComment('CTA más emocional'); }}>
-                      Más emocional
-                    </Button>
-                  </div>
-                </TabsContent>
-
-                {/* EDICIÓN TAB */}
-                <TabsContent value="edicion" className="mt-0 space-y-4">
-                  <div className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-xl p-5 border border-blue-500/20">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 rounded-lg bg-blue-500/20">
-                        <Film className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <h3 className="font-semibold text-blue-700 dark:text-blue-400">Pautas de Edición</h3>
-                    </div>
-                    
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {renderInfoCard('Ritmo', structuredData.editing.pace)}
-                      {renderInfoCard('Estilo', structuredData.editing.style)}
-                      {renderInfoCard('Subtítulos', structuredData.editing.subtitles)}
-                      {renderInfoCard('Música', structuredData.editing.music)}
-                      {structuredData.editing.colorGrading && renderInfoCard('Colorimetría', structuredData.editing.colorGrading)}
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* ESTRATEGIA TAB */}
-                <TabsContent value="estrategia" className="mt-0 space-y-4">
-                  <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-5 border border-purple-500/20">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 rounded-lg bg-purple-500/20">
-                        <Lightbulb className="h-4 w-4 text-purple-600" />
-                      </div>
-                      <h3 className="font-semibold text-purple-700 dark:text-purple-400">Estrategia del Video</h3>
-                    </div>
-                    
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {renderInfoCard('Objetivo', structuredData.strategy.objective)}
-                      {renderInfoCard('Emoción clave', structuredData.strategy.emotion)}
-                      {renderInfoCard('Fase del funnel', structuredData.strategy.funnelStage)}
-                      {structuredData.strategy.insight && renderInfoCard('Insight', structuredData.strategy.insight)}
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* TRAFFICKER TAB */}
-                <TabsContent value="trafficker" className="mt-0 space-y-4">
-                  <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl p-5 border border-orange-500/20">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 rounded-lg bg-orange-500/20">
-                        <TrendingUp className="h-4 w-4 text-orange-600" />
-                      </div>
-                      <h3 className="font-semibold text-orange-700 dark:text-orange-400">Pautas de Tráfico</h3>
-                    </div>
-                    
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {renderInfoCard('Objetivo de campaña', structuredData.trafficker.objective)}
-                      {renderInfoCard('Formato', structuredData.trafficker.format)}
-                      {structuredData.trafficker.audience && renderInfoCard('Audiencia', structuredData.trafficker.audience)}
-                      <div className="bg-background/50 rounded-lg p-3">
-                        <span className="text-xs font-medium text-muted-foreground">KPIs</span>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {structuredData.trafficker.kpis.map((kpi, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">{kpi}</Badge>
-                          ))}
+                  <CollapsibleContent>
+                    <div className="p-4 space-y-4">
+                      {/* Visual - Light blue background */}
+                      <div className="bg-sky-50 dark:bg-sky-950/30 rounded-lg p-4 border border-sky-200/50 dark:border-sky-800/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">🎥</span>
+                          <span className="font-semibold text-sky-700 dark:text-sky-300 text-sm uppercase tracking-wide">Qué se ve</span>
                         </div>
+                        <p className="text-sm leading-relaxed">{scene.visual}</p>
                       </div>
-                    </div>
-                    
-                    {structuredData.trafficker.copies && structuredData.trafficker.copies.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-orange-500/20">
-                        <span className="text-xs font-medium text-muted-foreground">Variaciones de Copy</span>
-                        <div className="space-y-2 mt-2">
-                          {structuredData.trafficker.copies.map((copy, idx) => (
-                            <div key={idx} className="bg-background/50 rounded-lg p-3 text-sm">
-                              {copy}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
 
-                {/* DISEÑO TAB */}
-                <TabsContent value="diseno" className="mt-0 space-y-4">
-                  <div className="bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-xl p-5 border border-pink-500/20">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 rounded-lg bg-pink-500/20">
-                        <Palette className="h-4 w-4 text-pink-600" />
-                      </div>
-                      <h3 className="font-semibold text-pink-700 dark:text-pink-400">Pautas de Diseño</h3>
-                    </div>
-                    
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="bg-background/50 rounded-lg p-3">
-                        <span className="text-xs font-medium text-muted-foreground">Colores</span>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {structuredData.design.colors.map((color, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">{color}</Badge>
-                          ))}
+                      {/* Dialogue - Light green background */}
+                      <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-4 border border-emerald-200/50 dark:border-emerald-800/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">🗣</span>
+                          <span className="font-semibold text-emerald-700 dark:text-emerald-300 text-sm uppercase tracking-wide">Qué se dice</span>
                         </div>
+                        <p className="text-sm leading-relaxed whitespace-pre-line">{scene.dialogue}</p>
                       </div>
-                      {renderInfoCard('Jerarquía de texto', structuredData.design.textHierarchy)}
-                      {structuredData.design.ctaPosition && renderInfoCard('Posición CTA', structuredData.design.ctaPosition)}
-                      {structuredData.design.elements && structuredData.design.elements.length > 0 && (
-                        <div className="bg-background/50 rounded-lg p-3">
-                          <span className="text-xs font-medium text-muted-foreground">Elementos</span>
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {structuredData.design.elements.map((el, idx) => (
-                              <Badge key={idx} variant="outline" className="text-xs">{el}</Badge>
+
+                      {/* Emotion - Small, subtle */}
+                      <div className="flex items-center gap-2 px-2">
+                        <span className="text-base">😶</span>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wide">Emoción:</span>
+                        <span className="text-sm text-muted-foreground italic">{scene.emotion}</span>
+                      </div>
+
+                      {/* Separator */}
+                      <div className="border-t border-dashed pt-3">
+                        {/* Scene Comments */}
+                        {getSceneComments(scene.id).length > 0 && (
+                          <div className="space-y-2 mb-3">
+                            {getSceneComments(scene.id).map((comment) => (
+                              <div key={comment.id} className="flex items-start gap-2 bg-muted/50 rounded-lg p-2">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage src={comment.profile?.avatar_url} />
+                                  <AvatarFallback className="text-xs">
+                                    {comment.profile?.full_name?.charAt(0) || 'U'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-medium">{comment.profile?.full_name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">{comment.comment}</p>
+                                </div>
+                              </div>
                             ))}
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
+                        )}
 
-                {/* ADMIN TAB */}
-                <TabsContent value="admin" className="mt-0 space-y-4">
-                  <div className="bg-gradient-to-r from-slate-500/10 to-gray-500/10 rounded-xl p-5 border border-slate-500/20">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 rounded-lg bg-slate-500/20">
-                        <ClipboardList className="h-4 w-4 text-slate-600" />
+                        {/* Comment Button/Input */}
+                        {activeCommentScene === scene.id ? (
+                          <div className="flex gap-2">
+                            <Textarea
+                              placeholder={`Comentar escena ${scene.id}...`}
+                              value={newComment}
+                              onChange={(e) => setNewComment(e.target.value)}
+                              className="min-h-[60px] text-sm flex-1"
+                              rows={2}
+                              autoFocus
+                            />
+                            <div className="flex flex-col gap-1">
+                              <Button
+                                size="icon"
+                                onClick={() => handleAddSceneComment(scene.id)}
+                                disabled={submitting || !newComment.trim()}
+                              >
+                                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => {
+                                  setActiveCommentScene(null);
+                                  setNewComment('');
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setActiveCommentScene(scene.id)}
+                            className="text-xs text-muted-foreground hover:text-foreground w-full justify-start"
+                          >
+                            <MessageCircle className="h-3 w-3 mr-1.5" />
+                            Comentar esta escena
+                          </Button>
+                        )}
                       </div>
-                      <h3 className="font-semibold text-slate-700 dark:text-slate-400">Información de Producción</h3>
                     </div>
-                    
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {structuredData.admin.deadline && renderInfoCard('Fecha de entrega', structuredData.admin.deadline, <Calendar className="h-3 w-3" />)}
-                      <div className="bg-background/50 rounded-lg p-3">
-                        <span className="text-xs font-medium text-muted-foreground">Estado</span>
-                        <div className="mt-1">
-                          <Badge className={cn(
-                            "text-xs",
-                            content.status === 'script_approved' ? "bg-green-500" :
-                            content.status === 'script_pending' ? "bg-amber-500" : "bg-blue-500"
-                          )}>
-                            {content.status === 'script_approved' ? 'Aprobado' :
-                             content.status === 'script_pending' ? 'Pendiente revisión' : content.status}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="bg-background/50 rounded-lg p-3 sm:col-span-2">
-                        <span className="text-xs font-medium text-muted-foreground">Entregables</span>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {structuredData.admin.deliverables.map((del, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">{del}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                      {structuredData.admin.timeline && renderInfoCard('Timeline', structuredData.admin.timeline)}
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+                  </CollapsibleContent>
+                </Collapsible>
+              ))
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-1">No hay guión disponible</p>
+                <p className="text-sm">El guión aún no ha sido generado para este contenido.</p>
+              </div>
+            )}
 
-              {/* General Comments Section */}
-              <div className="mt-6 pt-6 border-t">
-                <h4 className="font-semibold mb-3 flex items-center gap-2">
+            {/* General Comments Section */}
+            {scenes.length > 0 && (
+              <div className="border-t pt-6 mt-6">
+                <h3 className="font-semibold text-base mb-4 flex items-center gap-2">
                   <MessageCircle className="h-4 w-4" />
-                  Comentarios generales
-                </h4>
-                
-                <div className="flex gap-2 mb-4">
-                  <Textarea
-                    placeholder="Escribe un comentario sobre el guión..."
-                    value={commentSection === null ? newComment : ''}
-                    onChange={(e) => { setCommentSection(null); setNewComment(e.target.value); }}
-                    className="min-h-[60px] text-sm"
-                    rows={2}
-                  />
-                  <Button
-                    size="icon"
-                    onClick={() => handleAddComment()}
-                    disabled={submitting || !newComment.trim() || commentSection !== null}
-                  >
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  </Button>
-                </div>
-                
-                {loadingComments ? (
-                  <div className="text-center py-4">
-                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-                  </div>
-                ) : comments.filter(c => !c.section).length > 0 ? (
-                  <div className="space-y-3">
-                    {comments.filter(c => !c.section).map((comment) => (
-                      <div key={comment.id} className="flex gap-3 p-3 bg-muted/30 rounded-lg">
-                        <Avatar className="h-8 w-8 shrink-0">
+                  Comentarios Generales
+                </h3>
+
+                {/* Existing General Comments */}
+                {getGeneralComments().length > 0 && (
+                  <div className="space-y-3 mb-4">
+                    {getGeneralComments().map((comment) => (
+                      <div key={comment.id} className="flex items-start gap-3 bg-muted/30 rounded-lg p-3">
+                        <Avatar className="h-8 w-8">
                           <AvatarImage src={comment.profile?.avatar_url} />
-                          <AvatarFallback className="text-xs bg-primary/10">
-                            <User className="h-4 w-4" />
+                          <AvatarFallback className="text-xs">
+                            {comment.profile?.full_name?.charAt(0) || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="font-medium text-sm">{comment.profile?.full_name}</span>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-medium">{comment.profile?.full_name}</span>
                             <span className="text-xs text-muted-foreground">
-                              {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
+                              {format(new Date(comment.created_at), "d 'de' MMMM, HH:mm", { locale: es })}
                             </span>
-                            {comment.comment_type === 'change_request' && (
-                              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-600 border-amber-200">
-                                Solicitud de cambio
-                              </Badge>
-                            )}
                           </div>
                           <p className="text-sm">{comment.comment}</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">Sin comentarios aún</p>
                 )}
+
+                {/* Add General Comment */}
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Escribe un comentario general sobre el guión..."
+                    value={generalComment}
+                    onChange={(e) => setGeneralComment(e.target.value)}
+                    className="min-h-[80px] text-sm"
+                    rows={3}
+                  />
+                  <Button
+                    size="icon"
+                    onClick={handleAddGeneralComment}
+                    disabled={submitting || !generalComment.trim()}
+                    className="shrink-0 h-10 w-10"
+                  >
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </ScrollArea>
+            )}
+          </div>
         </div>
 
-        {/* Approval Status Footer */}
-        {isApproved && content.script_approved_at && (
-          <div className="border-t p-4 bg-green-50 dark:bg-green-950/30 shrink-0">
-            <div className="flex items-center justify-center gap-2 text-green-600">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">Guión aprobado</span>
-              <span className="text-sm text-muted-foreground">
-                • {format(new Date(content.script_approved_at), "d 'de' MMMM, yyyy", { locale: es })}
-              </span>
-            </div>
-          </div>
-        )}
+        {/* Change Request Modal */}
+        {showChangeRequest && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-background rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-lg">Solicitar Cambios</h3>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowChangeRequest(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
 
-        {/* Change Request Dialog */}
-        <Dialog open={showChangeRequest} onOpenChange={setShowChangeRequest}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Solicitar cambios</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-3 mb-4">
+                <p className="text-sm text-muted-foreground">¿Qué te gustaría cambiar?</p>
                 {changeRequestOptions.map((option) => (
-                  <Button
+                  <label
                     key={option.id}
-                    variant={selectedChangeTypes.includes(option.id) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setSelectedChangeTypes(prev =>
-                        prev.includes(option.id)
-                          ? prev.filter(t => t !== option.id)
-                          : [...prev, option.id]
-                      );
-                    }}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                      selectedChangeTypes.includes(option.id)
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-muted/50"
+                    )}
                   >
-                    {option.label}
-                  </Button>
+                    <Checkbox
+                      checked={selectedChangeTypes.includes(option.id)}
+                      onCheckedChange={() => toggleChangeType(option.id)}
+                    />
+                    <span className="text-sm">{option.label}</span>
+                  </label>
                 ))}
               </div>
+
               <Textarea
-                placeholder="Describe los cambios que necesitas..."
+                placeholder="Describe los cambios que necesitas (opcional)..."
                 value={changeDescription}
                 onChange={(e) => setChangeDescription(e.target.value)}
-                rows={3}
+                className="min-h-[100px] mb-4"
               />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowChangeRequest(false)}>
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowChangeRequest(false)}
+                >
                   Cancelar
                 </Button>
                 <Button
                   onClick={handleRequestChanges}
                   disabled={submitting || selectedChangeTypes.length === 0}
                 >
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {submitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
                   Enviar solicitud
                 </Button>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
