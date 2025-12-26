@@ -500,6 +500,8 @@ export type Database = {
           bunny_embed_url: string | null
           campaign_week: string | null
           caption: string | null
+          change_request_status: string | null
+          change_requests: Json | null
           client_id: string | null
           created_at: string | null
           creator_assigned_at: string | null
@@ -536,6 +538,7 @@ export type Database = {
           script: string | null
           script_approved_at: string | null
           script_approved_by: string | null
+          script_version: number | null
           start_date: string | null
           status: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines: string | null
@@ -557,6 +560,8 @@ export type Database = {
           bunny_embed_url?: string | null
           campaign_week?: string | null
           caption?: string | null
+          change_request_status?: string | null
+          change_requests?: Json | null
           client_id?: string | null
           created_at?: string | null
           creator_assigned_at?: string | null
@@ -593,6 +598,7 @@ export type Database = {
           script?: string | null
           script_approved_at?: string | null
           script_approved_by?: string | null
+          script_version?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines?: string | null
@@ -614,6 +620,8 @@ export type Database = {
           bunny_embed_url?: string | null
           campaign_week?: string | null
           caption?: string | null
+          change_request_status?: string | null
+          change_requests?: Json | null
           client_id?: string | null
           created_at?: string | null
           creator_assigned_at?: string | null
@@ -650,6 +658,7 @@ export type Database = {
           script?: string | null
           script_approved_at?: string | null
           script_approved_by?: string | null
+          script_version?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines?: string | null
@@ -723,23 +732,32 @@ export type Database = {
       content_comments: {
         Row: {
           comment: string
+          comment_type: string | null
           content_id: string
           created_at: string | null
           id: string
+          section: string | null
+          section_index: number | null
           user_id: string
         }
         Insert: {
           comment: string
+          comment_type?: string | null
           content_id: string
           created_at?: string | null
           id?: string
+          section?: string | null
+          section_index?: number | null
           user_id: string
         }
         Update: {
           comment?: string
+          comment_type?: string | null
           content_id?: string
           created_at?: string | null
           id?: string
+          section?: string | null
+          section_index?: number | null
           user_id?: string
         }
         Relationships: [
