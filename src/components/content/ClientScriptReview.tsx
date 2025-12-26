@@ -614,154 +614,22 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
           }}
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-            {/* GUION TAB - Complete Script */}
+            {/* GUION TAB - Complete Script in ONE container */}
             <TabsContent value="guion" className="m-0 p-4 sm:p-6 space-y-4">
-              {scenes.length > 0 ? (
+              {content.script ? (
                 <>
-                  {scenes.map((scene, idx) => (
-                    <Collapsible
-                      key={scene.id}
-                      open={expandedScenes.includes(scene.id)}
-                      onOpenChange={() => toggleScene(scene.id)}
-                      className="border rounded-xl overflow-hidden bg-card"
-                    >
-                      <CollapsibleTrigger className="w-full">
-                        <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b border-transparent data-[state=open]:border-border">
-                          <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "flex items-center justify-center w-10 h-10 rounded-lg font-bold text-lg",
-                              scene.isCTA 
-                                ? "bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600" 
-                                : idx === 0 
-                                  ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-600"
-                                  : "bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600"
-                            )}>
-                              {scene.id}
-                            </div>
-                            <div className="text-left">
-                              <h3 className="font-semibold text-base">
-                                ESCENA {scene.id} · {scene.title}
-                              </h3>
-                              <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
-                                {scene.dialogue.slice(0, 50)}...
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {getSceneComments(scene.id).length > 0 && (
-                              <Badge variant="secondary" className="text-xs">
-                                <MessageCircle className="h-3 w-3 mr-1" />
-                                {getSceneComments(scene.id).length}
-                              </Badge>
-                            )}
-                            {expandedScenes.includes(scene.id) ? (
-                              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                            ) : (
-                              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </div>
-                        </div>
-                      </CollapsibleTrigger>
-                      
-                      <CollapsibleContent>
-                        <div className="p-4 space-y-4">
-                          {/* Visual */}
-                          <div className="bg-sky-50 dark:bg-sky-950/30 rounded-lg p-4 border border-sky-200/50 dark:border-sky-800/50">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-lg">🎥</span>
-                              <span className="font-semibold text-sky-700 dark:text-sky-300 text-sm uppercase tracking-wide">Qué se ve</span>
-                            </div>
-                            <p className="text-sm leading-relaxed">{scene.visual}</p>
-                          </div>
-
-                          {/* Dialogue */}
-                          <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-4 border border-emerald-200/50 dark:border-emerald-800/50">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-lg">🗣</span>
-                              <span className="font-semibold text-emerald-700 dark:text-emerald-300 text-sm uppercase tracking-wide">Qué se dice</span>
-                            </div>
-                            <p className="text-sm leading-relaxed whitespace-pre-line">{scene.dialogue}</p>
-                          </div>
-
-                          {/* Emotion */}
-                          <div className="flex items-center gap-2 px-2">
-                            <span className="text-base">😶</span>
-                            <span className="text-xs text-muted-foreground uppercase tracking-wide">Emoción:</span>
-                            <span className="text-sm text-muted-foreground italic">{scene.emotion}</span>
-                          </div>
-
-                          {/* Scene Comments */}
-                          <div className="border-t border-dashed pt-3">
-                            {getSceneComments(scene.id).length > 0 && (
-                              <div className="space-y-2 mb-3">
-                                {getSceneComments(scene.id).map((comment) => (
-                                  <div key={comment.id} className="flex items-start gap-2 bg-muted/50 rounded-lg p-2">
-                                    <Avatar className="h-6 w-6">
-                                      <AvatarImage src={comment.profile?.avatar_url} />
-                                      <AvatarFallback className="text-xs">
-                                        {comment.profile?.full_name?.charAt(0) || 'U'}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-xs font-medium">{comment.profile?.full_name}</span>
-                                        <span className="text-xs text-muted-foreground">
-                                          {format(new Date(comment.created_at), "d MMM, HH:mm", { locale: es })}
-                                        </span>
-                                      </div>
-                                      <p className="text-sm text-muted-foreground">{comment.comment}</p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {activeCommentScene === scene.id ? (
-                              <div className="flex gap-2">
-                                <Textarea
-                                  placeholder={`Comentar escena ${scene.id}...`}
-                                  value={newComment}
-                                  onChange={(e) => setNewComment(e.target.value)}
-                                  className="min-h-[60px] text-sm flex-1"
-                                  rows={2}
-                                  autoFocus
-                                />
-                                <div className="flex flex-col gap-1">
-                                  <Button
-                                    size="icon"
-                                    onClick={() => handleAddSceneComment(scene.id)}
-                                    disabled={submitting || !newComment.trim()}
-                                  >
-                                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                  </Button>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    onClick={() => {
-                                      setActiveCommentScene(null);
-                                      setNewComment('');
-                                    }}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setActiveCommentScene(scene.id)}
-                                className="text-xs text-muted-foreground hover:text-foreground w-full justify-start"
-                              >
-                                <MessageCircle className="h-3 w-3 mr-1.5" />
-                                Comentar esta escena
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
+                  {/* Single unified script container */}
+                  <div className="border rounded-xl overflow-hidden bg-card">
+                    <div className="p-5 sm:p-6">
+                      <div 
+                        className="prose prose-sm dark:prose-invert max-w-none script-content"
+                        dangerouslySetInnerHTML={{ __html: content.script }}
+                        style={{
+                          lineHeight: '1.8',
+                        }}
+                      />
+                    </div>
+                  </div>
 
                   {/* General Comments */}
                   <div className="border-t pt-6 mt-6">
