@@ -12,15 +12,18 @@ import {
   LogOut,
   Kanban,
   RefreshCw,
-  Trophy
+  Trophy,
+  Eye
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
+import { Badge } from "@/components/ui/badge";
 
 interface NavItem {
   name: string;
@@ -75,13 +78,28 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, user, isAdmin, isEditor, isCreator, isStrategist, isClient } = useAuth();
+  const { signOut, profile, user, isAdmin, isEditor, isCreator, isStrategist, isClient, roles: realRoles } = useAuth();
+  const { isImpersonating, effectiveRoles, isRootAdmin, impersonationTarget } = useImpersonation();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
 
+  // Use effective roles when impersonating
+  const activeRoles = isImpersonating ? effectiveRoles : realRoles;
+  const activeIsAdmin = activeRoles.includes('admin');
+  const activeIsStrategist = activeRoles.includes('strategist');
+  const activeIsEditor = activeRoles.includes('editor');
+  const activeIsCreator = activeRoles.includes('creator');
+  const activeIsClient = activeRoles.includes('client');
+
   // Fetch current client name for client users
   useEffect(() => {
-    if (isClient && user) {
+    // When impersonating a client, use impersonation target
+    if (isImpersonating && activeIsClient && impersonationTarget.clientId) {
+      setCurrentClientName(impersonationTarget.clientName);
+      return;
+    }
+    
+    if (activeIsClient && user) {
       const fetchCurrentClient = async () => {
         const savedClientId = localStorage.getItem('selectedClientId');
         
@@ -120,18 +138,18 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
       fetchCurrentClient();
     }
-  }, [isClient, user]);
+  }, [activeIsClient, user, isImpersonating, impersonationTarget]);
 
-  // Determinar navegación según rol (prioridad: admin > strategist > editor > creator > client)
-  const navigation = isAdmin 
+  // Determinar navegación según rol efectivo (prioridad: admin > strategist > editor > creator > client)
+  const navigation = activeIsAdmin 
     ? adminNavigation 
-    : isStrategist 
+    : activeIsStrategist 
     ? strategistNavigation 
-    : isEditor 
+    : activeIsEditor 
     ? editorNavigation 
-    : isCreator 
+    : activeIsCreator 
     ? creatorNavigation 
-    : isClient 
+    : activeIsClient 
     ? clientNavigation 
     : adminNavigation;
 
@@ -215,7 +233,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           )}
 
           {/* Client company switcher */}
-          {isClient && (
+          {activeIsClient && (
             <div className="space-y-1">
               {!collapsed && currentClientName && (
                 <div className="px-3 py-1 text-xs text-sidebar-foreground/60 truncate flex items-center gap-2">
@@ -223,19 +241,21 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                   {currentClientName}
                 </div>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowClientSelector(true)}
-                className={cn(
-                  "w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  collapsed && "px-2"
-                )}
-                title={collapsed ? `${currentClientName || 'Cambiar Empresa'}` : undefined}
-              >
-                <RefreshCw className="h-4 w-4" />
-                {!collapsed && <span className="ml-2">Cambiar Empresa</span>}
-              </Button>
+              {!isImpersonating && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowClientSelector(true)}
+                  className={cn(
+                    "w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    collapsed && "px-2"
+                  )}
+                  title={collapsed ? `${currentClientName || 'Cambiar Empresa'}` : undefined}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  {!collapsed && <span className="ml-2">Cambiar Empresa</span>}
+                </Button>
+              )}
             </div>
           )}
           
