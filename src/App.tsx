@@ -34,6 +34,7 @@ import NoCompany from "./pages/NoCompany";
 import CompanyPortfolio from "./pages/CompanyPortfolio";
 import PendingAccess from "./pages/PendingAccess";
 import UPDocumentation from "./pages/UPDocumentation";
+import OrgAuth from "./pages/OrgAuth";
 import { MainLayout } from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient({
@@ -79,6 +80,7 @@ function AppRoutes() {
       <Route path="/no-company" element={<NoCompany />} />
       <Route path="/pending-access" element={<PendingAccess />} />
       <Route path="/up-documentation" element={<UPDocumentation />} />
+      <Route path="/org/:slug" element={<OrgAuth />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'ambassador']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
       <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'creator']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
