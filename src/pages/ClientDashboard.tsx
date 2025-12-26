@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -221,6 +222,7 @@ const PremiumStatsCard = ({
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
+  const { isImpersonating, effectiveClientId } = useImpersonation();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [content, setContent] = useState<Content[]>([]);
@@ -250,11 +252,19 @@ export default function ClientDashboard() {
   });
   const [savingCompany, setSavingCompany] = useState(false);
 
+  // In root mode, always force the dashboard to use the impersonated clientId
+  useEffect(() => {
+    if (isImpersonating && effectiveClientId) {
+      setSelectedClientId(effectiveClientId);
+      setShowClientSelector(false);
+    }
+  }, [isImpersonating, effectiveClientId]);
+
   useEffect(() => {
     if (user) {
       fetchUserClients();
     }
-  }, [user]);
+  }, [user, isImpersonating, effectiveClientId]);
 
   // Listen for client switching without full page reload
   useEffect(() => {
@@ -304,6 +314,16 @@ export default function ClientDashboard() {
 
   const fetchUserClients = async () => {
     if (!user) return;
+
+    // Root-mode override: the dashboard must follow the impersonated client,
+    // not the root admin's own client associations / saved localStorage selection.
+    if (isImpersonating && effectiveClientId) {
+      setSelectedClientId(effectiveClientId);
+      setShowClientSelector(false);
+      await fetchClientData(effectiveClientId);
+      return;
+    }
+
     setLoading(true);
 
     try {
