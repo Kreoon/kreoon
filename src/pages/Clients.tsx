@@ -6,6 +6,7 @@ import { VipBadge } from "@/components/ui/vip-badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -72,6 +73,7 @@ interface ClientUser {
 const Clients = () => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
+  const { isPlatformRoot, currentOrgId } = useOrgOwner();
   const [clients, setClients] = useState<Client[]>([]);
   const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,11 +95,17 @@ const Clients = () => {
   const fetchClients = async () => {
     setLoading(true);
     try {
-      // Fetch company clients
-      const { data: clientsData } = await supabase
+      // Fetch company clients - filter by organization if not platform root
+      let clientsQuery = supabase
         .from('clients')
         .select('*')
         .order('name');
+      
+      if (!isPlatformRoot && currentOrgId) {
+        clientsQuery = clientsQuery.eq('organization_id', currentOrgId);
+      }
+
+      const { data: clientsData } = await clientsQuery;
 
       // Fetch all client_users associations
       const { data: clientUsersAssociations } = await supabase
@@ -202,7 +210,7 @@ const Clients = () => {
 
   useEffect(() => {
     fetchClients();
-  }, []);
+  }, [isPlatformRoot, currentOrgId]);
 
   const handleDelete = async (clientId: string, clientName: string) => {
     try {
