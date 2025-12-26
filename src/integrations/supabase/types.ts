@@ -1253,46 +1253,106 @@ export type Database = {
       }
       organizations: {
         Row: {
+          address: string | null
+          admin_email: string | null
+          admin_name: string | null
+          admin_phone: string | null
+          billing_email: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
+          city: string | null
+          country: string | null
           created_at: string | null
           created_by: string | null
           default_role: Database["public"]["Enums"]["app_role"] | null
           description: string | null
+          facebook: string | null
           id: string
+          instagram: string | null
+          is_blocked: boolean | null
           is_registration_open: boolean | null
+          linkedin: string | null
           logo_url: string | null
+          max_members: number | null
           name: string
+          organization_type: string | null
+          primary_color: string | null
           registration_link: string | null
           settings: Json | null
           slug: string
+          tiktok: string | null
+          timezone: string | null
           updated_at: string | null
+          website: string | null
         }
         Insert: {
+          address?: string | null
+          admin_email?: string | null
+          admin_name?: string | null
+          admin_phone?: string | null
+          billing_email?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           created_by?: string | null
           default_role?: Database["public"]["Enums"]["app_role"] | null
           description?: string | null
+          facebook?: string | null
           id?: string
+          instagram?: string | null
+          is_blocked?: boolean | null
           is_registration_open?: boolean | null
+          linkedin?: string | null
           logo_url?: string | null
+          max_members?: number | null
           name: string
+          organization_type?: string | null
+          primary_color?: string | null
           registration_link?: string | null
           settings?: Json | null
           slug: string
+          tiktok?: string | null
+          timezone?: string | null
           updated_at?: string | null
+          website?: string | null
         }
         Update: {
+          address?: string | null
+          admin_email?: string | null
+          admin_name?: string | null
+          admin_phone?: string | null
+          billing_email?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           created_by?: string | null
           default_role?: Database["public"]["Enums"]["app_role"] | null
           description?: string | null
+          facebook?: string | null
           id?: string
+          instagram?: string | null
+          is_blocked?: boolean | null
           is_registration_open?: boolean | null
+          linkedin?: string | null
           logo_url?: string | null
+          max_members?: number | null
           name?: string
+          organization_type?: string | null
+          primary_color?: string | null
           registration_link?: string | null
           settings?: Json | null
           slug?: string
+          tiktok?: string | null
+          timezone?: string | null
           updated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }
