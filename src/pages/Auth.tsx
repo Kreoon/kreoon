@@ -55,6 +55,8 @@ export default function Auth() {
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [role, setRole] = useState<AppRole>('creator');
+  const [accountType, setAccountType] = useState<'individual' | 'organization'>('individual');
+  const [organizationType, setOrganizationType] = useState<'agency' | 'community' | 'academy'>('agency');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -220,7 +222,19 @@ export default function Auth() {
       return;
     }
 
-    if (role === 'client' && !companyName.trim()) {
+    // For organizations, require company name
+    if (accountType === 'organization' && !companyName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Por favor ingresa el nombre de tu organización',
+        variant: 'destructive'
+      });
+      setLoading(false);
+      return;
+    }
+
+    // For clients, require company name
+    if (accountType === 'individual' && role === 'client' && !companyName.trim()) {
       toast({
         title: 'Error',
         description: 'Por favor ingresa el nombre de tu empresa',
@@ -230,24 +244,77 @@ export default function Auth() {
       return;
     }
 
-    const { error } = await signUp(email, password, fullName, role, role === 'client' ? companyName : undefined);
+    try {
+      // Sign up the user
+      const { data: authData, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`,
+          data: {
+            full_name: fullName,
+            account_type: accountType,
+            organization_type: accountType === 'organization' ? organizationType : null,
+            requested_role: accountType === 'individual' ? role : 'admin',
+            company_name: companyName || null,
+          }
+        }
+      });
 
-    if (error) {
+      if (error) throw error;
+
+      // If it's an organization, create it
+      if (authData.user && accountType === 'organization') {
+        const orgTypeLabels = { agency: 'Agencia', community: 'Comunidad', academy: 'Academia' };
+        
+        // Create the organization
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .insert({
+            name: companyName,
+            slug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+            organization_type: organizationType,
+            admin_name: fullName,
+            admin_email: email,
+            is_registration_open: false,
+          })
+          .select('id')
+          .single();
+
+        if (orgError) {
+          console.error('Error creating organization:', orgError);
+        } else if (orgData) {
+          // Add user as org member and owner
+          await supabase.from('organization_members').insert({
+            organization_id: orgData.id,
+            user_id: authData.user.id,
+            role: 'admin',
+            is_owner: true,
+          });
+
+          // Update profile with current org
+          await supabase
+            .from('profiles')
+            .update({ current_organization_id: orgData.id })
+            .eq('id', authData.user.id);
+        }
+      }
+
+      toast({
+        title: 'Cuenta creada',
+        description: accountType === 'organization'
+          ? `Tu ${organizationType === 'agency' ? 'agencia' : organizationType === 'community' ? 'comunidad' : 'academia'} ha sido registrada. Tu solicitud será revisada.`
+          : 'Tu cuenta ha sido creada. Tu solicitud será revisada por un administrador.',
+      });
+      setShowAuthModal(false);
+    } catch (error: any) {
       toast({
         title: 'Error al registrarse',
-        description: error.message.includes('already registered') 
+        description: error.message?.includes('already registered') 
           ? 'Este correo ya está registrado' 
           : error.message,
         variant: 'destructive'
       });
-    } else {
-      toast({
-        title: 'Cuenta creada',
-        description: role === 'client' 
-          ? 'Tu cuenta y empresa han sido creadas exitosamente'
-          : 'Tu cuenta ha sido creada exitosamente',
-      });
-      setShowAuthModal(false);
     }
 
     setLoading(false);
@@ -604,23 +671,63 @@ export default function Auth() {
                           <Label>Contraseña</Label>
                           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
                         </div>
+                        
                         <div className="space-y-2">
-                          <Label>¿Cómo quieres unirte?</Label>
-                          <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                          <Label>Tipo de cuenta</Label>
+                          <Select value={accountType} onValueChange={(v) => setAccountType(v as 'individual' | 'organization')}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="creator">Creador</SelectItem>
-                              <SelectItem value="editor">Editor</SelectItem>
-                              <SelectItem value="client">Cliente</SelectItem>
+                              <SelectItem value="individual">Persona (Creador, Editor, Marca)</SelectItem>
+                              <SelectItem value="organization">Organización (Agencia, Comunidad, Academia)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                        {role === 'client' && (
-                          <div className="space-y-2">
-                            <Label>Empresa</Label>
-                            <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
-                          </div>
+
+                        {accountType === 'organization' ? (
+                          <>
+                            <div className="space-y-2">
+                              <Label>Tipo de organización</Label>
+                              <Select value={organizationType} onValueChange={(v) => setOrganizationType(v as any)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="agency">Agencia</SelectItem>
+                                  <SelectItem value="community">Comunidad</SelectItem>
+                                  <SelectItem value="academy">Academia</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Nombre de la organización</Label>
+                              <Input 
+                                value={companyName} 
+                                onChange={(e) => setCompanyName(e.target.value)} 
+                                placeholder="Nombre de tu agencia, comunidad o academia"
+                                required 
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="space-y-2">
+                              <Label>¿Cómo quieres unirte?</Label>
+                              <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="creator">Creador</SelectItem>
+                                  <SelectItem value="editor">Editor</SelectItem>
+                                  <SelectItem value="client">Marca / Cliente</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {role === 'client' && (
+                              <div className="space-y-2">
+                                <Label>Nombre de tu empresa</Label>
+                                <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
+                              </div>
+                            )}
+                          </>
                         )}
+                        
                         <Button type="submit" className="w-full" disabled={loading}>
                           {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                           Crear Cuenta
@@ -1028,32 +1135,77 @@ export default function Auth() {
                           required
                         />
                       </div>
+                      
                       <div className="space-y-2">
-                        <Label htmlFor="register-role">¿Cómo quieres unirte?</Label>
-                        <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                        <Label>Tipo de cuenta</Label>
+                        <Select value={accountType} onValueChange={(v) => setAccountType(v as 'individual' | 'organization')}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="creator">Creador de Contenido</SelectItem>
-                            <SelectItem value="editor">Editor de Video</SelectItem>
-                            <SelectItem value="client">Marca / Cliente</SelectItem>
+                            <SelectItem value="individual">Persona (Creador, Editor, Marca)</SelectItem>
+                            <SelectItem value="organization">Organización (Agencia, Comunidad, Academia)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                      
-                      {role === 'client' && (
-                        <div className="space-y-2">
-                          <Label htmlFor="register-company">Nombre de tu empresa</Label>
-                          <Input
-                            id="register-company"
-                            type="text"
-                            placeholder="Tu empresa"
-                            value={companyName}
-                            onChange={(e) => setCompanyName(e.target.value)}
-                            required
-                          />
-                        </div>
+
+                      {accountType === 'organization' ? (
+                        <>
+                          <div className="space-y-2">
+                            <Label>Tipo de organización</Label>
+                            <Select value={organizationType} onValueChange={(v) => setOrganizationType(v as any)}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="agency">Agencia</SelectItem>
+                                <SelectItem value="community">Comunidad</SelectItem>
+                                <SelectItem value="academy">Academia</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="register-org-name">Nombre de la organización</Label>
+                            <Input
+                              id="register-org-name"
+                              type="text"
+                              placeholder="Nombre de tu agencia, comunidad o academia"
+                              value={companyName}
+                              onChange={(e) => setCompanyName(e.target.value)}
+                              required
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="register-role">¿Cómo quieres unirte?</Label>
+                            <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="creator">Creador de Contenido</SelectItem>
+                                <SelectItem value="editor">Editor de Video</SelectItem>
+                                <SelectItem value="client">Marca / Cliente</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          {role === 'client' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="register-company">Nombre de tu empresa</Label>
+                              <Input
+                                id="register-company"
+                                type="text"
+                                placeholder="Tu empresa"
+                                value={companyName}
+                                onChange={(e) => setCompanyName(e.target.value)}
+                                required
+                              />
+                            </div>
+                          )}
+                        </>
                       )}
                       
                       <Button type="submit" className="w-full" disabled={loading}>

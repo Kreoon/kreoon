@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog, Building2 } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog, Building2, UserCog } from "lucide-react";
 import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
@@ -19,6 +19,7 @@ import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { PlatformSecurityPanel } from "@/components/settings/PlatformSecurityPanel";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { OrganizationManagement } from "@/components/settings/OrganizationManagement";
+import { UserOrganizationAssignment } from "@/components/settings/UserOrganizationAssignment";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -61,7 +62,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'organizaciones';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'organizaciones' | 'asignar-usuarios';
 
 const settingsSections = [
   { 
@@ -78,6 +79,15 @@ const settingsSections = [
     icon: Building2, 
     title: "Organizaciones", 
     description: "Gestiona tus organizaciones y equipos multi-tenant",
+    adminOnly: true,
+    rootOnly: false,
+    hideForClients: true
+  },
+  { 
+    id: 'asignar-usuarios' as const,
+    icon: UserCog, 
+    title: "Asignar Usuarios", 
+    description: "Asigna creadores, editores y marcas a organizaciones",
     adminOnly: true,
     rootOnly: false,
     hideForClients: true
@@ -245,6 +255,8 @@ const Settings = () => {
         return <AuditLogPanel />;
       case 'organizaciones':
         return <OrganizationManagement />;
+      case 'asignar-usuarios':
+        return <UserOrganizationAssignment />;
       case 'app-settings':
         return <AppSettingsManagement />;
       case 'gestion-usuarios':
