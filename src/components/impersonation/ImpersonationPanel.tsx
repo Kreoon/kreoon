@@ -293,10 +293,10 @@ export function ImpersonationPanel() {
             <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
               <p className="font-medium">Información importante:</p>
               <ul className="list-disc list-inside space-y-0.5">
-                <li>El modo simulación es solo lectura</li>
-                <li>No podrás aprobar, guardar ni ejecutar acciones</li>
+                <li>Puedes realizar cambios como el usuario simulado</li>
                 <li>Todas las acciones quedan registradas en logs</li>
                 <li>Verás exactamente lo que ve el usuario simulado</li>
+                <li>Los cambios afectarán datos reales</li>
               </ul>
             </div>
           </>
