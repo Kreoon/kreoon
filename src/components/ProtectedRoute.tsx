@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { AppRole } from '@/types/database';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,14 +24,24 @@ function getDashboardPath(roles: AppRole[]): string {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, roles, loading, rolesLoaded } = useAuth();
+  const { user, roles: realRoles, loading, rolesLoaded } = useAuth();
+  const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
+  
   const [clientHasCompany, setClientHasCompany] = useState<boolean | null>(null);
   const [checkingCompany, setCheckingCompany] = useState(false);
 
-  const isClient = roles.includes('client');
+  // Use effective roles when impersonating, otherwise real roles
+  const rolesToCheck = isImpersonating ? effectiveRoles : realRoles;
+  const isClient = rolesToCheck.includes('client');
 
   useEffect(() => {
     async function checkClientCompany() {
+      // When impersonating, we skip the company check (root admin is just viewing)
+      if (isImpersonating) {
+        setClientHasCompany(true);
+        return;
+      }
+      
       if (!user || !isClient) {
         setClientHasCompany(true); // Non-clients don't need company
         return;
@@ -61,7 +72,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     if (rolesLoaded && user) {
       checkClientCompany();
     }
-  }, [user, isClient, rolesLoaded]);
+  }, [user, isClient, rolesLoaded, isImpersonating]);
 
   // Wait for both auth loading AND roles to be loaded
   if (loading || !rolesLoaded || (isClient && clientHasCompany === null) || checkingCompany) {
@@ -76,14 +87,23 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/auth" replace />;
   }
 
-  // Users without any roles need to request access
-  if (roles.length === 0) {
-    return <Navigate to="/pending-access" replace />;
+  // Root admin bypasses most checks when impersonating
+  if (isRootAdmin && isImpersonating) {
+    // When impersonating, we allow access based on the impersonated role
+    if (allowedRoles && allowedRoles.length > 0) {
+      const hasAllowedRole = allowedRoles.some(role => effectiveRoles.includes(role));
+      if (!hasAllowedRole) {
+        // Navigate to the impersonated role's dashboard
+        const correctDashboard = getDashboardPath(effectiveRoles);
+        return <Navigate to={correctDashboard} replace />;
+      }
+    }
+    return <>{children}</>;
   }
 
-  // Client users without an associated company cannot access the app
-  if (isClient && !clientHasCompany) {
-    return <Navigate to="/no-company" replace />;
+  // Users without any roles need to request access
+  if (realRoles.length === 0) {
+    return <Navigate to="/pending-access" replace />;
   }
 
   // Client users without an associated company cannot access the app
@@ -93,10 +113,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   // Check if user has the required role
   if (allowedRoles && allowedRoles.length > 0) {
-    const hasAllowedRole = allowedRoles.some(role => roles.includes(role));
+    const hasAllowedRole = allowedRoles.some(role => rolesToCheck.includes(role));
     if (!hasAllowedRole) {
       // Instead of showing unauthorized, redirect to their appropriate dashboard
-      const correctDashboard = getDashboardPath(roles);
+      const correctDashboard = getDashboardPath(rolesToCheck);
       return <Navigate to={correctDashboard} replace />;
     }
   }
