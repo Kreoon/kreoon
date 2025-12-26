@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,7 +24,8 @@ import {
   Send,
   UserPlus,
   Search,
-  Swords
+  Swords,
+  Building2
 } from 'lucide-react';
 import { MedievalBanner } from '@/components/layout/MedievalBanner';
 
@@ -46,10 +48,11 @@ const ROLE_COLORS: Record<AppRole, string> = {
 };
 
 export default function Team() {
-  const { user } = useAuth();
+  const { user, profile: authProfile } = useAuth();
   const { toast } = useToast();
+  const { currentOrg } = useOrganizations();
   
-  const [profiles, setProfiles] = useState<(Profile & { roles: AppRole[] })[]>([]);
+  const [profiles, setProfiles] = useState<(Profile & { roles: AppRole[]; isOrgMember: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [addRoleDialog, setAddRoleDialog] = useState(false);
@@ -65,32 +68,60 @@ export default function Team() {
   const [sendingInvite, setSendingInvite] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Get current organization from profile or localStorage
+  const currentOrgId = authProfile?.current_organization_id || currentOrg?.id;
+
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (currentOrgId) {
+      fetchData();
+    }
+  }, [currentOrgId]);
 
   const fetchData = async () => {
+    if (!currentOrgId) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Fetch profiles
+      // Fetch organization members first
+      const { data: membersData } = await supabase
+        .from('organization_members')
+        .select('user_id, role, is_owner')
+        .eq('organization_id', currentOrgId);
+
+      const memberUserIds = membersData?.map(m => m.user_id) || [];
+
+      if (memberUserIds.length === 0) {
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch profiles only for organization members
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('*')
+        .in('id', memberUserIds)
         .order('created_at', { ascending: false });
 
-      // Fetch roles
+      // Fetch roles for organization members
       const { data: rolesData } = await supabase
         .from('user_roles')
-        .select('*');
+        .select('*')
+        .in('user_id', memberUserIds);
 
-      // Combine profiles with roles
+      // Combine profiles with roles and org membership
       const profilesWithRoles = (profilesData || []).map(profile => ({
         ...profile,
         roles: (rolesData || [])
           .filter(r => r.user_id === profile.id)
-          .map(r => r.role as AppRole)
+          .map(r => r.role as AppRole),
+        isOrgMember: true,
+        isOwner: membersData?.find(m => m.user_id === profile.id)?.is_owner || false
       }));
 
-      setProfiles(profilesWithRoles as (Profile & { roles: AppRole[] })[]);
+      setProfiles(profilesWithRoles as (Profile & { roles: AppRole[]; isOrgMember: boolean })[]); 
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -270,13 +301,29 @@ export default function Team() {
     </div>
   );
 
+  if (!currentOrgId) {
+    return (
+      <div className="p-4 md:p-6 space-y-6">
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Sin organización seleccionada</h3>
+            <p className="text-muted-foreground">
+              Selecciona una organización para ver sus miembros
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Medieval Banner */}
+      {/* Medieval Banner with org info */}
       <MedievalBanner
         icon={Swords}
-        title="Consejo del Reino"
-        subtitle="Administra los vasallos, roles y alianzas"
+        title={currentOrg?.name ? `Equipo de ${currentOrg.name}` : "Consejo del Reino"}
+        subtitle={`Administra los miembros de tu organización (${profiles.length} miembros)`}
         action={
           <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
             <DialogTrigger asChild>
@@ -287,7 +334,7 @@ export default function Team() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Invitar nuevo usuario</DialogTitle>
+                <DialogTitle>Invitar nuevo usuario a {currentOrg?.name}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
