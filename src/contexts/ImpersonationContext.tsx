@@ -86,8 +86,8 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
     ? impersonationTarget.userId 
     : user?.id ?? null;
 
-  // Read-only mode is always active when impersonating
-  const isReadOnlyMode = isImpersonating;
+  // Read-only mode disabled - root admin can make full changes while impersonating
+  const isReadOnlyMode = false;
 
   const startImpersonation = useCallback(async (target: ImpersonationTarget) => {
     if (!isRootAdmin) {

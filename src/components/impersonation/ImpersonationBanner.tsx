@@ -50,12 +50,10 @@ export function ImpersonationBanner() {
               )}
             </div>
 
-            {isReadOnlyMode && (
-              <div className="flex items-center gap-1.5 text-amber-900/80 text-sm">
-                <AlertTriangle className="h-4 w-4" />
-                <span>Solo lectura - Las acciones están bloqueadas</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 text-amber-900/80 text-sm">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Modo completo - Los cambios son reales</span>
+            </div>
           </div>
 
           <Button
