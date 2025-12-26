@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +22,7 @@ import { FullscreenContentViewer } from '@/components/content/FullscreenContentV
 import { ReviewCard } from '@/components/content/ReviewCard';
 import { ContentVideoCard } from '@/components/content/ContentVideoCard';
 import { ScriptReviewCard } from '@/components/content/ScriptReviewCard';
+import { useClientRealtimeContent } from '@/hooks/useClientRealtimeContent';
 import { 
   LogOut, 
   Video, 
@@ -254,6 +255,21 @@ export default function ClientDashboard() {
       fetchUserClients();
     }
   }, [user]);
+
+  // Memoized callback for real-time content updates
+  const handleRealtimeContentChange = useCallback(() => {
+    if (selectedClientId) {
+      // Silently refetch content data when realtime update comes
+      fetchClientData(selectedClientId);
+    }
+  }, [selectedClientId]);
+
+  // Subscribe to real-time updates for this client's content
+  useClientRealtimeContent(
+    selectedClientId,
+    handleRealtimeContentChange,
+    handleRealtimeContentChange
+  );
 
   useEffect(() => {
     if (selectedClientId) {

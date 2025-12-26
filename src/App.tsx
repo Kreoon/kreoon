@@ -37,8 +37,10 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-      staleTime: 30_000,
+      refetchOnReconnect: false,
+      // Increase stale time to reduce background refetches on tab switch
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000,   // 10 minutes garbage collection
     },
   },
 });
