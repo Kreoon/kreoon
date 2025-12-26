@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, MessageCircle, Briefcase, Eye } from "lucide-react";
+import { Bell, MessageCircle, Briefcase, Eye, Building2, Shield, User, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -7,17 +7,21 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useImpersonation, useImpersonationData, ImpersonationTarget } from "@/contexts/ImpersonationContext";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
 import { useToast } from "@/hooks/use-toast";
+import { AppRole } from "@/types/database";
 
 interface Notification {
   id: string;
@@ -27,6 +31,218 @@ interface Notification {
   link: string | null;
   is_read: boolean;
   created_at: string;
+}
+const ROLE_OPTIONS: { value: AppRole; label: string; defaultRoute: string }[] = [
+  { value: 'admin', label: 'Administrador', defaultRoute: '/' },
+  { value: 'strategist', label: 'Estratega', defaultRoute: '/strategist-dashboard' },
+  { value: 'creator', label: 'Creador', defaultRoute: '/creator-dashboard' },
+  { value: 'editor', label: 'Editor', defaultRoute: '/editor-dashboard' },
+  { value: 'client', label: 'Cliente', defaultRoute: '/client-dashboard' },
+  { value: 'ambassador', label: 'Embajador', defaultRoute: '/creator-dashboard' },
+];
+
+const QUICK_PRESETS = [
+  { label: 'Cliente', role: 'client' as AppRole, route: '/client-dashboard' },
+  { label: 'Creador', role: 'creator' as AppRole, route: '/creator-dashboard' },
+  { label: 'Editor', role: 'editor' as AppRole, route: '/editor-dashboard' },
+  { label: 'Estratega', role: 'strategist' as AppRole, route: '/strategist-dashboard' },
+  { label: 'Admin', role: 'admin' as AppRole, route: '/' },
+];
+
+function RootModePopover() {
+  const navigate = useNavigate();
+  const { startImpersonation } = useImpersonation();
+  const { clients, users, loading } = useImpersonationData();
+  const [open, setOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [selectedRole, setSelectedRole] = useState<AppRole | ''>('');
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [isStarting, setIsStarting] = useState(false);
+
+  const handleQuickPreset = async (preset: typeof QUICK_PRESETS[0]) => {
+    setIsStarting(true);
+    try {
+      const userWithRole = users.find(u => u.roles.includes(preset.role));
+      let clientForPreset = null;
+      if (preset.role === 'client' && clients.length > 0) {
+        clientForPreset = clients[0];
+      }
+
+      const target: ImpersonationTarget = {
+        clientId: clientForPreset?.id || null,
+        clientName: clientForPreset?.name || null,
+        role: preset.role,
+        userId: userWithRole?.id || null,
+        userName: userWithRole?.full_name || null,
+      };
+      await startImpersonation(target);
+      setOpen(false);
+      navigate(preset.route);
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  const handleStartCustom = async () => {
+    if (!selectedRole) return;
+    setIsStarting(true);
+    try {
+      const selectedClient = clients.find(c => c.id === selectedClientId);
+      const selectedUser = users.find(u => u.id === selectedUserId);
+      
+      const target: ImpersonationTarget = {
+        clientId: selectedClientId || null,
+        clientName: selectedClient?.name || null,
+        role: selectedRole,
+        userId: selectedUserId || null,
+        userName: selectedUser?.full_name || null,
+      };
+      await startImpersonation(target);
+      setOpen(false);
+      
+      const roleConfig = ROLE_OPTIONS.find(r => r.value === selectedRole);
+      if (roleConfig) {
+        navigate(roleConfig.defaultRoute);
+      }
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 border-amber-500 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600"
+        >
+          <Eye className="h-4 w-4" />
+          <span className="hidden sm:inline">Modo Root</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+        <div className="p-4 border-b border-border bg-amber-50 dark:bg-amber-950/20">
+          <div className="flex items-center gap-2">
+            <Eye className="h-5 w-5 text-amber-600" />
+            <div>
+              <h3 className="font-semibold text-sm">Modo Simulación</h3>
+              <p className="text-xs text-muted-foreground">Ver plataforma como otro usuario</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* Quick Presets */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Acceso rápido
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {QUICK_PRESETS.map((preset) => (
+                <Button
+                  key={preset.label}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickPreset(preset)}
+                  disabled={isStarting || loading}
+                  className="text-xs h-7"
+                >
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Custom Selection */}
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground">Configuración personalizada</Label>
+            
+            {/* Client */}
+            <div className="space-y-1">
+              <Label className="text-xs flex items-center gap-1">
+                <Building2 className="h-3 w-3" />
+                Negocio
+              </Label>
+              <Select 
+                value={selectedClientId || '__none__'} 
+                onValueChange={(v) => setSelectedClientId(v === '__none__' ? '' : v)}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Sin negocio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin negocio</SelectItem>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Role */}
+            <div className="space-y-1">
+              <Label className="text-xs flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                Rol
+              </Label>
+              <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Seleccionar rol..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* User */}
+            <div className="space-y-1">
+              <Label className="text-xs flex items-center gap-1">
+                <User className="h-3 w-3" />
+                Usuario (opcional)
+              </Label>
+              <Select 
+                value={selectedUserId || '__none__'} 
+                onValueChange={(v) => setSelectedUserId(v === '__none__' ? '' : v)}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Genérico" />
+                </SelectTrigger>
+                <SelectContent className="max-h-48">
+                  <SelectItem value="__none__">Genérico</SelectItem>
+                  {users.slice(0, 30).map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleStartCustom}
+              disabled={!selectedRole || isStarting || loading}
+              className="w-full h-8 text-xs"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              Iniciar simulación
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 interface IntegratedNotificationHeaderProps {
@@ -213,15 +429,7 @@ export function IntegratedNotificationHeader({
 
       {/* Root Mode Button - only for root admin */}
       {isRootAdmin && !isImpersonating && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/settings')}
-          className="gap-2 border-amber-500 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600"
-        >
-          <Eye className="h-4 w-4" />
-          <span className="hidden sm:inline">Modo Root</span>
-        </Button>
+        <RootModePopover />
       )}
 
       {/* Portfolio Button */}
