@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog, Building2 } from "lucide-react";
 import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
@@ -18,6 +18,7 @@ import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { PlatformSecurityPanel } from "@/components/settings/PlatformSecurityPanel";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
+import { OrganizationManagement } from "@/components/settings/OrganizationManagement";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -60,7 +61,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'organizaciones';
 
 const settingsSections = [
   { 
@@ -73,6 +74,15 @@ const settingsSections = [
     hideForClients: false
   },
   { 
+    id: 'organizaciones' as const,
+    icon: Building2, 
+    title: "Organizaciones", 
+    description: "Gestiona tus organizaciones y equipos multi-tenant",
+    adminOnly: true,
+    rootOnly: false,
+    hideForClients: true
+  },
+  { 
     id: 'referidos' as const,
     icon: Share2, 
     title: "Referidos", 
@@ -80,7 +90,7 @@ const settingsSections = [
     adminOnly: false,
     rootOnly: false
   },
-  { 
+  {
     id: 'permisos' as const,
     icon: Lock, 
     title: "Permisos", 
@@ -233,6 +243,8 @@ const Settings = () => {
         return <CurrencyManagement />;
       case 'historial':
         return <AuditLogPanel />;
+      case 'organizaciones':
+        return <OrganizationManagement />;
       case 'app-settings':
         return <AppSettingsManagement />;
       case 'gestion-usuarios':
