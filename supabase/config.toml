@@ -77,3 +77,9 @@ verify_jwt = false
 
 [functions.bunny-chat-upload]
 verify_jwt = true
+
+[functions.portfolio-ai]
+verify_jwt = false
+
+[functions.feed-recommendations]
+verify_jwt = false
