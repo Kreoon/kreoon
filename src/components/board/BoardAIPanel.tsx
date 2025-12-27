@@ -88,11 +88,12 @@ export function BoardAIPanel({
         addNotification({
           type,
           title: 'Análisis del Tablero',
-          message: result.summary,
+          message: result.summary || 'Análisis completado',
         });
         
-        // Add bottleneck warnings
-        result.bottlenecks.filter(b => b.severity === 'high').forEach(b => {
+        // Add bottleneck warnings (with defensive check)
+        const bottlenecks = result.bottlenecks || [];
+        bottlenecks.filter(b => b.severity === 'high').forEach(b => {
           addNotification({
             type: 'warning',
             title: `Cuello de botella: ${b.status}`,
@@ -336,7 +337,7 @@ export function BoardAIPanel({
                     </div>
 
                     {/* Recommendations */}
-                    {boardAnalysis.recommendations.length > 0 && (
+                    {(boardAnalysis.recommendations?.length ?? 0) > 0 && (
                       <Card>
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm flex items-center gap-2">
@@ -345,7 +346,7 @@ export function BoardAIPanel({
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                          {boardAnalysis.recommendations.map((rec, i) => (
+                          {(boardAnalysis.recommendations || []).map((rec, i) => (
                             <div key={i} className="p-3 rounded-lg border bg-muted/30">
                               <div className="flex items-start justify-between gap-2">
                                 <span className="font-medium text-sm">{rec.title}</span>
@@ -362,14 +363,14 @@ export function BoardAIPanel({
                   </TabsContent>
 
                   <TabsContent value="bottlenecks" className="mt-0 space-y-3 pr-4">
-                    {boardAnalysis.bottlenecks.length === 0 ? (
+                    {(boardAnalysis.bottlenecks?.length ?? 0) === 0 ? (
                       <div className="text-center py-8">
                         <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
                         <p className="font-medium">Sin cuellos de botella</p>
                         <p className="text-sm text-muted-foreground">El flujo del tablero parece saludable</p>
                       </div>
                     ) : (
-                      boardAnalysis.bottlenecks.map((bottleneck, i) => (
+                      (boardAnalysis.bottlenecks || []).map((bottleneck, i) => (
                         <Card 
                           key={i} 
                           className={cn("border-l-4", SEVERITY_COLORS[bottleneck.severity])}
