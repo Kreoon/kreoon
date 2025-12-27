@@ -1,0 +1,447 @@
+import { useState } from 'react';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle,
+  SheetDescription 
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Brain, Sparkles, AlertTriangle, CheckCircle2, 
+  ArrowRight, Lightbulb, Target, Zap, BarChart3,
+  Loader2, Clock, AlertCircle, TrendingUp, X
+} from 'lucide-react';
+import { useBoardAI, CardAnalysis, BoardAnalysis } from '@/hooks/useBoardAI';
+import { cn } from '@/lib/utils';
+
+interface BoardAIPanelProps {
+  organizationId: string;
+  open: boolean;
+  onClose: () => void;
+  mode: 'card' | 'board';
+  contentId?: string;
+  contentTitle?: string;
+}
+
+const RISK_COLORS = {
+  bajo: 'text-green-600 bg-green-100 dark:bg-green-900/30',
+  medio: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30',
+  alto: 'text-red-600 bg-red-100 dark:bg-red-900/30'
+};
+
+const SEVERITY_COLORS = {
+  low: 'border-green-500/50 bg-green-500/5',
+  medium: 'border-amber-500/50 bg-amber-500/5',
+  high: 'border-red-500/50 bg-red-500/5'
+};
+
+const PRIORITY_BADGES = {
+  low: { variant: 'secondary' as const, label: 'Baja' },
+  medium: { variant: 'default' as const, label: 'Media' },
+  high: { variant: 'destructive' as const, label: 'Alta' }
+};
+
+export function BoardAIPanel({
+  organizationId,
+  open,
+  onClose,
+  mode,
+  contentId,
+  contentTitle
+}: BoardAIPanelProps) {
+  const {
+    loading,
+    cardAnalysis,
+    boardAnalysis,
+    automationRecommendations,
+    analyzeCard,
+    analyzeBoard,
+    recommendAutomation,
+    clearAnalysis
+  } = useBoardAI(organizationId);
+
+  const [activeTab, setActiveTab] = useState<'analysis' | 'bottlenecks' | 'automation'>('analysis');
+
+  const handleAnalyze = async () => {
+    if (mode === 'card' && contentId) {
+      await analyzeCard(contentId);
+    } else {
+      await analyzeBoard();
+    }
+  };
+
+  const handleClose = () => {
+    clearAnalysis();
+    onClose();
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={handleClose}>
+      <SheetContent className="w-full sm:max-w-lg overflow-hidden flex flex-col">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            {mode === 'card' ? 'Análisis de Tarjeta' : 'Análisis de Tablero'}
+          </SheetTitle>
+          <SheetDescription>
+            {mode === 'card' 
+              ? `Análisis IA para: ${contentTitle || 'Tarjeta seleccionada'}`
+              : 'Análisis inteligente del estado del tablero'
+            }
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-hidden flex flex-col mt-4">
+          {/* Action Button */}
+          {!cardAnalysis && !boardAnalysis && (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <Brain className="h-16 w-16 text-muted-foreground/30 mb-4" />
+              <h3 className="font-medium mb-2">
+                {mode === 'card' ? 'Analizar esta tarjeta' : 'Analizar el tablero'}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+                {mode === 'card' 
+                  ? 'La IA analizará el estado, riesgos y recomendará acciones para esta tarjeta.'
+                  : 'La IA detectará cuellos de botella, problemas de flujo y oportunidades de mejora.'
+                }
+              </p>
+              <Button 
+                onClick={handleAnalyze} 
+                disabled={!!loading}
+                size="lg"
+                className="gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Analizando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Analizar con IA
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Card Analysis Results */}
+          {mode === 'card' && cardAnalysis && (
+            <ScrollArea className="flex-1">
+              <div className="space-y-4 pr-4">
+                {/* Risk Summary Card */}
+                <Card className={cn("border-2", RISK_COLORS[cardAnalysis.risk_level])}>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5" />
+                        <span className="font-semibold">Nivel de Riesgo</span>
+                      </div>
+                      <Badge className={cn("uppercase", RISK_COLORS[cardAnalysis.risk_level])}>
+                        {cardAnalysis.risk_level}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Probabilidad de atraso</span>
+                        <span className="font-medium">{cardAnalysis.risk_percentage}%</span>
+                      </div>
+                      <Progress value={cardAnalysis.risk_percentage} className="h-2" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Interpretation */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-primary" />
+                      Interpretación
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">{cardAnalysis.current_interpretation}</p>
+                  </CardContent>
+                </Card>
+
+                {/* Risk Factors */}
+                {cardAnalysis.risk_factors && cardAnalysis.risk_factors.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-amber-500" />
+                        Factores de Riesgo
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-1">
+                        {cardAnalysis.risk_factors.map((factor, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm">
+                            <span className="text-amber-500 mt-1">•</span>
+                            {factor}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Next State Suggestion */}
+                <Card className="border-primary/30">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <ArrowRight className="h-4 w-4 text-primary" />
+                      Siguiente Estado Probable
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Badge variant="outline" className="text-sm">
+                      {cardAnalysis.probable_next_state}
+                    </Badge>
+                  </CardContent>
+                </Card>
+
+                {/* Recommendation */}
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Lightbulb className="h-4 w-4 text-yellow-500" />
+                      Recomendación
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm font-medium">{cardAnalysis.recommendation}</p>
+                  </CardContent>
+                </Card>
+
+                {/* Explainability Section */}
+                <Card className="bg-muted/50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs text-muted-foreground flex items-center gap-2">
+                      <BarChart3 className="h-3 w-3" />
+                      Datos Analizados
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-1">
+                      {cardAnalysis.data_analyzed?.map((data, i) => (
+                        <Badge key={i} variant="outline" className="text-xs">
+                          {data}
+                        </Badge>
+                      ))}
+                    </div>
+                    <Separator className="my-2" />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Confianza: {cardAnalysis.confidence}%</span>
+                      <span>Modelo: {cardAnalysis.ai_model}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </ScrollArea>
+          )}
+
+          {/* Board Analysis Results */}
+          {mode === 'board' && boardAnalysis && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
+                <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsTrigger value="analysis">Resumen</TabsTrigger>
+                  <TabsTrigger value="bottlenecks">Cuellos</TabsTrigger>
+                  <TabsTrigger value="automation">Automatizar</TabsTrigger>
+                </TabsList>
+
+                <ScrollArea className="flex-1">
+                  <TabsContent value="analysis" className="mt-0 space-y-4 pr-4">
+                    {/* Health Score */}
+                    <Card className="border-2">
+                      <CardContent className="pt-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-medium">Salud del Tablero</span>
+                          <span className="text-2xl font-bold">{boardAnalysis.health_score}/100</span>
+                        </div>
+                        <Progress 
+                          value={boardAnalysis.health_score} 
+                          className={cn(
+                            "h-3",
+                            boardAnalysis.health_score >= 70 && "[&>div]:bg-green-500",
+                            boardAnalysis.health_score >= 40 && boardAnalysis.health_score < 70 && "[&>div]:bg-amber-500",
+                            boardAnalysis.health_score < 40 && "[&>div]:bg-red-500"
+                          )} 
+                        />
+                      </CardContent>
+                    </Card>
+
+                    {/* Summary */}
+                    <Card>
+                      <CardContent className="pt-4">
+                        <p className="text-sm">{boardAnalysis.summary}</p>
+                      </CardContent>
+                    </Card>
+
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <Card>
+                        <CardContent className="pt-3 pb-3 text-center">
+                          <div className="text-2xl font-bold">{boardAnalysis.total_cards}</div>
+                          <div className="text-xs text-muted-foreground">Total</div>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-amber-500/30">
+                        <CardContent className="pt-3 pb-3 text-center">
+                          <div className="text-2xl font-bold text-amber-500">{boardAnalysis.stale_count}</div>
+                          <div className="text-xs text-muted-foreground">Estancadas</div>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-destructive/30">
+                        <CardContent className="pt-3 pb-3 text-center">
+                          <div className="text-2xl font-bold text-destructive">{boardAnalysis.overdue_count}</div>
+                          <div className="text-xs text-muted-foreground">Vencidas</div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Recommendations */}
+                    {boardAnalysis.recommendations.length > 0 && (
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Lightbulb className="h-4 w-4 text-yellow-500" />
+                            Recomendaciones
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {boardAnalysis.recommendations.map((rec, i) => (
+                            <div key={i} className="p-3 rounded-lg border bg-muted/30">
+                              <div className="flex items-start justify-between gap-2">
+                                <span className="font-medium text-sm">{rec.title}</span>
+                                <Badge {...PRIORITY_BADGES[rec.priority]}>
+                                  {PRIORITY_BADGES[rec.priority].label}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">{rec.description}</p>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="bottlenecks" className="mt-0 space-y-3 pr-4">
+                    {boardAnalysis.bottlenecks.length === 0 ? (
+                      <div className="text-center py-8">
+                        <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
+                        <p className="font-medium">Sin cuellos de botella</p>
+                        <p className="text-sm text-muted-foreground">El flujo del tablero parece saludable</p>
+                      </div>
+                    ) : (
+                      boardAnalysis.bottlenecks.map((bottleneck, i) => (
+                        <Card 
+                          key={i} 
+                          className={cn("border-l-4", SEVERITY_COLORS[bottleneck.severity])}
+                        >
+                          <CardContent className="pt-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <Badge variant="outline">{bottleneck.status}</Badge>
+                              <Badge 
+                                variant={bottleneck.severity === 'high' ? 'destructive' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {bottleneck.severity === 'high' ? 'Crítico' : bottleneck.severity === 'medium' ? 'Moderado' : 'Leve'}
+                              </Badge>
+                            </div>
+                            <p className="text-sm mb-2">{bottleneck.description}</p>
+                            {bottleneck.impact && (
+                              <p className="text-xs text-muted-foreground mb-2">
+                                <strong>Impacto:</strong> {bottleneck.impact}
+                              </p>
+                            )}
+                            <div className="p-2 rounded bg-primary/5 text-xs">
+                              <strong>💡 Sugerencia:</strong> {bottleneck.suggestion}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="automation" className="mt-0 space-y-4 pr-4">
+                    {!automationRecommendations ? (
+                      <div className="text-center py-8">
+                        <Zap className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Analiza patrones de uso para obtener sugerencias de automatización
+                        </p>
+                        <Button 
+                          onClick={recommendAutomation} 
+                          disabled={loading === 'automation'}
+                          variant="outline"
+                        >
+                          {loading === 'automation' ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              Analizando...
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="h-4 w-4 mr-2" />
+                              Sugerir Automatizaciones
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {automationRecommendations.automations.map((auto, i) => (
+                          <Card key={i}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between mb-2">
+                                <span className="font-medium text-sm">{auto.title}</span>
+                                <Badge variant="outline" className="text-xs capitalize">
+                                  {auto.complexity}
+                                </Badge>
+                              </div>
+                              <div className="space-y-1 text-xs">
+                                <p><strong>Cuando:</strong> {auto.trigger}</p>
+                                <p><strong>Acción:</strong> {auto.action}</p>
+                                <p className="text-green-600"><strong>Beneficio:</strong> {auto.benefit}</p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+                </ScrollArea>
+              </Tabs>
+            </div>
+          )}
+        </div>
+
+        {/* Footer with model info */}
+        {(cardAnalysis || boardAnalysis) && (
+          <div className="pt-4 border-t mt-4 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Clock className="h-3 w-3" />
+              <span>
+                {new Date(cardAnalysis?.analyzed_at || boardAnalysis?.analyzed_at || '').toLocaleString()}
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleAnalyze} disabled={!!loading}>
+              {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <TrendingUp className="h-3 w-3" />}
+              <span className="ml-1">Actualizar</span>
+            </Button>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
