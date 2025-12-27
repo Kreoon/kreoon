@@ -111,10 +111,11 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     content,
     formData,
     setFormData,
-    editMode: editMode && !isTabLocked(activeTab), // Disable edit if tab is locked
+    editMode: editMode && !isTabLocked(activeTab) && !isTabReadOnly(activeTab), // Disable edit if tab is locked OR read-only
     setEditMode,
     permissions,
-    onUpdate
+    onUpdate,
+    readOnly: isTabReadOnly(activeTab), // Pass readOnly for components that need explicit check
   };
 
   const TAB_CONFIG: Record<string, { label: string; component: React.ReactNode }> = {

@@ -80,6 +80,11 @@ export interface TabProps {
   setEditMode: (value: boolean) => void;
   permissions: ContentPermissions;
   onUpdate?: () => void;
+  /** 
+   * When true, the tab is in read-only mode regardless of editMode.
+   * This is set by blockConfig.canEditBlock() returning false.
+   */
+  readOnly?: boolean;
 }
 
 // ============= DIALOG PROPS =============

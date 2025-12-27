@@ -73,9 +73,12 @@ export function VideoTab({
   permissions,
   onUpdate,
   selectedProduct,
+  readOnly = false,
 }: VideoTabProps) {
   const { isAdmin, isClient } = useAuth();
-  const canEditVideo = permissions.can('content.video', 'edit');
+  // Combine permissions with readOnly prop for effective edit capability
+  const canEditVideo = permissions.can('content.video', 'edit') && !readOnly;
+  const effectiveEditMode = editMode && !readOnly;
   const canDownload = permissions.can('content.video.download', 'view');
   const currentStatus = content?.status || 'draft';
   const approvedStatuses = ['approved', 'paid', 'delivered'];
@@ -136,10 +139,10 @@ export function VideoTab({
       </PermissionsGate>
 
       {/* Read-only notice */}
-      {!canEditVideo && editMode && (
+      {(!canEditVideo || readOnly) && effectiveEditMode && (
         <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
           <Lock className="h-4 w-4 text-warning" />
-          <span>Solo el estratega o admin pueden editar videos</span>
+          <span>{readOnly ? 'Este tab es de solo lectura' : 'Solo el estratega o admin pueden editar videos'}</span>
         </div>
       )}
 
@@ -151,7 +154,7 @@ export function VideoTab({
             <h4 className="font-medium flex items-center gap-2">
               <Video className="h-4 w-4" /> Videos Finales
             </h4>
-            {editMode && canEditVideo && (
+            {effectiveEditMode && canEditVideo && (
               <div className="flex items-center gap-2">
                 <Label className="text-sm text-muted-foreground">Cantidad:</Label>
                 <Select
@@ -171,11 +174,11 @@ export function VideoTab({
             )}
           </div>
 
-          {!editMode && formData.hooks_count > 1 && (
+          {!effectiveEditMode && formData.hooks_count > 1 && (
             <Badge variant="secondary">{formData.hooks_count} variables</Badge>
           )}
 
-          {editMode && canEditVideo ? (
+          {effectiveEditMode && canEditVideo ? (
             <BunnyMultiVideoUploader
               contentId={content?.id || ''}
               title={content?.title || 'video'}
@@ -233,7 +236,8 @@ export function VideoTab({
         <EditableField
           permissions={permissions}
           resource="content.comments"
-          editMode={editMode}
+          editMode={effectiveEditMode}
+          readOnly={readOnly}
           editComponent={
             <Textarea
               value={formData.notes || ''}

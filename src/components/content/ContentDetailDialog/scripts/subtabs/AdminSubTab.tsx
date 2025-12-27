@@ -20,13 +20,15 @@ export function AdminSubTab({
   scriptPermissions,
   onUpdate,
   advancedConfig,
+  readOnly = false,
 }: SubTabProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isLocked, setIsLocked] = useState(false);
   
-  const canEdit = scriptPermissions.canEdit('admin');
-  const canLock = scriptPermissions.canLock();
+  // Combine scriptPermissions with readOnly prop for effective edit capability
+  const canEdit = scriptPermissions.canEdit('admin') && !readOnly;
+  const canLock = scriptPermissions.canLock() && !readOnly;
   const hasContent = !!formData.admin_guidelines?.trim();
   const editorFeatures = advancedConfig?.text_editor_features;
 

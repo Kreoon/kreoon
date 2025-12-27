@@ -17,8 +17,11 @@ export function TeamTab({
   editMode,
   permissions,
   onUpdate,
+  readOnly = false,
 }: TabProps) {
-  const canEditTeam = permissions.can('content.team', 'edit');
+  // Combine permissions with readOnly prop for effective edit capability
+  const canEditTeam = permissions.can('content.team', 'edit') && !readOnly;
+  const effectiveEditMode = editMode && !readOnly;
   const [clients, setClients] = useState<SelectOption[]>([]);
   const [creators, setCreators] = useState<SelectOption[]>([]);
   const [editors, setEditors] = useState<SelectOption[]>([]);
@@ -69,7 +72,8 @@ export function TeamTab({
           <EditableField
             permissions={permissions}
             resource="content.team"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Select value={formData.client_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, client_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
@@ -87,7 +91,8 @@ export function TeamTab({
           <EditableField
             permissions={permissions}
             resource="content.team"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Select value={formData.creator_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, creator_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Asignar creador" /></SelectTrigger>
@@ -112,7 +117,8 @@ export function TeamTab({
           <EditableField
             permissions={permissions}
             resource="content.team"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Select value={formData.editor_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, editor_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Asignar editor" /></SelectTrigger>
@@ -137,7 +143,8 @@ export function TeamTab({
           <EditableField
             permissions={permissions}
             resource="content.team"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Select value={formData.strategist_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, strategist_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Asignar estratega" /></SelectTrigger>
@@ -158,7 +165,7 @@ export function TeamTab({
         </h4>
         <CollaboratorSelector
           contentId={content?.id || ''}
-          disabled={!editMode || !canEditTeam}
+          disabled={!effectiveEditMode || !canEditTeam}
         />
       </div>
     </div>

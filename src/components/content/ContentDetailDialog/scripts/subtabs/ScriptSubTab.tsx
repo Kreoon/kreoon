@@ -21,14 +21,16 @@ export function ScriptSubTab({
   onUpdate,
   scriptPermissions,
   advancedConfig,
+  readOnly = false,
 }: SubTabProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [showTeleprompter, setShowTeleprompter] = useState(false);
   
-  const canEdit = scriptPermissions.canEdit('script');
+  // Combine scriptPermissions with readOnly prop for effective edit capability
+  const canEdit = scriptPermissions.canEdit('script') && !readOnly;
   const canApprove = scriptPermissions.canApprove();
-  const isReadOnly = scriptPermissions.isReadOnly('script');
+  const isReadOnly = scriptPermissions.isReadOnly('script') || readOnly;
   const hasScript = !!formData.script?.trim();
   const editorFeatures = advancedConfig?.text_editor_features;
 

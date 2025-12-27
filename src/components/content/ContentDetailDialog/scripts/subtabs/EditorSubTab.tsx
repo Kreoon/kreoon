@@ -11,8 +11,10 @@ export function EditorSubTab({
   editMode,
   scriptPermissions,
   advancedConfig,
+  readOnly = false,
 }: SubTabProps) {
-  const canEdit = scriptPermissions.canEdit('editor');
+  // Combine scriptPermissions with readOnly prop for effective edit capability
+  const canEdit = scriptPermissions.canEdit('editor') && !readOnly;
   const hasContent = !!formData.editor_guidelines?.trim();
   const editorFeatures = advancedConfig?.text_editor_features;
 

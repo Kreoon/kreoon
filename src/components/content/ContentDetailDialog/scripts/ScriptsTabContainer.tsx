@@ -90,36 +90,38 @@ export function ScriptsTabContainer({
   } : null;
 
   // Common props for all sub-tabs
-  const subTabProps = {
+  const getSubTabProps = (tabKey: ScriptSubTab) => ({
     content,
     formData,
     setFormData,
-    editMode: editMode && !isTabLocked(activeTab), // Disable edit if locked
+    editMode: editMode && !isTabLocked(tabKey) && !isEffectiveReadOnly(tabKey), // Combine all checks
     setEditMode,
     onUpdate,
     selectedProduct,
     onProductChange,
     scriptPermissions: scriptPerms,
     advancedConfig,
-  };
+    readOnly: isEffectiveReadOnly(tabKey), // Explicit read-only flag
+  });
 
   // Render the appropriate sub-tab component
   const renderSubTab = (tabKey: ScriptSubTab) => {
+    const props = getSubTabProps(tabKey);
     switch (tabKey) {
       case 'ia':
-        return <IASubTab {...subTabProps} />;
+        return <IASubTab {...props} />;
       case 'script':
-        return <ScriptSubTabComponent {...subTabProps} />;
+        return <ScriptSubTabComponent {...props} />;
       case 'editor':
-        return <EditorSubTab {...subTabProps} />;
+        return <EditorSubTab {...props} />;
       case 'strategist':
-        return <StrategistSubTab {...subTabProps} />;
+        return <StrategistSubTab {...props} />;
       case 'designer':
-        return <DesignerSubTab {...subTabProps} />;
+        return <DesignerSubTab {...props} />;
       case 'trafficker':
-        return <TraffickerSubTab {...subTabProps} />;
+        return <TraffickerSubTab {...props} />;
       case 'admin':
-        return <AdminSubTab {...subTabProps} />;
+        return <AdminSubTab {...props} />;
       default:
         return null;
     }
