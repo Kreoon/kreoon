@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { getRoleBadgeInfo } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,7 @@ export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, user, isAdmin, isCreator, isEditor, isClient, isStrategist, roles } = useAuth();
+  const { currentOrgName } = useOrgOwner();
 
   // Fetch current client name for client users
   useEffect(() => {
@@ -146,9 +148,13 @@ export function MobileNav() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <span className="text-lg font-bold text-primary-foreground">C</span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-sm font-bold text-sidebar-foreground">Creartor Studio</h1>
-                <p className="text-xs text-sidebar-foreground/60">Content Agency</p>
+                {currentOrgName ? (
+                  <p className="text-xs text-primary/80 truncate font-medium">{currentOrgName}</p>
+                ) : (
+                  <p className="text-xs text-sidebar-foreground/60">Content Agency</p>
+                )}
               </div>
             </div>
           </div>
