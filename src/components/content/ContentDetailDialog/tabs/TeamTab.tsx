@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CollaboratorSelector } from '@/components/content/CollaboratorSelector';
 import { FieldRow } from '../components/SectionCard';
 import { EditableField } from '../components/PermissionsGate';
 import { TabProps, SelectOption } from '../types';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Users, Medal, Info } from 'lucide-react';
+import { User, Users, Medal, Info, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
+import { useInternalOrgContent } from '@/hooks/useInternalOrgContent';
 
 export function TeamTab({
   content,
@@ -26,12 +27,16 @@ export function TeamTab({
   const canEditTeam = permissions.can('content.team', 'edit') && !readOnly;
   const effectiveEditMode = editMode && !readOnly;
   const [creators, setCreators] = useState<SelectOption[]>([]);
-  const [ambassadors, setAmbassadors] = useState<SelectOption[]>([]);
   const [editors, setEditors] = useState<SelectOption[]>([]);
   const [strategists, setStrategists] = useState<SelectOption[]>([]);
 
-  // Detect if content is ambassador type
-  const isAmbassadorContent = content?.is_ambassador_content === true;
+  // Use centralized hook for internal org content detection
+  const { 
+    isInternalOrgContent, 
+    ambassadors, 
+    loading: ambassadorsLoading,
+    isAmbassador 
+  } = useInternalOrgContent(formData.client_id || content?.client_id);
 
   useEffect(() => {
     fetchTeamOptions();
@@ -52,21 +57,6 @@ export function TeamTab({
       setCreators(profiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
     } else {
       setCreators([]);
-    }
-
-    // Fetch ambassadors from organization_member_badges
-    const { data: ambassadorBadges } = await supabase
-      .from('organization_member_badges')
-      .select('user_id')
-      .eq('organization_id', currentOrgId)
-      .eq('badge', 'ambassador')
-      .eq('is_active', true);
-    
-    if (ambassadorBadges?.length) {
-      const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', ambassadorBadges.map(r => r.user_id));
-      setAmbassadors(profiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
-    } else {
-      setAmbassadors([]);
     }
 
     // Fetch editors from organization_member_roles
@@ -103,58 +93,77 @@ export function TeamTab({
     return format(new Date(date), "d MMM yyyy", { locale: es });
   };
 
-  // Use ambassadors list for ambassador content, regular creators otherwise
-  const availableCreators = isAmbassadorContent ? ambassadors : creators;
+  // CRITICAL: Use ambassadors list ONLY for internal org content, regular creators otherwise
+  const availableCreators = isInternalOrgContent 
+    ? ambassadors.map(a => ({ id: a.id, name: a.name }))
+    : creators;
+    
   const getCreatorName = () => availableCreators.find(c => c.id === formData.creator_id)?.name;
   const getEditorName = () => editors.find(e => e.id === formData.editor_id)?.name;
   const getStrategistName = () => strategists.find(s => s.id === formData.strategist_id)?.name;
 
+  // Check if current creator is valid for internal content
+  const currentCreatorValid = !isInternalOrgContent || !formData.creator_id || isAmbassador(formData.creator_id);
+
   return (
     <div className="space-y-4">
-      {/* Ambassador content badge */}
-      {isAmbassadorContent && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <Medal className="h-5 w-5 text-amber-500" />
-                <Badge variant="outline" className="border-amber-500/50 text-amber-600 bg-amber-500/10">
-                  🏅 Proyecto de Marca Interna – Solo Embajadores
-                </Badge>
-                <Info className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <p>Este contenido se produce sin pago monetario. La recompensa se otorga en puntos UP según las reglas de la organización.</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      {/* Internal Organization Content Banner - FIXED AND CLEAR */}
+      {isInternalOrgContent && (
+        <Alert className="border-amber-500/50 bg-amber-500/10">
+          <ShieldCheck className="h-4 w-4 text-amber-500" />
+          <AlertDescription>
+            <div className="flex flex-col gap-1">
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
+                🏅 Contenido Interno de la Organización
+              </span>
+              <span className="text-sm text-muted-foreground">
+                Este contenido es creado por embajadores. No tiene pago monetario. La recompensa se otorga en puntos UP.
+              </span>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Warning if current creator is not an ambassador but content is internal */}
+      {isInternalOrgContent && formData.creator_id && !currentCreatorValid && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            ⚠️ El creador asignado no tiene insignia de Embajador. Solo embajadores pueden crear contenido interno.
+          </AlertDescription>
+        </Alert>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Creador / Embajador */}
-        <FieldRow label={isAmbassadorContent ? "Embajador" : "Creador"} icon={isAmbassadorContent ? Medal : User}>
+        <FieldRow label={isInternalOrgContent ? "Embajador" : "Creador"} icon={isInternalOrgContent ? Medal : User}>
           <EditableField
             permissions={permissions}
             resource="content.team"
             editMode={effectiveEditMode}
             readOnly={readOnly}
             editComponent={
-              <Select value={formData.creator_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, creator_id: v }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder={isAmbassadorContent ? "Asignar embajador" : "Asignar creador"} />
+              <Select 
+                value={formData.creator_id || ''} 
+                onValueChange={(v) => setFormData(prev => ({ ...prev, creator_id: v }))}
+              >
+                <SelectTrigger className={!currentCreatorValid ? 'border-destructive' : ''}>
+                  <SelectValue placeholder={isInternalOrgContent ? "Asignar embajador" : "Asignar creador"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableCreators.length === 0 ? (
+                  {ambassadorsLoading && isInternalOrgContent ? (
                     <div className="p-2 text-sm text-muted-foreground text-center">
-                      {isAmbassadorContent 
-                        ? "No hay embajadores disponibles" 
+                      Cargando embajadores...
+                    </div>
+                  ) : availableCreators.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      {isInternalOrgContent 
+                        ? "No hay embajadores disponibles. Asigna la insignia de Embajador a usuarios primero." 
                         : "No hay creadores disponibles"}
                     </div>
                   ) : (
                     availableCreators.map(c => (
                       <SelectItem key={c.id} value={c.id}>
-                        {isAmbassadorContent && <Medal className="h-3 w-3 inline mr-2 text-amber-500" />}
+                        {isInternalOrgContent && <Medal className="h-3 w-3 inline mr-2 text-amber-500" />}
                         {c.name}
                       </SelectItem>
                     ))
@@ -164,7 +173,7 @@ export function TeamTab({
             }
             viewComponent={
               <div className="flex items-center gap-2">
-                {isAmbassadorContent && <Medal className="h-4 w-4 text-amber-500" />}
+                {isInternalOrgContent && <Medal className="h-4 w-4 text-amber-500" />}
                 <div>
                   <p className="font-medium">{getCreatorName() || '—'}</p>
                   {content?.creator_assigned_at && (

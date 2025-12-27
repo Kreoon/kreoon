@@ -1,4 +1,3 @@
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -6,8 +5,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FieldRow, SectionCard } from '../components/SectionCard';
 import { EditableField } from '../components/PermissionsGate';
 import { TabProps } from '../types';
-import { DollarSign, CheckCircle, Medal, Sparkles, Info } from 'lucide-react';
+import { CheckCircle, Medal, Sparkles, Info, ShieldCheck, Ban } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useInternalOrgContent } from '@/hooks/useInternalOrgContent';
 
 export function PaymentsTab({
   content,
@@ -18,32 +18,26 @@ export function PaymentsTab({
   readOnly = false,
 }: TabProps) {
   const effectiveEditMode = editMode && !readOnly;
-  const canEditPayments = permissions.can('content.payments', 'edit') && !readOnly;
 
-  // Detect if content is ambassador type
-  const isAmbassadorContent = content?.is_ambassador_content === true;
+  // Use centralized hook for internal org content detection - SINGLE SOURCE OF TRUTH
+  const { isInternalOrgContent } = useInternalOrgContent(formData.client_id || content?.client_id);
 
-  // Ambassador content - show special UI
-  if (isAmbassadorContent) {
+  // CRITICAL: Internal org content has NO monetary payments - HIDE EVERYTHING
+  if (isInternalOrgContent) {
     return (
       <div className="space-y-6">
-        {/* Ambassador Alert */}
+        {/* Fixed Banner - Clear Communication */}
         <Alert className="border-amber-500/50 bg-amber-500/10">
-          <Medal className="h-4 w-4 text-amber-500" />
-          <AlertDescription className="flex items-center gap-2">
-            <span className="font-medium text-amber-600 dark:text-amber-400">
-              🏅 Proyecto de Marca Interna – Recompensa UP
-            </span>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p>Este contenido es producido por embajadores sin pago monetario. La recompensa se otorga en puntos UP según las reglas de la organización.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <ShieldCheck className="h-4 w-4 text-amber-500" />
+          <AlertDescription>
+            <div className="flex flex-col gap-1">
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
+                🏅 Contenido Interno de la Organización
+              </span>
+              <span className="text-sm text-muted-foreground">
+                Este contenido es creado por embajadores. No tiene pago monetario. La recompensa se otorga en puntos UP.
+              </span>
+            </div>
           </AlertDescription>
         </Alert>
 
@@ -66,6 +60,7 @@ export function PaymentsTab({
               <div className="p-3 rounded-lg bg-background/50 border">
                 <p className="text-xs text-muted-foreground mb-1">Tipo de Contenido</p>
                 <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
+                  <Medal className="h-3 w-3 mr-1" />
                   Embajador Interno
                 </Badge>
               </div>
@@ -84,19 +79,25 @@ export function PaymentsTab({
           </div>
         </SectionCard>
 
-        {/* Payment Status - Read Only for Ambassador */}
+        {/* Payment Status - BLOCKED for Internal Content */}
         <SectionCard title="Estado de Pagos" iconEmoji="💰">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-3 rounded-lg bg-muted/30 border">
-              <p className="text-sm text-muted-foreground mb-1">Pago Creador</p>
+            <div className="p-3 rounded-lg bg-muted/30 border border-dashed">
+              <div className="flex items-center gap-2 mb-1">
+                <Ban className="h-3 w-3 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Pago Creador</p>
+              </div>
               <Badge variant="secondary" className="bg-muted">
-                No aplica (Embajador)
+                No aplica (Contenido Interno)
               </Badge>
             </div>
-            <div className="p-3 rounded-lg bg-muted/30 border">
-              <p className="text-sm text-muted-foreground mb-1">Pago Editor</p>
+            <div className="p-3 rounded-lg bg-muted/30 border border-dashed">
+              <div className="flex items-center gap-2 mb-1">
+                <Ban className="h-3 w-3 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Pago Editor</p>
+              </div>
               <Badge variant="secondary" className="bg-muted">
-                No aplica (Embajador)
+                No aplica (Contenido Interno)
               </Badge>
             </div>
           </div>
@@ -147,23 +148,23 @@ export function PaymentsTab({
               editMode={effectiveEditMode}
               readOnly={readOnly}
               editComponent={
-                <Input
+                <input
                   type="number"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={formData.creator_payment || 0}
                   onChange={(e) => setFormData(prev => ({ ...prev, creator_payment: parseFloat(e.target.value) || 0 }))}
                 />
               }
               viewComponent={
                 <p className="font-medium flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" />
-                  {formData.creator_payment?.toLocaleString() || 0}
+                  ${formData.creator_payment?.toLocaleString() || 0}
                 </p>
               }
             />
           </FieldRow>
 
           <FieldRow label="Estado">
-          <EditableField
+            <EditableField
               permissions={permissions}
               resource="content.payments"
               editMode={effectiveEditMode}
@@ -194,29 +195,29 @@ export function PaymentsTab({
       <SectionCard title="Pago Editor" iconEmoji="🎬">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FieldRow label="Monto">
-          <EditableField
+            <EditableField
               permissions={permissions}
               resource="content.payments"
               editMode={effectiveEditMode}
               readOnly={readOnly}
               editComponent={
-                <Input
+                <input
                   type="number"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={formData.editor_payment || 0}
                   onChange={(e) => setFormData(prev => ({ ...prev, editor_payment: parseFloat(e.target.value) || 0 }))}
                 />
               }
               viewComponent={
                 <p className="font-medium flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" />
-                  {formData.editor_payment?.toLocaleString() || 0}
+                  ${formData.editor_payment?.toLocaleString() || 0}
                 </p>
               }
             />
           </FieldRow>
 
           <FieldRow label="Estado">
-          <EditableField
+            <EditableField
               permissions={permissions}
               resource="content.payments"
               editMode={effectiveEditMode}
