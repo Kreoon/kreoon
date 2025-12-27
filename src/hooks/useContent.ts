@@ -29,8 +29,8 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
         `)
         .order('created_at', { ascending: false });
 
-      // Filter by organization if not platform root
-      if (!isPlatformRoot && currentOrgId) {
+      // Filter by organization - always apply when org is selected (including for root)
+      if (currentOrgId) {
         query = query.eq('organization_id', currentOrgId);
       }
 
@@ -176,8 +176,8 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
         `)
         .order('created_at', { ascending: false });
 
-      // Filter by organization if not platform root
-      if (!isPlatformRoot && currentOrgId) {
+      // Filter by organization - always apply when org is selected (including for root)
+      if (currentOrgId) {
         query = query.eq('organization_id', currentOrgId);
       }
 

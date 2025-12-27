@@ -101,7 +101,8 @@ const Clients = () => {
         .select('*')
         .order('name');
       
-      if (!isPlatformRoot && currentOrgId) {
+      // Filter by organization - always apply when org is selected (including for root)
+      if (currentOrgId) {
         clientsQuery = clientsQuery.eq('organization_id', currentOrgId);
       }
 
