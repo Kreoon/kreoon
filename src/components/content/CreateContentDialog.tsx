@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp, Medal, Info, Sparkles } from "lucide-react";
 import { ScriptGenerator } from "./ScriptGenerator";
 import { useInternalBrandClient } from "@/hooks/useInternalBrandClient";
+import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
 
 interface CreateContentDialogProps {
   open: boolean;
@@ -75,7 +76,6 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   // Options lists
   const [clients, setClients] = useState<SelectOption[]>([]);
   const [creators, setCreators] = useState<SelectOption[]>([]);
-  const [ambassadors, setAmbassadors] = useState<SelectOption[]>([]);
   const [editors, setEditors] = useState<SelectOption[]>([]);
   const [strategists, setStrategists] = useState<SelectOption[]>([]);
   
@@ -88,11 +88,13 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   const [isAmbassadorContent, setIsAmbassadorContent] = useState(false);
   const [organizationClientId, setOrganizationClientId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open) {
-      fetchOptions();
-    }
-  }, [open]);
+  // Centralized ambassadors list (auto-updates via realtime)
+  const {
+    ambassadors: internalAmbassadors,
+    loading: ambassadorsLoading,
+  } = useInternalOrgContent(clientId || null);
+
+  const ambassadorOptions = internalAmbassadors.map(a => ({ id: a.id, name: a.name }));
 
   // Detect if client is the organization (ambassador content)
   useEffect(() => {
@@ -212,23 +214,8 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
         setCreators([]);
       }
 
-      // Fetch ambassadors (users with ambassador BADGE for internal brand content)
-      const { data: ambassadorBadges } = await supabase
-        .from('organization_member_badges')
-        .select('user_id')
-        .eq('organization_id', currentOrgId)
-        .eq('badge', 'ambassador')
-        .eq('is_active', true);
-      
-      if (ambassadorBadges?.length) {
-        const { data: ambassadorProfiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', ambassadorBadges.map(r => r.user_id));
-        setAmbassadors(ambassadorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
-      } else {
-        setAmbassadors([]);
-      }
+      // Ambassadors for internal brand content are provided by useInternalOrgContent()
+      // (includes realtime updates when badges/roles change)
 
       // Fetch editors from organization_member_roles
       const { data: editorRoles } = await supabase
@@ -265,6 +252,12 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
       }
     }
   };
+
+  useEffect(() => {
+    if (open) {
+      fetchOptions();
+    }
+  }, [open]);
 
   const resetForm = () => {
     setTitle("");
@@ -313,10 +306,10 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
       return;
     }
 
-    if (isAmbassadorContent && ambassadors.length === 0) {
+    if (isAmbassadorContent && !ambassadorsLoading && ambassadorOptions.length === 0) {
       toast({
         title: "Error",
-        description: "No hay embajadores disponibles. Primero asigna el rol de embajador a usuarios.",
+        description: "No hay embajadores disponibles. Primero asigna la insignia de Embajador a usuarios.",
         variant: "destructive"
       });
       return;
@@ -550,8 +543,12 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
                   </SelectTrigger>
                   <SelectContent>
                     {isAmbassadorContent ? (
-                      ambassadors.length > 0 ? (
-                        ambassadors.map(a => (
+                      ambassadorsLoading ? (
+                        <div className="px-2 py-4 text-sm text-muted-foreground text-center">
+                          Cargando embajadores…
+                        </div>
+                      ) : ambassadorOptions.length > 0 ? (
+                        ambassadorOptions.map(a => (
                           <SelectItem key={a.id} value={a.id}>
                             <div className="flex items-center gap-2">
                               <Medal className="h-3 w-3 text-amber-500" />
@@ -563,7 +560,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
                         <div className="px-2 py-4 text-sm text-muted-foreground text-center">
                           No hay embajadores disponibles.
                           <br />
-                          <span className="text-xs">Primero asigna el rol de embajador a usuarios.</span>
+                          <span className="text-xs">Primero asigna la insignia de Embajador a usuarios.</span>
                         </div>
                       )
                     ) : (
