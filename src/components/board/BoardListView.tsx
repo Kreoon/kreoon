@@ -1,9 +1,10 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Clock, Building2, User, ChevronRight, Video, FileText, Star } from "lucide-react";
+import { Clock, Building2, ChevronRight, Video, FileText, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Content, STATUS_COLORS, STATUS_LABELS } from "@/types/database";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,31 @@ interface BoardListViewProps {
   visibleFields?: string[];
 }
 
+// Size configurations
+const SIZE_CONFIG = {
+  compact: {
+    padding: 'p-2 gap-2',
+    thumbnailSize: 'h-10 w-16',
+    avatarSize: 'h-5 w-5',
+    textSize: 'text-xs',
+    iconSize: 'h-2.5 w-2.5',
+  },
+  normal: {
+    padding: 'p-3 gap-3',
+    thumbnailSize: 'h-12 w-20',
+    avatarSize: 'h-6 w-6',
+    textSize: 'text-sm',
+    iconSize: 'h-3 w-3',
+  },
+  large: {
+    padding: 'p-4 gap-4',
+    thumbnailSize: 'h-16 w-28',
+    avatarSize: 'h-8 w-8',
+    textSize: 'text-base',
+    iconSize: 'h-4 w-4',
+  },
+};
+
 export function BoardListView({ 
   content, 
   onContentClick,
@@ -21,6 +47,7 @@ export function BoardListView({
   visibleFields = ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']
 }: BoardListViewProps) {
   const showField = (field: string) => visibleFields.includes(field);
+  const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
 
   // Group by status
   const groupedByStatus = content.reduce((acc, c) => {
@@ -57,18 +84,17 @@ export function BoardListView({
               const isOverdue = c.deadline && new Date(c.deadline) < new Date() && !['approved', 'paid', 'delivered'].includes(c.status);
               const hasVideo = c.video_url || (c.video_urls && c.video_urls.length > 0);
               const hasRawVideo = c.raw_video_urls && c.raw_video_urls.length > 0;
+              const responsible = c.creator || c.editor;
               
               return (
                 <div
                   key={c.id}
                   onClick={() => onContentClick(c)}
                   className={cn(
-                    "flex items-center gap-4 rounded-lg border bg-card cursor-pointer",
+                    "flex items-center rounded-lg border bg-card cursor-pointer",
                     "hover:bg-muted/50 hover:border-primary/30 transition-all",
                     isOverdue && "border-l-4 border-l-destructive",
-                    cardSize === 'compact' && "p-2 gap-2",
-                    cardSize === 'normal' && "p-3",
-                    cardSize === 'large' && "p-4"
+                    sizeConfig.padding
                   )}
                 >
                   {/* Thumbnail */}
@@ -77,32 +103,23 @@ export function BoardListView({
                       <img 
                         src={c.thumbnail_url} 
                         alt="" 
-                        className={cn(
-                          "rounded object-cover flex-shrink-0",
-                          cardSize === 'large' ? "h-16 w-28" : "h-12 w-20"
-                        )}
+                        className={cn("rounded object-cover flex-shrink-0", sizeConfig.thumbnailSize)}
                       />
                     ) : (
-                      <div className={cn(
-                        "rounded bg-muted flex-shrink-0",
-                        cardSize === 'large' ? "h-16 w-28" : "h-12 w-20"
-                      )} />
+                      <div className={cn("rounded bg-muted flex-shrink-0", sizeConfig.thumbnailSize)} />
                     )
                   )}
 
                   {/* Title & Client */}
                   <div className="flex-1 min-w-0">
                     {showField('title') && (
-                      <h4 className={cn(
-                        "font-medium text-foreground truncate",
-                        cardSize === 'compact' && "text-sm"
-                      )}>
+                      <h4 className={cn("font-medium text-foreground truncate", sizeConfig.textSize)}>
                         {c.title}
                       </h4>
                     )}
                     {showField('client') && c.client?.name && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                        <Building2 className="h-3 w-3" />
+                      <div className={cn("flex items-center gap-1 text-muted-foreground mt-0.5", cardSize === 'compact' ? "text-[10px]" : "text-xs")}>
+                        <Building2 className={sizeConfig.iconSize} />
                         <span className="truncate">{c.client.name}</span>
                       </div>
                     )}
@@ -117,46 +134,44 @@ export function BoardListView({
 
                   {/* Status badge */}
                   {showField('status') && (
-                    <Badge variant="secondary" className={cn("text-xs shrink-0", STATUS_COLORS[c.status])}>
+                    <Badge variant="secondary" className={cn("shrink-0", cardSize === 'compact' ? "text-[10px]" : "text-xs", STATUS_COLORS[c.status])}>
                       {cardSize === 'compact' ? STATUS_LABELS[c.status]?.substring(0, 3) : STATUS_LABELS[c.status]}
                     </Badge>
                   )}
 
-                  {/* Responsible */}
-                  {showField('responsible') && c.creator && (
-                    <div className={cn(
-                      "flex items-center gap-2 text-sm",
-                      cardSize === 'compact' && "hidden md:flex"
-                    )}>
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={c.creator.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs">
-                          {c.creator.full_name?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      {cardSize !== 'compact' && (
-                        <span className="text-muted-foreground hidden lg:inline">
-                          {c.creator.full_name?.split(' ')[0]}
-                        </span>
-                      )}
-                    </div>
+                  {/* Responsible - AVATAR ONLY with tooltip */}
+                  {showField('responsible') && responsible && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-background cursor-pointer")}>
+                          <AvatarImage src={responsible.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
+                            {(responsible.full_name || '?').charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        {responsible.full_name}
+                      </TooltipContent>
+                    </Tooltip>
                   )}
 
                   {/* Deadline */}
                   {showField('deadline') && c.deadline && (
                     <div className={cn(
-                      "hidden sm:flex items-center gap-1 text-sm",
-                      isOverdue ? "text-destructive" : "text-muted-foreground"
+                      "hidden sm:flex items-center gap-1",
+                      cardSize === 'compact' ? "text-[10px]" : "text-xs",
+                      isOverdue ? "text-destructive font-medium" : "text-muted-foreground"
                     )}>
-                      <Clock className="h-3.5 w-3.5" />
+                      <Clock className={sizeConfig.iconSize} />
                       {format(new Date(c.deadline), cardSize === 'compact' ? 'dd/MM' : 'dd MMM', { locale: es })}
                     </div>
                   )}
 
                   {/* Points */}
                   {showField('points') && (
-                    <div className="flex items-center gap-1 text-xs text-amber-500">
-                      <Star className="h-3 w-3 fill-current" />
+                    <div className={cn("flex items-center gap-1 text-amber-500", cardSize === 'compact' ? "text-[10px]" : "text-xs")}>
+                      <Star className={cn(sizeConfig.iconSize, "fill-current")} />
                       <span>100</span>
                     </div>
                   )}
