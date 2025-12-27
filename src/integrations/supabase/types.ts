@@ -936,6 +936,7 @@ export type Database = {
           facebook: string | null
           id: string
           instagram: string | null
+          is_internal_brand: boolean | null
           is_public: boolean | null
           is_vip: boolean | null
           linkedin: string | null
@@ -967,6 +968,7 @@ export type Database = {
           facebook?: string | null
           id?: string
           instagram?: string | null
+          is_internal_brand?: boolean | null
           is_public?: boolean | null
           is_vip?: boolean | null
           linkedin?: string | null
@@ -998,6 +1000,7 @@ export type Database = {
           facebook?: string | null
           id?: string
           instagram?: string | null
+          is_internal_brand?: boolean | null
           is_public?: boolean | null
           is_vip?: boolean | null
           linkedin?: string | null

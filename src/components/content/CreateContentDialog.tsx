@@ -95,30 +95,16 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
   // Detect if client is the organization (ambassador content)
   useEffect(() => {
-    if (clientId && currentOrgId) {
-      // Check if the selected client represents the organization
+    if (clientId) {
       const checkIfOrgClient = async () => {
         const { data: clientData } = await supabase
           .from('clients')
-          .select('id, name, organization_id')
+          .select('id, is_internal_brand')
           .eq('id', clientId)
           .maybeSingle();
         
-        // Also get org name to compare
-        const { data: orgData } = await supabase
-          .from('organizations')
-          .select('id, name')
-          .eq('id', currentOrgId)
-          .maybeSingle();
-        
-        // Client is organization if:
-        // 1. Client ID equals org ID (same entity), OR
-        // 2. Client name matches org name (org registered as client), OR  
-        // 3. Client's organization_id equals client's own ID (self-reference)
-        const isOrgAsClient = 
-          clientData?.id === currentOrgId ||
-          (clientData?.name === orgData?.name) ||
-          (clientData?.id === clientData?.organization_id);
+        // Client is internal brand (organization itself)
+        const isOrgAsClient = clientData?.is_internal_brand === true;
         
         const wasAmbassadorContent = isAmbassadorContent;
         setIsAmbassadorContent(isOrgAsClient);
@@ -140,7 +126,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
       setIsAmbassadorContent(false);
       setOrganizationClientId(null);
     }
-  }, [clientId, currentOrgId]);
+  }, [clientId]);
 
   // Fetch client's packages and products when client changes
   useEffect(() => {
