@@ -629,7 +629,7 @@ export function PlatformUsersManagement() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {ORG_ASSIGNABLE_ROLES.map(role => (
+                  {(["admin", ...ORG_ASSIGNABLE_ROLES] as AppRole[]).filter((r, i, arr) => arr.indexOf(r) === i).map(role => (
                     <SelectItem key={role} value={role}>{ROLE_LABELS[role]}</SelectItem>
                   ))}
                 </SelectContent>
