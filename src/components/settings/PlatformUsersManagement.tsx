@@ -178,31 +178,35 @@ export function PlatformUsersManagement() {
 
     setActionLoading(assignDialog.id);
     try {
-      // Check if already a member
-      const { data: existingMember } = await supabase
+      // First, remove user from ALL previous organizations to avoid duplicates
+      await supabase
         .from('organization_members')
-        .select('id')
-        .eq('organization_id', selectedOrgId)
-        .eq('user_id', assignDialog.id)
-        .maybeSingle();
+        .delete()
+        .eq('user_id', assignDialog.id);
 
-      if (existingMember) {
-        // Update role
-        await supabase
-          .from('organization_members')
-          .update({ role: selectedRole })
-          .eq('id', existingMember.id);
-      } else {
-        // Insert new membership
-        await supabase
-          .from('organization_members')
-          .insert({
-            organization_id: selectedOrgId,
-            user_id: assignDialog.id,
-            role: selectedRole,
-            is_owner: false,
-          });
-      }
+      await supabase
+        .from('organization_member_roles')
+        .delete()
+        .eq('user_id', assignDialog.id);
+
+      // Insert new membership in the selected organization
+      await supabase
+        .from('organization_members')
+        .insert({
+          organization_id: selectedOrgId,
+          user_id: assignDialog.id,
+          role: selectedRole,
+          is_owner: false,
+        });
+
+      // Insert role into organization_member_roles
+      await supabase
+        .from('organization_member_roles')
+        .insert({
+          organization_id: selectedOrgId,
+          user_id: assignDialog.id,
+          role: selectedRole,
+        });
 
       // Update current org in profile
       await supabase
