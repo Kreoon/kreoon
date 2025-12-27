@@ -33,6 +33,11 @@ export interface ContentFormData {
   trafficker_guidelines: string;
   designer_guidelines: string;
   admin_guidelines: string;
+  // Ambassador content fields
+  is_ambassador_content?: boolean;
+  content_type?: 'commercial' | 'ambassador_internal';
+  is_paid?: boolean;
+  reward_type?: 'money' | 'UP';
 }
 
 // ============= PERMISSIONS =============
