@@ -17,7 +17,7 @@ interface AIProviderConfig {
 
 const AI_PROVIDERS: Record<string, AIProviderConfig> = {
   lovable: {
-    url: "https://lovable.dev/api/llm-proxy/chat/completions",
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
     getHeaders: (apiKey: string) => ({
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
