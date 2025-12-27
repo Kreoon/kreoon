@@ -2,16 +2,21 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgOwner } from './useOrgOwner';
 
-interface Ambassador {
+interface AmbassadorWithRole {
   id: string;
   name: string;
+  roles: string[];
 }
 
 interface InternalOrgContentState {
   /** Whether the current content/client is internal organization content */
   isInternalOrgContent: boolean;
-  /** List of users with ambassador badge (only these can be assigned to internal content) */
-  ambassadors: Ambassador[];
+  /** List of ambassadors who also have the creator role */
+  ambassadorCreators: AmbassadorWithRole[];
+  /** List of ambassadors who also have the editor role */
+  ambassadorEditors: AmbassadorWithRole[];
+  /** All ambassadors (for backward compatibility) */
+  ambassadors: AmbassadorWithRole[];
   /** Loading state for ambassador data */
   loading: boolean;
 }
@@ -44,23 +49,28 @@ export type UseInternalOrgContentReturn = InternalOrgContentState & InternalOrgC
  * 
  * RULES:
  * 1. isInternalOrgContent = content.client_id matches organization's internal brand client
- * 2. Only ambassadors can be assigned to internal content
- * 3. Internal content has NO monetary payments (only UP points)
- * 4. Content type is automatically marked as 'ambassador_internal'
+ * 2. Only ambassadors WITH the creator role can be assigned as creators
+ * 3. Only ambassadors WITH the editor role can be assigned as editors
+ * 4. Internal content has NO monetary payments (only UP points)
+ * 5. Content type is automatically marked as 'ambassador_internal'
  */
 export function useInternalOrgContent(clientId?: string | null): UseInternalOrgContentReturn {
   const { currentOrgId } = useOrgOwner();
   const [internalBrandClientId, setInternalBrandClientId] = useState<string | null>(null);
-  const [ambassadors, setAmbassadors] = useState<Ambassador[]>([]);
+  const [ambassadors, setAmbassadors] = useState<AmbassadorWithRole[]>([]);
+  const [ambassadorCreators, setAmbassadorCreators] = useState<AmbassadorWithRole[]>([]);
+  const [ambassadorEditors, setAmbassadorEditors] = useState<AmbassadorWithRole[]>([]);
   const [ambassadorIds, setAmbassadorIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
-  // Fetch internal brand client and ambassadors
+  // Fetch internal brand client and ambassadors with their roles
   useEffect(() => {
     const fetchData = async () => {
       if (!currentOrgId) {
         setInternalBrandClientId(null);
         setAmbassadors([]);
+        setAmbassadorCreators([]);
+        setAmbassadorEditors([]);
         setAmbassadorIds(new Set());
         setLoading(false);
         return;
@@ -89,20 +99,48 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
 
         if (ambassadorBadges?.length) {
           const userIds = ambassadorBadges.map(b => b.user_id);
+          
+          // Fetch profiles
           const { data: profiles } = await supabase
             .from('profiles')
             .select('id, full_name')
             .in('id', userIds);
 
-          const ambassadorList = profiles?.map(p => ({ 
+          // Fetch roles for these ambassadors
+          const { data: memberRoles } = await supabase
+            .from('organization_member_roles')
+            .select('user_id, role')
+            .eq('organization_id', currentOrgId)
+            .in('user_id', userIds);
+
+          // Group roles by user
+          const rolesByUser: Record<string, string[]> = {};
+          memberRoles?.forEach(mr => {
+            if (!rolesByUser[mr.user_id]) {
+              rolesByUser[mr.user_id] = [];
+            }
+            rolesByUser[mr.user_id].push(mr.role);
+          });
+
+          // Build ambassador list with roles
+          const ambassadorList: AmbassadorWithRole[] = profiles?.map(p => ({ 
             id: p.id, 
-            name: p.full_name || 'Sin nombre' 
+            name: p.full_name || 'Sin nombre',
+            roles: rolesByUser[p.id] || []
           })) || [];
 
+          // Filter ambassadors by role
+          const creatorsWithBadge = ambassadorList.filter(a => a.roles.includes('creator'));
+          const editorsWithBadge = ambassadorList.filter(a => a.roles.includes('editor'));
+
           setAmbassadors(ambassadorList);
+          setAmbassadorCreators(creatorsWithBadge);
+          setAmbassadorEditors(editorsWithBadge);
           setAmbassadorIds(new Set(userIds));
         } else {
           setAmbassadors([]);
+          setAmbassadorCreators([]);
+          setAmbassadorEditors([]);
           setAmbassadorIds(new Set());
         }
       } catch (error) {
@@ -161,6 +199,8 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
   return {
     isInternalOrgContent,
     ambassadors,
+    ambassadorCreators,
+    ambassadorEditors,
     loading,
     checkIsInternalOrgContent,
     isAmbassador,

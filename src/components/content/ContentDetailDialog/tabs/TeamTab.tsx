@@ -33,13 +33,15 @@ export function TeamTab({
   // Use centralized hook for internal org content detection
   const { 
     isInternalOrgContent, 
-    ambassadors, 
+    ambassadorCreators,
+    ambassadorEditors,
     loading: ambassadorsLoading,
     isAmbassador 
   } = useInternalOrgContent(formData.client_id || content?.client_id);
 
-  // Convert ambassadors to SelectOption format
-  const ambassadorOptions = ambassadors.map(a => ({ id: a.id, name: a.name }));
+  // Convert to SelectOption format
+  const ambassadorCreatorOptions = ambassadorCreators.map(a => ({ id: a.id, name: a.name }));
+  const ambassadorEditorOptions = ambassadorEditors.map(a => ({ id: a.id, name: a.name }));
 
   useEffect(() => {
     fetchTeamOptions();
@@ -96,14 +98,14 @@ export function TeamTab({
     return format(new Date(date), "d MMM yyyy", { locale: es });
   };
 
-  // CRITICAL: Use ambassadors list ONLY for internal org content, regular creators/editors otherwise
+  // CRITICAL: Use ambassador creators ONLY for internal org content, regular creators otherwise
   const availableCreators = isInternalOrgContent 
-    ? ambassadorOptions
+    ? ambassadorCreatorOptions
     : creators;
   
-  // CRITICAL: For internal content, editors must also be ambassadors
+  // CRITICAL: For internal content, editors must also be ambassadors WITH editor role
   const availableEditors = isInternalOrgContent 
-    ? ambassadorOptions
+    ? ambassadorEditorOptions
     : editors;
     
   const getCreatorName = () => availableCreators.find(c => c.id === formData.creator_id)?.name;
