@@ -92,7 +92,7 @@ export default function FeedPage() {
         workQuery = workQuery.in('creator_id', followingIds);
       }
 
-      // Fetch portfolio posts
+      // Fetch portfolio posts (without FK hint - will join manually)
       let postsQuery = supabase
         .from('portfolio_posts')
         .select(`
@@ -105,8 +105,7 @@ export default function FeedPage() {
           views_count,
           likes_count,
           comments_count,
-          created_at,
-          user:profiles!portfolio_posts_user_id_fkey(id, full_name, avatar_url)
+          created_at
         `)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -119,6 +118,17 @@ export default function FeedPage() {
         workQuery,
         postsQuery,
       ]);
+
+      // Fetch user profiles for posts
+      const postUserIds = [...new Set((postsData || []).map(p => p.user_id))];
+      const { data: profilesData } = postUserIds.length > 0 
+        ? await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .in('id', postUserIds)
+        : { data: [] };
+      
+      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
 
       // Transform and merge
       const workItems: FeedItem[] = (workData || []).map(w => ({
@@ -139,22 +149,25 @@ export default function FeedPage() {
         is_saved: isSaved('work_video', w.id),
       }));
 
-      const postItems: FeedItem[] = (postsData || []).map(p => ({
-        id: p.id,
-        type: 'post' as const,
-        caption: p.caption || undefined,
-        media_url: p.media_url,
-        media_type: p.media_type as 'image' | 'video',
-        thumbnail_url: p.thumbnail_url || undefined,
-        user_id: p.user_id,
-        user_name: (p.user as any)?.full_name,
-        user_avatar: (p.user as any)?.avatar_url,
-        views_count: p.views_count || 0,
-        likes_count: p.likes_count || 0,
-        comments_count: p.comments_count || 0,
-        created_at: p.created_at,
-        is_saved: isSaved('post', p.id),
-      }));
+      const postItems: FeedItem[] = (postsData || []).map(p => {
+        const profile = profilesMap.get(p.user_id);
+        return {
+          id: p.id,
+          type: 'post' as const,
+          caption: p.caption || undefined,
+          media_url: p.media_url,
+          media_type: p.media_type as 'image' | 'video',
+          thumbnail_url: p.thumbnail_url || undefined,
+          user_id: p.user_id,
+          user_name: profile?.full_name,
+          user_avatar: profile?.avatar_url,
+          views_count: p.views_count || 0,
+          likes_count: p.likes_count || 0,
+          comments_count: p.comments_count || 0,
+          created_at: p.created_at,
+          is_saved: isSaved('post', p.id),
+        };
+      });
 
       // Merge and sort by date
       const merged = [...workItems, ...postItems].sort(
