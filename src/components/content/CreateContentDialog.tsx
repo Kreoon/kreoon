@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp, Medal, Info, Sparkles } from "lucide-react";
 import { ScriptGenerator } from "./ScriptGenerator";
-import { useOrgOwner } from "@/hooks/useOrgOwner";
+import { useInternalBrandClient } from "@/hooks/useInternalBrandClient";
 
 interface CreateContentDialogProps {
   open: boolean;
@@ -44,12 +44,9 @@ interface Product {
   brief_url: string | null;
 }
 
-// Special ID to represent "Organization as client" (internal brand)
-const ORG_AS_CLIENT_ID = '__INTERNAL_BRAND__';
-
 export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateContentDialogProps) {
   const { toast } = useToast();
-  const { currentOrgId, currentOrgName } = useOrgOwner();
+  const { internalBrandClient, isInternalBrand, currentOrgId } = useInternalBrandClient();
   const [loading, setLoading] = useState(false);
   
   // Form state
@@ -99,12 +96,11 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
   // Detect if client is the organization (ambassador content)
   useEffect(() => {
-    // Special ID means user selected org as internal brand
-    const isOrgAsClient = clientId === ORG_AS_CLIENT_ID;
+    const isOrgAsClient = isInternalBrand(clientId);
 
     const wasAmbassadorContent = isAmbassadorContent;
     setIsAmbassadorContent(isOrgAsClient);
-    setOrganizationClientId(isOrgAsClient ? currentOrgId : null);
+    setOrganizationClientId(isOrgAsClient ? clientId : null);
 
     if (isOrgAsClient !== wasAmbassadorContent) {
       setCreatorId("");
@@ -114,7 +110,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
       setCreatorPayment("");
       setEditorPayment("");
     }
-  }, [clientId, currentOrgId]);
+  }, [clientId, internalBrandClient]);
 
   // Fetch client's packages and products when client changes
   useEffect(() => {
@@ -180,16 +176,23 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
     // Fetch clients
     const { data: clientsData } = await supabase
       .from('clients')
-      .select('id, name')
+      .select('id, name, is_internal_brand')
       .order('name');
     
-    // Add organization as first option for internal brand / ambassador content
-    const orgOption: SelectOption = {
-      id: ORG_AS_CLIENT_ID,
-      name: currentOrgName ? `🏅 ${currentOrgName} (Marca Interna)` : '🏅 Marca Interna',
-      is_internal_brand: true
-    };
-    setClients([orgOption, ...(clientsData || [])]);
+    // Mark internal brand client for special display
+    const clientsWithFlags = (clientsData || []).map(c => ({
+      ...c,
+      is_internal_brand: c.is_internal_brand === true
+    }));
+    
+    // Sort to put internal brand first
+    clientsWithFlags.sort((a, b) => {
+      if (a.is_internal_brand && !b.is_internal_brand) return -1;
+      if (!a.is_internal_brand && b.is_internal_brand) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    
+    setClients(clientsWithFlags);
 
     // Fetch creators (regular)
     const { data: creatorRoles } = await supabase
@@ -413,9 +416,9 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
                     {clients.map(c => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.is_internal_brand ? (
-                          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium">
-                            {c.name}
-                          </div>
+                          <span className="text-amber-600 dark:text-amber-400 font-medium">
+                            🏅 {c.name} (Marca Interna)
+                          </span>
                         ) : (
                           c.name
                         )}
