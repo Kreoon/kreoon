@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import type { AppRole } from '@/types/database';
 import { OrganizationProfileEditor } from './OrganizationProfileEditor';
+import { EditorRandomizerSettings } from './EditorRandomizerSettings';
 
 const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Administrador',
@@ -454,6 +455,9 @@ export function OrganizationManagement() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Editor Randomizer Settings */}
+            <EditorRandomizerSettings />
           </TabsContent>
         </Tabs>
       )}
