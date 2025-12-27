@@ -161,13 +161,15 @@ const Creators = () => {
     if (!currentOrgId) return;
 
     const newStatus = !talent.is_ambassador;
+    const newLevel = newStatus ? 'bronze' : 'none';
 
     // Optimistic update
     setTalents(prev => prev.map(t =>
-      t.id === talent.id ? { ...t, is_ambassador: newStatus } : t
+      t.id === talent.id ? { ...t, is_ambassador: newStatus, ambassador_level: newLevel as any } : t
     ));
 
     try {
+      // Update profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -178,6 +180,16 @@ const Creators = () => {
 
       if (profileError) throw profileError;
 
+      // Update organization_members ambassador_level
+      const { error: memberError } = await supabase
+        .from('organization_members')
+        .update({ ambassador_level: newLevel })
+        .eq('organization_id', currentOrgId)
+        .eq('user_id', talent.id);
+
+      if (memberError) throw memberError;
+
+      // Update organization_member_roles
       if (newStatus) {
         const { error: roleError } = await supabase
           .from('organization_member_roles')
@@ -208,7 +220,7 @@ const Creators = () => {
     } catch (error) {
       console.error('Error toggling ambassador:', error);
       setTalents(prev => prev.map(t =>
-        t.id === talent.id ? { ...t, is_ambassador: !newStatus } : t
+        t.id === talent.id ? { ...t, is_ambassador: !newStatus, ambassador_level: talent.ambassador_level } : t
       ));
       toast({
         title: "Error",

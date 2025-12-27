@@ -1,8 +1,9 @@
 import { useState, type MouseEvent } from "react";
-import { User, Video, Star, Zap, Clock, TrendingUp, AlertTriangle, Crown, Shield, Sparkles } from "lucide-react";
+import { User, Video, Star, Zap, Clock, TrendingUp, AlertTriangle, Crown, Shield, Sparkles, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 export interface TalentProfile {
@@ -242,17 +243,48 @@ export function TalentCard({ talent, onClick, onAmbassadorToggle, isAdmin, showK
             )}
           </div>
 
-          {/* AI Recommended indicator */}
-          {level === 'elite' && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 text-amber-500">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>Recomendado por IA</TooltipContent>
-            </Tooltip>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Ambassador quick toggle for admins */}
+            {isAdmin && onAmbassadorToggle && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAmbassadorToggle(e);
+                    }}
+                    className={cn(
+                      "flex items-center justify-center h-6 w-6 rounded-md border transition-all cursor-pointer",
+                      talent.is_ambassador
+                        ? "bg-amber-500 border-amber-500 text-white"
+                        : "bg-muted/50 border-border hover:border-amber-500/50 hover:bg-amber-500/10"
+                    )}
+                  >
+                    {talent.is_ambassador ? (
+                      <Star className="h-3.5 w-3.5 fill-current" />
+                    ) : (
+                      <Star className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {talent.is_ambassador ? "Quitar embajador" : "Hacer embajador"}
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* AI Recommended indicator */}
+            {level === 'elite' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-amber-500">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>Recomendado por IA</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
       </div>
     </TooltipProvider>
