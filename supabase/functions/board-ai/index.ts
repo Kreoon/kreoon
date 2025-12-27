@@ -32,12 +32,11 @@ interface AIProviderConfig {
 
 const AI_PROVIDERS: Record<string, AIProviderConfig> = {
   lovable: {
-    url: "https://openrouter.ai/api/v1/chat/completions",
-    getHeaders: (_apiKey: string) => ({
-      "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY") || ""}`,
+    // Lovable AI Gateway (compatible with OpenAI chat.completions)
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    getHeaders: (apiKey: string) => ({
+      "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://lovable.dev",
-      "X-Title": "Lovable Board AI",
     }),
     getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
       const body: any = {
@@ -69,15 +68,19 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
       "Content-Type": "application/json",
     }),
     getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
+      const isNewOpenAIModel = model.startsWith("gpt-5") || model.startsWith("o3") || model.startsWith("o4");
+
       const body: any = {
         model,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 2000,
-        temperature: 0.7,
+        ...(isNewOpenAIModel
+          ? { max_completion_tokens: 2000 }
+          : { max_tokens: 2000, temperature: 0.7 }),
       };
+
       if (tools) {
         body.tools = tools;
         body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
@@ -107,49 +110,79 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
 
 // Get organization AI configuration
 async function getOrgAIConfig(supabase: any, organizationId: string) {
-  // First check organization-specific defaults
+  // Defaults
   const { data: defaults } = await supabase
     .from("organization_ai_defaults")
     .select("*")
     .eq("organization_id", organizationId)
     .maybeSingle();
 
-  // Get provider for tablero module (or default)
   let provider = defaults?.default_provider || "lovable";
   let model = defaults?.default_model || "google/gemini-2.5-flash";
 
-  // Check if there's a specific config for tablero module
-  if (defaults?.sistema_up_provider) {
-    provider = defaults.sistema_up_provider;
-  }
-  if (defaults?.sistema_up_model) {
-    model = defaults.sistema_up_model;
-  }
+  // (No existe módulo 'tablero' en defaults todavía; usamos default_provider/default_model)
 
-  // Get API key based on provider
-  let apiKey = "";
-  
-  if (provider === "lovable") {
-    // Lovable uses OpenRouter - no user API key needed
-    apiKey = "";
-  } else if (provider !== "lovable") {
-    const { data: providerConfig } = await supabase
-      .from("organization_ai_providers")
-      .select("api_key_encrypted")
-      .eq("organization_id", organizationId)
-      .eq("provider_key", provider)
-      .maybeSingle();
-    
-    if (providerConfig?.api_key_encrypted) {
-      apiKey = providerConfig.api_key_encrypted;
-    } else {
-      // Fallback to lovable if no API key
-      provider = "lovable";
-      model = "google/gemini-2.5-flash";
+  // Preferir SIEMPRE un proveedor configurado por la organización (con API key)
+  type OrgProviderRow = {
+    provider_key: string;
+    api_key_encrypted: string | null;
+    available_models: string[] | null;
+  };
+
+  const { data: enabledProviders } = await supabase
+    .from("organization_ai_providers")
+    .select("provider_key, api_key_encrypted, available_models")
+    .eq("organization_id", organizationId)
+    .eq("is_enabled", true);
+
+  const providerByKey = new Map<string, OrgProviderRow>(
+    ((enabledProviders as OrgProviderRow[] | null) || []).map((p) => [p.provider_key, p])
+  );
+
+  const hasOrgKey = (key: string) => {
+    const p = providerByKey.get(key);
+    return !!p?.api_key_encrypted;
+  };
+
+  const pickFirstConfigured = (): { provider: string; model: string; apiKey: string } | null => {
+    // Orden de preferencia (ajustable después): OpenAI > Gemini
+    const preferred = ["openai", "gemini"];
+    for (const key of preferred) {
+      if (!hasOrgKey(key)) continue;
+      const p = providerByKey.get(key)!;
+      const fallbackModel = Array.isArray(p.available_models) && p.available_models.length
+        ? p.available_models[0]
+        : key === "openai"
+          ? "gpt-4o"
+          : "gemini-2.5-flash";
+
+      return { provider: key, model: fallbackModel, apiKey: p.api_key_encrypted! };
     }
+    return null;
+  };
+
+  // Si el default es lovable o no hay API key para el provider seleccionado, elegir uno configurado
+  if (provider === "lovable" || !hasOrgKey(provider)) {
+    const picked = pickFirstConfigured();
+    if (picked) return picked;
   }
 
-  return { provider, model, apiKey };
+  // Si el provider seleccionado es un provider externo con API key, usarlo
+  if (provider !== "lovable") {
+    const p = providerByKey.get(provider);
+    if (p?.api_key_encrypted) {
+      return { provider, model, apiKey: p.api_key_encrypted };
+    }
+
+    // Sin API key => fallback a uno configurado (si existe)
+    const picked = pickFirstConfigured();
+    if (picked) return picked;
+  }
+
+  // Si llegamos aquí, no hay ningún proveedor externo configurado.
+  throw new Error(
+    "IA no configurada para esta organización. Activa un proveedor (OpenAI o Gemini) y guarda su API key en Configuración → IA & Modelos."
+  );
 }
 
 // Log AI usage
@@ -187,8 +220,8 @@ async function callAI(
   userPrompt: string,
   tools?: any[]
 ): Promise<any> {
-  const url = config.url.includes("gemini") 
-    ? `${config.url}/${model}:generateContent` 
+  const url = config.url.includes("generativelanguage")
+    ? `${config.url}/${model}:generateContent`
     : config.url;
 
   const response = await fetch(url, {
@@ -200,7 +233,7 @@ async function callAI(
   if (!response.ok) {
     const errorText = await response.text();
     console.error("AI API Error:", response.status, errorText);
-    throw new Error(`AI API Error: ${response.status}`);
+    throw new Error(`AI API Error: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
