@@ -166,7 +166,7 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
   };
 
   const getConversationName = (conv: ChatConversation) => {
-    if (conv.chat_type === 'ai_assistant') return 'Asistente IA';
+    if (conv.chat_type === 'ai_assistant') return conv.name || 'Asistente IA';
     if (conv.is_group) return conv.name || 'Grupo';
     const otherParticipant = conv.participants?.find(p => p.user_id !== user?.id);
     return otherParticipant?.profile?.full_name || 'Chat';
