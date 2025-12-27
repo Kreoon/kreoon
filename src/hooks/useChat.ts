@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useChatRBAC } from '@/hooks/useChatRBAC';
 
 export interface ChatMessage {
   id: string;
@@ -10,6 +11,11 @@ export interface ChatMessage {
   content: string;
   created_at: string;
   read_at?: string | null;
+  delivered_at?: string | null;
+  attachment_url?: string | null;
+  attachment_type?: string | null;
+  attachment_name?: string | null;
+  attachment_size?: number | null;
   sender?: {
     full_name: string;
     avatar_url: string | null;
@@ -20,6 +26,8 @@ export interface ChatConversation {
   id: string;
   name: string | null;
   is_group: boolean;
+  chat_type: 'direct' | 'group' | 'ai_assistant';
+  organization_id: string | null;
   created_by: string | null;
   content_id: string | null;
   created_at: string;
@@ -42,39 +50,30 @@ export interface ChatUser {
   roles: string[];
   is_online?: boolean;
   current_page?: string;
+  can_chat?: boolean;
+  can_add_to_group?: boolean;
 }
 
 export function useChat() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { visibleUsers, canChatWith, canAddToGroup, userRole } = useChatRBAC();
+  
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<ChatConversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [availableUsers, setAvailableUsers] = useState<ChatUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [orgMemberIds, setOrgMemberIds] = useState<string[]>([]);
 
-  // Fetch user roles from organization_members
-  useEffect(() => {
-    if (!user?.id || !profile?.current_organization_id) return;
-    const fetchRoles = async () => {
-      const { data } = await supabase
-        .from('organization_members')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('organization_id', profile.current_organization_id)
-        .maybeSingle();
-      setUserRoles(data?.role ? [data.role] : []);
-    };
-    fetchRoles();
-  }, [user?.id, profile?.current_organization_id]);
+  const orgId = profile?.current_organization_id;
+  const isAdmin = userRole === 'admin';
 
   // Fetch organization members for chat filtering
   useEffect(() => {
     const fetchOrgMembers = async () => {
-      if (!profile?.current_organization_id) {
+      if (!orgId) {
         setOrgMemberIds([]);
         return;
       }
@@ -82,7 +81,7 @@ export function useChat() {
       const { data } = await supabase
         .from('organization_members')
         .select('user_id')
-        .eq('organization_id', profile.current_organization_id);
+        .eq('organization_id', orgId);
       
       if (data) {
         setOrgMemberIds(data.map(m => m.user_id));
@@ -90,10 +89,9 @@ export function useChat() {
     };
     
     fetchOrgMembers();
-  }, [profile?.current_organization_id]);
+  }, [orgId]);
 
-  const isAdmin = userRoles.includes('admin');
-  // Fetch all conversations for the current user
+  // Fetch all conversations for the current user (filtered by org)
   const fetchConversations = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
@@ -112,11 +110,18 @@ export function useChat() {
 
       const conversationIds = participations.map(p => p.conversation_id);
 
-      const { data: convs } = await supabase
+      let query = supabase
         .from('chat_conversations')
         .select('*')
         .in('id', conversationIds)
         .order('updated_at', { ascending: false });
+
+      // Filter by org if user has one
+      if (orgId) {
+        query = query.or(`organization_id.eq.${orgId},organization_id.is.null`);
+      }
+
+      const { data: convs } = await query;
 
       if (!convs) {
         setConversations([]);
@@ -146,13 +151,30 @@ export function useChat() {
           .limit(1)
           .maybeSingle();
 
+        // Count unread messages
+        const { data: participant } = await supabase
+          .from('chat_participants')
+          .select('last_read_at')
+          .eq('conversation_id', conv.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const { count: unreadCount } = await supabase
+          .from('chat_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', conv.id)
+          .neq('sender_id', user.id)
+          .gt('created_at', participant?.last_read_at || '1970-01-01');
+
         return {
           ...conv,
+          chat_type: conv.chat_type || 'direct',
           participants: participants?.map(p => ({
             user_id: p.user_id,
             profile: profiles?.find(pr => pr.id === p.user_id)
           })),
-          last_message: lastMessage || undefined
+          last_message: lastMessage || undefined,
+          unread_count: unreadCount || 0
         };
       }));
 
@@ -162,7 +184,7 @@ export function useChat() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, orgId]);
 
   // Fetch messages for active conversation
   const fetchMessages = useCallback(async (conversationId: string) => {
@@ -188,15 +210,21 @@ export function useChat() {
         }));
 
         setMessages(messagesWithSenders);
+
+        // Mark messages as read
+        await supabase.rpc('mark_messages_read', {
+          _conversation_id: conversationId,
+          _user_id: user?.id
+        });
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
       setLoadingMessages(false);
     }
-  }, []);
+  }, [user?.id]);
 
-  // Fetch available users to chat with (filtered by organization)
+  // Fetch available users to chat with (filtered by RBAC)
   const fetchAvailableUsers = useCallback(async () => {
     if (!user?.id) return;
 
@@ -206,7 +234,7 @@ export function useChat() {
         .select('id, full_name, avatar_url')
         .neq('id', user.id);
       
-      // Filter by organization members if we have org member IDs
+      // Filter by organization members
       if (orgMemberIds.length > 0) {
         profilesQuery = profilesQuery.in('id', orgMemberIds);
       }
@@ -228,22 +256,37 @@ export function useChat() {
       const usersWithRoles = allProfiles.map(profile => {
         const userRoles = allRoles?.filter(r => r.user_id === profile.id).map(r => r.role) || [];
         const presence = presenceData?.find(p => p.user_id === profile.id);
+        const visibleUser = visibleUsers.find(v => v.user_id === profile.id);
+        
         return {
           ...profile,
           roles: userRoles,
           is_online: presence?.is_online || false,
-          current_page: presence?.current_page
+          current_page: presence?.current_page,
+          can_chat: visibleUser?.can_chat ?? canChatWith(profile.id),
+          can_add_to_group: visibleUser?.can_add_to_group ?? canAddToGroup(profile.id)
         };
       });
 
-      setAvailableUsers(usersWithRoles);
+      // Filter to only show users that can be seen in list
+      const filteredUsers = usersWithRoles.filter(u => u.can_chat);
+
+      setAvailableUsers(filteredUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
     }
-  }, [user?.id, orgMemberIds]);
+  }, [user?.id, orgMemberIds, visibleUsers, canChatWith, canAddToGroup]);
 
-  // Send a message
-  const sendMessage = useCallback(async (content: string) => {
+  // Send a message with optional attachment
+  const sendMessage = useCallback(async (
+    content: string,
+    attachment?: {
+      url: string;
+      type: string;
+      name: string;
+      size: number;
+    }
+  ) => {
     if (!user?.id || !activeConversation) return;
 
     try {
@@ -252,11 +295,15 @@ export function useChat() {
         .insert({
           conversation_id: activeConversation.id,
           sender_id: user.id,
-          content
+          content,
+          attachment_url: attachment?.url || null,
+          attachment_type: attachment?.type || null,
+          attachment_name: attachment?.name || null,
+          attachment_size: attachment?.size || null
         });
 
       if (error) throw error;
-    } catch (error) {
+    } catch (err) {
       toast({
         title: 'Error',
         description: 'No se pudo enviar el mensaje',
@@ -265,48 +312,92 @@ export function useChat() {
     }
   }, [user?.id, activeConversation, toast]);
 
-  // Start a new conversation
-  const startConversation = useCallback(async (participantIds: string[], name?: string, isGroup = false) => {
+  // Start a new conversation (with org context)
+  const startConversation = useCallback(async (
+    participantIds: string[], 
+    name?: string, 
+    isGroup = false,
+    chatType: 'direct' | 'group' | 'ai_assistant' = isGroup ? 'group' : 'direct'
+  ) => {
     if (!user?.id) return null;
 
-    try {
-      // For 1-on-1 chats, check if conversation already exists
-      if (!isGroup && participantIds.length === 1) {
-        const existingConv = conversations.find(c => 
-          !c.is_group && 
-          c.participants?.length === 2 &&
-          c.participants?.some(p => p.user_id === participantIds[0])
-        );
-        if (existingConv) {
-          setActiveConversation(existingConv);
-          return existingConv;
-        }
+    // Validate RBAC for 1:1 chats
+    if (!isGroup && participantIds.length === 1) {
+      if (!canChatWith(participantIds[0])) {
+        toast({
+          title: 'No permitido',
+          description: 'No tienes permiso para chatear con este usuario',
+          variant: 'destructive'
+        });
+        return null;
       }
 
-      // Use the security definer function to create conversation atomically
-      const { data: newConvId, error: rpcError } = await supabase
-        .rpc('create_chat_conversation', {
-          participant_ids: participantIds,
-          _name: isGroup ? name : null,
-          _is_group: isGroup
+      // Check if conversation already exists
+      const existingConv = conversations.find(c => 
+        !c.is_group && 
+        c.participants?.length === 2 &&
+        c.participants?.some(p => p.user_id === participantIds[0])
+      );
+      if (existingConv) {
+        setActiveConversation(existingConv);
+        return existingConv;
+      }
+    }
+
+    // Validate RBAC for groups
+    if (isGroup) {
+      const invalidUsers = participantIds.filter(id => !canAddToGroup(id));
+      if (invalidUsers.length > 0) {
+        toast({
+          title: 'No permitido',
+          description: 'Algunos usuarios no pueden ser agregados a grupos',
+          variant: 'destructive'
         });
+        return null;
+      }
+    }
 
-      if (rpcError) throw rpcError;
-
-      // Fetch the newly created conversation
-      const { data: newConv, error: fetchError } = await supabase
+    try {
+      // Create conversation with org context
+      const { data: newConv, error: convError } = await supabase
         .from('chat_conversations')
-        .select('*')
-        .eq('id', newConvId)
+        .insert({
+          name: isGroup ? name : null,
+          is_group: isGroup,
+          chat_type: chatType,
+          organization_id: orgId,
+          created_by: user.id
+        })
+        .select()
         .single();
 
-      if (fetchError) throw fetchError;
+      if (convError) throw convError;
+
+      // Add creator as participant
+      await supabase
+        .from('chat_participants')
+        .insert({
+          conversation_id: newConv.id,
+          user_id: user.id
+        });
+
+      // Add other participants
+      for (const participantId of participantIds) {
+        await supabase
+          .from('chat_participants')
+          .insert({
+            conversation_id: newConv.id,
+            user_id: participantId
+          });
+      }
 
       await fetchConversations();
       
-      // Set the new conversation as active
-      const fullConv = conversations.find(c => c.id === newConvId) || newConv;
-      setActiveConversation(fullConv);
+      const fullConv = conversations.find(c => c.id === newConv.id) || {
+        ...newConv,
+        chat_type: chatType
+      };
+      setActiveConversation(fullConv as ChatConversation);
       
       return newConv;
     } catch (error) {
@@ -318,7 +409,7 @@ export function useChat() {
       });
       return null;
     }
-  }, [user?.id, conversations, fetchConversations, toast]);
+  }, [user?.id, orgId, conversations, fetchConversations, toast, canChatWith, canAddToGroup]);
 
   // Subscribe to new messages
   useEffect(() => {
@@ -345,6 +436,41 @@ export function useChat() {
             .single();
 
           setMessages(prev => [...prev, { ...newMessage, sender: profile || undefined }]);
+
+          // Mark as delivered if not from current user
+          if (newMessage.sender_id !== user?.id) {
+            await supabase.rpc('mark_message_delivered', { _message_id: newMessage.id });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeConversation, user?.id]);
+
+  // Subscribe to read receipt updates
+  useEffect(() => {
+    if (!activeConversation) return;
+
+    const channel = supabase
+      .channel(`read-receipts-${activeConversation.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `conversation_id=eq.${activeConversation.id}`
+        },
+        (payload) => {
+          const updatedMessage = payload.new as ChatMessage;
+          setMessages(prev => prev.map(msg => 
+            msg.id === updatedMessage.id 
+              ? { ...msg, read_at: updatedMessage.read_at, delivered_at: updatedMessage.delivered_at }
+              : msg
+          ));
         }
       )
       .subscribe();
@@ -381,19 +507,6 @@ export function useChat() {
     }
 
     try {
-      // Delete messages first
-      await supabase
-        .from('chat_messages')
-        .delete()
-        .eq('conversation_id', conversationId);
-
-      // Delete participants
-      await supabase
-        .from('chat_participants')
-        .delete()
-        .eq('conversation_id', conversationId);
-
-      // Delete conversation
       const { error } = await supabase
         .from('chat_conversations')
         .delete()
@@ -401,7 +514,6 @@ export function useChat() {
 
       if (error) throw error;
 
-      // Refresh conversations
       await fetchConversations();
       
       if (activeConversation?.id === conversationId) {
@@ -425,36 +537,6 @@ export function useChat() {
     }
   }, [isAdmin, activeConversation, fetchConversations, toast]);
 
-  // Subscribe to read receipt updates
-  useEffect(() => {
-    if (!activeConversation) return;
-
-    const channel = supabase
-      .channel(`read-receipts-${activeConversation.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `conversation_id=eq.${activeConversation.id}`
-        },
-        (payload) => {
-          const updatedMessage = payload.new as ChatMessage;
-          setMessages(prev => prev.map(msg => 
-            msg.id === updatedMessage.id 
-              ? { ...msg, read_at: updatedMessage.read_at }
-              : msg
-          ));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [activeConversation]);
-
   return {
     conversations,
     activeConversation,
@@ -468,6 +550,7 @@ export function useChat() {
     fetchConversations,
     fetchAvailableUsers,
     deleteConversation,
-    isAdmin
+    isAdmin,
+    userRole
   };
 }

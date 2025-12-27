@@ -56,6 +56,145 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_assistant_config: {
+        Row: {
+          assistant_name: string
+          created_at: string
+          id: string
+          is_enabled: boolean
+          model: string
+          organization_id: string
+          provider: string
+          system_prompt: string | null
+          tone: string | null
+          updated_at: string
+        }
+        Insert: {
+          assistant_name?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          model?: string
+          organization_id: string
+          provider?: string
+          system_prompt?: string | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assistant_name?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          model?: string
+          organization_id?: string
+          provider?: string
+          system_prompt?: string | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_assistant_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_assistant_knowledge: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          knowledge_type: string
+          metadata: Json | null
+          organization_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          knowledge_type: string
+          metadata?: Json | null
+          organization_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          knowledge_type?: string
+          metadata?: Json | null
+          organization_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_assistant_knowledge_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_assistant_logs: {
+        Row: {
+          assistant_response: string
+          conversation_id: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          tokens_used: number | null
+          user_id: string
+          user_message: string
+        }
+        Insert: {
+          assistant_response: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          tokens_used?: number | null
+          user_id: string
+          user_message: string
+        }
+        Update: {
+          assistant_response?: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          tokens_used?: number | null
+          user_id?: string
+          user_message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_assistant_logs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_assistant_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_usage_logs: {
         Row: {
           action: string
@@ -704,30 +843,36 @@ export type Database = {
       }
       chat_conversations: {
         Row: {
+          chat_type: Database["public"]["Enums"]["chat_type"] | null
           content_id: string | null
           created_at: string
           created_by: string | null
           id: string
           is_group: boolean
           name: string | null
+          organization_id: string | null
           updated_at: string
         }
         Insert: {
+          chat_type?: Database["public"]["Enums"]["chat_type"] | null
           content_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
           is_group?: boolean
           name?: string | null
+          organization_id?: string | null
           updated_at?: string
         }
         Update: {
+          chat_type?: Database["public"]["Enums"]["chat_type"] | null
           content_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
           is_group?: boolean
           name?: string | null
+          organization_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -738,29 +883,80 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chat_conversations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_message_reads: {
+        Row: {
+          id: string
+          message_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
         ]
       }
       chat_messages: {
         Row: {
+          attachment_name: string | null
+          attachment_size: number | null
+          attachment_type: string | null
+          attachment_url: string | null
           content: string
           conversation_id: string
           created_at: string
+          delivered_at: string | null
           id: string
           read_at: string | null
           sender_id: string
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           content: string
           conversation_id: string
           created_at?: string
+          delivered_at?: string | null
           id?: string
           read_at?: string | null
           sender_id: string
         }
         Update: {
+          attachment_name?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           content?: string
           conversation_id?: string
           created_at?: string
+          delivered_at?: string | null
           id?: string
           read_at?: string | null
           sender_id?: string
@@ -800,6 +996,79 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "chat_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_rbac_rules: {
+        Row: {
+          can_add_to_group: boolean
+          can_chat: boolean
+          can_see_in_list: boolean
+          created_at: string
+          id: string
+          organization_id: string
+          source_role: string
+          target_role: string
+          updated_at: string
+        }
+        Insert: {
+          can_add_to_group?: boolean
+          can_chat?: boolean
+          can_see_in_list?: boolean
+          created_at?: string
+          id?: string
+          organization_id: string
+          source_role: string
+          target_role: string
+          updated_at?: string
+        }
+        Update: {
+          can_add_to_group?: boolean
+          can_chat?: boolean
+          can_see_in_list?: boolean
+          created_at?: string
+          id?: string
+          organization_id?: string
+          source_role?: string
+          target_role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_rbac_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_typing_indicators: {
+        Row: {
+          conversation_id: string
+          id: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_typing_indicators_conversation_id_fkey"
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "chat_conversations"
@@ -2016,6 +2285,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          channel_email: boolean
+          channel_in_app: boolean
+          channel_push: boolean
+          created_at: string
+          event_type: string
+          id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel_email?: boolean
+          channel_in_app?: boolean
+          channel_push?: boolean
+          created_at?: string
+          event_type: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel_email?: boolean
+          channel_in_app?: boolean
+          channel_push?: boolean
+          created_at?: string
+          event_type?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -4313,6 +4623,39 @@ export type Database = {
           },
         ]
       }
+      user_notification_settings: {
+        Row: {
+          channel_email: boolean | null
+          channel_in_app: boolean | null
+          channel_push: boolean | null
+          created_at: string
+          event_type: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_email?: boolean | null
+          channel_in_app?: boolean | null
+          channel_push?: boolean | null
+          created_at?: string
+          event_type: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_email?: boolean | null
+          channel_in_app?: boolean | null
+          channel_push?: boolean | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_points: {
         Row: {
           consecutive_on_time: number
@@ -4520,6 +4863,14 @@ export type Database = {
         Args: { points: number }
         Returns: Database["public"]["Enums"]["up_level"]
       }
+      can_chat_with_user: {
+        Args: {
+          _org_id: string
+          _source_user_id: string
+          _target_user_id: string
+        }
+        Returns: boolean
+      }
       can_move_content_status: {
         Args: {
           _content_id: string
@@ -4565,6 +4916,10 @@ export type Database = {
       create_chat_conversation: {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
         Returns: string
+      }
+      create_default_chat_rbac_rules: {
+        Args: { _org_id: string }
+        Returns: undefined
       }
       create_default_script_permissions: {
         Args: { org_id: string }
@@ -4644,6 +4999,14 @@ export type Database = {
           quality_score: number
           recommendation_score: number
           reliability_score: number
+        }[]
+      }
+      get_chat_visible_users: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: {
+          can_add_to_group: boolean
+          can_chat: boolean
+          user_id: string
         }[]
       }
       get_company_followers_count: {
@@ -4787,6 +5150,14 @@ export type Database = {
         }
         Returns: string
       }
+      mark_message_delivered: {
+        Args: { _message_id: string }
+        Returns: undefined
+      }
+      mark_messages_read: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: undefined
+      }
       register_ai_module: {
         Args: {
           _description?: string
@@ -4843,6 +5214,7 @@ export type Database = {
         | "client"
         | "ambassador"
         | "strategist"
+      chat_type: "direct" | "group" | "ai_assistant"
       content_status:
         | "draft"
         | "script_pending"
@@ -5033,6 +5405,7 @@ export const Constants = {
         "ambassador",
         "strategist",
       ],
+      chat_type: ["direct", "group", "ai_assistant"],
       content_status: [
         "draft",
         "script_pending",
