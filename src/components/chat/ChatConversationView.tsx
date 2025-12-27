@@ -468,18 +468,6 @@ export function ChatConversationView({
                             >
                               Tu navegador no soporta videos HTML5.
                             </video>
-                            <a 
-                              href={msg.attachment_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={cn(
-                                "flex items-center gap-1.5 mt-1 text-xs",
-                                isOwn ? "text-primary-foreground/70 hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                              )}
-                            >
-                              <Paperclip className="h-3 w-3" />
-                              <span className="truncate max-w-[180px]">{msg.attachment_name || 'Video'}</span>
-                            </a>
                           </div>
                         ) : msg.attachment_url && msg.attachment_type === 'audio' ? (
                           <div className="mt-2 w-full max-w-[250px]">
@@ -491,18 +479,6 @@ export function ChatConversationView({
                             >
                               Tu navegador no soporta audio HTML5.
                             </audio>
-                            <a 
-                              href={msg.attachment_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={cn(
-                                "flex items-center gap-1.5 mt-1 text-xs",
-                                isOwn ? "text-primary-foreground/70 hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                              )}
-                            >
-                              <Paperclip className="h-3 w-3" />
-                              <span className="truncate max-w-[180px]">{msg.attachment_name || 'Audio'}</span>
-                            </a>
                           </div>
                         ) : msg.attachment_url && msg.attachment_type === 'application/pdf' ? (
                           <a 
