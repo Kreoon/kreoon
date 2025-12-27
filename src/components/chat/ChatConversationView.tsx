@@ -487,11 +487,11 @@ export function ChatConversationView({
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors border border-red-500/20"
                           >
-                            <svg className="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                            <svg className="h-5 w-5 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM12 11.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 1 1 0zm-2.5 2a1.5 1.5 0 1 1 0 3H8v-3h1.5zm0 2H9v-1h.5a.5.5 0 0 1 0 1zm5-2v3h-1v-3h.5a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H13v-3h1.5z"/>
                             </svg>
-                            <span className="text-xs truncate max-w-[150px] text-red-600 dark:text-red-400">
-                              {msg.attachment_name || 'Documento PDF'}
+                            <span className="text-xs text-red-600 dark:text-red-400">
+                              Ver PDF
                             </span>
                           </a>
                         ) : msg.attachment_url && msg.attachment_type && (
