@@ -2350,6 +2350,80 @@ export type Database = {
           },
         ]
       }
+      organization_member_badges: {
+        Row: {
+          badge: string
+          created_at: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          is_active: boolean | null
+          level: string | null
+          organization_id: string
+          revoked_at: string | null
+          revoked_by: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          badge?: string
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          level?: string | null
+          organization_id: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          badge?: string
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          level?: string | null
+          organization_id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_member_badges_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_member_badges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_member_badges_revoked_by_fkey"
+            columns: ["revoked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_member_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_member_roles: {
         Row: {
           assigned_at: string
@@ -4551,6 +4625,10 @@ export type Database = {
         Args: { _module_key: string; _org_id: string }
         Returns: Json
       }
+      get_badge_level: {
+        Args: { p_badge?: string; p_organization_id: string; p_user_id: string }
+        Returns: string
+      }
       get_best_available_editor: { Args: never; Returns: string }
       get_best_available_editor_v2: {
         Args: {
@@ -4606,6 +4684,20 @@ export type Database = {
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      grant_badge: {
+        Args: {
+          p_badge: string
+          p_granted_by?: string
+          p_level?: string
+          p_organization_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      has_badge: {
+        Args: { p_badge?: string; p_organization_id: string; p_user_id: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
@@ -4703,6 +4795,15 @@ export type Database = {
           _org_id: string
         }
         Returns: string
+      }
+      revoke_badge: {
+        Args: {
+          p_badge: string
+          p_organization_id: string
+          p_revoked_by?: string
+          p_user_id: string
+        }
+        Returns: boolean
       }
       toggle_company_follow: { Args: { _company_id: string }; Returns: boolean }
       toggle_content_like: {

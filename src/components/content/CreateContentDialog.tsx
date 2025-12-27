@@ -208,19 +208,20 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
       setCreators(creatorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
     }
 
-    // Fetch ambassadors (for ambassador content)
+    // Fetch ambassadors (users with ambassador BADGE for internal brand content)
     if (currentOrgId) {
-      const { data: ambassadorRoles } = await supabase
-        .from('organization_member_roles')
+      const { data: ambassadorBadges } = await supabase
+        .from('organization_member_badges')
         .select('user_id')
         .eq('organization_id', currentOrgId)
-        .eq('role', 'ambassador');
+        .eq('badge', 'ambassador')
+        .eq('is_active', true);
       
-      if (ambassadorRoles?.length) {
+      if (ambassadorBadges?.length) {
         const { data: ambassadorProfiles } = await supabase
           .from('profiles')
           .select('id, full_name')
-          .in('id', ambassadorRoles.map(r => r.user_id));
+          .in('id', ambassadorBadges.map(r => r.user_id));
         setAmbassadors(ambassadorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
       } else {
         setAmbassadors([]);
