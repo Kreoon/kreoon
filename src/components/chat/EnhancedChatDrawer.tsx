@@ -7,6 +7,7 @@ import { useChatNotifications } from '@/hooks/useChatNotifications';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useMentionNotifications } from '@/hooks/useMentionNotifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -68,6 +69,7 @@ export function EnhancedChatDrawer({
   const { typingUsers, handleTyping, stopTyping } = useChatTyping(activeConversation?.id || null);
   const { uploadAttachment, uploading, formatFileSize } = useChatAttachments();
   const { requestPermission, unreadCount } = useChatNotifications(!!activeConversation?.id);
+  const { extractMentionedUserIds, notifyMentionedUsers } = useMentionNotifications();
 
   // Request notification permission on mount
   useEffect(() => {
@@ -116,6 +118,28 @@ export function EnhancedChatDrawer({
     
     stopTyping();
     await sendMessage(content.trim());
+
+    // Check for mentions and notify (only in group chats)
+    if (activeConversation?.is_group && activeConversation.participants) {
+      const participantIds = activeConversation.participants
+        .filter(p => p.user_id !== user?.id)
+        .map(p => p.user_id);
+      
+      const mentionedUserIds = await extractMentionedUserIds(content, participantIds);
+      
+      if (mentionedUserIds.length > 0) {
+        const senderName = activeConversation.participants
+          .find(p => p.user_id === user?.id)?.profile?.full_name || 'Alguien';
+        
+        await notifyMentionedUsers(
+          mentionedUserIds,
+          senderName,
+          content,
+          activeConversation.id,
+          activeConversation.name
+        );
+      }
+    }
   };
 
   const handleFileSelect = async (file: File) => {

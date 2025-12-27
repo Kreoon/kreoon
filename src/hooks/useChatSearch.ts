@@ -40,14 +40,40 @@ export function useChatSearch() {
         ? [conversationId]
         : participations.map(p => p.conversation_id);
 
-      // Search messages using text search
-      const { data: messages } = await supabase
+      // Prepare search terms for full-text search
+      // Convert to tsquery format with prefix matching
+      const searchTerms = query.trim().split(/\s+/).filter(t => t.length > 0);
+      
+      let messages;
+      
+      // Try full-text search with Spanish config for better performance
+      const tsQuery = searchTerms.map(term => `'${term}':*`).join(' & ');
+      
+      const { data: ftMessages, error: ftError } = await supabase
         .from('chat_messages')
         .select('id, conversation_id, content, created_at, sender_id')
         .in('conversation_id', conversationIds)
-        .ilike('content', `%${query}%`)
+        .textSearch('content', searchTerms.join(' '), {
+          type: 'websearch',
+          config: 'spanish'
+        })
         .order('created_at', { ascending: false })
         .limit(50);
+      
+      if (ftError || !ftMessages?.length) {
+        // Fallback to ilike if full-text search fails or returns no results
+        const { data: ilikeMessages } = await supabase
+          .from('chat_messages')
+          .select('id, conversation_id, content, created_at, sender_id')
+          .in('conversation_id', conversationIds)
+          .ilike('content', `%${query}%`)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        
+        messages = ilikeMessages;
+      } else {
+        messages = ftMessages;
+      }
 
       if (!messages?.length) {
         setResults([]);
@@ -55,7 +81,7 @@ export function useChatSearch() {
       }
 
       // Get sender profiles
-      const senderIds = [...new Set(messages.map(m => m.sender_id))];
+      const senderIds = [...new Set(messages.map(m => m.sender_id))] as string[];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name')

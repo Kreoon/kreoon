@@ -428,13 +428,47 @@ export function ChatConversationView({
                         </p>
                         
                         {/* Attachment preview */}
-                        {msg.attachment_url && msg.attachment_type === 'image' && (
+                        {msg.attachment_name === '[Archivo expirado]' ? (
+                          <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-muted/50 border border-dashed border-muted-foreground/30">
+                            <svg 
+                              className="h-4 w-4 text-muted-foreground" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                strokeWidth={2} 
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
+                              />
+                            </svg>
+                            <span className={cn(
+                              "text-xs",
+                              isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                            )}>
+                              Archivo expirado (8 días)
+                            </span>
+                          </div>
+                        ) : msg.attachment_url && msg.attachment_type === 'image' ? (
                           <img 
                             src={msg.attachment_url} 
                             alt="Imagen" 
                             className="max-w-full rounded-lg mt-2 cursor-pointer"
                             onClick={() => window.open(msg.attachment_url!, '_blank')}
                           />
+                        ) : msg.attachment_url && msg.attachment_type && (
+                          <a 
+                            href={msg.attachment_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                            <span className="text-xs truncate max-w-[150px]">
+                              {msg.attachment_name || 'Archivo adjunto'}
+                            </span>
+                          </a>
                         )}
 
                         {/* Link preview */}
