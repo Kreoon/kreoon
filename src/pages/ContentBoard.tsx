@@ -78,7 +78,7 @@ const canMoveToStatus = (
 
 export default function ContentBoard() {
   const { user, isAdmin, isCreator, isEditor, isClient, profile } = useAuth();
-  const { currentOrgId } = useOrgOwner();
+  const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
   
   // Filtros
@@ -137,6 +137,9 @@ export default function ContentBoard() {
 
   // Cargar listas para filtros (solo admin) - siempre scope por organización actual
   useEffect(() => {
+    // Wait for org context
+    if (orgLoading) return;
+
     if (!isAdmin || !currentOrgId) {
       setCreators([]);
       setEditors([]);

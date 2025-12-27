@@ -37,13 +37,15 @@ interface Creator {
 const Creators = () => {
   const { isAdmin, user } = useAuth();
   const { toast } = useToast();
-  const { isPlatformRoot, currentOrgId } = useOrgOwner();
+  const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
 
   const fetchCreators = async () => {
+    // Wait for org context
+    if (orgLoading) return;
     setLoading(true);
     try {
       // Filter by organization members - always apply when org is selected (including for root)
@@ -144,7 +146,7 @@ const Creators = () => {
 
   useEffect(() => {
     fetchCreators();
-  }, [isPlatformRoot, currentOrgId]);
+  }, [isPlatformRoot, currentOrgId, orgLoading]);
 
   const handleDelete = async (creatorId: string, creatorName: string) => {
     try {
