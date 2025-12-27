@@ -261,13 +261,18 @@ export default function Dashboard() {
   const [creators, setCreators] = useState<{id: string; name: string}[]>([]);
   const [editors, setEditors] = useState<{id: string; name: string}[]>([]);
   
-  const { content: allContent, loading, refetch, deleteContent } = useContentWithFilters({
+  // Only fetch content once org context is loaded
+  const { content: allContent, loading: contentLoading, refetch, deleteContent } = useContentWithFilters({
     userId: user?.id,
     role: 'admin',
     clientId: filterClientId !== 'all' ? filterClientId : undefined,
     creatorId: filterCreatorId !== 'all' ? filterCreatorId : undefined,
-    editorId: filterEditorId !== 'all' ? filterEditorId : undefined
+    editorId: filterEditorId !== 'all' ? filterEditorId : undefined,
+    organizationId: currentOrgId || undefined
   });
+  
+  // Combined loading state - wait for both org and content
+  const loading = orgLoading || contentLoading;
 
   // Filter content by date range
   const content = useMemo(() => {
@@ -345,6 +350,27 @@ export default function Dashboard() {
   // Load filters and data - wait for org context
   useEffect(() => {
     if (orgLoading) return;
+    
+    // Reset data when no org is selected
+    if (!currentOrgId) {
+      setClients([]);
+      setCreators([]);
+      setEditors([]);
+      setPackages([]);
+      setActiveClients([]);
+      setActiveCreators([]);
+      setActiveEditors([]);
+      setCurrentGoal(null);
+      setAllGoals([]);
+      setMonthlyActuals([]);
+      setClientsBilling({ 
+        totalBilled: 0, totalPending: 0, totalPaid: 0, contentOwed: 0,
+        totalBilledUSD: 0, totalPendingUSD: 0, totalPaidUSD: 0,
+        totalBilledCOP: 0, totalPendingCOP: 0, totalPaidCOP: 0
+      });
+      return;
+    }
+    
     const fetchFiltersAndData = async () => {
       // Get org member IDs for filtering creators/editors
       let orgMemberIds: string[] = [];
@@ -362,12 +388,8 @@ export default function Dashboard() {
         .select('user_id')
         .eq('role', 'creator');
       
-      if (creatorRoles?.length) {
-        let creatorIds = creatorRoles.map(r => r.user_id);
-        // Filter by org members if org is selected
-        if (currentOrgId && orgMemberIds.length > 0) {
-          creatorIds = creatorIds.filter(id => orgMemberIds.includes(id));
-        }
+      if (creatorRoles?.length && orgMemberIds.length > 0) {
+        const creatorIds = creatorRoles.map(r => r.user_id).filter(id => orgMemberIds.includes(id));
         if (creatorIds.length > 0) {
           const { data: creatorProfiles } = await supabase
             .from('profiles')
@@ -377,6 +399,8 @@ export default function Dashboard() {
         } else {
           setCreators([]);
         }
+      } else {
+        setCreators([]);
       }
 
       const { data: editorRoles } = await supabase
@@ -384,12 +408,8 @@ export default function Dashboard() {
         .select('user_id')
         .eq('role', 'editor');
       
-      if (editorRoles?.length) {
-        let editorIds = editorRoles.map(r => r.user_id);
-        // Filter by org members if org is selected
-        if (currentOrgId && orgMemberIds.length > 0) {
-          editorIds = editorIds.filter(id => orgMemberIds.includes(id));
-        }
+      if (editorRoles?.length && orgMemberIds.length > 0) {
+        const editorIds = editorRoles.map(r => r.user_id).filter(id => orgMemberIds.includes(id));
         if (editorIds.length > 0) {
           const { data: editorProfiles } = await supabase
             .from('profiles')
@@ -399,6 +419,8 @@ export default function Dashboard() {
         } else {
           setEditors([]);
         }
+      } else {
+        setEditors([]);
       }
 
       // Fetch clients - filter by org
@@ -410,21 +432,19 @@ export default function Dashboard() {
       setClients(clientsList?.map(c => ({ id: c.id, name: c.name })) || []);
 
       // Fetch packages with client info - filter by org (via client)
-      let packagesQuery = supabase
-        .from('client_packages')
-        .select('*, clients(*)')
-        .eq('is_active', true);
+      // Get client IDs for this org first
+      const orgClientIds = clientsList?.map(c => c.id) || [];
       
-      // Filter packages by client's organization
-      if (currentOrgId) {
-        // Get client IDs for this org first
-        const orgClientIds = clientsList?.map(c => c.id) || [];
-        if (orgClientIds.length > 0) {
-          packagesQuery = packagesQuery.in('client_id', orgClientIds);
-        }
+      // Only fetch packages if there are clients in this org
+      let packagesData: any[] = [];
+      if (orgClientIds.length > 0) {
+        const { data } = await supabase
+          .from('client_packages')
+          .select('*, clients(*)')
+          .eq('is_active', true)
+          .in('client_id', orgClientIds);
+        packagesData = data || [];
       }
-      
-      const { data: packagesData } = await packagesQuery;
 
       if (packagesData) {
         const mappedPackages = packagesData.map(p => ({
