@@ -2346,6 +2346,10 @@ export type Database = {
         Args: { _company_id: string }
         Returns: number
       }
+      get_current_organization_id: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       get_exchange_rate: {
         Args: {
           _from: Database["public"]["Enums"]["currency_type"]
