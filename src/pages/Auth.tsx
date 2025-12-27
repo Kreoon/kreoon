@@ -189,21 +189,25 @@ export default function Auth() {
         console.error('[Auth] Sign in error:', error);
         toast({
           title: 'Error al iniciar sesión',
-          description: error.message === 'Invalid login credentials' 
-            ? 'Credenciales inválidas' 
-            : error.message,
-          variant: 'destructive'
+          description:
+            error.message === 'Invalid login credentials'
+              ? 'Credenciales inválidas'
+              : error.message,
+          variant: 'destructive',
         });
-        setLoading(false);
         return;
       }
+
+      // Dejamos que el redirect lo maneje el useEffect cuando rolesLoaded termine.
     } catch (err) {
       console.error('[Auth] Unexpected error:', err);
       toast({
         title: 'Error',
         description: 'Ocurrió un error inesperado. Por favor intenta de nuevo.',
-        variant: 'destructive'
+        variant: 'destructive',
       });
+    } finally {
+      // IMPORTANT: evita loader infinito si el redirect no ocurre por algún fallo de red/roles
       setLoading(false);
     }
   };
