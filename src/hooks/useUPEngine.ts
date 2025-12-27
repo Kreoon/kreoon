@@ -500,6 +500,39 @@ export function useUPEngine(organizationId?: string) {
     }
   }, [orgId]);
 
+  const applyRecommendation = useCallback(async (recommendation: {
+    title: string;
+    proposedRule: {
+      eventType: string;
+      conditions?: any[];
+      points: number;
+      limits?: { perDay?: number; perWeek?: number; perContent?: number };
+    };
+  }) => {
+    if (!orgId) return null;
+
+    const rule = recommendation.proposedRule;
+    
+    // Create a new rule from the recommendation
+    const newRule = await createRule({
+      name: recommendation.title,
+      description: `Regla creada desde recomendación IA`,
+      event_type_key: rule.eventType,
+      conditions: rule.conditions || [],
+      points: rule.points,
+      is_bonus: rule.points > 0,
+      is_penalty: rule.points < 0,
+      applies_to_roles: ['creator', 'editor'],
+      max_per_day: rule.limits?.perDay,
+      max_per_week: rule.limits?.perWeek,
+      max_per_content: rule.limits?.perContent,
+      is_active: true,
+      priority: 50
+    });
+
+    return newRule;
+  }, [orgId, createRule]);
+
   const getActiveSeason = () => {
     return seasons.find(s => s.is_active);
   };
@@ -525,6 +558,7 @@ export function useUPEngine(organizationId?: string) {
     checkAntiFraud,
     generateQuests,
     getRuleRecommendations,
+    applyRecommendation,
     // Helpers
     getActiveSeason,
     refetch: fetchAll
