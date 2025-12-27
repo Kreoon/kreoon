@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useChat, ChatConversation, ChatUser } from '@/hooks/useChat';
 import { useChatTyping } from '@/hooks/useChatTyping';
 import { useChatAttachments } from '@/hooks/useChatAttachments';
+import { useAIChat, isAIUser } from '@/hooks/useAIChat';
 import { useAuth } from '@/hooks/useAuth';
 import { getPrimaryRole, getRoleLabelShort } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,9 @@ import {
   Image,
   FileText,
   Download,
-  Bot
+  Bot,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -68,13 +71,33 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
     userRole
   } = useChat();
 
+  // AI Chat hook
+  const { 
+    messages: aiMessages, 
+    isLoading: aiLoading, 
+    assistantConfig,
+    sendMessage: sendAIMessage,
+    loadHistory: loadAIHistory,
+    submitFeedback: submitAIFeedback
+  } = useAIChat();
+
   const { typingUsers, handleTyping, stopTyping } = useChatTyping(activeConversation?.id || null);
   const { uploadAttachment, uploading, formatFileSize } = useChatAttachments();
+
+  // Determine if current conversation is AI
+  const isAIConversation = activeConversation?.chat_type === 'ai_assistant';
 
   // Notify parent when active conversation changes
   useEffect(() => {
     onActiveConversationChange?.(activeConversation?.id || null);
   }, [activeConversation?.id, onActiveConversationChange]);
+
+  // Load AI history when entering AI conversation
+  useEffect(() => {
+    if (isAIConversation) {
+      loadAIHistory();
+    }
+  }, [isAIConversation, loadAIHistory]);
 
   const [view, setView] = useState<'list' | 'chat' | 'new'>('list');
   const [newMessage, setNewMessage] = useState('');
@@ -87,13 +110,20 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, aiMessages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
+    
+    if (isAIConversation) {
+      await sendAIMessage(newMessage.trim());
+      setNewMessage('');
+      return;
+    }
+    
     stopTyping();
     await sendMessage(newMessage.trim());
-    setNewMessage('');
+    setNewMessage('')
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -383,62 +413,132 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
         {view === 'chat' && activeConversation && (
           <div className="flex flex-col h-full">
             <ScrollArea className="flex-1 p-4">
-              {loadingMessages ? (
+              {(isAIConversation ? aiLoading && aiMessages.length === 0 : loadingMessages) ? (
                 <div className="flex items-center justify-center h-32">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : messages.length === 0 ? (
+              ) : (isAIConversation ? aiMessages.length === 0 : messages.length === 0) ? (
                 <div className="text-center text-muted-foreground py-8">
-                  <p>No hay mensajes aún</p>
-                  <p className="text-sm">Envía el primer mensaje</p>
+                  {isAIConversation ? (
+                    <>
+                      <Bot className="h-12 w-12 mx-auto mb-4 text-primary" />
+                      <p className="font-medium">{assistantConfig?.name || 'Asistente IA'}</p>
+                      <p className="text-sm">¿En qué puedo ayudarte hoy?</p>
+                    </>
+                  ) : (
+                    <>
+                      <p>No hay mensajes aún</p>
+                      <p className="text-sm">Envía el primer mensaje</p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {messages.map(msg => {
-                    const isOwn = msg.sender_id === user?.id;
-                    return (
+                  {/* Render AI messages or regular messages */}
+                  {isAIConversation ? (
+                    aiMessages.map(msg => (
                       <div
                         key={msg.id}
                         className={cn(
                           'flex gap-2',
-                          isOwn && 'flex-row-reverse'
+                          msg.role === 'user' && 'flex-row-reverse'
                         )}
                       >
-                        {!isOwn && (
-                          <Avatar className="h-8 w-8 shrink-0">
-                            <AvatarImage src={msg.sender?.avatar_url || ''} />
-                            <AvatarFallback>
-                              {msg.sender?.full_name?.charAt(0) || '?'}
+                        {msg.role === 'assistant' && (
+                          <Avatar className="h-8 w-8 shrink-0 bg-primary">
+                            <AvatarFallback className="bg-primary text-primary-foreground">
+                              <Bot className="h-4 w-4" />
                             </AvatarFallback>
                           </Avatar>
                         )}
                         <div className={cn(
                           'max-w-[70%] rounded-lg px-3 py-2',
-                          isOwn 
+                          msg.role === 'user' 
                             ? 'bg-primary text-primary-foreground' 
                             : 'bg-muted'
                         )}>
-                          {!isOwn && (
-                            <p className="text-xs font-medium mb-1">{msg.sender?.full_name}</p>
-                          )}
                           <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                          {renderAttachment(msg)}
                           <div className={cn(
                             'flex items-center gap-1 mt-1',
-                            isOwn ? 'justify-end' : 'justify-start'
+                            msg.role === 'user' ? 'justify-end' : 'justify-between'
                           )}>
                             <span className={cn(
                               'text-xs',
-                              isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                              msg.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
                             )}>
-                              {format(new Date(msg.created_at), 'HH:mm', { locale: es })}
+                              {format(msg.timestamp, 'HH:mm', { locale: es })}
                             </span>
-                            {renderMessageStatus(msg)}
+                            {msg.role === 'assistant' && !msg.feedback && (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5"
+                                  onClick={() => submitAIFeedback(msg.id, 'helpful')}
+                                >
+                                  <ThumbsUp className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5"
+                                  onClick={() => submitAIFeedback(msg.id, 'not_helpful')}
+                                >
+                                  <ThumbsDown className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
+                    ))
+                  ) : (
+                    messages.map(msg => {
+                      const isOwn = msg.sender_id === user?.id;
+                      return (
+                        <div
+                          key={msg.id}
+                          className={cn(
+                            'flex gap-2',
+                            isOwn && 'flex-row-reverse'
+                          )}
+                        >
+                          {!isOwn && (
+                            <Avatar className="h-8 w-8 shrink-0">
+                              <AvatarImage src={msg.sender?.avatar_url || ''} />
+                              <AvatarFallback>
+                                {msg.sender?.full_name?.charAt(0) || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                          <div className={cn(
+                            'max-w-[70%] rounded-lg px-3 py-2',
+                            isOwn 
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'bg-muted'
+                          )}>
+                            {!isOwn && (
+                              <p className="text-xs font-medium mb-1">{msg.sender?.full_name}</p>
+                            )}
+                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            {renderAttachment(msg)}
+                            <div className={cn(
+                              'flex items-center gap-1 mt-1',
+                              isOwn ? 'justify-end' : 'justify-start'
+                            )}>
+                              <span className={cn(
+                                'text-xs',
+                                isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                              )}>
+                                {format(new Date(msg.created_at), 'HH:mm', { locale: es })}
+                              </span>
+                              {renderMessageStatus(msg)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
               )}

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useChatRBAC } from '@/hooks/useChatRBAC';
+import { AI_USER_PREFIX, getAIUserId, isAIUser } from '@/hooks/useAIChat';
 
 export interface ChatMessage {
   id: string;
@@ -177,6 +178,47 @@ export function useChat() {
           unread_count: unreadCount || 0
         };
       }));
+
+      // Add virtual AI assistant conversation if org has it enabled
+      if (orgId) {
+        const { data: aiConfig } = await supabase
+          .from('ai_assistant_config')
+          .select('assistant_name, is_enabled')
+          .eq('organization_id', orgId)
+          .single();
+
+        if (aiConfig?.is_enabled) {
+          const aiUserId = getAIUserId(orgId);
+          
+          // Check if AI conversation already exists
+          const existingAIConv = convsWithDetails.find(c => c.chat_type === 'ai_assistant');
+          
+          if (!existingAIConv) {
+            // Create virtual AI conversation entry (at the start of the list)
+            const aiConversation = {
+              id: `ai-${orgId}`,
+              name: aiConfig.assistant_name || 'Asistente IA',
+              is_group: false,
+              chat_type: 'ai_assistant' as const,
+              organization_id: orgId,
+              created_by: null,
+              content_id: null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              participants: [{
+                user_id: aiUserId,
+                profile: {
+                  id: aiUserId,
+                  full_name: aiConfig.assistant_name || 'Asistente IA',
+                  avatar_url: null as string | null
+                }
+              }],
+              unread_count: 0
+            };
+            convsWithDetails.unshift(aiConversation as any);
+          }
+        }
+      }
 
       setConversations(convsWithDetails);
     } catch (error) {
