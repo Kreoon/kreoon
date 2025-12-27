@@ -16,3 +16,5 @@ export { UPRulesBuilder } from './UPRulesBuilder';
 export { UPAIPanel } from './UPAIPanel';
 export { UPAnalytics } from './UPAnalytics';
 export { UPSeasonsManager } from './UPSeasonsManager';
+export { QualityScoreWidget } from './QualityScoreWidget';
+export { RuleSimulator } from './RuleSimulator';
