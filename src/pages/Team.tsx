@@ -56,8 +56,9 @@ export default function Team() {
   const [loading, setLoading] = useState(true);
   
   const [addRoleDialog, setAddRoleDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [selectedUser, setSelectedUser] = useState<(Profile & { roles: AppRole[] }) | null>(null);
   const [newRole, setNewRole] = useState<AppRole>('creator');
+  const [roleAction, setRoleAction] = useState<'add' | 'replace'>('replace'); // Default to replace
 
   // Invitation state
   const [inviteDialog, setInviteDialog] = useState(false);
@@ -134,6 +135,26 @@ export default function Team() {
     if (!selectedUser) return;
 
     try {
+      // If replacing, first remove all existing roles for this user
+      if (roleAction === 'replace' && selectedUser.roles.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', selectedUser.id);
+
+        if (deleteError) throw deleteError;
+
+        // Also update organization_members role
+        if (currentOrgId) {
+          await supabase
+            .from('organization_members')
+            .update({ role: newRole })
+            .eq('user_id', selectedUser.id)
+            .eq('organization_id', currentOrgId);
+        }
+      }
+
+      // Insert the new role
       const { error } = await supabase
         .from('user_roles')
         .insert({
@@ -153,16 +174,19 @@ export default function Team() {
         }
       } else {
         toast({
-          title: 'Rol agregado',
-          description: `Se agregó el rol de ${ROLE_LABELS[newRole]} a ${selectedUser.full_name}`
+          title: roleAction === 'replace' ? 'Rol cambiado' : 'Rol agregado',
+          description: roleAction === 'replace' 
+            ? `Se cambió el rol de ${selectedUser.full_name} a ${ROLE_LABELS[newRole]}`
+            : `Se agregó el rol de ${ROLE_LABELS[newRole]} a ${selectedUser.full_name}`
         });
         setAddRoleDialog(false);
         fetchData();
       }
     } catch (error) {
+      console.error('Error managing role:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo agregar el rol',
+        description: 'No se pudo gestionar el rol',
         variant: 'destructive'
       });
     }
@@ -600,15 +624,30 @@ export default function Team() {
         </TabsContent>
       </Tabs>
 
-      {/* Add Role Dialog */}
+      {/* Add/Change Role Dialog */}
       <Dialog open={addRoleDialog} onOpenChange={setAddRoleDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Agregar rol a {selectedUser?.full_name}</DialogTitle>
+            <DialogTitle>
+              {selectedUser?.roles.length ? 'Cambiar rol de' : 'Agregar rol a'} {selectedUser?.full_name}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {selectedUser?.roles.length ? (
+              <div className="p-3 bg-muted/50 rounded-lg border">
+                <p className="text-sm text-muted-foreground mb-2">Roles actuales:</p>
+                <div className="flex gap-2 flex-wrap">
+                  {selectedUser.roles.map(role => (
+                    <Badge key={role} className={ROLE_COLORS[role]}>
+                      {ROLE_LABELS[role]}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            
             <div>
-              <Label>Seleccionar rol</Label>
+              <Label>Nuevo rol</Label>
               <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -623,13 +662,33 @@ export default function Team() {
                 </SelectContent>
               </Select>
             </div>
+
+            {selectedUser?.roles.length ? (
+              <div>
+                <Label>Acción</Label>
+                <Select value={roleAction} onValueChange={(v) => setRoleAction(v as 'add' | 'replace')}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="replace">Reemplazar roles existentes</SelectItem>
+                    <SelectItem value="add">Agregar rol adicional</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {roleAction === 'replace' 
+                    ? 'Se eliminarán los roles actuales y se asignará solo el nuevo rol.'
+                    : 'El usuario tendrá múltiples roles simultáneamente.'}
+                </p>
+              </div>
+            ) : null}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddRoleDialog(false)}>
               Cancelar
             </Button>
             <Button onClick={handleAddRole}>
-              Agregar Rol
+              {selectedUser?.roles.length && roleAction === 'replace' ? 'Cambiar Rol' : 'Agregar Rol'}
             </Button>
           </DialogFooter>
         </DialogContent>
