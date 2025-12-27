@@ -2452,6 +2452,7 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_platform_root: { Args: { _user_id: string }; Returns: boolean }
       log_activity: {
         Args: {
           _action: string
