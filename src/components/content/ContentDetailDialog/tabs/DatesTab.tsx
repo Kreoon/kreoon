@@ -12,8 +12,11 @@ export function DatesTab({
   setFormData,
   editMode,
   permissions,
+  readOnly = false,
 }: TabProps) {
-  const canEditDates = permissions.can('content.dates', 'edit');
+  // Combine permissions with readOnly prop for effective edit capability
+  const canEditDates = permissions.can('content.dates', 'edit') && !readOnly;
+  const effectiveEditMode = editMode && !readOnly;
 
   const formatDate = (date: string | null | undefined) => {
     if (!date) return 'Sin fecha';
@@ -28,7 +31,8 @@ export function DatesTab({
           <EditableField
             permissions={permissions}
             resource="content.dates"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Input
                 type="date"
@@ -45,7 +49,8 @@ export function DatesTab({
           <EditableField
             permissions={permissions}
             resource="content.dates"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Input
                 type="date"

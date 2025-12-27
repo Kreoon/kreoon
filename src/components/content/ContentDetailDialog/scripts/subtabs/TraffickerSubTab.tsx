@@ -11,8 +11,10 @@ export function TraffickerSubTab({
   editMode,
   scriptPermissions,
   advancedConfig,
+  readOnly = false,
 }: SubTabProps) {
-  const canEdit = scriptPermissions.canEdit('trafficker');
+  // Combine scriptPermissions with readOnly prop for effective edit capability
+  const canEdit = scriptPermissions.canEdit('trafficker') && !readOnly;
   const hasContent = !!formData.trafficker_guidelines?.trim();
   const editorFeatures = advancedConfig?.text_editor_features;
 

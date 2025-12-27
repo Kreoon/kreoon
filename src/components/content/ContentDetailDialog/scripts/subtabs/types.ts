@@ -23,4 +23,9 @@ export interface SubTabProps {
   onProductChange: (productId: string) => void;
   scriptPermissions: ScriptPermissionsHook;
   advancedConfig?: AdvancedConfigData | null;
+  /** 
+   * When true, the sub-tab is in read-only mode regardless of editMode.
+   * This is enforced by blockConfig or scriptPermissions.
+   */
+  readOnly?: boolean;
 }

@@ -23,12 +23,14 @@ export function IASubTab({
   selectedProduct,
   onProductChange,
   scriptPermissions,
+  readOnly = false,
 }: SubTabProps) {
   const { toast } = useToast();
   const [selectedModel, setSelectedModel] = useState('gemini-pro');
-  const canEdit = scriptPermissions.canEdit('ia');
-  const canGenerate = scriptPermissions.canGenerate();
-  const isReadOnly = scriptPermissions.isReadOnly('ia');
+  // Combine scriptPermissions with readOnly prop for effective edit capability
+  const canEdit = scriptPermissions.canEdit('ia') && !readOnly;
+  const canGenerate = scriptPermissions.canGenerate() && !readOnly;
+  const isReadOnly = scriptPermissions.isReadOnly('ia') || readOnly;
 
   const handleScriptGenerated = (generated: {
     script: string;

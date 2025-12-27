@@ -21,8 +21,11 @@ export function GeneralTab({
   permissions,
   selectedProduct,
   onProductChange,
+  readOnly = false,
 }: GeneralTabProps) {
-  const canEditGeneral = permissions.can('content.general', 'edit');
+  // Combine permissions with readOnly prop for effective edit capability
+  const canEditGeneral = permissions.can('content.general', 'edit') && !readOnly;
+  const effectiveEditMode = editMode && !readOnly;
   const [showProductDialog, setShowProductDialog] = useState(false);
 
   return (
@@ -33,7 +36,8 @@ export function GeneralTab({
           <EditableField
             permissions={permissions}
             resource="content.general"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <ProductSelector
                 clientId={formData.client_id || content?.client_id || null}
@@ -59,7 +63,8 @@ export function GeneralTab({
           <EditableField
             permissions={permissions}
             resource="content.general"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Input
                 value={formData.sales_angle || ''}
@@ -76,7 +81,8 @@ export function GeneralTab({
           <EditableField
             permissions={permissions}
             resource="content.general"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Input
                 value={formData.description || ''}
@@ -93,7 +99,8 @@ export function GeneralTab({
           <EditableField
             permissions={permissions}
             resource="content.general"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Input
                 value={formData.campaign_week || ''}
@@ -110,7 +117,8 @@ export function GeneralTab({
           <EditableField
             permissions={permissions}
             resource="content.general"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Input
                 value={formData.reference_url || ''}

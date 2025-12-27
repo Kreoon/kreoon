@@ -11,8 +11,10 @@ export function StrategistSubTab({
   editMode,
   scriptPermissions,
   advancedConfig,
+  readOnly = false,
 }: SubTabProps) {
-  const canEdit = scriptPermissions.canEdit('strategist');
+  // Combine scriptPermissions with readOnly prop for effective edit capability
+  const canEdit = scriptPermissions.canEdit('strategist') && !readOnly;
   const hasContent = !!formData.strategist_guidelines?.trim();
   const editorFeatures = advancedConfig?.text_editor_features;
 

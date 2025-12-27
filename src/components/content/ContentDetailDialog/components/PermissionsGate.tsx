@@ -99,6 +99,10 @@ export function ReadOnlyWrapper({
 
 /**
  * EditableField - Switches between edit/view mode based on permissions
+ * 
+ * NOTE: The readOnly prop is an additional override that forces view mode
+ * regardless of permissions. This is used when blockConfig determines the
+ * tab/block should be read-only for the current user.
  */
 interface EditableFieldProps {
   permissions: ContentPermissions;
@@ -106,6 +110,8 @@ interface EditableFieldProps {
   editMode: boolean;
   editComponent: React.ReactNode;
   viewComponent: React.ReactNode;
+  /** When true, forces view mode regardless of permissions */
+  readOnly?: boolean;
 }
 
 export function EditableField({
@@ -114,8 +120,9 @@ export function EditableField({
   editMode,
   editComponent,
   viewComponent,
+  readOnly = false,
 }: EditableFieldProps) {
-  const canEdit = permissions.can(resource, 'edit');
+  const canEdit = permissions.can(resource, 'edit') && !readOnly;
   
   if (editMode && canEdit) {
     return <>{editComponent}</>;
