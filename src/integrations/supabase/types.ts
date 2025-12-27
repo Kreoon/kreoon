@@ -762,6 +762,7 @@ export type Database = {
           script_approved_at: string | null
           script_approved_by: string | null
           script_version: number | null
+          sequence_number: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines: string | null
@@ -824,6 +825,7 @@ export type Database = {
           script_approved_at?: string | null
           script_approved_by?: string | null
           script_version?: number | null
+          sequence_number?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines?: string | null
@@ -886,6 +888,7 @@ export type Database = {
           script_approved_at?: string | null
           script_approved_by?: string | null
           script_version?: number | null
+          sequence_number?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines?: string | null
