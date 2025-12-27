@@ -9,14 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Plus, Target, Zap, Edit2, Trash2, 
   AlertTriangle, CheckCircle2, Clock, TrendingUp,
-  Shield
+  Shield, Play, ChevronDown
 } from 'lucide-react';
 import { UPRule, useUPEngine } from '@/hooks/useUPEngine';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { RuleSimulator } from './RuleSimulator';
 
 interface UPRulesBuilderProps {
   organizationId: string;
@@ -293,6 +295,8 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
     </div>
   );
 
+  const [simulatorOpen, setSimulatorOpen] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -302,24 +306,37 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
             Define cómo se otorgan y penalizan puntos UP
           </p>
         </div>
-        <Dialog open={isCreating} onOpenChange={setIsCreating}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Nueva Regla
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Crear Nueva Regla</DialogTitle>
-              <DialogDescription>
-                Define las condiciones y puntos para esta regla
-              </DialogDescription>
-            </DialogHeader>
-            <RuleForm onSubmit={handleCreate} submitLabel="Crear Regla" />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setSimulatorOpen(!simulatorOpen)}>
+            <Play className="w-4 h-4 mr-2" />
+            Simulador
+          </Button>
+          <Dialog open={isCreating} onOpenChange={setIsCreating}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Nueva Regla
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Crear Nueva Regla</DialogTitle>
+                <DialogDescription>
+                  Define las condiciones y puntos para esta regla
+                </DialogDescription>
+              </DialogHeader>
+              <RuleForm onSubmit={handleCreate} submitLabel="Crear Regla" />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      {/* Simulador Colapsable */}
+      <Collapsible open={simulatorOpen} onOpenChange={setSimulatorOpen}>
+        <CollapsibleContent>
+          <RuleSimulator rules={rules} organizationId={organizationId} />
+        </CollapsibleContent>
+      </Collapsible>
 
       <ScrollArea className="h-[500px]">
         <div className="space-y-3 pr-4">
