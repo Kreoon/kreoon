@@ -38,39 +38,63 @@ export function TeamTab({
   }, [currentOrgId]);
 
   const fetchTeamOptions = async () => {
-    // Fetch regular creators
-    const { data: creatorRoles } = await supabase.from('user_roles').select('user_id').eq('role', 'creator');
+    if (!currentOrgId) return;
+
+    // Fetch creators from organization_member_roles
+    const { data: creatorRoles } = await supabase
+      .from('organization_member_roles')
+      .select('user_id')
+      .eq('organization_id', currentOrgId)
+      .eq('role', 'creator');
+    
     if (creatorRoles?.length) {
       const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', creatorRoles.map(r => r.user_id));
       setCreators(profiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+    } else {
+      setCreators([]);
     }
 
-    // Fetch ambassadors
-    if (currentOrgId) {
-      const { data: ambassadorRoles } = await supabase
-        .from('organization_member_roles')
-        .select('user_id')
-        .eq('organization_id', currentOrgId)
-        .eq('role', 'ambassador');
-      
-      if (ambassadorRoles?.length) {
-        const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', ambassadorRoles.map(r => r.user_id));
-        setAmbassadors(profiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
-      } else {
-        setAmbassadors([]);
-      }
+    // Fetch ambassadors from organization_member_badges
+    const { data: ambassadorBadges } = await supabase
+      .from('organization_member_badges')
+      .select('user_id')
+      .eq('organization_id', currentOrgId)
+      .eq('badge', 'ambassador')
+      .eq('is_active', true);
+    
+    if (ambassadorBadges?.length) {
+      const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', ambassadorBadges.map(r => r.user_id));
+      setAmbassadors(profiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+    } else {
+      setAmbassadors([]);
     }
 
-    const { data: editorRoles } = await supabase.from('user_roles').select('user_id').eq('role', 'editor');
+    // Fetch editors from organization_member_roles
+    const { data: editorRoles } = await supabase
+      .from('organization_member_roles')
+      .select('user_id')
+      .eq('organization_id', currentOrgId)
+      .eq('role', 'editor');
+    
     if (editorRoles?.length) {
       const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', editorRoles.map(r => r.user_id));
       setEditors(profiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+    } else {
+      setEditors([]);
     }
 
-    const { data: adminRoles } = await supabase.from('user_roles').select('user_id').eq('role', 'admin');
-    if (adminRoles?.length) {
-      const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', adminRoles.map(r => r.user_id));
+    // Fetch strategists from organization_member_roles
+    const { data: strategistRoles } = await supabase
+      .from('organization_member_roles')
+      .select('user_id')
+      .eq('organization_id', currentOrgId)
+      .eq('role', 'strategist');
+    
+    if (strategistRoles?.length) {
+      const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', strategistRoles.map(r => r.user_id));
       setStrategists(profiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+    } else {
+      setStrategists([]);
     }
   };
 

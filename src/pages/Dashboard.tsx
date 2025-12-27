@@ -382,44 +382,41 @@ export default function Dashboard() {
         orgMemberIds = orgMembers?.map(m => m.user_id) || [];
       }
 
-      // Fetch filter options - filter by org members
-      const { data: creatorRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'creator');
-      
-      if (creatorRoles?.length && orgMemberIds.length > 0) {
-        const creatorIds = creatorRoles.map(r => r.user_id).filter(id => orgMemberIds.includes(id));
-        if (creatorIds.length > 0) {
+      // Fetch creators from organization_member_roles
+      if (currentOrgId) {
+        const { data: creatorRoles } = await supabase
+          .from('organization_member_roles')
+          .select('user_id')
+          .eq('organization_id', currentOrgId)
+          .eq('role', 'creator');
+        
+        if (creatorRoles?.length) {
           const { data: creatorProfiles } = await supabase
             .from('profiles')
             .select('id, full_name')
-            .in('id', creatorIds);
+            .in('id', creatorRoles.map(r => r.user_id));
           setCreators(creatorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
         } else {
           setCreators([]);
         }
-      } else {
-        setCreators([]);
-      }
 
-      const { data: editorRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'editor');
-      
-      if (editorRoles?.length && orgMemberIds.length > 0) {
-        const editorIds = editorRoles.map(r => r.user_id).filter(id => orgMemberIds.includes(id));
-        if (editorIds.length > 0) {
+        const { data: editorRoles } = await supabase
+          .from('organization_member_roles')
+          .select('user_id')
+          .eq('organization_id', currentOrgId)
+          .eq('role', 'editor');
+        
+        if (editorRoles?.length) {
           const { data: editorProfiles } = await supabase
             .from('profiles')
             .select('id, full_name')
-            .in('id', editorIds);
+            .in('id', editorRoles.map(r => r.user_id));
           setEditors(editorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
         } else {
           setEditors([]);
         }
       } else {
+        setCreators([]);
         setEditors([]);
       }
 
