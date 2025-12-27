@@ -3431,6 +3431,100 @@ export type Database = {
           },
         ]
       }
+      portfolio_moderation_flags: {
+        Row: {
+          ai_confidence: number | null
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+          notes: string | null
+          organization_id: string | null
+          reasons: Json
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type: string
+          notes?: string | null
+          organization_id?: string | null
+          reasons?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          notes?: string | null
+          organization_id?: string | null
+          reasons?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_moderation_flags_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          permissions: Json
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          permissions?: Json
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          permissions?: Json
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_permissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_post_comments: {
         Row: {
           comment: string
@@ -3646,6 +3740,88 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_ai_config: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          features: Json
+          id: string
+          model: string
+          organization_id: string
+          provider: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          features?: Json
+          id?: string
+          model?: string
+          organization_id: string
+          provider?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          features?: Json
+          id?: string
+          model?: string
+          organization_id?: string
+          provider?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_ai_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_blocks_config: {
+        Row: {
+          blocks: Json
+          created_at: string
+          id: string
+          organization_id: string
+          profile_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          blocks?: Json
+          created_at?: string
+          id?: string
+          organization_id: string
+          profile_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          blocks?: Json
+          created_at?: string
+          id?: string
+          organization_id?: string
+          profile_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_blocks_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -3915,6 +4091,36 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_collections: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          id: string
+          is_private: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          is_private?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          is_private?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_content: {
         Row: {
           content_id: string | null
@@ -3953,6 +4159,41 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "portfolio_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_items: {
+        Row: {
+          collection_id: string | null
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+          user_id: string
+        }
+        Insert: {
+          collection_id?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type: string
+          user_id: string
+        }
+        Update: {
+          collection_id?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "saved_collections"
             referencedColumns: ["id"]
           },
         ]
@@ -5436,6 +5677,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      get_default_profile_blocks: { Args: never; Returns: Json }
       get_exchange_rate: {
         Args: {
           _from: Database["public"]["Enums"]["currency_type"]
