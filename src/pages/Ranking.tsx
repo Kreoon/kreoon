@@ -1,6 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useLeaderboard } from '@/hooks/useUserPoints';
 import { useUPSettings } from '@/hooks/useUPSettings';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -489,19 +490,38 @@ function RankingContent({
 function GlobalPointsHistory() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { currentOrgId } = useOrgOwner();
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrgId]);
 
   const fetchTransactions = async () => {
     try {
+      if (!currentOrgId) {
+        setTransactions([]);
+        return;
+      }
+
+      const { data: membersData } = await supabase
+        .from('organization_members')
+        .select('user_id')
+        .eq('organization_id', currentOrgId);
+
+      const memberIds = (membersData || []).map(m => m.user_id);
+      if (!memberIds.length) {
+        setTransactions([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('point_transactions')
         .select(`
           *,
           profiles:user_id (full_name, avatar_url)
         `)
+        .in('user_id', memberIds)
         .order('created_at', { ascending: false })
         .limit(50);
 

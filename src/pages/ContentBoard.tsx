@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_ORDER, STATUS_LABELS, Product } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -77,6 +78,7 @@ const canMoveToStatus = (
 
 export default function ContentBoard() {
   const { user, isAdmin, isCreator, isEditor, isClient, profile } = useAuth();
+  const { currentOrgId } = useOrgOwner();
   const { toast } = useToast();
   
   // Filtros
@@ -133,60 +135,78 @@ export default function ContentBoard() {
     }
   };
 
-  // Cargar listas para filtros (solo admin)
+  // Cargar listas para filtros (solo admin) - siempre scope por organización actual
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || !currentOrgId) {
+      setCreators([]);
+      setEditors([]);
+      setClients([]);
+      setProducts([]);
+      return;
+    }
 
     const fetchFilters = async () => {
-      const { data: creatorRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'creator');
-      
-      if (creatorRoles?.length) {
+      // Users from this org only
+      const { data: membersData } = await supabase
+        .from('organization_members')
+        .select('user_id, role')
+        .eq('organization_id', currentOrgId);
+
+      const creatorIds = (membersData || [])
+        .filter(m => m.role === 'creator')
+        .map(m => m.user_id);
+
+      const editorIds = (membersData || [])
+        .filter(m => m.role === 'editor')
+        .map(m => m.user_id);
+
+      if (creatorIds.length) {
         const { data: creatorProfiles } = await supabase
           .from('profiles')
           .select('id, full_name')
-          .in('id', creatorRoles.map(r => r.user_id));
-        
+          .in('id', creatorIds);
+
         setCreators(creatorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+      } else {
+        setCreators([]);
       }
 
-      const { data: editorRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'editor');
-      
-      if (editorRoles?.length) {
+      if (editorIds.length) {
         const { data: editorProfiles } = await supabase
           .from('profiles')
           .select('id, full_name')
-          .in('id', editorRoles.map(r => r.user_id));
-        
+          .in('id', editorIds);
+
         setEditors(editorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+      } else {
+        setEditors([]);
       }
 
       const { data: clientsList } = await supabase
         .from('clients')
-        .select('id, name');
-      
+        .select('id, name')
+        .eq('organization_id', currentOrgId);
+
       setClients(clientsList?.map(c => ({ id: c.id, name: c.name })) || []);
 
-      // Fetch products with client name
+      // Products only from clients in this org
       const { data: productsList } = await supabase
         .from('products')
-        .select('id, name, client_id, clients(name)')
+        .select('id, name, client_id, clients!inner(name, organization_id)')
+        .eq('clients.organization_id', currentOrgId)
         .order('name');
-      
-      setProducts(productsList?.map(p => ({ 
-        id: p.id, 
-        name: p.name,
-        client_name: (p.clients as any)?.name 
-      })) || []);
+
+      setProducts(
+        productsList?.map(p => ({
+          id: p.id,
+          name: p.name,
+          client_name: (p.clients as any)?.name,
+        })) || []
+      );
     };
 
     fetchFilters();
-  }, [isAdmin]);
+  }, [isAdmin, currentOrgId]);
 
   // Extract unique campaign weeks from content
   const campaignWeeks = useMemo(() => {

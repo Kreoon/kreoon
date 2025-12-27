@@ -1,7 +1,8 @@
-import { Star, TrendingUp } from "lucide-react";
+import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 
 interface CreatorStats {
   id: string;
@@ -11,39 +12,47 @@ interface CreatorStats {
 }
 
 export function TopCreatorsReal() {
+  const { currentOrgId } = useOrgOwner();
   const [creators, setCreators] = useState<CreatorStats[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTopCreators = async () => {
-      try {
-        // Obtener creadores con rol 'creator'
-        const { data: creatorRoles } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'creator');
+      if (!currentOrgId) {
+        setCreators([]);
+        setLoading(false);
+        return;
+      }
 
-        if (!creatorRoles?.length) {
+      try {
+        // Creadores SOLO de la organización actual
+        const { data: membersData } = await supabase
+          .from('organization_members')
+          .select('user_id, role')
+          .eq('organization_id', currentOrgId);
+
+        const creatorIds = (membersData || [])
+          .filter(m => m.role === 'creator')
+          .map(m => m.user_id);
+
+        if (!creatorIds.length) {
+          setCreators([]);
           setLoading(false);
           return;
         }
 
-        const creatorIds = creatorRoles.map(r => r.user_id);
-
-        // Obtener perfiles de creadores
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, full_name, avatar_url')
           .in('id', creatorIds);
 
-        // Contar contenido aprobado por creador
         const { data: contentCounts } = await supabase
           .from('content')
           .select('creator_id')
+          .eq('organization_id', currentOrgId)
           .in('creator_id', creatorIds)
           .eq('status', 'approved');
 
-        // Crear mapa de conteo
         const countMap: Record<string, number> = {};
         contentCounts?.forEach(c => {
           if (c.creator_id) {
@@ -51,13 +60,12 @@ export function TopCreatorsReal() {
           }
         });
 
-        // Crear stats y ordenar
         const stats: CreatorStats[] = (profiles || [])
           .map(p => ({
             id: p.id,
             name: p.full_name,
             avatar: p.avatar_url,
-            videosCompleted: countMap[p.id] || 0
+            videosCompleted: countMap[p.id] || 0,
           }))
           .sort((a, b) => b.videosCompleted - a.videosCompleted)
           .slice(0, 5);
@@ -70,8 +78,9 @@ export function TopCreatorsReal() {
       }
     };
 
+    setLoading(true);
     fetchTopCreators();
-  }, []);
+  }, [currentOrgId]);
 
   if (loading) {
     return (

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { Zap, UserPlus, Minus, Plus, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +23,7 @@ interface UserWithPoints {
 
 export function UPManualAdjustment() {
   const { toast } = useToast();
+  const { currentOrgId } = useOrgOwner();
   const [users, setUsers] = useState<UserWithPoints[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,29 +35,49 @@ export function UPManualAdjustment() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrgId]);
 
   const fetchUsers = async () => {
     try {
-      // Obtener usuarios con sus puntos
+      if (!currentOrgId) {
+        setUsers([]);
+        return;
+      }
+
+      const { data: membersData, error: membersError } = await supabase
+        .from('organization_members')
+        .select('user_id')
+        .eq('organization_id', currentOrgId);
+
+      if (membersError) throw membersError;
+
+      const memberIds = (membersData || []).map(m => m.user_id);
+      if (!memberIds.length) {
+        setUsers([]);
+        return;
+      }
+
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, email');
+        .select('id, full_name, avatar_url, email')
+        .in('id', memberIds);
 
       if (profilesError) throw profilesError;
 
       const { data: userPoints, error: pointsError } = await supabase
         .from('user_points')
-        .select('user_id, total_points, current_level');
+        .select('user_id, total_points, current_level')
+        .in('user_id', memberIds);
 
       if (pointsError) throw pointsError;
 
       const usersWithPoints: UserWithPoints[] = (profiles || []).map(profile => {
-        const points = userPoints?.find(p => p.user_id === profile.id);
+        const userPoint = userPoints?.find(p => p.user_id === profile.id);
         return {
           ...profile,
-          total_points: points?.total_points || 0,
-          current_level: points?.current_level || 'bronze'
+          total_points: userPoint?.total_points || 0,
+          current_level: userPoint?.current_level || 'bronze'
         };
       });
 
