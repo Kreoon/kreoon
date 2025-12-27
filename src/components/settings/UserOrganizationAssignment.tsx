@@ -40,10 +40,10 @@ interface Organization {
 }
 
 import { ROLE_LABELS_SHORT as ROLE_LABELS } from '@/lib/roles';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 
 export function UserOrganizationAssignment() {
-  const { hasRole } = useAuth();
-  const isAdminUser = hasRole('admin');
+  const { isPlatformRoot } = useOrgOwner();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserWithOrg[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -57,10 +57,10 @@ export function UserOrganizationAssignment() {
   const [showAssignDialog, setShowAssignDialog] = useState(false);
 
   useEffect(() => {
-    if (isAdminUser) {
+    if (isPlatformRoot) {
       fetchData();
     }
-  }, [isAdminUser]);
+  }, [isPlatformRoot]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -85,24 +85,26 @@ export function UserOrganizationAssignment() {
       return;
     }
 
-    // Get organization members with roles
+    // Get ALL organization members (not just current org) to show where users are assigned
     const userIds = profilesData?.map(p => p.id) || [];
     const { data: membersData } = await supabase
       .from('organization_members')
       .select('user_id, role, organization_id')
       .in('user_id', userIds);
 
-    // Get org names
-    const orgIds = [...new Set(profilesData?.filter(p => p.current_organization_id).map(p => p.current_organization_id))] as string[];
+    // Get all org names for mapping
+    const allOrgIds = [...new Set(membersData?.map(m => m.organization_id) || [])];
     const { data: orgNamesData } = await supabase
       .from('organizations')
       .select('id, name')
-      .in('id', orgIds);
+      .in('id', allOrgIds.length > 0 ? allOrgIds : ['00000000-0000-0000-0000-000000000000']);
 
     const orgNamesMap = new Map(orgNamesData?.map(o => [o.id, o.name]) || []);
     
-    // Build roles map from organization_members
+    // Build roles map and org membership map from organization_members
     const rolesMap = new Map<string, AppRole[]>();
+    const userOrgMap = new Map<string, { orgId: string; orgName: string | null }>();
+    
     membersData?.forEach(m => {
       if (m.role) {
         const existing = rolesMap.get(m.user_id) || [];
@@ -110,17 +112,27 @@ export function UserOrganizationAssignment() {
           rolesMap.set(m.user_id, [...existing, m.role]);
         }
       }
+      // Store the first organization membership found (user can belong to multiple, show primary)
+      if (!userOrgMap.has(m.user_id)) {
+        userOrgMap.set(m.user_id, {
+          orgId: m.organization_id,
+          orgName: orgNamesMap.get(m.organization_id) || null
+        });
+      }
     });
 
-    const usersWithOrgs: UserWithOrg[] = (profilesData || []).map(p => ({
-      id: p.id,
-      email: p.email,
-      full_name: p.full_name,
-      avatar_url: p.avatar_url,
-      roles: rolesMap.get(p.id) || [],
-      current_organization_id: p.current_organization_id,
-      organization_name: p.current_organization_id ? orgNamesMap.get(p.current_organization_id) || null : null,
-    }));
+    const usersWithOrgs: UserWithOrg[] = (profilesData || []).map(p => {
+      const membership = userOrgMap.get(p.id);
+      return {
+        id: p.id,
+        email: p.email,
+        full_name: p.full_name,
+        avatar_url: p.avatar_url,
+        roles: rolesMap.get(p.id) || [],
+        current_organization_id: membership?.orgId || p.current_organization_id,
+        organization_name: membership?.orgName || null,
+      };
+    });
 
     setUsers(usersWithOrgs);
     setLoading(false);
@@ -279,11 +291,11 @@ export function UserOrganizationAssignment() {
     return matchesSearch && matchesOrg && matchesUnassigned;
   });
 
-  if (!isAdminUser) {
+  if (!isPlatformRoot) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-        Solo administradores pueden acceder a esta sección
+        Solo el administrador de plataforma puede acceder a esta sección
       </div>
     );
   }
