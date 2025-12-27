@@ -182,27 +182,29 @@ export default function SavedPage() {
       </div>
 
       {/* New collection dialog */}
-      <Dialog open={showNewCollection} onOpenChange={setShowNewCollection}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Nueva colección</DialogTitle>
-          </DialogHeader>
-          <Input
-            placeholder="Nombre de la colección"
-            value={newCollectionName}
-            onChange={(e) => setNewCollectionName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreateCollection()}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewCollection(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreateCollection} disabled={saving || !newCollectionName.trim()}>
-              {saving ? 'Creando...' : 'Crear'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {showNewCollection && (
+        <Dialog open={showNewCollection} onOpenChange={setShowNewCollection}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nueva colección</DialogTitle>
+            </DialogHeader>
+            <Input
+              placeholder="Nombre de la colección"
+              value={newCollectionName}
+              onChange={(e) => setNewCollectionName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateCollection()}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNewCollection(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateCollection} disabled={saving || !newCollectionName.trim()}>
+                {saving ? 'Creando...' : 'Crear'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
