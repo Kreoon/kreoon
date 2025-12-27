@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Settings, Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, Check, X } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Settings, Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, Check, X, ArrowUp, ArrowDown, Palette } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useBoardSettings, OrganizationStatus, BoardCustomField } from "@/hooks/useBoardSettings";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 interface BoardConfigDialogProps {
   organizationId: string | null;
@@ -44,15 +45,17 @@ const FIELD_TYPES = [
 ];
 
 const VISIBLE_FIELD_OPTIONS = [
-  { value: 'title', label: 'Título' },
-  { value: 'thumbnail', label: 'Miniatura' },
-  { value: 'status', label: 'Estado' },
-  { value: 'responsible', label: 'Responsable' },
-  { value: 'client', label: 'Cliente' },
-  { value: 'deadline', label: 'Fecha límite' },
-  { value: 'priority', label: 'Prioridad' },
-  { value: 'points', label: 'Puntos UP' },
-  { value: 'tags', label: 'Etiquetas' },
+  { value: 'title', label: 'Título', description: 'Nombre del contenido' },
+  { value: 'thumbnail', label: 'Miniatura', description: 'Imagen de preview' },
+  { value: 'status', label: 'Estado', description: 'Badge de estado actual' },
+  { value: 'responsible', label: 'Responsable', description: 'Avatar del asignado' },
+  { value: 'client', label: 'Cliente', description: 'Nombre del cliente' },
+  { value: 'deadline', label: 'Fecha límite', description: 'Deadline del proyecto' },
+  { value: 'priority', label: 'Prioridad', description: 'Nivel de prioridad' },
+  { value: 'points', label: 'Puntos UP', description: 'Puntos de usuario' },
+  { value: 'tags', label: 'Etiquetas', description: 'Tags del proyecto' },
+  { value: 'progress', label: 'Progreso', description: 'Barra de progreso' },
+  { value: 'indicators', label: 'Indicadores', description: 'Puntos de estado visual' },
 ];
 
 const ROLES = ['admin', 'creator', 'editor', 'strategist', 'client'];
@@ -139,8 +142,9 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
         </DialogHeader>
 
         <Tabs defaultValue="statuses" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="statuses">Estados</TabsTrigger>
+            <TabsTrigger value="rules">Reglas</TabsTrigger>
             <TabsTrigger value="cards">Tarjetas</TabsTrigger>
             <TabsTrigger value="fields">Campos</TabsTrigger>
             <TabsTrigger value="permissions">Permisos</TabsTrigger>
@@ -290,8 +294,71 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
             </ScrollArea>
           </TabsContent>
 
+          {/* REGLAS TAB */}
+          <TabsContent value="rules" className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Define reglas y automatizaciones al cambiar de estado
+            </p>
+            
+            <ScrollArea className="h-[320px] border rounded-lg p-3">
+              <div className="space-y-3">
+                {statuses.filter(s => s.is_active).map(status => (
+                  <Card key={status.id} className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div 
+                        className="h-4 w-4 rounded-full flex-shrink-0" 
+                        style={{ backgroundColor: status.color }} 
+                      />
+                      <span className="font-medium">{status.label}</span>
+                    </div>
+                    
+                    <div className="space-y-3 pl-7">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Roles permitidos</Label>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {ROLES.map(role => (
+                            <Badge 
+                              key={role}
+                              variant="outline" 
+                              className="text-xs cursor-pointer hover:bg-primary/10"
+                            >
+                              {role}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Al entrar a este estado</Label>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          <Badge variant="secondary" className="text-xs">
+                            + Notificar responsable
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            + Asignar UP
+                          </Badge>
+                          <Button variant="ghost" size="sm" className="h-6 text-xs">
+                            <Plus className="h-3 w-3 mr-1" />
+                            Agregar acción
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+                
+                {statuses.filter(s => s.is_active).length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Crea estados primero para configurar reglas.
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
           {/* TARJETAS TAB */}
           <TabsContent value="cards" className="space-y-6">
+            {/* Card Size Selection */}
             <div>
               <Label className="text-sm font-medium">Tamaño de tarjeta</Label>
               <p className="text-sm text-muted-foreground mb-3">
@@ -299,18 +366,31 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
               </p>
               <div className="flex gap-2">
                 {(['compact', 'normal', 'large'] as const).map(size => (
-                  <Button
+                  <Card
                     key={size}
-                    variant={settings?.card_size === size ? 'default' : 'outline'}
-                    size="sm"
+                    className={cn(
+                      "p-3 cursor-pointer transition-all hover:border-primary/50",
+                      settings?.card_size === size && "border-primary bg-primary/5"
+                    )}
                     onClick={() => updateSettings({ card_size: size })}
                   >
-                    {size === 'compact' ? 'Compacta' : size === 'normal' ? 'Normal' : 'Grande'}
-                  </Button>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className={cn(
+                        "rounded bg-muted",
+                        size === 'compact' && "w-12 h-8",
+                        size === 'normal' && "w-16 h-12",
+                        size === 'large' && "w-20 h-16"
+                      )} />
+                      <span className="text-xs font-medium">
+                        {size === 'compact' ? 'Compacta' : size === 'normal' ? 'Normal' : 'Grande'}
+                      </span>
+                    </div>
+                  </Card>
                 ))}
               </div>
             </div>
 
+            {/* Default View Selection */}
             <div>
               <Label className="text-sm font-medium">Vista predeterminada</Label>
               <p className="text-sm text-muted-foreground mb-3">
@@ -330,27 +410,100 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
               </div>
             </div>
 
+            {/* Visual Card Editor */}
             <div>
-              <Label className="text-sm font-medium">Campos visibles en tarjeta</Label>
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Palette className="h-4 w-4" />
+                Editor visual de tarjeta
+              </Label>
               <p className="text-sm text-muted-foreground mb-3">
-                Selecciona qué información mostrar en las tarjetas
+                Configura qué información mostrar en las tarjetas y en qué orden
               </p>
-              <div className="grid grid-cols-3 gap-2">
-                {VISIBLE_FIELD_OPTIONS.map(field => (
-                  <div
-                    key={field.value}
-                    className={cn(
-                      "flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors",
-                      settings?.visible_fields.includes(field.value)
-                        ? "bg-primary/10 border-primary"
-                        : "hover:bg-muted"
-                    )}
-                    onClick={() => toggleVisibleField(field.value)}
-                  >
-                    <Checkbox checked={settings?.visible_fields.includes(field.value)} />
-                    <span className="text-sm">{field.label}</span>
+              
+              {/* Card Preview */}
+              <div className="flex gap-4">
+                {/* Fields selector */}
+                <ScrollArea className="flex-1 h-[240px] border rounded-lg p-3">
+                  <div className="space-y-2">
+                    {VISIBLE_FIELD_OPTIONS.map((field, index) => {
+                      const isActive = settings?.visible_fields.includes(field.value);
+                      const fieldIndex = settings?.visible_fields.indexOf(field.value) ?? -1;
+                      
+                      return (
+                        <div
+                          key={field.value}
+                          className={cn(
+                            "flex items-center gap-3 p-2 rounded-lg border transition-all",
+                            isActive ? "bg-primary/10 border-primary" : "hover:bg-muted border-transparent"
+                          )}
+                        >
+                          <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                          
+                          <Checkbox 
+                            checked={isActive}
+                            onCheckedChange={() => toggleVisibleField(field.value)}
+                          />
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm">{field.label}</div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {field.description}
+                            </div>
+                          </div>
+                          
+                          {isActive && (
+                            <Badge variant="secondary" className="text-xs">
+                              #{fieldIndex + 1}
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+                </ScrollArea>
+                
+                {/* Live Preview */}
+                <div className="w-48 flex-shrink-0">
+                  <div className="text-xs text-muted-foreground mb-2">Vista previa</div>
+                  <Card className={cn(
+                    "p-2 space-y-2 transition-all",
+                    settings?.card_size === 'compact' && "p-1.5",
+                    settings?.card_size === 'large' && "p-3"
+                  )}>
+                    {settings?.visible_fields.includes('thumbnail') && (
+                      <div className="aspect-video bg-muted rounded" />
+                    )}
+                    {settings?.visible_fields.includes('title') && (
+                      <div className="h-3 bg-foreground/20 rounded w-3/4" />
+                    )}
+                    {settings?.visible_fields.includes('client') && (
+                      <div className="h-2 bg-muted-foreground/30 rounded w-1/2" />
+                    )}
+                    <div className="flex items-center gap-2">
+                      {settings?.visible_fields.includes('status') && (
+                        <div className="h-4 w-12 bg-primary/30 rounded-full" />
+                      )}
+                      {settings?.visible_fields.includes('responsible') && (
+                        <div className="h-5 w-5 bg-muted rounded-full" />
+                      )}
+                      {settings?.visible_fields.includes('deadline') && (
+                        <div className="h-2 bg-muted-foreground/20 rounded w-12" />
+                      )}
+                    </div>
+                    {settings?.visible_fields.includes('progress') && (
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full w-2/3 bg-primary rounded-full" />
+                      </div>
+                    )}
+                    {settings?.visible_fields.includes('indicators') && (
+                      <div className="flex gap-1">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                        <div className="h-2 w-2 rounded-full bg-muted" />
+                      </div>
+                    )}
+                  </Card>
+                </div>
               </div>
             </div>
           </TabsContent>
