@@ -772,6 +772,9 @@ export type Database = {
       content: {
         Row: {
           admin_guidelines: string | null
+          ai_assignment_reason: string | null
+          ai_delay_risk: string | null
+          ai_quality_score: number | null
           approved_at: string | null
           approved_at_v2: string | null
           approved_by: string | null
@@ -846,6 +849,9 @@ export type Database = {
         }
         Insert: {
           admin_guidelines?: string | null
+          ai_assignment_reason?: string | null
+          ai_delay_risk?: string | null
+          ai_quality_score?: number | null
           approved_at?: string | null
           approved_at_v2?: string | null
           approved_by?: string | null
@@ -920,6 +926,9 @@ export type Database = {
         }
         Update: {
           admin_guidelines?: string | null
+          ai_assignment_reason?: string | null
+          ai_delay_risk?: string | null
+          ai_quality_score?: number | null
           approved_at?: string | null
           approved_at_v2?: string | null
           approved_by?: string | null
@@ -2082,6 +2091,7 @@ export type Database = {
       }
       organization_members: {
         Row: {
+          ambassador_level: string | null
           id: string
           invited_by: string | null
           is_owner: boolean | null
@@ -2089,8 +2099,10 @@ export type Database = {
           organization_id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
+          visibility_scope: string | null
         }
         Insert: {
+          ambassador_level?: string | null
           id?: string
           invited_by?: string | null
           is_owner?: boolean | null
@@ -2098,8 +2110,10 @@ export type Database = {
           organization_id: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
+          visibility_scope?: string | null
         }
         Update: {
+          ambassador_level?: string | null
           id?: string
           invited_by?: string | null
           is_owner?: boolean | null
@@ -2107,6 +2121,7 @@ export type Database = {
           organization_id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+          visibility_scope?: string | null
         }
         Relationships: [
           {
@@ -2574,6 +2589,8 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          ai_recommended_level: string | null
+          ai_risk_flag: string | null
           ambassador_celebration_pending: boolean | null
           avatar_url: string | null
           bio: string | null
@@ -2591,16 +2608,22 @@ export type Database = {
           has_seen_tour: boolean | null
           id: string
           instagram: string | null
+          is_active: boolean | null
           is_ambassador: boolean | null
           is_public: boolean | null
           phone: string | null
           portfolio_url: string | null
+          quality_score_avg: number | null
+          reliability_score: number | null
           tiktok: string | null
           updated_at: string | null
           username: string | null
+          velocity_score: number | null
         }
         Insert: {
           address?: string | null
+          ai_recommended_level?: string | null
+          ai_risk_flag?: string | null
           ambassador_celebration_pending?: boolean | null
           avatar_url?: string | null
           bio?: string | null
@@ -2618,16 +2641,22 @@ export type Database = {
           has_seen_tour?: boolean | null
           id: string
           instagram?: string | null
+          is_active?: boolean | null
           is_ambassador?: boolean | null
           is_public?: boolean | null
           phone?: string | null
           portfolio_url?: string | null
+          quality_score_avg?: number | null
+          reliability_score?: number | null
           tiktok?: string | null
           updated_at?: string | null
           username?: string | null
+          velocity_score?: number | null
         }
         Update: {
           address?: string | null
+          ai_recommended_level?: string | null
+          ai_risk_flag?: string | null
           ambassador_celebration_pending?: boolean | null
           avatar_url?: string | null
           bio?: string | null
@@ -2645,13 +2674,17 @@ export type Database = {
           has_seen_tour?: boolean | null
           id?: string
           instagram?: string | null
+          is_active?: boolean | null
           is_ambassador?: boolean | null
           is_public?: boolean | null
           phone?: string | null
           portfolio_url?: string | null
+          quality_score_avg?: number | null
+          reliability_score?: number | null
           tiktok?: string | null
           updated_at?: string | null
           username?: string | null
+          velocity_score?: number | null
         }
         Relationships: [
           {
@@ -3035,6 +3068,118 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      talent_ai_recommendations: {
+        Row: {
+          actioned_at: string | null
+          actioned_by: string | null
+          ai_model: string | null
+          confidence: number | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_actioned: boolean | null
+          organization_id: string
+          reason: string
+          recommendation_type: string
+          user_id: string
+        }
+        Insert: {
+          actioned_at?: string | null
+          actioned_by?: string | null
+          ai_model?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_actioned?: boolean | null
+          organization_id: string
+          reason: string
+          recommendation_type: string
+          user_id: string
+        }
+        Update: {
+          actioned_at?: string | null
+          actioned_by?: string | null
+          ai_model?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_actioned?: boolean | null
+          organization_id?: string
+          reason?: string
+          recommendation_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talent_ai_recommendations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talent_performance_history: {
+        Row: {
+          active_tasks_count: number | null
+          ai_level: string | null
+          ai_risk_flag: string | null
+          completed_tasks_count: number | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          on_time_count: number | null
+          organization_id: string
+          quality_score: number | null
+          recorded_at: string
+          reliability_score: number | null
+          user_id: string
+          velocity_score: number | null
+        }
+        Insert: {
+          active_tasks_count?: number | null
+          ai_level?: string | null
+          ai_risk_flag?: string | null
+          completed_tasks_count?: number | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          on_time_count?: number | null
+          organization_id: string
+          quality_score?: number | null
+          recorded_at?: string
+          reliability_score?: number | null
+          user_id: string
+          velocity_score?: number | null
+        }
+        Update: {
+          active_tasks_count?: number | null
+          ai_level?: string | null
+          ai_risk_flag?: string | null
+          completed_tasks_count?: number | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          on_time_count?: number | null
+          organization_id?: string
+          quality_score?: number | null
+          recorded_at?: string
+          reliability_score?: number | null
+          user_id?: string
+          velocity_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talent_performance_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       up_ai_config: {
         Row: {
@@ -4092,6 +4237,22 @@ export type Database = {
         Returns: Json
       }
       get_best_available_editor: { Args: never; Returns: string }
+      get_best_available_editor_v2: {
+        Args: {
+          p_content_type?: string
+          p_deadline?: string
+          p_organization_id: string
+          p_priority?: string
+        }
+        Returns: {
+          active_tasks: number
+          editor_id: string
+          full_name: string
+          quality_score: number
+          recommendation_score: number
+          reliability_score: number
+        }[]
+      }
       get_company_followers_count: {
         Args: { _company_id: string }
         Returns: number
@@ -4252,6 +4413,10 @@ export type Database = {
           _to_currency: Database["public"]["Enums"]["currency_type"]
         }
         Returns: string
+      }
+      update_talent_performance_scores: {
+        Args: { p_organization_id: string; p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

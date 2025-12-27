@@ -37,6 +37,16 @@ export const UP_AI_MODULES = {
 } as const;
 
 // ============================================
+// TALENT SYSTEM
+// ============================================
+export const TALENT_AI_MODULES = {
+  MATCHING: 'talent.matching.ai',       // Asignación inteligente
+  QUALITY: 'talent.quality.ai',         // Scoring de calidad
+  RISK: 'talent.risk.ai',               // Riesgo de retraso/burnout
+  REPUTATION: 'talent.reputation.ai',   // Reputación y embajadores
+} as const;
+
+// ============================================
 // LIVE COMMERCE (Futuro)
 // ============================================
 export const LIVE_AI_MODULES = {
@@ -52,7 +62,7 @@ export interface AIModuleDefinition {
   key: string;
   name: string;
   description: string;
-  category: 'board' | 'content' | 'up' | 'live' | 'general';
+  category: 'board' | 'content' | 'up' | 'live' | 'talent' | 'general';
   icon?: string;
 }
 
@@ -141,6 +151,32 @@ export const AI_MODULE_DEFINITIONS: AIModuleDefinition[] = [
     category: 'up',
   },
   
+  // TALENT SYSTEM
+  {
+    key: TALENT_AI_MODULES.MATCHING,
+    name: 'Talent – Matching',
+    description: 'Asignación inteligente de creadores y editores basada en carga, calidad y disponibilidad',
+    category: 'talent',
+  },
+  {
+    key: TALENT_AI_MODULES.QUALITY,
+    name: 'Talent – Quality',
+    description: 'Evaluación automática de calidad de trabajo y scoring de talento',
+    category: 'talent',
+  },
+  {
+    key: TALENT_AI_MODULES.RISK,
+    name: 'Talent – Risk',
+    description: 'Detección de riesgo de retraso, burnout o sobrecarga de trabajo',
+    category: 'talent',
+  },
+  {
+    key: TALENT_AI_MODULES.REPUTATION,
+    name: 'Talent – Reputation',
+    description: 'Análisis de reputación, recomendaciones de nivel y potencial de embajador',
+    category: 'talent',
+  },
+  
   // LIVE COMMERCE (Futuro)
   {
     key: LIVE_AI_MODULES.CONTROL,
@@ -177,6 +213,7 @@ export const AI_MODULE_CATEGORIES = {
   board: { label: 'Tablero', icon: 'LayoutDashboard' },
   content: { label: 'Contenido', icon: 'FileVideo' },
   up: { label: 'Sistema UP', icon: 'Trophy' },
+  talent: { label: 'Talento', icon: 'Users' },
   live: { label: 'Live Commerce', icon: 'Radio' },
   general: { label: 'General', icon: 'Bot' },
 } as const;
@@ -197,6 +234,7 @@ export type AIModuleKey =
   | typeof BOARD_AI_MODULES[keyof typeof BOARD_AI_MODULES]
   | typeof CONTENT_AI_MODULES[keyof typeof CONTENT_AI_MODULES]
   | typeof UP_AI_MODULES[keyof typeof UP_AI_MODULES]
+  | typeof TALENT_AI_MODULES[keyof typeof TALENT_AI_MODULES]
   | typeof LIVE_AI_MODULES[keyof typeof LIVE_AI_MODULES];
 
 // All module keys as array
@@ -204,5 +242,6 @@ export const ALL_AI_MODULE_KEYS: AIModuleKey[] = [
   ...Object.values(BOARD_AI_MODULES),
   ...Object.values(CONTENT_AI_MODULES),
   ...Object.values(UP_AI_MODULES),
+  ...Object.values(TALENT_AI_MODULES),
   ...Object.values(LIVE_AI_MODULES),
 ];
