@@ -823,6 +823,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 {/* AI Thumbnail Generator */}
                 <AIThumbnailGenerator
                   contentId={content.id}
+                  organizationId={currentOrgId || ''}
                   currentThumbnail={content.thumbnail_url}
                   scriptContext={{
                     script: content.script,
