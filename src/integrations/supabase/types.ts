@@ -2551,6 +2551,39 @@ export type Database = {
         }
         Relationships: []
       }
+      link_previews: {
+        Row: {
+          description: string | null
+          expires_at: string
+          fetched_at: string
+          id: string
+          image_url: string | null
+          site_name: string | null
+          title: string | null
+          url: string
+        }
+        Insert: {
+          description?: string | null
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          site_name?: string | null
+          title?: string | null
+          url: string
+        }
+        Update: {
+          description?: string | null
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          site_name?: string | null
+          title?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       login_history: {
         Row: {
           device_type: string | null
@@ -2589,6 +2622,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      message_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          reaction: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          reaction: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          reaction?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {
@@ -5055,6 +5120,7 @@ export type Database = {
       user_presence: {
         Row: {
           created_at: string
+          current_activity: string | null
           current_page: string | null
           id: string
           is_online: boolean
@@ -5064,6 +5130,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          current_activity?: string | null
           current_page?: string | null
           id?: string
           is_online?: boolean
@@ -5073,6 +5140,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          current_activity?: string | null
           current_page?: string | null
           id?: string
           is_online?: boolean

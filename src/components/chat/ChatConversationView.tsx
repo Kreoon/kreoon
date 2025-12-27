@@ -1,9 +1,8 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -30,11 +29,19 @@ import {
   Paperclip,
   ThumbsUp,
   ThumbsDown,
-  Circle,
-  ChevronLeft
+  ChevronLeft,
+  Search
 } from 'lucide-react';
 import { ChatConversation, ChatMessage } from '@/hooks/useChat';
 import { AIMessage } from '@/hooks/useAIChat';
+import { useChatPresence } from '@/hooks/useChatPresence';
+import { useMessageReactions } from '@/hooks/useMessageReactions';
+import { useLinkPreview } from '@/hooks/useLinkPreview';
+import { PresenceIndicator } from './PresenceIndicator';
+import { MessageReactions } from './MessageReactions';
+import { LinkPreviewCard } from './LinkPreviewCard';
+import { ChatSearchDialog } from './ChatSearchDialog';
+import { MentionInput, renderMentions } from './MentionInput';
 
 interface ChatConversationViewProps {
   conversation: ChatConversation;
@@ -52,6 +59,7 @@ interface ChatConversationViewProps {
   uploading?: boolean;
   showBackButton?: boolean;
   isAdmin?: boolean;
+  availableUsers?: { id: string; full_name: string; avatar_url: string | null }[];
 }
 
 export function ChatConversationView({
@@ -69,11 +77,41 @@ export function ChatConversationView({
   onFileSelect,
   uploading,
   showBackButton = false,
-  isAdmin = false
+  isAdmin = false,
+  availableUsers = []
 }: ChatConversationViewProps) {
   const [newMessage, setNewMessage] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Get participant IDs for presence tracking
+  const participantIds = useMemo(() => {
+    if (isAIConversation) return [];
+    return conversation.participants
+      ?.map(p => p.user_id)
+      .filter(id => id !== currentUserId) || [];
+  }, [conversation.participants, currentUserId, isAIConversation]);
+
+  // Hooks for enhanced features
+  const { isOnline, getLastSeen } = useChatPresence(participantIds);
+  const { fetchReactions, toggleReaction, getReactionSummary } = useMessageReactions(conversation.id);
+  const { extractUrls, fetchPreview, previews } = useLinkPreview();
+
+  // Fetch reactions when messages change
+  useEffect(() => {
+    if (!isAIConversation && messages.length > 0) {
+      fetchReactions(messages.map(m => m.id));
+    }
+  }, [messages, isAIConversation, fetchReactions]);
+
+  // Fetch link previews for messages
+  useEffect(() => {
+    messages.forEach(msg => {
+      const urls = extractUrls(msg.content);
+      urls.slice(0, 1).forEach(url => fetchPreview(url));
+    });
+  }, [messages, extractUrls, fetchPreview]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -115,6 +153,12 @@ export function ChatConversationView({
     return otherParticipant?.profile?.avatar_url;
   };
 
+  const getOtherUserId = () => {
+    if (isAIConversation || conversation.is_group) return null;
+    const otherParticipant = conversation.participants?.find(p => p.user_id !== currentUserId);
+    return otherParticipant?.user_id;
+  };
+
   const getIcon = () => {
     if (isAIConversation) return <Bot className="h-5 w-5" />;
     if (conversation.is_group) return <Users className="h-5 w-5" />;
@@ -130,6 +174,21 @@ export function ChatConversationView({
 
   const displayMessages = isAIConversation ? aiMessages : messages;
   const showEmptyState = displayMessages.length === 0 && !isLoading;
+  const otherUserId = getOtherUserId();
+  const otherUserOnline = otherUserId ? isOnline(otherUserId) : false;
+  const otherUserLastSeen = otherUserId ? getLastSeen(otherUserId) : null;
+
+  // Get mentions users from participants
+  const mentionUsers = useMemo(() => {
+    if (!conversation.is_group) return [];
+    return conversation.participants
+      ?.filter(p => p.user_id !== currentUserId)
+      .map(p => ({
+        id: p.user_id,
+        full_name: p.profile?.full_name || 'Usuario',
+        avatar_url: p.profile?.avatar_url || null
+      })) || [];
+  }, [conversation.participants, conversation.is_group, currentUserId]);
 
   return (
     <div className="flex flex-col h-full">
@@ -146,17 +205,28 @@ export function ChatConversationView({
           </Button>
         )}
         
-        <Avatar className={cn(
-          "h-10 w-10 shrink-0",
-          isAIConversation && "border-2 border-primary"
-        )}>
-          <AvatarImage src={getConversationAvatar() || ''} />
-          <AvatarFallback className={cn(
-            isAIConversation && "bg-primary text-primary-foreground"
+        <div className="relative">
+          <Avatar className={cn(
+            "h-10 w-10 shrink-0",
+            isAIConversation && "border-2 border-primary"
           )}>
-            {getIcon()}
-          </AvatarFallback>
-        </Avatar>
+            <AvatarImage src={getConversationAvatar() || ''} />
+            <AvatarFallback className={cn(
+              isAIConversation && "bg-primary text-primary-foreground"
+            )}>
+              {getIcon()}
+            </AvatarFallback>
+          </Avatar>
+          {!isAIConversation && !conversation.is_group && otherUserId && (
+            <div className="absolute -bottom-0.5 -right-0.5">
+              <PresenceIndicator 
+                isOnline={otherUserOnline} 
+                lastSeen={otherUserLastSeen}
+                size="md"
+              />
+            </div>
+          )}
+        </div>
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -168,13 +238,31 @@ export function ChatConversationView({
             )}
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Circle className={cn(
-              "h-2 w-2 fill-current",
-              isAIConversation ? "text-green-500" : "text-muted-foreground"
-            )} />
-            <span>{isAIConversation ? 'Siempre disponible' : 'En línea'}</span>
+            {isAIConversation ? (
+              <>
+                <PresenceIndicator isOnline={true} size="sm" />
+                <span>Siempre disponible</span>
+              </>
+            ) : conversation.is_group ? (
+              <span>{conversation.participants?.length || 0} participantes</span>
+            ) : (
+              <PresenceIndicator 
+                isOnline={otherUserOnline} 
+                lastSeen={otherUserLastSeen}
+                showText
+              />
+            )}
           </div>
         </div>
+
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => setSearchOpen(true)}
+          className="shrink-0"
+        >
+          <Search className="h-5 w-5" />
+        </Button>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -300,14 +388,18 @@ export function ChatConversationView({
                 </div>
               ))
             ) : (
-              // Regular Messages
+              // Regular Messages with reactions and link previews
               messages.map(msg => {
                 const isOwn = msg.sender_id === currentUserId;
+                const reactionSummary = getReactionSummary(msg.id);
+                const urls = extractUrls(msg.content);
+                const linkPreview = urls[0] ? previews.get(urls[0]) : null;
+
                 return (
                   <div
                     key={msg.id}
                     className={cn(
-                      'flex gap-2',
+                      'flex gap-2 group',
                       isOwn && 'flex-row-reverse'
                     )}
                   >
@@ -319,40 +411,58 @@ export function ChatConversationView({
                         </AvatarFallback>
                       </Avatar>
                     )}
-                    <div className={cn(
-                      'max-w-[75%] rounded-2xl px-4 py-2',
-                      isOwn 
-                        ? 'bg-primary text-primary-foreground rounded-br-md' 
-                        : 'bg-muted rounded-bl-md'
-                    )}>
-                      {!isOwn && conversation.is_group && (
-                        <p className="text-xs font-medium mb-1 opacity-80">
-                          {msg.sender?.full_name}
-                        </p>
-                      )}
-                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                      
-                      {/* Attachment preview */}
-                      {msg.attachment_url && msg.attachment_type === 'image' && (
-                        <img 
-                          src={msg.attachment_url} 
-                          alt="Imagen" 
-                          className="max-w-full rounded-lg mt-2 cursor-pointer"
-                          onClick={() => window.open(msg.attachment_url!, '_blank')}
-                        />
-                      )}
-                      
+                    <div className="max-w-[75%]">
                       <div className={cn(
-                        'flex items-center gap-1 mt-1',
-                        isOwn ? 'justify-end' : 'justify-start'
+                        'rounded-2xl px-4 py-2',
+                        isOwn 
+                          ? 'bg-primary text-primary-foreground rounded-br-md' 
+                          : 'bg-muted rounded-bl-md'
                       )}>
-                        <span className={cn(
-                          'text-[10px]',
-                          isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                        {!isOwn && conversation.is_group && (
+                          <p className="text-xs font-medium mb-1 opacity-80">
+                            {msg.sender?.full_name}
+                          </p>
+                        )}
+                        <p className="text-sm whitespace-pre-wrap">
+                          {renderMentions(msg.content, currentUserId)}
+                        </p>
+                        
+                        {/* Attachment preview */}
+                        {msg.attachment_url && msg.attachment_type === 'image' && (
+                          <img 
+                            src={msg.attachment_url} 
+                            alt="Imagen" 
+                            className="max-w-full rounded-lg mt-2 cursor-pointer"
+                            onClick={() => window.open(msg.attachment_url!, '_blank')}
+                          />
+                        )}
+
+                        {/* Link preview */}
+                        {linkPreview && (
+                          <LinkPreviewCard preview={linkPreview} isOwnMessage={isOwn} />
+                        )}
+                        
+                        <div className={cn(
+                          'flex items-center gap-1 mt-1',
+                          isOwn ? 'justify-end' : 'justify-start'
                         )}>
-                          {format(new Date(msg.created_at), 'HH:mm', { locale: es })}
-                        </span>
-                        {renderMessageStatus(msg)}
+                          <span className={cn(
+                            'text-[10px]',
+                            isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                          )}>
+                            {format(new Date(msg.created_at), 'HH:mm', { locale: es })}
+                          </span>
+                          {renderMessageStatus(msg)}
+                        </div>
+                      </div>
+
+                      {/* Reactions */}
+                      <div className="mt-1">
+                        <MessageReactions
+                          reactions={reactionSummary}
+                          onToggleReaction={(reaction) => toggleReaction(msg.id, reaction)}
+                          isOwnMessage={isOwn}
+                        />
                       </div>
                     </div>
                   </div>
@@ -414,16 +524,29 @@ export function ChatConversationView({
             </>
           )}
           
-          <div className="flex-1">
-            <Input
+          {conversation.is_group && mentionUsers.length > 0 ? (
+            <MentionInput
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={setNewMessage}
               onKeyDown={handleKeyDown}
-              placeholder={isAIConversation ? 'Pregúntale al asistente...' : 'Escribe un mensaje...'}
+              placeholder="Escribe un mensaje... (usa @ para mencionar)"
               className="rounded-full bg-muted border-0"
               disabled={isLoading && isAIConversation}
+              users={mentionUsers}
             />
-          </div>
+          ) : (
+            <div className="flex-1">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isAIConversation ? 'Pregúntale al asistente...' : 'Escribe un mensaje...'}
+                className="w-full h-10 px-4 rounded-full bg-muted border-0 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled={isLoading && isAIConversation}
+              />
+            </div>
+          )}
           
           <Button 
             size="icon" 
@@ -439,6 +562,13 @@ export function ChatConversationView({
           </Button>
         </div>
       </div>
+
+      {/* Search Dialog */}
+      <ChatSearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        conversationId={conversation.id}
+      />
     </div>
   );
 }
