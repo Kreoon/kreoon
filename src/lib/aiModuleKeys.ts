@@ -191,3 +191,18 @@ export const LEGACY_MODULE_MAPPINGS: Record<string, string> = {
   'thumbnails': CONTENT_AI_MODULES.DESIGNER,
   'sistema_up': UP_AI_MODULES.QUALITY, // Mapea al quality score por defecto
 };
+
+// Type for all valid module keys
+export type AIModuleKey = 
+  | typeof BOARD_AI_MODULES[keyof typeof BOARD_AI_MODULES]
+  | typeof CONTENT_AI_MODULES[keyof typeof CONTENT_AI_MODULES]
+  | typeof UP_AI_MODULES[keyof typeof UP_AI_MODULES]
+  | typeof LIVE_AI_MODULES[keyof typeof LIVE_AI_MODULES];
+
+// All module keys as array
+export const ALL_AI_MODULE_KEYS: AIModuleKey[] = [
+  ...Object.values(BOARD_AI_MODULES),
+  ...Object.values(CONTENT_AI_MODULES),
+  ...Object.values(UP_AI_MODULES),
+  ...Object.values(LIVE_AI_MODULES),
+];

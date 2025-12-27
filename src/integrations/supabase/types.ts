@@ -4146,6 +4146,7 @@ export type Database = {
         Args: { post_uuid: string }
         Returns: undefined
       }
+      init_ai_prompts_for_org: { Args: { _org_id: string }; Returns: undefined }
       initialize_board_settings: {
         Args: { _org_id: string }
         Returns: undefined
