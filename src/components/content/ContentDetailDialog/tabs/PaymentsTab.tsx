@@ -13,8 +13,10 @@ export function PaymentsTab({
   setFormData,
   editMode,
   permissions,
+  readOnly = false,
 }: TabProps) {
-  const canEditPayments = permissions.can('content.payments', 'edit');
+  const effectiveEditMode = editMode && !readOnly;
+  const canEditPayments = permissions.can('content.payments', 'edit') && !readOnly;
 
   return (
     <div className="space-y-6">
@@ -25,7 +27,8 @@ export function PaymentsTab({
             <EditableField
               permissions={permissions}
               resource="content.payments"
-              editMode={editMode}
+              editMode={effectiveEditMode}
+              readOnly={readOnly}
               editComponent={
                 <Input
                   type="number"
@@ -43,10 +46,11 @@ export function PaymentsTab({
           </FieldRow>
 
           <FieldRow label="Estado">
-            <EditableField
+          <EditableField
               permissions={permissions}
               resource="content.payments"
-              editMode={editMode}
+              editMode={effectiveEditMode}
+              readOnly={readOnly}
               editComponent={
                 <div className="flex items-center gap-2">
                   <Checkbox
@@ -73,10 +77,11 @@ export function PaymentsTab({
       <SectionCard title="Pago Editor" iconEmoji="🎬">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FieldRow label="Monto">
-            <EditableField
+          <EditableField
               permissions={permissions}
               resource="content.payments"
-              editMode={editMode}
+              editMode={effectiveEditMode}
+              readOnly={readOnly}
               editComponent={
                 <Input
                   type="number"
@@ -94,10 +99,11 @@ export function PaymentsTab({
           </FieldRow>
 
           <FieldRow label="Estado">
-            <EditableField
+          <EditableField
               permissions={permissions}
               resource="content.payments"
-              editMode={editMode}
+              editMode={effectiveEditMode}
+              readOnly={readOnly}
               editComponent={
                 <div className="flex items-center gap-2">
                   <Checkbox
@@ -126,7 +132,8 @@ export function PaymentsTab({
           <EditableField
             permissions={permissions}
             resource="content.payments"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <div className="flex items-center gap-2">
                 <Checkbox

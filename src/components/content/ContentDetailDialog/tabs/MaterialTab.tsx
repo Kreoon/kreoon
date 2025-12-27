@@ -13,10 +13,12 @@ export function MaterialTab({
   editMode,
   permissions,
   onUpdate,
+  readOnly = false,
 }: TabProps) {
   const { user } = useAuth();
-  const canEditMaterial = permissions.can('content.material', 'edit');
-  const canEditDrive = permissions.can('content.material.drive', 'edit');
+  const effectiveEditMode = editMode && !readOnly;
+  const canEditMaterial = permissions.can('content.material', 'edit') && !readOnly;
+  const canEditDrive = permissions.can('content.material.drive', 'edit') && !readOnly;
 
   // Video embed helper
   const renderVideoEmbed = (url: string) => {
@@ -100,7 +102,7 @@ export function MaterialTab({
               setFormData(prev => ({ ...prev, raw_video_urls: urls }));
               onUpdate?.();
             }}
-            disabled={!editMode || !canEditMaterial}
+            disabled={!effectiveEditMode || !canEditMaterial}
           />
         </SectionCard>
       </PermissionsGate>
@@ -111,7 +113,8 @@ export function MaterialTab({
           <EditableField
             permissions={permissions}
             resource="content.material.drive"
-            editMode={editMode}
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
             editComponent={
               <Input
                 value={formData.drive_url || ''}
