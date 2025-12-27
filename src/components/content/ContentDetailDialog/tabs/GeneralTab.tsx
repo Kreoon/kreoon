@@ -3,6 +3,7 @@ import { FieldRow } from '../components/SectionCard';
 import { EditableField } from '../components/PermissionsGate';
 import { TabProps } from '../types';
 import { Target, FileText, Link as LinkIcon, ExternalLink } from 'lucide-react';
+import { QualityScoreWidget } from '@/components/points/QualityScoreWidget';
 
 interface GeneralTabProps extends TabProps {
   selectedProduct: any;
@@ -24,6 +25,11 @@ export function GeneralTab({
 
   return (
     <div className="space-y-4">
+      {/* Quality Score Widget - Solo mostrar si hay contenido existente */}
+      {content?.id && (
+        <QualityScoreWidget contentId={content.id} />
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Ángulo de Ventas */}
         <FieldRow label="Ángulo de Ventas" icon={Target}>
