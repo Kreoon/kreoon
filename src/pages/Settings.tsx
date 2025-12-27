@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog, Building2, UserCog, Landmark } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog, Building2, UserCog, Landmark, Star } from "lucide-react";
 import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
@@ -21,6 +21,7 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { OrganizationManagement } from "@/components/settings/OrganizationManagement";
 import { OrganizationRegistrations } from "@/components/settings/OrganizationRegistrations";
 import { PlatformUsersManagement } from "@/components/settings/PlatformUsersManagement";
+import { AmbassadorDashboard } from "@/components/ambassador";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -64,7 +65,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios-plataforma' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'gestion-orgs';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios-plataforma' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'gestion-orgs' | 'embajadores';
 
 interface SettingsSectionItem {
   id: SettingsSection;
@@ -108,6 +109,12 @@ const orgLevelSections: SettingsSectionItem[] = [
     icon: Building2, 
     title: "Mi Organización", 
     description: "Datos y configuración de tu organización",
+  },
+  { 
+    id: 'embajadores',
+    icon: Star, 
+    title: "Sistema de Embajadores", 
+    description: "Gestiona embajadores, comisiones y referidos",
   },
   { 
     id: 'historial',
@@ -236,6 +243,8 @@ const Settings = () => {
         return <AuditLogPanel />;
       case 'mi-organizacion':
         return <OrganizationManagement />;
+      case 'embajadores':
+        return <AmbassadorDashboard />;
       case 'gestion-orgs':
         return <OrganizationRegistrations />;
       case 'usuarios-plataforma':

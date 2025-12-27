@@ -9,11 +9,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { Content, STATUS_LABELS, STATUS_COLORS } from "@/types/database";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { User, Video, Mail, Phone, Calendar, DollarSign, MapPin, Instagram, Facebook, Edit, Star, TrendingUp, Clock, Brain } from "lucide-react";
+import { User, Video, Mail, Phone, Calendar, DollarSign, MapPin, Instagram, Facebook, Edit, Star, TrendingUp, Clock, Brain, Users } from "lucide-react";
 import { CreatorEditorForm } from "./CreatorEditorForm";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { TalentAITab } from "./TalentAITab";
+import { AmbassadorProfileSection } from "@/components/ambassador";
 
 interface CreatorProfile {
   id: string;
@@ -207,10 +208,16 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
           </DialogHeader>
 
           <Tabs defaultValue="info" className="mt-4">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className={`grid w-full ${profile?.is_ambassador ? 'grid-cols-5' : 'grid-cols-4'}`}>
               <TabsTrigger value="info">Información</TabsTrigger>
               <TabsTrigger value="content">Contenido ({assignedContent.length})</TabsTrigger>
               <TabsTrigger value="stats">Estadísticas</TabsTrigger>
+              {profile?.is_ambassador && (
+                <TabsTrigger value="ambassador" className="gap-1">
+                  <Users className="h-3 w-3" />
+                  Embajador
+                </TabsTrigger>
+              )}
               <TabsTrigger value="ai" className="gap-1">
                 <Brain className="h-3 w-3" />
                 IA
@@ -484,6 +491,12 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
                 </div>
               )}
             </TabsContent>
+
+            {profile?.is_ambassador && (
+              <TabsContent value="ambassador" className="mt-4">
+                <AmbassadorProfileSection userId={creator.id} />
+              </TabsContent>
+            )}
 
             <TabsContent value="ai" className="mt-4">
               <TalentAITab userId={creator.id} onUpdate={onUpdate} />
