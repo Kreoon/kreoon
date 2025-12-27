@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 
 export interface UserPoints {
   id: string;
@@ -195,12 +196,13 @@ export function useUserPoints(userId?: string) {
 }
 
 export function useLeaderboard() {
+  const { currentOrgId } = useOrgOwner();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchLeaderboard();
-    
+
     const channel = supabase
       .channel('leaderboard-changes')
       .on(
@@ -217,25 +219,42 @@ export function useLeaderboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrgId]);
 
   const fetchLeaderboard = async () => {
     try {
-      // Obtener puntos con perfil
+      if (!currentOrgId) {
+        setLeaderboard([]);
+        return;
+      }
+
+      const { data: membersData, error: membersError } = await supabase
+        .from('organization_members')
+        .select('user_id')
+        .eq('organization_id', currentOrgId);
+
+      if (membersError) throw membersError;
+
+      const memberIds = (membersData || []).map(m => m.user_id);
+      if (!memberIds.length) {
+        setLeaderboard([]);
+        return;
+      }
+
       const { data: pointsData, error: pointsError } = await supabase
         .from('user_points')
         .select('user_id, total_points, current_level')
+        .in('user_id', memberIds)
         .order('total_points', { ascending: false });
 
       if (pointsError) throw pointsError;
 
       if (!pointsData || pointsData.length === 0) {
         setLeaderboard([]);
-        setLoading(false);
         return;
       }
 
-      // Obtener perfiles de los usuarios
       const userIds = pointsData.map(p => p.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
@@ -244,9 +263,7 @@ export function useLeaderboard() {
 
       if (profilesError) throw profilesError;
 
-      const profilesMap = new Map(
-        (profilesData || []).map(p => [p.id, p])
-      );
+      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
 
       const entries: LeaderboardEntry[] = pointsData.map((p, index) => {
         const profile = profilesMap.get(p.user_id);
