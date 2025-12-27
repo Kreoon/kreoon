@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Settings, Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, Check, X, ArrowUp, ArrowDown, Palette, ChevronRight, ChevronLeft, Lock } from "lucide-react";
+import { Settings, Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, Check, X, ArrowUp, ArrowDown, Palette, ChevronRight, ChevronLeft, Lock, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useBoardSettings, OrganizationStatus, BoardCustomField } from "@/hooks/useBoardSettings";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { ScriptPermissionsEditor } from "@/components/settings/ScriptPermissionsEditor";
 
 interface BoardConfigDialogProps {
   organizationId: string | null;
@@ -183,12 +184,13 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
         </DialogHeader>
 
         <Tabs defaultValue="statuses" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="statuses">Estados</TabsTrigger>
             <TabsTrigger value="rules">Reglas</TabsTrigger>
             <TabsTrigger value="cards">Tarjetas</TabsTrigger>
             <TabsTrigger value="fields">Campos</TabsTrigger>
             <TabsTrigger value="permissions">Permisos</TabsTrigger>
+            <TabsTrigger value="scripts">Scripts</TabsTrigger>
           </TabsList>
 
           {/* ESTADOS TAB */}
@@ -764,6 +766,11 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                 </tbody>
               </table>
             </div>
+          </TabsContent>
+
+          {/* SCRIPTS TAB */}
+          <TabsContent value="scripts" className="space-y-4">
+            <ScriptPermissionsEditor organizationId={organizationId} />
           </TabsContent>
         </Tabs>
       </DialogContent>
