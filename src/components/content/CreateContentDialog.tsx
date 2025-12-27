@@ -7,10 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp } from "lucide-react";
+import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp, Medal, Info, Sparkles } from "lucide-react";
 import { ScriptGenerator } from "./ScriptGenerator";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 
 interface CreateContentDialogProps {
   open: boolean;
@@ -42,6 +45,7 @@ interface Product {
 
 export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateContentDialogProps) {
   const { toast } = useToast();
+  const { currentOrgId } = useOrgOwner();
   const [loading, setLoading] = useState(false);
   
   // Form state
@@ -70,6 +74,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   // Options lists
   const [clients, setClients] = useState<SelectOption[]>([]);
   const [creators, setCreators] = useState<SelectOption[]>([]);
+  const [ambassadors, setAmbassadors] = useState<SelectOption[]>([]);
   const [editors, setEditors] = useState<SelectOption[]>([]);
   const [strategists, setStrategists] = useState<SelectOption[]>([]);
   
@@ -77,12 +82,51 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   const [clientPackages, setClientPackages] = useState<ClientPackage[]>([]);
   const [clientProducts, setClientProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  
+  // Ambassador content detection
+  const [isAmbassadorContent, setIsAmbassadorContent] = useState(false);
+  const [organizationClientId, setOrganizationClientId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       fetchOptions();
     }
   }, [open]);
+
+  // Detect if client is the organization (ambassador content)
+  useEffect(() => {
+    if (clientId && currentOrgId) {
+      // Check if the selected client ID matches the organization ID
+      // OR if the client's organization_id matches and it's the org's own client
+      const checkIfOrgClient = async () => {
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('id, organization_id')
+          .eq('id', clientId)
+          .maybeSingle();
+        
+        // Client is organization if its ID equals org ID (same entity) OR it represents the org
+        const isOrgAsClient = clientData?.id === currentOrgId;
+        setIsAmbassadorContent(isOrgAsClient);
+        setOrganizationClientId(isOrgAsClient ? clientId : null);
+        
+        // Reset creator selection when switching to/from ambassador content
+        if (isOrgAsClient !== isAmbassadorContent) {
+          setCreatorId("");
+        }
+        
+        // Clear payments for ambassador content
+        if (isOrgAsClient) {
+          setCreatorPayment("");
+          setEditorPayment("");
+        }
+      };
+      checkIfOrgClient();
+    } else {
+      setIsAmbassadorContent(false);
+      setOrganizationClientId(null);
+    }
+  }, [clientId, currentOrgId]);
 
   // Fetch client's packages and products when client changes
   useEffect(() => {
@@ -152,7 +196,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
       .order('name');
     setClients(clientsData || []);
 
-    // Fetch creators
+    // Fetch creators (regular)
     const { data: creatorRoles } = await supabase
       .from('user_roles')
       .select('user_id')
@@ -164,6 +208,25 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
         .select('id, full_name')
         .in('id', creatorRoles.map(r => r.user_id));
       setCreators(creatorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+    }
+
+    // Fetch ambassadors (for ambassador content)
+    if (currentOrgId) {
+      const { data: ambassadorRoles } = await supabase
+        .from('organization_member_roles')
+        .select('user_id')
+        .eq('organization_id', currentOrgId)
+        .eq('role', 'ambassador');
+      
+      if (ambassadorRoles?.length) {
+        const { data: ambassadorProfiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', ambassadorRoles.map(r => r.user_id));
+        setAmbassadors(ambassadorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+      } else {
+        setAmbassadors([]);
+      }
     }
 
     // Fetch editors
@@ -232,6 +295,25 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
       return;
     }
 
+    // Validation for ambassador content
+    if (isAmbassadorContent && !creatorId) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar un embajador para contenido de marca interna",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isAmbassadorContent && ambassadors.length === 0) {
+      toast({
+        title: "Error",
+        description: "No hay embajadores disponibles. Primero asigna el rol de embajador a usuarios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -249,8 +331,9 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
         reference_url: referenceUrl.trim() || null,
         script: script.trim() || null,
         description: description.trim() || null,
-        creator_payment: creatorPayment ? parseFloat(creatorPayment) : 0,
-        editor_payment: editorPayment ? parseFloat(editorPayment) : 0,
+        // Ambassador content: no monetary payment
+        creator_payment: isAmbassadorContent ? 0 : (creatorPayment ? parseFloat(creatorPayment) : 0),
+        editor_payment: isAmbassadorContent ? 0 : (editorPayment ? parseFloat(editorPayment) : 0),
         hooks_count: hooksCount,
         video_urls: Array(hooksCount).fill(''),
         editor_guidelines: editorGuidelines.trim() || null,
@@ -258,14 +341,22 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
         trafficker_guidelines: traffickerGuidelines.trim() || null,
         status: 'draft',
         creator_assigned_at: creatorId ? new Date().toISOString() : null,
-        editor_assigned_at: editorId ? new Date().toISOString() : null
+        editor_assigned_at: editorId ? new Date().toISOString() : null,
+        // Ambassador content fields
+        is_ambassador_content: isAmbassadorContent,
+        content_type: isAmbassadorContent ? 'ambassador_internal' : 'commercial',
+        is_paid: !isAmbassadorContent,
+        reward_type: isAmbassadorContent ? 'UP' : 'money',
+        organization_id: currentOrgId
       });
 
       if (error) throw error;
 
       toast({
-        title: "Proyecto creado",
-        description: "El proyecto se ha creado exitosamente"
+        title: isAmbassadorContent ? "Proyecto de Embajador creado" : "Proyecto creado",
+        description: isAmbassadorContent 
+          ? "El proyecto de marca interna se ha creado. La recompensa será en puntos UP."
+          : "El proyecto se ha creado exitosamente"
       });
 
       resetForm();
@@ -398,20 +489,71 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
           <Separator />
 
+          {/* Ambassador Content Alert */}
+          {isAmbassadorContent && (
+            <Alert className="border-amber-500/50 bg-amber-500/10">
+              <Medal className="h-4 w-4 text-amber-500" />
+              <AlertDescription className="flex items-center gap-2">
+                <span className="font-medium text-amber-600 dark:text-amber-400">
+                  🏅 Proyecto de Marca Interna – Solo Embajadores
+                </span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Este contenido se produce sin pago monetario. La recompensa se otorga en puntos UP según las reglas de la organización.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Equipo */}
           <div className="space-y-4">
             <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Equipo Asignado</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="creator">Creador</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="creator">
+                    {isAmbassadorContent ? "Embajador" : "Creador"}
+                  </Label>
+                  {isAmbassadorContent && (
+                    <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      UP
+                    </Badge>
+                  )}
+                </div>
                 <Select value={creatorId} onValueChange={setCreatorId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar creador" />
+                  <SelectTrigger className={isAmbassadorContent ? "border-amber-500/50" : ""}>
+                    <SelectValue placeholder={isAmbassadorContent ? "Seleccionar embajador" : "Seleccionar creador"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {creators.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
+                    {isAmbassadorContent ? (
+                      ambassadors.length > 0 ? (
+                        ambassadors.map(a => (
+                          <SelectItem key={a.id} value={a.id}>
+                            <div className="flex items-center gap-2">
+                              <Medal className="h-3 w-3 text-amber-500" />
+                              {a.name}
+                            </div>
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-4 text-sm text-muted-foreground text-center">
+                          No hay embajadores disponibles.
+                          <br />
+                          <span className="text-xs">Primero asigna el rol de embajador a usuarios.</span>
+                        </div>
+                      )
+                    ) : (
+                      creators.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -490,35 +632,53 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
           <Separator />
 
-          {/* Pagos */}
-          <div className="space-y-4">
-            <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Pagos</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="creatorPayment">Pago Creador (COP)</Label>
-                <Input
-                  id="creatorPayment"
-                  type="number"
-                  value={creatorPayment}
-                  onChange={(e) => setCreatorPayment(e.target.value)}
-                  placeholder="0"
-                  min="0"
-                />
-              </div>
+          {/* Pagos - Hidden for ambassador content */}
+          {!isAmbassadorContent ? (
+            <div className="space-y-4">
+              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Pagos</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="creatorPayment">Pago Creador (COP)</Label>
+                  <Input
+                    id="creatorPayment"
+                    type="number"
+                    value={creatorPayment}
+                    onChange={(e) => setCreatorPayment(e.target.value)}
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="editorPayment">Pago Editor (COP)</Label>
-                <Input
-                  id="editorPayment"
-                  type="number"
-                  value={editorPayment}
-                  onChange={(e) => setEditorPayment(e.target.value)}
-                  placeholder="0"
-                  min="0"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="editorPayment">Pago Editor (COP)</Label>
+                  <Input
+                    id="editorPayment"
+                    type="number"
+                    value={editorPayment}
+                    onChange={(e) => setEditorPayment(e.target.value)}
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                Recompensa UP
+              </h3>
+              <div className="p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                <p className="text-sm text-muted-foreground">
+                  Este contenido no genera pago monetario. El embajador recibirá puntos UP según las reglas configuradas en la organización.
+                </p>
+                <div className="mt-2 flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                  <Medal className="h-3 w-3" />
+                  <span>Los puntos se asignarán automáticamente al aprobar el contenido</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <Separator />
 

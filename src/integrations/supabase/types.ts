@@ -346,6 +346,56 @@ export type Database = {
           },
         ]
       }
+      ambassador_up_config: {
+        Row: {
+          base_points: number
+          conditions: Json | null
+          created_at: string | null
+          description: string | null
+          event_key: string
+          event_name: string
+          id: string
+          is_active: boolean | null
+          multipliers: Json | null
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_points?: number
+          conditions?: Json | null
+          created_at?: string | null
+          description?: string | null
+          event_key: string
+          event_name: string
+          id?: string
+          is_active?: boolean | null
+          multipliers?: Json | null
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_points?: number
+          conditions?: Json | null
+          created_at?: string | null
+          description?: string | null
+          event_key?: string
+          event_name?: string
+          id?: string
+          is_active?: boolean | null
+          multipliers?: Json | null
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_up_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           description: string | null
@@ -1019,6 +1069,7 @@ export type Database = {
           change_request_status: string | null
           change_requests: Json | null
           client_id: string | null
+          content_type: string | null
           created_at: string | null
           creator_assigned_at: string | null
           creator_id: string | null
@@ -1043,6 +1094,7 @@ export type Database = {
           id: string
           invoiced: boolean | null
           is_ambassador_content: boolean | null
+          is_paid: boolean | null
           is_portfolio_public: boolean | null
           is_published: boolean | null
           issue_at: string | null
@@ -1059,6 +1111,7 @@ export type Database = {
           recording_at: string | null
           reference_url: string | null
           review_at: string | null
+          reward_type: string | null
           sales_angle: string | null
           script: string | null
           script_approved_at: string | null
@@ -1096,6 +1149,7 @@ export type Database = {
           change_request_status?: string | null
           change_requests?: Json | null
           client_id?: string | null
+          content_type?: string | null
           created_at?: string | null
           creator_assigned_at?: string | null
           creator_id?: string | null
@@ -1120,6 +1174,7 @@ export type Database = {
           id?: string
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
+          is_paid?: boolean | null
           is_portfolio_public?: boolean | null
           is_published?: boolean | null
           issue_at?: string | null
@@ -1136,6 +1191,7 @@ export type Database = {
           recording_at?: string | null
           reference_url?: string | null
           review_at?: string | null
+          reward_type?: string | null
           sales_angle?: string | null
           script?: string | null
           script_approved_at?: string | null
@@ -1173,6 +1229,7 @@ export type Database = {
           change_request_status?: string | null
           change_requests?: Json | null
           client_id?: string | null
+          content_type?: string | null
           created_at?: string | null
           creator_assigned_at?: string | null
           creator_id?: string | null
@@ -1197,6 +1254,7 @@ export type Database = {
           id?: string
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
+          is_paid?: boolean | null
           is_portfolio_public?: boolean | null
           is_published?: boolean | null
           issue_at?: string | null
@@ -1213,6 +1271,7 @@ export type Database = {
           recording_at?: string | null
           reference_url?: string | null
           review_at?: string | null
+          reward_type?: string | null
           sales_angle?: string | null
           script?: string | null
           script_approved_at?: string | null
