@@ -19,9 +19,20 @@ export interface LevelThresholds {
   diamond: number;
 }
 
+export interface MultiCurrencyConfig {
+  secondary_currency_enabled: boolean;
+  secondary_currency_name: string;
+  secondary_currency_icon: string;
+}
+
 export function useUPSettings() {
   const [settings, setSettings] = useState<UPSetting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currencyConfig, setCurrencyConfig] = useState<MultiCurrencyConfig>({
+    secondary_currency_enabled: false,
+    secondary_currency_name: 'XP',
+    secondary_currency_icon: '⭐'
+  });
 
   useEffect(() => {
     fetchSettings();
@@ -52,7 +63,27 @@ export function useUPSettings() {
         .order('category', { ascending: true });
 
       if (error) throw error;
-      setSettings((data as UPSetting[]) || []);
+      
+      const settingsData = (data as any[]) || [];
+      setSettings(settingsData.map(s => ({
+        id: s.id,
+        key: s.key,
+        value: s.value,
+        label: s.label,
+        description: s.description,
+        category: s.category,
+        updated_at: s.updated_at,
+        updated_by: s.updated_by
+      })));
+      
+      // Extract currency config from first row (shared across all)
+      if (settingsData.length > 0) {
+        setCurrencyConfig({
+          secondary_currency_enabled: settingsData[0].secondary_currency_enabled ?? false,
+          secondary_currency_name: settingsData[0].secondary_currency_name ?? 'XP',
+          secondary_currency_icon: settingsData[0].secondary_currency_icon ?? '⭐'
+        });
+      }
     } catch (error) {
       console.error('Error fetching UP settings:', error);
     } finally {
@@ -68,6 +99,38 @@ export function useUPSettings() {
 
     if (error) throw error;
     await fetchSettings();
+  };
+
+  const updateCurrencyConfig = async (config: MultiCurrencyConfig) => {
+    try {
+      // Get all setting IDs first
+      const { data: allSettings } = await supabase
+        .from('up_settings')
+        .select('id');
+      
+      if (!allSettings || allSettings.length === 0) {
+        throw new Error('No settings found');
+      }
+
+      // Update each setting row individually
+      const updatePromises = allSettings.map(setting => 
+        supabase
+          .from('up_settings')
+          .update({
+            secondary_currency_enabled: config.secondary_currency_enabled,
+            secondary_currency_name: config.secondary_currency_name,
+            secondary_currency_icon: config.secondary_currency_icon
+          } as any)
+          .eq('id', setting.id)
+      );
+
+      await Promise.all(updatePromises);
+      setCurrencyConfig(config);
+      await fetchSettings();
+    } catch (error) {
+      console.error('Error updating currency config:', error);
+      throw error;
+    }
   };
 
   const getSetting = (key: string): Record<string, any> | null => {
@@ -90,6 +153,10 @@ export function useUPSettings() {
     return setting?.enabled ?? true;
   };
 
+  const isSecondaryCurrencyEnabled = (): boolean => {
+    return currencyConfig.secondary_currency_enabled;
+  };
+
   return {
     settings,
     loading,
@@ -97,6 +164,9 @@ export function useUPSettings() {
     getSetting,
     getLevelThresholds,
     isSystemEnabled,
+    currencyConfig,
+    updateCurrencyConfig,
+    isSecondaryCurrencyEnabled,
     refetch: fetchSettings
   };
 }
