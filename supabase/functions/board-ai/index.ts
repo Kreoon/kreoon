@@ -108,19 +108,16 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
   }
 };
 
-// Get organization AI configuration - uses Lovable AI Gateway by default
-async function getOrgAIConfig(supabase: any, organizationId: string) {
-  // Get Lovable API key - this is always available
+// Get all available AI configurations for an organization (for fallback)
+async function getAllAIConfigs(supabase: any, organizationId: string) {
   const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
   
-  // Get organization defaults
   const { data: defaults } = await supabase
     .from("organization_ai_defaults")
     .select("*")
     .eq("organization_id", organizationId)
     .maybeSingle();
 
-  // Check if organization has external providers configured
   type OrgProviderRow = {
     provider_key: string;
     api_key_encrypted: string | null;
@@ -133,15 +130,15 @@ async function getOrgAIConfig(supabase: any, organizationId: string) {
     .eq("organization_id", organizationId)
     .eq("is_enabled", true);
 
+  const configs: Array<{ provider: string; model: string; apiKey: string }> = [];
   const providerByKey = new Map<string, OrgProviderRow>(
     ((enabledProviders as OrgProviderRow[] | null) || []).map((p) => [p.provider_key, p])
   );
 
-  // Get preferred provider from config
   const preferredProvider = defaults?.tablero_provider || defaults?.default_provider || "lovable";
   const preferredModel = defaults?.tablero_model || defaults?.default_model || "google/gemini-2.5-flash";
 
-  // If organization has a specific external provider configured with API key, use it
+  // Add preferred provider first if it has API key
   if (preferredProvider !== "lovable") {
     const orgProvider = providerByKey.get(preferredProvider);
     if (orgProvider?.api_key_encrypted) {
@@ -150,32 +147,37 @@ async function getOrgAIConfig(supabase: any, organizationId: string) {
           ? orgProvider.available_models[0]
           : preferredProvider === "openai" ? "gpt-4o" : "gemini-2.5-flash"
       );
-      return { provider: preferredProvider, model, apiKey: orgProvider.api_key_encrypted };
+      configs.push({ provider: preferredProvider, model, apiKey: orgProvider.api_key_encrypted });
     }
   }
 
-  // Check other external providers as fallback
+  // Add other external providers as fallbacks
   const externalProviders = ["openai", "gemini"];
   for (const key of externalProviders) {
+    if (key === preferredProvider) continue; // Already added
     const p = providerByKey.get(key);
     if (p?.api_key_encrypted) {
       const fallbackModel = Array.isArray(p.available_models) && p.available_models.length
         ? p.available_models[0]
         : key === "openai" ? "gpt-4o" : "gemini-2.5-flash";
-      return { provider: key, model: fallbackModel, apiKey: p.api_key_encrypted };
+      configs.push({ provider: key, model: fallbackModel, apiKey: p.api_key_encrypted });
     }
   }
 
-  // Default: Use Lovable AI Gateway (always available, no external API key needed)
-  if (!lovableApiKey) {
-    throw new Error("LOVABLE_API_KEY no está configurada. Contacta al soporte.");
+  // Add Lovable AI as final fallback
+  if (lovableApiKey) {
+    configs.push({ 
+      provider: "lovable", 
+      model: preferredModel || "google/gemini-2.5-flash", 
+      apiKey: lovableApiKey 
+    });
   }
-  
-  return { 
-    provider: "lovable", 
-    model: preferredModel || "google/gemini-2.5-flash", 
-    apiKey: lovableApiKey 
-  };
+
+  if (configs.length === 0) {
+    throw new Error("No hay proveedores de IA configurados. Contacta al soporte.");
+  }
+
+  return configs;
 }
 
 // Log AI usage
@@ -204,8 +206,8 @@ async function logAIUsage(supabase: any, params: {
   }
 }
 
-// Call AI provider
-async function callAI(
+// Call AI provider (single attempt)
+async function callAISingle(
   config: AIProviderConfig,
   apiKey: string,
   model: string,
@@ -225,26 +227,49 @@ async function callAI(
 
   if (!response.ok) {
     const errorText = await response.text();
-
-    // Pass-through rate-limit errors with proper status so the client can handle them.
-    if (response.status === 429) {
-      const retryMatch = errorText.match(/retryDelay"\s*:\s*"(\d+)s"/);
-      const retryAfterSeconds = retryMatch ? Number(retryMatch[1]) : null;
-      const err: any = new Error("RATE_LIMIT");
-      err.status = 429;
-      err.retryAfterSeconds = retryAfterSeconds;
-      err.details = errorText;
-      throw err;
-    }
-
     console.error("AI API Error:", response.status, errorText);
     const err: any = new Error(`AI API Error: ${response.status} ${errorText}`);
     err.status = response.status;
+    err.details = errorText;
     throw err;
   }
 
   const data = await response.json();
   return config.extractContent(data, !!tools);
+}
+
+// Call AI with automatic fallback to other providers
+async function callAIWithFallback(
+  configs: Array<{ provider: string; model: string; apiKey: string }>,
+  systemPrompt: string,
+  userPrompt: string,
+  tools?: any[]
+): Promise<{ result: any; usedProvider: string; usedModel: string }> {
+  const errors: string[] = [];
+
+  for (const cfg of configs) {
+    const providerConfig = AI_PROVIDERS[cfg.provider] || AI_PROVIDERS.lovable;
+    
+    try {
+      console.log(`Intentando con proveedor: ${cfg.provider}, modelo: ${cfg.model}`);
+      const result = await callAISingle(providerConfig, cfg.apiKey, cfg.model, systemPrompt, userPrompt, tools);
+      console.log(`Éxito con proveedor: ${cfg.provider}`);
+      return { result, usedProvider: cfg.provider, usedModel: cfg.model };
+    } catch (err: any) {
+      const errorMsg = `${cfg.provider}: ${err.message}`;
+      errors.push(errorMsg);
+      console.warn(`Fallo con ${cfg.provider}, intentando siguiente...`, err.message);
+      
+      // If it's a rate limit error and we have more providers, continue
+      // If it's the last provider, we'll throw at the end
+      continue;
+    }
+  }
+
+  // All providers failed
+  const allErrors = errors.join("; ");
+  console.error("Todos los proveedores de IA fallaron:", allErrors);
+  throw new Error(`Todos los proveedores de IA fallaron: ${allErrors}`);
 }
 
 // Status labels in Spanish
@@ -266,8 +291,7 @@ const STATUS_LABELS: Record<string, string> = {
 // ==================== AI ACTIONS ====================
 
 async function analyzeCard(supabase: any, contentId: string, organizationId: string, userId: string) {
-  const aiConfig = await getOrgAIConfig(supabase, organizationId);
-  const providerConfig = AI_PROVIDERS[aiConfig.provider] || AI_PROVIDERS.lovable;
+  const configs = await getAllAIConfigs(supabase, organizationId);
 
   // Get card details with related data
   const { data: content, error } = await supabase
@@ -380,13 +404,13 @@ Proporciona un análisis estructurado.`;
     }
   }];
 
-  const result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, systemPrompt, userPrompt, tools);
+  const { result, usedProvider, usedModel } = await callAIWithFallback(configs, systemPrompt, userPrompt, tools);
 
   await logAIUsage(supabase, {
     organizationId,
     userId,
-    provider: aiConfig.provider,
-    model: aiConfig.model,
+    provider: usedProvider,
+    model: usedModel,
     action: "analyze_card",
     success: true
   });
@@ -397,13 +421,12 @@ Proporciona un análisis estructurado.`;
     card_title: content.title,
     current_status: content.status,
     analyzed_at: new Date().toISOString(),
-    ai_model: aiConfig.model
+    ai_model: usedModel
   };
 }
 
 async function analyzeBoard(supabase: any, organizationId: string, userId: string) {
-  const aiConfig = await getOrgAIConfig(supabase, organizationId);
-  const providerConfig = AI_PROVIDERS[aiConfig.provider] || AI_PROVIDERS.lovable;
+  const configs = await getAllAIConfigs(supabase, organizationId);
 
   // Get all content for the organization
   const { data: contents } = await supabase
@@ -521,13 +544,13 @@ Detecta cuellos de botella y sugiere mejoras.`;
     }
   }];
 
-  const result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, systemPrompt, userPrompt, tools);
+  const { result, usedProvider, usedModel } = await callAIWithFallback(configs, systemPrompt, userPrompt, tools);
 
   await logAIUsage(supabase, {
     organizationId,
     userId,
-    provider: aiConfig.provider,
-    model: aiConfig.model,
+    provider: usedProvider,
+    model: usedModel,
     action: "analyze_board",
     success: true
   });
@@ -539,13 +562,12 @@ Detecta cuellos de botella y sugiere mejoras.`;
     stale_count: staleItems.length,
     status_distribution: statusDistribution,
     analyzed_at: new Date().toISOString(),
-    ai_model: aiConfig.model
+    ai_model: usedModel
   };
 }
 
 async function suggestNextState(supabase: any, contentId: string, organizationId: string, userId: string) {
-  const aiConfig = await getOrgAIConfig(supabase, organizationId);
-  const providerConfig = AI_PROVIDERS[aiConfig.provider] || AI_PROVIDERS.lovable;
+  const configs = await getAllAIConfigs(supabase, organizationId);
 
   // Get card details
   const { data: content } = await supabase
@@ -596,13 +618,13 @@ Editor asignado: ${content.editor?.full_name || "No"}
     }
   }];
 
-  const result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, systemPrompt, userPrompt, tools);
+  const { result, usedProvider, usedModel } = await callAIWithFallback(configs, systemPrompt, userPrompt, tools);
 
   await logAIUsage(supabase, {
     organizationId,
     userId,
-    provider: aiConfig.provider,
-    model: aiConfig.model,
+    provider: usedProvider,
+    model: usedModel,
     action: "suggest_next_state",
     success: true
   });
@@ -611,7 +633,7 @@ Editor asignado: ${content.editor?.full_name || "No"}
     ...result,
     current_state: content.status,
     card_id: contentId,
-    ai_model: aiConfig.model
+    ai_model: usedModel
   };
 }
 
@@ -628,8 +650,7 @@ async function detectBottlenecks(supabase: any, organizationId: string, userId: 
 }
 
 async function recommendAutomation(supabase: any, organizationId: string, userId: string) {
-  const aiConfig = await getOrgAIConfig(supabase, organizationId);
-  const providerConfig = AI_PROVIDERS[aiConfig.provider] || AI_PROVIDERS.lovable;
+  const configs = await getAllAIConfigs(supabase, organizationId);
 
   // Get recent status changes
   const { data: statusLogs } = await supabase
@@ -648,21 +669,12 @@ async function recommendAutomation(supabase: any, organizationId: string, userId
 
   // If there's no history, we can't infer patterns reliably
   if (!statusLogs || statusLogs.length === 0) {
-    await logAIUsage(supabase, {
-      organizationId,
-      userId,
-      provider: aiConfig.provider,
-      model: aiConfig.model,
-      action: "recommend_automation",
-      success: true,
-    });
-
     return {
       automations: [],
       patterns_analyzed: [],
       transition_patterns: {},
       analyzed_at: new Date().toISOString(),
-      ai_model: aiConfig.model,
+      ai_model: configs[0]?.model || "unknown",
       note: "No hay historial de movimientos suficiente para sugerir automatizaciones.",
     };
   }
@@ -713,7 +725,7 @@ Sugiere automatizaciones basadas en estos patrones.`;
     },
   }];
 
-  const rawResult = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, systemPrompt, userPrompt, tools);
+  const { result: rawResult, usedProvider, usedModel } = await callAIWithFallback(configs, systemPrompt, userPrompt, tools);
 
   // Normalize result across providers (some providers may return plain text)
   let normalized: any = rawResult;
@@ -736,8 +748,8 @@ Sugiere automatizaciones basadas en estos patrones.`;
   await logAIUsage(supabase, {
     organizationId,
     userId,
-    provider: aiConfig.provider,
-    model: aiConfig.model,
+    provider: usedProvider,
+    model: usedModel,
     action: "recommend_automation",
     success: true,
   });
@@ -746,7 +758,7 @@ Sugiere automatizaciones basadas en estos patrones.`;
     ...normalized,
     transition_patterns: transitions,
     analyzed_at: new Date().toISOString(),
-    ai_model: aiConfig.model,
+    ai_model: usedModel,
   };
 }
 
