@@ -29,6 +29,7 @@ import {
   Loader2,
   Palette
 } from 'lucide-react';
+import { OrganizationAISettings } from './OrganizationAISettings';
 
 interface OrganizationProfile {
   id: string;
@@ -596,6 +597,9 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
           )}
         </CardContent>
       </Card>
+
+      {/* AI Settings */}
+      <OrganizationAISettings organizationId={organizationId} />
 
       {/* Actions */}
       <div className="flex justify-between items-center">

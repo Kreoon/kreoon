@@ -56,6 +56,62 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage_logs: {
+        Row: {
+          action: string
+          created_at: string
+          error_message: string | null
+          estimated_cost: number | null
+          id: string
+          model: string
+          module: string
+          organization_id: string
+          provider: string
+          success: boolean
+          tokens_input: number | null
+          tokens_output: number | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error_message?: string | null
+          estimated_cost?: number | null
+          id?: string
+          model: string
+          module: string
+          organization_id: string
+          provider: string
+          success?: boolean
+          tokens_input?: number | null
+          tokens_output?: number | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error_message?: string | null
+          estimated_cost?: number | null
+          id?: string
+          model?: string
+          module?: string
+          organization_id?: string
+          provider?: string
+          success?: boolean
+          tokens_input?: number | null
+          tokens_output?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           description: string | null
@@ -1688,6 +1744,109 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      organization_ai_defaults: {
+        Row: {
+          created_at: string
+          default_model: string
+          default_provider: string
+          id: string
+          live_assistant_model: string | null
+          live_assistant_provider: string | null
+          organization_id: string
+          scripts_model: string | null
+          scripts_provider: string | null
+          sistema_up_model: string | null
+          sistema_up_provider: string | null
+          thumbnails_model: string | null
+          thumbnails_provider: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_model?: string
+          default_provider?: string
+          id?: string
+          live_assistant_model?: string | null
+          live_assistant_provider?: string | null
+          organization_id: string
+          scripts_model?: string | null
+          scripts_provider?: string | null
+          sistema_up_model?: string | null
+          sistema_up_provider?: string | null
+          thumbnails_model?: string | null
+          thumbnails_provider?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_model?: string
+          default_provider?: string
+          id?: string
+          live_assistant_model?: string | null
+          live_assistant_provider?: string | null
+          organization_id?: string
+          scripts_model?: string | null
+          scripts_provider?: string | null
+          sistema_up_model?: string | null
+          sistema_up_provider?: string | null
+          thumbnails_model?: string | null
+          thumbnails_provider?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_ai_defaults_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_ai_providers: {
+        Row: {
+          api_key_encrypted: string | null
+          available_models: string[] | null
+          configured_by: string | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          organization_id: string
+          provider_key: string
+          updated_at: string
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          available_models?: string[] | null
+          configured_by?: string | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          organization_id: string
+          provider_key: string
+          updated_at?: string
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          available_models?: string[] | null
+          configured_by?: string | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          organization_id?: string
+          provider_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_ai_providers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organization_editor_pool: {
         Row: {
