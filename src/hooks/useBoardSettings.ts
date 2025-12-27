@@ -168,7 +168,17 @@ export function useBoardSettings(organizationId: string | null) {
       if (error) throw error;
 
       setSettings(prev => prev ? { ...prev, ...updates } : null);
-      toast({ title: 'Configuración guardada' });
+      
+      // Specific messages based on what was updated
+      if (updates.card_size) {
+        toast({ title: 'Diseño de tarjeta aplicado', description: `Tamaño: ${updates.card_size === 'compact' ? 'Compacta' : updates.card_size === 'large' ? 'Grande' : 'Normal'}` });
+      } else if (updates.visible_fields) {
+        toast({ title: 'Campos visibles actualizados' });
+      } else if (updates.default_view) {
+        toast({ title: 'Vista predeterminada actualizada' });
+      } else {
+        toast({ title: 'Configuración guardada' });
+      }
     } catch (error) {
       console.error('Error updating settings:', error);
       toast({ title: 'Error al guardar', variant: 'destructive' });

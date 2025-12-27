@@ -1,10 +1,11 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronDown, ChevronUp, ArrowUpDown } from "lucide-react";
+import { ChevronDown, ChevronUp, ArrowUpDown, Star, Video, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -22,19 +23,45 @@ interface BoardTableViewProps {
   onContentClick: (content: Content) => void;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
+  visibleFields?: string[];
 }
 
 type SortField = 'title' | 'status' | 'client' | 'creator' | 'deadline' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
+// Column config based on visibleFields
+const COLUMN_CONFIG = {
+  title: { label: 'Título', sortable: true },
+  thumbnail: { label: 'Miniatura', sortable: false },
+  status: { label: 'Estado', sortable: true },
+  client: { label: 'Cliente', sortable: true },
+  responsible: { label: 'Responsable', sortable: true },
+  deadline: { label: 'Fecha límite', sortable: true },
+  progress: { label: 'Progreso', sortable: false },
+  points: { label: 'Puntos', sortable: false },
+  indicators: { label: 'Indicadores', sortable: false },
+};
+
 export function BoardTableView({
   content,
   onContentClick,
   selectedIds = [],
-  onSelectionChange
+  onSelectionChange,
+  visibleFields = ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']
 }: BoardTableViewProps) {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const showField = (field: string) => visibleFields.includes(field);
+
+  const getProgress = (status: string): number => {
+    const statusProgress: Record<string, number> = {
+      'draft': 5, 'pending_script': 10, 'script_review': 20, 'script_approved': 30,
+      'assigned': 40, 'recording': 50, 'recorded': 60, 'editing': 70,
+      'delivered': 80, 'issue': 75, 'approved': 90, 'paid': 100
+    };
+    return statusProgress[status] || 0;
+  };
 
   const sortedContent = useMemo(() => {
     return [...content].sort((a, b) => {
@@ -109,6 +136,9 @@ export function BoardTableView({
       : <ChevronDown className="h-3 w-3 ml-1" />;
   };
 
+  // Build visible columns based on configuration
+  const visibleColumns = visibleFields.filter(f => f in COLUMN_CONFIG);
+
   return (
     <div className="border rounded-xl overflow-hidden bg-card">
       <Table>
@@ -122,41 +152,33 @@ export function BoardTableView({
                 />
               </TableHead>
             )}
-            <TableHead className="cursor-pointer" onClick={() => toggleSort('title')}>
-              <div className="flex items-center">
-                Título <SortIcon field="title" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer" onClick={() => toggleSort('status')}>
-              <div className="flex items-center">
-                Estado <SortIcon field="status" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer" onClick={() => toggleSort('client')}>
-              <div className="flex items-center">
-                Cliente <SortIcon field="client" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer" onClick={() => toggleSort('creator')}>
-              <div className="flex items-center">
-                Creador <SortIcon field="creator" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer" onClick={() => toggleSort('deadline')}>
-              <div className="flex items-center">
-                Fecha límite <SortIcon field="deadline" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer" onClick={() => toggleSort('created_at')}>
-              <div className="flex items-center">
-                Creado <SortIcon field="created_at" />
-              </div>
-            </TableHead>
+            {visibleColumns.map(field => {
+              const config = COLUMN_CONFIG[field as keyof typeof COLUMN_CONFIG];
+              if (!config) return null;
+              
+              if (config.sortable) {
+                return (
+                  <TableHead 
+                    key={field}
+                    className="cursor-pointer" 
+                    onClick={() => toggleSort(field as SortField)}
+                  >
+                    <div className="flex items-center">
+                      {config.label} <SortIcon field={field as SortField} />
+                    </div>
+                  </TableHead>
+                );
+              }
+              return <TableHead key={field}>{config.label}</TableHead>;
+            })}
+            <TableHead>Creado</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {sortedContent.map(c => {
             const isOverdue = c.deadline && new Date(c.deadline) < new Date() && !['approved', 'paid', 'delivered'].includes(c.status);
+            const hasVideo = c.video_url || (c.video_urls && c.video_urls.length > 0);
+            const hasRawVideo = c.raw_video_urls && c.raw_video_urls.length > 0;
             
             return (
               <TableRow 
@@ -172,47 +194,109 @@ export function BoardTableView({
                     />
                   </TableCell>
                 )}
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {c.thumbnail_url && (
-                      <img 
-                        src={c.thumbnail_url} 
-                        alt="" 
-                        className="h-8 w-12 rounded object-cover"
-                      />
-                    )}
-                    <span className="font-medium line-clamp-1">{c.title}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[c.status])}>
-                    {STATUS_LABELS[c.status]}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {c.client?.name || '-'}
-                </TableCell>
-                <TableCell>
-                  {c.creator ? (
+
+                {/* Title column (with or without thumbnail) */}
+                {showField('title') && (
+                  <TableCell>
                     <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={c.creator.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs">
-                          {c.creator.full_name?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm">{c.creator.full_name?.split(' ')[0]}</span>
+                      {showField('thumbnail') && c.thumbnail_url && (
+                        <img 
+                          src={c.thumbnail_url} 
+                          alt="" 
+                          className="h-8 w-12 rounded object-cover"
+                        />
+                      )}
+                      <span className="font-medium line-clamp-1">{c.title}</span>
                     </div>
-                  ) : (
-                    <span className="text-muted-foreground">-</span>
-                  )}
-                </TableCell>
-                <TableCell className={cn(isOverdue && "text-destructive font-medium")}>
-                  {c.deadline 
-                    ? format(new Date(c.deadline), 'dd MMM yyyy', { locale: es })
-                    : '-'
-                  }
-                </TableCell>
+                  </TableCell>
+                )}
+
+                {/* Thumbnail only (if title not visible) */}
+                {!showField('title') && showField('thumbnail') && (
+                  <TableCell>
+                    {c.thumbnail_url ? (
+                      <img src={c.thumbnail_url} alt="" className="h-8 w-12 rounded object-cover" />
+                    ) : (
+                      <div className="h-8 w-12 rounded bg-muted" />
+                    )}
+                  </TableCell>
+                )}
+
+                {/* Status */}
+                {showField('status') && (
+                  <TableCell>
+                    <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[c.status])}>
+                      {STATUS_LABELS[c.status]}
+                    </Badge>
+                  </TableCell>
+                )}
+
+                {/* Client */}
+                {showField('client') && (
+                  <TableCell className="text-muted-foreground">
+                    {c.client?.name || '-'}
+                  </TableCell>
+                )}
+
+                {/* Responsible */}
+                {showField('responsible') && (
+                  <TableCell>
+                    {c.creator ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={c.creator.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs">
+                            {c.creator.full_name?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{c.creator.full_name?.split(' ')[0]}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                )}
+
+                {/* Deadline */}
+                {showField('deadline') && (
+                  <TableCell className={cn(isOverdue && "text-destructive font-medium")}>
+                    {c.deadline 
+                      ? format(new Date(c.deadline), 'dd MMM yyyy', { locale: es })
+                      : '-'
+                    }
+                  </TableCell>
+                )}
+
+                {/* Progress */}
+                {showField('progress') && (
+                  <TableCell>
+                    <div className="w-20">
+                      <Progress value={getProgress(c.status)} className="h-1.5" />
+                    </div>
+                  </TableCell>
+                )}
+
+                {/* Points */}
+                {showField('points') && (
+                  <TableCell>
+                    <div className="flex items-center gap-1 text-xs text-amber-500">
+                      <Star className="h-3 w-3 fill-current" />
+                      <span>100</span>
+                    </div>
+                  </TableCell>
+                )}
+
+                {/* Indicators */}
+                {showField('indicators') && (
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {hasRawVideo && <div className="h-2 w-2 rounded-full bg-orange-500" />}
+                      {hasVideo && <div className="h-2 w-2 rounded-full bg-green-500" />}
+                      {c.script && <div className="h-2 w-2 rounded-full bg-blue-500" />}
+                    </div>
+                  </TableCell>
+                )}
+
                 <TableCell className="text-muted-foreground">
                   {format(new Date(c.created_at), 'dd MMM yyyy', { locale: es })}
                 </TableCell>
@@ -222,7 +306,7 @@ export function BoardTableView({
           
           {content.length === 0 && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-muted-foreground">
                 No hay contenido para mostrar
               </TableCell>
             </TableRow>
