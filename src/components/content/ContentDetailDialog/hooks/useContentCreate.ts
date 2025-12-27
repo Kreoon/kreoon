@@ -3,6 +3,7 @@ import { ContentFormData } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 
 interface UseContentCreateOptions {
   onSuccess?: () => void;
@@ -34,6 +35,7 @@ interface Product {
 export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currentOrgId } = useOrgOwner();
   
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -41,6 +43,7 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
   // Options lists
   const [clients, setClients] = useState<SelectOption[]>([]);
   const [creators, setCreators] = useState<SelectOption[]>([]);
+  const [ambassadors, setAmbassadors] = useState<SelectOption[]>([]);
   const [editors, setEditors] = useState<SelectOption[]>([]);
   const [strategists, setStrategists] = useState<SelectOption[]>([]);
   
@@ -49,6 +52,10 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
   const [clientProducts, setClientProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [packageId, setPackageId] = useState('');
+  
+  // Ambassador content detection
+  const [isAmbassadorContent, setIsAmbassadorContent] = useState(false);
+  const [organizationClientId, setOrganizationClientId] = useState<string | null>(null);
 
   const initialFormData: ContentFormData = {
     title: '',
@@ -81,7 +88,11 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
     strategist_guidelines: '',
     trafficker_guidelines: '',
     designer_guidelines: '',
-    admin_guidelines: ''
+    admin_guidelines: '',
+    is_ambassador_content: false,
+    content_type: 'commercial',
+    is_paid: true,
+    reward_type: 'money'
   };
 
   const [formData, setFormData] = useState<ContentFormData>(initialFormData);
@@ -89,7 +100,67 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
   // Fetch options on mount
   useEffect(() => {
     fetchOptions();
-  }, []);
+  }, [currentOrgId]);
+
+  // Detect if client is the organization (ambassador content)
+  useEffect(() => {
+    const checkIfOrgClient = async () => {
+      if (!formData.client_id || !currentOrgId) {
+        setIsAmbassadorContent(false);
+        setOrganizationClientId(null);
+        return;
+      }
+
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('id, organization_id, name')
+        .eq('id', formData.client_id)
+        .maybeSingle();
+      
+      // Check if client ID matches org ID OR if client represents the org
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('id', currentOrgId)
+        .maybeSingle();
+      
+      // Client is organization if its name matches org name or it's flagged as org client
+      const isOrgAsClient = clientData?.id === currentOrgId || 
+                           (clientData?.organization_id === currentOrgId && 
+                            orgData?.name && clientData?.name?.toLowerCase() === orgData.name.toLowerCase());
+      
+      setIsAmbassadorContent(isOrgAsClient);
+      setOrganizationClientId(isOrgAsClient ? formData.client_id : null);
+      
+      // Clear creator selection when switching to/from ambassador content
+      if (isOrgAsClient !== isAmbassadorContent) {
+        setFormData(prev => ({ ...prev, creator_id: '' }));
+      }
+      
+      // Clear payments and set ambassador fields
+      if (isOrgAsClient) {
+        setFormData(prev => ({ 
+          ...prev, 
+          creator_payment: 0,
+          editor_payment: 0,
+          is_ambassador_content: true,
+          content_type: 'ambassador_internal',
+          is_paid: false,
+          reward_type: 'UP'
+        }));
+      } else {
+        setFormData(prev => ({ 
+          ...prev, 
+          is_ambassador_content: false,
+          content_type: 'commercial',
+          is_paid: true,
+          reward_type: 'money'
+        }));
+      }
+    };
+    
+    checkIfOrgClient();
+  }, [formData.client_id, currentOrgId]);
 
   // Fetch client's packages and products when client changes
   useEffect(() => {
@@ -163,7 +234,7 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
         .order('name');
       setClients(clientsData || []);
 
-      // Fetch creators
+      // Fetch creators (regular)
       const { data: creatorRoles } = await supabase
         .from('user_roles')
         .select('user_id')
@@ -175,6 +246,25 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
           .select('id, full_name')
           .in('id', creatorRoles.map(r => r.user_id));
         setCreators(creatorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+      }
+
+      // Fetch ambassadors (for ambassador content)
+      if (currentOrgId) {
+        const { data: ambassadorRoles } = await supabase
+          .from('organization_member_roles')
+          .select('user_id')
+          .eq('organization_id', currentOrgId)
+          .eq('role', 'ambassador');
+        
+        if (ambassadorRoles?.length) {
+          const { data: ambassadorProfiles } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', ambassadorRoles.map(r => r.user_id));
+          setAmbassadors(ambassadorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+        } else {
+          setAmbassadors([]);
+        }
       }
 
       // Fetch editors
@@ -228,6 +318,8 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
     setClientPackages([]);
     setClientProducts([]);
     setSelectedProduct(null);
+    setIsAmbassadorContent(false);
+    setOrganizationClientId(null);
   };
 
   const handleCreate = async () => {
@@ -235,6 +327,25 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
       toast({
         title: 'Error',
         description: 'El nombre del video es requerido',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validation for ambassador content
+    if (isAmbassadorContent && !formData.creator_id) {
+      toast({
+        title: 'Error',
+        description: 'Debes seleccionar un embajador para contenido de marca interna',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (isAmbassadorContent && ambassadors.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'No hay embajadores disponibles. Primero asigna el rol de embajador a usuarios.',
         variant: 'destructive'
       });
       return;
@@ -265,8 +376,9 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
         reference_url: formData.reference_url?.trim() || null,
         script: formData.script?.trim() || null,
         description: formData.description?.trim() || null,
-        creator_payment: formData.creator_payment || 0,
-        editor_payment: formData.editor_payment || 0,
+        // Ambassador content: no monetary payment
+        creator_payment: isAmbassadorContent ? 0 : (formData.creator_payment || 0),
+        editor_payment: isAmbassadorContent ? 0 : (formData.editor_payment || 0),
         hooks_count: formData.hooks_count,
         video_urls: Array(formData.hooks_count).fill(''),
         editor_guidelines: formData.editor_guidelines?.trim() || null,
@@ -277,14 +389,21 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
         status: 'draft',
         organization_id: organizationId,
         creator_assigned_at: formData.creator_id ? new Date().toISOString() : null,
-        editor_assigned_at: formData.editor_id ? new Date().toISOString() : null
+        editor_assigned_at: formData.editor_id ? new Date().toISOString() : null,
+        // Ambassador content fields
+        is_ambassador_content: isAmbassadorContent,
+        content_type: isAmbassadorContent ? 'ambassador_internal' : 'commercial',
+        is_paid: !isAmbassadorContent,
+        reward_type: isAmbassadorContent ? 'UP' : 'money'
       });
 
       if (error) throw error;
 
       toast({
-        title: 'Proyecto creado',
-        description: 'El proyecto se ha creado exitosamente'
+        title: isAmbassadorContent ? 'Proyecto de Embajador creado' : 'Proyecto creado',
+        description: isAmbassadorContent 
+          ? 'El proyecto de marca interna se ha creado. La recompensa será en puntos UP.'
+          : 'El proyecto se ha creado exitosamente'
       });
 
       resetForm();
@@ -302,6 +421,9 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
     }
   };
 
+  // Get available creators based on content type
+  const availableCreators = isAmbassadorContent ? ambassadors : creators;
+
   return {
     // State
     loading,
@@ -309,10 +431,13 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
     formData,
     setFormData,
     selectedProduct,
+    isAmbassadorContent,
     
     // Options
     clients,
     creators,
+    ambassadors,
+    availableCreators,
     editors,
     strategists,
     clientPackages,
