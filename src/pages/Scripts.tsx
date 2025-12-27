@@ -14,6 +14,7 @@ import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { ScriptBlockCard } from "@/components/scripts/ScriptBlockCard";
 import { ScriptDetailPanel } from "@/components/scripts/ScriptDetailPanel";
 import { cn } from "@/lib/utils";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 
 type BlockType = 'creator' | 'editor' | 'trafficker' | 'strategist' | 'designer' | 'admin';
 
@@ -27,15 +28,16 @@ const tabConfig: { id: BlockType; label: string; icon: typeof FileText; shortLab
 ];
 
 const Scripts = () => {
+  const { currentOrgId } = useOrgOwner();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<BlockType>('creator');
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
 
   // Fetch content with scripts
   const { data: contents, isLoading, refetch } = useQuery({
-    queryKey: ['scripts-content'],
+    queryKey: ['scripts-content', currentOrgId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('content')
         .select(`
           id,
@@ -48,11 +50,18 @@ const Scripts = () => {
           trafficker_guidelines,
           designer_guidelines,
           admin_guidelines,
+          organization_id,
           client:clients(name, logo_url),
           product:products(name)
         `)
         .order('created_at', { ascending: false });
       
+      // Filter by organization - always apply when org is selected
+      if (currentOrgId) {
+        query = query.eq('organization_id', currentOrgId);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

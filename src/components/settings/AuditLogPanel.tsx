@@ -73,10 +73,10 @@ export function AuditLogPanel() {
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [orgMemberIds, setOrgMemberIds] = useState<string[]>([]);
 
-  // Fetch org member IDs for filtering (only for org owners, not platform root)
+  // Fetch org member IDs for filtering - always apply when org is selected
   useEffect(() => {
     const fetchOrgMembers = async () => {
-      if (!isPlatformRoot && currentOrgId) {
+      if (currentOrgId) {
         const { data } = await supabase
           .from('organization_members')
           .select('user_id')
@@ -85,11 +85,13 @@ export function AuditLogPanel() {
         if (data) {
           setOrgMemberIds(data.map(m => m.user_id));
         }
+      } else {
+        setOrgMemberIds([]);
       }
     };
     
     fetchOrgMembers();
-  }, [isPlatformRoot, currentOrgId]);
+  }, [currentOrgId]);
 
   useEffect(() => {
     if (isAdmin || isOrgOwner) {

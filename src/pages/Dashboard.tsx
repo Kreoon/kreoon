@@ -10,6 +10,7 @@ import { es } from "date-fns/locale";
 import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Content, Client, Profile, ClientPackage } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -245,6 +246,7 @@ const LargeKpiCard = ({
 
 export default function Dashboard() {
   const { user, isAdmin, profile, isAmbassador } = useAuth();
+  const { currentOrgId } = useOrgOwner();
   const { toast } = useToast();
   
   // Filters state
@@ -343,18 +345,37 @@ export default function Dashboard() {
   // Load filters and data
   useEffect(() => {
     const fetchFiltersAndData = async () => {
-      // Fetch filter options
+      // Get org member IDs for filtering creators/editors
+      let orgMemberIds: string[] = [];
+      if (currentOrgId) {
+        const { data: orgMembers } = await supabase
+          .from('organization_members')
+          .select('user_id')
+          .eq('organization_id', currentOrgId);
+        orgMemberIds = orgMembers?.map(m => m.user_id) || [];
+      }
+
+      // Fetch filter options - filter by org members
       const { data: creatorRoles } = await supabase
         .from('user_roles')
         .select('user_id')
         .eq('role', 'creator');
       
       if (creatorRoles?.length) {
-        const { data: creatorProfiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', creatorRoles.map(r => r.user_id));
-        setCreators(creatorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+        let creatorIds = creatorRoles.map(r => r.user_id);
+        // Filter by org members if org is selected
+        if (currentOrgId && orgMemberIds.length > 0) {
+          creatorIds = creatorIds.filter(id => orgMemberIds.includes(id));
+        }
+        if (creatorIds.length > 0) {
+          const { data: creatorProfiles } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', creatorIds);
+          setCreators(creatorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+        } else {
+          setCreators([]);
+        }
       }
 
       const { data: editorRoles } = await supabase
@@ -363,23 +384,46 @@ export default function Dashboard() {
         .eq('role', 'editor');
       
       if (editorRoles?.length) {
-        const { data: editorProfiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', editorRoles.map(r => r.user_id));
-        setEditors(editorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+        let editorIds = editorRoles.map(r => r.user_id);
+        // Filter by org members if org is selected
+        if (currentOrgId && orgMemberIds.length > 0) {
+          editorIds = editorIds.filter(id => orgMemberIds.includes(id));
+        }
+        if (editorIds.length > 0) {
+          const { data: editorProfiles } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', editorIds);
+          setEditors(editorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
+        } else {
+          setEditors([]);
+        }
       }
 
-      const { data: clientsList } = await supabase
-        .from('clients')
-        .select('*');
+      // Fetch clients - filter by org
+      let clientsQuery = supabase.from('clients').select('*');
+      if (currentOrgId) {
+        clientsQuery = clientsQuery.eq('organization_id', currentOrgId);
+      }
+      const { data: clientsList } = await clientsQuery;
       setClients(clientsList?.map(c => ({ id: c.id, name: c.name })) || []);
 
-      // Fetch packages with client info
-      const { data: packagesData } = await supabase
+      // Fetch packages with client info - filter by org (via client)
+      let packagesQuery = supabase
         .from('client_packages')
         .select('*, clients(*)')
         .eq('is_active', true);
+      
+      // Filter packages by client's organization
+      if (currentOrgId) {
+        // Get client IDs for this org first
+        const orgClientIds = clientsList?.map(c => c.id) || [];
+        if (orgClientIds.length > 0) {
+          packagesQuery = packagesQuery.in('client_id', orgClientIds);
+        }
+      }
+      
+      const { data: packagesData } = await packagesQuery;
 
       if (packagesData) {
         const mappedPackages = packagesData.map(p => ({
@@ -540,7 +584,7 @@ export default function Dashboard() {
     };
 
     fetchFiltersAndData();
-  }, [allContent, startDateFilter, endDateFilter]);
+  }, [allContent, startDateFilter, endDateFilter, currentOrgId]);
 
   // Calculate active creators and editors with their stats
   useEffect(() => {

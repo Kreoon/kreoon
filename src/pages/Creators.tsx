@@ -46,9 +46,9 @@ const Creators = () => {
   const fetchCreators = async () => {
     setLoading(true);
     try {
-      // If not platform root and has org, filter by organization members
+      // Filter by organization members - always apply when org is selected (including for root)
       let orgMemberIds: string[] = [];
-      if (!isPlatformRoot && currentOrgId) {
+      if (currentOrgId) {
         const { data: orgMembers } = await supabase
           .from('organization_members')
           .select('user_id')
@@ -62,10 +62,10 @@ const Creators = () => {
         .select('user_id, role')
         .in('role', ['creator', 'editor']);
       
-      // Filter by org members if not platform root
-      if (!isPlatformRoot && currentOrgId && orgMemberIds.length > 0) {
+      // Filter by org members - always apply when org is selected
+      if (currentOrgId && orgMemberIds.length > 0) {
         rolesQuery = rolesQuery.in('user_id', orgMemberIds);
-      } else if (!isPlatformRoot && currentOrgId && orgMemberIds.length === 0) {
+      } else if (currentOrgId && orgMemberIds.length === 0) {
         // No members in org, return empty
         setCreators([]);
         setLoading(false);

@@ -127,8 +127,8 @@ const Content = () => {
         .or('video_url.not.is.null,video_urls.not.is.null')
         .order('created_at', { ascending: false });
       
-      // Filter by organization if not platform root
-      if (!isPlatformRoot && currentOrgId) {
+      // Filter by organization - always apply when org is selected (including for root)
+      if (currentOrgId) {
         query = query.eq('organization_id', currentOrgId);
       }
 
