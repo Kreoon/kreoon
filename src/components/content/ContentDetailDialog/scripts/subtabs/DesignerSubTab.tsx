@@ -25,10 +25,9 @@ export function DesignerSubTab({
 
           {editMode && canEdit ? (
             <RichTextEditor
-              value={formData.designer_guidelines || ''}
+              content={formData.designer_guidelines || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, designer_guidelines: value }))}
               placeholder="Describe el estilo visual, paleta de colores, tipografías, mood..."
-              minHeight={200}
             />
           ) : hasContent ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">

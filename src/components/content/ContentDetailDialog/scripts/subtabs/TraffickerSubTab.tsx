@@ -25,10 +25,9 @@ export function TraffickerSubTab({
 
           {editMode && canEdit ? (
             <RichTextEditor
-              value={formData.trafficker_guidelines || ''}
+              content={formData.trafficker_guidelines || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, trafficker_guidelines: value }))}
               placeholder="Define objetivo de campaña, audiencia, presupuesto, plataformas..."
-              minHeight={200}
             />
           ) : hasContent ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
