@@ -8,10 +8,10 @@ export interface ChatAttachment {
   type: 'image' | 'video' | 'audio' | 'file';
   name: string;
   size: number;
+  expiresAt?: string;
 }
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
-const BUCKET_NAME = 'chat-attachments';
 
 const getFileType = (mimeType: string): ChatAttachment['type'] => {
   if (mimeType.startsWith('image/')) return 'image';
@@ -53,61 +53,65 @@ export function useChatAttachments() {
     setUploadProgress(0);
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      // Use user_id as folder for RLS policy compliance
-      const filePath = `${user.id}/${conversationId}/${fileName}`;
-
       setUploadProgress(10);
 
-      const { data, error } = await supabase.storage
-        .from(BUCKET_NAME)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) {
-        if (error.message.includes('Bucket not found')) {
-          toast({
-            title: 'Error',
-            description: 'El almacenamiento de archivos no está configurado',
-            variant: 'destructive'
-          });
-          return null;
-        }
-        throw error;
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No session token');
       }
+
+      setUploadProgress(20);
+
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Upload to Bunny via edge function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bunny-chat-upload?conversation_id=${conversationId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: formData
+        }
+      );
 
       setUploadProgress(80);
 
-      const { data: { publicUrl } } = supabase.storage
-        .from(BUCKET_NAME)
-        .getPublicUrl(filePath);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
+      }
 
-      // Track attachment metadata for auto-cleanup after 8 days
-      await supabase.from('chat_attachment_metadata').insert({
-        storage_path: filePath,
-        message_id: messageId || null,
-        uploaded_by: user.id,
-        file_size: file.size,
-        file_type: file.type,
-        expires_at: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString()
-      });
+      const result = await response.json();
+
+      setUploadProgress(90);
+
+      // Update metadata with message ID if provided
+      if (messageId && result.storage_path) {
+        await supabase
+          .from('chat_attachment_metadata')
+          .update({ message_id: messageId })
+          .eq('storage_path', result.storage_path);
+      }
 
       setUploadProgress(100);
 
       return {
-        url: publicUrl,
+        url: result.url,
+        name: result.name || file.name,
         type: getFileType(file.type),
-        name: file.name,
-        size: file.size
+        size: file.size,
+        expiresAt: result.expires_at
       };
     } catch (error) {
       console.error('Error uploading attachment:', error);
       toast({
         title: 'Error al subir archivo',
-        description: 'No se pudo subir el archivo. Intenta de nuevo.',
+        description: error instanceof Error ? error.message : 'No se pudo subir el archivo. Intenta de nuevo.',
         variant: 'destructive'
       });
       return null;
