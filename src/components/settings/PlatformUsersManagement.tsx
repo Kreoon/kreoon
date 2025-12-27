@@ -49,7 +49,8 @@ import {
   UserPlus,
   ArrowRightLeft,
   CheckCircle,
-  XCircle
+  XCircle,
+  Crown
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -72,6 +73,7 @@ interface UserData {
   banned: boolean;
   current_organization_id: string | null;
   organization_name: string | null;
+  isPlatformAdmin: boolean;
 }
 
 interface Organization {
@@ -131,6 +133,15 @@ export function PlatformUsersManagement() {
         .select('id, current_organization_id')
         .in('id', userIds);
 
+      // Fetch platform admin roles from user_roles table
+      const { data: platformRolesData } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .eq('role', 'admin')
+        .in('user_id', userIds);
+
+      const platformAdminIds = new Set(platformRolesData?.map(r => r.user_id) || []);
+
       // Build org names map
       const orgNamesMap = new Map(orgsData?.map(o => [o.id, o.name]) || []);
 
@@ -145,7 +156,8 @@ export function PlatformUsersManagement() {
           organization_name: userProfile?.current_organization_id 
             ? orgNamesMap.get(userProfile.current_organization_id) || null 
             : null,
-          roles: userMember?.role ? [userMember.role] : user.roles || []
+          roles: userMember?.role ? [userMember.role] : user.roles || [],
+          isPlatformAdmin: platformAdminIds.has(user.id)
         };
       });
 
@@ -253,6 +265,33 @@ export function PlatformUsersManagement() {
     }
   };
 
+  const handleTogglePlatformAdmin = async (user: UserData) => {
+    setActionLoading(user.id);
+    try {
+      if (user.isPlatformAdmin) {
+        // Remove admin role from user_roles
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('role', 'admin');
+        toast.success(`${user.full_name} ya no es administrador de plataforma`);
+      } else {
+        // Add admin role to user_roles
+        await supabase
+          .from('user_roles')
+          .insert({ user_id: user.id, role: 'admin' });
+        toast.success(`${user.full_name} ahora es administrador de plataforma`);
+      }
+      fetchData();
+    } catch (error: any) {
+      console.error("Error toggling platform admin:", error);
+      toast.error("Error al modificar administrador de plataforma");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleResetPassword = async (user: UserData) => {
     setActionLoading(user.id);
     try {
@@ -300,6 +339,9 @@ export function PlatformUsersManagement() {
   // Split users by assignment status
   const unassignedUsers = filteredUsers.filter(u => !u.current_organization_id);
   const assignedUsers = filteredUsers.filter(u => u.current_organization_id);
+  
+  // Platform admins are users with 'admin' role in user_roles table (not org-level)
+  const platformAdmins = users.filter(u => u.isPlatformAdmin);
 
   if (!isRoot) {
     return (
@@ -311,7 +353,7 @@ export function PlatformUsersManagement() {
     );
   }
 
-  const UserCard = ({ user }: { user: UserData }) => (
+  const UserCard = ({ user, showPlatformAdminToggle = false }: { user: UserData; showPlatformAdminToggle?: boolean }) => (
     <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <Avatar className="h-10 w-10">
@@ -319,9 +361,17 @@ export function PlatformUsersManagement() {
           <AvatarFallback>{user.full_name?.charAt(0) || '?'}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="font-medium truncate">{user.full_name}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-medium truncate">{user.full_name}</p>
+            {user.isPlatformAdmin && (
+              <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-xs">
+                <Crown className="h-3 w-3 mr-1" />
+                Admin Plataforma
+              </Badge>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             {user.organization_name ? (
               <Badge variant="outline" className="text-xs">
                 <Building2 className="h-3 w-3 mr-1" />
@@ -354,6 +404,14 @@ export function PlatformUsersManagement() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          
+          {/* Platform Admin Toggle */}
+          <DropdownMenuItem onClick={() => handleTogglePlatformAdmin(user)}>
+            <Crown className="h-4 w-4 mr-2" />
+            {user.isPlatformAdmin ? "Quitar Admin Plataforma" : "Hacer Admin Plataforma"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          
           <DropdownMenuItem onClick={() => {
             setAssignDialog(user);
             setSelectedOrgId(user.current_organization_id || "");
@@ -423,8 +481,12 @@ export function PlatformUsersManagement() {
         </Button>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList>
+      <Tabs defaultValue="platform-admins" className="w-full">
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="platform-admins" className="gap-2">
+            <Crown className="h-4 w-4" />
+            Admins Plataforma ({platformAdmins.length})
+          </TabsTrigger>
           <TabsTrigger value="all" className="gap-2">
             <Users className="h-4 w-4" />
             Todos ({filteredUsers.length})
@@ -438,6 +500,31 @@ export function PlatformUsersManagement() {
             Asignados ({assignedUsers.length})
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="platform-admins" className="mt-4">
+          <Card className="mb-4 border-amber-500/30 bg-amber-500/5">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">
+                <Crown className="h-4 w-4 inline mr-2 text-amber-500" />
+                Los administradores de plataforma tienen acceso completo para ayudarte a gestionar toda la plataforma. 
+                Puedes agregar o quitar este rol desde el menú de acciones de cualquier usuario.
+              </p>
+            </CardContent>
+          </Card>
+          {platformAdmins.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                No hay administradores de plataforma asignados (aparte de ti)
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {platformAdmins.map(user => (
+                <UserCard key={user.id} user={user} showPlatformAdminToggle />
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
         <TabsContent value="all" className="mt-4">
           {loading ? (
