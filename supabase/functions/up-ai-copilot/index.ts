@@ -345,7 +345,7 @@ async function evaluateQualityScore(
       id, title, description, script, sales_angle, notes, caption,
       strategist_guidelines, editor_guidelines, designer_guidelines,
       admin_guidelines, trafficker_guidelines,
-      status, video_url, thumbnail_url, raw_video_urls, hooks_count,
+      status, custom_status_id, video_url, thumbnail_url, raw_video_urls, hooks_count,
       deadline, start_date, created_at, updated_at,
       creator_payment, editor_payment, creator_id, editor_id,
       client:clients(name, category, bio, notes),
@@ -353,8 +353,7 @@ async function evaluateQualityScore(
         name, description, strategy, market_research, 
         ideal_avatar, sales_angles, brief_url
       ),
-      strategist:profiles!content_strategist_id_fkey(full_name),
-      custom_status:organization_statuses(label, status_key, color)
+      strategist:profiles!content_strategist_id_fkey(full_name)
     `)
     .eq("id", req.contentId)
     .single();
@@ -367,6 +366,16 @@ async function evaluateQualityScore(
   // Fetch creator and editor profiles separately (no FK exists)
   let creatorName = null;
   let editorName = null;
+  let customStatus: any = null;
+
+  if (content.custom_status_id) {
+    const { data: statusRow } = await supabase
+      .from("organization_statuses")
+      .select("label, status_key, color")
+      .eq("id", content.custom_status_id)
+      .single();
+    customStatus = statusRow;
+  }
   
   if (content.creator_id) {
     const { data: creatorProfile } = await supabase
@@ -461,7 +470,7 @@ Responde SOLO con JSON válido:
 ═══════════════════════════════════════
 • Título: ${content.title}
 • Descripción: ${content.description || "Sin descripción"}
-• Estado actual: ${content.custom_status?.label || content.status || "N/A"}
+• Estado actual: ${customStatus?.label || content.status || "N/A"}
 • Hooks count: ${content.hooks_count || 1}
 • Caption: ${content.caption || "Sin caption"}
 
