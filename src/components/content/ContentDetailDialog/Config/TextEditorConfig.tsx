@@ -14,7 +14,11 @@ import {
   Highlighter,
   Smile,
   MessageSquare,
-  History
+  History,
+  Link2,
+  Table,
+  CheckSquare,
+  Image
 } from 'lucide-react';
 
 interface TextEditorConfigProps {
@@ -40,6 +44,10 @@ const FEATURE_CONFIG: {
   { key: 'emojis', label: 'Emojis', icon: <Smile className="h-5 w-5" />, description: 'Selector de emojis', category: 'advanced' },
   { key: 'comments', label: 'Comentarios', icon: <MessageSquare className="h-5 w-5" />, description: 'Comentarios inline', category: 'advanced' },
   { key: 'history', label: 'Historial', icon: <History className="h-5 w-5" />, description: 'Versionado y deshacer', category: 'advanced' },
+  { key: 'links', label: 'Enlaces', icon: <Link2 className="h-5 w-5" />, description: 'Enlaces clicables', category: 'advanced' },
+  { key: 'tables', label: 'Tablas', icon: <Table className="h-5 w-5" />, description: 'Tablas con filas y columnas', category: 'advanced' },
+  { key: 'checklist', label: 'Checklist', icon: <CheckSquare className="h-5 w-5" />, description: 'Lista de tareas con checkbox', category: 'advanced' },
+  { key: 'images', label: 'Imágenes', icon: <Image className="h-5 w-5" />, description: 'Insertar imágenes desde URL', category: 'advanced' },
 ];
 
 const CATEGORY_LABELS = {

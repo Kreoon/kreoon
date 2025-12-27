@@ -73,6 +73,10 @@ export interface TextEditorFeatures {
   emojis: boolean;
   comments: boolean;
   history: boolean;
+  links: boolean;
+  tables: boolean;
+  checklist: boolean;
+  images: boolean;
 }
 
 export interface ContentConfigState {

@@ -118,6 +118,10 @@ export function ContentConfigDialog({ open, onOpenChange, organizationId }: Cont
                   emojis: true,
                   comments: true,
                   history: true,
+                  links: true,
+                  tables: true,
+                  checklist: true,
+                  images: true,
                 }}
                 onUpdate={(features) => updateAdvancedConfig({ text_editor_features: features })}
               />
