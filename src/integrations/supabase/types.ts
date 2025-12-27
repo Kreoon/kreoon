@@ -2756,6 +2756,629 @@ export type Database = {
         }
         Relationships: []
       }
+      up_ai_config: {
+        Row: {
+          anti_fraud_enabled: boolean | null
+          auto_approve_quality_threshold: number | null
+          created_at: string | null
+          event_detection_enabled: boolean | null
+          id: string
+          min_quality_for_approval: number | null
+          organization_id: string
+          quality_score_enabled: boolean | null
+          quest_generation_enabled: boolean | null
+          rule_recommendations_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          anti_fraud_enabled?: boolean | null
+          auto_approve_quality_threshold?: number | null
+          created_at?: string | null
+          event_detection_enabled?: boolean | null
+          id?: string
+          min_quality_for_approval?: number | null
+          organization_id: string
+          quality_score_enabled?: boolean | null
+          quest_generation_enabled?: boolean | null
+          rule_recommendations_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          anti_fraud_enabled?: boolean | null
+          auto_approve_quality_threshold?: number | null
+          created_at?: string | null
+          event_detection_enabled?: boolean | null
+          id?: string
+          min_quality_for_approval?: number | null
+          organization_id?: string
+          quality_score_enabled?: boolean | null
+          quest_generation_enabled?: boolean | null
+          rule_recommendations_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_ai_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_event_types: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          event_key: string
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          is_system: boolean | null
+          label: string
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          event_key: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          label: string
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          event_key?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          label?: string
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_event_types_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_events: {
+        Row: {
+          ai_confidence: number | null
+          ai_evidence: Json | null
+          ai_inferred: boolean | null
+          content_id: string | null
+          created_at: string | null
+          event_data: Json | null
+          event_type_key: string
+          id: string
+          organization_id: string
+          points_awarded: number | null
+          processed_at: string | null
+          rule_id: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_evidence?: Json | null
+          ai_inferred?: boolean | null
+          content_id?: string | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type_key: string
+          id?: string
+          organization_id: string
+          points_awarded?: number | null
+          processed_at?: string | null
+          rule_id?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_evidence?: Json | null
+          ai_inferred?: boolean | null
+          content_id?: string | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type_key?: string
+          id?: string
+          organization_id?: string
+          points_awarded?: number | null
+          processed_at?: string | null
+          rule_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_events_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_events_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "up_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_fraud_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          evidence: Json | null
+          id: string
+          is_resolved: boolean | null
+          organization_id: string
+          reason: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          user_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          evidence?: Json | null
+          id?: string
+          is_resolved?: boolean | null
+          organization_id: string
+          reason: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          user_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          evidence?: Json | null
+          id?: string
+          is_resolved?: boolean | null
+          organization_id?: string
+          reason?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_fraud_alerts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_permissions: {
+        Row: {
+          can_approve_ai_events: boolean | null
+          can_create_rules: boolean | null
+          can_edit_rules: boolean | null
+          can_manage_quests: boolean | null
+          can_manage_seasons: boolean | null
+          can_manual_adjust: boolean | null
+          can_toggle_ai: boolean | null
+          can_view_fraud_alerts: boolean | null
+          can_view_others_up: boolean | null
+          can_view_own_up: boolean | null
+          can_view_quality_scores: boolean | null
+          can_view_ranking: boolean | null
+          created_at: string | null
+          id: string
+          organization_id: string
+          role: string
+          updated_at: string | null
+        }
+        Insert: {
+          can_approve_ai_events?: boolean | null
+          can_create_rules?: boolean | null
+          can_edit_rules?: boolean | null
+          can_manage_quests?: boolean | null
+          can_manage_seasons?: boolean | null
+          can_manual_adjust?: boolean | null
+          can_toggle_ai?: boolean | null
+          can_view_fraud_alerts?: boolean | null
+          can_view_others_up?: boolean | null
+          can_view_own_up?: boolean | null
+          can_view_quality_scores?: boolean | null
+          can_view_ranking?: boolean | null
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          role: string
+          updated_at?: string | null
+        }
+        Update: {
+          can_approve_ai_events?: boolean | null
+          can_create_rules?: boolean | null
+          can_edit_rules?: boolean | null
+          can_manage_quests?: boolean | null
+          can_manage_seasons?: boolean | null
+          can_manual_adjust?: boolean | null
+          can_toggle_ai?: boolean | null
+          can_view_fraud_alerts?: boolean | null
+          can_view_others_up?: boolean | null
+          can_view_own_up?: boolean | null
+          can_view_quality_scores?: boolean | null
+          can_view_ranking?: boolean | null
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          role?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_permissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_quality_scores: {
+        Row: {
+          ai_model: string | null
+          breakdown: Json | null
+          content_id: string
+          evaluated_at: string | null
+          id: string
+          organization_id: string
+          reasons: string[] | null
+          score: number
+          suggestions: string[] | null
+        }
+        Insert: {
+          ai_model?: string | null
+          breakdown?: Json | null
+          content_id: string
+          evaluated_at?: string | null
+          id?: string
+          organization_id: string
+          reasons?: string[] | null
+          score: number
+          suggestions?: string[] | null
+        }
+        Update: {
+          ai_model?: string | null
+          breakdown?: Json | null
+          content_id?: string
+          evaluated_at?: string | null
+          id?: string
+          organization_id?: string
+          reasons?: string[] | null
+          score?: number
+          suggestions?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_quality_scores_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: true
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_quality_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_quest_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          current_value: number | null
+          id: string
+          quest_id: string
+          reward_claimed: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          quest_id: string
+          reward_claimed?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          quest_id?: string
+          reward_claimed?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_quest_progress_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "up_quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_quests: {
+        Row: {
+          ai_reasoning: string | null
+          applies_to_roles: string[] | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          ends_at: string | null
+          goal_metric: string
+          goal_value: number
+          id: string
+          is_active: boolean | null
+          is_ai_generated: boolean | null
+          organization_id: string
+          reward_badge_id: string | null
+          reward_points: number
+          starts_at: string | null
+          title: string
+        }
+        Insert: {
+          ai_reasoning?: string | null
+          applies_to_roles?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          goal_metric: string
+          goal_value?: number
+          id?: string
+          is_active?: boolean | null
+          is_ai_generated?: boolean | null
+          organization_id: string
+          reward_badge_id?: string | null
+          reward_points?: number
+          starts_at?: string | null
+          title: string
+        }
+        Update: {
+          ai_reasoning?: string | null
+          applies_to_roles?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          goal_metric?: string
+          goal_value?: number
+          id?: string
+          is_active?: boolean | null
+          is_ai_generated?: boolean | null
+          organization_id?: string
+          reward_badge_id?: string | null
+          reward_points?: number
+          starts_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_quests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_quests_reward_badge_id_fkey"
+            columns: ["reward_badge_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_rules: {
+        Row: {
+          applies_to_roles: string[] | null
+          conditions: Json | null
+          cooldown_minutes: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          event_type_key: string
+          id: string
+          is_active: boolean | null
+          is_bonus: boolean | null
+          is_penalty: boolean | null
+          max_per_content: number | null
+          max_per_day: number | null
+          max_per_week: number | null
+          name: string
+          organization_id: string
+          points: number
+          priority: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          applies_to_roles?: string[] | null
+          conditions?: Json | null
+          cooldown_minutes?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          event_type_key: string
+          id?: string
+          is_active?: boolean | null
+          is_bonus?: boolean | null
+          is_penalty?: boolean | null
+          max_per_content?: number | null
+          max_per_day?: number | null
+          max_per_week?: number | null
+          name: string
+          organization_id: string
+          points?: number
+          priority?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          applies_to_roles?: string[] | null
+          conditions?: Json | null
+          cooldown_minutes?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          event_type_key?: string
+          id?: string
+          is_active?: boolean | null
+          is_bonus?: boolean | null
+          is_penalty?: boolean | null
+          max_per_content?: number | null
+          max_per_day?: number | null
+          max_per_week?: number | null
+          name?: string
+          organization_id?: string
+          points?: number
+          priority?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_season_snapshots: {
+        Row: {
+          achievements_unlocked: number | null
+          created_at: string | null
+          final_level: string | null
+          final_points: number | null
+          final_rank: number | null
+          id: string
+          season_id: string
+          total_events: number | null
+          user_id: string
+        }
+        Insert: {
+          achievements_unlocked?: number | null
+          created_at?: string | null
+          final_level?: string | null
+          final_points?: number | null
+          final_rank?: number | null
+          id?: string
+          season_id: string
+          total_events?: number | null
+          user_id: string
+        }
+        Update: {
+          achievements_unlocked?: number | null
+          created_at?: string | null
+          final_level?: string | null
+          final_points?: number | null
+          final_rank?: number | null
+          id?: string
+          season_id?: string
+          total_events?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_season_snapshots_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "up_seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_seasons: {
+        Row: {
+          created_at: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean | null
+          mode: Database["public"]["Enums"]["up_season_mode"]
+          name: string
+          organization_id: string
+          reset_points: boolean | null
+          reset_ranking: boolean | null
+          reset_streaks: boolean | null
+          starts_at: string
+        }
+        Insert: {
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          mode?: Database["public"]["Enums"]["up_season_mode"]
+          name: string
+          organization_id: string
+          reset_points?: boolean | null
+          reset_ranking?: boolean | null
+          reset_streaks?: boolean | null
+          starts_at?: string
+        }
+        Update: {
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          mode?: Database["public"]["Enums"]["up_season_mode"]
+          name?: string
+          organization_id?: string
+          reset_points?: boolean | null
+          reset_ranking?: boolean | null
+          reset_streaks?: boolean | null
+          starts_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_seasons_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       up_settings: {
         Row: {
           category: string
@@ -3072,6 +3695,23 @@ export type Database = {
         Args: { org_id: string }
         Returns: undefined
       }
+      create_default_up_config: {
+        Args: { _org_id: string }
+        Returns: undefined
+      }
+      emit_up_event: {
+        Args: {
+          _ai_confidence?: number
+          _ai_evidence?: Json
+          _ai_inferred?: boolean
+          _content_id?: string
+          _event_data?: Json
+          _event_type_key: string
+          _org_id: string
+          _user_id: string
+        }
+        Returns: string
+      }
       generate_org_slug: { Args: { org_name: string }; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       generate_registration_link: { Args: { _org_id: string }; Returns: string }
@@ -3259,7 +3899,34 @@ export type Database = {
         | "manual_adjustment"
       subscription_plan: "free" | "basic" | "pro"
       subscription_status: "active" | "cancelled" | "expired" | "pending"
+      up_event_type:
+        | "status_change"
+        | "deadline_met"
+        | "deadline_missed"
+        | "content_approved"
+        | "content_delivered"
+        | "correction_requested"
+        | "assignment_received"
+        | "script_submitted"
+        | "script_approved"
+        | "video_uploaded"
+        | "thumbnail_uploaded"
+        | "client_feedback_positive"
+        | "client_feedback_negative"
+        | "streak_milestone"
+        | "quest_completed"
+        | "manual_adjustment"
+        | "ai_quality_bonus"
+        | "ai_quality_penalty"
       up_level: "bronze" | "silver" | "gold" | "diamond"
+      up_rule_operator:
+        | "equals"
+        | "not_equals"
+        | "greater_than"
+        | "less_than"
+        | "contains"
+        | "in_list"
+      up_season_mode: "permanent" | "monthly" | "quarterly" | "custom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3424,7 +4091,36 @@ export const Constants = {
       ],
       subscription_plan: ["free", "basic", "pro"],
       subscription_status: ["active", "cancelled", "expired", "pending"],
+      up_event_type: [
+        "status_change",
+        "deadline_met",
+        "deadline_missed",
+        "content_approved",
+        "content_delivered",
+        "correction_requested",
+        "assignment_received",
+        "script_submitted",
+        "script_approved",
+        "video_uploaded",
+        "thumbnail_uploaded",
+        "client_feedback_positive",
+        "client_feedback_negative",
+        "streak_milestone",
+        "quest_completed",
+        "manual_adjustment",
+        "ai_quality_bonus",
+        "ai_quality_penalty",
+      ],
       up_level: ["bronze", "silver", "gold", "diamond"],
+      up_rule_operator: [
+        "equals",
+        "not_equals",
+        "greater_than",
+        "less_than",
+        "contains",
+        "in_list",
+      ],
+      up_season_mode: ["permanent", "monthly", "quarterly", "custom"],
     },
   },
 } as const
