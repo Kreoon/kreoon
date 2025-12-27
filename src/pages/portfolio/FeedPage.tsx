@@ -7,7 +7,8 @@ import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
 import { useSavedItems } from '@/hooks/useSavedItems';
 import StoriesBar from '@/components/portfolio/feed/StoriesBar';
 import SmartSearchBar from '@/components/portfolio/feed/SmartSearchBar';
-import FeedCard from '@/components/portfolio/feed/FeedCard';
+import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
+import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -43,6 +44,8 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch following users
@@ -86,13 +89,13 @@ export default function FeedPage() {
         .eq('is_published', true)
         .not('video_url', 'is', null)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
 
       if (isFollowing && followingIds.length > 0) {
         workQuery = workQuery.in('creator_id', followingIds);
       }
 
-      // Fetch portfolio posts (without FK hint - will join manually)
+      // Fetch portfolio posts
       let postsQuery = supabase
         .from('portfolio_posts')
         .select(`
@@ -108,7 +111,7 @@ export default function FeedPage() {
           created_at
         `)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
 
       if (isFollowing && followingIds.length > 0) {
         postsQuery = postsQuery.in('user_id', followingIds);
@@ -187,16 +190,26 @@ export default function FeedPage() {
     fetchFeed();
   }, [fetchFeed]);
 
+  const handleCardClick = (index: number) => {
+    setSelectedIndex(index);
+    setModalOpen(true);
+  };
+
   const handleSave = async (item: FeedItem) => {
     const itemType = item.type === 'work' ? 'work_video' : 'post';
     await toggleSave(itemType, item.id);
+  };
+
+  const checkIsSaved = (item: FeedItem) => {
+    const itemType = item.type === 'work' ? 'work_video' : 'post';
+    return isSaved(itemType, item.id);
   };
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto md:ml-20 lg:ml-64">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border">
-        <div className="max-w-2xl mx-auto px-4 py-3">
+        <div className="max-w-4xl mx-auto px-4 py-3">
           {/* Search bar */}
           <SmartSearchBar className="mb-3" />
           
@@ -228,19 +241,14 @@ export default function FeedPage() {
       {/* Stories bar */}
       <StoriesBar followingIds={followingIds} />
 
-      {/* Feed content */}
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-6 pb-20">
+      {/* Feed content - 3 column grid */}
+      <div className="max-w-4xl mx-auto px-1 py-2 pb-20">
         {loading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-              <Skeleton className="h-80 w-full rounded-xl" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-          ))
+          <div className="grid grid-cols-3 gap-1">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-square" />
+            ))}
+          </div>
         ) : items.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             {activeTab === 'following' 
@@ -248,16 +256,27 @@ export default function FeedPage() {
               : 'No hay contenido disponible'}
           </div>
         ) : (
-          items.map(item => (
-            <FeedCard
-              key={`${item.type}-${item.id}`}
-              item={item}
-              onSave={() => handleSave(item)}
-              isSaved={item.is_saved}
-            />
-          ))
+          <div className="grid grid-cols-3 gap-1">
+            {items.map((item, index) => (
+              <FeedGridCard
+                key={`${item.type}-${item.id}`}
+                item={item}
+                onClick={() => handleCardClick(index)}
+              />
+            ))}
+          </div>
         )}
       </div>
+
+      {/* Fullscreen modal */}
+      <FeedGridModal
+        items={items}
+        initialIndex={selectedIndex}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSave}
+        isSaved={checkIsSaved}
+      />
     </div>
   );
 }
