@@ -84,59 +84,99 @@ export function useBlockConfig(
   }, [isAdmin, isCreator, isEditor, isClient, content, user?.id]);
 
   // Fetch configuration from database
-  useEffect(() => {
-    const fetchConfig = async () => {
-      const orgId = organizationId || contentExt?.organization_id;
-      if (!orgId) {
-        setLoading(false);
-        return;
+  const fetchConfig = useCallback(async () => {
+    const orgId = organizationId || contentExt?.organization_id;
+    if (!orgId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Fetch all config in parallel
+      const [blocksRes, permsRes, rulesRes, advancedRes] = await Promise.all([
+        supabase
+          .from('content_block_config')
+          .select('*')
+          .eq('organization_id', orgId),
+        supabase
+          .from('content_block_permissions')
+          .select('*')
+          .eq('organization_id', orgId)
+          .eq('role', effectiveRole),
+        supabase
+          .from('content_block_state_rules')
+          .select('*')
+          .eq('organization_id', orgId),
+        supabase
+          .from('content_advanced_config')
+          .select('*')
+          .eq('organization_id', orgId)
+          .maybeSingle(),
+      ]);
+
+      setBlocks((blocksRes.data || []) as any);
+      setPermissions((permsRes.data || []) as any);
+      setStateRules((rulesRes.data || []) as any);
+
+      if (advancedRes.data) {
+        setAdvanced({
+          enable_comments: advancedRes.data.enable_comments,
+          require_approval_before_advance: advancedRes.data.require_approval_before_advance,
+          client_read_only_mode: advancedRes.data.client_read_only_mode,
+          enable_custom_fields: advancedRes.data.enable_custom_fields,
+          content_types: (advancedRes.data.content_types as string[]) || [],
+          text_editor_features: (advancedRes.data.text_editor_features as Record<string, boolean>) || {},
+        });
+      } else {
+        setAdvanced(null);
       }
-
-      try {
-        // Fetch all config in parallel
-        const [blocksRes, permsRes, rulesRes, advancedRes] = await Promise.all([
-          supabase
-            .from('content_block_config')
-            .select('*')
-            .eq('organization_id', orgId),
-          supabase
-            .from('content_block_permissions')
-            .select('*')
-            .eq('organization_id', orgId)
-            .eq('role', effectiveRole),
-          supabase
-            .from('content_block_state_rules')
-            .select('*')
-            .eq('organization_id', orgId),
-          supabase
-            .from('content_advanced_config')
-            .select('*')
-            .eq('organization_id', orgId)
-            .maybeSingle(),
-        ]);
-
-        if (blocksRes.data) setBlocks(blocksRes.data);
-        if (permsRes.data) setPermissions(permsRes.data);
-        if (rulesRes.data) setStateRules(rulesRes.data);
-        if (advancedRes.data) {
-          setAdvanced({
-            enable_comments: advancedRes.data.enable_comments,
-            require_approval_before_advance: advancedRes.data.require_approval_before_advance,
-            client_read_only_mode: advancedRes.data.client_read_only_mode,
-            enable_custom_fields: advancedRes.data.enable_custom_fields,
-            content_types: (advancedRes.data.content_types as string[]) || [],
-            text_editor_features: (advancedRes.data.text_editor_features as Record<string, boolean>) || {},
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching block config:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchConfig();
+    } catch (err) {
+      console.error('Error fetching block config:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [organizationId, contentExt?.organization_id, effectiveRole]);
+
+  // Initial fetch + refetch when org/role changes
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
+
+  // Realtime refresh when config changes
+  useEffect(() => {
+    const orgId = organizationId || contentExt?.organization_id;
+    if (!orgId) return;
+
+    const channel = supabase
+      .channel(`content-config-${orgId}-${effectiveRole}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'content_block_config', filter: `organization_id=eq.${orgId}` },
+        () => fetchConfig()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'content_block_state_rules', filter: `organization_id=eq.${orgId}` },
+        () => fetchConfig()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'content_block_permissions', filter: `organization_id=eq.${orgId}` },
+        () => fetchConfig()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'content_advanced_config', filter: `organization_id=eq.${orgId}` },
+        () => fetchConfig()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [organizationId, contentExt?.organization_id, effectiveRole, fetchConfig]);
 
   // Check if block is visible in org config
   const isBlockVisible = useCallback((blockKey: BlockKey): boolean => {

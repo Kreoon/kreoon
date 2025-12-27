@@ -51,7 +51,7 @@ export function useContentConfig(organizationId: string | null) {
         supabase.from('content_block_config').select('*').eq('organization_id', organizationId),
         supabase.from('content_block_permissions').select('*').eq('organization_id', organizationId),
         supabase.from('content_block_state_rules').select('*').eq('organization_id', organizationId),
-        supabase.from('content_advanced_config').select('*').eq('organization_id', organizationId).single(),
+        supabase.from('content_advanced_config').select('*').eq('organization_id', organizationId).maybeSingle(),
       ]);
 
       const advancedData = advancedRes.data ? {
