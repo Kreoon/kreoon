@@ -108,27 +108,47 @@ interface TalentAmbassadorRequest {
 type RequestBody = TalentMatchingRequest | TalentQualityRequest | TalentRiskRequest | TalentReputationRequest | TalentAmbassadorRequest;
 
 async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
+  // First try to get module-specific config
   const { data: moduleData } = await supabase
     .from("organization_ai_modules")
-    .select("provider, model, api_key")
+    .select("provider, model")
     .eq("organization_id", organizationId)
     .eq("module_key", moduleKey)
     .eq("is_active", true)
     .single();
 
-  if (moduleData?.provider && moduleData?.api_key) {
-    return {
-      provider: moduleData.provider,
-      model: moduleData.model,
-      apiKey: moduleData.api_key,
-    };
+  // Then get organization defaults
+  const { data: defaults } = await supabase
+    .from("organization_ai_defaults")
+    .select("default_provider, default_model")
+    .eq("organization_id", organizationId)
+    .single();
+
+  // Use module config if available, otherwise use org defaults
+  const provider = moduleData?.provider || defaults?.default_provider || "lovable";
+  const model = moduleData?.model || defaults?.default_model || "google/gemini-2.5-flash";
+
+  // Get the appropriate API key based on provider
+  let apiKey = "";
+  switch (provider) {
+    case "openai":
+      apiKey = Deno.env.get("OPENAI_API_KEY") || "";
+      break;
+    case "gemini":
+      apiKey = Deno.env.get("GEMINI_API_KEY") || "";
+      break;
+    case "anthropic":
+      apiKey = Deno.env.get("ANTHROPIC_API_KEY") || "";
+      break;
+    case "lovable":
+    default:
+      apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
+      break;
   }
 
-  return {
-    provider: "lovable",
-    model: "google/gemini-2.5-flash",
-    apiKey: Deno.env.get("LOVABLE_API_KEY") || "",
-  };
+  console.log(`AI Config for module ${moduleKey}: provider=${provider}, model=${model}, hasKey=${!!apiKey}`);
+
+  return { provider, model, apiKey };
 }
 
 async function callAI(
