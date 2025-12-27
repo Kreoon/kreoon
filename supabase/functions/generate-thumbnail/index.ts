@@ -23,8 +23,23 @@ async function getModuleAIConfig(supabase: any, organizationId: string, moduleKe
   }
   
   let provider = moduleData?.provider || "lovable";
-  let model = moduleData?.model || "google/gemini-2.5-flash-image-preview";
+  let model = moduleData?.model || "";
   let apiKey: string | null = null;
+  
+  // Ensure model has correct format for image generation
+  // The allowed image models are: google/gemini-2.5-flash-image-preview, google/gemini-3-pro-image-preview, gpt-image-1, dall-e-3
+  const validImageModels = [
+    "google/gemini-2.5-flash-image-preview",
+    "google/gemini-3-pro-image-preview", 
+    "gpt-image-1",
+    "dall-e-3"
+  ];
+  
+  if (!model || !validImageModels.includes(model)) {
+    // Default to Gemini image model if invalid or not an image model
+    model = "google/gemini-2.5-flash-image-preview";
+    provider = "lovable";
+  }
   
   if (provider === "openai") {
     const { data: providerData } = await supabase
