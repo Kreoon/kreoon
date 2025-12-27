@@ -358,7 +358,7 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Usar por defecto</SelectItem>
+                            <SelectItem value="__default__">Usar por defecto</SelectItem>
                             {enabledProviders.map(p => (
                               <SelectItem key={p.key} value={p.key}>
                                 {p.label}
@@ -379,10 +379,10 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Usar por defecto</SelectItem>
+                            <SelectItem value="__default__">Usar por defecto</SelectItem>
                             {enabledProviders
                               .find(p => p.key === currentProvider)
-                              ?.models.map(m => (
+                              ?.models.filter(m => m.value).map(m => (
                                 <SelectItem key={m.value} value={m.value}>
                                   {m.label}
                                 </SelectItem>
