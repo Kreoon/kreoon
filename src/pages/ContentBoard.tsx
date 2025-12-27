@@ -713,6 +713,8 @@ export default function ContentBoard() {
                       <EnhancedContentCard
                         key={item.id}
                         content={item}
+                        cardSize={settings?.card_size || 'normal'}
+                        visibleFields={settings?.visible_fields || ['title', 'status', 'client', 'deadline', 'responsible']}
                         onClick={() => setSelectedContent(item)}
                         onDragStart={(e) => handleDragStart(e, item)}
                         isDragging={draggingContent?.id === item.id}
