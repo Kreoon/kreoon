@@ -18,3 +18,6 @@ export { UPAnalytics } from './UPAnalytics';
 export { UPSeasonsManager } from './UPSeasonsManager';
 export { QualityScoreWidget } from './QualityScoreWidget';
 export { RuleSimulator } from './RuleSimulator';
+export { UPAchievementsManager } from './UPAchievementsManager';
+export { UPLevelsManager } from './UPLevelsManager';
+export { UPPermissionsEditor } from './UPPermissionsEditor';
