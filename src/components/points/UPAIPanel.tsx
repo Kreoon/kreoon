@@ -553,8 +553,11 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
                 <Brain className="w-5 h-5 text-primary" />
                 Acciones IA
               </CardTitle>
-              <CardDescription>
-                Ejecuta análisis y genera contenido con IA (GPT-4o-mini)
+              <CardDescription className="flex items-center gap-2">
+                Ejecuta análisis y genera contenido con 
+                <Badge variant="secondary" className="font-normal">
+                  {AI_PROVIDERS_CONFIG[selectedAI.provider as keyof typeof AI_PROVIDERS_CONFIG]?.models.find(m => m.value === selectedAI.model)?.label || selectedAI.model}
+                </Badge>
               </CardDescription>
             </CardHeader>
             <CardContent>
