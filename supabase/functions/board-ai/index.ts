@@ -633,17 +633,45 @@ async function recommendAutomation(supabase: any, organizationId: string, userId
 
   // Analyze patterns
   const transitions: Record<string, number> = {};
-  statusLogs?.forEach((log: any) => {
+  (statusLogs || []).forEach((log: any) => {
     const key = `${log.from_status || "start"} → ${log.to_status}`;
     transitions[key] = (transitions[key] || 0) + 1;
   });
 
+  // If there's no history, we can't infer patterns reliably
+  if (!statusLogs || statusLogs.length === 0) {
+    await logAIUsage(supabase, {
+      organizationId,
+      userId,
+      provider: aiConfig.provider,
+      model: aiConfig.model,
+      action: "recommend_automation",
+      success: true,
+    });
+
+    return {
+      automations: [],
+      patterns_analyzed: [],
+      transition_patterns: {},
+      analyzed_at: new Date().toISOString(),
+      ai_model: aiConfig.model,
+      note: "No hay historial de movimientos suficiente para sugerir automatizaciones.",
+    };
+  }
+
   const systemPrompt = `Eres un experto en automatización de flujos de trabajo.
 Analiza patrones de movimiento de tarjetas y sugiere automatizaciones útiles.
-Las automatizaciones deben ser prácticas y mejorar la eficiencia.`;
+Las automatizaciones deben ser prácticas y mejorar la eficiencia.
+Responde en español.
+Devuelve SIEMPRE un JSON válido con la forma: {\"automations\":[...],\"patterns_analyzed\":[...] }.`;
+
+  const transitionLines = Object.entries(transitions)
+    .sort((a, b) => b[1] - a[1])
+    .map(([t, c]) => `- ${t}: ${c} veces`)
+    .join("\n");
 
   const userPrompt = `Patrones de transición detectados (últimas 100):
-${Object.entries(transitions).sort((a, b) => b[1] - a[1]).map(([t, c]) => `- ${t}: ${c} veces`).join("\n")}
+${transitionLines || "(sin patrones)"}
 
 Sugiere automatizaciones basadas en estos patrones.`;
 
@@ -664,20 +692,38 @@ Sugiere automatizaciones basadas en estos patrones.`;
                 trigger: { type: "string" },
                 action: { type: "string" },
                 benefit: { type: "string" },
-                complexity: { type: "string", enum: ["simple", "medium", "complex"] }
+                complexity: { type: "string", enum: ["simple", "medium", "complex"] },
               },
-              required: ["title", "trigger", "action", "benefit", "complexity"]
-            }
+              required: ["title", "trigger", "action", "benefit", "complexity"],
+            },
           },
-          patterns_analyzed: { type: "array", items: { type: "string" } }
+          patterns_analyzed: { type: "array", items: { type: "string" } },
         },
         required: ["automations"],
-        additionalProperties: false
-      }
-    }
+        additionalProperties: false,
+      },
+    },
   }];
 
-  const result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, systemPrompt, userPrompt, tools);
+  const rawResult = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, systemPrompt, userPrompt, tools);
+
+  // Normalize result across providers (some providers may return plain text)
+  let normalized: any = rawResult;
+  if (typeof normalized === "string") {
+    try {
+      normalized = JSON.parse(normalized);
+    } catch {
+      normalized = { automations: [], patterns_analyzed: [] };
+    }
+  }
+
+  if (!normalized || typeof normalized !== "object") {
+    normalized = { automations: [], patterns_analyzed: [] };
+  }
+
+  if (!Array.isArray(normalized.automations)) {
+    normalized.automations = [];
+  }
 
   await logAIUsage(supabase, {
     organizationId,
@@ -685,14 +731,14 @@ Sugiere automatizaciones basadas en estos patrones.`;
     provider: aiConfig.provider,
     model: aiConfig.model,
     action: "recommend_automation",
-    success: true
+    success: true,
   });
 
   return {
-    ...result,
+    ...normalized,
     transition_patterns: transitions,
     analyzed_at: new Date().toISOString(),
-    ai_model: aiConfig.model
+    ai_model: aiConfig.model,
   };
 }
 
