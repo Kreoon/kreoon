@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
 import { useProfileBlocksConfig } from '@/hooks/useProfileBlocksConfig';
 import { useSavedItems } from '@/hooks/useSavedItems';
+import { usePortfolioAIConfig } from '@/hooks/usePortfolioAIConfig';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,8 +12,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ProfileBlocksRenderer from '@/components/portfolio/profile/ProfileBlocksRenderer';
 import BlocksEditorDialog from '@/components/portfolio/profile/BlocksEditorDialog';
+import { AIBioHelper } from '@/components/portfolio/AIBioHelper';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface ProfileStats {
   posts_count: number;
@@ -25,7 +28,23 @@ export default function ProfilePage() {
   const { user, profile } = useAuth();
   const { can, canEditBlock, isOrgAdmin } = usePortfolioPermissions();
   const { blocks, loading: blocksLoading } = useProfileBlocksConfig();
+  const { isFeatureEnabled } = usePortfolioAIConfig();
   const navigate = useNavigate();
+  const aiBioEnabled = isFeatureEnabled('ai_bio_helper');
+
+  const handleBioUpdate = async (newBio: string) => {
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ bio: newBio })
+      .eq('id', user.id);
+    if (error) {
+      toast.error('Error al actualizar bio');
+    } else {
+      toast.success('Bio actualizada');
+      window.location.reload();
+    }
+  };
 
   const [stats, setStats] = useState<ProfileStats>({
     posts_count: 0,
@@ -147,10 +166,17 @@ export default function ProfilePage() {
 
             {/* Actions */}
             {canEdit && (
-              <div className="mt-4 flex justify-center sm:justify-start gap-2">
+              <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
                 <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
                   Editar perfil
                 </Button>
+                {aiBioEnabled && (
+                  <AIBioHelper
+                    currentBio={profile.bio || ''}
+                    profession="Creator"
+                    onApply={handleBioUpdate}
+                  />
+                )}
               </div>
             )}
           </div>
