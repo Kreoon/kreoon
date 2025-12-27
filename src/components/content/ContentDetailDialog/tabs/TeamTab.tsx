@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CollaboratorSelector } from '@/components/content/CollaboratorSelector';
-import { SectionCard, FieldRow, ReadonlyField } from '../components/SectionCard';
-import { useContentPermissions } from '../hooks/useContentPermissions';
+import { FieldRow } from '../components/SectionCard';
 import { TabProps, SelectOption } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -19,13 +17,11 @@ export function TeamTab({
   formData,
   setFormData,
   editMode,
-  userRole,
-  organizationId,
+  permissions,
   onUpdate,
   clients
 }: TeamTabProps) {
-  const permissions = useContentPermissions({ organizationId, role: userRole });
-  const canEditTeam = permissions.can('team', 'edit');
+  const canEditTeam = permissions.can('content.team', 'edit');
 
   const [creators, setCreators] = useState<SelectOption[]>([]);
   const [editors, setEditors] = useState<SelectOption[]>([]);
@@ -88,14 +84,11 @@ export function TeamTab({
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Cliente */}
-        <FieldRow>
-          <Label className="text-muted-foreground text-xs flex items-center gap-1">
-            <Package className="h-3 w-3" /> Cliente
-          </Label>
+        <FieldRow label="Cliente" icon={Package}>
           {editMode && canEditTeam ? (
             <Select 
               value={formData.client_id} 
-              onValueChange={(v) => setFormData((prev: any) => ({ ...prev, client_id: v }))}
+              onValueChange={(v) => setFormData((prev) => ({ ...prev, client_id: v }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar cliente" />
@@ -107,19 +100,16 @@ export function TeamTab({
               </SelectContent>
             </Select>
           ) : (
-            <ReadonlyField value={content?.client?.name} />
+            <p className="font-medium">{content?.client?.name || "Sin asignar"}</p>
           )}
         </FieldRow>
 
         {/* Creador */}
-        <FieldRow>
-          <Label className="text-muted-foreground text-xs flex items-center gap-1">
-            <User className="h-3 w-3" /> Creador
-          </Label>
+        <FieldRow label="Creador" icon={User}>
           {editMode && canEditTeam ? (
             <Select 
               value={formData.creator_id} 
-              onValueChange={(v) => setFormData((prev: any) => ({ ...prev, creator_id: v }))}
+              onValueChange={(v) => setFormData((prev) => ({ ...prev, creator_id: v }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar" />
@@ -141,14 +131,11 @@ export function TeamTab({
         </FieldRow>
 
         {/* Editor */}
-        <FieldRow>
-          <Label className="text-muted-foreground text-xs flex items-center gap-1">
-            <User className="h-3 w-3" /> Editor
-          </Label>
+        <FieldRow label="Editor" icon={User}>
           {editMode && canEditTeam ? (
             <Select 
               value={formData.editor_id} 
-              onValueChange={(v) => setFormData((prev: any) => ({ ...prev, editor_id: v }))}
+              onValueChange={(v) => setFormData((prev) => ({ ...prev, editor_id: v }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar" />
@@ -170,14 +157,11 @@ export function TeamTab({
         </FieldRow>
 
         {/* Estratega */}
-        <FieldRow>
-          <Label className="text-muted-foreground text-xs flex items-center gap-1">
-            <User className="h-3 w-3" /> Estratega
-          </Label>
+        <FieldRow label="Estratega" icon={User}>
           {editMode && canEditTeam ? (
             <Select 
               value={formData.strategist_id} 
-              onValueChange={(v) => setFormData((prev: any) => ({ ...prev, strategist_id: v }))}
+              onValueChange={(v) => setFormData((prev) => ({ ...prev, strategist_id: v }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar" />

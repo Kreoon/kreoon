@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RawVideoUploader } from '@/components/content/RawVideoUploader';
-import { PermissionsGate, ReadOnlyWrapper } from '../blocks/PermissionsGate';
+import { PermissionsGate } from '../blocks/PermissionsGate';
 import { SectionCard } from '../components/SectionCard';
-import { useContentPermissions } from '../hooks/useContentPermissions';
 import { TabProps } from '../types';
+import { useAuth } from '@/hooks/useAuth';
 import { Link as LinkIcon, FolderOpen, Upload, ExternalLink } from 'lucide-react';
 
 interface MaterialTabProps extends TabProps {}
@@ -14,19 +14,14 @@ export function MaterialTab({
   formData,
   setFormData,
   editMode,
-  userRole,
-  userId,
-  organizationId,
+  permissions,
   onUpdate
 }: MaterialTabProps) {
-  const permissions = useContentPermissions({ organizationId, role: userRole });
-  const canEditMaterial = permissions.can('material', 'edit');
-  const isAdmin = userRole === 'admin';
-  const isCreator = userRole === 'creator';
-  const isEditor = userRole === 'editor';
+  const { user, isAdmin, isCreator, isEditor } = useAuth();
+  const canEditMaterial = permissions.can('content.material', 'edit');
   
   // Check if user can edit drive url
-  const isAssignedCreator = isCreator && content?.creator_id === userId;
+  const isAssignedCreator = isCreator && content?.creator_id === user?.id;
   const canEditDriveUrl = isAdmin || isAssignedCreator;
 
   // Helper function to render video embed
@@ -136,11 +131,7 @@ export function MaterialTab({
     
     if (url.match(/\.(mp4|webm|ogg)$/i)) {
       return (
-        <video
-          src={url}
-          className="w-full h-full object-contain"
-          controls
-        />
+        <video src={url} className="w-full h-full object-contain" controls />
       );
     }
     
@@ -163,10 +154,7 @@ export function MaterialTab({
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Video de Referencia */}
-        <SectionCard 
-          title="Video de Referencia" 
-          icon={<LinkIcon className="h-4 w-4" />}
-        >
+        <SectionCard title="Video de Referencia" iconEmoji="🎬">
           {content?.reference_url ? (
             <div className="space-y-2">
               <div 
@@ -194,16 +182,13 @@ export function MaterialTab({
           )}
         </SectionCard>
 
-        {/* Videos Crudos - Raw video uploader with download option */}
-        <SectionCard 
-          title="Videos Crudos (Material Original)" 
-          icon={<Upload className="h-4 w-4" />}
-        >
+        {/* Videos Crudos */}
+        <SectionCard title="Videos Crudos (Material Original)" iconEmoji="📹">
           <RawVideoUploader
             contentId={content?.id || ''}
             currentUrls={formData.raw_video_urls}
             onUploadComplete={(urls) => {
-              setFormData((prev: any) => ({ 
+              setFormData((prev) => ({ 
                 ...prev, 
                 raw_video_urls: urls, 
                 drive_url: urls[0] || prev.drive_url 
@@ -217,7 +202,7 @@ export function MaterialTab({
         </SectionCard>
       </div>
 
-      {/* Separador con "O" */}
+      {/* Separator */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
@@ -229,25 +214,18 @@ export function MaterialTab({
         </div>
       </div>
 
-      {/* Link de Google Drive */}
-      <SectionCard 
-        title="Carpeta de Google Drive" 
-        icon={<FolderOpen className="h-4 w-4" />}
-      >
+      {/* Google Drive Link */}
+      <SectionCard title="Carpeta de Google Drive" iconEmoji="📁">
         <div className="flex gap-2">
           <Input
             value={formData.drive_url || ''}
-            onChange={(e) => setFormData((prev: any) => ({ ...prev, drive_url: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, drive_url: e.target.value }))}
             placeholder="https://drive.google.com/drive/folders/..."
             disabled={!editMode && !canEditDriveUrl && !isCreator}
             className="flex-1"
           />
           {formData.drive_url && (
-            <Button
-              variant="outline"
-              size="icon"
-              asChild
-            >
+            <Button variant="outline" size="icon" asChild>
               <a href={formData.drive_url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-4 w-4" />
               </a>

@@ -1,10 +1,7 @@
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ProductSelector } from '@/components/products/ProductSelector';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
-import { ReadOnlyWrapper } from '../blocks/PermissionsGate';
-import { SectionCard, FieldRow, ReadonlyField } from '../components/SectionCard';
-import { useContentPermissions } from '../hooks/useContentPermissions';
+import { FieldRow, ReadonlyField } from '../components/SectionCard';
 import { TabProps } from '../types';
 import { useState } from 'react';
 import { Package, Target, FileText, Link as LinkIcon, ExternalLink } from 'lucide-react';
@@ -20,23 +17,18 @@ export function GeneralTab({
   formData,
   setFormData,
   editMode,
-  userRole,
-  organizationId,
+  permissions,
   selectedProduct,
   onProductChange
 }: GeneralTabProps) {
-  const permissions = useContentPermissions({ organizationId, role: userRole });
-  const canEditGeneral = permissions.can('general', 'edit');
+  const canEditGeneral = permissions.can('content.general', 'edit');
   const [showProductDialog, setShowProductDialog] = useState(false);
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Producto */}
-        <FieldRow>
-          <Label className="text-muted-foreground text-xs flex items-center gap-2">
-            <Package className="h-3 w-3" /> Producto
-          </Label>
+        <FieldRow label="Producto" icon={Package}>
           {editMode && canEditGeneral ? (
             <ProductSelector
               clientId={formData.client_id || content?.client_id || null}
@@ -61,60 +53,50 @@ export function GeneralTab({
         </FieldRow>
 
         {/* Ángulo de Ventas */}
-        <FieldRow>
-          <Label className="text-muted-foreground text-xs flex items-center gap-2">
-            <Target className="h-3 w-3" /> Ángulo de Ventas
-          </Label>
+        <FieldRow label="Ángulo de Ventas" icon={Target}>
           {editMode && canEditGeneral ? (
             <Input
               value={formData.sales_angle || ''}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, sales_angle: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, sales_angle: e.target.value }))}
               placeholder="Ej: Dolor, Beneficio, Urgencia..."
             />
           ) : (
-            <ReadonlyField value={formData.sales_angle || content?.sales_angle} />
+            <p className="font-medium">{formData.sales_angle || content?.sales_angle || "—"}</p>
           )}
         </FieldRow>
 
         {/* Descripción */}
-        <FieldRow className="md:col-span-2">
-          <Label className="text-muted-foreground text-xs flex items-center gap-2">
-            <FileText className="h-3 w-3" /> Descripción
-          </Label>
+        <FieldRow label="Descripción" icon={FileText} className="md:col-span-2">
           {editMode && canEditGeneral ? (
             <Input
               value={formData.description || ''}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, description: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               placeholder="Descripción del contenido..."
             />
           ) : (
-            <ReadonlyField value={formData.description || content?.description} />
+            <p className="font-medium">{formData.description || content?.description || "—"}</p>
           )}
         </FieldRow>
 
         {/* Semana de Campaña */}
-        <FieldRow>
-          <Label className="text-muted-foreground text-xs">Semana de Campaña</Label>
+        <FieldRow label="Semana de Campaña">
           {editMode && canEditGeneral ? (
             <Input
               value={formData.campaign_week || ''}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, campaign_week: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, campaign_week: e.target.value }))}
               placeholder="Ej: Semana 1, Q1 2024..."
             />
           ) : (
-            <ReadonlyField value={formData.campaign_week || content?.campaign_week} />
+            <p className="font-medium">{formData.campaign_week || content?.campaign_week || "—"}</p>
           )}
         </FieldRow>
 
         {/* URL de Referencia */}
-        <FieldRow>
-          <Label className="text-muted-foreground text-xs flex items-center gap-2">
-            <LinkIcon className="h-3 w-3" /> URL de Referencia
-          </Label>
+        <FieldRow label="URL de Referencia" icon={LinkIcon}>
           {editMode && canEditGeneral ? (
             <Input
               value={formData.reference_url || ''}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, reference_url: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, reference_url: e.target.value }))}
               placeholder="https://..."
             />
           ) : formData.reference_url ? (
@@ -127,7 +109,7 @@ export function GeneralTab({
               Ver referencia <ExternalLink className="h-3 w-3" />
             </a>
           ) : (
-            <ReadonlyField value={null} />
+            <p className="font-medium">—</p>
           )}
         </FieldRow>
       </div>
