@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.up-ai-copilot]
 verify_jwt = false
+
+[functions.ai-assistant]
+verify_jwt = true
