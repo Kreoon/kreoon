@@ -2,8 +2,8 @@ import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { IntegratedNotificationHeader } from "@/components/notifications/IntegratedNotificationHeader";
-import { ChatPanel } from "@/components/chat/ChatPanel";
-import { FloatingChatButton } from "@/components/chat/FloatingChatButton";
+import { EnhancedChatDrawer } from "@/components/chat/EnhancedChatDrawer";
+import { EnhancedChatButton } from "@/components/chat/EnhancedChatButton";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
@@ -146,14 +146,14 @@ export function MainLayout({
         </main>
 
         {/* Floating Chat Button */}
-        <FloatingChatButton 
+        <EnhancedChatButton 
           onClick={() => setChatOpen(!chatOpen)} 
           isOpen={chatOpen} 
           unreadCount={unreadChatCount} 
         />
 
         {/* Chat Panel */}
-        <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
+        <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
 
         {/* Ambassador Celebration */}
@@ -306,14 +306,14 @@ export function MainLayout({
         </main>
 
         {/* Floating Chat Button */}
-        <FloatingChatButton 
+        <EnhancedChatButton 
           onClick={() => setChatOpen(!chatOpen)} 
           isOpen={chatOpen} 
           unreadCount={unreadChatCount} 
         />
 
         {/* Chat Panel */}
-        <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
+        <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
 
         {/* Ambassador Celebration */}
@@ -390,14 +390,14 @@ export function MainLayout({
       </main>
 
       {/* Floating Chat Button */}
-      <FloatingChatButton 
+      <EnhancedChatButton 
         onClick={() => setChatOpen(!chatOpen)} 
         isOpen={chatOpen} 
         unreadCount={unreadChatCount} 
       />
 
       {/* Chat Panel */}
-      <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
+      <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
       {/* Tour Provider */}
       <TourProvider />
