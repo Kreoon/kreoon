@@ -23,6 +23,7 @@ import { OrganizationRegistrations } from "@/components/settings/OrganizationReg
 import { PlatformUsersManagement } from "@/components/settings/PlatformUsersManagement";
 import { AmbassadorDashboard } from "@/components/ambassador";
 import { ChatNotificationsSettings } from "@/components/settings/ChatNotificationsSettings";
+import { PortfolioAISettings } from "@/components/settings/PortfolioAISettings";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -66,7 +67,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios-plataforma' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'gestion-orgs' | 'embajadores' | 'chat-notificaciones';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios-plataforma' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'gestion-orgs' | 'embajadores' | 'chat-notificaciones' | 'portfolio-ai';
 
 interface SettingsSectionItem {
   id: SettingsSection;
@@ -122,6 +123,12 @@ const orgLevelSections: SettingsSectionItem[] = [
     icon: Star, 
     title: "Sistema de Embajadores", 
     description: "Gestiona embajadores, comisiones y referidos",
+  },
+  { 
+    id: 'portfolio-ai',
+    icon: Sparkles, 
+    title: "IA de Portfolio", 
+    description: "Configura IA para el módulo de red social",
   },
   { 
     id: 'historial',
@@ -254,6 +261,8 @@ const Settings = () => {
         return <AmbassadorDashboard />;
       case 'chat-notificaciones':
         return <ChatNotificationsSettings />;
+      case 'portfolio-ai':
+        return <PortfolioAISettings />;
       case 'gestion-orgs':
         return <OrganizationRegistrations />;
       case 'usuarios-plataforma':
