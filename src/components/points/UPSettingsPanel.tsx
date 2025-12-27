@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useUPSettings, UPSetting } from '@/hooks/useUPSettings';
+import { useState } from 'react';
+import { useUPSettings, UPSetting, MultiCurrencyConfig } from '@/hooks/useUPSettings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { useOrgOwner } from '@/hooks/useOrgOwner';
-import { supabase } from '@/integrations/supabase/client';
 import { 
   Settings, Zap, Trophy, TrendingUp, Clock, AlertTriangle, 
   Star, Flame, Gift, Eye, Save, Coins
@@ -36,91 +34,24 @@ const SETTING_ICONS: Record<string, any> = {
   show_leaderboard_public: Eye
 };
 
-interface MultiCurrencyConfig {
-  secondary_currency_enabled: boolean;
-  secondary_currency_name: string;
-  secondary_currency_icon: string;
-}
-
 export function UPSettingsPanel() {
-  const { settings, loading, updateSetting } = useUPSettings();
-  const { currentOrgId } = useOrgOwner();
+  const { settings, loading, updateSetting, currencyConfig, updateCurrencyConfig } = useUPSettings();
   const { toast } = useToast();
   const [editingValues, setEditingValues] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState<string | null>(null);
   
-  // Multi-currency state
-  const [currencyConfig, setCurrencyConfig] = useState<MultiCurrencyConfig>({
-    secondary_currency_enabled: false,
-    secondary_currency_name: 'XP',
-    secondary_currency_icon: '⭐'
-  });
-  const [currencyLoading, setCurrencyLoading] = useState(true);
+  // Local currency config state for editing
+  const [localCurrencyConfig, setLocalCurrencyConfig] = useState<MultiCurrencyConfig | null>(null);
   const [currencySaving, setCurrencySaving] = useState(false);
 
-  useEffect(() => {
-    fetchCurrencyConfig();
-  }, []);
-
-  const fetchCurrencyConfig = async () => {
-    setCurrencyLoading(true);
-    try {
-      // Fetch first setting row to get currency config (all rows share the same values)
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/up_settings?select=secondary_currency_enabled,secondary_currency_name,secondary_currency_icon&limit=1`,
-        {
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-          }
-        }
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data[0]) {
-          setCurrencyConfig({
-            secondary_currency_enabled: data[0].secondary_currency_enabled ?? false,
-            secondary_currency_name: data[0].secondary_currency_name ?? 'XP',
-            secondary_currency_icon: data[0].secondary_currency_icon ?? '⭐'
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching currency config:', error);
-    } finally {
-      setCurrencyLoading(false);
-    }
-  };
+  // Initialize local currency config when it loads
+  const effectiveCurrencyConfig = localCurrencyConfig ?? currencyConfig;
 
   const saveCurrencyConfig = async () => {
     setCurrencySaving(true);
     try {
-      // Update all up_settings rows with currency config
-      const session = await supabase.auth.getSession();
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/up_settings`,
-        {
-          method: 'PATCH',
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${session.data.session?.access_token}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            secondary_currency_enabled: currencyConfig.secondary_currency_enabled,
-            secondary_currency_name: currencyConfig.secondary_currency_name,
-            secondary_currency_icon: currencyConfig.secondary_currency_icon
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Failed to update:', errorText);
-        throw new Error('Failed to update');
-      }
+      await updateCurrencyConfig(effectiveCurrencyConfig);
+      setLocalCurrencyConfig(null);
       toast({ title: 'Configuración de moneda guardada' });
     } catch (error) {
       console.error('Error saving currency config:', error);
@@ -129,6 +60,15 @@ export function UPSettingsPanel() {
       setCurrencySaving(false);
     }
   };
+
+  const handleCurrencyChange = (field: keyof MultiCurrencyConfig, value: any) => {
+    setLocalCurrencyConfig(prev => ({
+      ...(prev ?? currencyConfig),
+      [field]: value
+    }));
+  };
+
+  const hasCurrencyChanges = localCurrencyConfig !== null;
 
   const handleValueChange = (key: string, field: string, newValue: any) => {
     setEditingValues(prev => ({
@@ -326,7 +266,7 @@ export function UPSettingsPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {currencyLoading ? (
+          {loading ? (
             <Skeleton className="h-20 w-full" />
           ) : (
             <>
@@ -338,21 +278,21 @@ export function UPSettingsPanel() {
                   </p>
                 </div>
                 <Switch
-                  checked={currencyConfig.secondary_currency_enabled}
+                  checked={effectiveCurrencyConfig.secondary_currency_enabled}
                   onCheckedChange={(checked) => 
-                    setCurrencyConfig(prev => ({ ...prev, secondary_currency_enabled: checked }))
+                    handleCurrencyChange('secondary_currency_enabled', checked)
                   }
                 />
               </div>
 
-              {currencyConfig.secondary_currency_enabled && (
+              {effectiveCurrencyConfig.secondary_currency_enabled && (
                 <div className="grid grid-cols-2 gap-4 p-4 rounded-lg border bg-muted/30">
                   <div className="space-y-2">
                     <Label>Nombre de la moneda</Label>
                     <Input
-                      value={currencyConfig.secondary_currency_name}
+                      value={effectiveCurrencyConfig.secondary_currency_name}
                       onChange={(e) => 
-                        setCurrencyConfig(prev => ({ ...prev, secondary_currency_name: e.target.value }))
+                        handleCurrencyChange('secondary_currency_name', e.target.value)
                       }
                       placeholder="XP, Reputación, Estrellas..."
                     />
@@ -360,9 +300,9 @@ export function UPSettingsPanel() {
                   <div className="space-y-2">
                     <Label>Ícono</Label>
                     <Input
-                      value={currencyConfig.secondary_currency_icon}
+                      value={effectiveCurrencyConfig.secondary_currency_icon}
                       onChange={(e) => 
-                        setCurrencyConfig(prev => ({ ...prev, secondary_currency_icon: e.target.value }))
+                        handleCurrencyChange('secondary_currency_icon', e.target.value)
                       }
                       placeholder="⭐, 💎, 🌟..."
                       className="text-center text-xl"
@@ -373,7 +313,7 @@ export function UPSettingsPanel() {
 
               <Button 
                 onClick={saveCurrencyConfig} 
-                disabled={currencySaving}
+                disabled={currencySaving || !hasCurrencyChanges}
                 className="w-full"
               >
                 <Save className="w-4 h-4 mr-2" />
