@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,9 +14,12 @@ import { STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER } from '@/typ
 import { useAuth } from '@/hooks/useAuth';
 import { useContentDetail } from './hooks/useContentDetail';
 import { useContentPermissions } from './hooks/useContentPermissions';
+import { useBlockConfig } from './hooks/useBlockConfig';
+import { BlockKey } from './Config/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings } from 'lucide-react';
+import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { ContentDetailDialogProps } from './types';
 
 // Lazy load tabs
@@ -27,6 +30,17 @@ const TeamTab = lazy(() => import('./tabs/TeamTab').then(m => ({ default: m.Team
 const DatesTab = lazy(() => import('./tabs/DatesTab').then(m => ({ default: m.DatesTab })));
 const PaymentsTab = lazy(() => import('./tabs/PaymentsTab').then(m => ({ default: m.PaymentsTab })));
 const MaterialTab = lazy(() => import('./tabs/MaterialTab').then(m => ({ default: m.MaterialTab })));
+
+// Map tab keys to block keys
+const TAB_TO_BLOCK: Record<string, BlockKey> = {
+  scripts: 'script',
+  video: 'video',
+  material: 'material',
+  general: 'script', // General uses script block permissions
+  team: 'team',
+  dates: 'dates',
+  payments: 'payments',
+};
 
 function TabSkeleton() {
   return (
@@ -61,6 +75,30 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   } = useContentDetail({ content, onUpdate });
   
   const permissions = useContentPermissions(content);
+  const blockConfig = useBlockConfig(content);
+
+  // Combine permissions with block config for effective visible tabs
+  const effectiveVisibleTabs = useMemo(() => {
+    return permissions.visibleTabs.filter(tabKey => {
+      const blockKey = TAB_TO_BLOCK[tabKey];
+      if (!blockKey) return true; // If no mapping, show by default
+      return blockConfig.canViewBlock(blockKey);
+    });
+  }, [permissions.visibleTabs, blockConfig]);
+
+  // Check if a tab is locked
+  const isTabLocked = (tabKey: string): boolean => {
+    const blockKey = TAB_TO_BLOCK[tabKey];
+    if (!blockKey) return false;
+    return blockConfig.isBlockLocked(blockKey);
+  };
+
+  // Check if a tab is read-only (can view but not edit)
+  const isTabReadOnly = (tabKey: string): boolean => {
+    const blockKey = TAB_TO_BLOCK[tabKey];
+    if (!blockKey) return false;
+    return !blockConfig.canEditBlock(blockKey);
+  };
 
   if (!content) return null;
 
@@ -73,7 +111,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     content,
     formData,
     setFormData,
-    editMode,
+    editMode: editMode && !isTabLocked(activeTab), // Disable edit if tab is locked
     setEditMode,
     permissions,
     onUpdate
@@ -223,25 +261,51 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         {/* Content Area with Tabs */}
         <div className="overflow-y-auto max-h-[calc(90vh-200px)] p-4 sm:p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className={`grid w-full h-auto gap-1 mb-6 grid-cols-${permissions.visibleTabs.length}`}>
-              {permissions.visibleTabs.map(tabKey => (
-                <TabsTrigger 
-                  key={tabKey} 
-                  value={tabKey} 
-                  className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2"
-                >
-                  {TAB_CONFIG[tabKey]?.label}
-                </TabsTrigger>
-              ))}
+            <TabsList className={`grid w-full h-auto gap-1 mb-6 grid-cols-${effectiveVisibleTabs.length}`}>
+              {effectiveVisibleTabs.map(tabKey => {
+                const locked = isTabLocked(tabKey);
+                const readOnly = isTabReadOnly(tabKey);
+                
+                return (
+                  <TabsTrigger 
+                    key={tabKey} 
+                    value={tabKey} 
+                    className={cn(
+                      "text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2 flex items-center gap-1",
+                      locked && "border-warning/50",
+                      readOnly && !locked && "border-dashed"
+                    )}
+                  >
+                    {TAB_CONFIG[tabKey]?.label}
+                    {locked && <Lock className="h-3 w-3 text-warning" />}
+                    {readOnly && !locked && <Eye className="h-3 w-3 text-muted-foreground" />}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
 
-            {permissions.visibleTabs.map(tabKey => (
-              <TabsContent key={tabKey} value={tabKey} className="mt-4">
-                <Suspense fallback={<TabSkeleton />}>
-                  {TAB_CONFIG[tabKey]?.component}
-                </Suspense>
-              </TabsContent>
-            ))}
+            {effectiveVisibleTabs.map(tabKey => {
+              const locked = isTabLocked(tabKey);
+              const readOnly = isTabReadOnly(tabKey);
+              
+              return (
+                <TabsContent key={tabKey} value={tabKey} className="mt-4 relative">
+                  {/* Locked/ReadOnly indicator */}
+                  {(locked || readOnly) && (
+                    <div className={cn(
+                      "absolute top-0 right-0 z-10 flex items-center gap-1 px-2 py-1 text-xs rounded-bl-lg",
+                      locked ? "bg-warning/20 text-warning" : "bg-muted/80 text-muted-foreground"
+                    )}>
+                      {locked ? <Lock className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                      {locked ? 'Bloqueado' : 'Solo lectura'}
+                    </div>
+                  )}
+                  <Suspense fallback={<TabSkeleton />}>
+                    {TAB_CONFIG[tabKey]?.component}
+                  </Suspense>
+                </TabsContent>
+              );
+            })}
           </Tabs>
         </div>
 
