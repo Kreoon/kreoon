@@ -1,0 +1,721 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Action types
+type BoardAIAction = 
+  | "analyze_card"
+  | "analyze_board"
+  | "suggest_next_state"
+  | "detect_bottlenecks"
+  | "recommend_automation";
+
+interface RequestBody {
+  action: BoardAIAction;
+  organizationId: string;
+  contentId?: string;
+  boardData?: any;
+}
+
+// AI Provider configuration
+interface AIProviderConfig {
+  url: string;
+  getHeaders: (apiKey: string) => Record<string, string>;
+  getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => any;
+  extractContent: (data: any, hasTools: boolean) => any;
+}
+
+const AI_PROVIDERS: Record<string, AIProviderConfig> = {
+  lovable: {
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    getHeaders: (apiKey: string) => ({
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    }),
+    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
+      const body: any = {
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      };
+      if (tools) {
+        body.tools = tools;
+        body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
+      }
+      return body;
+    },
+    extractContent: (data: any, hasTools: boolean) => {
+      if (hasTools && data.choices?.[0]?.message?.tool_calls?.[0]) {
+        return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
+      }
+      return data.choices?.[0]?.message?.content || "";
+    }
+  },
+  openai: {
+    url: "https://api.openai.com/v1/chat/completions",
+    getHeaders: (apiKey: string) => ({
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    }),
+    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
+      const body: any = {
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 2000,
+        temperature: 0.7,
+      };
+      if (tools) {
+        body.tools = tools;
+        body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
+      }
+      return body;
+    },
+    extractContent: (data: any, hasTools: boolean) => {
+      if (hasTools && data.choices?.[0]?.message?.tool_calls?.[0]) {
+        return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
+      }
+      return data.choices?.[0]?.message?.content || "";
+    }
+  },
+  gemini: {
+    url: "https://generativelanguage.googleapis.com/v1beta/models",
+    getHeaders: (apiKey: string) => ({
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+    }),
+    getBody: (model: string, systemPrompt: string, userPrompt: string) => ({
+      contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+      generationConfig: { temperature: 0.7, maxOutputTokens: 2000 },
+    }),
+    extractContent: (data: any) => data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+  }
+};
+
+// Get organization AI configuration
+async function getOrgAIConfig(supabase: any, organizationId: string) {
+  // First check organization-specific defaults
+  const { data: defaults } = await supabase
+    .from("organization_ai_defaults")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+
+  // Get provider for tablero module (or default)
+  let provider = defaults?.default_provider || "lovable";
+  let model = defaults?.default_model || "google/gemini-2.5-flash";
+
+  // Check if there's a specific config for tablero module
+  if (defaults?.sistema_up_provider) {
+    provider = defaults.sistema_up_provider;
+  }
+  if (defaults?.sistema_up_model) {
+    model = defaults.sistema_up_model;
+  }
+
+  // Get API key if not lovable
+  let apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
+  
+  if (provider !== "lovable") {
+    const { data: providerConfig } = await supabase
+      .from("organization_ai_providers")
+      .select("api_key_encrypted")
+      .eq("organization_id", organizationId)
+      .eq("provider_key", provider)
+      .maybeSingle();
+    
+    if (providerConfig?.api_key_encrypted) {
+      apiKey = providerConfig.api_key_encrypted;
+    } else {
+      // Fallback to lovable if no API key
+      provider = "lovable";
+      model = "google/gemini-2.5-flash";
+      apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
+    }
+  }
+
+  return { provider, model, apiKey };
+}
+
+// Log AI usage
+async function logAIUsage(supabase: any, params: {
+  organizationId: string;
+  userId: string;
+  provider: string;
+  model: string;
+  action: string;
+  success: boolean;
+  errorMessage?: string;
+}) {
+  try {
+    await supabase.from("ai_usage_logs").insert({
+      organization_id: params.organizationId,
+      user_id: params.userId,
+      provider: params.provider,
+      model: params.model,
+      module: "tablero",
+      action: params.action,
+      success: params.success,
+      error_message: params.errorMessage,
+    });
+  } catch (e) {
+    console.error("Failed to log AI usage:", e);
+  }
+}
+
+// Call AI provider
+async function callAI(
+  config: AIProviderConfig,
+  apiKey: string,
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  tools?: any[]
+): Promise<any> {
+  const url = config.url.includes("gemini") 
+    ? `${config.url}/${model}:generateContent` 
+    : config.url;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: config.getHeaders(apiKey),
+    body: JSON.stringify(config.getBody(model, systemPrompt, userPrompt, tools)),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("AI API Error:", response.status, errorText);
+    throw new Error(`AI API Error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return config.extractContent(data, !!tools);
+}
+
+// Status labels in Spanish
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Borrador",
+  pending_script: "Guión Pendiente",
+  script_review: "Revisión de Guión",
+  script_approved: "Guión Aprobado",
+  assigned: "Asignado",
+  recording: "En Grabación",
+  recorded: "Grabado",
+  editing: "En Edición",
+  delivered: "Entregado",
+  issue: "Con Problema",
+  approved: "Aprobado",
+  paid: "Pagado",
+};
+
+// ==================== AI ACTIONS ====================
+
+async function analyzeCard(supabase: any, contentId: string, organizationId: string, userId: string) {
+  const aiConfig = await getOrgAIConfig(supabase, organizationId);
+  const providerConfig = AI_PROVIDERS[aiConfig.provider] || AI_PROVIDERS.lovable;
+
+  // Get card details with related data
+  const { data: content, error } = await supabase
+    .from("content")
+    .select(`
+      *,
+      client:clients(name),
+      creator:profiles!content_creator_id_fkey(full_name),
+      editor:profiles!content_editor_id_fkey(full_name)
+    `)
+    .eq("id", contentId)
+    .single();
+
+  if (error || !content) {
+    throw new Error("Content not found");
+  }
+
+  // Get status history
+  const { data: statusLogs } = await supabase
+    .from("content_status_logs")
+    .select("*")
+    .eq("content_id", contentId)
+    .order("moved_at", { ascending: false })
+    .limit(10);
+
+  // Calculate time in current status
+  const lastMove = statusLogs?.[0];
+  const daysInCurrentStatus = lastMove 
+    ? Math.floor((Date.now() - new Date(lastMove.moved_at).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+
+  // Check deadline
+  const isOverdue = content.deadline && new Date(content.deadline) < new Date();
+  const daysUntilDeadline = content.deadline 
+    ? Math.floor((new Date(content.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const systemPrompt = `Eres un asistente de análisis de producción de contenido para una agencia.
+Tu rol es analizar tarjetas de contenido en un tablero Kanban y proporcionar insights accionables.
+Responde siempre en español. Sé directo y conciso.
+Tus análisis deben ser explicables: indica qué datos analizaste y por qué llegas a cada conclusión.`;
+
+  const userPrompt = `Analiza esta tarjeta de contenido:
+
+INFORMACIÓN DE LA TARJETA:
+- Título: ${content.title}
+- Cliente: ${content.client?.name || "Sin asignar"}
+- Estado actual: ${STATUS_LABELS[content.status] || content.status}
+- Días en estado actual: ${daysInCurrentStatus}
+- Deadline: ${content.deadline ? new Date(content.deadline).toLocaleDateString() : "Sin deadline"}
+- Días hasta deadline: ${daysUntilDeadline !== null ? daysUntilDeadline : "N/A"}
+- ¿Vencido?: ${isOverdue ? "SÍ" : "No"}
+- Creador: ${content.creator?.full_name || "Sin asignar"}
+- Editor: ${content.editor?.full_name || "Sin asignar"}
+- Tiene guión: ${content.script ? "Sí" : "No"}
+- Tiene video: ${content.video_url ? "Sí" : "No"}
+
+HISTORIAL DE ESTADOS (últimos):
+${statusLogs?.map((log: any) => `- ${log.from_status || "inicio"} → ${log.to_status} (${new Date(log.moved_at).toLocaleDateString()})`).join("\n") || "Sin historial"}
+
+Proporciona un análisis estructurado.`;
+
+  const tools = [{
+    type: "function",
+    function: {
+      name: "card_analysis",
+      description: "Análisis estructurado de una tarjeta de contenido",
+      parameters: {
+        type: "object",
+        properties: {
+          current_interpretation: {
+            type: "string",
+            description: "Interpretación del estado actual de la tarjeta (2-3 oraciones)"
+          },
+          risk_level: {
+            type: "string",
+            enum: ["bajo", "medio", "alto"],
+            description: "Nivel de riesgo de atraso o problema"
+          },
+          risk_percentage: {
+            type: "number",
+            description: "Porcentaje de probabilidad de atraso (0-100)"
+          },
+          risk_factors: {
+            type: "array",
+            items: { type: "string" },
+            description: "Factores que contribuyen al riesgo"
+          },
+          probable_next_state: {
+            type: "string",
+            description: "Estado más probable al que debería moverse"
+          },
+          recommendation: {
+            type: "string",
+            description: "Recomendación concreta y accionable"
+          },
+          data_analyzed: {
+            type: "array",
+            items: { type: "string" },
+            description: "Lista de datos que se analizaron para llegar a esta conclusión"
+          },
+          confidence: {
+            type: "number",
+            description: "Nivel de confianza del análisis (0-100)"
+          }
+        },
+        required: ["current_interpretation", "risk_level", "risk_percentage", "probable_next_state", "recommendation", "confidence"],
+        additionalProperties: false
+      }
+    }
+  }];
+
+  const result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, systemPrompt, userPrompt, tools);
+
+  await logAIUsage(supabase, {
+    organizationId,
+    userId,
+    provider: aiConfig.provider,
+    model: aiConfig.model,
+    action: "analyze_card",
+    success: true
+  });
+
+  return {
+    ...result,
+    card_id: contentId,
+    card_title: content.title,
+    current_status: content.status,
+    analyzed_at: new Date().toISOString(),
+    ai_model: aiConfig.model
+  };
+}
+
+async function analyzeBoard(supabase: any, organizationId: string, userId: string) {
+  const aiConfig = await getOrgAIConfig(supabase, organizationId);
+  const providerConfig = AI_PROVIDERS[aiConfig.provider] || AI_PROVIDERS.lovable;
+
+  // Get all content for the organization
+  const { data: contents } = await supabase
+    .from("content")
+    .select("id, title, status, deadline, created_at, updated_at, creator_id, editor_id")
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: false });
+
+  if (!contents || contents.length === 0) {
+    return {
+      summary: "No hay contenido en el tablero para analizar.",
+      bottlenecks: [],
+      recommendations: []
+    };
+  }
+
+  // Group by status
+  const statusGroups: Record<string, any[]> = {};
+  contents.forEach((c: any) => {
+    if (!statusGroups[c.status]) statusGroups[c.status] = [];
+    statusGroups[c.status].push(c);
+  });
+
+  // Calculate metrics
+  const totalCards = contents.length;
+  const statusDistribution = Object.entries(statusGroups).map(([status, items]) => ({
+    status,
+    label: STATUS_LABELS[status] || status,
+    count: items.length,
+    percentage: Math.round((items.length / totalCards) * 100)
+  }));
+
+  // Check for overdue items
+  const overdueItems = contents.filter((c: any) => 
+    c.deadline && new Date(c.deadline) < new Date() && !["approved", "paid", "delivered"].includes(c.status)
+  );
+
+  // Check for stale items (no update in 7+ days)
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const staleItems = contents.filter((c: any) => 
+    new Date(c.updated_at) < sevenDaysAgo && !["approved", "paid", "delivered"].includes(c.status)
+  );
+
+  const systemPrompt = `Eres un analista de productividad para una agencia de contenido.
+Tu rol es analizar tableros Kanban y detectar cuellos de botella, problemas de flujo y oportunidades de mejora.
+Responde siempre en español. Sé directo y accionable.
+Explica siempre el razonamiento detrás de cada conclusión.`;
+
+  const userPrompt = `Analiza este tablero de producción de contenido:
+
+MÉTRICAS GENERALES:
+- Total de tarjetas: ${totalCards}
+- Tarjetas vencidas: ${overdueItems.length}
+- Tarjetas sin movimiento (7+ días): ${staleItems.length}
+
+DISTRIBUCIÓN POR ESTADO:
+${statusDistribution.map(s => `- ${s.label}: ${s.count} (${s.percentage}%)`).join("\n")}
+
+Detecta cuellos de botella y sugiere mejoras.`;
+
+  const tools = [{
+    type: "function",
+    function: {
+      name: "board_analysis",
+      description: "Análisis completo del tablero",
+      parameters: {
+        type: "object",
+        properties: {
+          summary: {
+            type: "string",
+            description: "Resumen ejecutivo del estado del tablero (2-3 oraciones)"
+          },
+          health_score: {
+            type: "number",
+            description: "Puntuación de salud del tablero (0-100)"
+          },
+          bottlenecks: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                status: { type: "string" },
+                severity: { type: "string", enum: ["low", "medium", "high"] },
+                description: { type: "string" },
+                impact: { type: "string" },
+                suggestion: { type: "string" }
+              },
+              required: ["status", "severity", "description", "suggestion"]
+            },
+            description: "Cuellos de botella detectados"
+          },
+          recommendations: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                priority: { type: "string", enum: ["low", "medium", "high"] },
+                type: { type: "string", enum: ["process", "automation", "resource", "training"] }
+              },
+              required: ["title", "description", "priority", "type"]
+            },
+            description: "Recomendaciones de mejora"
+          },
+          metrics_analyzed: {
+            type: "array",
+            items: { type: "string" },
+            description: "Métricas que se analizaron"
+          }
+        },
+        required: ["summary", "health_score", "bottlenecks", "recommendations"],
+        additionalProperties: false
+      }
+    }
+  }];
+
+  const result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, systemPrompt, userPrompt, tools);
+
+  await logAIUsage(supabase, {
+    organizationId,
+    userId,
+    provider: aiConfig.provider,
+    model: aiConfig.model,
+    action: "analyze_board",
+    success: true
+  });
+
+  return {
+    ...result,
+    total_cards: totalCards,
+    overdue_count: overdueItems.length,
+    stale_count: staleItems.length,
+    status_distribution: statusDistribution,
+    analyzed_at: new Date().toISOString(),
+    ai_model: aiConfig.model
+  };
+}
+
+async function suggestNextState(supabase: any, contentId: string, organizationId: string, userId: string) {
+  const aiConfig = await getOrgAIConfig(supabase, organizationId);
+  const providerConfig = AI_PROVIDERS[aiConfig.provider] || AI_PROVIDERS.lovable;
+
+  // Get card details
+  const { data: content } = await supabase
+    .from("content")
+    .select(`
+      *,
+      client:clients(name),
+      creator:profiles!content_creator_id_fkey(full_name),
+      editor:profiles!content_editor_id_fkey(full_name)
+    `)
+    .eq("id", contentId)
+    .single();
+
+  if (!content) throw new Error("Content not found");
+
+  const systemPrompt = `Eres un asistente de flujo de trabajo para producción de contenido.
+Analiza el estado actual de una tarjeta y sugiere el siguiente estado más apropiado.
+Considera los prerrequisitos típicos de cada estado.`;
+
+  const userPrompt = `Tarjeta: "${content.title}"
+Estado actual: ${STATUS_LABELS[content.status] || content.status}
+Tiene guión: ${content.script ? "Sí" : "No"}
+Tiene video: ${content.video_url ? "Sí" : "No"}
+Creador asignado: ${content.creator?.full_name || "No"}
+Editor asignado: ${content.editor?.full_name || "No"}
+
+¿Cuál debería ser el siguiente estado y por qué?`;
+
+  const tools = [{
+    type: "function",
+    function: {
+      name: "next_state_suggestion",
+      description: "Sugerencia del siguiente estado",
+      parameters: {
+        type: "object",
+        properties: {
+          suggested_state: { type: "string" },
+          confidence: { type: "number" },
+          reasoning: { type: "string" },
+          prerequisites_met: { type: "array", items: { type: "string" } },
+          prerequisites_missing: { type: "array", items: { type: "string" } },
+          alternative_state: { type: "string" },
+          alternative_reasoning: { type: "string" }
+        },
+        required: ["suggested_state", "confidence", "reasoning"],
+        additionalProperties: false
+      }
+    }
+  }];
+
+  const result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, systemPrompt, userPrompt, tools);
+
+  await logAIUsage(supabase, {
+    organizationId,
+    userId,
+    provider: aiConfig.provider,
+    model: aiConfig.model,
+    action: "suggest_next_state",
+    success: true
+  });
+
+  return {
+    ...result,
+    current_state: content.status,
+    card_id: contentId,
+    ai_model: aiConfig.model
+  };
+}
+
+async function detectBottlenecks(supabase: any, organizationId: string, userId: string) {
+  // This reuses analyzeBoard but focuses only on bottlenecks
+  const analysis = await analyzeBoard(supabase, organizationId, userId);
+  return {
+    bottlenecks: analysis.bottlenecks || [],
+    health_score: analysis.health_score,
+    status_distribution: analysis.status_distribution,
+    analyzed_at: analysis.analyzed_at,
+    ai_model: analysis.ai_model
+  };
+}
+
+async function recommendAutomation(supabase: any, organizationId: string, userId: string) {
+  const aiConfig = await getOrgAIConfig(supabase, organizationId);
+  const providerConfig = AI_PROVIDERS[aiConfig.provider] || AI_PROVIDERS.lovable;
+
+  // Get recent status changes
+  const { data: statusLogs } = await supabase
+    .from("content_status_logs")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .order("moved_at", { ascending: false })
+    .limit(100);
+
+  // Analyze patterns
+  const transitions: Record<string, number> = {};
+  statusLogs?.forEach((log: any) => {
+    const key = `${log.from_status || "start"} → ${log.to_status}`;
+    transitions[key] = (transitions[key] || 0) + 1;
+  });
+
+  const systemPrompt = `Eres un experto en automatización de flujos de trabajo.
+Analiza patrones de movimiento de tarjetas y sugiere automatizaciones útiles.
+Las automatizaciones deben ser prácticas y mejorar la eficiencia.`;
+
+  const userPrompt = `Patrones de transición detectados (últimas 100):
+${Object.entries(transitions).sort((a, b) => b[1] - a[1]).map(([t, c]) => `- ${t}: ${c} veces`).join("\n")}
+
+Sugiere automatizaciones basadas en estos patrones.`;
+
+  const tools = [{
+    type: "function",
+    function: {
+      name: "automation_recommendations",
+      description: "Recomendaciones de automatización",
+      parameters: {
+        type: "object",
+        properties: {
+          automations: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                trigger: { type: "string" },
+                action: { type: "string" },
+                benefit: { type: "string" },
+                complexity: { type: "string", enum: ["simple", "medium", "complex"] }
+              },
+              required: ["title", "trigger", "action", "benefit", "complexity"]
+            }
+          },
+          patterns_analyzed: { type: "array", items: { type: "string" } }
+        },
+        required: ["automations"],
+        additionalProperties: false
+      }
+    }
+  }];
+
+  const result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, systemPrompt, userPrompt, tools);
+
+  await logAIUsage(supabase, {
+    organizationId,
+    userId,
+    provider: aiConfig.provider,
+    model: aiConfig.model,
+    action: "recommend_automation",
+    success: true
+  });
+
+  return {
+    ...result,
+    transition_patterns: transitions,
+    analyzed_at: new Date().toISOString(),
+    ai_model: aiConfig.model
+  };
+}
+
+// ==================== MAIN HANDLER ====================
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get user from auth header
+    const authHeader = req.headers.get("Authorization");
+    let userId = "system";
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user } } = await supabase.auth.getUser(token);
+      if (user) userId = user.id;
+    }
+
+    const body: RequestBody = await req.json();
+    const { action, organizationId, contentId } = body;
+
+    console.log(`Board AI action: ${action} for org: ${organizationId}`);
+
+    let result;
+    switch (action) {
+      case "analyze_card":
+        if (!contentId) throw new Error("contentId is required");
+        result = await analyzeCard(supabase, contentId, organizationId, userId);
+        break;
+      case "analyze_board":
+        result = await analyzeBoard(supabase, organizationId, userId);
+        break;
+      case "suggest_next_state":
+        if (!contentId) throw new Error("contentId is required");
+        result = await suggestNextState(supabase, contentId, organizationId, userId);
+        break;
+      case "detect_bottlenecks":
+        result = await detectBottlenecks(supabase, organizationId, userId);
+        break;
+      case "recommend_automation":
+        result = await recommendAutomation(supabase, organizationId, userId);
+        break;
+      default:
+        throw new Error(`Unknown action: ${action}`);
+    }
+
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Board AI Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
