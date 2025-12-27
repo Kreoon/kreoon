@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -17,6 +17,8 @@ import {
 import { UPAIConfig, useUPEngine } from '@/hooks/useUPEngine';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useOrganizationAI, AI_PROVIDERS_CONFIG } from '@/hooks/useOrganizationAI';
+import { AIProviderSelector } from '@/components/ai/AIProviderSelector';
 
 interface UPAIPanelProps {
   organizationId: string;
@@ -32,6 +34,15 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
     applyRecommendation
   } = useUPEngine(organizationId);
   const { toast } = useToast();
+  
+  // Organization AI configuration
+  const { 
+    getModuleConfig, 
+    updateDefaults, 
+    saving: savingAI,
+    getEnabledProviders,
+    hasValidApiKey
+  } = useOrganizationAI(organizationId);
 
   const [loading, setLoading] = useState<string | null>(null);
   const [applyingIndex, setApplyingIndex] = useState<number | null>(null);
@@ -39,10 +50,40 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
   const [fraudAlerts, setFraudAlerts] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   
+  // AI provider selection for this module
+  const [selectedAI, setSelectedAI] = useState<{ provider: string; model: string }>({ 
+    provider: 'lovable', 
+    model: 'google/gemini-2.5-flash' 
+  });
+  
+  // Initialize selected AI from module config
+  useEffect(() => {
+    const config = getModuleConfig('sistema_up');
+    setSelectedAI(config);
+  }, [getModuleConfig]);
+  
   // Editable config state
   const [editableConfig, setEditableConfig] = useState({
     min_quality_for_approval: aiConfig?.min_quality_for_approval || 60,
   });
+  
+  // Handle AI provider/model change
+  const handleAIChange = async (config: { provider: string; model: string }) => {
+    setSelectedAI(config);
+    try {
+      await updateDefaults({
+        sistema_up_provider: config.provider,
+        sistema_up_model: config.model
+      });
+      toast({ title: 'Modelo de IA actualizado' });
+    } catch (error) {
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo actualizar el modelo de IA.',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const handleToggle = async (key: keyof UPAIConfig, value: boolean) => {
     try {
@@ -337,25 +378,22 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* AI Model Info */}
-              <div className="p-4 rounded-lg bg-muted/50 border">
-                <div className="flex items-center gap-3 mb-3">
+              {/* AI Model Selector */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 mb-2">
                   <Cpu className="w-5 h-5 text-primary" />
                   <div>
                     <h4 className="font-medium">Modelo de IA</h4>
-                    <p className="text-sm text-muted-foreground">Motor de procesamiento actual</p>
+                    <p className="text-sm text-muted-foreground">Selecciona el motor de procesamiento para Sistema UP</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Modelo:</span>
-                    <Badge variant="outline" className="ml-2">GPT-4o-mini</Badge>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Proveedor:</span>
-                    <Badge variant="outline" className="ml-2">OpenAI</Badge>
-                  </div>
-                </div>
+                <AIProviderSelector
+                  organizationId={organizationId}
+                  module="sistema_up"
+                  value={selectedAI}
+                  onChange={handleAIChange}
+                  disabled={savingAI}
+                />
               </div>
 
               <Separator />
@@ -406,7 +444,24 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
 
               {/* Current Config Summary */}
               <div className="space-y-3">
-                <Label className="text-base">Estado actual de funciones</Label>
+                <Label className="text-base">Estado actual</Label>
+                
+                {/* Current AI Model */}
+                <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Modelo IA activo:</span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="capitalize">
+                        {AI_PROVIDERS_CONFIG[selectedAI.provider as keyof typeof AI_PROVIDERS_CONFIG]?.label || selectedAI.provider}
+                      </Badge>
+                      <Badge variant="outline">
+                        {AI_PROVIDERS_CONFIG[selectedAI.provider as keyof typeof AI_PROVIDERS_CONFIG]?.models.find(m => m.value === selectedAI.model)?.label || selectedAI.model}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Features status */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   <div className="flex items-center gap-2 text-sm">
                     <div className={cn(
