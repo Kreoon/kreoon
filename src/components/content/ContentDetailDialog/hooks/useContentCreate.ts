@@ -242,6 +242,15 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
 
     setSaving(true);
     try {
+      // Get user's current organization
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('current_organization_id')
+        .eq('id', user?.id)
+        .maybeSingle();
+
+      const organizationId = profile?.current_organization_id;
+
       const { error } = await supabase.from('content').insert({
         title: formData.title.trim(),
         product: selectedProduct?.name || formData.product || null,
@@ -266,6 +275,7 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
         designer_guidelines: formData.designer_guidelines?.trim() || null,
         admin_guidelines: formData.admin_guidelines?.trim() || null,
         status: 'draft',
+        organization_id: organizationId,
         creator_assigned_at: formData.creator_id ? new Date().toISOString() : null,
         editor_assigned_at: formData.editor_id ? new Date().toISOString() : null
       });

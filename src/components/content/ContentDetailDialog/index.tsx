@@ -422,12 +422,12 @@ export function ContentDetailDialog({
                 </div>
               ) : null}
 
-              {/* Semana/Campaña */}
+              {/* Semana o Campaña */}
               {editMode ? (
                 <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
                     <Target className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">Semana</span>
+                    <span className="text-xs font-medium text-muted-foreground">Semana o Campaña</span>
                   </div>
                   <Input
                     value={formData.campaign_week || ''}
@@ -435,8 +435,8 @@ export function ContentDetailDialog({
                       ...prev, 
                       campaign_week: e.target.value 
                     }))}
-                    className="border-0 bg-transparent h-8 w-[100px] text-sm focus-visible:ring-0"
-                    placeholder="Ej: S1"
+                    className="border-0 bg-transparent h-8 w-[120px] text-sm focus-visible:ring-0"
+                    placeholder="Ej: S1, Campaña 2"
                   />
                 </div>
               ) : displayContent.campaign_week ? (

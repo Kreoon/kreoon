@@ -717,7 +717,9 @@ export type Database = {
         Row: {
           admin_guidelines: string | null
           approved_at: string | null
+          approved_at_v2: string | null
           approved_by: string | null
+          assigned_at: string | null
           bunny_embed_url: string | null
           campaign_week: string | null
           caption: string | null
@@ -735,7 +737,9 @@ export type Database = {
           delivered_at: string | null
           description: string | null
           designer_guidelines: string | null
+          draft_at: string | null
           drive_url: string | null
+          editing_at: string | null
           editor_assigned_at: string | null
           editor_guidelines: string | null
           editor_id: string | null
@@ -748,19 +752,26 @@ export type Database = {
           is_ambassador_content: boolean | null
           is_portfolio_public: boolean | null
           is_published: boolean | null
+          issue_at: string | null
           likes_count: number | null
           notes: string | null
           organization_id: string | null
           paid_at: string | null
+          paid_at_v2: string | null
           product: string | null
           product_id: string | null
+          published_at: string | null
           raw_video_urls: string[] | null
           recorded_at: string | null
+          recording_at: string | null
           reference_url: string | null
+          review_at: string | null
           sales_angle: string | null
           script: string | null
           script_approved_at: string | null
+          script_approved_at_v2: string | null
           script_approved_by: string | null
+          script_pending_at: string | null
           script_version: number | null
           sequence_number: string | null
           start_date: string | null
@@ -780,7 +791,9 @@ export type Database = {
         Insert: {
           admin_guidelines?: string | null
           approved_at?: string | null
+          approved_at_v2?: string | null
           approved_by?: string | null
+          assigned_at?: string | null
           bunny_embed_url?: string | null
           campaign_week?: string | null
           caption?: string | null
@@ -798,7 +811,9 @@ export type Database = {
           delivered_at?: string | null
           description?: string | null
           designer_guidelines?: string | null
+          draft_at?: string | null
           drive_url?: string | null
+          editing_at?: string | null
           editor_assigned_at?: string | null
           editor_guidelines?: string | null
           editor_id?: string | null
@@ -811,19 +826,26 @@ export type Database = {
           is_ambassador_content?: boolean | null
           is_portfolio_public?: boolean | null
           is_published?: boolean | null
+          issue_at?: string | null
           likes_count?: number | null
           notes?: string | null
           organization_id?: string | null
           paid_at?: string | null
+          paid_at_v2?: string | null
           product?: string | null
           product_id?: string | null
+          published_at?: string | null
           raw_video_urls?: string[] | null
           recorded_at?: string | null
+          recording_at?: string | null
           reference_url?: string | null
+          review_at?: string | null
           sales_angle?: string | null
           script?: string | null
           script_approved_at?: string | null
+          script_approved_at_v2?: string | null
           script_approved_by?: string | null
+          script_pending_at?: string | null
           script_version?: number | null
           sequence_number?: string | null
           start_date?: string | null
@@ -843,7 +865,9 @@ export type Database = {
         Update: {
           admin_guidelines?: string | null
           approved_at?: string | null
+          approved_at_v2?: string | null
           approved_by?: string | null
+          assigned_at?: string | null
           bunny_embed_url?: string | null
           campaign_week?: string | null
           caption?: string | null
@@ -861,7 +885,9 @@ export type Database = {
           delivered_at?: string | null
           description?: string | null
           designer_guidelines?: string | null
+          draft_at?: string | null
           drive_url?: string | null
+          editing_at?: string | null
           editor_assigned_at?: string | null
           editor_guidelines?: string | null
           editor_id?: string | null
@@ -874,19 +900,26 @@ export type Database = {
           is_ambassador_content?: boolean | null
           is_portfolio_public?: boolean | null
           is_published?: boolean | null
+          issue_at?: string | null
           likes_count?: number | null
           notes?: string | null
           organization_id?: string | null
           paid_at?: string | null
+          paid_at_v2?: string | null
           product?: string | null
           product_id?: string | null
+          published_at?: string | null
           raw_video_urls?: string[] | null
           recorded_at?: string | null
+          recording_at?: string | null
           reference_url?: string | null
+          review_at?: string | null
           sales_angle?: string | null
           script?: string | null
           script_approved_at?: string | null
+          script_approved_at_v2?: string | null
           script_approved_by?: string | null
+          script_pending_at?: string | null
           script_version?: number | null
           sequence_number?: string | null
           start_date?: string | null
