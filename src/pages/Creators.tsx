@@ -1,57 +1,35 @@
 import { useState, useEffect, type MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Star, Video, Trash2, User, Sword } from "lucide-react";
+import { Search, Plus, Star, User, Sword, Users, Edit3, Trophy } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
 import { CreatorDetailDialog } from "@/components/team/CreatorDetailDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { TalentCard, TalentProfile } from "@/components/team/TalentCard";
+import { TalentRanking } from "@/components/team/TalentRanking";
 import { cn } from "@/lib/utils";
-
-interface Creator {
-  id: string;
-  full_name: string;
-  email: string;
-  avatar_url: string | null;
-  phone: string | null;
-  bio: string | null;
-  role: 'creator' | 'editor';
-  content_count: number;
-  is_ambassador: boolean;
-}
 
 const Creators = () => {
   const { isAdmin, user } = useAuth();
   const { toast } = useToast();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
-  const [creators, setCreators] = useState<Creator[]>([]);
+  const [talents, setTalents] = useState<TalentProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
+  const [selectedTalent, setSelectedTalent] = useState<TalentProfile | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
 
-  const fetchCreators = async () => {
-    // Wait for org context
+  const fetchTalents = async () => {
     if (orgLoading) return;
     setLoading(true);
 
     try {
       if (!currentOrgId) {
-        // Without an org selected, show nothing to avoid cross-org leakage
-        setCreators([]);
+        setTalents([]);
         return;
       }
 
@@ -65,14 +43,14 @@ const Creators = () => {
       if (memberRolesError) throw memberRolesError;
 
       if (!memberRoles?.length) {
-        setCreators([]);
+        setTalents([]);
         return;
       }
 
       const userIds = [...new Set(memberRoles.map(r => r.user_id))];
       const roleMap = new Map(memberRoles.map(r => [r.user_id, r.role]));
 
-      // Ambassador status (org-scoped) + profile flag fallback
+      // Ambassador status (org-scoped)
       const { data: ambassadorRoles } = await supabase
         .from('organization_member_roles')
         .select('user_id')
@@ -82,21 +60,37 @@ const Creators = () => {
 
       const ambassadorSet = new Set(ambassadorRoles?.map(r => r.user_id) || []);
 
-      // Get profiles
+      // Get organization member data for ambassador_level
+      const { data: memberData } = await supabase
+        .from('organization_members')
+        .select('user_id, ambassador_level')
+        .eq('organization_id', currentOrgId)
+        .in('user_id', userIds);
+
+      const ambassadorLevelMap = new Map(memberData?.map(m => [m.user_id, m.ambassador_level]) || []);
+
+      // Get profiles with performance data
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url, phone, bio, is_ambassador')
+        .select(`
+          id, full_name, email, avatar_url, phone, bio, is_ambassador,
+          quality_score_avg, reliability_score, velocity_score,
+          ai_recommended_level, ai_risk_flag,
+          editor_rating, editor_completed_count, editor_on_time_count
+        `)
         .in('id', userIds);
 
       // Get content counts
       const { data: creatorCounts } = await supabase
         .from('content')
         .select('creator_id')
+        .eq('organization_id', currentOrgId)
         .in('creator_id', userIds);
 
       const { data: editorCounts } = await supabase
         .from('content')
         .select('editor_id')
+        .eq('organization_id', currentOrgId)
         .in('editor_id', userIds);
 
       const countMap = new Map<string, number>();
@@ -111,7 +105,24 @@ const Creators = () => {
         }
       });
 
-      const creatorsData: Creator[] = (profiles || []).map(p => ({
+      // Get active tasks count for each talent
+      const { data: activeTasks } = await supabase
+        .from('content')
+        .select('creator_id, editor_id')
+        .eq('organization_id', currentOrgId)
+        .in('status', ['assigned', 'recording', 'recorded', 'editing', 'review', 'issue']);
+
+      const activeTasksMap = new Map<string, number>();
+      activeTasks?.forEach(c => {
+        if (c.creator_id) {
+          activeTasksMap.set(c.creator_id, (activeTasksMap.get(c.creator_id) || 0) + 1);
+        }
+        if (c.editor_id) {
+          activeTasksMap.set(c.editor_id, (activeTasksMap.get(c.editor_id) || 0) + 1);
+        }
+      });
+
+      const talentsData: TalentProfile[] = (profiles || []).map(p => ({
         id: p.id,
         full_name: p.full_name,
         email: p.email,
@@ -121,88 +132,59 @@ const Creators = () => {
         role: roleMap.get(p.id) as 'creator' | 'editor',
         content_count: countMap.get(p.id) || 0,
         is_ambassador: ambassadorSet.has(p.id) || p.is_ambassador || false,
+        quality_score_avg: p.quality_score_avg || 0,
+        reliability_score: p.reliability_score || 0,
+        velocity_score: p.velocity_score || 0,
+        ai_recommended_level: (p.ai_recommended_level as 'junior' | 'pro' | 'elite') || 'junior',
+        ai_risk_flag: (p.ai_risk_flag as 'none' | 'warning' | 'high') || 'none',
+        ambassador_level: (ambassadorLevelMap.get(p.id) as 'none' | 'bronze' | 'silver' | 'gold') || 'none',
+        editor_rating: p.editor_rating,
+        editor_completed_count: p.editor_completed_count,
+        editor_on_time_count: p.editor_on_time_count,
+        active_tasks: activeTasksMap.get(p.id) || 0,
       }));
 
-      setCreators(creatorsData);
+      setTalents(talentsData);
     } catch (error) {
-      console.error('Error fetching creators:', error);
+      console.error('Error fetching talents:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCreators();
+    fetchTalents();
   }, [isPlatformRoot, currentOrgId, orgLoading]);
 
-  const handleDelete = async (creatorId: string, creatorName: string) => {
-    if (!currentOrgId) return;
-
-    try {
-      // Remove roles and membership from CURRENT organization only
-      const { error: rolesError } = await supabase
-        .from('organization_member_roles')
-        .delete()
-        .eq('organization_id', currentOrgId)
-        .eq('user_id', creatorId);
-
-      if (rolesError) throw rolesError;
-
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .delete()
-        .eq('organization_id', currentOrgId)
-        .eq('user_id', creatorId);
-
-      if (memberError) throw memberError;
-
-      toast({
-        title: "Eliminado",
-        description: `${creatorName} ha sido eliminado del equipo`,
-      });
-
-      fetchCreators();
-    } catch (error) {
-      console.error('Error deleting creator:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar al usuario",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const toggleAmbassador = async (creator: Creator, e: MouseEvent) => {
+  const toggleAmbassador = async (talent: TalentProfile, e: MouseEvent) => {
     e.stopPropagation();
     if (!currentOrgId) return;
 
-    const newStatus = !creator.is_ambassador;
+    const newStatus = !talent.is_ambassador;
 
     // Optimistic update
-    setCreators(prev => prev.map(c =>
-      c.id === creator.id ? { ...c, is_ambassador: newStatus } : c
+    setTalents(prev => prev.map(t =>
+      t.id === talent.id ? { ...t, is_ambassador: newStatus } : t
     ));
 
     try {
-      // Update profiles table - set celebration pending flag when activating
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           is_ambassador: newStatus,
           ambassador_celebration_pending: newStatus,
         })
-        .eq('id', creator.id);
+        .eq('id', talent.id);
 
       if (profileError) throw profileError;
 
-      // Org-scoped ambassador role
       if (newStatus) {
         const { error: roleError } = await supabase
           .from('organization_member_roles')
           .upsert(
             {
               organization_id: currentOrgId,
-              user_id: creator.id,
+              user_id: talent.id,
               role: 'ambassador',
             },
             { onConflict: 'organization_id,user_id,role' }
@@ -213,21 +195,20 @@ const Creators = () => {
           .from('organization_member_roles')
           .delete()
           .eq('organization_id', currentOrgId)
-          .eq('user_id', creator.id)
+          .eq('user_id', talent.id)
           .eq('role', 'ambassador');
         if (roleError) throw roleError;
       }
 
       toast({
         description: newStatus
-          ? `¡${creator.full_name} es ahora embajador! Verá la celebración cuando inicie sesión.`
-          : `${creator.full_name} ya no es embajador`,
+          ? `¡${talent.full_name} es ahora embajador!`
+          : `${talent.full_name} ya no es embajador`,
       });
     } catch (error) {
       console.error('Error toggling ambassador:', error);
-      // Revert on error
-      setCreators(prev => prev.map(c =>
-        c.id === creator.id ? { ...c, is_ambassador: !newStatus } : c
+      setTalents(prev => prev.map(t =>
+        t.id === talent.id ? { ...t, is_ambassador: !newStatus } : t
       ));
       toast({
         title: "Error",
@@ -237,14 +218,31 @@ const Creators = () => {
     }
   };
 
-  const filteredCreators = creators.filter(c => 
-    c.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter talents based on search and active tab
+  const filteredTalents = talents.filter(t => {
+    const matchesSearch = t.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
 
-  const roleLabels = {
-    creator: { label: "Creador", className: "bg-primary/10 text-primary" },
-    editor: { label: "Editor", className: "bg-info/10 text-info" }
+    switch (activeTab) {
+      case 'creators':
+        return t.role === 'creator';
+      case 'editors':
+        return t.role === 'editor';
+      case 'ambassadors':
+        return t.is_ambassador;
+      default:
+        return true;
+    }
+  });
+
+  // Stats for tabs
+  const stats = {
+    all: talents.length,
+    creators: talents.filter(t => t.role === 'creator').length,
+    editors: talents.filter(t => t.role === 'editor').length,
+    ambassadors: talents.filter(t => t.is_ambassador).length,
   };
 
   return (
@@ -255,7 +253,7 @@ const Creators = () => {
           <MedievalBanner
             icon={Sword}
             title="Cuartel de Guerreros"
-            subtitle="Los artesanos y forjadores del reino"
+            subtitle="Sistema de Talento Inteligente"
             action={
               isAdmin && (
                 <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0 font-medieval">
@@ -267,160 +265,154 @@ const Creators = () => {
             }
           />
 
-          <div className="mb-4 md:mb-6">
-            <div className="relative w-full md:max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input 
-                type="text"
-                placeholder="Buscar creadores o editores..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-9 md:h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          </div>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <TabsList className="grid grid-cols-5 w-full sm:w-auto">
+                <TabsTrigger value="all" className="gap-1.5">
+                  <Users className="h-4 w-4" />
+                  <span className="hidden sm:inline">Todos</span>
+                  <span className="text-xs opacity-70">({stats.all})</span>
+                </TabsTrigger>
+                <TabsTrigger value="creators" className="gap-1.5">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Creadores</span>
+                  <span className="text-xs opacity-70">({stats.creators})</span>
+                </TabsTrigger>
+                <TabsTrigger value="editors" className="gap-1.5">
+                  <Edit3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Editores</span>
+                  <span className="text-xs opacity-70">({stats.editors})</span>
+                </TabsTrigger>
+                <TabsTrigger value="ambassadors" className="gap-1.5">
+                  <Star className="h-4 w-4" />
+                  <span className="hidden sm:inline">Embajadores</span>
+                  <span className="text-xs opacity-70">({stats.ambassadors})</span>
+                </TabsTrigger>
+                <TabsTrigger value="ranking" className="gap-1.5">
+                  <Trophy className="h-4 w-4" />
+                  <span className="hidden sm:inline">Ranking</span>
+                </TabsTrigger>
+              </TabsList>
 
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-              {[1, 2, 3, 4].map(i => (
-                <Skeleton key={i} className="h-40 md:h-48 rounded-xl" />
-              ))}
-            </div>
-          ) : filteredCreators.length === 0 ? (
-            <div className="text-center py-8 md:py-12">
-              <User className="h-10 w-10 md:h-12 md:w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-sm md:text-base text-muted-foreground">No hay creadores o editores registrados</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-              {filteredCreators.map((creator) => (
-                <div 
-                  key={creator.id}
-                  onClick={() => setSelectedCreator(creator)}
-                  className={cn(
-                    "group rounded-xl border bg-card p-5 transition-all duration-300 hover:shadow-lg cursor-pointer relative",
-                    creator.is_ambassador 
-                      ? "border-amber-500/50 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)] hover:shadow-[0_0_25px_-3px_rgba(245,158,11,0.5)] hover:border-amber-500 bg-gradient-to-br from-card via-card to-amber-500/5" 
-                      : "border-border hover:border-primary/20"
-                  )}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    {creator.avatar_url ? (
-                      <img 
-                        src={creator.avatar_url} 
-                        alt={creator.full_name}
-                        className="h-14 w-14 rounded-full object-cover ring-2 ring-border"
-                      />
-                    ) : (
-                      <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-border">
-                        <User className="h-6 w-6 text-primary" />
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1.5">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${roleLabels[creator.role].className}`}>
-                        {roleLabels[creator.role].label}
-                      </span>
-                      {creator.is_ambassador && (
-                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary gap-0.5">
-                          <Star className="h-3 w-3 fill-primary" />
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-card-foreground">{creator.full_name}</h3>
-                    {creator.is_ambassador && (
-                      <Star className="h-4 w-4 text-primary fill-primary" />
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-4 truncate">{creator.email}</p>
-
-                  {/* Ambassador toggle for admins */}
-                  {isAdmin && (
-                    <div 
-                      onClick={(e) => toggleAmbassador(creator, e)}
-                      className={cn(
-                        "flex items-center gap-2 mb-4 p-2 rounded-lg border cursor-pointer transition-all",
-                        creator.is_ambassador 
-                          ? "bg-primary/10 border-primary/30 hover:bg-primary/20" 
-                          : "bg-muted/50 border-border hover:bg-muted"
-                      )}
-                    >
-                      <Checkbox 
-                        checked={creator.is_ambassador}
-                        className="pointer-events-none"
-                      />
-                      <div className="flex items-center gap-1.5">
-                        <Star className={cn(
-                          "h-4 w-4 transition-colors",
-                          creator.is_ambassador ? "text-primary fill-primary" : "text-muted-foreground"
-                        )} />
-                        <span className={cn(
-                          "text-xs font-medium",
-                          creator.is_ambassador ? "text-primary" : "text-muted-foreground"
-                        )}>
-                          Embajador
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <div className="flex items-center gap-1">
-                      <Video className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-card-foreground">{creator.content_count}</span>
-                      <span className="text-xs text-muted-foreground">videos</span>
-                    </div>
-
-                    {isAdmin && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>¿Eliminar a {creator.full_name}?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta acción eliminará el rol de {roleLabels[creator.role].label.toLowerCase()} de este usuario. 
-                              El perfil seguirá existiendo pero no tendrá acceso como miembro del equipo.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(creator.id, creator.full_name)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Eliminar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </div>
+              {/* Search */}
+              {activeTab !== 'ranking' && (
+                <div className="relative w-full sm:max-w-xs">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input 
+                    type="text"
+                    placeholder="Buscar talento..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="h-9 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
                 </div>
-              ))}
+              )}
             </div>
-          )}
+
+            {/* Tab Contents */}
+            <TabsContent value="all" className="mt-0">
+              <TalentGrid 
+                talents={filteredTalents}
+                loading={loading}
+                onSelect={setSelectedTalent}
+                onAmbassadorToggle={toggleAmbassador}
+                isAdmin={isAdmin}
+              />
+            </TabsContent>
+
+            <TabsContent value="creators" className="mt-0">
+              <TalentGrid 
+                talents={filteredTalents}
+                loading={loading}
+                onSelect={setSelectedTalent}
+                onAmbassadorToggle={toggleAmbassador}
+                isAdmin={isAdmin}
+              />
+            </TabsContent>
+
+            <TabsContent value="editors" className="mt-0">
+              <TalentGrid 
+                talents={filteredTalents}
+                loading={loading}
+                onSelect={setSelectedTalent}
+                onAmbassadorToggle={toggleAmbassador}
+                isAdmin={isAdmin}
+              />
+            </TabsContent>
+
+            <TabsContent value="ambassadors" className="mt-0">
+              <TalentGrid 
+                talents={filteredTalents}
+                loading={loading}
+                onSelect={setSelectedTalent}
+                onAmbassadorToggle={toggleAmbassador}
+                isAdmin={isAdmin}
+              />
+            </TabsContent>
+
+            <TabsContent value="ranking" className="mt-0">
+              <div className="max-w-3xl">
+                <TalentRanking />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
       <CreatorDetailDialog
-        creator={selectedCreator}
-        open={!!selectedCreator}
-        onOpenChange={(open) => !open && setSelectedCreator(null)}
-        onUpdate={fetchCreators}
+        creator={selectedTalent}
+        open={!!selectedTalent}
+        onOpenChange={(open) => !open && setSelectedTalent(null)}
+        onUpdate={fetchTalents}
       />
     </>
   );
 };
+
+// Extracted grid component for reuse
+interface TalentGridProps {
+  talents: TalentProfile[];
+  loading: boolean;
+  onSelect: (talent: TalentProfile) => void;
+  onAmbassadorToggle: (talent: TalentProfile, e: MouseEvent) => void;
+  isAdmin: boolean;
+}
+
+function TalentGrid({ talents, loading, onSelect, onAmbassadorToggle, isAdmin }: TalentGridProps) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+        {[1, 2, 3, 4].map(i => (
+          <Skeleton key={i} className="h-56 rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  if (talents.length === 0) {
+    return (
+      <div className="text-center py-8 md:py-12">
+        <User className="h-10 w-10 md:h-12 md:w-12 mx-auto text-muted-foreground mb-4" />
+        <p className="text-sm md:text-base text-muted-foreground">No hay talento en esta categoría</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+      {talents.map((talent) => (
+        <TalentCard
+          key={talent.id}
+          talent={talent}
+          onClick={() => onSelect(talent)}
+          onAmbassadorToggle={(e) => onAmbassadorToggle(talent, e)}
+          isAdmin={isAdmin}
+          showKPIs={true}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default Creators;
