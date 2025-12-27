@@ -159,23 +159,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userProfile = profileResult.data as Profile | null;
       setProfile(userProfile);
 
-      // Now fetch role from organization_members based on current_organization_id
+      // Now fetch roles from organization_member_roles based on current_organization_id
       let userRoles: AppRole[] = [];
       
       if (userProfile?.current_organization_id) {
-        const { data: memberData, error: memberError } = await supabase
-          .from('organization_members')
+        // Fetch multiple roles from the new organization_member_roles table
+        const { data: memberRolesData, error: memberRolesError } = await supabase
+          .from('organization_member_roles')
           .select('role')
           .eq('user_id', userId)
-          .eq('organization_id', userProfile.current_organization_id)
-          .maybeSingle();
+          .eq('organization_id', userProfile.current_organization_id);
 
-        if (memberError) {
-          console.warn('[auth] org member role fetch error', memberError);
+        if (memberRolesError) {
+          console.warn('[auth] org member roles fetch error', memberRolesError);
         }
 
-        if (memberData?.role) {
-          userRoles = [memberData.role as AppRole];
+        if (memberRolesData && memberRolesData.length > 0) {
+          userRoles = memberRolesData.map(r => r.role as AppRole);
+        } else {
+          // Fallback to organization_members single role for backward compatibility
+          const { data: memberData } = await supabase
+            .from('organization_members')
+            .select('role')
+            .eq('user_id', userId)
+            .eq('organization_id', userProfile.current_organization_id)
+            .maybeSingle();
+
+          if (memberData?.role) {
+            userRoles = [memberData.role as AppRole];
+          }
         }
       }
 

@@ -157,6 +157,13 @@ const OrgAuth = () => {
           is_owner: false,
         });
 
+        // Also insert into organization_member_roles for multi-role support
+        await supabase.from("organization_member_roles").insert({
+          organization_id: organization.id,
+          user_id: data.user.id,
+          role: organization.default_role as any,
+        });
+
         // Update profile with current org
         await supabase
           .from("profiles")
