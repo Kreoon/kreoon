@@ -15,6 +15,7 @@ import { SectionCard } from '../components/SectionCard';
 import { TabProps } from '../types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { supabase } from '@/integrations/supabase/client';
 import { Video, Share2, Lock, Download, Loader2, ExternalLink } from 'lucide-react';
 
@@ -76,6 +77,7 @@ export function VideoTab({
   readOnly = false,
 }: VideoTabProps) {
   const { isAdmin, isClient } = useAuth();
+  const { currentOrgId } = useOrgOwner();
   // Combine permissions with readOnly prop for effective edit capability
   const canEditVideo = permissions.can('content.video', 'edit') && !readOnly;
   const effectiveEditMode = editMode && !readOnly;
@@ -116,6 +118,7 @@ export function VideoTab({
         <div className="space-y-4">
           <AIThumbnailGenerator
             contentId={content?.id || ''}
+            organizationId={currentOrgId || ''}
             currentThumbnail={content?.thumbnail_url}
             scriptContext={{
               script: content?.script,

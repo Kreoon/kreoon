@@ -26,6 +26,7 @@ interface ScriptContext {
 
 interface AIThumbnailGeneratorProps {
   contentId: string;
+  organizationId: string;
   currentThumbnail?: string | null;
   scriptContext: ScriptContext;
   onThumbnailGenerated?: (thumbnailUrl: string) => void;
@@ -133,7 +134,8 @@ const PRODUCT_VISIBILITY = [
 ];
 
 export function AIThumbnailGenerator({ 
-  contentId, 
+  contentId,
+  organizationId,
   currentThumbnail, 
   scriptContext,
   onThumbnailGenerated 
@@ -333,6 +335,7 @@ export function AIThumbnailGenerator({
           referenceImage: referenceImage,
           productImage: productImage,
           contentId,
+          organizationId,
           outputFormat: outputFormat,
           aiProvider: modelConfig.provider,
           aiModel: modelConfig.model
