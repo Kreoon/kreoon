@@ -1810,6 +1810,62 @@ export type Database = {
           },
         ]
       }
+      organization_ai_modules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_execution_at: string | null
+          model: string | null
+          module_key: string
+          module_name: string
+          organization_id: string
+          provider: string | null
+          required_role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_execution_at?: string | null
+          model?: string | null
+          module_key: string
+          module_name: string
+          organization_id: string
+          provider?: string | null
+          required_role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_execution_at?: string | null
+          model?: string | null
+          module_key?: string
+          module_name?: string
+          organization_id?: string
+          provider?: string | null
+          required_role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_ai_modules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_ai_providers: {
         Row: {
           api_key_encrypted: string | null
@@ -3967,6 +4023,14 @@ export type Database = {
         Args: { full_name: string }
         Returns: string
       }
+      get_ai_module_config: {
+        Args: { _module_key: string; _org_id: string }
+        Returns: {
+          is_active: boolean
+          model: string
+          provider: string
+        }[]
+      }
       get_best_available_editor: { Args: never; Returns: string }
       get_company_followers_count: {
         Args: { _company_id: string }
@@ -4026,6 +4090,10 @@ export type Database = {
         Args: { _org_id: string }
         Returns: undefined
       }
+      is_ai_module_active: {
+        Args: { _module_key: string; _org_id: string }
+        Returns: boolean
+      }
       is_client_owner: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
@@ -4060,6 +4128,10 @@ export type Database = {
         }
         Returns: string
       }
+      log_ai_module_execution: {
+        Args: { _module_key: string; _org_id: string }
+        Returns: undefined
+      }
       log_security_event: {
         Args: {
           _action_taken?: string
@@ -4083,6 +4155,15 @@ export type Database = {
           _ip_address?: string
           _user_agent?: string
           _user_id: string
+        }
+        Returns: string
+      }
+      register_ai_module: {
+        Args: {
+          _description?: string
+          _module_key: string
+          _module_name: string
+          _org_id: string
         }
         Returns: string
       }

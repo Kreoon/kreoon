@@ -108,6 +108,72 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
   }
 };
 
+// Map action to module key for validation
+const ACTION_TO_MODULE: Record<BoardAIAction, string> = {
+  analyze_card: "board_cards",
+  analyze_board: "board_flows",
+  suggest_next_state: "board_cards",
+  detect_bottlenecks: "board_states",
+  recommend_automation: "board_flows",
+};
+
+// Check if a module is active for the organization
+async function isModuleActive(supabase: any, organizationId: string, moduleKey: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("organization_ai_modules")
+    .select("is_active")
+    .eq("organization_id", organizationId)
+    .eq("module_key", moduleKey)
+    .maybeSingle();
+  
+  return data?.is_active ?? false;
+}
+
+// Get module-specific configuration (provider & model)
+async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
+  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  
+  // First check if module is active
+  const { data: moduleData } = await supabase
+    .from("organization_ai_modules")
+    .select("is_active, provider, model")
+    .eq("organization_id", organizationId)
+    .eq("module_key", moduleKey)
+    .maybeSingle();
+  
+  if (!moduleData?.is_active) {
+    throw new Error(`MODULE_INACTIVE:${moduleKey}`);
+  }
+  
+  // Get the provider configuration from the module or fall back to org defaults
+  let provider = moduleData?.provider || "lovable";
+  let model = moduleData?.model || "google/gemini-2.5-flash";
+  
+  // If provider is external, get API key
+  if (provider !== "lovable") {
+    const { data: providerData } = await supabase
+      .from("organization_ai_providers")
+      .select("api_key_encrypted")
+      .eq("organization_id", organizationId)
+      .eq("provider_key", provider)
+      .eq("is_enabled", true)
+      .maybeSingle();
+    
+    if (providerData?.api_key_encrypted) {
+      return { provider, model, apiKey: providerData.api_key_encrypted };
+    }
+    // Fall back to lovable if no API key
+    provider = "lovable";
+    model = "google/gemini-2.5-flash";
+  }
+  
+  if (!lovableApiKey) {
+    throw new Error("LOVABLE_API_KEY no está configurada");
+  }
+  
+  return { provider, model, apiKey: lovableApiKey };
+}
+
 // Get all available AI configurations for an organization (for fallback)
 async function getAllAIConfigs(supabase: any, organizationId: string) {
   const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -788,6 +854,25 @@ serve(async (req) => {
 
     console.log(`Board AI action: ${action} for org: ${organizationId}`);
 
+    // Get module key for this action
+    const moduleKey = ACTION_TO_MODULE[action];
+    if (!moduleKey) {
+      throw new Error(`Unknown action: ${action}`);
+    }
+
+    // Check if module is active
+    const moduleActive = await isModuleActive(supabase, organizationId, moduleKey);
+    if (!moduleActive) {
+      return new Response(
+        JSON.stringify({ 
+          error: "MODULE_INACTIVE",
+          message: "IA no habilitada para este módulo. Actívala en Configuración → IA & Modelos.",
+          module_key: moduleKey
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     let result;
     switch (action) {
       case "analyze_card":
@@ -810,6 +895,12 @@ serve(async (req) => {
       default:
         throw new Error(`Unknown action: ${action}`);
     }
+
+    // Log module execution
+    await supabase.rpc("log_ai_module_execution", {
+      _org_id: organizationId,
+      _module_key: moduleKey
+    });
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
