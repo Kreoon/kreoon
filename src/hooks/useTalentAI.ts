@@ -42,6 +42,27 @@ export interface TalentReputationResult {
   development_areas: string[];
 }
 
+export interface TalentAmbassadorResult {
+  recommended_level: "none" | "bronze" | "silver" | "gold";
+  current_level: string;
+  level_change: "up" | "down" | "same";
+  justification: string[];
+  risk_flags: string[];
+  suggested_actions: Array<{
+    type: string;
+    description: string;
+    priority: "high" | "medium" | "low";
+  }>;
+  network_metrics?: {
+    active_referrals: number;
+    network_content_count: number;
+    network_quality_avg: number;
+    retention_rate: number;
+    estimated_revenue_impact: number;
+  };
+  confidence: number;
+}
+
 export function useTalentAI() {
   const [loading, setLoading] = useState(false);
   const { currentOrgId } = useOrgOwner();
@@ -158,11 +179,36 @@ export function useTalentAI() {
     }
   };
 
+  const evaluateAmbassador = async (userId: string): Promise<TalentAmbassadorResult | null> => {
+    if (!currentOrgId) return null;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("talent-ai", {
+        body: {
+          action: "ambassador",
+          organizationId: currentOrgId,
+          userId,
+        },
+      });
+
+      if (error) throw error;
+      return data as TalentAmbassadorResult;
+    } catch (error: any) {
+      console.error("Ambassador evaluation error:", error);
+      toast({ variant: "destructive", description: error.message || "Error al evaluar embajador" });
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     findBestMatch,
     evaluateQuality,
     analyzeRisk,
     evaluateReputation,
+    evaluateAmbassador,
   };
 }

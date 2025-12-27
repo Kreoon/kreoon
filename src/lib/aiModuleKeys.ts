@@ -44,6 +44,7 @@ export const TALENT_AI_MODULES = {
   QUALITY: 'talent.quality.ai',         // Scoring de calidad
   RISK: 'talent.risk.ai',               // Riesgo de retraso/burnout
   REPUTATION: 'talent.reputation.ai',   // Reputación y embajadores
+  AMBASSADOR: 'talent.ambassador.ai',   // Evaluación y gestión de embajadores
 } as const;
 
 // ============================================
@@ -174,6 +175,12 @@ export const AI_MODULE_DEFINITIONS: AIModuleDefinition[] = [
     key: TALENT_AI_MODULES.REPUTATION,
     name: 'Talent – Reputation',
     description: 'Análisis de reputación, recomendaciones de nivel y potencial de embajador',
+    category: 'talent',
+  },
+  {
+    key: TALENT_AI_MODULES.AMBASSADOR,
+    name: 'Talent – Ambassador',
+    description: 'Evaluación de embajadores, métricas de red, ascensos/descensos y alertas',
     category: 'talent',
   },
   
