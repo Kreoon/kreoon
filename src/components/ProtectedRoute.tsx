@@ -1,7 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { AppRole } from '@/types/database';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles?: AppRole[];
+  requiresOrg?: boolean; // Whether this route requires an organization
 }
 
 // Helper to get the correct dashboard path based on user roles
@@ -23,9 +25,14 @@ function getDashboardPath(roles: AppRole[]): string {
   return '/pending-access';
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, roles: realRoles, loading, rolesLoaded } = useAuth();
+// Routes that require an organization to be selected
+const ORG_REQUIRED_ROUTES = ['/', '/board', '/content', '/creators', '/scripts', '/clients', '/team', '/ranking'];
+
+export function ProtectedRoute({ children, allowedRoles, requiresOrg }: ProtectedRouteProps) {
+  const { user, profile, roles: realRoles, loading, rolesLoaded } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
+  const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
+  const location = useLocation();
   
   const [clientHasCompany, setClientHasCompany] = useState<boolean | null>(null);
   const [checkingCompany, setCheckingCompany] = useState(false);
@@ -33,6 +40,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   // Use effective roles when impersonating, otherwise real roles
   const rolesToCheck = isImpersonating ? effectiveRoles : realRoles;
   const isClient = rolesToCheck.includes('client');
+  
+  // Check if current route requires org
+  const routeRequiresOrg = requiresOrg ?? ORG_REQUIRED_ROUTES.includes(location.pathname);
 
   useEffect(() => {
     async function checkClientCompany() {
@@ -74,8 +84,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     }
   }, [user, isClient, rolesLoaded, isImpersonating]);
 
-  // Wait for both auth loading AND roles to be loaded
-  if (loading || !rolesLoaded || (isClient && clientHasCompany === null) || checkingCompany) {
+  // Wait for both auth loading AND roles to be loaded AND org check for platform root
+  if (loading || !rolesLoaded || orgLoading || (isClient && clientHasCompany === null) || checkingCompany) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -85,6 +95,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Platform root without org selected trying to access org-required routes
+  if (isPlatformRoot && !currentOrgId && routeRequiresOrg && !isImpersonating) {
+    return <Navigate to="/no-organization" replace />;
   }
 
   // Root admin bypasses most checks when impersonating
@@ -102,7 +117,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   // Users without any roles need to request access
-  if (realRoles.length === 0) {
+  if (realRoles.length === 0 && !isPlatformRoot) {
     return <Navigate to="/pending-access" replace />;
   }
 
@@ -113,7 +128,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   // Check if user has the required role
   if (allowedRoles && allowedRoles.length > 0) {
-    const hasAllowedRole = allowedRoles.some(role => rolesToCheck.includes(role));
+    // Platform root with org selected is treated as admin
+    const effectiveRolesToCheck = isPlatformRoot && currentOrgId ? ['admin', ...rolesToCheck] : rolesToCheck;
+    const hasAllowedRole = allowedRoles.some(role => effectiveRolesToCheck.includes(role));
     if (!hasAllowedRole) {
       // Instead of showing unauthorized, redirect to their appropriate dashboard
       const correctDashboard = getDashboardPath(rolesToCheck);
