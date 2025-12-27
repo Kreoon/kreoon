@@ -4,7 +4,7 @@ import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog/index";
-import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll, RotateCcw } from "lucide-react";
+import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll, RotateCcw, Brain } from "lucide-react";
 import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,8 @@ import {
   BoardTableView, 
   BoardListView,
   EnhancedKanbanColumn,
-  EnhancedContentCard
+  EnhancedContentCard,
+  BoardAIPanel
 } from "@/components/board";
 import { useBoardSettings } from "@/hooks/useBoardSettings";
 import { useBoardPersistence } from "@/hooks/useBoardPersistence";
@@ -199,6 +200,12 @@ export default function ContentBoard() {
   
   // Dialog para crear contenido
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  
+  // AI Panel state
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const [aiPanelMode, setAIPanelMode] = useState<'card' | 'board'>('board');
+  const [aiContentId, setAIContentId] = useState<string | undefined>();
+  const [aiContentTitle, setAIContentTitle] = useState<string | undefined>();
   
   // Vista actual y configuración del board - using persisted view
   const currentView = persistence.currentView;
@@ -762,15 +769,36 @@ export default function ContentBoard() {
               )}
               <BoardViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
               {isAdmin && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-1.5"
-                  onClick={() => setShowConfigDialog(true)}
-                >
-                  <Settings2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Configurar</span>
-                </Button>
+                <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-1.5"
+                        onClick={() => {
+                          setAIPanelMode('board');
+                          setAIContentId(undefined);
+                          setAIContentTitle(undefined);
+                          setShowAIPanel(true);
+                        }}
+                      >
+                        <Brain className="h-4 w-4 text-primary" />
+                        <span className="hidden sm:inline">Analizar IA</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Analizar tablero con IA</TooltipContent>
+                  </Tooltip>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-1.5"
+                    onClick={() => setShowConfigDialog(true)}
+                  >
+                    <Settings2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Configurar</span>
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -824,6 +852,13 @@ export default function ContentBoard() {
                         onClick={() => setSelectedContent(item)}
                         onDragStart={(e) => handleDragStart(e, item)}
                         isDragging={draggingContent?.id === item.id}
+                        showAIIndicators={isAdmin}
+                        onAnalyzeWithAI={isAdmin ? (contentId, title) => {
+                          setAIPanelMode('card');
+                          setAIContentId(contentId);
+                          setAIContentTitle(title);
+                          setShowAIPanel(true);
+                        } : undefined}
                       />
                     ))}
                     {columnContent.length === 0 && (
@@ -895,6 +930,18 @@ export default function ContentBoard() {
         onUpdate={refetch}
         mode="create"
       />
+
+      {/* AI Analysis Panel */}
+      {isAdmin && currentOrgId && (
+        <BoardAIPanel
+          organizationId={currentOrgId}
+          open={showAIPanel}
+          onClose={() => setShowAIPanel(false)}
+          mode={aiPanelMode}
+          contentId={aiContentId}
+          contentTitle={aiContentTitle}
+        />
+      )}
     </div>
   );
 }

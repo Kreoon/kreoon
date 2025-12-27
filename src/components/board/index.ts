@@ -5,3 +5,4 @@ export { EnhancedKanbanColumn } from './EnhancedKanbanColumn';
 export { BoardCalendarView } from './BoardCalendarView';
 export { BoardTableView } from './BoardTableView';
 export { BoardListView } from './BoardListView';
+export { BoardAIPanel } from './BoardAIPanel';

@@ -1,12 +1,14 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Clock, Building2, Video, FileText, Star } from "lucide-react";
+import { Clock, Building2, Video, FileText, Star, MoreVertical, Brain, AlertTriangle, Clock4 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { Content, STATUS_COLORS, STATUS_LABELS } from "@/types/database";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +19,8 @@ interface EnhancedContentCardProps {
   onClick?: () => void;
   onDragStart?: (e: React.DragEvent) => void;
   isDragging?: boolean;
+  onAnalyzeWithAI?: (contentId: string, title: string) => void;
+  showAIIndicators?: boolean;
 }
 
 // Size configurations for different card sizes
@@ -56,7 +60,9 @@ export function EnhancedContentCard({
   visibleFields = ['title', 'status', 'client', 'deadline', 'creator', 'editor'],
   onClick,
   onDragStart,
-  isDragging
+  isDragging,
+  onAnalyzeWithAI,
+  showAIIndicators = false
 }: EnhancedContentCardProps) {
   // Get size configuration
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
@@ -76,6 +82,14 @@ export function EnhancedContentCard({
   const hasVideo = content.video_url || (content.video_urls && content.video_urls.length > 0);
   const hasRawVideo = content.raw_video_urls && content.raw_video_urls.length > 0;
 
+  // Check if card is stale (no update in 3+ days in certain statuses)
+  const isStale = useMemo(() => {
+    if (!content.updated_at) return false;
+    const daysSinceUpdate = (Date.now() - new Date(content.updated_at).getTime()) / (1000 * 60 * 60 * 24);
+    const staleStatuses = ['draft', 'assigned', 'recording', 'editing', 'review'];
+    return staleStatuses.includes(content.status) && daysSinceUpdate >= 3;
+  }, [content.updated_at, content.status]);
+
   // Calculate progress based on status
   const getProgress = (): number => {
     const statusProgress: Record<string, number> = {
@@ -86,20 +100,75 @@ export function EnhancedContentCard({
     return statusProgress[content.status] || 0;
   };
 
+  const handleAnalyzeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onAnalyzeWithAI) {
+      onAnalyzeWithAI(content.id, content.title);
+    }
+  };
+
   return (
     <Card
       className={cn(
-        "group cursor-pointer transition-all duration-200",
+        "group cursor-pointer transition-all duration-200 relative",
         "hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5",
         "bg-card/90 backdrop-blur-sm border-border/60",
         isDragging && "opacity-50 scale-95 rotate-1 shadow-xl",
         isOverdue && "border-l-4 border-l-destructive",
+        isStale && !isOverdue && "border-l-4 border-l-amber-500",
         sizeConfig.padding
       )}
       draggable
       onDragStart={onDragStart}
       onClick={onClick}
     >
+      {/* AI Indicators */}
+      {showAIIndicators && (isOverdue || isStale) && (
+        <div className="absolute -top-1.5 -right-1.5 flex gap-0.5">
+          {isOverdue && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm">
+                  <AlertTriangle className="h-3 w-3" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Tarjeta vencida - Requiere atención</TooltipContent>
+            </Tooltip>
+          )}
+          {isStale && !isOverdue && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm">
+                  <Clock4 className="h-3 w-3" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Tarjeta estancada - Sin cambios recientes</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      )}
+
+      {/* AI Menu */}
+      {onAnalyzeWithAI && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreVertical className="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleAnalyzeClick} className="gap-2">
+              <Brain className="h-4 w-4 text-primary" />
+              Analizar con IA
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       {/* Thumbnail - respects cardSize */}
       {showField('thumbnail') && content.thumbnail_url && (
         <div className={cn(
