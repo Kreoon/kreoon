@@ -101,8 +101,8 @@ const baseSections: SettingsSectionItem[] = [
   },
 ];
 
-// Sections for org owners (not platform root)
-const orgOwnerSections: SettingsSectionItem[] = [
+// Sections for organization level (org owners and admins see these)
+const orgLevelSections: SettingsSectionItem[] = [
   { 
     id: 'mi-organizacion',
     icon: Building2, 
@@ -117,7 +117,7 @@ const orgOwnerSections: SettingsSectionItem[] = [
   },
 ];
 
-// Sections ONLY for platform root admin
+// Sections ONLY for platform root admin - PLATFORM LEVEL
 const platformRootSections: SettingsSectionItem[] = [
   { 
     id: 'gestion-orgs',
@@ -128,62 +128,56 @@ const platformRootSections: SettingsSectionItem[] = [
   { 
     id: 'asignar-usuarios',
     icon: UserCog, 
-    title: "Asignar Usuarios", 
+    title: "Asignar Usuarios a Orgs", 
     description: "Asigna creadores, editores y marcas a organizaciones",
   },
   { 
     id: 'usuarios',
     icon: Users,
-    title: "Usuarios",
-    description: "Gestiona usuarios, contraseñas y accesos",
+    title: "Gestión de Usuarios",
+    description: "Gestiona usuarios, contraseñas y accesos globales",
   },
   { 
     id: 'referidos',
     icon: Share2, 
-    title: "Referidos", 
-    description: "Gestiona sistema de referidos",
+    title: "Sistema de Referidos", 
+    description: "Gestiona sistema de referidos de la plataforma",
   },
   {
     id: 'permisos',
     icon: Lock, 
-    title: "Permisos", 
+    title: "Permisos Globales", 
     description: "Gestiona los permisos de acceso para cada rol",
   },
   { 
     id: 'planes',
     icon: Crown, 
     title: "Planes y Comisiones", 
-    description: "Gestiona comisiones de referidos",
+    description: "Gestiona planes de suscripción y comisiones",
   },
   { 
     id: 'gestion-usuarios',
     icon: CreditCard, 
-    title: "Gestión de Usuarios y Planes", 
+    title: "Facturación de Usuarios", 
     description: "Asigna planes y cobra a usuarios",
   },
   { 
     id: 'monedas',
     icon: Coins, 
-    title: "Monedas", 
+    title: "Monedas y Cambios", 
     description: "Gestiona tasas de cambio y transferencias USD/COP",
   },
   { 
     id: 'app-settings',
     icon: Settings2, 
-    title: "Configuración General", 
-    description: "WhatsApp de empresa y otras configuraciones",
-  },
-  { 
-    id: 'historial',
-    icon: History, 
-    title: "Historial de Actividad", 
-    description: "Ver registro de todas las acciones en la plataforma",
+    title: "Configuración de App", 
+    description: "WhatsApp de empresa y otras configuraciones globales",
   },
   { 
     id: 'seguridad-plataforma',
     icon: ShieldCheck, 
     title: "Seguridad Plataforma", 
-    description: "Políticas de seguridad y gestión de usuarios",
+    description: "Políticas de seguridad y gestión global de usuarios",
   },
   { 
     id: 'apariencia',
@@ -216,14 +210,12 @@ const Settings = () => {
     const sections = [...baseSections];
     
     if (isPlatformRoot) {
-      // Platform root sees all platform-level management
+      // Platform root sees platform-level management + org sections for context
+      sections.push(...orgLevelSections);
       sections.push(...platformRootSections);
-    } else if (isOrgOwner) {
-      // Org owners see their org management + org-scoped historial
-      sections.push(...orgOwnerSections);
-    } else if (isAdmin) {
-      // Regular admins see org management
-      sections.push(...orgOwnerSections);
+    } else if (isOrgOwner || isAdmin) {
+      // Org owners and admins see their org management
+      sections.push(...orgLevelSections);
     }
     
     // Hide some sections from clients
