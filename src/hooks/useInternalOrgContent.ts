@@ -63,95 +63,135 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
   const [ambassadorIds, setAmbassadorIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
-  // Fetch internal brand client and ambassadors with their roles
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!currentOrgId) {
-        setInternalBrandClientId(null);
+  // Fetch function - extracted so it can be called on demand
+  const fetchData = useCallback(async () => {
+    if (!currentOrgId) {
+      setInternalBrandClientId(null);
+      setAmbassadors([]);
+      setAmbassadorCreators([]);
+      setAmbassadorEditors([]);
+      setAmbassadorIds(new Set());
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Fetch internal brand client
+      const { data: internalClient } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('organization_id', currentOrgId)
+        .eq('is_internal_brand', true)
+        .maybeSingle();
+
+      setInternalBrandClientId(internalClient?.id || null);
+
+      // Fetch ambassadors from organization_member_badges
+      const { data: ambassadorBadges } = await supabase
+        .from('organization_member_badges')
+        .select('user_id')
+        .eq('organization_id', currentOrgId)
+        .eq('badge', 'ambassador')
+        .eq('is_active', true);
+
+      if (ambassadorBadges?.length) {
+        const userIds = ambassadorBadges.map(b => b.user_id);
+        
+        // Fetch profiles
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', userIds);
+
+        // Fetch roles for these ambassadors
+        const { data: memberRoles } = await supabase
+          .from('organization_member_roles')
+          .select('user_id, role')
+          .eq('organization_id', currentOrgId)
+          .in('user_id', userIds);
+
+        // Group roles by user
+        const rolesByUser: Record<string, string[]> = {};
+        memberRoles?.forEach(mr => {
+          if (!rolesByUser[mr.user_id]) {
+            rolesByUser[mr.user_id] = [];
+          }
+          rolesByUser[mr.user_id].push(mr.role);
+        });
+
+        // Build ambassador list with roles
+        const ambassadorList: AmbassadorWithRole[] = profiles?.map(p => ({ 
+          id: p.id, 
+          name: p.full_name || 'Sin nombre',
+          roles: rolesByUser[p.id] || []
+        })) || [];
+
+        // Filter ambassadors by role
+        const creatorsWithBadge = ambassadorList.filter(a => a.roles.includes('creator'));
+        const editorsWithBadge = ambassadorList.filter(a => a.roles.includes('editor'));
+
+        setAmbassadors(ambassadorList);
+        setAmbassadorCreators(creatorsWithBadge);
+        setAmbassadorEditors(editorsWithBadge);
+        setAmbassadorIds(new Set(userIds));
+      } else {
         setAmbassadors([]);
         setAmbassadorCreators([]);
         setAmbassadorEditors([]);
         setAmbassadorIds(new Set());
-        setLoading(false);
-        return;
       }
-
-      setLoading(true);
-
-      try {
-        // Fetch internal brand client
-        const { data: internalClient } = await supabase
-          .from('clients')
-          .select('id')
-          .eq('organization_id', currentOrgId)
-          .eq('is_internal_brand', true)
-          .maybeSingle();
-
-        setInternalBrandClientId(internalClient?.id || null);
-
-        // Fetch ambassadors from organization_member_badges
-        const { data: ambassadorBadges } = await supabase
-          .from('organization_member_badges')
-          .select('user_id')
-          .eq('organization_id', currentOrgId)
-          .eq('badge', 'ambassador')
-          .eq('is_active', true);
-
-        if (ambassadorBadges?.length) {
-          const userIds = ambassadorBadges.map(b => b.user_id);
-          
-          // Fetch profiles
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, full_name')
-            .in('id', userIds);
-
-          // Fetch roles for these ambassadors
-          const { data: memberRoles } = await supabase
-            .from('organization_member_roles')
-            .select('user_id, role')
-            .eq('organization_id', currentOrgId)
-            .in('user_id', userIds);
-
-          // Group roles by user
-          const rolesByUser: Record<string, string[]> = {};
-          memberRoles?.forEach(mr => {
-            if (!rolesByUser[mr.user_id]) {
-              rolesByUser[mr.user_id] = [];
-            }
-            rolesByUser[mr.user_id].push(mr.role);
-          });
-
-          // Build ambassador list with roles
-          const ambassadorList: AmbassadorWithRole[] = profiles?.map(p => ({ 
-            id: p.id, 
-            name: p.full_name || 'Sin nombre',
-            roles: rolesByUser[p.id] || []
-          })) || [];
-
-          // Filter ambassadors by role
-          const creatorsWithBadge = ambassadorList.filter(a => a.roles.includes('creator'));
-          const editorsWithBadge = ambassadorList.filter(a => a.roles.includes('editor'));
-
-          setAmbassadors(ambassadorList);
-          setAmbassadorCreators(creatorsWithBadge);
-          setAmbassadorEditors(editorsWithBadge);
-          setAmbassadorIds(new Set(userIds));
-        } else {
-          setAmbassadors([]);
-          setAmbassadorCreators([]);
-          setAmbassadorEditors([]);
-          setAmbassadorIds(new Set());
-        }
-      } catch (error) {
-        console.error('Error fetching internal org content data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    } catch (error) {
+      console.error('Error fetching internal org content data:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [currentOrgId]);
+
+  // Initial fetch and realtime subscription
+  useEffect(() => {
+    fetchData();
+
+    // Subscribe to realtime changes on organization_member_badges
+    if (!currentOrgId) return;
+
+    const channel = supabase
+      .channel(`ambassador-badges-${currentOrgId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'organization_member_badges',
+          filter: `organization_id=eq.${currentOrgId}`
+        },
+        (payload) => {
+          console.log('Ambassador badge change detected:', payload);
+          // Refetch data when any badge changes
+          fetchData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'organization_member_roles',
+          filter: `organization_id=eq.${currentOrgId}`
+        },
+        (payload) => {
+          console.log('Member role change detected:', payload);
+          // Refetch data when roles change
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentOrgId, fetchData]);
 
   // Check if client ID represents internal organization content
   const checkIsInternalOrgContent = useCallback((checkClientId: string | null | undefined): boolean => {
