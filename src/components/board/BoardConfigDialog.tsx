@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Settings, Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, Check, X, ArrowUp, ArrowDown, Palette } from "lucide-react";
+import { Settings, Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, Check, X, ArrowUp, ArrowDown, Palette, ChevronRight, ChevronLeft, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,7 +58,16 @@ const VISIBLE_FIELD_OPTIONS = [
   { value: 'indicators', label: 'Indicadores', description: 'Puntos de estado visual' },
 ];
 
-const ROLES = ['admin', 'creator', 'editor', 'strategist', 'client'];
+const ROLES = ['admin', 'creator', 'editor', 'strategist', 'client', 'trafficker', 'designer'];
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Admin',
+  creator: 'Creador',
+  editor: 'Editor',
+  strategist: 'Estratega',
+  client: 'Cliente',
+  trafficker: 'Trafficker',
+  designer: 'Diseñador'
+};
 
 export function BoardConfigDialog({ organizationId, trigger, open: controlledOpen, onOpenChange }: BoardConfigDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -74,6 +83,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     loading,
     settings,
     statuses,
+    rules,
     customFields,
     permissions,
     updateSettings,
@@ -82,8 +92,30 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     deleteStatus,
     createCustomField,
     deleteCustomField,
-    updatePermission
+    updatePermission,
+    updateStatusRule
   } = useBoardSettings(organizationId);
+
+  // Get rule for a status
+  const getRuleForStatus = (statusId: string) => {
+    return rules.find(r => r.status_id === statusId);
+  };
+
+  // Toggle role in advance/retreat arrays
+  const toggleRolePermission = async (statusId: string, role: string, type: 'advance' | 'retreat') => {
+    const rule = getRuleForStatus(statusId);
+    const currentRoles = type === 'advance' 
+      ? (rule?.can_advance_roles || [])
+      : (rule?.can_retreat_roles || []);
+    
+    const newRoles = currentRoles.includes(role)
+      ? currentRoles.filter(r => r !== role)
+      : [...currentRoles, role];
+    
+    await updateStatusRule(statusId, {
+      [type === 'advance' ? 'can_advance_roles' : 'can_retreat_roles']: newRoles
+    });
+  };
 
   const handleCreateStatus = async () => {
     if (!newStatusLabel.trim()) return;
@@ -294,62 +326,107 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
             </ScrollArea>
           </TabsContent>
 
-          {/* REGLAS TAB */}
+          {/* REGLAS TAB - Permisos de movimiento */}
           <TabsContent value="rules" className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Define reglas y automatizaciones al cambiar de estado
-            </p>
+            <div className="flex items-center gap-2 mb-2">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Define qué roles pueden avanzar o retroceder tarjetas desde cada estado
+              </p>
+            </div>
             
-            <ScrollArea className="h-[320px] border rounded-lg p-3">
-              <div className="space-y-3">
-                {statuses.filter(s => s.is_active).map(status => (
-                  <Card key={status.id} className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div 
-                        className="h-4 w-4 rounded-full flex-shrink-0" 
-                        style={{ backgroundColor: status.color }} 
-                      />
-                      <span className="font-medium">{status.label}</span>
-                    </div>
-                    
-                    <div className="space-y-3 pl-7">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Roles permitidos</Label>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {ROLES.map(role => (
-                            <Badge 
-                              key={role}
-                              variant="outline" 
-                              className="text-xs cursor-pointer hover:bg-primary/10"
-                            >
-                              {role}
-                            </Badge>
-                          ))}
-                        </div>
+            <ScrollArea className="h-[350px] border rounded-lg p-3">
+              <div className="space-y-4">
+                {statuses.filter(s => s.is_active).map((status, index) => {
+                  const rule = getRuleForStatus(status.id);
+                  const canAdvanceRoles = rule?.can_advance_roles || [];
+                  const canRetreatRoles = rule?.can_retreat_roles || [];
+                  
+                  return (
+                    <Card key={status.id} className="p-4">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div 
+                          className="h-5 w-5 rounded-full flex-shrink-0 shadow-sm" 
+                          style={{ backgroundColor: status.color }} 
+                        />
+                        <span className="font-semibold">{status.label}</span>
+                        <Badge variant="outline" className="text-xs ml-auto">
+                          Orden: {status.sort_order + 1}
+                        </Badge>
                       </div>
                       
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Al entrar a este estado</Label>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          <Badge variant="secondary" className="text-xs">
-                            + Notificar responsable
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            + Asignar UP
-                          </Badge>
-                          <Button variant="ghost" size="sm" className="h-6 text-xs">
-                            <Plus className="h-3 w-3 mr-1" />
-                            Agregar acción
-                          </Button>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Quién puede AVANZAR */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <ChevronRight className="h-4 w-4 text-green-500" />
+                            <Label className="text-sm font-medium">Puede AVANZAR</Label>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Roles que pueden mover al siguiente estado
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {ROLES.map(role => {
+                              const isActive = canAdvanceRoles.includes(role);
+                              return (
+                                <Badge 
+                                  key={role}
+                                  variant={isActive ? "default" : "outline"}
+                                  className={cn(
+                                    "text-xs cursor-pointer transition-all",
+                                    isActive 
+                                      ? "bg-green-500/20 text-green-700 border-green-500 hover:bg-green-500/30" 
+                                      : "hover:bg-muted opacity-60"
+                                  )}
+                                  onClick={() => toggleRolePermission(status.id, role, 'advance')}
+                                >
+                                  {isActive && <Check className="h-3 w-3 mr-1" />}
+                                  {ROLE_LABELS[role] || role}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Quién puede RETROCEDER */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <ChevronLeft className="h-4 w-4 text-orange-500" />
+                            <Label className="text-sm font-medium">Puede RETROCEDER</Label>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Roles que pueden devolver a un estado anterior
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {ROLES.map(role => {
+                              const isActive = canRetreatRoles.includes(role);
+                              return (
+                                <Badge 
+                                  key={role}
+                                  variant={isActive ? "default" : "outline"}
+                                  className={cn(
+                                    "text-xs cursor-pointer transition-all",
+                                    isActive 
+                                      ? "bg-orange-500/20 text-orange-700 border-orange-500 hover:bg-orange-500/30" 
+                                      : "hover:bg-muted opacity-60"
+                                  )}
+                                  onClick={() => toggleRolePermission(status.id, role, 'retreat')}
+                                >
+                                  {isActive && <Check className="h-3 w-3 mr-1" />}
+                                  {ROLE_LABELS[role] || role}
+                                </Badge>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
                 
                 {statuses.filter(s => s.is_active).length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
-                    Crea estados primero para configurar reglas.
+                    Crea estados primero para configurar reglas de movimiento.
                   </div>
                 )}
               </div>

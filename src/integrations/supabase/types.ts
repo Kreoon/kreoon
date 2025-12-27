@@ -305,6 +305,8 @@ export type Database = {
           allowed_roles: string[] | null
           allowed_to_statuses: string[] | null
           auto_actions: Json | null
+          can_advance_roles: string[] | null
+          can_retreat_roles: string[] | null
           created_at: string
           id: string
           organization_id: string
@@ -317,6 +319,8 @@ export type Database = {
           allowed_roles?: string[] | null
           allowed_to_statuses?: string[] | null
           auto_actions?: Json | null
+          can_advance_roles?: string[] | null
+          can_retreat_roles?: string[] | null
           created_at?: string
           id?: string
           organization_id: string
@@ -329,6 +333,8 @@ export type Database = {
           allowed_roles?: string[] | null
           allowed_to_statuses?: string[] | null
           auto_actions?: Json | null
+          can_advance_roles?: string[] | null
+          can_retreat_roles?: string[] | null
           created_at?: string
           id?: string
           organization_id?: string
@@ -1107,6 +1113,77 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_status_logs: {
+        Row: {
+          content_id: string
+          from_custom_status_id: string | null
+          from_status: string | null
+          id: string
+          moved_at: string
+          notes: string | null
+          organization_id: string | null
+          to_custom_status_id: string | null
+          to_status: string
+          user_id: string
+          user_role: string | null
+        }
+        Insert: {
+          content_id: string
+          from_custom_status_id?: string | null
+          from_status?: string | null
+          id?: string
+          moved_at?: string
+          notes?: string | null
+          organization_id?: string | null
+          to_custom_status_id?: string | null
+          to_status: string
+          user_id: string
+          user_role?: string | null
+        }
+        Update: {
+          content_id?: string
+          from_custom_status_id?: string | null
+          from_status?: string | null
+          id?: string
+          moved_at?: string
+          notes?: string | null
+          organization_id?: string | null
+          to_custom_status_id?: string | null
+          to_status?: string
+          user_id?: string
+          user_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_status_logs_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_status_logs_from_custom_status_id_fkey"
+            columns: ["from_custom_status_id"]
+            isOneToOne: false
+            referencedRelation: "organization_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_status_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_status_logs_to_custom_status_id_fkey"
+            columns: ["to_custom_status_id"]
+            isOneToOne: false
+            referencedRelation: "organization_statuses"
             referencedColumns: ["id"]
           },
         ]
@@ -2630,6 +2707,14 @@ export type Database = {
       calculate_up_level: {
         Args: { points: number }
         Returns: Database["public"]["Enums"]["up_level"]
+      }
+      can_move_content_status: {
+        Args: {
+          _content_id: string
+          _target_status_id: string
+          _user_id: string
+        }
+        Returns: boolean
       }
       can_move_to_status: {
         Args: {

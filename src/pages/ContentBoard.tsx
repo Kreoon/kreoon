@@ -49,8 +49,66 @@ const CREATOR_COLUMNS = KANBAN_COLUMNS.filter(col =>
   ['assigned', 'recording', 'recorded', 'editing', 'delivered', 'approved', 'paid'].includes(col.status)
 );
 
-// Verificar si un movimiento de estado es válido según el rol
-const canMoveToStatus = (
+// Helper types for movement rules
+interface StatusRule {
+  status_id: string;
+  can_advance_roles: string[];
+  can_retreat_roles: string[];
+}
+
+interface OrgStatus {
+  id: string;
+  status_key: string;
+  sort_order: number;
+}
+
+// Verificar si un movimiento de estado es válido según el rol y las reglas configuradas
+const canMoveToStatusWithRules = (
+  role: string,
+  currentStatus: ContentStatus,
+  targetStatus: ContentStatus,
+  content: Content,
+  userId: string,
+  orgStatuses: OrgStatus[],
+  rules: StatusRule[]
+): boolean => {
+  // Admin siempre puede mover
+  if (role === 'admin') return true;
+
+  // Encontrar los estados en la configuración de la organización
+  const currentOrgStatus = orgStatuses.find(s => s.status_key === currentStatus);
+  const targetOrgStatus = orgStatuses.find(s => s.status_key === targetStatus);
+  
+  // Si no hay configuración de estados, usar lógica legacy
+  if (!currentOrgStatus || !targetOrgStatus || rules.length === 0) {
+    return canMoveToStatusLegacy(role, currentStatus, targetStatus, content, userId);
+  }
+
+  // Determinar si es avance o retroceso
+  const isForward = targetOrgStatus.sort_order > currentOrgStatus.sort_order;
+  
+  // Buscar la regla para el estado actual
+  const rule = rules.find(r => r.status_id === currentOrgStatus.id);
+  
+  if (!rule) {
+    // Sin regla = permitir a todos por defecto
+    return true;
+  }
+
+  // Verificar permisos según dirección
+  if (isForward) {
+    const canAdvanceRoles = rule.can_advance_roles || [];
+    if (canAdvanceRoles.length === 0) return true; // Sin restricciones
+    return canAdvanceRoles.includes(role);
+  } else {
+    const canRetreatRoles = rule.can_retreat_roles || [];
+    if (canRetreatRoles.length === 0) return true; // Sin restricciones
+    return canRetreatRoles.includes(role);
+  }
+};
+
+// Lógica legacy como fallback
+const canMoveToStatusLegacy = (
   role: string,
   currentStatus: ContentStatus,
   targetStatus: ContentStatus,
@@ -196,7 +254,7 @@ export default function ContentBoard() {
   }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, startDateFilter, deadlineFilter]);
   
   // Board settings hook
-  const { settings, statuses, loading: settingsLoading } = useBoardSettings(currentOrgId);
+  const { settings, statuses: orgStatuses, rules, loading: settingsLoading } = useBoardSettings(currentOrgId);
 
   // Determinar el rol principal del usuario
   const primaryRole = isAdmin ? 'admin' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'admin';
@@ -380,12 +438,14 @@ export default function ContentBoard() {
       return;
     }
 
-    const canMove = canMoveToStatus(
+    const canMove = canMoveToStatusWithRules(
       primaryRole,
       draggingContent.status,
       targetStatus,
       draggingContent,
-      user.id
+      user.id,
+      orgStatuses,
+      rules
     );
 
     if (!canMove) {
@@ -693,7 +753,7 @@ export default function ContentBoard() {
                 const columnContent = getContentByStatus(column.status);
                 const isCurrentDropTarget = dropTarget === column.status;
                 const canDropHere = draggingContent 
-                  ? canMoveToStatus(primaryRole, draggingContent.status, column.status, draggingContent, user?.id || '')
+                  ? canMoveToStatusWithRules(primaryRole, draggingContent.status, column.status, draggingContent, user?.id || '', orgStatuses, rules)
                   : true;
 
                 return (

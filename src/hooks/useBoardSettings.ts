@@ -33,6 +33,8 @@ export interface BoardStatusRule {
   allowed_roles: string[];
   allowed_to_statuses: string[];
   auto_actions: any[];
+  can_advance_roles: string[];
+  can_retreat_roles: string[];
   created_at: string;
   updated_at: string;
 }
@@ -126,7 +128,9 @@ export function useBoardSettings(organizationId: string | null) {
         allowed_from_statuses: r.allowed_from_statuses || [],
         allowed_roles: r.allowed_roles || [],
         allowed_to_statuses: r.allowed_to_statuses || [],
-        auto_actions: r.auto_actions as any[]
+        auto_actions: r.auto_actions as any[],
+        can_advance_roles: (r as any).can_advance_roles || [],
+        can_retreat_roles: (r as any).can_retreat_roles || []
       })));
       setCustomFields((fieldsRes.data || []).map(f => ({
         ...f,
@@ -300,7 +304,9 @@ export function useBoardSettings(organizationId: string | null) {
           allowed_from_statuses: data.allowed_from_statuses || [],
           allowed_roles: data.allowed_roles || [],
           allowed_to_statuses: data.allowed_to_statuses || [],
-          auto_actions: data.auto_actions as any[]
+          auto_actions: data.auto_actions as any[],
+          can_advance_roles: (data as any).can_advance_roles || [],
+          can_retreat_roles: (data as any).can_retreat_roles || []
         }]);
       }
 
