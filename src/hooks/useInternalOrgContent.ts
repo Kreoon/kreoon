@@ -88,7 +88,7 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
 
       setInternalBrandClientId(internalClient?.id || null);
 
-      // Fetch ambassadors (support BOTH legacy badge and current role assignment)
+      // Fetch ambassadors ONLY from badges (role 'ambassador' is deprecated)
       const { data: ambassadorBadges } = await supabase
         .from('organization_member_badges')
         .select('user_id')
@@ -96,18 +96,7 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
         .eq('badge', 'ambassador')
         .eq('is_active', true);
 
-      const { data: ambassadorRoles } = await supabase
-        .from('organization_member_roles')
-        .select('user_id')
-        .eq('organization_id', currentOrgId)
-        .eq('role', 'ambassador');
-
-      const userIds = Array.from(
-        new Set([
-          ...(ambassadorBadges?.map(b => b.user_id) || []),
-          ...(ambassadorRoles?.map(r => r.user_id) || []),
-        ])
-      );
+      const userIds = ambassadorBadges?.map(b => b.user_id) || [];
 
       if (userIds.length) {
         // Fetch profiles
@@ -140,7 +129,7 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
         })) || [];
 
         // Filter ambassadors for internal content assignments
-        // - creators: ALL ambassadors (badge/role holders)
+        // - creators: ALL ambassadors (badge holders)
         // - editors: ambassadors who also have the editor role
         const creatorsWithBadge = ambassadorList;
         const editorsWithBadge = ambassadorList.filter(a => a.roles.includes('editor'));
