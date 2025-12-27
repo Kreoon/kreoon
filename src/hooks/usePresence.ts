@@ -13,6 +13,7 @@ const PAGE_NAMES: Record<string, string> = {
   '/team': 'Equipo',
   '/settings': 'Configuración',
   '/portfolio': 'Portafolio',
+  '/social': 'Red Social',
   '/creator-dashboard': 'Dashboard Creador',
   '/editor-dashboard': 'Dashboard Editor',
   '/strategist-dashboard': 'Dashboard Estratega',
@@ -24,41 +25,35 @@ export function usePresence() {
   const location = useLocation();
   const lastActivityRef = useRef<number>(Date.now());
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isUpdatingRef = useRef(false);
 
   const getPageName = useCallback((pathname: string) => {
     return PAGE_NAMES[pathname] || pathname;
   }, []);
 
   const updatePresence = useCallback(async (isOnline: boolean, currentPage?: string) => {
-    if (!user?.id) return;
+    if (!user?.id || isUpdatingRef.current) return;
 
+    isUpdatingRef.current = true;
     try {
-      const { data: existing } = await supabase
+      // Use upsert to avoid race conditions
+      await supabase
         .from('user_presence')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      const presenceData = {
-        user_id: user.id,
-        is_online: isOnline,
-        current_page: currentPage || getPageName(location.pathname),
-        last_activity: new Date().toISOString(),
-        last_seen: isOnline ? new Date().toISOString() : undefined
-      };
-
-      if (existing) {
-        await supabase
-          .from('user_presence')
-          .update(presenceData)
-          .eq('user_id', user.id);
-      } else {
-        await supabase
-          .from('user_presence')
-          .insert(presenceData);
-      }
+        .upsert({
+          user_id: user.id,
+          is_online: isOnline,
+          current_page: currentPage || getPageName(location.pathname),
+          last_activity: new Date().toISOString(),
+          last_seen: new Date().toISOString()
+        }, { 
+          onConflict: 'user_id',
+          ignoreDuplicates: false 
+        });
     } catch (error) {
-      console.error('Error updating presence:', error);
+      // Silently ignore presence errors to not affect UX
+      console.debug('Presence update skipped:', error);
+    } finally {
+      isUpdatingRef.current = false;
     }
   }, [user?.id, location.pathname, getPageName]);
 
@@ -70,47 +65,45 @@ export function usePresence() {
   useEffect(() => {
     if (!user?.id) return;
 
-    // Set online when component mounts
-    updatePresence(true);
+    // Set online when component mounts (debounced)
+    const initTimeout = setTimeout(() => updatePresence(true), 1000);
 
-    // Listen to user activity
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    events.forEach(event => window.addEventListener(event, handleActivity));
-
-    // Update presence periodically
-    updateIntervalRef.current = setInterval(() => {
-      const isActive = Date.now() - lastActivityRef.current < 60000; // 1 minute
-      updatePresence(isActive, getPageName(location.pathname));
-    }, 30000); // Every 30 seconds
-
-    // Set offline when leaving
-    const handleBeforeUnload = () => {
-      // Use sendBeacon for reliable offline update
-      const data = JSON.stringify({
-        user_id: user.id,
-        is_online: false,
-        last_seen: new Date().toISOString()
-      });
-      navigator.sendBeacon && navigator.sendBeacon('/api/presence-offline', data);
+    // Listen to user activity (throttled)
+    let activityThrottle: NodeJS.Timeout | null = null;
+    const throttledActivity = () => {
+      if (activityThrottle) return;
+      handleActivity();
+      activityThrottle = setTimeout(() => {
+        activityThrottle = null;
+      }, 5000);
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => window.addEventListener(event, throttledActivity, { passive: true }));
+
+    // Update presence less frequently (every 60 seconds instead of 30)
+    updateIntervalRef.current = setInterval(() => {
+      const isActive = Date.now() - lastActivityRef.current < 120000; // 2 minutes
+      updatePresence(isActive, getPageName(location.pathname));
+    }, 60000);
 
     return () => {
-      events.forEach(event => window.removeEventListener(event, handleActivity));
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      clearTimeout(initTimeout);
+      if (activityThrottle) clearTimeout(activityThrottle);
+      events.forEach(event => window.removeEventListener(event, throttledActivity));
       if (updateIntervalRef.current) {
         clearInterval(updateIntervalRef.current);
       }
-      updatePresence(false);
     };
   }, [user?.id, updatePresence, handleActivity, getPageName, location.pathname]);
 
-  // Update when page changes
+  // Update when page changes (debounced)
   useEffect(() => {
-    if (user?.id) {
+    if (!user?.id) return;
+    const timeout = setTimeout(() => {
       updatePresence(true, getPageName(location.pathname));
-    }
+    }, 500);
+    return () => clearTimeout(timeout);
   }, [location.pathname, user?.id, updatePresence, getPageName]);
 
   return { updatePresence };
