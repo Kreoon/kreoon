@@ -6,7 +6,7 @@ import { ChatPanel } from "@/components/chat/ChatPanel";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { AIAssistantButton } from "@/components/chat/AIAssistantButton";
+// AIAssistantButton removed - AI chat is now integrated into ChatPanel
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
@@ -164,8 +164,6 @@ export function MainLayout({
         {/* Chat Panel */}
         <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
-        {/* AI Assistant Button */}
-        <AIAssistantButton />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -335,8 +333,6 @@ export function MainLayout({
         {/* Chat Panel */}
         <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
-        {/* AI Assistant Button */}
-        <AIAssistantButton />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -433,8 +429,6 @@ export function MainLayout({
       {/* Tour Provider */}
       <TourProvider />
 
-      {/* AI Assistant Button */}
-      <AIAssistantButton />
 
       {/* Ambassador Celebration */}
       <AmbassadorCelebration />
