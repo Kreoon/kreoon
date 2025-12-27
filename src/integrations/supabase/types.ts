@@ -2355,6 +2355,92 @@ export type Database = {
           },
         ]
       }
+      script_permissions: {
+        Row: {
+          admin_edit: boolean
+          admin_lock: boolean
+          admin_view: boolean
+          created_at: string
+          designer_edit: boolean
+          designer_view: boolean
+          editor_edit: boolean
+          editor_view: boolean
+          ia_edit: boolean
+          ia_generate: boolean
+          ia_view: boolean
+          id: string
+          organization_id: string
+          role: string
+          script_approve: boolean
+          script_edit: boolean
+          script_view: boolean
+          status_overrides: Json | null
+          strategist_edit: boolean
+          strategist_view: boolean
+          trafficker_edit: boolean
+          trafficker_view: boolean
+          updated_at: string
+        }
+        Insert: {
+          admin_edit?: boolean
+          admin_lock?: boolean
+          admin_view?: boolean
+          created_at?: string
+          designer_edit?: boolean
+          designer_view?: boolean
+          editor_edit?: boolean
+          editor_view?: boolean
+          ia_edit?: boolean
+          ia_generate?: boolean
+          ia_view?: boolean
+          id?: string
+          organization_id: string
+          role: string
+          script_approve?: boolean
+          script_edit?: boolean
+          script_view?: boolean
+          status_overrides?: Json | null
+          strategist_edit?: boolean
+          strategist_view?: boolean
+          trafficker_edit?: boolean
+          trafficker_view?: boolean
+          updated_at?: string
+        }
+        Update: {
+          admin_edit?: boolean
+          admin_lock?: boolean
+          admin_view?: boolean
+          created_at?: string
+          designer_edit?: boolean
+          designer_view?: boolean
+          editor_edit?: boolean
+          editor_view?: boolean
+          ia_edit?: boolean
+          ia_generate?: boolean
+          ia_view?: boolean
+          id?: string
+          organization_id?: string
+          role?: string
+          script_approve?: boolean
+          script_edit?: boolean
+          script_view?: boolean
+          status_overrides?: Json | null
+          strategist_edit?: boolean
+          strategist_view?: boolean
+          trafficker_edit?: boolean
+          trafficker_view?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "script_permissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_events: {
         Row: {
           action_taken: string | null
@@ -2756,6 +2842,10 @@ export type Database = {
       create_chat_conversation: {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
         Returns: string
+      }
+      create_default_script_permissions: {
+        Args: { org_id: string }
+        Returns: undefined
       }
       generate_org_slug: { Args: { org_name: string }; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
