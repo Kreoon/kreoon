@@ -99,10 +99,11 @@ export const AI_PROVIDERS_CONFIG = {
 };
 
 export const AI_MODULES = [
-  { key: 'scripts', label: 'Generación de Guiones' },
-  { key: 'thumbnails', label: 'Miniaturas' },
-  { key: 'sistema_up', label: 'Sistema UP' },
-  { key: 'live_assistant', label: 'Asistente Live' },
+  { key: 'tablero', label: 'Tablero (Kanban)', description: 'Análisis de tarjetas, detección de cuellos de botella, recomendaciones' },
+  { key: 'scripts', label: 'Generación de Guiones', description: 'Creación y mejora de guiones para contenido' },
+  { key: 'thumbnails', label: 'Miniaturas', description: 'Generación de prompts para thumbnails' },
+  { key: 'sistema_up', label: 'Sistema UP', description: 'Copiloto de puntos y logros' },
+  { key: 'live_assistant', label: 'Asistente Live', description: 'Asistente en tiempo real para transmisiones' },
 ];
 
 export function useOrganizationAI(organizationId?: string) {

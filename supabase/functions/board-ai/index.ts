@@ -117,10 +117,9 @@ async function getOrgAIConfig(supabase: any, organizationId: string) {
     .eq("organization_id", organizationId)
     .maybeSingle();
 
-  let provider = defaults?.default_provider || "lovable";
-  let model = defaults?.default_model || "google/gemini-2.5-flash";
-
-  // (No existe módulo 'tablero' en defaults todavía; usamos default_provider/default_model)
+  // Usar configuración específica del módulo "tablero" si existe
+  let provider = defaults?.tablero_provider || defaults?.default_provider || "lovable";
+  let model = defaults?.tablero_model || defaults?.default_model || "google/gemini-2.5-flash";
 
   // Preferir SIEMPRE un proveedor configurado por la organización (con API key)
   type OrgProviderRow = {
