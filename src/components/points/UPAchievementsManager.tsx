@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,8 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { 
-  Plus, Trophy, Edit2, Trash2, Star, 
-  Shield, Zap, Crown, Award, Target
+  Plus, Edit2, Trash2, Sparkles, Loader2, ImageIcon
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -45,6 +44,8 @@ export function UPAchievementsManager({ organizationId }: UPAchievementsManagerP
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
   const [editingAchievement, setEditingAchievement] = useState<any>(null);
+  const [isGeneratingIcon, setIsGeneratingIcon] = useState(false);
+  const [generatedIconUrl, setGeneratedIconUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     key: '',
     name: '',
@@ -128,6 +129,7 @@ export function UPAchievementsManager({ organizationId }: UPAchievementsManagerP
       condition_value: 1,
       points_required: 0
     });
+    setGeneratedIconUrl(null);
   };
 
   const openEdit = (achievement: any) => {
@@ -143,14 +145,66 @@ export function UPAchievementsManager({ organizationId }: UPAchievementsManagerP
       points_required: achievement.points_required || 0
     });
     setEditingAchievement(achievement);
+    // Check if the icon is a URL (AI generated)
+    if (achievement.icon?.startsWith('data:') || achievement.icon?.startsWith('http')) {
+      setGeneratedIconUrl(achievement.icon);
+    } else {
+      setGeneratedIconUrl(null);
+    }
   };
 
   const handleSubmit = () => {
+    // If we have a generated icon, use it
+    const iconToSave = generatedIconUrl || formData.icon;
+    const dataToSave = { ...formData, icon: iconToSave };
+    
     if (editingAchievement) {
-      updateMutation.mutate({ id: editingAchievement.id, ...formData });
+      updateMutation.mutate({ id: editingAchievement.id, ...dataToSave });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(dataToSave);
     }
+  };
+
+  const generateIconWithAI = async () => {
+    if (!formData.name) {
+      toast({ title: 'Por favor ingresa un nombre para el logro', variant: 'destructive' });
+      return;
+    }
+
+    setIsGeneratingIcon(true);
+    try {
+      const response = await supabase.functions.invoke('generate-achievement-icon', {
+        body: {
+          name: formData.name,
+          description: formData.description,
+          rarity: formData.rarity
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data?.imageUrl) {
+        setGeneratedIconUrl(response.data.imageUrl);
+        toast({ title: 'Icono generado con IA' });
+      } else {
+        throw new Error('No se recibió imagen');
+      }
+    } catch (error) {
+      console.error('Error generating icon:', error);
+      toast({ 
+        title: 'Error al generar icono', 
+        description: error instanceof Error ? error.message : 'Intenta de nuevo',
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsGeneratingIcon(false);
+    }
+  };
+
+  const clearGeneratedIcon = () => {
+    setGeneratedIconUrl(null);
   };
 
   const AchievementForm = () => (
@@ -187,18 +241,61 @@ export function UPAchievementsManager({ organizationId }: UPAchievementsManagerP
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label>Icono</Label>
-          <Select value={formData.icon} onValueChange={(v) => setFormData(prev => ({ ...prev, icon: v }))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ICON_OPTIONS.map(icon => (
-                <SelectItem key={icon} value={icon}>
-                  <span className="text-xl">{icon}</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            {generatedIconUrl ? (
+              <div className="relative">
+                <div className="h-10 w-10 rounded-lg border overflow-hidden bg-muted">
+                  <img 
+                    src={generatedIconUrl} 
+                    alt="Generated icon" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground"
+                  onClick={clearGeneratedIcon}
+                >
+                  ×
+                </Button>
+              </div>
+            ) : (
+              <Select value={formData.icon} onValueChange={(v) => setFormData(prev => ({ ...prev, icon: v }))}>
+                <SelectTrigger className="w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ICON_OPTIONS.map(icon => (
+                    <SelectItem key={icon} value={icon}>
+                      <span className="text-xl">{icon}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={generateIconWithAI}
+              disabled={isGeneratingIcon || !formData.name}
+              className="flex-1"
+            >
+              {isGeneratingIcon ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generar con IA
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -261,6 +358,28 @@ export function UPAchievementsManager({ organizationId }: UPAchievementsManagerP
         </div>
       </div>
 
+      {/* Preview of AI generated icon */}
+      {generatedIconUrl && (
+        <div className="p-4 border rounded-lg bg-muted/50">
+          <Label className="text-sm text-muted-foreground mb-2 block">Vista previa del icono generado</Label>
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "h-16 w-16 rounded-full flex items-center justify-center overflow-hidden",
+              "bg-gradient-to-br from-primary/20 to-primary/5 border-2",
+              formData.rarity === 'legendary' && "border-amber-500",
+              formData.rarity === 'rare' && "border-cyan-500",
+              formData.rarity === 'uncommon' && "border-green-500"
+            )}>
+              <img src={generatedIconUrl} alt="Preview" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <p className="font-medium">{formData.name || 'Nombre del logro'}</p>
+              <p className="text-sm text-muted-foreground">{formData.description || 'Descripción'}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <DialogFooter>
         <Button variant="outline" onClick={() => { setIsCreating(false); setEditingAchievement(null); resetForm(); }}>
           Cancelar
@@ -271,6 +390,14 @@ export function UPAchievementsManager({ organizationId }: UPAchievementsManagerP
       </DialogFooter>
     </div>
   );
+
+  // Helper to render icon (emoji or image)
+  const renderIcon = (icon: string) => {
+    if (icon?.startsWith('data:') || icon?.startsWith('http')) {
+      return <img src={icon} alt="Achievement icon" className="w-full h-full object-cover" />;
+    }
+    return <span className="text-2xl">{icon}</span>;
+  };
 
   return (
     <div className="space-y-6">
@@ -292,7 +419,7 @@ export function UPAchievementsManager({ organizationId }: UPAchievementsManagerP
             <DialogHeader>
               <DialogTitle>Crear Nuevo Logro</DialogTitle>
               <DialogDescription>
-                Define las condiciones para desbloquear este logro
+                Define las condiciones para desbloquear este logro. Puedes generar un icono personalizado con IA.
               </DialogDescription>
             </DialogHeader>
             <AchievementForm />
@@ -311,13 +438,13 @@ export function UPAchievementsManager({ organizationId }: UPAchievementsManagerP
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <div className={cn(
-                      "h-12 w-12 rounded-full flex items-center justify-center text-2xl",
+                      "h-12 w-12 rounded-full flex items-center justify-center overflow-hidden",
                       "bg-gradient-to-br from-primary/20 to-primary/5 border-2",
                       achievement.rarity === 'legendary' && "border-amber-500",
                       achievement.rarity === 'rare' && "border-cyan-500",
                       achievement.rarity === 'uncommon' && "border-green-500"
                     )}>
-                      {achievement.icon}
+                      {renderIcon(achievement.icon)}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
