@@ -22,11 +22,13 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
     updateAIConfig, 
     checkAntiFraud,
     generateQuests,
-    getRuleRecommendations
+    getRuleRecommendations,
+    applyRecommendation
   } = useUPEngine(organizationId);
   const { toast } = useToast();
 
   const [loading, setLoading] = useState<string | null>(null);
+  const [applyingIndex, setApplyingIndex] = useState<number | null>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [fraudAlerts, setFraudAlerts] = useState<any[]>([]);
 
@@ -302,9 +304,38 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
                         <p className="text-xs text-primary mt-2">
                           Impacto esperado: {rec.impact}
                         </p>
+                        {rec.proposedRule && (
+                          <div className="mt-2 p-2 rounded bg-muted/50 text-xs">
+                            <span className="text-muted-foreground">Regla propuesta:</span>
+                            <span className="ml-1 font-mono">
+                              {rec.proposedRule.eventType} → {rec.proposedRule.points > 0 ? '+' : ''}{rec.proposedRule.points} UP
+                            </span>
+                          </div>
+                        )}
                       </div>
-                      <Button size="sm">
-                        Aplicar
+                      <Button 
+                        size="sm"
+                        disabled={applyingIndex === index}
+                        onClick={async () => {
+                          if (!rec.proposedRule) {
+                            toast({ title: 'Sin regla propuesta', variant: 'destructive' });
+                            return;
+                          }
+                          setApplyingIndex(index);
+                          try {
+                            const result = await applyRecommendation(rec);
+                            if (result) {
+                              setRecommendations(prev => prev.filter((_, i) => i !== index));
+                              toast({ title: 'Regla aplicada', description: `Se creó la regla "${rec.title}"` });
+                            }
+                          } catch (error) {
+                            toast({ title: 'Error al aplicar', variant: 'destructive' });
+                          } finally {
+                            setApplyingIndex(null);
+                          }
+                        }}
+                      >
+                        {applyingIndex === index ? 'Aplicando...' : 'Aplicar'}
                       </Button>
                     </div>
                   </div>
