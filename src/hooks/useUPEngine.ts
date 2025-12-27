@@ -96,8 +96,9 @@ export interface UPAIConfig {
   min_quality_for_approval: number;
 }
 
-export function useUPEngine() {
+export function useUPEngine(organizationId?: string) {
   const { currentOrgId } = useOrgOwner();
+  const orgId = organizationId || currentOrgId;
   const { toast } = useToast();
   
   const [rules, setRules] = useState<UPRule[]>([]);
@@ -108,7 +109,7 @@ export function useUPEngine() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (currentOrgId) {
+    if (orgId) {
       fetchAll();
       
       // Subscribe to realtime updates
@@ -120,7 +121,7 @@ export function useUPEngine() {
             event: 'INSERT',
             schema: 'public',
             table: 'up_events',
-            filter: `organization_id=eq.${currentOrgId}`
+            filter: `organization_id=eq.${orgId}`
           },
           (payload) => {
             setEvents(prev => [payload.new as UPEvent, ...prev].slice(0, 100));
@@ -132,32 +133,32 @@ export function useUPEngine() {
         supabase.removeChannel(eventsChannel);
       };
     }
-  }, [currentOrgId]);
+  }, [orgId]);
 
   const fetchAll = async () => {
-    if (!currentOrgId) return;
+    if (!orgId) return;
     
     setLoading(true);
     try {
       await Promise.all([
-        fetchRules(),
-        fetchEvents(),
-        fetchQuests(),
-        fetchSeasons(),
-        fetchAIConfig()
+        fetchRulesInternal(),
+        fetchEventsInternal(),
+        fetchQuestsInternal(),
+        fetchSeasonsInternal(),
+        fetchAIConfigInternal()
       ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchRules = async () => {
-    if (!currentOrgId) return;
+  const fetchRulesInternal = async () => {
+    if (!orgId) return;
     
     const { data, error } = await supabase
       .from('up_rules')
       .select('*')
-      .eq('organization_id', currentOrgId)
+      .eq('organization_id', orgId)
       .order('priority', { ascending: false });
 
     if (error) {
@@ -168,13 +169,13 @@ export function useUPEngine() {
     setRules(data as UPRule[]);
   };
 
-  const fetchEvents = async () => {
-    if (!currentOrgId) return;
+  const fetchEventsInternal = async () => {
+    if (!orgId) return;
     
     const { data, error } = await supabase
       .from('up_events')
       .select('*')
-      .eq('organization_id', currentOrgId)
+      .eq('organization_id', orgId)
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -186,13 +187,13 @@ export function useUPEngine() {
     setEvents(data as UPEvent[]);
   };
 
-  const fetchQuests = async () => {
-    if (!currentOrgId) return;
+  const fetchQuestsInternal = async () => {
+    if (!orgId) return;
     
     const { data, error } = await supabase
       .from('up_quests')
       .select('*')
-      .eq('organization_id', currentOrgId)
+      .eq('organization_id', orgId)
       .eq('is_active', true)
       .order('created_at', { ascending: false });
 
@@ -204,13 +205,13 @@ export function useUPEngine() {
     setQuests(data as UPQuest[]);
   };
 
-  const fetchSeasons = async () => {
-    if (!currentOrgId) return;
+  const fetchSeasonsInternal = async () => {
+    if (!orgId) return;
     
     const { data, error } = await supabase
       .from('up_seasons')
       .select('*')
-      .eq('organization_id', currentOrgId)
+      .eq('organization_id', orgId)
       .order('starts_at', { ascending: false });
 
     if (error) {
@@ -221,13 +222,13 @@ export function useUPEngine() {
     setSeasons(data as UPSeason[]);
   };
 
-  const fetchAIConfig = async () => {
-    if (!currentOrgId) return;
+  const fetchAIConfigInternal = async () => {
+    if (!orgId) return;
     
     const { data, error } = await supabase
       .from('up_ai_config')
       .select('*')
-      .eq('organization_id', currentOrgId)
+      .eq('organization_id', orgId)
       .maybeSingle();
 
     if (error) {
@@ -239,7 +240,7 @@ export function useUPEngine() {
   };
 
   const createRule = async (rule: Partial<UPRule>) => {
-    if (!currentOrgId) return null;
+    if (!orgId) return null;
 
     const { data, error } = await supabase
       .from('up_rules')
@@ -247,7 +248,7 @@ export function useUPEngine() {
         name: rule.name || '',
         event_type_key: rule.event_type_key || '',
         points: rule.points || 0,
-        organization_id: currentOrgId,
+        organization_id: orgId,
         description: rule.description,
         conditions: rule.conditions,
         is_bonus: rule.is_bonus,
@@ -267,7 +268,7 @@ export function useUPEngine() {
       return null;
     }
 
-    await fetchRules();
+    await fetchRulesInternal();
     toast({ title: 'Regla creada', description: `${data.name} se ha creado correctamente` });
     return data;
   };
@@ -283,7 +284,7 @@ export function useUPEngine() {
       return false;
     }
 
-    await fetchRules();
+    await fetchRulesInternal();
     toast({ title: 'Regla actualizada' });
     return true;
   };
@@ -299,13 +300,13 @@ export function useUPEngine() {
       return false;
     }
 
-    await fetchRules();
+    await fetchRulesInternal();
     toast({ title: 'Regla eliminada' });
     return true;
   };
 
   const createQuest = async (quest: Partial<UPQuest>) => {
-    if (!currentOrgId) return null;
+    if (!orgId) return null;
 
     const { data, error } = await supabase
       .from('up_quests')
@@ -314,7 +315,7 @@ export function useUPEngine() {
         goal_metric: quest.goal_metric || '',
         goal_value: quest.goal_value || 1,
         reward_points: quest.reward_points || 0,
-        organization_id: currentOrgId,
+        organization_id: orgId,
         description: quest.description,
         applies_to_roles: quest.applies_to_roles,
         starts_at: quest.starts_at,
@@ -330,18 +331,60 @@ export function useUPEngine() {
       return null;
     }
 
-    await fetchQuests();
+    await fetchQuestsInternal();
     toast({ title: 'Misión creada', description: `${data.title} se ha creado correctamente` });
     return data;
   };
 
+  const createSeason = async (season: Partial<UPSeason>) => {
+    if (!orgId) return null;
+
+    const { data, error } = await supabase
+      .from('up_seasons')
+      .insert({
+        name: season.name || '',
+        mode: season.mode || 'monthly',
+        organization_id: orgId,
+        starts_at: season.starts_at,
+        ends_at: season.ends_at,
+        is_active: season.is_active ?? false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: 'Error', description: 'No se pudo crear la temporada', variant: 'destructive' });
+      return null;
+    }
+
+    await fetchSeasonsInternal();
+    toast({ title: 'Temporada creada', description: `${data.name} se ha creado correctamente` });
+    return data;
+  };
+
+  const updateSeason = async (id: string, updates: Partial<UPSeason>) => {
+    const { error } = await supabase
+      .from('up_seasons')
+      .update(updates)
+      .eq('id', id);
+
+    if (error) {
+      toast({ title: 'Error', description: 'No se pudo actualizar la temporada', variant: 'destructive' });
+      return false;
+    }
+
+    await fetchSeasonsInternal();
+    toast({ title: 'Temporada actualizada' });
+    return true;
+  };
+
   const updateAIConfig = async (updates: Partial<UPAIConfig>) => {
-    if (!currentOrgId) return false;
+    if (!orgId) return false;
 
     const { error } = await supabase
       .from('up_ai_config')
       .upsert({ 
-        organization_id: currentOrgId,
+        organization_id: orgId,
         ...aiConfig,
         ...updates 
       });
@@ -351,20 +394,20 @@ export function useUPEngine() {
       return false;
     }
 
-    await fetchAIConfig();
+    await fetchAIConfigInternal();
     toast({ title: 'Configuración de IA actualizada' });
     return true;
   };
 
   const evaluateQualityScore = useCallback(async (contentId: string) => {
-    if (!currentOrgId) return null;
+    if (!orgId) return null;
 
     try {
       const { data, error } = await supabase.functions.invoke('up-ai-copilot', {
         body: {
           action: 'quality_score',
           contentId,
-          organizationId: currentOrgId
+          organizationId: orgId
         }
       });
 
@@ -375,17 +418,17 @@ export function useUPEngine() {
       toast({ title: 'Error', description: 'No se pudo evaluar la calidad', variant: 'destructive' });
       return null;
     }
-  }, [currentOrgId, toast]);
+  }, [orgId, toast]);
 
   const detectEvents = useCallback(async (contentId: string, userId: string) => {
-    if (!currentOrgId) return null;
+    if (!orgId) return null;
 
     try {
       const { data, error } = await supabase.functions.invoke('up-ai-copilot', {
         body: {
           action: 'detect_events',
           contentId,
-          organizationId: currentOrgId,
+          organizationId: orgId,
           userId
         }
       });
@@ -396,16 +439,16 @@ export function useUPEngine() {
       console.error('Error detecting events:', error);
       return null;
     }
-  }, [currentOrgId]);
+  }, [orgId]);
 
   const checkAntiFraud = useCallback(async () => {
-    if (!currentOrgId) return null;
+    if (!orgId) return null;
 
     try {
       const { data, error } = await supabase.functions.invoke('up-ai-copilot', {
         body: {
           action: 'anti_fraud',
-          organizationId: currentOrgId
+          organizationId: orgId
         }
       });
 
@@ -415,16 +458,16 @@ export function useUPEngine() {
       console.error('Error checking anti-fraud:', error);
       return null;
     }
-  }, [currentOrgId]);
+  }, [orgId]);
 
   const generateQuests = useCallback(async (role?: string) => {
-    if (!currentOrgId) return null;
+    if (!orgId) return null;
 
     try {
       const { data, error } = await supabase.functions.invoke('up-ai-copilot', {
         body: {
           action: 'generate_quests',
-          organizationId: currentOrgId,
+          organizationId: orgId,
           role
         }
       });
@@ -436,16 +479,16 @@ export function useUPEngine() {
       toast({ title: 'Error', description: 'No se pudieron generar misiones', variant: 'destructive' });
       return null;
     }
-  }, [currentOrgId, toast]);
+  }, [orgId, toast]);
 
   const getRuleRecommendations = useCallback(async () => {
-    if (!currentOrgId) return null;
+    if (!orgId) return null;
 
     try {
       const { data, error } = await supabase.functions.invoke('up-ai-copilot', {
         body: {
           action: 'rule_recommendations',
-          organizationId: currentOrgId
+          organizationId: orgId
         }
       });
 
@@ -455,7 +498,7 @@ export function useUPEngine() {
       console.error('Error getting recommendations:', error);
       return null;
     }
-  }, [currentOrgId]);
+  }, [orgId]);
 
   const getActiveSeason = () => {
     return seasons.find(s => s.is_active);
@@ -473,6 +516,8 @@ export function useUPEngine() {
     updateRule,
     deleteRule,
     createQuest,
+    createSeason,
+    updateSeason,
     updateAIConfig,
     // AI Functions
     evaluateQualityScore,

@@ -195,6 +195,41 @@ export function useUserPoints(userId?: string) {
   };
 }
 
+export function usePointsHistory(userId?: string) {
+  const [history, setHistory] = useState<PointTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    fetchHistory();
+  }, [userId]);
+
+  const fetchHistory = async () => {
+    if (!userId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('point_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setHistory((data || []) as PointTransaction[]);
+    } catch (error) {
+      console.error('Error fetching history:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { history, loading, refetch: fetchHistory };
+}
+
 export function useLeaderboard() {
   const { currentOrgId } = useOrgOwner();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
