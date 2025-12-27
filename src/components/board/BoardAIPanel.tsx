@@ -427,7 +427,7 @@ export function BoardAIPanel({
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {automationRecommendations.automations.map((auto, i) => (
+                        {(automationRecommendations.automations || []).map((auto, i) => (
                           <Card key={i}>
                             <CardContent className="pt-4">
                               <div className="flex items-start justify-between mb-2">
