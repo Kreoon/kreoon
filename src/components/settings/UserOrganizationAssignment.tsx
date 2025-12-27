@@ -42,7 +42,8 @@ interface Organization {
 import { ROLE_LABELS_SHORT as ROLE_LABELS } from '@/lib/roles';
 
 export function UserOrganizationAssignment() {
-  const { isAdmin } = useAuth();
+  const { hasRole } = useAuth();
+  const isAdminUser = hasRole('admin');
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserWithOrg[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -56,10 +57,10 @@ export function UserOrganizationAssignment() {
   const [showAssignDialog, setShowAssignDialog] = useState(false);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdminUser) {
       fetchData();
     }
-  }, [isAdmin]);
+  }, [isAdminUser]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -150,7 +151,7 @@ export function UserOrganizationAssignment() {
       }
 
       if (existingMember) {
-        // Update role
+        // Update role in organization_members
         const { error: updateError } = await supabase
           .from('organization_members')
           .update({ role: selectedRole })
@@ -162,6 +163,21 @@ export function UserOrganizationAssignment() {
           setIsAssigning(false);
           return;
         }
+
+        // Also update organization_member_roles - delete old roles and insert new one
+        await supabase
+          .from('organization_member_roles')
+          .delete()
+          .eq('organization_id', selectedOrgId)
+          .eq('user_id', selectedUser.id);
+
+        await supabase
+          .from('organization_member_roles')
+          .insert({
+            organization_id: selectedOrgId,
+            user_id: selectedUser.id,
+            role: selectedRole,
+          });
       } else {
         // Add as member
         const { error: insertError } = await supabase
@@ -178,6 +194,20 @@ export function UserOrganizationAssignment() {
           toast.error(`Error asignando usuario: ${insertError.message}`);
           setIsAssigning(false);
           return;
+        }
+
+        // Also insert into organization_member_roles
+        const { error: rolesInsertError } = await supabase
+          .from('organization_member_roles')
+          .insert({
+            organization_id: selectedOrgId,
+            user_id: selectedUser.id,
+            role: selectedRole,
+          });
+
+        if (rolesInsertError) {
+          console.error('Error inserting member role:', rolesInsertError);
+          // Non-critical, continue
         }
       }
 
@@ -249,7 +279,7 @@ export function UserOrganizationAssignment() {
     return matchesSearch && matchesOrg && matchesUnassigned;
   });
 
-  if (!isAdmin) {
+  if (!isAdminUser) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <AlertCircle className="h-8 w-8 mx-auto mb-2" />
