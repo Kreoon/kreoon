@@ -15,12 +15,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useContentDetail } from './hooks/useContentDetail';
 import { useContentPermissions } from './hooks/useContentPermissions';
 import { useBlockConfig } from './hooks/useBlockConfig';
+import { useContentCreate } from './hooks/useContentCreate';
 import { BlockKey } from './Config/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye } from 'lucide-react';
+import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ContentDetailDialogProps } from './types';
+import type { ContentDetailDialogProps, ContentFormData } from './types';
 
 // Lazy load tabs
 const ScriptsTab = lazy(() => import('./tabs/ScriptsTab').then(m => ({ default: m.ScriptsTab })));
@@ -52,42 +53,60 @@ function TabSkeleton() {
   );
 }
 
-export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onDelete }: ContentDetailDialogProps) {
+export function ContentDetailDialog({ 
+  content, 
+  open, 
+  onOpenChange, 
+  onUpdate, 
+  onDelete,
+  mode = 'view'
+}: ContentDetailDialogProps) {
   const { isAdmin, isClient, user } = useAuth();
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('scripts');
   
-  const {
-    loading,
-    editMode,
-    setEditMode,
-    currentStatus,
-    selectedProduct,
-    formData,
-    setFormData,
-    handleStatusChange,
-    handleSave,
-    handleProductChange,
-    autoSaveStatus,
-    lastSaved,
-    hasUnsavedChanges
-  } = useContentDetail({ content, onUpdate });
+  const isCreateMode = mode === 'create';
   
-  const permissions = useContentPermissions(content);
-  const blockConfig = useBlockConfig(content);
+  // View mode hooks (only used when viewing existing content)
+  const viewHooks = useContentDetail({ content: isCreateMode ? null : content, onUpdate });
+  const permissions = useContentPermissions(isCreateMode ? null : content);
+  const blockConfig = useBlockConfig(isCreateMode ? null : content);
+  
+  // Create mode hooks (only used when creating new content)
+  const createHooks = useContentCreate({
+    onSuccess: onUpdate,
+    onClose: () => onOpenChange(false)
+  });
+
+  // Unified state based on mode
+  const formData = isCreateMode ? createHooks.formData : viewHooks.formData;
+  const setFormData = isCreateMode ? createHooks.setFormData : viewHooks.setFormData;
+  const selectedProduct = isCreateMode ? createHooks.selectedProduct : viewHooks.selectedProduct;
+  const handleProductChange = isCreateMode ? createHooks.handleProductChange : viewHooks.handleProductChange;
+  const loading = isCreateMode ? createHooks.loading : viewHooks.loading;
+  const saving = isCreateMode ? createHooks.saving : viewHooks.loading;
+
+  // In create mode, always in edit mode
+  const editMode = isCreateMode ? true : viewHooks.editMode;
+  const setEditMode = isCreateMode ? () => {} : viewHooks.setEditMode;
 
   // Combine permissions with block config for effective visible tabs
   const effectiveVisibleTabs = useMemo(() => {
+    // In create mode, show all admin tabs
+    if (isCreateMode) {
+      return ['scripts', 'general', 'team', 'dates', 'payments'] as const;
+    }
     return permissions.visibleTabs.filter(tabKey => {
       const blockKey = TAB_TO_BLOCK[tabKey];
       if (!blockKey) return true; // If no mapping, show by default
       return blockConfig.canViewBlock(blockKey);
     });
-  }, [permissions.visibleTabs, blockConfig]);
+  }, [isCreateMode, permissions.visibleTabs, blockConfig]);
 
   // Check if a tab is locked
   const isTabLocked = (tabKey: string): boolean => {
+    if (isCreateMode) return false;
     const blockKey = TAB_TO_BLOCK[tabKey];
     if (!blockKey) return false;
     return blockConfig.isBlockLocked(blockKey);
@@ -95,27 +114,52 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
   // Check if a tab is read-only (can view but not edit)
   const isTabReadOnly = (tabKey: string): boolean => {
+    if (isCreateMode) return false;
     const blockKey = TAB_TO_BLOCK[tabKey];
     if (!blockKey) return false;
     return !blockConfig.canEditBlock(blockKey);
   };
 
-  if (!content) return null;
+  // Don't render if no content in view mode
+  if (!isCreateMode && !content) return null;
 
   const formatDate = (date: string | null) => {
     if (!date) return 'Sin fecha';
     return format(new Date(date), "d 'de' MMMM, yyyy", { locale: es });
   };
 
+  // Create a mock content object for create mode
+  const displayContent = isCreateMode 
+    ? { 
+        id: '', 
+        title: formData.title || 'Nuevo Proyecto',
+        status: 'draft' as ContentStatus,
+        client: null,
+        client_id: formData.client_id,
+        campaign_week: formData.campaign_week,
+        deadline: formData.deadline,
+      } as any
+    : content;
+
+  // Create permissions for create mode (full admin access)
+  const effectivePermissions = isCreateMode 
+    ? {
+        can: () => true,
+        visibleTabs: ['scripts', 'general', 'team', 'dates', 'payments'] as any[],
+        isReadOnly: () => false,
+        canEnterEditMode: true,
+      }
+    : permissions;
+
   const tabProps = {
-    content,
+    content: displayContent,
     formData,
     setFormData,
-    editMode: editMode && !isTabLocked(activeTab) && !isTabReadOnly(activeTab), // Disable edit if tab is locked OR read-only
+    editMode: editMode && !isTabLocked(activeTab) && !isTabReadOnly(activeTab),
     setEditMode,
-    permissions,
+    permissions: effectivePermissions,
     onUpdate,
-    readOnly: isTabReadOnly(activeTab), // Pass readOnly for components that need explicit check
+    readOnly: isTabReadOnly(activeTab),
   };
 
   const TAB_CONFIG: Record<string, { label: string; component: React.ReactNode }> = {
@@ -128,8 +172,23 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     payments: { label: 'Pagos', component: <PaymentsTab {...tabProps} /> }
   };
 
+  const handleSave = () => {
+    if (isCreateMode) {
+      createHooks.handleCreate();
+    } else {
+      viewHooks.handleSave();
+    }
+  };
+
+  const handleClose = () => {
+    if (isCreateMode) {
+      createHooks.resetForm();
+    }
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0">
         {/* Hero Header */}
         <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-6 sm:p-8 border-b">
@@ -144,13 +203,18 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             {/* Top Row: Status & Actions */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                {permissions.can('content.status', 'edit') ? (
+                {isCreateMode ? (
+                  <Badge className="text-sm px-3 py-1 bg-primary/10 text-primary border-primary/20">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Nueva Misión
+                  </Badge>
+                ) : effectivePermissions.can('content.status', 'edit') ? (
                   <Select 
-                    value={currentStatus || content.status} 
-                    onValueChange={(v) => handleStatusChange(v as ContentStatus)}
+                    value={viewHooks.currentStatus || content?.status} 
+                    onValueChange={(v) => viewHooks.handleStatusChange(v as ContentStatus)}
                     disabled={loading}
                   >
-                    <SelectTrigger className={`w-auto min-w-[140px] text-sm font-medium ${STATUS_COLORS[currentStatus || content.status]}`}>
+                    <SelectTrigger className={`w-auto min-w-[140px] text-sm font-medium ${STATUS_COLORS[viewHooks.currentStatus || content?.status || 'draft']}`}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -162,12 +226,12 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Badge className={`text-sm px-3 py-1 ${STATUS_COLORS[content.status]}`}>
-                    {STATUS_LABELS[content.status]}
+                  <Badge className={`text-sm px-3 py-1 ${STATUS_COLORS[content?.status || 'draft']}`}>
+                    {STATUS_LABELS[content?.status || 'draft']}
                   </Badge>
                 )}
                 
-                {formData.is_published && (
+                {!isCreateMode && formData.is_published && (
                   <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
                     <Share2 className="h-3 w-3 mr-1" />
                     Publicado
@@ -176,8 +240,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
               
               <div className="flex items-center gap-2">
-                {/* Config Button - Only for Admins */}
-                {isAdmin && (
+                {/* Config Button - Only for Admins in view mode */}
+                {!isCreateMode && isAdmin && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -189,14 +253,15 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 )}
                 
                 {/* AutoSave Indicator */}
-                {editMode && (
+                {!isCreateMode && editMode && (
                   <AutoSaveIndicator 
-                    status={autoSaveStatus} 
-                    lastSaved={lastSaved} 
+                    status={viewHooks.autoSaveStatus} 
+                    lastSaved={viewHooks.lastSaved} 
                   />
                 )}
                 
-                {permissions.canEnterEditMode && (
+                {/* Edit/Cancel button - only in view mode */}
+                {!isCreateMode && effectivePermissions.canEnterEditMode && (
                   <Button
                     variant={editMode ? 'default' : 'outline'}
                     size="sm"
@@ -205,10 +270,16 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     {editMode ? 'Cancelar' : 'Editar'}
                   </Button>
                 )}
+                
+                {/* Save button */}
                 {editMode && (
-                  <Button onClick={handleSave} disabled={loading} size="sm">
-                    <Save className="h-4 w-4 mr-1" />
-                    Guardar
+                  <Button onClick={handleSave} disabled={saving} size="sm">
+                    {saving ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-1" />
+                    )}
+                    {isCreateMode ? 'Crear' : 'Guardar'}
                   </Button>
                 )}
               </div>
@@ -217,24 +288,25 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
             {/* Title */}
             <DialogHeader className="space-y-2">
               <DialogTitle className="text-2xl sm:text-3xl font-bold tracking-tight">
-                {editMode && permissions.can('content.title', 'edit') ? (
+                {editMode && (isCreateMode || effectivePermissions.can('content.title', 'edit')) ? (
                   <Input
                     value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) => setFormData((prev: ContentFormData) => ({ ...prev, title: e.target.value }))}
                     className="text-2xl sm:text-3xl font-bold h-auto py-2 bg-background/50"
+                    placeholder="Nombre del proyecto..."
                   />
                 ) : (
-                  content.title
+                  displayContent.title
                 )}
               </DialogTitle>
             </DialogHeader>
 
             {/* Meta Info Row */}
             <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
-              {content.client?.name && (
+              {displayContent.client?.name && (
                 <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
                   <Package className="h-4 w-4" />
-                  <span>{content.client.name}</span>
+                  <span>{displayContent.client.name}</span>
                 </div>
               )}
               {selectedProduct?.name && (
@@ -243,16 +315,16 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   <span>{selectedProduct.name}</span>
                 </div>
               )}
-              {content.campaign_week && (
+              {displayContent.campaign_week && (
                 <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
                   <Calendar className="h-4 w-4" />
-                  <span>{content.campaign_week}</span>
+                  <span>{displayContent.campaign_week}</span>
                 </div>
               )}
-              {content.deadline && (
+              {displayContent.deadline && (
                 <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
                   <Clock className="h-4 w-4" />
-                  <span>Entrega: {formatDate(content.deadline)}</span>
+                  <span>Entrega: {formatDate(displayContent.deadline)}</span>
                 </div>
               )}
             </div>
@@ -310,8 +382,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
           </Tabs>
         </div>
 
-        {/* Footer Actions - Delete */}
-        {permissions.can('content.delete', 'edit') && (
+        {/* Footer Actions - Delete (only in view mode) */}
+        {!isCreateMode && effectivePermissions.can('content.delete', 'edit') && (
           <div className="border-t p-4 bg-muted/30">
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -324,14 +396,14 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Eliminar proyecto?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto "{content.title}".
+                    Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto "{content?.title}".
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
-                      onDelete?.(content.id);
+                      onDelete?.(content!.id);
                       onOpenChange(false);
                     }}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -354,12 +426,12 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         onSave={() => {}}
       />
 
-      {/* Content Config Dialog - Admin Only */}
-      {isAdmin && (
+      {/* Content Config Dialog - Admin Only (view mode) */}
+      {!isCreateMode && isAdmin && (
         <ContentConfigDialog
           open={showConfigDialog}
           onOpenChange={setShowConfigDialog}
-          organizationId={(content as any).organization_id || null}
+          organizationId={(content as any)?.organization_id || null}
         />
       )}
     </Dialog>

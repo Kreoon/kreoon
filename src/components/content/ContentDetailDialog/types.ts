@@ -88,12 +88,19 @@ export interface TabProps {
 }
 
 // ============= DIALOG PROPS =============
+export type DialogMode = 'view' | 'create';
+
 export interface ContentDetailDialogProps {
   content: Content | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate?: () => void;
   onDelete?: (contentId: string) => void;
+  /** 
+   * Dialog mode: 'view' for viewing/editing existing content, 'create' for new content.
+   * Defaults to 'view'.
+   */
+  mode?: DialogMode;
 }
 
 // ============= HELPERS =============
