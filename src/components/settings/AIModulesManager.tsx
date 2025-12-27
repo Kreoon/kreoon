@@ -1,9 +1,8 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
@@ -15,10 +14,17 @@ import {
   BarChart2,
   RefreshCw,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  LayoutDashboard,
+  FileVideo,
+  Trophy,
+  Radio,
+  Settings2,
+  ChevronRight
 } from 'lucide-react';
-import { useAIModules, PREDEFINED_AI_MODULES } from '@/hooks/useAIModules';
-import { AI_PROVIDERS_CONFIG } from '@/hooks/useOrganizationAI';
+import { useAIModules } from '@/hooks/useAIModules';
+import { AI_MODULE_CATEGORIES, getModuleDefinition } from '@/lib/aiModuleKeys';
+import { AIModuleConfigDrawer } from './AIModuleConfigDrawer';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -27,16 +33,28 @@ interface AIModulesManagerProps {
   enabledProviders: Array<{ key: string; label: string; models: Array<{ value: string; label: string }> }>;
 }
 
+const CATEGORY_ICONS = {
+  board: LayoutDashboard,
+  content: FileVideo,
+  up: Trophy,
+  live: Radio,
+  general: Bot,
+};
+
 export function AIModulesManager({ organizationId, enabledProviders }: AIModulesManagerProps) {
   const {
     modules,
     loading,
     saving,
     toggleModule,
-    updateModuleConfig,
+    updateModuleFull,
+    getModulesByCategory,
     ensureModulesExist,
     refetch
   } = useAIModules(organizationId);
+
+  const [selectedModule, setSelectedModule] = useState<any>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     // Auto-register predefined modules when component mounts
@@ -51,30 +69,23 @@ export function AIModulesManager({ organizationId, enabledProviders }: AIModules
     );
   }
 
-  const handleProviderChange = async (moduleKey: string, newProvider: string) => {
-    const mod = modules.find(m => m.module_key === moduleKey);
-    if (!mod) return;
-    
-    // Get default model for the new provider
-    const providerConfig = enabledProviders.find(p => p.key === newProvider);
-    const defaultModel = providerConfig?.models[0]?.value || 'google/gemini-2.5-flash';
-    
-    await updateModuleConfig(moduleKey, newProvider, defaultModel);
+  const handleOpenDrawer = (mod: any) => {
+    setSelectedModule(mod);
+    setDrawerOpen(true);
   };
 
-  const handleModelChange = async (moduleKey: string, newModel: string) => {
-    const mod = modules.find(m => m.module_key === moduleKey);
-    if (!mod) return;
-    await updateModuleConfig(moduleKey, mod.provider, newModel);
+  const handleSaveModule = async (config: any) => {
+    if (!selectedModule) return;
+    await updateModuleFull(selectedModule.module_key, config);
   };
 
-  // Get module info from predefined list
-  const getModuleInfo = (key: string) => {
-    return PREDEFINED_AI_MODULES.find(m => m.key === key);
-  };
+  const groupedModules = getModulesByCategory();
+  const activeCount = modules.filter(m => m.is_active).length;
+  const totalCount = modules.length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-medium flex items-center gap-2">
@@ -82,7 +93,7 @@ export function AIModulesManager({ organizationId, enabledProviders }: AIModules
             Módulos con IA
           </h3>
           <p className="text-sm text-muted-foreground">
-            Activa y configura la IA para cada módulo de tu organización
+            {activeCount} de {totalCount} módulos activos
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={refetch} disabled={saving}>
@@ -91,6 +102,7 @@ export function AIModulesManager({ organizationId, enabledProviders }: AIModules
         </Button>
       </div>
 
+      {/* Warning */}
       <div className="rounded-lg border bg-amber-500/10 border-amber-500/30 p-4">
         <div className="flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
@@ -103,141 +115,138 @@ export function AIModulesManager({ organizationId, enabledProviders }: AIModules
         </div>
       </div>
 
-      <Separator />
+      {/* Modules by Category */}
+      {Object.entries(groupedModules).map(([category, categoryModules]) => {
+        if (categoryModules.length === 0) return null;
+        
+        const categoryInfo = AI_MODULE_CATEGORIES[category as keyof typeof AI_MODULE_CATEGORIES];
+        const CategoryIcon = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS] || Bot;
 
-      <div className="space-y-4">
-        {modules.map((mod) => {
-          const info = getModuleInfo(mod.module_key);
-          const currentProviderConfig = enabledProviders.find(p => p.key === mod.provider);
-          
-          return (
-            <Card 
-              key={mod.id} 
-              className={mod.is_active ? 'border-primary/30 bg-primary/5' : 'opacity-75'}
-            >
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-medium">{mod.module_name}</h4>
-                      {mod.is_active ? (
-                        <Badge variant="outline" className="text-xs border-green-500/50 text-green-600">
-                          <Check className="h-3 w-3 mr-1" />
-                          Activo
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs border-muted text-muted-foreground">
-                          <X className="h-3 w-3 mr-1" />
-                          Inactivo
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {mod.description || info?.description}
-                    </p>
-                    
-                    {/* Stats */}
-                    {mod.execution_count > 0 && (
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <BarChart2 className="h-3 w-3" />
-                          {mod.execution_count} ejecuciones
-                        </span>
-                        {mod.last_execution_at && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            Última: {format(new Date(mod.last_execution_at), 'dd MMM HH:mm', { locale: es })}
+        return (
+          <div key={category} className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <CategoryIcon className="h-4 w-4" />
+              {categoryInfo?.label || category}
+              <Badge variant="outline" className="text-xs ml-auto">
+                {categoryModules.filter(m => m.is_active).length} / {categoryModules.length}
+              </Badge>
+            </div>
+
+            <div className="grid gap-2">
+              {categoryModules.map((mod) => {
+                const definition = getModuleDefinition(mod.module_key);
+                
+                return (
+                  <div
+                    key={mod.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                      mod.is_active 
+                        ? 'border-primary/30 bg-primary/5' 
+                        : 'border-border hover:border-border/80 opacity-75'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <Switch
+                                checked={mod.is_active}
+                                onCheckedChange={(checked) => toggleModule(mod.module_key, checked)}
+                                disabled={saving}
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {mod.is_active ? 'Desactivar' : 'Activar'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm truncate">
+                            {mod.module_name}
                           </span>
+                          {mod.is_active && (
+                            <Badge variant="outline" className="text-xs border-green-500/50 text-green-600">
+                              <Check className="h-3 w-3 mr-1" />
+                              Activo
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {/* Stats inline */}
+                        {mod.execution_count > 0 && (
+                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <BarChart2 className="h-3 w-3" />
+                              {mod.execution_count}
+                            </span>
+                            {mod.last_execution_at && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {format(new Date(mod.last_execution_at), 'dd/MM HH:mm', { locale: es })}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
+                    </div>
+
+                    {/* Provider/Model badge when active */}
+                    {mod.is_active && (
+                      <div className="flex items-center gap-2 mx-3">
+                        <Badge variant="secondary" className="text-xs">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          {mod.provider}
+                        </Badge>
+                      </div>
                     )}
+
+                    {/* Edit button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleOpenDrawer(mod)}
+                      className="shrink-0"
+                    >
+                      <Settings2 className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">Editar</span>
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
                   </div>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <Switch
-                            checked={mod.is_active}
-                            onCheckedChange={(checked) => toggleModule(mod.module_key, checked)}
-                            disabled={saving}
-                          />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {mod.is_active ? 'Desactivar IA para este módulo' : 'Activar IA para este módulo'}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-
-                {/* Provider & Model selection - only show when active */}
-                {mod.is_active && (
-                  <div className="mt-4 pt-4 border-t grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        Proveedor
-                      </label>
-                      <Select
-                        value={mod.provider}
-                        onValueChange={(value) => handleProviderChange(mod.module_key, value)}
-                        disabled={saving}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {enabledProviders.map(p => (
-                            <SelectItem key={p.key} value={p.key}>
-                              {p.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Modelo</label>
-                      <Select
-                        value={mod.model}
-                        onValueChange={(value) => handleModelChange(mod.module_key, value)}
-                        disabled={saving}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {currentProviderConfig?.models.map(m => (
-                            <SelectItem key={m.value} value={m.value}>
-                              {m.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-
-        {modules.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            <Bot className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>No hay módulos de IA registrados</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-4"
-              onClick={ensureModulesExist}
-            >
-              Registrar módulos predefinidos
-            </Button>
+                );
+              })}
+            </div>
           </div>
-        )}
-      </div>
+        );
+      })}
+
+      {modules.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          <Bot className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <p>No hay módulos de IA registrados</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-4"
+            onClick={ensureModulesExist}
+          >
+            Registrar módulos predefinidos
+          </Button>
+        </div>
+      )}
+
+      {/* Config Drawer */}
+      <AIModuleConfigDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        module={selectedModule}
+        enabledProviders={enabledProviders}
+        saving={saving}
+        onSave={handleSaveModule}
+      />
     </div>
   );
 }

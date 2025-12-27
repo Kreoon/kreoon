@@ -4,15 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { 
   Bot, 
   Key, 
-  Settings2, 
   BarChart3, 
   Eye, 
   EyeOff, 
@@ -20,9 +19,9 @@ import {
   AlertCircle,
   Loader2,
   Shield,
-  Cpu,
   Sparkles,
-  Blocks
+  Blocks,
+  Cpu
 } from 'lucide-react';
 import { 
   useOrganizationAI, 
@@ -39,13 +38,11 @@ interface OrganizationAISettingsProps {
 export function OrganizationAISettings({ organizationId }: OrganizationAISettingsProps) {
   const {
     providers,
-    defaults,
     usageLogs,
     loading,
     saving,
     toggleProvider,
     updateProviderApiKey,
-    updateDefaults,
     getEnabledProviders,
     hasValidApiKey,
     getMaskedApiKey
@@ -54,6 +51,7 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
   const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({});
   const [apiKeyInputs, setApiKeyInputs] = useState<Record<string, string>>({});
   const [editingApiKey, setEditingApiKey] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   if (loading) {
     return (
@@ -89,15 +87,6 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
     }
   };
 
-  const handleUpdateDefault = async (field: string, value: string) => {
-    try {
-      await updateDefaults({ [field]: value });
-      toast.success('Configuración actualizada');
-    } catch {
-      toast.error('Error al actualizar');
-    }
-  };
-
   const enabledProviders = getEnabledProviders();
 
   return (
@@ -108,15 +97,15 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
           IA & Modelos
         </CardTitle>
         <CardDescription>
-          Configura los proveedores de IA y modelos por defecto para tu organización
+          Configura los proveedores de IA y módulos para tu organización
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="modules">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="modules" className="flex items-center gap-2">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
               <Blocks className="h-4 w-4" />
-              Módulos
+              Vista General
             </TabsTrigger>
             <TabsTrigger value="providers" className="flex items-center gap-2">
               <Cpu className="h-4 w-4" />
@@ -128,15 +117,103 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
             </TabsTrigger>
           </TabsList>
 
-          {/* Modules Tab - Now First */}
-          <TabsContent value="modules" className="space-y-4 mt-4">
-            <AIModulesManager 
-              organizationId={organizationId} 
-              enabledProviders={enabledProviders}
-            />
+          {/* Overview Tab - 2 Column Layout */}
+          <TabsContent value="overview" className="mt-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* LEFT COLUMN - Providers Summary */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Cpu className="h-5 w-5 text-primary" />
+                  <h3 className="font-medium">Proveedores de IA</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  {Object.values(AI_PROVIDERS_CONFIG).map((config) => {
+                    const providerData = providers.find(p => p.provider_key === config.key);
+                    const isEnabled = config.key === 'lovable' || providerData?.is_enabled;
+                    const hasKey = hasValidApiKey(config.key);
+
+                    return (
+                      <div 
+                        key={config.key}
+                        className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                          isEnabled ? 'border-primary/30 bg-primary/5' : 'border-border'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${isEnabled ? 'bg-primary/10' : 'bg-muted'}`}>
+                            <Sparkles className={`h-4 w-4 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{config.label}</span>
+                              {config.key === 'lovable' && (
+                                <Badge className="text-xs bg-gradient-to-r from-purple-500 to-pink-500">
+                                  Incluido
+                                </Badge>
+                              )}
+                              {isEnabled && config.key !== 'lovable' && (
+                                <Badge variant="outline" className="text-xs">
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Activo
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="secondary" className="text-xs">
+                                {config.models.length} modelos
+                              </Badge>
+                              {config.requiresApiKey && isEnabled && (
+                                hasKey ? (
+                                  <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                                    <Shield className="h-3 w-3 mr-1" />
+                                    API Key ✓
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
+                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                    Sin Key
+                                  </Badge>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {config.key !== 'lovable' && (
+                          <Switch
+                            checked={isEnabled}
+                            onCheckedChange={(checked) => handleToggleProvider(config.key, checked)}
+                            disabled={saving}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => setActiveTab('providers')}
+                >
+                  <Key className="h-4 w-4 mr-2" />
+                  Configurar API Keys
+                </Button>
+              </div>
+
+              {/* RIGHT COLUMN - Modules */}
+              <div className="space-y-4">
+                <AIModulesManager 
+                  organizationId={organizationId} 
+                  enabledProviders={enabledProviders}
+                />
+              </div>
+            </div>
           </TabsContent>
 
-          {/* Providers Tab */}
+          {/* Providers Tab - Full API Key Management */}
           <TabsContent value="providers" className="space-y-4 mt-4">
             {Object.values(AI_PROVIDERS_CONFIG).map((config) => {
               const providerData = providers.find(p => p.provider_key === config.key);
@@ -276,7 +353,6 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
             })}
           </TabsContent>
 
-
           {/* Usage Tab */}
           <TabsContent value="usage" className="mt-4">
             <Card>
@@ -293,30 +369,32 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                     <p>No hay registros de uso todavía</p>
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {usageLogs.map(log => (
-                      <div 
-                        key={log.id} 
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50 text-sm"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full ${log.success ? 'bg-green-500' : 'bg-red-500'}`} />
-                          <div>
-                            <div className="font-medium">{log.action}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {log.module} • {log.provider}/{log.model}
+                  <ScrollArea className="h-96">
+                    <div className="space-y-2">
+                      {usageLogs.map(log => (
+                        <div 
+                          key={log.id} 
+                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50 text-sm"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${log.success ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <div>
+                              <div className="font-medium">{log.action}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {log.module} • {log.provider}/{log.model}
+                              </div>
                             </div>
                           </div>
+                          <div className="text-right text-xs text-muted-foreground">
+                            {format(new Date(log.created_at), "d MMM HH:mm", { locale: es })}
+                            {log.tokens_input && (
+                              <div>{log.tokens_input + (log.tokens_output || 0)} tokens</div>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-right text-xs text-muted-foreground">
-                          {format(new Date(log.created_at), "d MMM HH:mm", { locale: es })}
-                          {log.tokens_input && (
-                            <div>{log.tokens_input + (log.tokens_output || 0)} tokens</div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 )}
               </CardContent>
             </Card>

@@ -1812,6 +1812,7 @@ export type Database = {
       }
       organization_ai_modules: {
         Row: {
+          category: string | null
           created_at: string | null
           description: string | null
           execution_count: number | null
@@ -1821,12 +1822,15 @@ export type Database = {
           model: string | null
           module_key: string
           module_name: string
+          monthly_limit: number | null
           organization_id: string
+          permission_level: string | null
           provider: string | null
           required_role: string | null
           updated_at: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           description?: string | null
           execution_count?: number | null
@@ -1836,12 +1840,15 @@ export type Database = {
           model?: string | null
           module_key: string
           module_name: string
+          monthly_limit?: number | null
           organization_id: string
+          permission_level?: string | null
           provider?: string | null
           required_role?: string | null
           updated_at?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           description?: string | null
           execution_count?: number | null
@@ -1851,7 +1858,9 @@ export type Database = {
           model?: string | null
           module_key?: string
           module_name?: string
+          monthly_limit?: number | null
           organization_id?: string
+          permission_level?: string | null
           provider?: string | null
           required_role?: string | null
           updated_at?: string | null
@@ -1866,12 +1875,57 @@ export type Database = {
           },
         ]
       }
+      organization_ai_prompts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          module_key: string
+          organization_id: string
+          prompt_config: Json
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          module_key: string
+          organization_id: string
+          prompt_config?: Json
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          module_key?: string
+          organization_id?: string
+          prompt_config?: Json
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_ai_prompts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_ai_providers: {
         Row: {
           api_key_encrypted: string | null
           available_models: string[] | null
           configured_by: string | null
           created_at: string
+          default_model: string | null
           id: string
           is_enabled: boolean
           organization_id: string
@@ -1883,6 +1937,7 @@ export type Database = {
           available_models?: string[] | null
           configured_by?: string | null
           created_at?: string
+          default_model?: string | null
           id?: string
           is_enabled?: boolean
           organization_id: string
@@ -1894,6 +1949,7 @@ export type Database = {
           available_models?: string[] | null
           configured_by?: string | null
           created_at?: string
+          default_model?: string | null
           id?: string
           is_enabled?: boolean
           organization_id?: string
@@ -4030,6 +4086,10 @@ export type Database = {
           model: string
           provider: string
         }[]
+      }
+      get_ai_module_prompt: {
+        Args: { _module_key: string; _org_id: string }
+        Returns: Json
       }
       get_best_available_editor: { Args: never; Returns: string }
       get_company_followers_count: {
