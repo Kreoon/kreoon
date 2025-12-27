@@ -164,7 +164,9 @@ export function ContentDetailDialog({
         client: null,
         client_id: formData.client_id,
         campaign_week: formData.campaign_week,
+        start_date: formData.start_date,
         deadline: formData.deadline,
+        sequence_number: null,
       } as any
     : content;
 
@@ -310,19 +312,32 @@ export function ContentDetailDialog({
               </div>
             </div>
 
-            {/* Title */}
+            {/* Title with Sequence Number */}
             <DialogHeader className="space-y-2">
-              <DialogTitle className="text-2xl sm:text-3xl font-bold tracking-tight">
-                {editMode && (isCreateMode || effectivePermissions.can('content.title', 'edit')) ? (
-                  <Input
-                    value={formData.title}
-                    onChange={(e) => setFormData((prev: ContentFormData) => ({ ...prev, title: e.target.value }))}
-                    className="text-2xl sm:text-3xl font-bold h-auto py-2 bg-background/50"
-                    placeholder="Nombre del proyecto..."
-                  />
-                ) : (
-                  displayContent.title
+              <DialogTitle className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3">
+                {/* Sequence Number Badge */}
+                {!isCreateMode && displayContent.sequence_number && (
+                  <Badge variant="outline" className="text-sm font-mono shrink-0 bg-primary/5 border-primary/20 text-primary">
+                    {displayContent.sequence_number}
+                  </Badge>
                 )}
+                {isCreateMode && (
+                  <Badge variant="outline" className="text-sm font-mono shrink-0 bg-muted/50 border-dashed text-muted-foreground">
+                    Auto
+                  </Badge>
+                )}
+                <span className="flex-1">
+                  {editMode && (isCreateMode || effectivePermissions.can('content.title', 'edit')) ? (
+                    <Input
+                      value={formData.title}
+                      onChange={(e) => setFormData((prev: ContentFormData) => ({ ...prev, title: e.target.value }))}
+                      className="text-2xl sm:text-3xl font-bold h-auto py-2 bg-background/50"
+                      placeholder="Nombre del proyecto..."
+                    />
+                  ) : (
+                    displayContent.title
+                  )}
+                </span>
               </DialogTitle>
             </DialogHeader>
 
@@ -383,13 +398,55 @@ export function ContentDetailDialog({
                 </div>
               ) : null}
 
-              {/* Other meta info */}
-              {displayContent.campaign_week && (
+              {/* Fecha de Inicio */}
+              {editMode ? (
+                <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">Inicio</span>
+                  </div>
+                  <Input
+                    type="date"
+                    value={formData.start_date ? format(new Date(formData.start_date), 'yyyy-MM-dd') : ''}
+                    onChange={(e) => setFormData((prev: ContentFormData) => ({ 
+                      ...prev, 
+                      start_date: e.target.value ? new Date(e.target.value).toISOString() : null 
+                    }))}
+                    className="border-0 bg-transparent h-8 w-auto text-sm focus-visible:ring-0"
+                  />
+                </div>
+              ) : displayContent.start_date ? (
                 <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full text-muted-foreground">
                   <Calendar className="h-4 w-4" />
+                  <span>Inicio: {formatDate(displayContent.start_date)}</span>
+                </div>
+              ) : null}
+
+              {/* Semana/Campaña */}
+              {editMode ? (
+                <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">Semana</span>
+                  </div>
+                  <Input
+                    value={formData.campaign_week || ''}
+                    onChange={(e) => setFormData((prev: ContentFormData) => ({ 
+                      ...prev, 
+                      campaign_week: e.target.value 
+                    }))}
+                    className="border-0 bg-transparent h-8 w-[100px] text-sm focus-visible:ring-0"
+                    placeholder="Ej: S1"
+                  />
+                </div>
+              ) : displayContent.campaign_week ? (
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full text-muted-foreground">
+                  <Target className="h-4 w-4" />
                   <span>{displayContent.campaign_week}</span>
                 </div>
-              )}
+              ) : null}
+
+              {/* Deadline (read-only in header, editable in DatesTab) */}
               {displayContent.deadline && (
                 <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full text-muted-foreground">
                   <Clock className="h-4 w-4" />
