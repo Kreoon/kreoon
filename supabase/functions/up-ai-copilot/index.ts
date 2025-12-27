@@ -44,18 +44,191 @@ type RequestBody =
   | QuestGenerationRequest
   | RuleRecommendationsRequest;
 
+// Provider configurations
+interface AIProviderConfig {
+  url: string;
+  getHeaders: (apiKey: string) => Record<string, string>;
+  getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => any;
+  extractContent: (data: any, hasTools: boolean) => any;
+}
+
+const AI_PROVIDERS: Record<string, AIProviderConfig> = {
+  lovable: {
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    getHeaders: (apiKey: string) => ({
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    }),
+    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
+      const body: any = {
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      };
+      if (tools) {
+        body.tools = tools;
+        body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
+      }
+      return body;
+    },
+    extractContent: (data: any, hasTools: boolean) => {
+      if (hasTools && data.choices?.[0]?.message?.tool_calls?.[0]) {
+        return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
+      }
+      return data.choices?.[0]?.message?.content || "";
+    }
+  },
+  openai: {
+    url: "https://api.openai.com/v1/chat/completions",
+    getHeaders: (apiKey: string) => ({
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    }),
+    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
+      const body: any = {
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 2000,
+        temperature: 0.7,
+      };
+      if (tools) {
+        body.tools = tools;
+        body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
+      }
+      return body;
+    },
+    extractContent: (data: any, hasTools: boolean) => {
+      if (hasTools && data.choices?.[0]?.message?.tool_calls?.[0]) {
+        return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
+      }
+      return data.choices?.[0]?.message?.content || "";
+    }
+  },
+  gemini: {
+    url: "https://generativelanguage.googleapis.com/v1beta/models",
+    getHeaders: (apiKey: string) => ({
+      "x-goog-api-key": apiKey,
+      "Content-Type": "application/json",
+    }),
+    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
+      const body: any = {
+        contents: [
+          { role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }
+        ],
+        generationConfig: {
+          maxOutputTokens: 2000,
+          temperature: 0.7,
+        }
+      };
+      // Gemini uses different tool format - simplified for now
+      return body;
+    },
+    extractContent: (data: any, hasTools: boolean) => {
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (hasTools) {
+        try {
+          // Try to parse JSON from response
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (jsonMatch) return JSON.parse(jsonMatch[0]);
+        } catch {}
+      }
+      return text;
+    }
+  }
+};
+
+// Get organization AI configuration
+async function getOrgAIConfig(supabase: any, organizationId: string) {
+  // Get org defaults
+  const { data: defaults } = await supabase
+    .from("organization_ai_defaults")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+
+  // Get enabled providers with API keys
+  const { data: providers } = await supabase
+    .from("organization_ai_providers")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("is_enabled", true);
+
+  // Get provider for sistema_up module
+  let provider = defaults?.sistema_up_provider || defaults?.default_provider || "lovable";
+  let model = defaults?.sistema_up_model || defaults?.default_model || "google/gemini-2.5-flash";
+
+  // Get API key for the provider
+  let apiKey: string | null = null;
+  
+  if (provider === "lovable") {
+    apiKey = Deno.env.get("LOVABLE_API_KEY") || null;
+  } else {
+    const providerData = providers?.find((p: any) => p.provider_key === provider);
+    apiKey = providerData?.api_key_encrypted || null;
+  }
+
+  // Fallback to global keys if org doesn't have one
+  if (!apiKey) {
+    if (provider === "openai") {
+      apiKey = Deno.env.get("OPENAI_API_KEY") || null;
+    } else if (provider === "gemini") {
+      apiKey = Deno.env.get("GOOGLE_GEMINI_API_KEY") || null;
+    }
+  }
+
+  // Final fallback to Lovable AI
+  if (!apiKey) {
+    provider = "lovable";
+    model = "google/gemini-2.5-flash";
+    apiKey = Deno.env.get("LOVABLE_API_KEY") || null;
+  }
+
+  return { provider, model, apiKey };
+}
+
+// Log AI usage
+async function logAIUsage(
+  supabase: any, 
+  organizationId: string, 
+  userId: string,
+  provider: string,
+  model: string,
+  module: string,
+  action: string,
+  success: boolean,
+  errorMessage?: string,
+  tokensInput?: number,
+  tokensOutput?: number
+) {
+  try {
+    await supabase.from("ai_usage_logs").insert({
+      organization_id: organizationId,
+      user_id: userId,
+      provider,
+      model,
+      module: "sistema_up",
+      action,
+      success,
+      error_message: errorMessage,
+      tokens_input: tokensInput,
+      tokens_output: tokensOutput
+    });
+  } catch (e) {
+    console.error("Error logging AI usage:", e);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Use OpenAI API Key for GPT
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not configured");
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -63,27 +236,41 @@ serve(async (req) => {
     const body: RequestBody = await req.json();
     console.log("UP AI Co-Pilot action:", body.action);
 
+    // Get organization AI configuration
+    const orgId = body.organizationId;
+    const { provider, model, apiKey } = await getOrgAIConfig(supabase, orgId);
+    
+    console.log(`Using provider: ${provider}, model: ${model}`);
+
+    if (!apiKey) {
+      throw new Error("No API key configured for AI provider");
+    }
+
     let result: any;
 
     switch (body.action) {
       case "quality_score":
-        result = await evaluateQualityScore(supabase, body, OPENAI_API_KEY);
+        result = await evaluateQualityScore(supabase, body, provider, model, apiKey);
         break;
       case "detect_events":
-        result = await detectEvents(supabase, body, OPENAI_API_KEY);
+        result = await detectEvents(supabase, body, provider, model, apiKey);
         break;
       case "anti_fraud":
-        result = await checkAntiFraud(supabase, body, OPENAI_API_KEY);
+        result = await checkAntiFraud(supabase, body, provider, model, apiKey);
         break;
       case "generate_quests":
-        result = await generateQuests(supabase, body, OPENAI_API_KEY);
+        result = await generateQuests(supabase, body, provider, model, apiKey);
         break;
       case "rule_recommendations":
-        result = await getRuleRecommendations(supabase, body, OPENAI_API_KEY);
+        result = await getRuleRecommendations(supabase, body, provider, model, apiKey);
         break;
       default:
         throw new Error("Invalid action");
     }
+
+    // Add provider info to result
+    result.aiProvider = provider;
+    result.aiModel = model;
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -97,53 +284,48 @@ serve(async (req) => {
   }
 });
 
-// GPT model to use - gpt-4o-mini for fast and cost-effective responses
-const GPT_MODEL = "gpt-4o-mini";
-
-async function callGPT(prompt: string, systemPrompt: string, apiKey: string, tools?: any[]) {
-  console.log("Calling GPT with model:", GPT_MODEL);
+async function callAI(
+  provider: string, 
+  model: string, 
+  apiKey: string,
+  systemPrompt: string, 
+  userPrompt: string, 
+  tools?: any[]
+) {
+  const config = AI_PROVIDERS[provider] || AI_PROVIDERS.lovable;
   
-  const body: any = {
-    model: GPT_MODEL,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: prompt },
-    ],
-    max_tokens: 2000,
-    temperature: 0.7,
-  };
-
-  if (tools) {
-    body.tools = tools;
-    body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
+  let url = config.url;
+  if (provider === "gemini") {
+    url = `${config.url}/${model}:generateContent`;
   }
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  console.log(`Calling ${provider} API with model: ${model}`);
+  
+  const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+    headers: config.getHeaders(apiKey),
+    body: JSON.stringify(config.getBody(model, systemPrompt, userPrompt, tools)),
   });
 
   if (!response.ok) {
     const text = await response.text();
-    console.error("OpenAI API error:", response.status, text);
-    throw new Error(`OpenAI API error: ${response.status} - ${text}`);
+    console.error(`${provider} API error:`, response.status, text);
+    throw new Error(`${provider} API error: ${response.status} - ${text}`);
   }
 
   const data = await response.json();
-  console.log("GPT response received");
+  console.log(`${provider} response received`);
   
-  if (tools && data.choices?.[0]?.message?.tool_calls?.[0]) {
-    return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
-  }
-  
-  return data.choices?.[0]?.message?.content || "";
+  return config.extractContent(data, !!tools);
 }
 
-async function evaluateQualityScore(supabase: any, req: QualityScoreRequest, apiKey: string) {
+async function evaluateQualityScore(
+  supabase: any, 
+  req: QualityScoreRequest, 
+  provider: string,
+  model: string,
+  apiKey: string
+) {
   // Fetch content details
   const { data: content, error } = await supabase
     .from("content")
@@ -176,7 +358,13 @@ Evalúa el contenido basándote en:
 - Claridad y persuasión
 - Potencial viral
 
-Responde SOLO con la función tool_call solicitada.`;
+Responde con un JSON válido con esta estructura:
+{
+  "score": number (0-100),
+  "breakdown": { "hook": number, "structure": number, "cta": number, "coherence": number, "viralPotential": number },
+  "reasons": ["razón 1", "razón 2"],
+  "suggestions": ["sugerencia 1", "sugerencia 2"]
+}`;
 
   const prompt = `Evalúa este contenido:
 
@@ -228,7 +416,20 @@ TIENE THUMBNAIL: ${content.thumbnail_url ? "Sí" : "No"}`;
     }
   }];
 
-  const result = await callGPT(prompt, systemPrompt, apiKey, tools);
+  let result: any;
+  
+  if (provider === "openai" || provider === "lovable") {
+    result = await callAI(provider, model, apiKey, systemPrompt, prompt, tools);
+  } else {
+    // For providers without native tool support, parse JSON response
+    const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
+    try {
+      result = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
+    } catch {
+      // Create default response if parsing fails
+      result = { score: 50, breakdown: { hook: 50, structure: 50, cta: 50, coherence: 50, viralPotential: 50 }, reasons: ["No se pudo evaluar"], suggestions: [] };
+    }
+  }
 
   // Save to database
   const { error: saveError } = await supabase
@@ -240,7 +441,7 @@ TIENE THUMBNAIL: ${content.thumbnail_url ? "Sí" : "No"}`;
       breakdown: result.breakdown,
       reasons: result.reasons,
       suggestions: result.suggestions,
-      ai_model: GPT_MODEL,
+      ai_model: `${provider}/${model}`,
       evaluated_at: new Date().toISOString()
     }, { onConflict: "content_id" });
 
@@ -253,7 +454,13 @@ TIENE THUMBNAIL: ${content.thumbnail_url ? "Sí" : "No"}`;
   };
 }
 
-async function detectEvents(supabase: any, req: EventDetectionRequest, apiKey: string) {
+async function detectEvents(
+  supabase: any, 
+  req: EventDetectionRequest, 
+  provider: string,
+  model: string,
+  apiKey: string
+) {
   // Fetch recent content activity
   const { data: content } = await supabase
     .from("content")
@@ -277,7 +484,14 @@ async function detectEvents(supabase: any, req: EventDetectionRequest, apiKey: s
 
   const systemPrompt = `Eres un sistema de detección de eventos para gamificación de UGC Colombia.
 Analiza la actividad del contenido y detecta eventos implícitos que podrían no haberse registrado.
-Solo detecta eventos con alta confianza (>0.7).`;
+Solo detecta eventos con alta confianza (>0.7).
+
+Responde con un JSON válido con esta estructura:
+{
+  "suggestedEvents": [
+    { "eventType": "string", "confidence": number (0-1), "evidence": ["string"], "recommendedPoints": number }
+  ]
+}`;
 
   const prompt = `Analiza esta actividad de contenido:
 
@@ -320,7 +534,18 @@ Detecta eventos que podrían haberse producido pero no se registraron.`;
     }
   }];
 
-  const result = await callGPT(prompt, systemPrompt, apiKey, tools);
+  let result: any;
+  
+  if (provider === "openai" || provider === "lovable") {
+    result = await callAI(provider, model, apiKey, systemPrompt, prompt, tools);
+  } else {
+    const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
+    try {
+      result = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
+    } catch {
+      result = { suggestedEvents: [] };
+    }
+  }
 
   return {
     contentId: req.contentId,
@@ -329,7 +554,13 @@ Detecta eventos que podrían haberse producido pero no se registraron.`;
   };
 }
 
-async function checkAntiFraud(supabase: any, req: AntiFraudRequest, apiKey: string) {
+async function checkAntiFraud(
+  supabase: any, 
+  req: AntiFraudRequest, 
+  provider: string,
+  model: string,
+  apiKey: string
+) {
   const timeRange = req.timeRangeHours || 168; // Default 7 days
   const since = new Date(Date.now() - timeRange * 60 * 60 * 1000).toISOString();
 
@@ -360,7 +591,15 @@ Detecta patrones sospechosos como:
 - Asignaciones repetidas entre mismos usuarios
 - Aprobaciones sin review
 - Spam de microtareas
-Solo reporta patrones con evidencia clara.`;
+Solo reporta patrones con evidencia clara.
+
+Responde con un JSON válido con esta estructura:
+{
+  "alerts": [
+    { "severity": "low|medium|high", "alertType": "string", "reason": "string", "evidence": ["string"], "affectedUserId": "string" }
+  ],
+  "summary": "string"
+}`;
 
   const prompt = `Analiza estos datos de actividad:
 
@@ -403,7 +642,18 @@ Detecta patrones de fraude o gaming del sistema.`;
     }
   }];
 
-  const result = await callGPT(prompt, systemPrompt, apiKey, tools);
+  let result: any;
+  
+  if (provider === "openai" || provider === "lovable") {
+    result = await callAI(provider, model, apiKey, systemPrompt, prompt, tools);
+  } else {
+    const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
+    try {
+      result = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
+    } catch {
+      result = { alerts: [], summary: "No se pudo analizar" };
+    }
+  }
 
   // Save high-severity alerts to database
   for (const alert of result.alerts || []) {
@@ -422,7 +672,13 @@ Detecta patrones de fraude o gaming del sistema.`;
   return result;
 }
 
-async function generateQuests(supabase: any, req: QuestGenerationRequest, apiKey: string) {
+async function generateQuests(
+  supabase: any, 
+  req: QuestGenerationRequest, 
+  provider: string,
+  model: string,
+  apiKey: string
+) {
   // Fetch org stats
   const { data: recentEvents } = await supabase
     .from("up_events")
@@ -448,7 +704,14 @@ Crea misiones semanales relevantes basadas en:
 - Cuellos de botella detectados
 - Objetivos de mejora de la agencia
 - Engagement del equipo de creadores y editores
-Las misiones deben ser alcanzables pero desafiantes.`;
+Las misiones deben ser alcanzables pero desafiantes.
+
+Responde con un JSON válido con esta estructura:
+{
+  "quests": [
+    { "title": "string", "description": "string", "goalMetric": "string", "goalValue": number, "rewardPoints": number, "appliesTo": ["role"], "reasoning": "string" }
+  ]
+}`;
 
   const prompt = `Genera misiones semanales para esta organización:
 
@@ -492,7 +755,18 @@ Genera 3-5 misiones nuevas y relevantes para creadores de contenido UGC.`;
     }
   }];
 
-  const result = await callGPT(prompt, systemPrompt, apiKey, tools);
+  let result: any;
+  
+  if (provider === "openai" || provider === "lovable") {
+    result = await callAI(provider, model, apiKey, systemPrompt, prompt, tools);
+  } else {
+    const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
+    try {
+      result = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
+    } catch {
+      result = { quests: [] };
+    }
+  }
 
   return {
     organizationId: req.organizationId,
@@ -500,63 +774,65 @@ Genera 3-5 misiones nuevas y relevantes para creadores de contenido UGC.`;
   };
 }
 
-async function getRuleRecommendations(supabase: any, req: RuleRecommendationsRequest, apiKey: string) {
+async function getRuleRecommendations(
+  supabase: any, 
+  req: RuleRecommendationsRequest, 
+  provider: string,
+  model: string,
+  apiKey: string
+) {
   // Fetch current rules
-  const { data: rules } = await supabase
-    .from("up_rules")
-    .select("name, event_type_key, points, is_active")
+  const { data: currentRules } = await supabase
+    .from("up_event_types")
+    .select("key, label, points, category")
     .eq("organization_id", req.organizationId);
 
-  // Fetch recent metrics
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  
-  const { data: lateDeliveries } = await supabase
+  // Fetch recent activity stats
+  const { data: recentEvents } = await supabase
     .from("up_events")
-    .select("id")
+    .select("event_type_key, points_awarded")
     .eq("organization_id", req.organizationId)
-    .eq("event_type_key", "deadline_missed")
-    .gte("created_at", thirtyDaysAgo);
+    .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
-  const { data: corrections } = await supabase
-    .from("up_events")
-    .select("id")
-    .eq("organization_id", req.organizationId)
-    .eq("event_type_key", "correction_requested")
-    .gte("created_at", thirtyDaysAgo);
+  // Calculate event frequency
+  const eventFreq: Record<string, number> = {};
+  (recentEvents || []).forEach((e: any) => {
+    eventFreq[e.event_type_key] = (eventFreq[e.event_type_key] || 0) + 1;
+  });
 
-  const { data: deliveries } = await supabase
-    .from("up_events")
-    .select("id")
-    .eq("organization_id", req.organizationId)
-    .eq("event_type_key", "content_delivered")
-    .gte("created_at", thirtyDaysAgo);
+  const systemPrompt = `Eres un consultor de gamificación experto para UGC Colombia.
+Analiza las reglas actuales y sugiere mejoras basándote en:
+- Balance de puntos
+- Engagement del equipo
+- Prevención de fraude
+- Simplicidad del sistema
 
-  const systemPrompt = `Eres un consultor de gamificación para UGC Colombia.
-Analiza las métricas y sugiere ajustes a las reglas del sistema UP para mejorar:
-- Entregas a tiempo de los creadores
-- Reducir correcciones y retrabajo
-- Aumentar engagement del equipo
-Solo sugiere cambios con impacto claro.`;
+Responde con un JSON válido con esta estructura:
+{
+  "recommendations": [
+    { "ruleKey": "string", "currentPoints": number, "suggestedPoints": number, "reasoning": "string", "priority": "low|medium|high" }
+  ],
+  "newRulesSuggestions": [
+    { "key": "string", "label": "string", "points": number, "category": "string", "reasoning": "string" }
+  ],
+  "summary": "string"
+}`;
 
-  const prompt = `Analiza estas métricas y reglas:
+  const prompt = `Analiza estas reglas de gamificación:
 
 REGLAS ACTUALES:
-${JSON.stringify(rules || [])}
+${JSON.stringify(currentRules || [])}
 
-MÉTRICAS (últimos 30 días):
-- Entregas tardías: ${lateDeliveries?.length || 0}
-- Correcciones: ${corrections?.length || 0}
-- Entregas totales: ${deliveries?.length || 0}
-- Tasa de corrección: ${deliveries?.length ? ((corrections?.length || 0) / deliveries.length * 100).toFixed(1) : 0}%
-- Tasa de tardanza: ${deliveries?.length ? ((lateDeliveries?.length || 0) / deliveries.length * 100).toFixed(1) : 0}%
+FRECUENCIA DE EVENTOS (últimos 30 días):
+${JSON.stringify(eventFreq)}
 
-Sugiere ajustes a las reglas para mejorar el rendimiento del equipo.`;
+Sugiere mejoras al sistema de puntos para optimizar engagement y prevenir gaming.`;
 
   const tools = [{
     type: "function",
     function: {
       name: "recommend_rules",
-      description: "Recomienda cambios a las reglas",
+      description: "Recomienda mejoras a las reglas",
       parameters: {
         type: "object",
         properties: {
@@ -565,30 +841,48 @@ Sugiere ajustes a las reglas para mejorar el rendimiento del equipo.`;
             items: {
               type: "object",
               properties: {
-                title: { type: "string" },
-                why: { type: "string" },
-                impact: { type: "string" },
-                proposedRule: {
-                  type: "object",
-                  properties: {
-                    eventType: { type: "string" },
-                    points: { type: "integer" },
-                    isNew: { type: "boolean" }
-                  },
-                  required: ["eventType", "points", "isNew"]
-                }
+                ruleKey: { type: "string" },
+                currentPoints: { type: "integer" },
+                suggestedPoints: { type: "integer" },
+                reasoning: { type: "string" },
+                priority: { type: "string", enum: ["low", "medium", "high"] }
               },
-              required: ["title", "why", "impact", "proposedRule"]
+              required: ["ruleKey", "currentPoints", "suggestedPoints", "reasoning", "priority"]
+            }
+          },
+          newRulesSuggestions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                key: { type: "string" },
+                label: { type: "string" },
+                points: { type: "integer" },
+                category: { type: "string" },
+                reasoning: { type: "string" }
+              },
+              required: ["key", "label", "points", "category", "reasoning"]
             }
           },
           summary: { type: "string" }
         },
-        required: ["recommendations", "summary"]
+        required: ["recommendations", "newRulesSuggestions", "summary"]
       }
     }
   }];
 
-  const result = await callGPT(prompt, systemPrompt, apiKey, tools);
+  let result: any;
+  
+  if (provider === "openai" || provider === "lovable") {
+    result = await callAI(provider, model, apiKey, systemPrompt, prompt, tools);
+  } else {
+    const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
+    try {
+      result = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
+    } catch {
+      result = { recommendations: [], newRulesSuggestions: [], summary: "No se pudo analizar" };
+    }
+  }
 
   return {
     organizationId: req.organizationId,
