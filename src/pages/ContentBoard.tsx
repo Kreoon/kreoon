@@ -254,7 +254,7 @@ export default function ContentBoard() {
   }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, startDateFilter, deadlineFilter]);
   
   // Board settings hook
-  const { settings, statuses: orgStatuses, rules, loading: settingsLoading } = useBoardSettings(currentOrgId);
+  const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings } = useBoardSettings(currentOrgId);
 
   // Determinar el rol principal del usuario
   const primaryRole = isAdmin ? 'admin' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'admin';
@@ -709,9 +709,15 @@ export default function ContentBoard() {
         {/* Board Header with View Switcher */}
         <div className="rounded-xl border border-border bg-card p-3 md:p-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 md:mb-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-base md:text-lg font-semibold text-card-foreground">Flujo de Trabajo</h2>
               <Badge variant="outline" className="text-xs">{filteredContent.length} items</Badge>
+              {settings && settings.card_size !== 'normal' && (
+                <Badge variant="secondary" className="text-xs gap-1">
+                  <Settings2 className="h-3 w-3" />
+                  {settings.card_size === 'compact' ? 'Compacta' : 'Grande'}
+                </Badge>
+              )}
               <AutoSaveIndicator status={saveStatus} lastSaved={persistence.lastSaved} />
             </div>
             <div className="flex items-center gap-2">
@@ -830,6 +836,7 @@ export default function ContentBoard() {
           organizationId={currentOrgId}
           open={showConfigDialog}
           onOpenChange={setShowConfigDialog}
+          onSettingsChange={refetchSettings}
         />
       )}
 

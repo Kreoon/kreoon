@@ -19,6 +19,7 @@ interface BoardConfigDialogProps {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onSettingsChange?: () => void; // Callback when settings change
 }
 
 const STATUS_COLORS = [
@@ -69,7 +70,7 @@ const ROLE_LABELS: Record<string, string> = {
   designer: 'Diseñador'
 };
 
-export function BoardConfigDialog({ organizationId, trigger, open: controlledOpen, onOpenChange }: BoardConfigDialogProps) {
+export function BoardConfigDialog({ organizationId, trigger, open: controlledOpen, onOpenChange, onSettingsChange }: BoardConfigDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
@@ -147,12 +148,19 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     setNewFieldType('text');
   };
 
-  const toggleVisibleField = (field: string) => {
+  const toggleVisibleField = async (field: string) => {
     if (!settings) return;
     const newFields = settings.visible_fields.includes(field)
       ? settings.visible_fields.filter(f => f !== field)
       : [...settings.visible_fields, field];
-    updateSettings({ visible_fields: newFields });
+    await updateSettings({ visible_fields: newFields });
+    onSettingsChange?.();
+  };
+  
+  // Wrapper to call callback after settings update
+  const handleUpdateSettings = async (updates: Parameters<typeof updateSettings>[0]) => {
+    await updateSettings(updates);
+    onSettingsChange?.();
   };
 
   return (
@@ -449,7 +457,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                       "p-3 cursor-pointer transition-all hover:border-primary/50",
                       settings?.card_size === size && "border-primary bg-primary/5"
                     )}
-                    onClick={() => updateSettings({ card_size: size })}
+                    onClick={() => handleUpdateSettings({ card_size: size })}
                   >
                     <div className="flex flex-col items-center gap-2">
                       <div className={cn(
@@ -479,7 +487,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                     key={view}
                     variant={settings?.default_view === view ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => updateSettings({ default_view: view })}
+                    onClick={() => handleUpdateSettings({ default_view: view })}
                   >
                     {view === 'kanban' ? 'Kanban' : view === 'list' ? 'Lista' : view === 'calendar' ? 'Calendario' : 'Tabla'}
                   </Button>
