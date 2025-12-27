@@ -142,52 +142,51 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
   }
 };
 
-// Get organization AI configuration
-async function getOrgAIConfig(supabase: any, organizationId: string) {
-  // Get org defaults
-  const { data: defaults } = await supabase
-    .from("organization_ai_defaults")
-    .select("*")
+// Get module AI configuration with validation
+async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
+  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  
+  // Check if module is active
+  const { data: moduleData } = await supabase
+    .from("organization_ai_modules")
+    .select("is_active, provider, model")
     .eq("organization_id", organizationId)
+    .eq("module_key", moduleKey)
     .maybeSingle();
-
-  // Get enabled providers with API keys
-  const { data: providers } = await supabase
-    .from("organization_ai_providers")
-    .select("*")
-    .eq("organization_id", organizationId)
-    .eq("is_enabled", true);
-
-  // Get provider for sistema_up module
-  let provider = defaults?.sistema_up_provider || defaults?.default_provider || "lovable";
-  let model = defaults?.sistema_up_model || defaults?.default_model || "google/gemini-2.5-flash";
-
-  // Get API key for the provider
+  
+  if (!moduleData?.is_active) {
+    throw new Error(`MODULE_INACTIVE:${moduleKey}`);
+  }
+  
+  let provider = moduleData?.provider || "lovable";
+  let model = moduleData?.model || "google/gemini-2.5-flash";
   let apiKey: string | null = null;
   
-  if (provider === "lovable") {
-    apiKey = Deno.env.get("LOVABLE_API_KEY") || null;
-  } else {
-    const providerData = providers?.find((p: any) => p.provider_key === provider);
-    apiKey = providerData?.api_key_encrypted || null;
-  }
-
-  // Fallback to global keys if org doesn't have one
-  if (!apiKey) {
-    if (provider === "openai") {
-      apiKey = Deno.env.get("OPENAI_API_KEY") || null;
-    } else if (provider === "gemini") {
-      apiKey = Deno.env.get("GOOGLE_GEMINI_API_KEY") || null;
+  if (provider !== "lovable") {
+    const { data: providerData } = await supabase
+      .from("organization_ai_providers")
+      .select("api_key_encrypted")
+      .eq("organization_id", organizationId)
+      .eq("provider_key", provider)
+      .eq("is_enabled", true)
+      .maybeSingle();
+    
+    if (providerData?.api_key_encrypted) {
+      apiKey = providerData.api_key_encrypted;
+    } else {
+      provider = "lovable";
+      model = "google/gemini-2.5-flash";
     }
   }
-
-  // Final fallback to Lovable AI
-  if (!apiKey) {
-    provider = "lovable";
-    model = "google/gemini-2.5-flash";
-    apiKey = Deno.env.get("LOVABLE_API_KEY") || null;
+  
+  if (provider === "lovable") {
+    apiKey = lovableApiKey || null;
   }
-
+  
+  if (!apiKey) {
+    throw new Error("No hay API key configurada para el proveedor de IA");
+  }
+  
   return { provider, model, apiKey };
 }
 
@@ -236,15 +235,28 @@ serve(async (req) => {
     const body: RequestBody = await req.json();
     console.log("UP AI Co-Pilot action:", body.action);
 
-    // Get organization AI configuration
     const orgId = body.organizationId;
-    const { provider, model, apiKey } = await getOrgAIConfig(supabase, orgId);
-    
-    console.log(`Using provider: ${provider}, model: ${model}`);
 
-    if (!apiKey) {
-      throw new Error("No API key configured for AI provider");
+    // Validate module is active and get configuration
+    let aiConfig;
+    try {
+      aiConfig = await getModuleAIConfig(supabase, orgId, "sistema_up");
+    } catch (error: any) {
+      if (error.message?.startsWith("MODULE_INACTIVE:")) {
+        return new Response(
+          JSON.stringify({ 
+            error: "MODULE_INACTIVE",
+            module: "sistema_up",
+            message: "El módulo de IA 'Sistema UP' no está habilitado. Actívalo en Configuración → IA & Modelos."
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      throw error;
     }
+
+    const { provider, model, apiKey } = aiConfig;
+    console.log(`Using provider: ${provider}, model: ${model}`);
 
     let result: any;
 
