@@ -59,7 +59,7 @@ function getVideoUrls(item: ContentItem): string[] {
 
 const Content = () => {
   const { roles, user } = useAuth();
-  const { isPlatformRoot, currentOrgId } = useOrgOwner();
+  const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
   const isAdmin = roles.includes('admin');
   const isClient = roles.includes('client');
   const [content, setContent] = useState<ContentItem[]>([]);
@@ -102,8 +102,10 @@ const Content = () => {
   }, [user?.id, isClient]);
 
   useEffect(() => {
+    // Wait for org context to resolve
+    if (orgLoading) return;
     fetchContent();
-  }, [isPlatformRoot, currentOrgId]);
+  }, [isPlatformRoot, currentOrgId, orgLoading]);
 
   const fetchContent = async () => {
     try {
@@ -126,7 +128,7 @@ const Content = () => {
         `)
         .or('video_url.not.is.null,video_urls.not.is.null')
         .order('created_at', { ascending: false });
-      
+
       // Filter by organization - always apply when org is selected (including for root)
       if (currentOrgId) {
         query = query.eq('organization_id', currentOrgId);

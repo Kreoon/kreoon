@@ -73,7 +73,7 @@ interface ClientUser {
 const Clients = () => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
-  const { isPlatformRoot, currentOrgId, currentOrgName } = useOrgOwner();
+  const { isPlatformRoot, currentOrgId, currentOrgName, loading: orgLoading } = useOrgOwner();
   const [clients, setClients] = useState<Client[]>([]);
   const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -220,8 +220,9 @@ const Clients = () => {
   };
 
   useEffect(() => {
+    if (orgLoading) return;
     fetchClients();
-  }, [isPlatformRoot, currentOrgId]);
+  }, [isPlatformRoot, currentOrgId, orgLoading]);
 
   const handleDelete = async (clientId: string, clientName: string) => {
     try {

@@ -28,15 +28,18 @@ const tabConfig: { id: BlockType; label: string; icon: typeof FileText; shortLab
 ];
 
 const Scripts = () => {
-  const { currentOrgId } = useOrgOwner();
+  const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<BlockType>('creator');
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
 
-  // Fetch content with scripts
+  // Fetch content with scripts – wait for org context
   const { data: contents, isLoading, refetch } = useQuery({
-    queryKey: ['scripts-content', currentOrgId],
+    queryKey: ['scripts-content', currentOrgId, orgLoading],
     queryFn: async () => {
+      // Guard: ensure org ready
+      if (orgLoading || !currentOrgId) return [];
+
       let query = supabase
         .from('content')
         .select(`
@@ -54,17 +57,14 @@ const Scripts = () => {
           client:clients(name, logo_url),
           product:products(name)
         `)
+        .eq('organization_id', currentOrgId)
         .order('created_at', { ascending: false });
-      
-      // Filter by organization - always apply when org is selected
-      if (currentOrgId) {
-        query = query.eq('organization_id', currentOrgId);
-      }
-      
+
       const { data, error } = await query;
       if (error) throw error;
       return data;
     },
+    enabled: !orgLoading,
   });
 
   // Filter contents based on search

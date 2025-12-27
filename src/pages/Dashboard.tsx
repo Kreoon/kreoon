@@ -246,7 +246,7 @@ const LargeKpiCard = ({
 
 export default function Dashboard() {
   const { user, isAdmin, profile, isAmbassador } = useAuth();
-  const { currentOrgId } = useOrgOwner();
+  const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
   
   // Filters state
@@ -342,8 +342,9 @@ export default function Dashboard() {
   const [activeCreators, setActiveCreators] = useState<(Profile & { content_count?: number; total_payment?: number })[]>([]);
   const [activeEditors, setActiveEditors] = useState<(Profile & { content_count?: number; total_payment?: number })[]>([]);
 
-  // Load filters and data
+  // Load filters and data - wait for org context
   useEffect(() => {
+    if (orgLoading) return;
     const fetchFiltersAndData = async () => {
       // Get org member IDs for filtering creators/editors
       let orgMemberIds: string[] = [];
