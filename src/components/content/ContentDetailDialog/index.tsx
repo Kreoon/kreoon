@@ -24,10 +24,7 @@ import { es } from 'date-fns/locale';
 import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ContentDetailDialogProps, ContentFormData, SelectOption } from './types';
-import { useOrgOwner } from '@/hooks/useOrgOwner';
-
-// Special ID to represent "Organization as client" (internal brand)
-const ORG_AS_CLIENT_ID = '__INTERNAL_BRAND__';
+import { useInternalBrandClient } from '@/hooks/useInternalBrandClient';
 
 // Lazy load tabs
 const ScriptsTab = lazy(() => import('./tabs/ScriptsTab').then(m => ({ default: m.ScriptsTab })));
@@ -68,7 +65,7 @@ export function ContentDetailDialog({
   mode = 'view'
 }: ContentDetailDialogProps) {
   const { isAdmin, isClient, user } = useAuth();
-  const { currentOrgId, currentOrgName } = useOrgOwner();
+  const { internalBrandClient } = useInternalBrandClient();
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('scripts');
@@ -102,20 +99,29 @@ export function ContentDetailDialog({
   // Fetch clients for header selector
   useEffect(() => {
     const fetchClients = async () => {
-      const { data } = await supabase.from('clients').select('id, name').order('name');
+      const { data } = await supabase
+        .from('clients')
+        .select('id, name, is_internal_brand')
+        .order('name');
       
-      // Add organization as first option for internal brand / ambassador content
-      const orgOption: SelectOption = {
-        id: ORG_AS_CLIENT_ID,
-        name: currentOrgName ? `🏅 ${currentOrgName} (Marca Interna)` : '🏅 Marca Interna',
-        is_internal_brand: true
-      };
-      setClients([orgOption, ...(data || [])]);
+      // Mark internal brand client for special display and sort first
+      const clientsWithFlags = (data || []).map(c => ({
+        ...c,
+        is_internal_brand: c.is_internal_brand === true
+      }));
+      
+      clientsWithFlags.sort((a, b) => {
+        if (a.is_internal_brand && !b.is_internal_brand) return -1;
+        if (!a.is_internal_brand && b.is_internal_brand) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      
+      setClients(clientsWithFlags);
     };
     if (open) {
       fetchClients();
     }
-  }, [open, currentOrgName]);
+  }, [open]);
 
   // Get client name from formData
   const getClientName = () => {
@@ -370,7 +376,9 @@ export function ContentDetailDialog({
                       {clients.map(c => (
                         <SelectItem key={c.id} value={c.id}>
                           {c.is_internal_brand ? (
-                            <span className="text-amber-600 dark:text-amber-400 font-medium">{c.name}</span>
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">
+                              🏅 {c.name} (Marca Interna)
+                            </span>
                           ) : (
                             c.name
                           )}

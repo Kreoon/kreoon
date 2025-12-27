@@ -3,10 +3,7 @@ import { ContentFormData } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { useOrgOwner } from '@/hooks/useOrgOwner';
-
-// Special ID to represent "Organization as client" (internal brand)
-const ORG_AS_CLIENT_ID = '__INTERNAL_BRAND__';
+import { useInternalBrandClient } from '@/hooks/useInternalBrandClient';
 
 interface UseContentCreateOptions {
   onSuccess?: () => void;
@@ -39,7 +36,7 @@ interface Product {
 export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { currentOrgId, currentOrgName } = useOrgOwner();
+  const { internalBrandClient, isInternalBrand, currentOrgId } = useInternalBrandClient();
   
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -108,12 +105,11 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
 
   // Detect if client is the organization (ambassador content)
   useEffect(() => {
-    // Special ID means user selected org as internal brand
-    const isOrgAsClient = formData.client_id === ORG_AS_CLIENT_ID;
+    const isOrgAsClient = isInternalBrand(formData.client_id);
     
     const wasAmbassadorContent = isAmbassadorContent;
     setIsAmbassadorContent(isOrgAsClient);
-    setOrganizationClientId(isOrgAsClient ? currentOrgId : null);
+    setOrganizationClientId(isOrgAsClient ? formData.client_id : null);
     
     // Clear creator selection when switching to/from ambassador content
     if (isOrgAsClient !== wasAmbassadorContent) {
@@ -140,11 +136,12 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
         reward_type: 'money'
       }));
     }
-  }, [formData.client_id, currentOrgId]);
+  }, [formData.client_id, internalBrandClient]);
 
-  // Fetch client's packages and products when client changes (skip for internal brand)
+  // Fetch client's packages and products when client changes
   useEffect(() => {
-    if (formData.client_id && formData.client_id !== ORG_AS_CLIENT_ID) {
+    // Skip if no client selected, but allow internal brand clients to fetch their data
+    if (formData.client_id) {
       fetchClientData(formData.client_id);
     } else {
       setClientPackages([]);
@@ -207,19 +204,25 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
   const fetchOptions = async () => {
     setLoading(true);
     try {
-      // Fetch clients
+      // Fetch clients with internal brand flag
       const { data: clientsData } = await supabase
         .from('clients')
-        .select('id, name')
+        .select('id, name, is_internal_brand')
         .order('name');
       
-      // Add organization as first option for internal brand / ambassador content
-      const orgOption: SelectOption = {
-        id: ORG_AS_CLIENT_ID,
-        name: currentOrgName ? `🏅 ${currentOrgName} (Marca Interna)` : '🏅 Marca Interna',
-        is_internal_brand: true
-      };
-      setClients([orgOption, ...(clientsData || [])]);
+      // Mark internal brand and sort first
+      const clientsWithFlags = (clientsData || []).map(c => ({
+        ...c,
+        is_internal_brand: c.is_internal_brand === true
+      }));
+      
+      clientsWithFlags.sort((a, b) => {
+        if (a.is_internal_brand && !b.is_internal_brand) return -1;
+        if (!a.is_internal_brand && b.is_internal_brand) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      
+      setClients(clientsWithFlags);
 
       // Fetch creators (regular)
       const { data: creatorRoles } = await supabase
