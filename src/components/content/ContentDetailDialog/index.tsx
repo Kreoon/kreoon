@@ -24,6 +24,10 @@ import { es } from 'date-fns/locale';
 import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ContentDetailDialogProps, ContentFormData, SelectOption } from './types';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
+
+// Special ID to represent "Organization as client" (internal brand)
+const ORG_AS_CLIENT_ID = '__INTERNAL_BRAND__';
 
 // Lazy load tabs
 const ScriptsTab = lazy(() => import('./tabs/ScriptsTab').then(m => ({ default: m.ScriptsTab })));
@@ -64,6 +68,7 @@ export function ContentDetailDialog({
   mode = 'view'
 }: ContentDetailDialogProps) {
   const { isAdmin, isClient, user } = useAuth();
+  const { currentOrgId, currentOrgName } = useOrgOwner();
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('scripts');
@@ -98,12 +103,19 @@ export function ContentDetailDialog({
   useEffect(() => {
     const fetchClients = async () => {
       const { data } = await supabase.from('clients').select('id, name').order('name');
-      setClients(data || []);
+      
+      // Add organization as first option for internal brand / ambassador content
+      const orgOption: SelectOption = {
+        id: ORG_AS_CLIENT_ID,
+        name: currentOrgName ? `🏅 ${currentOrgName} (Marca Interna)` : '🏅 Marca Interna',
+        is_internal_brand: true
+      };
+      setClients([orgOption, ...(data || [])]);
     };
     if (open) {
       fetchClients();
     }
-  }, [open]);
+  }, [open, currentOrgName]);
 
   // Get client name from formData
   const getClientName = () => {
@@ -356,7 +368,13 @@ export function ContentDetailDialog({
                     </SelectTrigger>
                     <SelectContent>
                       {clients.map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.is_internal_brand ? (
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">{c.name}</span>
+                          ) : (
+                            c.name
+                          )}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
