@@ -338,89 +338,208 @@ async function evaluateQualityScore(
   model: string,
   apiKey: string
 ) {
-  // Fetch content details
+  // Fetch comprehensive content details including all guidelines and context
   const { data: content, error } = await supabase
     .from("content")
     .select(`
-      id, title, description, script, sales_angle, notes,
+      id, title, description, script, sales_angle, notes, caption,
       strategist_guidelines, editor_guidelines, designer_guidelines,
-      status, video_url, thumbnail_url,
-      client:clients(name, category),
-      product:products(name, description)
+      admin_guidelines, trafficker_guidelines,
+      status, video_url, thumbnail_url, raw_video_urls, hooks_count,
+      deadline, start_date, created_at, updated_at,
+      creator_payment, editor_payment,
+      client:clients(name, category, bio, notes),
+      product:products(
+        name, description, strategy, market_research, 
+        ideal_avatar, sales_angles, brief_url
+      ),
+      creator:profiles!content_creator_id_fkey(full_name, role),
+      editor:profiles!content_editor_id_fkey(full_name, role),
+      strategist:profiles!content_strategist_id_fkey(full_name),
+      custom_status:organization_statuses(name, label, description)
     `)
     .eq("id", req.contentId)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error fetching content for quality score:", error);
+    throw error;
+  }
 
-  // Fetch correction history
+  // Fetch content comments for additional context
+  const { data: comments } = await supabase
+    .from("content_comments")
+    .select("comment, comment_type, section, created_at")
+    .eq("content_id", req.contentId)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  // Fetch complete status history
   const { data: statusLogs } = await supabase
     .from("content_status_logs")
-    .select("to_status, notes, moved_at")
+    .select("to_status, from_status, notes, moved_at, user_role")
     .eq("content_id", req.contentId)
-    .eq("to_status", "issue")
-    .order("moved_at", { ascending: false });
+    .order("moved_at", { ascending: false })
+    .limit(15);
 
-  const correctionCount = statusLogs?.length || 0;
+  // Count issues/corrections
+  const issueCount = statusLogs?.filter((log: any) => log.to_status === "issue").length || 0;
+  
+  // Fetch custom field values if any
+  const { data: customFields } = await supabase
+    .from("content_custom_field_values")
+    .select(`
+      value,
+      field:board_custom_fields(name, field_type)
+    `)
+    .eq("content_id", req.contentId);
 
-  const systemPrompt = `Eres un evaluador experto de calidad de contenido UGC para la agencia UGC Colombia. 
-Evalúa el contenido basándote en:
-- Estructura del guión (hook, desarrollo, CTA)
-- Coherencia con el brief/ángulo de venta
-- Claridad y persuasión
-- Potencial viral
+  // Build comprehensive context
+  const customFieldsText = customFields?.length > 0
+    ? customFields.map((cf: any) => `${cf.field?.name}: ${JSON.stringify(cf.value)}`).join("\n")
+    : "Sin campos personalizados";
 
-Responde con un JSON válido con esta estructura:
+  const commentsText = comments?.length > 0
+    ? comments.map((c: any) => `[${c.comment_type || 'general'}] ${c.comment}`).join("\n")
+    : "Sin comentarios";
+
+  const statusHistoryText = statusLogs?.length > 0
+    ? statusLogs.slice(0, 5).map((log: any) => 
+        `${log.from_status || 'inicio'} → ${log.to_status}${log.notes ? `: ${log.notes}` : ''}`
+      ).join("\n")
+    : "Sin historial";
+
+  const systemPrompt = `Eres un evaluador experto de calidad de contenido UGC para agencias de marketing.
+Tu evaluación debe ser ESPECÍFICA basada en el contenido real proporcionado.
+
+Criterios de evaluación:
+1. HOOK (0-100): ¿El gancho es atractivo, genera curiosidad, detiene el scroll?
+2. ESTRUCTURA (0-100): ¿Tiene introducción, desarrollo y cierre claros? ¿Fluye bien?
+3. CTA (0-100): ¿El llamado a la acción es claro, persuasivo y alineado con el objetivo?
+4. COHERENCIA (0-100): ¿El contenido es coherente con el brief, avatar ideal y ángulo de venta?
+5. POTENCIAL VIRAL (0-100): ¿Tiene elementos que lo hagan compartible, relatable, memorable?
+
+IMPORTANTE:
+- Lee TODA la información proporcionada antes de evaluar
+- Sé específico en las razones, menciona partes concretas del guión
+- Las sugerencias deben ser accionables y específicas
+- Si falta guión o información clave, refleja eso en el score
+- Considera las correcciones previas y comentarios
+
+Responde SOLO con JSON válido:
 {
-  "score": number (0-100),
+  "score": number (0-100, promedio ponderado),
   "breakdown": { "hook": number, "structure": number, "cta": number, "coherence": number, "viralPotential": number },
-  "reasons": ["razón 1", "razón 2"],
-  "suggestions": ["sugerencia 1", "sugerencia 2"]
+  "reasons": ["razón específica 1", "razón específica 2", "razón 3"],
+  "suggestions": ["sugerencia accionable 1", "sugerencia 2"]
 }`;
 
-  const prompt = `Evalúa este contenido:
+  const prompt = `EVALÚA ESTE CONTENIDO EN DETALLE:
 
-TÍTULO: ${content.title}
-DESCRIPCIÓN: ${content.description || "N/A"}
-GUIÓN: ${content.script || "Sin guión"}
-ÁNGULO DE VENTA: ${content.sales_angle || "N/A"}
-CLIENTE: ${content.client?.name || "N/A"} (${content.client?.category || "N/A"})
-PRODUCTO: ${content.product?.name || "N/A"} - ${content.product?.description || "N/A"}
-GUIDELINES ESTRATEGA: ${content.strategist_guidelines || "N/A"}
-CORRECCIONES PREVIAS: ${correctionCount}
-ESTADO: ${content.status}
-TIENE VIDEO: ${content.video_url ? "Sí" : "No"}
-TIENE THUMBNAIL: ${content.thumbnail_url ? "Sí" : "No"}`;
+═══════════════════════════════════════
+📋 INFORMACIÓN GENERAL
+═══════════════════════════════════════
+• Título: ${content.title}
+• Descripción: ${content.description || "Sin descripción"}
+• Estado actual: ${content.custom_status?.label || content.status || "N/A"}
+• Hooks count: ${content.hooks_count || 1}
+• Caption: ${content.caption || "Sin caption"}
+
+═══════════════════════════════════════
+📝 GUIÓN COMPLETO
+═══════════════════════════════════════
+${content.script || "⚠️ SIN GUIÓN - Esto afecta significativamente la evaluación"}
+
+═══════════════════════════════════════
+🎯 ESTRATEGIA Y CONTEXTO
+═══════════════════════════════════════
+• Ángulo de venta: ${content.sales_angle || "No definido"}
+• Guidelines Estratega: ${content.strategist_guidelines || "Sin guidelines"}
+• Guidelines Admin: ${content.admin_guidelines || "Sin guidelines"}
+• Guidelines Editor: ${content.editor_guidelines || "Sin guidelines"}
+• Guidelines Trafficker: ${content.trafficker_guidelines || "Sin guidelines"}
+• Guidelines Diseñador: ${content.designer_guidelines || "Sin guidelines"}
+
+═══════════════════════════════════════
+🏢 CLIENTE
+═══════════════════════════════════════
+• Nombre: ${content.client?.name || "Sin cliente"}
+• Categoría: ${content.client?.category || "N/A"}
+• Bio/Descripción: ${content.client?.bio || "Sin información"}
+• Notas cliente: ${content.client?.notes || "Sin notas"}
+
+═══════════════════════════════════════
+📦 PRODUCTO
+═══════════════════════════════════════
+• Nombre: ${content.product?.name || "Sin producto"}
+• Descripción: ${content.product?.description || "Sin descripción"}
+• Estrategia: ${content.product?.strategy || "Sin estrategia definida"}
+• Investigación de mercado: ${content.product?.market_research || "Sin investigación"}
+• Avatar ideal: ${content.product?.ideal_avatar || "Sin avatar definido"}
+• Ángulos de venta disponibles: ${content.product?.sales_angles?.join(", ") || "Sin ángulos"}
+
+═══════════════════════════════════════
+👥 EQUIPO ASIGNADO
+═══════════════════════════════════════
+• Creator: ${content.creator?.full_name || "Sin asignar"}
+• Editor: ${content.editor?.full_name || "Sin asignar"}
+• Estratega: ${content.strategist?.full_name || "Sin asignar"}
+
+═══════════════════════════════════════
+📊 HISTORIAL Y CONTEXTO
+═══════════════════════════════════════
+• Correcciones previas (issues): ${issueCount}
+• Tiene video: ${content.video_url || content.raw_video_urls?.length > 0 ? "Sí" : "No"}
+• Tiene thumbnail: ${content.thumbnail_url ? "Sí" : "No"}
+• Notas adicionales: ${content.notes || "Sin notas"}
+
+Historial de estados:
+${statusHistoryText}
+
+═══════════════════════════════════════
+💬 COMENTARIOS RECIENTES
+═══════════════════════════════════════
+${commentsText}
+
+═══════════════════════════════════════
+📋 CAMPOS PERSONALIZADOS
+═══════════════════════════════════════
+${customFieldsText}
+
+═══════════════════════════════════════
+EVALÚA basándote en TODA esta información. Sé específico.`;
+
+  console.log("Quality Score prompt length:", prompt.length);
 
   const tools = [{
     type: "function",
     function: {
       name: "evaluate_quality",
-      description: "Evalúa la calidad del contenido y devuelve un score",
+      description: "Evalúa la calidad del contenido UGC y devuelve un score detallado basado en el análisis completo",
       parameters: {
         type: "object",
         properties: {
-          score: { type: "integer", minimum: 0, maximum: 100, description: "Puntuación de calidad 0-100" },
+          score: { type: "integer", minimum: 0, maximum: 100, description: "Puntuación global de calidad 0-100" },
           breakdown: {
             type: "object",
             properties: {
-              hook: { type: "integer", minimum: 0, maximum: 100 },
-              structure: { type: "integer", minimum: 0, maximum: 100 },
-              cta: { type: "integer", minimum: 0, maximum: 100 },
-              coherence: { type: "integer", minimum: 0, maximum: 100 },
-              viralPotential: { type: "integer", minimum: 0, maximum: 100 }
+              hook: { type: "integer", minimum: 0, maximum: 100, description: "Calidad del gancho/hook inicial" },
+              structure: { type: "integer", minimum: 0, maximum: 100, description: "Estructura y flujo del contenido" },
+              cta: { type: "integer", minimum: 0, maximum: 100, description: "Efectividad del llamado a la acción" },
+              coherence: { type: "integer", minimum: 0, maximum: 100, description: "Coherencia con brief y estrategia" },
+              viralPotential: { type: "integer", minimum: 0, maximum: 100, description: "Potencial de viralidad y engagement" }
             },
             required: ["hook", "structure", "cta", "coherence", "viralPotential"]
           },
           reasons: { 
             type: "array", 
             items: { type: "string" },
-            description: "Razones principales del score"
+            description: "Razones específicas del score, mencionando partes concretas del contenido"
           },
           suggestions: { 
             type: "array", 
             items: { type: "string" },
-            description: "Sugerencias de mejora"
+            description: "Sugerencias accionables y específicas para mejorar"
           }
         },
         required: ["score", "breakdown", "reasons", "suggestions"]
@@ -436,11 +555,30 @@ TIENE THUMBNAIL: ${content.thumbnail_url ? "Sí" : "No"}`;
     // For providers without native tool support, parse JSON response
     const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
     try {
-      result = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
+      const jsonMatch = typeof rawResult === 'string' 
+        ? rawResult.match(/\{[\s\S]*\}/) 
+        : null;
+      result = jsonMatch ? JSON.parse(jsonMatch[0]) : rawResult;
     } catch {
-      // Create default response if parsing fails
-      result = { score: 50, breakdown: { hook: 50, structure: 50, cta: 50, coherence: 50, viralPotential: 50 }, reasons: ["No se pudo evaluar"], suggestions: [] };
+      console.error("Failed to parse quality score response");
+      result = { 
+        score: 50, 
+        breakdown: { hook: 50, structure: 50, cta: 50, coherence: 50, viralPotential: 50 }, 
+        reasons: ["No se pudo evaluar correctamente el contenido"], 
+        suggestions: ["Revisa que el contenido tenga un guión completo"] 
+      };
     }
+  }
+
+  // Validate result structure
+  if (!result.score || !result.breakdown) {
+    console.error("Invalid quality score result:", result);
+    result = {
+      score: result.score || 50,
+      breakdown: result.breakdown || { hook: 50, structure: 50, cta: 50, coherence: 50, viralPotential: 50 },
+      reasons: result.reasons || ["Evaluación incompleta"],
+      suggestions: result.suggestions || []
+    };
   }
 
   // Save to database
