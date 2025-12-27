@@ -12,6 +12,7 @@ import { MedievalBanner } from '@/components/layout/MedievalBanner';
 import { cn } from '@/lib/utils';
 import { UPSettingsPanel } from '@/components/points/UPSettingsPanel';
 import { UPManualAdjustment } from '@/components/points/UPManualAdjustment';
+import { UPControlCenter } from '@/components/points/UPControlCenter';
 import { Leaderboard } from '@/components/points/Leaderboard';
 import { PointsHistory } from '@/components/points/PointsHistory';
 import { AchievementsShowcase } from '@/components/points/AchievementsShowcase';
@@ -59,6 +60,7 @@ export default function RankingPage() {
   const { user, isAdmin } = useAuth();
   const { leaderboard, loading } = useLeaderboard();
   const { getLevelThresholds, isSystemEnabled } = useUPSettings();
+  const { currentOrgId } = useOrgOwner();
 
   const thresholds = getLevelThresholds();
 
@@ -105,7 +107,7 @@ export default function RankingPage() {
       {/* Tabs for Admin */}
       {isAdmin ? (
         <Tabs defaultValue="ranking" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
             <TabsTrigger value="ranking" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Trophy className="w-4 h-4" />
               <span className="hidden sm:inline">Ranking</span>
@@ -121,6 +123,10 @@ export default function RankingPage() {
             <TabsTrigger value="history" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <History className="w-4 h-4" />
               <span className="hidden sm:inline">Crónicas</span>
+            </TabsTrigger>
+            <TabsTrigger value="control" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Castle className="w-4 h-4" />
+              <span className="hidden sm:inline">Control</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Settings className="w-4 h-4" />
@@ -202,6 +208,10 @@ export default function RankingPage() {
                 <GlobalPointsHistory />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="control">
+            {currentOrgId && <UPControlCenter organizationId={currentOrgId} />}
           </TabsContent>
 
           <TabsContent value="settings">
