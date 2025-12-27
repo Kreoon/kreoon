@@ -2041,6 +2041,7 @@ export type Database = {
           description: string | null
           id: string
           points: number
+          secondary_points: number | null
           transaction_type: Database["public"]["Enums"]["point_transaction_type"]
           user_id: string
         }
@@ -2050,6 +2051,7 @@ export type Database = {
           description?: string | null
           id?: string
           points: number
+          secondary_points?: number | null
           transaction_type: Database["public"]["Enums"]["point_transaction_type"]
           user_id: string
         }
@@ -2059,6 +2061,7 @@ export type Database = {
           description?: string | null
           id?: string
           points?: number
+          secondary_points?: number | null
           transaction_type?: Database["public"]["Enums"]["point_transaction_type"]
           user_id?: string
         }
@@ -2806,6 +2809,50 @@ export type Database = {
           },
         ]
       }
+      up_currency_conversions: {
+        Row: {
+          conversion_rate: number
+          created_at: string | null
+          from_amount: number
+          from_currency: string
+          id: string
+          organization_id: string
+          to_amount: number
+          to_currency: string
+          user_id: string
+        }
+        Insert: {
+          conversion_rate?: number
+          created_at?: string | null
+          from_amount: number
+          from_currency: string
+          id?: string
+          organization_id: string
+          to_amount: number
+          to_currency: string
+          user_id: string
+        }
+        Update: {
+          conversion_rate?: number
+          created_at?: string | null
+          from_amount?: number
+          from_currency?: string
+          id?: string
+          organization_id?: string
+          to_amount?: number
+          to_currency?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_currency_conversions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       up_event_types: {
         Row: {
           color: string | null
@@ -2870,6 +2917,7 @@ export type Database = {
           points_awarded: number | null
           processed_at: string | null
           rule_id: string | null
+          secondary_points_awarded: number | null
           user_id: string
         }
         Insert: {
@@ -2885,6 +2933,7 @@ export type Database = {
           points_awarded?: number | null
           processed_at?: string | null
           rule_id?: string | null
+          secondary_points_awarded?: number | null
           user_id: string
         }
         Update: {
@@ -2900,6 +2949,7 @@ export type Database = {
           points_awarded?: number | null
           processed_at?: string | null
           rule_id?: string | null
+          secondary_points_awarded?: number | null
           user_id?: string
         }
         Relationships: [
@@ -3155,6 +3205,7 @@ export type Database = {
           organization_id: string
           reward_badge_id: string | null
           reward_points: number
+          reward_secondary_points: number | null
           starts_at: string | null
           title: string
         }
@@ -3173,6 +3224,7 @@ export type Database = {
           organization_id: string
           reward_badge_id?: string | null
           reward_points?: number
+          reward_secondary_points?: number | null
           starts_at?: string | null
           title: string
         }
@@ -3191,6 +3243,7 @@ export type Database = {
           organization_id?: string
           reward_badge_id?: string | null
           reward_points?: number
+          reward_secondary_points?: number | null
           starts_at?: string | null
           title?: string
         }
@@ -3231,6 +3284,7 @@ export type Database = {
           organization_id: string
           points: number
           priority: number | null
+          secondary_points: number | null
           updated_at: string | null
         }
         Insert: {
@@ -3252,6 +3306,7 @@ export type Database = {
           organization_id: string
           points?: number
           priority?: number | null
+          secondary_points?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -3273,6 +3328,7 @@ export type Database = {
           organization_id?: string
           points?: number
           priority?: number | null
+          secondary_points?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -3386,6 +3442,9 @@ export type Database = {
           id: string
           key: string
           label: string
+          secondary_currency_enabled: boolean | null
+          secondary_currency_icon: string | null
+          secondary_currency_name: string | null
           updated_at: string
           updated_by: string | null
           value: Json
@@ -3396,6 +3455,9 @@ export type Database = {
           id?: string
           key: string
           label: string
+          secondary_currency_enabled?: boolean | null
+          secondary_currency_icon?: string | null
+          secondary_currency_name?: string | null
           updated_at?: string
           updated_by?: string | null
           value?: Json
@@ -3406,6 +3468,9 @@ export type Database = {
           id?: string
           key?: string
           label?: string
+          secondary_currency_enabled?: boolean | null
+          secondary_currency_icon?: string | null
+          secondary_currency_name?: string | null
           updated_at?: string
           updated_by?: string | null
           value?: Json
@@ -3447,6 +3512,7 @@ export type Database = {
           created_at: string
           current_level: Database["public"]["Enums"]["up_level"]
           id: string
+          secondary_points: number | null
           total_completions: number
           total_corrections: number
           total_late: number
@@ -3460,6 +3526,7 @@ export type Database = {
           created_at?: string
           current_level?: Database["public"]["Enums"]["up_level"]
           id?: string
+          secondary_points?: number | null
           total_completions?: number
           total_corrections?: number
           total_late?: number
@@ -3473,6 +3540,7 @@ export type Database = {
           created_at?: string
           current_level?: Database["public"]["Enums"]["up_level"]
           id?: string
+          secondary_points?: number | null
           total_completions?: number
           total_corrections?: number
           total_late?: number
