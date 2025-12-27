@@ -8,10 +8,7 @@ import {
   ContentPermissions 
 } from '../types';
 
-interface UseContentPermissionsOptions {
-  content: Content | null;
-  organizationId?: string;
-}
+// Hook accepts Content | null directly
 
 // ============= PERMISSION MATRIX =============
 // Define what each role can do with each resource
@@ -167,10 +164,7 @@ const TAB_VISIBILITY: Record<AppRole, TabKey[]> = {
   ambassador: ['scripts', 'video', 'material', 'general'],
 };
 
-export function useContentPermissions({ 
-  content, 
-  organizationId 
-}: UseContentPermissionsOptions): ContentPermissions {
+export function useContentPermissions(content: Content | null): ContentPermissions {
   const { user, activeRole, isAdmin } = useAuth();
 
   return useMemo(() => {
