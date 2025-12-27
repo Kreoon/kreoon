@@ -19,8 +19,8 @@ import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { PlatformSecurityPanel } from "@/components/settings/PlatformSecurityPanel";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { OrganizationManagement } from "@/components/settings/OrganizationManagement";
-import { UserOrganizationAssignment } from "@/components/settings/UserOrganizationAssignment";
 import { OrganizationRegistrations } from "@/components/settings/OrganizationRegistrations";
+import { PlatformUsersManagement } from "@/components/settings/PlatformUsersManagement";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -64,7 +64,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'asignar-usuarios' | 'gestion-orgs';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios-plataforma' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'gestion-orgs';
 
 interface SettingsSectionItem {
   id: SettingsSection;
@@ -126,16 +126,10 @@ const platformRootSections: SettingsSectionItem[] = [
     description: "Administra todas las organizaciones y asigna propietarios",
   },
   { 
-    id: 'asignar-usuarios',
-    icon: UserCog, 
-    title: "Asignar Usuarios a Orgs", 
-    description: "Asigna creadores, editores y marcas a organizaciones",
-  },
-  { 
-    id: 'usuarios',
+    id: 'usuarios-plataforma',
     icon: Users,
-    title: "Gestión de Usuarios",
-    description: "Gestiona usuarios, contraseñas y accesos globales",
+    title: "Usuarios de Plataforma",
+    description: "Gestiona usuarios, asigna a organizaciones y control total",
   },
   { 
     id: 'referidos',
@@ -242,10 +236,10 @@ const Settings = () => {
         return <AuditLogPanel />;
       case 'mi-organizacion':
         return <OrganizationManagement />;
-      case 'asignar-usuarios':
-        return <UserOrganizationAssignment />;
       case 'gestion-orgs':
         return <OrganizationRegistrations />;
+      case 'usuarios-plataforma':
+        return <PlatformUsersManagement />;
       case 'app-settings':
         return <AppSettingsManagement />;
       case 'gestion-usuarios':
@@ -260,8 +254,6 @@ const Settings = () => {
         return <AppearanceSettings />;
       case 'integraciones':
         return <IntegrationsSettings />;
-      case 'usuarios':
-        return <UserManagement />;
       case 'root-admin':
         return <RootAdminPanel />;
       case 'tour':
