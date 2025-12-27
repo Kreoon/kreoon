@@ -44,7 +44,7 @@ export function BoardListView({
   content, 
   onContentClick,
   cardSize = 'normal',
-  visibleFields = ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']
+  visibleFields = ['title', 'thumbnail', 'status', 'client', 'creator', 'editor', 'deadline']
 }: BoardListViewProps) {
   const showField = (field: string) => visibleFields.includes(field);
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
@@ -139,19 +139,53 @@ export function BoardListView({
                     </Badge>
                   )}
 
-                  {/* Responsible - AVATAR ONLY with tooltip */}
-                  {showField('responsible') && responsible && (
+                  {/* Creator Avatar */}
+                  {showField('creator') && c.creator && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-background cursor-pointer")}>
-                          <AvatarImage src={responsible.avatar_url || undefined} />
+                        <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-primary/30 cursor-pointer")}>
+                          <AvatarImage src={c.creator.avatar_url || undefined} />
                           <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
-                            {(responsible.full_name || '?').charAt(0).toUpperCase()}
+                            {(c.creator.full_name || '?').charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="text-xs">
-                        {responsible.full_name}
+                        <span className="font-medium">Creador:</span> {c.creator.full_name}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+
+                  {/* Editor Avatar */}
+                  {showField('editor') && c.editor && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-secondary/50 cursor-pointer")}>
+                          <AvatarImage src={c.editor.avatar_url || undefined} />
+                          <AvatarFallback className="bg-secondary/20 text-secondary-foreground font-medium text-xs">
+                            {(c.editor.full_name || '?').charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        <span className="font-medium">Editor:</span> {c.editor.full_name}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+
+                  {/* Responsible (legacy fallback) - AVATAR ONLY with tooltip */}
+                  {showField('responsible') && !showField('creator') && !showField('editor') && (c.creator || c.editor) && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-background cursor-pointer")}>
+                          <AvatarImage src={(c.creator || c.editor)?.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
+                            {((c.creator || c.editor)?.full_name || '?').charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        {(c.creator || c.editor)?.full_name}
                       </TooltipContent>
                     </Tooltip>
                   )}

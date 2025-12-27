@@ -53,7 +53,7 @@ const SIZE_CONFIG = {
 export function EnhancedContentCard({
   content,
   cardSize = 'normal',
-  visibleFields = ['title', 'status', 'client', 'deadline', 'responsible'],
+  visibleFields = ['title', 'status', 'client', 'deadline', 'creator', 'editor'],
   onClick,
   onDragStart,
   isDragging
@@ -155,14 +155,54 @@ export function EnhancedContentCard({
         </div>
       )}
 
-      {/* Meta Row: Avatar, Deadline, Points, Indicators */}
+      {/* Meta Row: Avatars, Deadline, Points, Indicators */}
       <div className={cn(
         "flex flex-wrap items-center text-muted-foreground",
         sizeConfig.spacing,
         cardSize === 'large' && "mt-2"
       )}>
-        {/* Responsible - AVATAR MODE (no text, just avatar with tooltip) */}
-        {showField('responsible') && responsible && (
+        {/* Creator Avatar */}
+        {showField('creator') && content.creator && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-primary/30 cursor-pointer")}>
+                <AvatarImage src={content.creator.avatar_url || undefined} />
+                <AvatarFallback className={cn(
+                  "bg-primary/10 text-primary font-medium",
+                  cardSize === 'compact' ? "text-[8px]" : cardSize === 'large' ? "text-sm" : "text-xs"
+                )}>
+                  {(content.creator.full_name || '?').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              <span className="font-medium">Creador:</span> {content.creator.full_name}
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* Editor Avatar */}
+        {showField('editor') && content.editor && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-secondary/50 cursor-pointer")}>
+                <AvatarImage src={content.editor.avatar_url || undefined} />
+                <AvatarFallback className={cn(
+                  "bg-secondary/20 text-secondary-foreground font-medium",
+                  cardSize === 'compact' ? "text-[8px]" : cardSize === 'large' ? "text-sm" : "text-xs"
+                )}>
+                  {(content.editor.full_name || '?').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              <span className="font-medium">Editor:</span> {content.editor.full_name}
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* Responsible (legacy fallback) - AVATAR MODE */}
+        {showField('responsible') && !showField('creator') && !showField('editor') && responsible && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-background cursor-pointer")}>
