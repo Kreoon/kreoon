@@ -96,22 +96,36 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   // Detect if client is the organization (ambassador content)
   useEffect(() => {
     if (clientId && currentOrgId) {
-      // Check if the selected client ID matches the organization ID
-      // OR if the client's organization_id matches and it's the org's own client
+      // Check if the selected client represents the organization
       const checkIfOrgClient = async () => {
         const { data: clientData } = await supabase
           .from('clients')
-          .select('id, organization_id')
+          .select('id, name, organization_id')
           .eq('id', clientId)
           .maybeSingle();
         
-        // Client is organization if its ID equals org ID (same entity) OR it represents the org
-        const isOrgAsClient = clientData?.id === currentOrgId;
+        // Also get org name to compare
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .eq('id', currentOrgId)
+          .maybeSingle();
+        
+        // Client is organization if:
+        // 1. Client ID equals org ID (same entity), OR
+        // 2. Client name matches org name (org registered as client), OR  
+        // 3. Client's organization_id equals client's own ID (self-reference)
+        const isOrgAsClient = 
+          clientData?.id === currentOrgId ||
+          (clientData?.name === orgData?.name) ||
+          (clientData?.id === clientData?.organization_id);
+        
+        const wasAmbassadorContent = isAmbassadorContent;
         setIsAmbassadorContent(isOrgAsClient);
         setOrganizationClientId(isOrgAsClient ? clientId : null);
         
         // Reset creator selection when switching to/from ambassador content
-        if (isOrgAsClient !== isAmbassadorContent) {
+        if (isOrgAsClient !== wasAmbassadorContent) {
           setCreatorId("");
         }
         
