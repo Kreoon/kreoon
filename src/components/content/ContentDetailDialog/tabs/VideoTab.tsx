@@ -10,11 +10,11 @@ import { AutoPauseVideo } from '@/components/content/AutoPauseVideo';
 import { ThumbnailSelector } from '@/components/content/ThumbnailSelector';
 import { AIThumbnailGenerator } from '@/components/content/AIThumbnailGenerator';
 import { CommentsSection } from '@/components/content/CommentsSection';
-import { PermissionsGate, ReadOnlyWrapper } from '../blocks/PermissionsGate';
+import { PermissionsGate } from '../blocks/PermissionsGate';
 import { SectionCard } from '../components/SectionCard';
-import { useContentPermissions } from '../hooks/useContentPermissions';
 import { TabProps } from '../types';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Video, Share2, Image, Lock, Download, Loader2, ExternalLink
@@ -89,8 +89,6 @@ function DownloadVideoButton({ contentId, videoUrl, variantIndex, title }: {
 interface VideoTabProps extends TabProps {
   selectedProduct: any;
   currentStatus: string | null;
-  comments: any[];
-  onAddComment: (comment: string) => Promise<void>;
 }
 
 export function VideoTab({
@@ -99,20 +97,14 @@ export function VideoTab({
   setFormData,
   editMode,
   setEditMode,
-  userRole,
-  userId,
-  organizationId,
+  permissions,
   onUpdate,
   selectedProduct,
-  currentStatus,
-  comments,
-  onAddComment
+  currentStatus
 }: VideoTabProps) {
-  const permissions = useContentPermissions({ organizationId, role: userRole });
-  const canEditVideo = permissions.can('video', 'edit');
-  const isReadOnly = permissions.isReadOnly('video');
-  const isAdmin = userRole === 'admin';
-  const isClient = userRole === 'client';
+  const { user, isAdmin, isClient } = useAuth();
+  const canEditVideo = permissions.can('content.video', 'edit');
+  const isReadOnly = permissions.isReadOnly('content.video');
 
   // Determine if download is allowed
   const approvedStatuses = ['approved', 'paid', 'delivered'];
@@ -123,9 +115,8 @@ export function VideoTab({
       {/* Publish to Portfolio Toggle - Only for Admin */}
       <PermissionsGate 
         permissions={permissions} 
-        resource="admin" 
+        resource="content.video.thumbnail" 
         action="edit"
-        showMessage={false}
       >
         <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-primary/5 to-primary/10">
           <div className="flex items-center gap-3">
@@ -149,7 +140,7 @@ export function VideoTab({
               id="is_published"
               checked={formData.is_published}
               onCheckedChange={(checked) => {
-                setFormData((prev: any) => ({ ...prev, is_published: !!checked }));
+                setFormData((prev) => ({ ...prev, is_published: !!checked }));
                 if (!editMode) setEditMode(true);
               }}
             />
@@ -160,9 +151,8 @@ export function VideoTab({
       {/* Thumbnail Section - Admin only */}
       <PermissionsGate 
         permissions={permissions} 
-        resource="admin" 
+        resource="content.video.thumbnail" 
         action="edit"
-        showMessage={false}
       >
         <div className="space-y-4">
           <AIThumbnailGenerator
@@ -179,12 +169,8 @@ export function VideoTab({
             onThumbnailGenerated={() => onUpdate?.()}
           />
 
-          <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
-            <div className="flex items-center gap-2">
-              <Image className="h-4 w-4 text-primary" />
-              <h4 className="font-medium">Subir Miniatura Manual</h4>
-            </div>
-            <p className="text-xs text-muted-foreground">
+          <SectionCard title="Subir Miniatura Manual" iconEmoji="🖼️">
+            <p className="text-xs text-muted-foreground mb-3">
               O sube una imagen personalizada manualmente.
             </p>
             <ThumbnailSelector
@@ -193,11 +179,11 @@ export function VideoTab({
               onThumbnailChange={() => onUpdate?.()}
               disabled={false}
             />
-          </div>
+          </SectionCard>
         </div>
       </PermissionsGate>
 
-      {/* Restriction notice for non-strategists */}
+      {/* Restriction notice */}
       {isReadOnly && editMode && (
         <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
           <Lock className="h-4 w-4 text-warning" />
@@ -205,16 +191,15 @@ export function VideoTab({
         </div>
       )}
 
-      {/* Section 1: Videos Finales (Hooks) + Comments side by side */}
+      {/* Videos + Comments grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Videos Finales (Multiple) - Embedded Bunny Videos */}
+        {/* Videos Finales */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="font-medium flex items-center gap-2">
               <Video className="h-4 w-4" /> Videos Finales (Variables)
             </h4>
             
-            {/* Hooks count selector - edit mode only */}
             {editMode && canEditVideo && (
               <div className="flex items-center gap-2">
                 <Label className="text-sm text-muted-foreground">Cantidad:</Label>
@@ -223,7 +208,7 @@ export function VideoTab({
                   onValueChange={(value) => {
                     const newCount = parseInt(value);
                     const newUrls = Array.from({ length: newCount }, (_, i) => formData.video_urls[i] || '');
-                    setFormData((prev: any) => ({ ...prev, hooks_count: newCount, video_urls: newUrls }));
+                    setFormData((prev) => ({ ...prev, hooks_count: newCount, video_urls: newUrls }));
                   }}
                 >
                   <SelectTrigger className="w-20">
@@ -239,99 +224,85 @@ export function VideoTab({
             )}
           </div>
 
-          {/* Show hooks count badge when not editing */}
           {!editMode && formData.hooks_count > 1 && (
             <Badge variant="secondary" className="w-fit">
               {formData.hooks_count} variables configuradas
             </Badge>
           )}
           
-          {/* Embedded Bunny Videos based on hooks_count */}
-          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-            {formData.video_urls.map((videoUrl: string, index: number) => (
-              <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Variable {index + 1}</span>
-                  <div className="flex items-center gap-2">
-                    {videoUrl && canDownloadVideo && (
-                      <DownloadVideoButton 
-                        contentId={content?.id || ''}
-                        videoUrl={videoUrl}
-                        variantIndex={index}
-                        title={content?.title || 'video'}
-                      />
-                    )}
-                    {videoUrl && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        asChild
-                      >
-                        <a href={videoUrl} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          Abrir
-                        </a>
-                      </Button>
-                    )}
+          {/* Use BunnyMultiVideoUploader for editing */}
+          {editMode && canEditVideo ? (
+            <BunnyMultiVideoUploader
+              contentId={content?.id || ''}
+              title={content?.title || 'video'}
+              currentUrls={formData.video_urls}
+              hooksCount={formData.hooks_count}
+              onUploadComplete={(urls) => {
+                setFormData((prev) => ({ ...prev, video_urls: urls }));
+                onUpdate?.();
+              }}
+              disabled={!canEditVideo}
+            />
+          ) : (
+            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+              {formData.video_urls.map((videoUrl: string, index: number) => (
+                <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Variable {index + 1}</span>
+                    <div className="flex items-center gap-2">
+                      {videoUrl && canDownloadVideo && (
+                        <DownloadVideoButton 
+                          contentId={content?.id || ''}
+                          videoUrl={videoUrl}
+                          variantIndex={index}
+                          title={content?.title || 'video'}
+                        />
+                      )}
+                      {videoUrl && (
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                          <a href={videoUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Abrir
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-                
-                {videoUrl ? (
-                  <div className="aspect-[9/16] max-h-[300px] rounded-lg overflow-hidden bg-black">
-                    <AutoPauseVideo src={videoUrl} className="w-full h-full object-contain" />
-                  </div>
-                ) : (
-                  editMode && canEditVideo ? (
-                    <BunnyMultiVideoUploader
-                      contentId={content?.id || ''}
-                      variantIndex={index}
-                      currentUrl={videoUrl}
-                      onUploadComplete={(url) => {
-                        const newUrls = [...formData.video_urls];
-                        newUrls[index] = url;
-                        setFormData((prev: any) => ({ ...prev, video_urls: newUrls }));
-                        onUpdate?.();
-                      }}
-                    />
+                  
+                  {videoUrl ? (
+                    <div className="aspect-[9/16] max-h-[300px] rounded-lg overflow-hidden bg-black">
+                      <AutoPauseVideo src={videoUrl} className="w-full h-full object-contain" />
+                    </div>
                   ) : (
                     <div className="aspect-[9/16] max-h-[300px] rounded-lg border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
                       <p className="text-sm text-muted-foreground">Sin video</p>
                     </div>
-                  )
-                )}
-              </div>
-            ))}
-          </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Comments Section */}
+        {/* Comments Section - uses contentId */}
         <div className="space-y-4">
-          <h4 className="font-medium flex items-center gap-2">
-            💬 Comentarios
-          </h4>
-          <CommentsSection
-            comments={comments}
-            onAddComment={onAddComment}
-            currentUserId={userId}
-          />
+          <h4 className="font-medium flex items-center gap-2">💬 Comentarios</h4>
+          <CommentsSection contentId={content?.id || ''} />
         </div>
       </div>
 
       {/* Notes Section */}
       <SectionCard title="Notas Adicionales">
-        <ReadOnlyWrapper readOnly={!editMode}>
-          {editMode ? (
-            <Textarea
-              value={formData.notes || ''}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, notes: e.target.value }))}
-              placeholder="Notas adicionales sobre el contenido..."
-              className="min-h-[100px]"
-            />
-          ) : (
-            <p className="text-sm">{formData.notes || 'Sin notas'}</p>
-          )}
-        </ReadOnlyWrapper>
+        {editMode ? (
+          <Textarea
+            value={formData.notes || ''}
+            onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+            placeholder="Notas adicionales sobre el contenido..."
+            className="min-h-[100px]"
+          />
+        ) : (
+          <p className="text-sm">{formData.notes || 'Sin notas'}</p>
+        )}
       </SectionCard>
     </div>
   );

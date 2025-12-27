@@ -2,9 +2,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { SectionCard, FieldRow } from '../components/SectionCard';
-import { PaymentStatusBadge } from '../components/StatusBadge';
-import { useContentPermissions } from '../hooks/useContentPermissions';
 import { TabProps } from '../types';
 import { DollarSign, CheckCircle } from 'lucide-react';
 
@@ -15,11 +12,9 @@ export function PaymentsTab({
   formData,
   setFormData,
   editMode,
-  userRole,
-  organizationId
+  permissions
 }: PaymentsTabProps) {
-  const permissions = useContentPermissions({ organizationId, role: userRole });
-  const canEditPayments = permissions.can('payments', 'edit');
+  const canEditPayments = permissions.can('content.payments', 'edit');
 
   return (
     <div className="space-y-4">
@@ -34,7 +29,7 @@ export function PaymentsTab({
               <Input
                 type="number"
                 value={formData.creator_payment}
-                onChange={(e) => setFormData((prev: any) => ({ 
+                onChange={(e) => setFormData((prev) => ({ 
                   ...prev, 
                   creator_payment: parseFloat(e.target.value) || 0 
                 }))}
@@ -43,7 +38,7 @@ export function PaymentsTab({
                 <Checkbox
                   id="creator_paid"
                   checked={formData.creator_paid}
-                  onCheckedChange={(checked) => setFormData((prev: any) => ({ 
+                  onCheckedChange={(checked) => setFormData((prev) => ({ 
                     ...prev, 
                     creator_paid: !!checked 
                   }))}
@@ -54,7 +49,11 @@ export function PaymentsTab({
           ) : (
             <>
               <p className="text-2xl font-bold">${content?.creator_payment?.toLocaleString() || 0}</p>
-              <PaymentStatusBadge paid={content?.creator_paid || false} />
+              <Badge variant={content?.creator_paid ? "default" : "secondary"}>
+                {content?.creator_paid ? (
+                  <><CheckCircle className="h-3 w-3 mr-1" /> Pagado</>
+                ) : "Pendiente"}
+              </Badge>
             </>
           )}
         </div>
@@ -69,7 +68,7 @@ export function PaymentsTab({
               <Input
                 type="number"
                 value={formData.editor_payment}
-                onChange={(e) => setFormData((prev: any) => ({ 
+                onChange={(e) => setFormData((prev) => ({ 
                   ...prev, 
                   editor_payment: parseFloat(e.target.value) || 0 
                 }))}
@@ -78,7 +77,7 @@ export function PaymentsTab({
                 <Checkbox
                   id="editor_paid"
                   checked={formData.editor_paid}
-                  onCheckedChange={(checked) => setFormData((prev: any) => ({ 
+                  onCheckedChange={(checked) => setFormData((prev) => ({ 
                     ...prev, 
                     editor_paid: !!checked 
                   }))}
@@ -89,7 +88,11 @@ export function PaymentsTab({
           ) : (
             <>
               <p className="text-2xl font-bold">${content?.editor_payment?.toLocaleString() || 0}</p>
-              <PaymentStatusBadge paid={content?.editor_paid || false} />
+              <Badge variant={content?.editor_paid ? "default" : "secondary"}>
+                {content?.editor_paid ? (
+                  <><CheckCircle className="h-3 w-3 mr-1" /> Pagado</>
+                ) : "Pendiente"}
+              </Badge>
             </>
           )}
         </div>
@@ -103,7 +106,7 @@ export function PaymentsTab({
               <Checkbox
                 id="invoiced"
                 checked={formData.invoiced}
-                onCheckedChange={(checked) => setFormData((prev: any) => ({ 
+                onCheckedChange={(checked) => setFormData((prev) => ({ 
                   ...prev, 
                   invoiced: !!checked 
                 }))}
