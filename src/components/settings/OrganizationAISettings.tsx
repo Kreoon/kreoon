@@ -21,13 +21,14 @@ import {
   Loader2,
   Shield,
   Cpu,
-  Sparkles
+  Sparkles,
+  Blocks
 } from 'lucide-react';
 import { 
   useOrganizationAI, 
-  AI_PROVIDERS_CONFIG, 
-  AI_MODULES 
+  AI_PROVIDERS_CONFIG 
 } from '@/hooks/useOrganizationAI';
+import { AIModulesManager } from './AIModulesManager';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -111,21 +112,29 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="providers">
+        <Tabs defaultValue="modules">
           <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="modules" className="flex items-center gap-2">
+              <Blocks className="h-4 w-4" />
+              Módulos
+            </TabsTrigger>
             <TabsTrigger value="providers" className="flex items-center gap-2">
               <Cpu className="h-4 w-4" />
               Proveedores
-            </TabsTrigger>
-            <TabsTrigger value="modules" className="flex items-center gap-2">
-              <Settings2 className="h-4 w-4" />
-              Módulos
             </TabsTrigger>
             <TabsTrigger value="usage" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Uso
             </TabsTrigger>
           </TabsList>
+
+          {/* Modules Tab - Now First */}
+          <TabsContent value="modules" className="space-y-4 mt-4">
+            <AIModulesManager 
+              organizationId={organizationId} 
+              enabledProviders={enabledProviders}
+            />
+          </TabsContent>
 
           {/* Providers Tab */}
           <TabsContent value="providers" className="space-y-4 mt-4">
@@ -267,138 +276,6 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
             })}
           </TabsContent>
 
-          {/* Modules Tab */}
-          <TabsContent value="modules" className="space-y-4 mt-4">
-            {/* Default settings */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Configuración por Defecto</CardTitle>
-                <CardDescription>
-                  Proveedor y modelo predeterminado para todos los módulos
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Proveedor por Defecto</Label>
-                  <Select
-                    value={defaults?.default_provider || 'lovable'}
-                    onValueChange={(value) => handleUpdateDefault('default_provider', value)}
-                    disabled={saving}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {enabledProviders.map(p => (
-                        <SelectItem key={p.key} value={p.key}>
-                          {p.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Modelo por Defecto</Label>
-                  <Select
-                    value={defaults?.default_model || 'google/gemini-2.5-flash'}
-                    onValueChange={(value) => handleUpdateDefault('default_model', value)}
-                    disabled={saving}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {enabledProviders
-                        .find(p => p.key === (defaults?.default_provider || 'lovable'))
-                        ?.models.map(m => (
-                          <SelectItem key={m.value} value={m.value}>
-                            {m.label}
-                          </SelectItem>
-                        )) || []}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Separator />
-
-            {/* Per-module settings */}
-            {AI_MODULES.map(module => {
-              const providerField = `${module.key}_provider` as keyof typeof defaults;
-              const modelField = `${module.key}_model` as keyof typeof defaults;
-              const currentProvider = defaults?.[providerField] as string || defaults?.default_provider || 'lovable';
-              const currentModel = defaults?.[modelField] as string || defaults?.default_model || 'google/gemini-2.5-flash';
-              const isCustomized = !!defaults?.[providerField];
-
-              return (
-                <Card key={module.key} className={isCustomized ? 'border-primary/30' : ''}>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h4 className="font-medium">{module.label}</h4>
-                        {'description' in module && (
-                          <p className="text-sm text-muted-foreground">
-                            {module.description}
-                          </p>
-                        )}
-                      </div>
-                      {isCustomized && (
-                        <Badge variant="outline" className="border-primary/50 text-primary">Personalizado</Badge>
-                      )}
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label className="text-sm">Proveedor</Label>
-                        <Select
-                          value={currentProvider}
-                          onValueChange={(value) => handleUpdateDefault(providerField, value)}
-                          disabled={saving}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__default__">Usar por defecto</SelectItem>
-                            {enabledProviders.map(p => (
-                              <SelectItem key={p.key} value={p.key}>
-                                {p.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-sm">Modelo</Label>
-                        <Select
-                          value={currentModel}
-                          onValueChange={(value) => handleUpdateDefault(modelField, value)}
-                          disabled={saving}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__default__">Usar por defecto</SelectItem>
-                            {enabledProviders
-                              .find(p => p.key === currentProvider)
-                              ?.models.filter(m => m.value).map(m => (
-                                <SelectItem key={m.value} value={m.value}>
-                                  {m.label}
-                                </SelectItem>
-                              )) || []}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </TabsContent>
 
           {/* Usage Tab */}
           <TabsContent value="usage" className="mt-4">

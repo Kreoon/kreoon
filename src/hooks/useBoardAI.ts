@@ -88,6 +88,7 @@ export function useBoardAI(organizationId?: string) {
   const [boardAnalysis, setBoardAnalysis] = useState<BoardAnalysis | null>(null);
   const [nextStateSuggestion, setNextStateSuggestion] = useState<NextStateSuggestion | null>(null);
   const [automationRecommendations, setAutomationRecommendations] = useState<AutomationRecommendations | null>(null);
+  const [moduleInactive, setModuleInactive] = useState<string | null>(null);
 
   const callBoardAI = useCallback(async (action: string, contentId?: string) => {
     if (!organizationId) {
@@ -95,9 +96,22 @@ export function useBoardAI(organizationId?: string) {
       return null;
     }
 
+    setModuleInactive(null);
+
     const { data, error } = await supabase.functions.invoke('board-ai', {
       body: { action, organizationId, contentId }
     });
+
+    // Handle MODULE_INACTIVE error
+    if (data?.error === 'MODULE_INACTIVE') {
+      setModuleInactive(data.module_key);
+      toast({
+        title: 'IA no habilitada',
+        description: 'Este módulo de IA no está activado. Ve a Configuración → IA & Modelos para habilitarlo.',
+        variant: 'destructive',
+      });
+      return null;
+    }
 
     if (error) {
       console.error('Board AI Error:', error);
@@ -218,6 +232,7 @@ export function useBoardAI(organizationId?: string) {
     boardAnalysis,
     nextStateSuggestion,
     automationRecommendations,
+    moduleInactive,
     analyzeCard,
     analyzeBoard,
     suggestNextState,
