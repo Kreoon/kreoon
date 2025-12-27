@@ -135,13 +135,25 @@ export default function StrategistDashboard() {
       }
       setContent((contentData || []) as Content[]);
 
-      // Fetch all products for script generation
-      const { data: productsData } = await supabase
-        .from('products')
-        .select('*')
-        .order('name');
+      // Fetch products for script generation - only for clients in user's current organization
+      const { data: authProfile } = await supabase
+        .from('profiles')
+        .select('current_organization_id')
+        .eq('id', user.id)
+        .maybeSingle();
 
-      setProducts(productsData || []);
+      const orgId = authProfile?.current_organization_id;
+
+      let productsQuery = supabase.from('products').select('*, client:clients(organization_id)').order('name');
+      
+      const { data: productsData } = await productsQuery;
+      
+      // Filter products to only those belonging to clients in the current org
+      const filteredProducts = orgId 
+        ? (productsData || []).filter((p: any) => p.client?.organization_id === orgId)
+        : productsData || [];
+
+      setProducts(filteredProducts as Product[]);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({

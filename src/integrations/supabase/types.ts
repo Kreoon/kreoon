@@ -977,6 +977,7 @@ export type Database = {
           id: string
           new_clients_goal: number | null
           notes: string | null
+          organization_id: string
           period_type: string
           period_value: number
           revenue_goal: number | null
@@ -991,6 +992,7 @@ export type Database = {
           id?: string
           new_clients_goal?: number | null
           notes?: string | null
+          organization_id: string
           period_type: string
           period_value: number
           revenue_goal?: number | null
@@ -1005,6 +1007,7 @@ export type Database = {
           id?: string
           new_clients_goal?: number | null
           notes?: string | null
+          organization_id?: string
           period_type?: string
           period_value?: number
           revenue_goal?: number | null
