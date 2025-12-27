@@ -74,3 +74,6 @@ verify_jwt = true
 
 [functions.cleanup-chat-attachments]
 verify_jwt = false
+
+[functions.bunny-chat-upload]
+verify_jwt = true

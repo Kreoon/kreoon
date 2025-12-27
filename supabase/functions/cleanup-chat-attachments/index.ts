@@ -1,97 +1,135 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const bunnyStorageZone = Deno.env.get('BUNNY_STORAGE_ZONE')
+    const bunnyStoragePassword = Deno.env.get('BUNNY_STORAGE_PASSWORD')
 
-    console.log('Starting chat attachments cleanup...');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get expired attachments (older than 8 days)
-    const { data: expiredAttachments, error: fetchError } = await supabase
+    console.log('Starting chat attachment cleanup...')
+
+    // Get expired attachments
+    const { data: expired, error: fetchError } = await supabase
       .from('chat_attachment_metadata')
-      .select('id, storage_path')
-      .lt('expires_at', new Date().toISOString());
+      .select('id, storage_path, message_id')
+      .lt('expires_at', new Date().toISOString())
 
     if (fetchError) {
-      console.error('Error fetching expired attachments:', fetchError);
-      throw fetchError;
+      console.error('Error fetching expired attachments:', fetchError)
+      throw fetchError
     }
 
-    if (!expiredAttachments || expiredAttachments.length === 0) {
-      console.log('No expired attachments to clean up');
-      return new Response(JSON.stringify({ 
-        message: 'No expired attachments', 
-        deleted: 0 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (!expired || expired.length === 0) {
+      console.log('No expired attachments found')
+      return new Response(
+        JSON.stringify({ success: true, deleted: 0, message: 'No expired files found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    console.log(`Found ${expiredAttachments.length} expired attachments`);
+    console.log(`Found ${expired.length} expired attachments to delete`)
 
-    // Delete files from storage
-    const storagePaths = expiredAttachments.map(a => a.storage_path);
-    const { error: storageError } = await supabase.storage
-      .from('chat-attachments')
-      .remove(storagePaths);
+    let deletedCount = 0
+    let failedCount = 0
 
-    if (storageError) {
-      console.error('Error deleting from storage:', storageError);
-      // Continue to delete metadata even if storage deletion fails
+    for (const attachment of expired) {
+      try {
+        // Determine storage type from path
+        const isBunnyStorage = attachment.storage_path.startsWith('chat/')
+
+        if (isBunnyStorage && bunnyStorageZone && bunnyStoragePassword) {
+          // Delete from Bunny Storage
+          const deleteResponse = await fetch(
+            `https://storage.bunnycdn.com/${bunnyStorageZone}/${attachment.storage_path}`,
+            {
+              method: 'DELETE',
+              headers: { 'AccessKey': bunnyStoragePassword }
+            }
+          )
+
+          if (!deleteResponse.ok && deleteResponse.status !== 404) {
+            console.error(`Failed to delete from Bunny: ${attachment.storage_path}`)
+            failedCount++
+            continue
+          }
+        } else {
+          // Delete from Supabase Storage (legacy)
+          const { error: storageError } = await supabase.storage
+            .from('chat-attachments')
+            .remove([attachment.storage_path])
+
+          if (storageError) {
+            console.error(`Failed to delete from Supabase Storage: ${attachment.storage_path}`, storageError)
+            // Continue anyway to clean up metadata
+          }
+        }
+
+        // Clear attachment URL in message if exists
+        if (attachment.message_id) {
+          const { error: updateError } = await supabase
+            .from('chat_messages')
+            .update({ 
+              attachment_url: null, 
+              attachment_type: null, 
+              attachment_name: '[Archivo expirado]', 
+              attachment_size: null 
+            })
+            .eq('id', attachment.message_id)
+
+          if (updateError) {
+            console.error(`Failed to update message ${attachment.message_id}:`, updateError)
+          }
+        }
+
+        // Delete metadata record
+        const { error: deleteError } = await supabase
+          .from('chat_attachment_metadata')
+          .delete()
+          .eq('id', attachment.id)
+
+        if (deleteError) {
+          console.error(`Failed to delete metadata for ${attachment.id}:`, deleteError)
+          failedCount++
+        } else {
+          deletedCount++
+          console.log(`Deleted: ${attachment.storage_path}`)
+        }
+      } catch (err) {
+        console.error(`Error processing ${attachment.storage_path}:`, err)
+        failedCount++
+      }
     }
 
-    // Delete metadata records
-    const expiredIds = expiredAttachments.map(a => a.id);
-    const { error: deleteError } = await supabase
-      .from('chat_attachment_metadata')
-      .delete()
-      .in('id', expiredIds);
+    console.log(`Cleanup complete: ${deletedCount} deleted, ${failedCount} failed`)
 
-    if (deleteError) {
-      console.error('Error deleting metadata:', deleteError);
-      throw deleteError;
-    }
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        deleted: deletedCount, 
+        failed: failedCount,
+        total: expired.length 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
 
-    // Also update chat_messages to clear attachment URLs for deleted files
-    for (const attachment of expiredAttachments) {
-      await supabase
-        .from('chat_messages')
-        .update({ 
-          attachment_url: null, 
-          attachment_name: '[Archivo expirado]',
-          attachment_type: null,
-          attachment_size: null 
-        })
-        .eq('attachment_url', attachment.storage_path);
-    }
-
-    console.log(`Successfully cleaned up ${expiredAttachments.length} attachments`);
-
-    return new Response(JSON.stringify({ 
-      message: 'Cleanup completed', 
-      deleted: expiredAttachments.length 
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
-  } catch (error: unknown) {
-    console.error('Cleanup error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+  } catch (error) {
+    console.error('Cleanup error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
-});
+})
