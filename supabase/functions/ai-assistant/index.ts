@@ -279,33 +279,33 @@ serve(async (req) => {
       // Get API key from organization_ai_providers
       const { data: providerConfig } = await supabase
         .from('organization_ai_providers')
-        .select('api_key')
+        .select('api_key_encrypted')
         .eq('organization_id', organizationId)
-        .eq('provider', 'openai')
+        .eq('provider_key', 'openai')
         .single();
       
-      apiKey = providerConfig?.api_key || '';
+      apiKey = providerConfig?.api_key_encrypted || '';
       apiUrl = 'https://api.openai.com/v1/chat/completions';
       headers['Authorization'] = `Bearer ${apiKey}`;
     } else if (provider === 'gemini') {
       const { data: providerConfig } = await supabase
         .from('organization_ai_providers')
-        .select('api_key')
+        .select('api_key_encrypted')
         .eq('organization_id', organizationId)
-        .eq('provider', 'gemini')
+        .eq('provider_key', 'gemini')
         .single();
       
-      apiKey = providerConfig?.api_key || '';
+      apiKey = providerConfig?.api_key_encrypted || '';
       apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent?key=${apiKey}`;
     } else if (provider === 'anthropic') {
       const { data: providerConfig } = await supabase
         .from('organization_ai_providers')
-        .select('api_key')
+        .select('api_key_encrypted')
         .eq('organization_id', organizationId)
-        .eq('provider', 'anthropic')
+        .eq('provider_key', 'anthropic')
         .single();
       
-      apiKey = providerConfig?.api_key || '';
+      apiKey = providerConfig?.api_key_encrypted || '';
       apiUrl = 'https://api.anthropic.com/v1/messages';
       headers['x-api-key'] = apiKey;
       headers['anthropic-version'] = '2023-06-01';
