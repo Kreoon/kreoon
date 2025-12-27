@@ -25,6 +25,10 @@ const DEFAULT_TEXT_FEATURES = {
   emojis: true,
   comments: true,
   history: true,
+  links: true,
+  tables: true,
+  checklist: true,
+  images: true,
 };
 
 export function useContentConfig(organizationId: string | null) {
