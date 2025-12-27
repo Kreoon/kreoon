@@ -32,10 +32,12 @@ interface AIProviderConfig {
 
 const AI_PROVIDERS: Record<string, AIProviderConfig> = {
   lovable: {
-    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
-    getHeaders: (apiKey: string) => ({
-      "Authorization": `Bearer ${apiKey}`,
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    getHeaders: (_apiKey: string) => ({
+      "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY") || ""}`,
       "Content-Type": "application/json",
+      "HTTP-Referer": "https://lovable.dev",
+      "X-Title": "Lovable Board AI",
     }),
     getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
       const body: any = {
@@ -44,6 +46,8 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
+        max_tokens: 2000,
+        temperature: 0.7,
       };
       if (tools) {
         body.tools = tools;
@@ -122,10 +126,13 @@ async function getOrgAIConfig(supabase: any, organizationId: string) {
     model = defaults.sistema_up_model;
   }
 
-  // Get API key if not lovable
-  let apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
+  // Get API key based on provider
+  let apiKey = "";
   
-  if (provider !== "lovable") {
+  if (provider === "lovable") {
+    // Lovable uses OpenRouter - no user API key needed
+    apiKey = "";
+  } else if (provider !== "lovable") {
     const { data: providerConfig } = await supabase
       .from("organization_ai_providers")
       .select("api_key_encrypted")
@@ -139,7 +146,6 @@ async function getOrgAIConfig(supabase: any, organizationId: string) {
       // Fallback to lovable if no API key
       provider = "lovable";
       model = "google/gemini-2.5-flash";
-      apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
     }
   }
 
