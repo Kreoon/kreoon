@@ -412,6 +412,13 @@ export function useUPEngine(organizationId?: string) {
       });
 
       if (error) throw error;
+      
+      // Handle MODULE_INACTIVE error
+      if (data?.error === 'MODULE_INACTIVE') {
+        toast({ title: 'IA no habilitada', description: data?.message || 'El módulo Sistema UP no está activado', variant: 'destructive' });
+        return null;
+      }
+      
       return data as UPQualityScore;
     } catch (error) {
       console.error('Error evaluating quality:', error);
@@ -434,6 +441,12 @@ export function useUPEngine(organizationId?: string) {
       });
 
       if (error) throw error;
+      
+      // Handle MODULE_INACTIVE error
+      if (data?.error === 'MODULE_INACTIVE') {
+        return null;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error detecting events:', error);
@@ -453,6 +466,13 @@ export function useUPEngine(organizationId?: string) {
       });
 
       if (error) throw error;
+      
+      // Handle MODULE_INACTIVE error
+      if (data?.error === 'MODULE_INACTIVE') {
+        toast({ title: 'IA no habilitada', description: data?.message || 'El módulo Sistema UP no está activado', variant: 'destructive' });
+        return null;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error checking anti-fraud:', error);
@@ -473,6 +493,13 @@ export function useUPEngine(organizationId?: string) {
       });
 
       if (error) throw error;
+      
+      // Handle MODULE_INACTIVE error
+      if (data?.error === 'MODULE_INACTIVE') {
+        toast({ title: 'IA no habilitada', description: data?.message || 'El módulo Sistema UP no está activado', variant: 'destructive' });
+        return null;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error generating quests:', error);
@@ -493,6 +520,13 @@ export function useUPEngine(organizationId?: string) {
       });
 
       if (error) throw error;
+      
+      // Handle MODULE_INACTIVE error
+      if (data?.error === 'MODULE_INACTIVE') {
+        toast({ title: 'IA no habilitada', description: data?.message || 'El módulo Sistema UP no está activado', variant: 'destructive' });
+        return null;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error getting recommendations:', error);

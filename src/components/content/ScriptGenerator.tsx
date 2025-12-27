@@ -578,6 +578,16 @@ Responde SOLO en formato JSON con esta estructura exacta:
 
       if (error) throw new Error(error.message);
 
+      // Handle MODULE_INACTIVE error
+      if (data?.error === 'MODULE_INACTIVE') {
+        toast({ 
+          title: "IA no habilitada", 
+          description: data?.message || "El módulo de IA 'Generación de Guiones' no está activado. Un administrador debe habilitarlo en Configuración → IA & Modelos.",
+          variant: "destructive" 
+        });
+        return;
+      }
+
       const responseText = data?.script || data?.result || "";
       
       // Parse JSON from response
@@ -724,6 +734,12 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
     if (error) throw new Error(error.message);
     if (!data) throw new Error("Respuesta vacía de la IA");
+    
+    // Handle MODULE_INACTIVE error
+    if (data.error === 'MODULE_INACTIVE') {
+      throw new Error(data.message || "El módulo de IA 'Generación de Guiones' no está activado. Un administrador debe habilitarlo en Configuración → IA & Modelos.");
+    }
+    
     if (data.error) throw new Error(data.error);
 
     return data.script || data.result || "";

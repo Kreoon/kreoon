@@ -218,6 +218,16 @@ export default function StrategistDashboard() {
         return;
       }
 
+      // Handle MODULE_INACTIVE error
+      if (response.data?.error === 'MODULE_INACTIVE') {
+        toast({
+          title: 'IA no habilitada',
+          description: response.data?.message || "El módulo de IA 'Generación de Guiones' no está activado. Un administrador debe habilitarlo en Configuración → IA & Modelos.",
+          variant: 'destructive'
+        });
+        return;
+      }
+
       setGeneratedScript(response.data?.script || '');
       toast({ title: 'Guión generado exitosamente' });
     } catch (error) {
