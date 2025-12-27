@@ -144,16 +144,22 @@ export default function StrategistDashboard() {
 
       const orgId = authProfile?.current_organization_id;
 
-      let productsQuery = supabase.from('products').select('*, client:clients(organization_id)').order('name');
-      
+      let productsQuery = supabase
+        .from('products')
+        .select('*, client:clients(organization_id)')
+        .order('name');
+
       const { data: productsData } = await productsQuery;
-      
+
       // Filter products to only those belonging to clients in the current org
-      const filteredProducts = orgId 
+      const filteredProducts = orgId
         ? (productsData || []).filter((p: any) => p.client?.organization_id === orgId)
         : productsData || [];
 
-      setProducts(filteredProducts as Product[]);
+      // Remove the partial `client` join so it matches our local `Product` type
+      const sanitizedProducts = filteredProducts.map(({ client, ...p }: any) => p);
+
+      setProducts(sanitizedProducts as Product[]);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
