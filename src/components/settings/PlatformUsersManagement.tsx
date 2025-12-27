@@ -226,27 +226,40 @@ export function PlatformUsersManagement() {
 
     setActionLoading(user.id);
     try {
-      // Remove from ALL organization_members entries for this user
+      // 1) Remove membership for the current org
       const { error: memberError } = await supabase
-        .from('organization_members')
+        .from("organization_members")
         .delete()
-        .eq('user_id', user.id);
+        .eq("user_id", user.id)
+        .eq("organization_id", user.current_organization_id);
 
-      if (memberError) {
-        console.error("Error removing from org members:", memberError);
-      }
+      if (memberError) throw memberError;
 
-      // Clear current_organization_id in profile
+      // 2) Clear current_organization_id in profile
       const { error: profileError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({ current_organization_id: null })
-        .eq('id', user.id);
+        .eq("id", user.id);
 
-      if (profileError) {
-        throw profileError;
+      if (profileError) throw profileError;
+
+      // 3) Verify (avoid “toast success but still assigned”)
+      const { data: verifyProfile, error: verifyError } = await supabase
+        .from("profiles")
+        .select("current_organization_id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (verifyError) throw verifyError;
+
+      if (verifyProfile?.current_organization_id) {
+        toast.error(
+          `No se pudo remover completamente: aún tiene organización asignada.`
+        );
+      } else {
+        toast.success(`${user.full_name} removido de la organización`);
       }
 
-      toast.success(`${user.full_name} removido de la organización`);
       fetchData();
     } catch (error: any) {
       console.error("Error removing user:", error);
