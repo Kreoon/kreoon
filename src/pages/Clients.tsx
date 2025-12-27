@@ -111,21 +111,23 @@ const Clients = () => {
 
       const { data: clientsData } = await clientsQuery;
 
-      // Fetch all client_users associations
-      const { data: clientUsersAssociations } = await supabase
-        .from('client_users')
-        .select('client_id, user_id, role');
+      const clientIds = (clientsData || []).map((c) => c.id);
 
-      // Fetch users with client role
-      const { data: clientRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'client');
+      // Fetch client_users associations ONLY for clients in this organization
+      const { data: clientUsersAssociations } = clientIds.length
+        ? await supabase
+            .from('client_users')
+            .select('client_id, user_id, role')
+            .in('client_id', clientIds)
+        : { data: [] as Array<{ client_id: string; user_id: string; role: string | null }> };
 
-      const clientUserIds = clientRoles?.map(r => r.user_id) || [];
+      // Build client users list ONLY from the users linked to those org clients
+      const clientUserIds = Array.from(
+        new Set((clientUsersAssociations || []).map((a) => a.user_id))
+      );
 
       let clientUsersList: ClientUser[] = [];
-      
+
       if (clientUserIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
@@ -134,13 +136,18 @@ const Clients = () => {
           .order('full_name');
 
         if (profilesData) {
-          // Map profiles to client users with their linked clients
-          clientUsersList = profilesData.map(p => {
-            const userAssociations = clientUsersAssociations?.filter(a => a.user_id === p.id) || [];
-            const linkedClients = userAssociations.map(a => {
-              const client = clientsData?.find(c => c.id === a.client_id);
-              return client ? { id: client.id, name: client.name, role: a.role || 'viewer' } : null;
-            }).filter(Boolean) as Array<{ id: string; name: string; role: string }>;
+          clientUsersList = profilesData.map((p) => {
+            const userAssociations =
+              clientUsersAssociations?.filter((a) => a.user_id === p.id) || [];
+
+            const linkedClients = userAssociations
+              .map((a) => {
+                const client = clientsData?.find((c) => c.id === a.client_id);
+                return client
+                  ? { id: client.id, name: client.name, role: a.role || 'viewer' }
+                  : null;
+              })
+              .filter(Boolean) as Array<{ id: string; name: string; role: string }>;
 
             return {
               id: p.id,
@@ -150,7 +157,7 @@ const Clients = () => {
               phone: p.phone,
               city: p.city,
               created_at: p.created_at || '',
-              linked_clients: linkedClients
+              linked_clients: linkedClients,
             };
           });
         }
