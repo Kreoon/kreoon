@@ -108,20 +108,19 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
   }
 };
 
-// Get organization AI configuration
+// Get organization AI configuration - uses Lovable AI Gateway by default
 async function getOrgAIConfig(supabase: any, organizationId: string) {
-  // Defaults
+  // Get Lovable API key - this is always available
+  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  
+  // Get organization defaults
   const { data: defaults } = await supabase
     .from("organization_ai_defaults")
     .select("*")
     .eq("organization_id", organizationId)
     .maybeSingle();
 
-  // Usar configuración específica del módulo "tablero" si existe
-  let provider = defaults?.tablero_provider || defaults?.default_provider || "lovable";
-  let model = defaults?.tablero_model || defaults?.default_model || "google/gemini-2.5-flash";
-
-  // Preferir SIEMPRE un proveedor configurado por la organización (con API key)
+  // Check if organization has external providers configured
   type OrgProviderRow = {
     provider_key: string;
     api_key_encrypted: string | null;
@@ -138,50 +137,45 @@ async function getOrgAIConfig(supabase: any, organizationId: string) {
     ((enabledProviders as OrgProviderRow[] | null) || []).map((p) => [p.provider_key, p])
   );
 
-  const hasOrgKey = (key: string) => {
-    const p = providerByKey.get(key);
-    return !!p?.api_key_encrypted;
-  };
+  // Get preferred provider from config
+  const preferredProvider = defaults?.tablero_provider || defaults?.default_provider || "lovable";
+  const preferredModel = defaults?.tablero_model || defaults?.default_model || "google/gemini-2.5-flash";
 
-  const pickFirstConfigured = (): { provider: string; model: string; apiKey: string } | null => {
-    // Orden de preferencia (ajustable después): OpenAI > Gemini
-    const preferred = ["openai", "gemini"];
-    for (const key of preferred) {
-      if (!hasOrgKey(key)) continue;
-      const p = providerByKey.get(key)!;
+  // If organization has a specific external provider configured with API key, use it
+  if (preferredProvider !== "lovable") {
+    const orgProvider = providerByKey.get(preferredProvider);
+    if (orgProvider?.api_key_encrypted) {
+      const model = preferredModel || (
+        Array.isArray(orgProvider.available_models) && orgProvider.available_models.length
+          ? orgProvider.available_models[0]
+          : preferredProvider === "openai" ? "gpt-4o" : "gemini-2.5-flash"
+      );
+      return { provider: preferredProvider, model, apiKey: orgProvider.api_key_encrypted };
+    }
+  }
+
+  // Check other external providers as fallback
+  const externalProviders = ["openai", "gemini"];
+  for (const key of externalProviders) {
+    const p = providerByKey.get(key);
+    if (p?.api_key_encrypted) {
       const fallbackModel = Array.isArray(p.available_models) && p.available_models.length
         ? p.available_models[0]
-        : key === "openai"
-          ? "gpt-4o"
-          : "gemini-2.5-flash";
-
-      return { provider: key, model: fallbackModel, apiKey: p.api_key_encrypted! };
+        : key === "openai" ? "gpt-4o" : "gemini-2.5-flash";
+      return { provider: key, model: fallbackModel, apiKey: p.api_key_encrypted };
     }
-    return null;
+  }
+
+  // Default: Use Lovable AI Gateway (always available, no external API key needed)
+  if (!lovableApiKey) {
+    throw new Error("LOVABLE_API_KEY no está configurada. Contacta al soporte.");
+  }
+  
+  return { 
+    provider: "lovable", 
+    model: preferredModel || "google/gemini-2.5-flash", 
+    apiKey: lovableApiKey 
   };
-
-  // Si el default es lovable o no hay API key para el provider seleccionado, elegir uno configurado
-  if (provider === "lovable" || !hasOrgKey(provider)) {
-    const picked = pickFirstConfigured();
-    if (picked) return picked;
-  }
-
-  // Si el provider seleccionado es un provider externo con API key, usarlo
-  if (provider !== "lovable") {
-    const p = providerByKey.get(provider);
-    if (p?.api_key_encrypted) {
-      return { provider, model, apiKey: p.api_key_encrypted };
-    }
-
-    // Sin API key => fallback a uno configurado (si existe)
-    const picked = pickFirstConfigured();
-    if (picked) return picked;
-  }
-
-  // Si llegamos aquí, no hay ningún proveedor externo configurado.
-  throw new Error(
-    "IA no configurada para esta organización. Activa un proveedor (OpenAI o Gemini) y guarda su API key en Configuración → IA & Modelos."
-  );
 }
 
 // Log AI usage
