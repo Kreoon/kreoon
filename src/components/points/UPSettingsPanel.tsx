@@ -59,19 +59,15 @@ export function UPSettingsPanel() {
   const [currencySaving, setCurrencySaving] = useState(false);
 
   useEffect(() => {
-    if (currentOrgId) {
-      fetchCurrencyConfig();
-    }
-  }, [currentOrgId]);
+    fetchCurrencyConfig();
+  }, []);
 
   const fetchCurrencyConfig = async () => {
-    if (!currentOrgId) return;
-    
     setCurrencyLoading(true);
     try {
-      // Query using postgrest directly to avoid TS type issues with new columns
+      // Fetch first setting row to get currency config (all rows share the same values)
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/up_settings?organization_id=eq.${currentOrgId}&select=secondary_currency_enabled,secondary_currency_name,secondary_currency_icon`,
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/up_settings?select=secondary_currency_enabled,secondary_currency_name,secondary_currency_icon&limit=1`,
         {
           headers: {
             'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
@@ -98,14 +94,12 @@ export function UPSettingsPanel() {
   };
 
   const saveCurrencyConfig = async () => {
-    if (!currentOrgId) return;
-
     setCurrencySaving(true);
     try {
-      // Use fetch directly to avoid TS type issues with new columns
+      // Update all up_settings rows with currency config
       const session = await supabase.auth.getSession();
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/up_settings?organization_id=eq.${currentOrgId}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/up_settings`,
         {
           method: 'PATCH',
           headers: {
@@ -122,9 +116,14 @@ export function UPSettingsPanel() {
         }
       );
 
-      if (!response.ok) throw new Error('Failed to update');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to update:', errorText);
+        throw new Error('Failed to update');
+      }
       toast({ title: 'Configuración de moneda guardada' });
     } catch (error) {
+      console.error('Error saving currency config:', error);
       toast({ title: 'Error al guardar', variant: 'destructive' });
     } finally {
       setCurrencySaving(false);
