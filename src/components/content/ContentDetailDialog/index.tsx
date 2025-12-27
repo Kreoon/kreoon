@@ -9,13 +9,14 @@ import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
+import { ContentConfigDialog } from './Config';
 import { STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
 import { useContentDetail } from './hooks/useContentDetail';
 import { useContentPermissions } from './hooks/useContentPermissions';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Clock, Package, Target, Save, Trash2, Share2 } from 'lucide-react';
+import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings } from 'lucide-react';
 import type { ContentDetailDialogProps } from './types';
 
 // Lazy load tabs
@@ -40,6 +41,7 @@ function TabSkeleton() {
 export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onDelete }: ContentDetailDialogProps) {
   const { isAdmin, isClient, user } = useAuth();
   const [showProductDialog, setShowProductDialog] = useState(false);
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('scripts');
   
   const {
@@ -135,6 +137,18 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
               </div>
               
               <div className="flex items-center gap-2">
+                {/* Config Button - Only for Admins */}
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowConfigDialog(true)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                )}
+                
                 {/* AutoSave Indicator */}
                 {editMode && (
                   <AutoSaveIndicator 
@@ -274,6 +288,15 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         onOpenChange={setShowProductDialog}
         onSave={() => {}}
       />
+
+      {/* Content Config Dialog - Admin Only */}
+      {isAdmin && (
+        <ContentConfigDialog
+          open={showConfigDialog}
+          onOpenChange={setShowConfigDialog}
+          organizationId={(content as any).organization_id || null}
+        />
+      )}
     </Dialog>
   );
 }
