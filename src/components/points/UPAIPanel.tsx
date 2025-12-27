@@ -2,15 +2,11 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Slider } from '@/components/ui/slider';
-import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Brain, Sparkles, Shield, Target, AlertTriangle,
-  Lightbulb, TrendingUp, CheckCircle2, XCircle,
-  Zap, RefreshCw, Eye
+  Lightbulb, TrendingUp, Eye
 } from 'lucide-react';
 import { UPAIConfig, useUPEngine } from '@/hooks/useUPEngine';
 import { useToast } from '@/hooks/use-toast';
@@ -24,9 +20,7 @@ interface UPAIPanelProps {
 export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
   const { 
     updateAIConfig, 
-    analyzeQuality, 
-    detectEvents, 
-    checkFraud,
+    checkAntiFraud,
     generateQuests,
     getRuleRecommendations
   } = useUPEngine(organizationId);
@@ -65,7 +59,7 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
   const handleCheckFraud = async () => {
     setLoading('fraud');
     try {
-      const alerts = await checkFraud();
+      const alerts = await checkAntiFraud();
       setFraudAlerts(alerts || []);
       toast({ 
         title: alerts?.length ? `${alerts.length} alertas detectadas` : 'Sin alertas de fraude'
@@ -124,7 +118,7 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
                   {aiConfig.quality_score_enabled ? 'Activo' : 'Inactivo'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Umbral mínimo: {aiConfig.quality_threshold || 60}
+                  Umbral mínimo: {aiConfig.min_quality_for_approval || 60}
                 </p>
               </div>
               <Switch 

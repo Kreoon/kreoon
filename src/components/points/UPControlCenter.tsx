@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  BarChart3, Settings, Brain, Shield, Target, Sparkles, 
-  TrendingUp, AlertTriangle, Zap, Trophy, Users, Activity
+  BarChart3, Settings, Brain, Target, 
+  AlertTriangle, Zap, Trophy, Activity
 } from 'lucide-react';
 import { useUPEngine } from '@/hooks/useUPEngine';
 import { UPRulesBuilder } from './UPRulesBuilder';
@@ -27,8 +26,7 @@ export function UPControlCenter({ organizationId }: UPControlCenterProps) {
     seasons,
     aiConfig,
     loading,
-    fetchRules,
-    fetchEvents
+    refetch
   } = useUPEngine(organizationId);
 
   const [activeTab, setActiveTab] = useState('analytics');
@@ -48,7 +46,7 @@ export function UPControlCenter({ organizationId }: UPControlCenterProps) {
     );
   }
 
-  const activeSeason = seasons.find(s => s.status === 'active');
+  const activeSeason = seasons.find(s => s.is_active);
   const activeRulesCount = rules.filter(r => r.is_active).length;
   const totalEvents = events.length;
   const fraudAlerts = 0; // Will be fetched from UP fraud alerts
@@ -145,7 +143,7 @@ export function UPControlCenter({ organizationId }: UPControlCenterProps) {
           <UPRulesBuilder 
             organizationId={organizationId} 
             rules={rules}
-            onRefresh={fetchRules}
+            onRefresh={refetch}
           />
         </TabsContent>
 

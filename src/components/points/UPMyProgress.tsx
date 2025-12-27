@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -6,14 +5,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Zap, Trophy, Flame, TrendingUp, Clock, Target, 
-  CheckCircle2, XCircle, Star, Crown, Shield, Award,
-  ChevronRight, Sparkles, Brain
+  CheckCircle2, XCircle, Star, Crown, Award,
+  Sparkles, Brain
 } from 'lucide-react';
 import { useUserPoints, usePointsHistory } from '@/hooks/useUserPoints';
 import { useUserQuests } from '@/hooks/useUPEngine';
 import { useAchievements } from '@/hooks/useAchievements';
 import { cn } from '@/lib/utils';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface UPMyProgressProps {
@@ -51,7 +50,6 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
     points, 
     loading: pointsLoading,
     getProgressToNextLevel,
-    LEVEL_LABELS: levelLabels,
     LEVEL_COLORS,
     LEVEL_BG_COLORS
   } = useUserPoints(userId);
@@ -86,8 +84,8 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
     .filter(a => !unlockedIds.has(a.id))
     .slice(0, 3);
 
-  // Active quests
-  const activeQuests = quests.filter(q => q.status === 'active').slice(0, 3);
+  // Active quests - filter by is_active
+  const activeQuests = quests.filter(q => q.is_active).slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -184,32 +182,37 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {activeQuests.length > 0 ? (
-              activeQuests.map(quest => (
-                <div 
-                  key={quest.id}
-                  className="p-3 rounded-lg border bg-gradient-to-r from-purple-500/10 to-transparent"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{quest.title}</h4>
-                      <p className="text-sm text-muted-foreground">{quest.description}</p>
+              activeQuests.map(quest => {
+                const currentProgress = quest.progress?.current_value || 0;
+                const targetValue = quest.goal_value || 1;
+                
+                return (
+                  <div 
+                    key={quest.id}
+                    className="p-3 rounded-lg border bg-gradient-to-r from-purple-500/10 to-transparent"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{quest.title}</h4>
+                        <p className="text-sm text-muted-foreground">{quest.description}</p>
+                      </div>
+                      <Badge variant="outline" className="shrink-0">
+                        +{quest.reward_points} UP
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="shrink-0">
-                      +{quest.reward_points} UP
-                    </Badge>
-                  </div>
-                  <div className="mt-2 space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Progreso</span>
-                      <span>{quest.current_progress || 0} / {quest.target_value}</span>
+                    <div className="mt-2 space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Progreso</span>
+                        <span>{currentProgress} / {targetValue}</span>
+                      </div>
+                      <Progress 
+                        value={(currentProgress / targetValue) * 100} 
+                        className="h-2" 
+                      />
                     </div>
-                    <Progress 
-                      value={((quest.current_progress || 0) / quest.target_value) * 100} 
-                      className="h-2" 
-                    />
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="text-center py-6 text-muted-foreground">
                 <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -246,8 +249,8 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
                     variant="outline"
                     className={cn(
                       achievement.rarity === 'legendary' && 'border-amber-500 text-amber-500',
-                      achievement.rarity === 'epic' && 'border-purple-500 text-purple-500',
-                      achievement.rarity === 'rare' && 'border-cyan-500 text-cyan-500'
+                      achievement.rarity === 'rare' && 'border-cyan-500 text-cyan-500',
+                      achievement.rarity === 'uncommon' && 'border-purple-500 text-purple-500'
                     )}
                   >
                     {achievement.rarity}
@@ -279,7 +282,7 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-3">
               {history.length > 0 ? (
-                history.map((transaction, index) => {
+                history.map((transaction) => {
                   const typeInfo = TRANSACTION_ICONS[transaction.transaction_type] || 
                     { icon: Zap, color: 'text-muted-foreground' };
                   const Icon = typeInfo.icon;

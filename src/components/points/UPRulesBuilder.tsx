@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,9 +10,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { 
-  Plus, Target, Zap, Edit2, Trash2, Play, 
+  Plus, Target, Zap, Edit2, Trash2, 
   AlertTriangle, CheckCircle2, Clock, TrendingUp,
-  Shield, Settings, Copy
+  Shield
 } from 'lucide-react';
 import { UPRule, useUPEngine } from '@/hooks/useUPEngine';
 import { useToast } from '@/hooks/use-toast';
@@ -50,33 +50,34 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
   const [isCreating, setIsCreating] = useState(false);
   const [editingRule, setEditingRule] = useState<UPRule | null>(null);
   const [formData, setFormData] = useState({
-    event_type: '',
+    event_type_key: '',
     name: '',
     description: '',
     points: 10,
     is_penalty: false,
-    applicable_roles: ['all'] as string[],
-    conditions: {} as Record<string, any>,
-    limits: { daily_max: 0, weekly_max: 0, per_content_max: 1 }
+    applies_to_roles: ['all'] as string[],
+    max_per_day: 0,
+    max_per_week: 0,
+    max_per_content: 1
   });
 
   const resetForm = () => {
     setFormData({
-      event_type: '',
+      event_type_key: '',
       name: '',
       description: '',
       points: 10,
       is_penalty: false,
-      applicable_roles: ['all'],
-      conditions: {},
-      limits: { daily_max: 0, weekly_max: 0, per_content_max: 1 }
+      applies_to_roles: ['all'],
+      max_per_day: 0,
+      max_per_week: 0,
+      max_per_content: 1
     });
   };
 
   const handleCreate = async () => {
     try {
       await createRule({
-        organization_id: organizationId,
         ...formData,
         is_active: true
       });
@@ -139,14 +140,15 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
 
   const openEdit = (rule: UPRule) => {
     setFormData({
-      event_type: rule.event_type,
+      event_type_key: rule.event_type_key,
       name: rule.name,
       description: rule.description || '',
       points: rule.points,
       is_penalty: rule.is_penalty,
-      applicable_roles: rule.applicable_roles || ['all'],
-      conditions: rule.conditions || {},
-      limits: rule.limits || { daily_max: 0, weekly_max: 0, per_content_max: 1 }
+      applies_to_roles: rule.applies_to_roles || ['all'],
+      max_per_day: rule.max_per_day || 0,
+      max_per_week: rule.max_per_week || 0,
+      max_per_content: rule.max_per_content || 1
     });
     setEditingRule(rule);
   };
@@ -157,8 +159,8 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
         <div className="space-y-2">
           <Label>Tipo de Evento</Label>
           <Select 
-            value={formData.event_type} 
-            onValueChange={(v) => setFormData(prev => ({ ...prev, event_type: v }))}
+            value={formData.event_type_key} 
+            onValueChange={(v) => setFormData(prev => ({ ...prev, event_type_key: v }))}
           >
             <SelectTrigger>
               <SelectValue placeholder="Seleccionar evento" />
@@ -221,8 +223,8 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
         <div className="space-y-2">
           <Label>Rol Aplicable</Label>
           <Select 
-            value={formData.applicable_roles[0] || 'all'} 
-            onValueChange={(v) => setFormData(prev => ({ ...prev, applicable_roles: [v] }))}
+            value={formData.applies_to_roles[0] || 'all'} 
+            onValueChange={(v) => setFormData(prev => ({ ...prev, applies_to_roles: [v] }))}
           >
             <SelectTrigger>
               <SelectValue />
@@ -247,10 +249,10 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
             <Label className="text-xs">Máx. Diario</Label>
             <Input 
               type="number"
-              value={formData.limits.daily_max || 0}
+              value={formData.max_per_day || 0}
               onChange={(e) => setFormData(prev => ({ 
                 ...prev, 
-                limits: { ...prev.limits, daily_max: parseInt(e.target.value) || 0 }
+                max_per_day: parseInt(e.target.value) || 0
               }))}
               placeholder="0 = sin límite"
             />
@@ -259,10 +261,10 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
             <Label className="text-xs">Máx. Semanal</Label>
             <Input 
               type="number"
-              value={formData.limits.weekly_max || 0}
+              value={formData.max_per_week || 0}
               onChange={(e) => setFormData(prev => ({ 
                 ...prev, 
-                limits: { ...prev.limits, weekly_max: parseInt(e.target.value) || 0 }
+                max_per_week: parseInt(e.target.value) || 0
               }))}
             />
           </div>
@@ -270,10 +272,10 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
             <Label className="text-xs">Por Contenido</Label>
             <Input 
               type="number"
-              value={formData.limits.per_content_max || 1}
+              value={formData.max_per_content || 1}
               onChange={(e) => setFormData(prev => ({ 
                 ...prev, 
-                limits: { ...prev.limits, per_content_max: parseInt(e.target.value) || 1 }
+                max_per_content: parseInt(e.target.value) || 1
               }))}
             />
           </div>
@@ -323,7 +325,7 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
         <div className="space-y-3 pr-4">
           {rules.length > 0 ? (
             rules.map(rule => {
-              const eventType = EVENT_TYPES.find(e => e.value === rule.event_type);
+              const eventType = EVENT_TYPES.find(e => e.value === rule.event_type_key);
               const EventIcon = eventType?.icon || Target;
 
               return (
@@ -366,11 +368,11 @@ export function UPRulesBuilder({ organizationId, rules, onRefresh }: UPRulesBuil
                             )}>
                               {rule.is_penalty ? '-' : '+'}{rule.points} UP
                             </span>
-                            <span>Roles: {rule.applicable_roles?.join(', ') || 'Todos'}</span>
-                            {rule.limits?.daily_max > 0 && (
+                            <span>Roles: {rule.applies_to_roles?.join(', ') || 'Todos'}</span>
+                            {rule.max_per_day && rule.max_per_day > 0 && (
                               <span className="flex items-center gap-1">
                                 <Shield className="w-3 h-3" />
-                                Máx {rule.limits.daily_max}/día
+                                Máx {rule.max_per_day}/día
                               </span>
                             )}
                           </div>

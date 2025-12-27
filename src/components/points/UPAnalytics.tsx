@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   BarChart3, TrendingUp, Users, Zap, Trophy, 
-  CheckCircle2, XCircle, Clock, Target, Flame
+  CheckCircle2, Target, Flame
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -82,13 +82,14 @@ export function UPAnalytics({ organizationId }: UPAnalyticsProps) {
         .sort((a, b) => (b.total_points || 0) - (a.total_points || 0))
         .slice(0, 5);
 
-      // Event breakdown
+      // Event breakdown - use event_type_key
       const eventCounts = events.reduce((acc, e) => {
-        if (!acc[e.event_type]) {
-          acc[e.event_type] = { count: 0, points: 0 };
+        const eventKey = e.event_type_key || 'unknown';
+        if (!acc[eventKey]) {
+          acc[eventKey] = { count: 0, points: 0 };
         }
-        acc[e.event_type].count += 1;
-        acc[e.event_type].points += e.points_awarded || 0;
+        acc[eventKey].count += 1;
+        acc[eventKey].points += e.points_awarded || 0;
         return acc;
       }, {} as Record<string, { count: number; points: number }>);
 
