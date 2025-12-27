@@ -25,10 +25,9 @@ export function EditorSubTab({
 
           {editMode && canEdit ? (
             <RichTextEditor
-              value={formData.editor_guidelines || ''}
+              content={formData.editor_guidelines || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, editor_guidelines: value }))}
               placeholder="Describe el estilo de edición, ritmo, transiciones, efectos especiales..."
-              minHeight={200}
             />
           ) : hasContent ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">

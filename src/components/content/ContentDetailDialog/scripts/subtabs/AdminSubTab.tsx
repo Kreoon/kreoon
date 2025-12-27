@@ -97,10 +97,9 @@ export function AdminSubTab({
 
           {editMode && canEdit ? (
             <RichTextEditor
-              value={formData.admin_guidelines || ''}
+              content={formData.admin_guidelines || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, admin_guidelines: value }))}
               placeholder="Notas internas, decisiones, historial de cambios..."
-              minHeight={150}
             />
           ) : hasContent ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
@@ -117,7 +116,7 @@ export function AdminSubTab({
 
       {/* Lock Control */}
       {canLock && (
-        <SectionCard title="Control de Edición" iconEmoji="🔐" variant="warning">
+        <SectionCard title="Control de Edición" iconEmoji="🔐" variant="highlight">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

@@ -6,7 +6,7 @@ import { RichTextViewer } from '@/components/scripts/RichTextViewer';
 import { TeleprompterMode } from '@/components/content/TeleprompterMode';
 import { CommentsSection } from '@/components/content/CommentsSection';
 import { SectionCard } from '../../components/SectionCard';
-import { CheckCircle, FileText, MessageSquare, History, Tv } from 'lucide-react';
+import { CheckCircle, FileText, Tv } from 'lucide-react';
 import { SubTabProps } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -57,12 +57,6 @@ export function ScriptSubTab({
           {/* Actions bar */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2">
-              {content?.script_version && (
-                <Badge variant="outline" className="gap-1">
-                  <History className="h-3 w-3" />
-                  v{content.script_version}
-                </Badge>
-              )}
               {content?.script_approved_at && (
                 <Badge variant="secondary" className="gap-1 bg-success/10 text-success">
                   <CheckCircle className="h-3 w-3" />
@@ -86,10 +80,9 @@ export function ScriptSubTab({
           {/* Script editor/viewer */}
           {editMode && canEdit ? (
             <RichTextEditor
-              value={formData.script || ''}
+              content={formData.script || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, script: value }))}
               placeholder="Escribe el guión aquí..."
-              minHeight={300}
             />
           ) : hasScript ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
@@ -133,7 +126,7 @@ export function ScriptSubTab({
       {/* Comments */}
       {content?.id && (
         <SectionCard title="Comentarios del Guión" iconEmoji="💬">
-          <CommentsSection contentId={content.id} section="script" />
+          <CommentsSection contentId={content.id} />
         </SectionCard>
       )}
 

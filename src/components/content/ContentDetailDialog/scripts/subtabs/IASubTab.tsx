@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProductSelector } from '@/components/products/ProductSelector';
 import { StrategistScriptForm } from '@/components/content/StrategistScriptForm';
 import { SectionCard, FieldRow } from '../../components/SectionCard';
-import { Sparkles, Package, History, RefreshCw } from 'lucide-react';
+import { Sparkles, Package, History } from 'lucide-react';
 import { SubTabProps } from './types';
 import { useToast } from '@/hooks/use-toast';
 
