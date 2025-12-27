@@ -13,7 +13,8 @@ import {
   Kanban,
   RefreshCw,
   Trophy,
-  Eye
+  Eye,
+  Globe
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,7 @@ const adminNavigation: NavItem[] = [
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
   { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
   { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
+  { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
   { name: "Sistema UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
@@ -54,6 +56,7 @@ const adminNavigation: NavItem[] = [
 const strategistNavigation: NavItem[] = [
   { name: "Dashboard", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+  { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
@@ -61,6 +64,7 @@ const editorNavigation: NavItem[] = [
   { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+  { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
@@ -68,11 +72,13 @@ const creatorNavigation: NavItem[] = [
   { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+  { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
 const clientNavigation: NavItem[] = [
   { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
