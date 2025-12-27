@@ -1,12 +1,8 @@
 import { Input } from '@/components/ui/input';
-import { ProductSelector } from '@/components/products/ProductSelector';
-import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
 import { FieldRow } from '../components/SectionCard';
 import { EditableField } from '../components/PermissionsGate';
 import { TabProps } from '../types';
-import { useState } from 'react';
-import { Package, Target, FileText, Link as LinkIcon, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Target, FileText, Link as LinkIcon, ExternalLink } from 'lucide-react';
 
 interface GeneralTabProps extends TabProps {
   selectedProduct: any;
@@ -23,41 +19,12 @@ export function GeneralTab({
   onProductChange,
   readOnly = false,
 }: GeneralTabProps) {
-  // Combine permissions with readOnly prop for effective edit capability
   const canEditGeneral = permissions.can('content.general', 'edit') && !readOnly;
   const effectiveEditMode = editMode && !readOnly;
-  const [showProductDialog, setShowProductDialog] = useState(false);
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Producto */}
-        <FieldRow label="Producto" icon={Package}>
-          <EditableField
-            permissions={permissions}
-            resource="content.general"
-            editMode={effectiveEditMode}
-            readOnly={readOnly}
-            editComponent={
-              <ProductSelector
-                clientId={formData.client_id || content?.client_id || null}
-                value={formData.product_id}
-                onChange={onProductChange}
-              />
-            }
-            viewComponent={
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{selectedProduct?.name || content?.product || '—'}</span>
-                {selectedProduct && (
-                  <Button variant="ghost" size="sm" onClick={() => setShowProductDialog(true)} className="h-6 px-2 text-xs">
-                    Ver info
-                  </Button>
-                )}
-              </div>
-            }
-          />
-        </FieldRow>
-
         {/* Ángulo de Ventas */}
         <FieldRow label="Ángulo de Ventas" icon={Target}>
           <EditableField
@@ -77,7 +44,7 @@ export function GeneralTab({
         </FieldRow>
 
         {/* Descripción */}
-        <FieldRow label="Descripción" icon={FileText} className="md:col-span-2">
+        <FieldRow label="Descripción" icon={FileText}>
           <EditableField
             permissions={permissions}
             resource="content.general"
@@ -138,17 +105,6 @@ export function GeneralTab({
           />
         </FieldRow>
       </div>
-
-      {/* Product Dialog */}
-      {selectedProduct && (
-        <ProductDetailDialog
-          product={selectedProduct}
-          clientId={formData.client_id}
-          open={showProductDialog}
-          onOpenChange={setShowProductDialog}
-          onSave={() => {}}
-        />
-      )}
     </div>
   );
 }

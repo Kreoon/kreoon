@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useMemo } from 'react';
+import { lazy, Suspense, useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
+import { ProductSelector } from '@/components/products/ProductSelector';
 import { ContentConfigDialog } from './Config';
 import { STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,11 +18,12 @@ import { useContentPermissions } from './hooks/useContentPermissions';
 import { useBlockConfig } from './hooks/useBlockConfig';
 import { useContentCreate } from './hooks/useContentCreate';
 import { BlockKey } from './Config/types';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2 } from 'lucide-react';
+import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ContentDetailDialogProps, ContentFormData } from './types';
+import type { ContentDetailDialogProps, ContentFormData, SelectOption } from './types';
 
 // Lazy load tabs
 const ScriptsTab = lazy(() => import('./tabs/ScriptsTab').then(m => ({ default: m.ScriptsTab })));
@@ -37,7 +39,7 @@ const TAB_TO_BLOCK: Record<string, BlockKey> = {
   scripts: 'script',
   video: 'video',
   material: 'material',
-  general: 'script', // General uses script block permissions
+  general: 'script',
   team: 'team',
   dates: 'dates',
   payments: 'payments',
@@ -65,15 +67,16 @@ export function ContentDetailDialog({
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('scripts');
+  const [clients, setClients] = useState<SelectOption[]>([]);
   
   const isCreateMode = mode === 'create';
   
-  // View mode hooks (only used when viewing existing content)
+  // View mode hooks
   const viewHooks = useContentDetail({ content: isCreateMode ? null : content, onUpdate });
   const permissions = useContentPermissions(isCreateMode ? null : content);
   const blockConfig = useBlockConfig(isCreateMode ? null : content);
   
-  // Create mode hooks (only used when creating new content)
+  // Create mode hooks
   const createHooks = useContentCreate({
     onSuccess: onUpdate,
     onClose: () => onOpenChange(false)
@@ -91,20 +94,47 @@ export function ContentDetailDialog({
   const editMode = isCreateMode ? true : viewHooks.editMode;
   const setEditMode = isCreateMode ? () => {} : viewHooks.setEditMode;
 
+  // Fetch clients for header selector
+  useEffect(() => {
+    const fetchClients = async () => {
+      const { data } = await supabase.from('clients').select('id, name').order('name');
+      setClients(data || []);
+    };
+    if (open) {
+      fetchClients();
+    }
+  }, [open]);
+
+  // Get client name from formData
+  const getClientName = () => {
+    if (formData.client_id) {
+      return clients.find(c => c.id === formData.client_id)?.name;
+    }
+    return content?.client?.name;
+  };
+
+  // Handle client change - also clear product when client changes
+  const handleClientChange = (clientId: string) => {
+    setFormData((prev: ContentFormData) => ({ 
+      ...prev, 
+      client_id: clientId,
+      product_id: '', // Clear product when client changes
+      product: ''
+    }));
+  };
+
   // Combine permissions with block config for effective visible tabs
   const effectiveVisibleTabs = useMemo(() => {
-    // In create mode, show all admin tabs
     if (isCreateMode) {
       return ['scripts', 'general', 'team', 'dates', 'payments'] as const;
     }
     return permissions.visibleTabs.filter(tabKey => {
       const blockKey = TAB_TO_BLOCK[tabKey];
-      if (!blockKey) return true; // If no mapping, show by default
+      if (!blockKey) return true;
       return blockConfig.canViewBlock(blockKey);
     });
   }, [isCreateMode, permissions.visibleTabs, blockConfig]);
 
-  // Check if a tab is locked
   const isTabLocked = (tabKey: string): boolean => {
     if (isCreateMode) return false;
     const blockKey = TAB_TO_BLOCK[tabKey];
@@ -112,7 +142,6 @@ export function ContentDetailDialog({
     return blockConfig.isBlockLocked(blockKey);
   };
 
-  // Check if a tab is read-only (can view but not edit)
   const isTabReadOnly = (tabKey: string): boolean => {
     if (isCreateMode) return false;
     const blockKey = TAB_TO_BLOCK[tabKey];
@@ -120,7 +149,6 @@ export function ContentDetailDialog({
     return !blockConfig.canEditBlock(blockKey);
   };
 
-  // Don't render if no content in view mode
   if (!isCreateMode && !content) return null;
 
   const formatDate = (date: string | null) => {
@@ -128,7 +156,6 @@ export function ContentDetailDialog({
     return format(new Date(date), "d 'de' MMMM, yyyy", { locale: es });
   };
 
-  // Create a mock content object for create mode
   const displayContent = isCreateMode 
     ? { 
         id: '', 
@@ -141,7 +168,6 @@ export function ContentDetailDialog({
       } as any
     : content;
 
-  // Create permissions for create mode (full admin access)
   const effectivePermissions = isCreateMode 
     ? {
         can: () => true,
@@ -150,6 +176,9 @@ export function ContentDetailDialog({
         canEnterEditMode: true,
       }
     : permissions;
+
+  // Check if user can edit client/product (admin or edit mode with general permission)
+  const canEditClientProduct = isCreateMode || (editMode && effectivePermissions.can('content.general', 'edit'));
 
   const tabProps = {
     content: displayContent,
@@ -240,7 +269,6 @@ export function ContentDetailDialog({
               </div>
               
               <div className="flex items-center gap-2">
-                {/* Config Button - Only for Admins in view mode */}
                 {!isCreateMode && isAdmin && (
                   <Button
                     variant="ghost"
@@ -252,7 +280,6 @@ export function ContentDetailDialog({
                   </Button>
                 )}
                 
-                {/* AutoSave Indicator */}
                 {!isCreateMode && editMode && (
                   <AutoSaveIndicator 
                     status={viewHooks.autoSaveStatus} 
@@ -260,7 +287,6 @@ export function ContentDetailDialog({
                   />
                 )}
                 
-                {/* Edit/Cancel button - only in view mode */}
                 {!isCreateMode && effectivePermissions.canEnterEditMode && (
                   <Button
                     variant={editMode ? 'default' : 'outline'}
@@ -271,7 +297,6 @@ export function ContentDetailDialog({
                   </Button>
                 )}
                 
-                {/* Save button */}
                 {editMode && (
                   <Button onClick={handleSave} disabled={saving} size="sm">
                     {saving ? (
@@ -301,28 +326,72 @@ export function ContentDetailDialog({
               </DialogTitle>
             </DialogHeader>
 
-            {/* Meta Info Row */}
-            <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
-              {displayContent.client?.name && (
-                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
-                  <Package className="h-4 w-4" />
-                  <span>{displayContent.client.name}</span>
+            {/* Meta Info Row - Client & Product Selectors */}
+            <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
+              {/* Cliente Selector/Badge */}
+              {canEditClientProduct ? (
+                <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">Cliente</span>
+                  </div>
+                  <Select value={formData.client_id || ''} onValueChange={handleClientChange}>
+                    <SelectTrigger className="border-0 bg-transparent h-8 min-w-[140px] text-sm focus:ring-0">
+                      <SelectValue placeholder="Seleccionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-              {selectedProduct?.name && (
+              ) : getClientName() ? (
                 <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
-                  <Target className="h-4 w-4" />
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span>{getClientName()}</span>
+                </div>
+              ) : null}
+
+              {/* Producto Selector/Badge */}
+              {canEditClientProduct ? (
+                <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">Producto</span>
+                  </div>
+                  <div className="px-2">
+                    <ProductSelector
+                      clientId={formData.client_id || null}
+                      value={formData.product_id || ''}
+                      onChange={handleProductChange}
+                    />
+                  </div>
+                </div>
+              ) : selectedProduct?.name ? (
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                  <Target className="h-4 w-4 text-muted-foreground" />
                   <span>{selectedProduct.name}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowProductDialog(true)} 
+                    className="h-5 px-1 text-xs ml-1"
+                  >
+                    Ver
+                  </Button>
                 </div>
-              )}
+              ) : null}
+
+              {/* Other meta info */}
               {displayContent.campaign_week && (
-                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span>{displayContent.campaign_week}</span>
                 </div>
               )}
               {displayContent.deadline && (
-                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full text-muted-foreground">
                   <Clock className="h-4 w-4" />
                   <span>Entrega: {formatDate(displayContent.deadline)}</span>
                 </div>
@@ -332,7 +401,7 @@ export function ContentDetailDialog({
         </div>
 
         {/* Content Area with Tabs */}
-        <div className="overflow-y-auto max-h-[calc(90vh-200px)] p-4 sm:p-6">
+        <div className="overflow-y-auto max-h-[calc(90vh-220px)] p-4 sm:p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className={`grid w-full h-auto gap-1 mb-6 grid-cols-${effectiveVisibleTabs.length}`}>
               {effectiveVisibleTabs.map(tabKey => {
@@ -363,7 +432,6 @@ export function ContentDetailDialog({
               
               return (
                 <TabsContent key={tabKey} value={tabKey} className="mt-4 relative">
-                  {/* Locked/ReadOnly indicator */}
                   {(locked || readOnly) && (
                     <div className={cn(
                       "absolute top-0 right-0 z-10 flex items-center gap-1 px-2 py-1 text-xs rounded-bl-lg",
@@ -382,7 +450,7 @@ export function ContentDetailDialog({
           </Tabs>
         </div>
 
-        {/* Footer Actions - Delete (only in view mode) */}
+        {/* Footer Actions - Delete */}
         {!isCreateMode && effectivePermissions.can('content.delete', 'edit') && (
           <div className="border-t p-4 bg-muted/30">
             <AlertDialog>
@@ -419,14 +487,14 @@ export function ContentDetailDialog({
 
       {/* Product Dialog */}
       <ProductDetailDialog
-        product={null}
+        product={selectedProduct}
         clientId={formData.client_id}
         open={showProductDialog}
         onOpenChange={setShowProductDialog}
         onSave={() => {}}
       />
 
-      {/* Content Config Dialog - Admin Only (view mode) */}
+      {/* Content Config Dialog */}
       {!isCreateMode && isAdmin && (
         <ContentConfigDialog
           open={showConfigDialog}

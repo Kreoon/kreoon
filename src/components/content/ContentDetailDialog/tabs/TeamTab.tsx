@@ -22,7 +22,6 @@ export function TeamTab({
   // Combine permissions with readOnly prop for effective edit capability
   const canEditTeam = permissions.can('content.team', 'edit') && !readOnly;
   const effectiveEditMode = editMode && !readOnly;
-  const [clients, setClients] = useState<SelectOption[]>([]);
   const [creators, setCreators] = useState<SelectOption[]>([]);
   const [editors, setEditors] = useState<SelectOption[]>([]);
   const [strategists, setStrategists] = useState<SelectOption[]>([]);
@@ -32,9 +31,6 @@ export function TeamTab({
   }, []);
 
   const fetchTeamOptions = async () => {
-    const { data: clientsData } = await supabase.from('clients').select('id, name').order('name');
-    setClients(clientsData || []);
-
     const { data: creatorRoles } = await supabase.from('user_roles').select('user_id').eq('role', 'creator');
     if (creatorRoles?.length) {
       const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', creatorRoles.map(r => r.user_id));
@@ -59,7 +55,6 @@ export function TeamTab({
     return format(new Date(date), "d MMM yyyy", { locale: es });
   };
 
-  const getClientName = () => clients.find(c => c.id === formData.client_id)?.name || content?.client?.name;
   const getCreatorName = () => creators.find(c => c.id === formData.creator_id)?.name;
   const getEditorName = () => editors.find(e => e.id === formData.editor_id)?.name;
   const getStrategistName = () => strategists.find(s => s.id === formData.strategist_id)?.name;
@@ -67,26 +62,31 @@ export function TeamTab({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Cliente */}
-        <FieldRow label="Cliente" icon={Users}>
+        {/* Creador */}
+        <FieldRow label="Creador" icon={User}>
           <EditableField
             permissions={permissions}
             resource="content.team"
             editMode={effectiveEditMode}
             readOnly={readOnly}
             editComponent={
-              <Select value={formData.client_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, client_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
+              <Select value={formData.creator_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, creator_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Asignar creador" /></SelectTrigger>
                 <SelectContent>
-                  {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  {creators.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             }
-            viewComponent={<p className="font-medium">{getClientName() || '—'}</p>}
+            viewComponent={
+              <div>
+                <p className="font-medium">{getCreatorName() || '—'}</p>
+                {content?.creator_assigned_at && (
+                  <p className="text-xs text-muted-foreground">Asignado: {formatDate(content.creator_assigned_at)}</p>
+                )}
+              </div>
+            }
           />
         </FieldRow>
-
-        {/* Creador */}
         <FieldRow label="Creador" icon={User}>
           <EditableField
             permissions={permissions}
