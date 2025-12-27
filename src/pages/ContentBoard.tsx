@@ -4,7 +4,7 @@ import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { CreateContentDialog } from "@/components/content/CreateContentDialog";
-import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
+import { ContentDetailDialog } from "@/components/content/ContentDetailDialog/index";
 import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll, RotateCcw } from "lucide-react";
 import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { Button } from "@/components/ui/button";

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS, Product } from '@/types/database';
-import { ContentDetailDialog } from '@/components/content/ContentDetailDialog';
+import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/index';
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { 
   Lightbulb, 
