@@ -38,6 +38,9 @@ export function TeamTab({
     isAmbassador 
   } = useInternalOrgContent(formData.client_id || content?.client_id);
 
+  // Convert ambassadors to SelectOption format
+  const ambassadorOptions = ambassadors.map(a => ({ id: a.id, name: a.name }));
+
   useEffect(() => {
     fetchTeamOptions();
   }, [currentOrgId]);
@@ -93,17 +96,23 @@ export function TeamTab({
     return format(new Date(date), "d MMM yyyy", { locale: es });
   };
 
-  // CRITICAL: Use ambassadors list ONLY for internal org content, regular creators otherwise
+  // CRITICAL: Use ambassadors list ONLY for internal org content, regular creators/editors otherwise
   const availableCreators = isInternalOrgContent 
-    ? ambassadors.map(a => ({ id: a.id, name: a.name }))
+    ? ambassadorOptions
     : creators;
+  
+  // CRITICAL: For internal content, editors must also be ambassadors
+  const availableEditors = isInternalOrgContent 
+    ? ambassadorOptions
+    : editors;
     
   const getCreatorName = () => availableCreators.find(c => c.id === formData.creator_id)?.name;
-  const getEditorName = () => editors.find(e => e.id === formData.editor_id)?.name;
+  const getEditorName = () => availableEditors.find(e => e.id === formData.editor_id)?.name;
   const getStrategistName = () => strategists.find(s => s.id === formData.strategist_id)?.name;
 
-  // Check if current creator is valid for internal content
+  // Check if current creator/editor is valid for internal content
   const currentCreatorValid = !isInternalOrgContent || !formData.creator_id || isAmbassador(formData.creator_id);
+  const currentEditorValid = !isInternalOrgContent || !formData.editor_id || isAmbassador(formData.editor_id);
 
   return (
     <div className="space-y-4">
@@ -124,11 +133,18 @@ export function TeamTab({
         </Alert>
       )}
 
-      {/* Warning if current creator is not an ambassador but content is internal */}
+      {/* Warning if current creator/editor is not an ambassador but content is internal */}
       {isInternalOrgContent && formData.creator_id && !currentCreatorValid && (
         <Alert variant="destructive">
           <AlertDescription>
             ⚠️ El creador asignado no tiene insignia de Embajador. Solo embajadores pueden crear contenido interno.
+          </AlertDescription>
+        </Alert>
+      )}
+      {isInternalOrgContent && formData.editor_id && !currentEditorValid && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            ⚠️ El editor asignado no tiene insignia de Embajador. Solo embajadores pueden editar contenido interno.
           </AlertDescription>
         </Alert>
       )}
@@ -185,27 +201,52 @@ export function TeamTab({
           />
         </FieldRow>
 
-        {/* Editor */}
-        <FieldRow label="Editor" icon={User}>
+        {/* Editor - For internal content, only ambassadors */}
+        <FieldRow label={isInternalOrgContent ? "Editor (Embajador)" : "Editor"} icon={isInternalOrgContent ? Medal : User}>
           <EditableField
             permissions={permissions}
             resource="content.team"
             editMode={effectiveEditMode}
             readOnly={readOnly}
             editComponent={
-              <Select value={formData.editor_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, editor_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Asignar editor" /></SelectTrigger>
+              <Select 
+                value={formData.editor_id || ''} 
+                onValueChange={(v) => setFormData(prev => ({ ...prev, editor_id: v }))}
+              >
+                <SelectTrigger className={!currentEditorValid ? 'border-destructive' : ''}>
+                  <SelectValue placeholder={isInternalOrgContent ? "Asignar editor embajador" : "Asignar editor"} />
+                </SelectTrigger>
                 <SelectContent>
-                  {editors.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                  {ambassadorsLoading && isInternalOrgContent ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      Cargando embajadores...
+                    </div>
+                  ) : availableEditors.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      {isInternalOrgContent 
+                        ? "No hay embajadores disponibles" 
+                        : "No hay editores disponibles"}
+                    </div>
+                  ) : (
+                    availableEditors.map(e => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {isInternalOrgContent && <Medal className="h-3 w-3 inline mr-2 text-amber-500" />}
+                        {e.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             }
             viewComponent={
-              <div>
-                <p className="font-medium">{getEditorName() || '—'}</p>
-                {content?.editor_assigned_at && (
-                  <p className="text-xs text-muted-foreground">Asignado: {formatDate(content.editor_assigned_at)}</p>
-                )}
+              <div className="flex items-center gap-2">
+                {isInternalOrgContent && <Medal className="h-4 w-4 text-amber-500" />}
+                <div>
+                  <p className="font-medium">{getEditorName() || '—'}</p>
+                  {content?.editor_assigned_at && (
+                    <p className="text-xs text-muted-foreground">Asignado: {formatDate(content.editor_assigned_at)}</p>
+                  )}
+                </div>
               </div>
             }
           />
