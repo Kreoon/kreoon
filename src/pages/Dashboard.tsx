@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
+import { ContentDetailDialog } from "@/components/content/ContentDetailDialog/index";
 import { KpiContentDialog } from "@/components/dashboard/KpiContentDialog";
 import { KpiListDialog } from "@/components/dashboard/KpiListDialog";
 import { GoalsDialog } from "@/components/dashboard/GoalsDialog";

@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
-import { ContentDetailDialog } from '@/components/content/ContentDetailDialog';
+import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/index';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { UPWidget } from '@/components/points/UPWidget';
