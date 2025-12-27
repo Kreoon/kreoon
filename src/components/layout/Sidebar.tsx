@@ -34,18 +34,19 @@ interface NavItem {
   tourId: string;
   isDynamic?: boolean;
   platformRootOnly?: boolean; // Only show for platform root admin
+  requiresOrg?: boolean; // Requires an organization to be selected
 }
 
 // Full admin navigation - organization level modules
 const adminNavigation: NavItem[] = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-  { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-  { name: "Contenido", href: "/content", icon: FileText, tourId: "sidebar-content" },
-  { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators" },
-  { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-  { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients" },
-  { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team" }, // Removed platformRootOnly - belongs to org
-  { name: "Sistema UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up" },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
+  { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
+  { name: "Contenido", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
+  { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
+  { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+  { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+  { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
+  { name: "Sistema UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
@@ -145,7 +146,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     }
   }, [activeIsClient, user, isImpersonating, impersonationTarget]);
 
-  // Filter navigation based on platform root vs org owner
+  // Filter navigation based on platform root vs org owner and org selection
   const filteredNavigation = useMemo(() => {
     let baseNav = activeIsAdmin 
       ? adminNavigation 
@@ -164,8 +165,13 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       baseNav = baseNav.filter(item => !item.platformRootOnly);
     }
 
+    // For platform root without org selected, hide org-specific modules
+    if (isPlatformRoot && !profile?.current_organization_id) {
+      baseNav = baseNav.filter(item => !item.requiresOrg);
+    }
+
     return baseNav;
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, profile?.current_organization_id]);
 
   const navigation = filteredNavigation;
 

@@ -31,6 +31,7 @@ import Ranking from "./pages/Ranking";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import NoCompany from "./pages/NoCompany";
+import NoOrganization from "./pages/NoOrganization";
 import CompanyPortfolio from "./pages/CompanyPortfolio";
 import PendingAccess from "./pages/PendingAccess";
 import UPDocumentation from "./pages/UPDocumentation";
@@ -78,6 +79,7 @@ function AppRoutes() {
       <Route path="/profile" element={<ProfileRedirect />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/no-company" element={<NoCompany />} />
+      <Route path="/no-organization" element={<NoOrganization />} />
       <Route path="/pending-access" element={<PendingAccess />} />
       <Route path="/up-documentation" element={<UPDocumentation />} />
       <Route path="/org/:slug" element={<OrgAuth />} />
