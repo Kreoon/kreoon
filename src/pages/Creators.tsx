@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Star, Video, Trash2, User, Sword } from "lucide-react";
 import { MedievalBanner } from "@/components/layout/MedievalBanner";
@@ -47,48 +47,36 @@ const Creators = () => {
     // Wait for org context
     if (orgLoading) return;
     setLoading(true);
+
     try {
-      // Filter by organization members - always apply when org is selected (including for root)
-      let orgMemberIds: string[] = [];
-      if (currentOrgId) {
-        const { data: orgMembers } = await supabase
-          .from('organization_members')
-          .select('user_id')
-          .eq('organization_id', currentOrgId);
-        orgMemberIds = orgMembers?.map(m => m.user_id) || [];
+      if (!currentOrgId) {
+        // Without an org selected, show nothing to avoid cross-org leakage
+        setCreators([]);
+        return;
       }
 
-      // Get creators and editors
-      let rolesQuery = supabase
-        .from('user_roles')
+      // Get creators and editors scoped to the current organization
+      const { data: memberRoles, error: memberRolesError } = await supabase
+        .from('organization_member_roles')
         .select('user_id, role')
+        .eq('organization_id', currentOrgId)
         .in('role', ['creator', 'editor']);
-      
-      // Filter by org members - always apply when org is selected
-      if (currentOrgId && orgMemberIds.length > 0) {
-        rolesQuery = rolesQuery.in('user_id', orgMemberIds);
-      } else if (currentOrgId && orgMemberIds.length === 0) {
-        // No members in org, return empty
+
+      if (memberRolesError) throw memberRolesError;
+
+      if (!memberRoles?.length) {
         setCreators([]);
-        setLoading(false);
         return;
       }
 
-      const { data: roles } = await rolesQuery;
+      const userIds = [...new Set(memberRoles.map(r => r.user_id))];
+      const roleMap = new Map(memberRoles.map(r => [r.user_id, r.role]));
 
-      if (!roles?.length) {
-        setCreators([]);
-        setLoading(false);
-        return;
-      }
-
-      const userIds = roles.map(r => r.user_id);
-      const roleMap = new Map(roles.map(r => [r.user_id, r.role]));
-
-      // Get ambassador roles separately to check if user has ambassador role
+      // Ambassador status (org-scoped) + profile flag fallback
       const { data: ambassadorRoles } = await supabase
-        .from('user_roles')
+        .from('organization_member_roles')
         .select('user_id')
+        .eq('organization_id', currentOrgId)
         .eq('role', 'ambassador')
         .in('user_id', userIds);
 
@@ -123,7 +111,6 @@ const Creators = () => {
         }
       });
 
-      // Use ambassador role OR is_ambassador flag from profiles
       const creatorsData: Creator[] = (profiles || []).map(p => ({
         id: p.id,
         full_name: p.full_name,
@@ -133,7 +120,7 @@ const Creators = () => {
         bio: p.bio,
         role: roleMap.get(p.id) as 'creator' | 'editor',
         content_count: countMap.get(p.id) || 0,
-        is_ambassador: ambassadorSet.has(p.id) || p.is_ambassador || false
+        is_ambassador: ambassadorSet.has(p.id) || p.is_ambassador || false,
       }));
 
       setCreators(creatorsData);
@@ -149,18 +136,29 @@ const Creators = () => {
   }, [isPlatformRoot, currentOrgId, orgLoading]);
 
   const handleDelete = async (creatorId: string, creatorName: string) => {
+    if (!currentOrgId) return;
+
     try {
-      // Delete user role
-      const { error: roleError } = await supabase
-        .from('user_roles')
+      // Remove roles and membership from CURRENT organization only
+      const { error: rolesError } = await supabase
+        .from('organization_member_roles')
         .delete()
+        .eq('organization_id', currentOrgId)
         .eq('user_id', creatorId);
 
-      if (roleError) throw roleError;
+      if (rolesError) throw rolesError;
+
+      const { error: memberError } = await supabase
+        .from('organization_members')
+        .delete()
+        .eq('organization_id', currentOrgId)
+        .eq('user_id', creatorId);
+
+      if (memberError) throw memberError;
 
       toast({
         title: "Eliminado",
-        description: `${creatorName} ha sido eliminado del equipo`
+        description: `${creatorName} ha sido eliminado del equipo`,
       });
 
       fetchCreators();
@@ -169,17 +167,19 @@ const Creators = () => {
       toast({
         title: "Error",
         description: "No se pudo eliminar al usuario",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
-  const toggleAmbassador = async (creator: Creator, e: React.MouseEvent) => {
+  const toggleAmbassador = async (creator: Creator, e: MouseEvent) => {
     e.stopPropagation();
+    if (!currentOrgId) return;
+
     const newStatus = !creator.is_ambassador;
-    
+
     // Optimistic update
-    setCreators(prev => prev.map(c => 
+    setCreators(prev => prev.map(c =>
       c.id === creator.id ? { ...c, is_ambassador: newStatus } : c
     ));
 
@@ -187,51 +187,52 @@ const Creators = () => {
       // Update profiles table - set celebration pending flag when activating
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           is_ambassador: newStatus,
-          ambassador_celebration_pending: newStatus // Set flag for celebration on next login
+          ambassador_celebration_pending: newStatus,
         })
         .eq('id', creator.id);
 
       if (profileError) throw profileError;
 
-      // Update user_roles table - add or remove ambassador role
+      // Org-scoped ambassador role
       if (newStatus) {
-        // Add ambassador role
         const { error: roleError } = await supabase
-          .from('user_roles')
-          .upsert({ 
-            user_id: creator.id, 
-            role: 'ambassador' as const 
-          }, { 
-            onConflict: 'user_id,role' 
-          });
+          .from('organization_member_roles')
+          .upsert(
+            {
+              organization_id: currentOrgId,
+              user_id: creator.id,
+              role: 'ambassador',
+            },
+            { onConflict: 'organization_id,user_id,role' }
+          );
         if (roleError) throw roleError;
       } else {
-        // Remove ambassador role
         const { error: roleError } = await supabase
-          .from('user_roles')
+          .from('organization_member_roles')
           .delete()
+          .eq('organization_id', currentOrgId)
           .eq('user_id', creator.id)
           .eq('role', 'ambassador');
         if (roleError) throw roleError;
       }
 
       toast({
-        description: newStatus 
-          ? `🎉 ¡${creator.full_name} es ahora embajador! Verá la celebración cuando inicie sesión.` 
-          : `${creator.full_name} ya no es embajador`
+        description: newStatus
+          ? `¡${creator.full_name} es ahora embajador! Verá la celebración cuando inicie sesión.`
+          : `${creator.full_name} ya no es embajador`,
       });
     } catch (error) {
       console.error('Error toggling ambassador:', error);
       // Revert on error
-      setCreators(prev => prev.map(c => 
+      setCreators(prev => prev.map(c =>
         c.id === creator.id ? { ...c, is_ambassador: !newStatus } : c
       ));
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado de embajador",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
