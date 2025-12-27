@@ -5,7 +5,7 @@ import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanCol
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { CreateContentDialog } from "@/components/content/CreateContentDialog";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
-import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll } from "lucide-react";
+import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll, RotateCcw } from "lucide-react";
 import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,9 @@ import {
   EnhancedContentCard
 } from "@/components/board";
 import { useBoardSettings } from "@/hooks/useBoardSettings";
+import { useBoardPersistence } from "@/hooks/useBoardPersistence";
+import { AutoSaveIndicator } from "@/components/ui/autosave-indicator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Columnas base del Kanban
 const BOARD_COLUMNS = KANBAN_COLUMNS;
@@ -92,15 +95,36 @@ export default function ContentBoard() {
   const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
   
-  // Filtros
-  const [filterCreatorId, setFilterCreatorId] = useState<string>('all');
-  const [filterEditorId, setFilterEditorId] = useState<string>('all');
-  const [filterClientId, setFilterClientId] = useState<string>('all');
-  const [filterProductId, setFilterProductId] = useState<string>('all');
-  const [filterCampaignWeek, setFilterCampaignWeek] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [startDateFilter, setStartDateFilter] = useState<Date | undefined>(undefined);
-  const [deadlineFilter, setDeadlineFilter] = useState<Date | undefined>(undefined);
+  // Board persistence hook - saves view, filters, scroll, selected content
+  const persistence = useBoardPersistence({ organizationId: currentOrgId });
+  
+  // Filtros - using persisted values
+  const [filterCreatorId, setFilterCreatorId] = useState<string>(persistence.filters.creatorId);
+  const [filterEditorId, setFilterEditorId] = useState<string>(persistence.filters.editorId);
+  const [filterClientId, setFilterClientId] = useState<string>(persistence.filters.clientId);
+  const [filterProductId, setFilterProductId] = useState<string>(persistence.filters.productId);
+  const [filterCampaignWeek, setFilterCampaignWeek] = useState<string>(persistence.filters.campaignWeek);
+  const [searchTerm, setSearchTerm] = useState(persistence.filters.searchTerm);
+  const [startDateFilter, setStartDateFilter] = useState<Date | undefined>(
+    persistence.filters.startDate ? new Date(persistence.filters.startDate) : undefined
+  );
+  const [deadlineFilter, setDeadlineFilter] = useState<Date | undefined>(
+    persistence.filters.deadline ? new Date(persistence.filters.deadline) : undefined
+  );
+  
+  // Sync filters to persistence
+  useEffect(() => {
+    persistence.setFilters({
+      creatorId: filterCreatorId,
+      editorId: filterEditorId,
+      clientId: filterClientId,
+      productId: filterProductId,
+      campaignWeek: filterCampaignWeek,
+      searchTerm: searchTerm,
+      startDate: startDateFilter?.toISOString(),
+      deadline: deadlineFilter?.toISOString(),
+    });
+  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, startDateFilter, deadlineFilter]);
   
   // Listas para filtros
   const [creators, setCreators] = useState<{id: string; name: string}[]>([]);
@@ -112,16 +136,64 @@ export default function ContentBoard() {
   const [draggingContent, setDraggingContent] = useState<Content | null>(null);
   const [dropTarget, setDropTarget] = useState<ContentStatus | null>(null);
   
-  // Dialog para detalle
+  // Dialog para detalle - using persisted selected content
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   
   // Dialog para crear contenido
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   
-  // Vista actual y configuración del board
-  const [currentView, setCurrentView] = useState<BoardView>('kanban');
+  // Vista actual y configuración del board - using persisted view
+  const currentView = persistence.currentView;
+  const setCurrentView = persistence.setCurrentView;
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [calendarDate, setCalendarDate] = useState<Date>(new Date());
+  
+  // Autosave status
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  
+  // Show saving indicator
+  useEffect(() => {
+    if (persistence.isDirty) {
+      setSaveStatus('saving');
+    }
+  }, [persistence.isDirty]);
+  
+  useEffect(() => {
+    if (persistence.lastSaved) {
+      setSaveStatus('saved');
+      const timer = setTimeout(() => setSaveStatus('idle'), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [persistence.lastSaved]);
+  
+  // Reset filters handler
+  const handleResetFilters = useCallback(() => {
+    setFilterCreatorId('all');
+    setFilterEditorId('all');
+    setFilterClientId('all');
+    setFilterProductId('all');
+    setFilterCampaignWeek('');
+    setSearchTerm('');
+    setStartDateFilter(undefined);
+    setDeadlineFilter(undefined);
+    persistence.resetFilters();
+    toast({
+      title: "Filtros restablecidos",
+      description: "Todos los filtros han sido eliminados"
+    });
+  }, [persistence, toast]);
+  
+  // Check if any filter is active
+  const hasActiveFilters = useMemo(() => {
+    return filterCreatorId !== 'all' || 
+           filterEditorId !== 'all' || 
+           filterClientId !== 'all' || 
+           filterProductId !== 'all' || 
+           filterCampaignWeek !== '' || 
+           searchTerm !== '' ||
+           startDateFilter !== undefined ||
+           deadlineFilter !== undefined;
+  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, startDateFilter, deadlineFilter]);
   
   // Board settings hook
   const { settings, statuses, loading: settingsLoading } = useBoardSettings(currentOrgId);
@@ -580,8 +652,25 @@ export default function ContentBoard() {
             <div className="flex items-center gap-3">
               <h2 className="text-base md:text-lg font-semibold text-card-foreground">Flujo de Trabajo</h2>
               <Badge variant="outline" className="text-xs">{filteredContent.length} items</Badge>
+              <AutoSaveIndicator status={saveStatus} lastSaved={persistence.lastSaved} />
             </div>
             <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="gap-1.5 text-muted-foreground hover:text-foreground"
+                      onClick={handleResetFilters}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      <span className="hidden sm:inline">Reset</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Restablecer todos los filtros</TooltipContent>
+                </Tooltip>
+              )}
               <BoardViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
               {isAdmin && (
                 <Button 
