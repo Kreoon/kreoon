@@ -13,7 +13,7 @@ import { toast } from "@/hooks/use-toast";
 
 interface AmbassadorProfileSectionProps {
   userId: string;
-  ambassadorLevel: "none" | "bronze" | "silver" | "gold";
+  ambassadorLevel?: "none" | "bronze" | "silver" | "gold";
   isOwn?: boolean;
 }
 
@@ -31,13 +31,14 @@ const LEVEL_LABELS = {
   gold: "Oro",
 };
 
-export function AmbassadorProfileSection({ userId, ambassadorLevel, isOwn = false }: AmbassadorProfileSectionProps) {
+export function AmbassadorProfileSection({ userId, ambassadorLevel = "none", isOwn = false }: AmbassadorProfileSectionProps) {
   const { getAmbassadorStats, createReferral, getMyReferralCode, loading } = useAmbassador();
   const { evaluateAmbassador, loading: aiLoading } = useTalentAI();
   
   const [stats, setStats] = useState<any>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<TalentAmbassadorResult | null>(null);
+  const [currentLevel, setCurrentLevel] = useState<"none" | "bronze" | "silver" | "gold">(ambassadorLevel);
   
   // New referral form
   const [newEmail, setNewEmail] = useState("");
@@ -84,7 +85,7 @@ export function AmbassadorProfileSection({ userId, ambassadorLevel, isOwn = fals
   const pendingReferrals = stats?.referrals?.filter((r: any) => r.status === "pending")?.length || 0;
   const totalReferrals = stats?.referrals?.length || 0;
 
-  if (ambassadorLevel === "none" && !isOwn) {
+  if (currentLevel === "none" && !isOwn) {
     return null;
   }
 
@@ -96,8 +97,8 @@ export function AmbassadorProfileSection({ userId, ambassadorLevel, isOwn = fals
             <Crown className="h-5 w-5 text-amber-500" />
             <CardTitle className="text-lg">Impacto como Embajador</CardTitle>
           </div>
-          <Badge className={LEVEL_COLORS[ambassadorLevel]}>
-            {LEVEL_LABELS[ambassadorLevel]}
+          <Badge className={LEVEL_COLORS[currentLevel]}>
+            {LEVEL_LABELS[currentLevel]}
           </Badge>
         </div>
         <CardDescription>
