@@ -112,6 +112,240 @@ export type Database = {
           },
         ]
       }
+      ambassador_ai_evaluations: {
+        Row: {
+          confidence: number
+          current_level: string | null
+          evaluated_at: string
+          id: string
+          justification: Json
+          network_metrics: Json | null
+          organization_id: string
+          recommended_level: string
+          risk_flags: Json
+          suggested_actions: Json
+          user_id: string
+        }
+        Insert: {
+          confidence?: number
+          current_level?: string | null
+          evaluated_at?: string
+          id?: string
+          justification?: Json
+          network_metrics?: Json | null
+          organization_id: string
+          recommended_level: string
+          risk_flags?: Json
+          suggested_actions?: Json
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          current_level?: string | null
+          evaluated_at?: string
+          id?: string
+          justification?: Json
+          network_metrics?: Json | null
+          organization_id?: string
+          recommended_level?: string
+          risk_flags?: Json
+          suggested_actions?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_ai_evaluations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_ai_evaluations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ambassador_commission_config: {
+        Row: {
+          ambassador_level: string
+          commission_type: string
+          commission_value: number
+          created_at: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          priority_assignment_boost: number
+          up_bonus_multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          ambassador_level: string
+          commission_type?: string
+          commission_value?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          priority_assignment_boost?: number
+          up_bonus_multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          ambassador_level?: string
+          commission_type?: string
+          commission_value?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          priority_assignment_boost?: number
+          up_bonus_multiplier?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_commission_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ambassador_network_stats: {
+        Row: {
+          active_referrals_count: number
+          ambassador_id: string
+          commission_earned: number
+          content_by_network: number
+          created_at: string
+          id: string
+          organization_id: string
+          period_month: number
+          period_year: number
+          retention_rate: number
+          revenue_by_network: number
+          up_bonus_earned: number
+          updated_at: string
+        }
+        Insert: {
+          active_referrals_count?: number
+          ambassador_id: string
+          commission_earned?: number
+          content_by_network?: number
+          created_at?: string
+          id?: string
+          organization_id: string
+          period_month: number
+          period_year: number
+          retention_rate?: number
+          revenue_by_network?: number
+          up_bonus_earned?: number
+          updated_at?: string
+        }
+        Update: {
+          active_referrals_count?: number
+          ambassador_id?: string
+          commission_earned?: number
+          content_by_network?: number
+          created_at?: string
+          id?: string
+          organization_id?: string
+          period_month?: number
+          period_year?: number
+          retention_rate?: number
+          revenue_by_network?: number
+          up_bonus_earned?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_network_stats_ambassador_id_fkey"
+            columns: ["ambassador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_network_stats_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ambassador_referrals: {
+        Row: {
+          activated_at: string | null
+          ambassador_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          referral_code: string
+          referred_email: string
+          referred_type: string
+          referred_user_id: string | null
+          registered_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          ambassador_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          referral_code: string
+          referred_email: string
+          referred_type?: string
+          referred_user_id?: string | null
+          registered_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          ambassador_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          referral_code?: string
+          referred_email?: string
+          referred_type?: string
+          referred_user_id?: string | null
+          registered_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_referrals_ambassador_id_fkey"
+            columns: ["ambassador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_referrals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           description: string | null
@@ -2091,7 +2325,12 @@ export type Database = {
       }
       organization_members: {
         Row: {
+          ambassador_active_referrals: number | null
           ambassador_level: string | null
+          ambassador_network_revenue: number | null
+          ambassador_referral_code: string | null
+          ambassador_since: string | null
+          ambassador_total_referrals: number | null
           id: string
           invited_by: string | null
           is_owner: boolean | null
@@ -2102,7 +2341,12 @@ export type Database = {
           visibility_scope: string | null
         }
         Insert: {
+          ambassador_active_referrals?: number | null
           ambassador_level?: string | null
+          ambassador_network_revenue?: number | null
+          ambassador_referral_code?: string | null
+          ambassador_since?: string | null
+          ambassador_total_referrals?: number | null
           id?: string
           invited_by?: string | null
           is_owner?: boolean | null
@@ -2113,7 +2357,12 @@ export type Database = {
           visibility_scope?: string | null
         }
         Update: {
+          ambassador_active_referrals?: number | null
           ambassador_level?: string | null
+          ambassador_network_revenue?: number | null
+          ambassador_referral_code?: string | null
+          ambassador_since?: string | null
+          ambassador_total_referrals?: number | null
           id?: string
           invited_by?: string | null
           is_owner?: boolean | null
@@ -4217,6 +4466,10 @@ export type Database = {
             }
             Returns: string
           }
+      generate_ambassador_referral_code: {
+        Args: { org_id: string; p_user_id: string }
+        Returns: string
+      }
       generate_org_slug: { Args: { org_name: string }; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       generate_registration_link: { Args: { _org_id: string }; Returns: string }

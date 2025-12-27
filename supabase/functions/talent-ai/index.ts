@@ -99,7 +99,13 @@ interface TalentReputationRequest {
   userId: string;
 }
 
-type RequestBody = TalentMatchingRequest | TalentQualityRequest | TalentRiskRequest | TalentReputationRequest;
+interface TalentAmbassadorRequest {
+  action: "ambassador";
+  organizationId: string;
+  userId: string;
+}
+
+type RequestBody = TalentMatchingRequest | TalentQualityRequest | TalentRiskRequest | TalentReputationRequest | TalentAmbassadorRequest;
 
 async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
   const { data: moduleData } = await supabase
@@ -569,6 +575,177 @@ Responde en JSON con:
   return parsed;
 }
 
+async function handleAmbassador(supabase: any, req: TalentAmbassadorRequest, provider: string, apiKey: string) {
+  // Get user profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", req.userId)
+    .single();
+
+  // Get organization membership with ambassador data
+  const { data: membership } = await supabase
+    .from("organization_members")
+    .select("*, organization:organizations(name)")
+    .eq("user_id", req.userId)
+    .eq("organization_id", req.organizationId)
+    .single();
+
+  // Get ambassador referrals
+  const { data: referrals } = await supabase
+    .from("ambassador_referrals")
+    .select("*")
+    .eq("ambassador_id", req.userId)
+    .eq("organization_id", req.organizationId);
+
+  // Get network stats
+  const { data: networkStats } = await supabase
+    .from("ambassador_network_stats")
+    .select("*")
+    .eq("ambassador_id", req.userId)
+    .eq("organization_id", req.organizationId)
+    .order("period_year", { ascending: false })
+    .order("period_month", { ascending: false })
+    .limit(6);
+
+  // Get content produced by referrals
+  const referredUserIds = referrals?.filter((r: any) => r.referred_user_id).map((r: any) => r.referred_user_id) || [];
+  let networkContent = [];
+  if (referredUserIds.length > 0) {
+    const { data } = await supabase
+      .from("content")
+      .select("id, title, status, approved_at, ai_quality_score")
+      .eq("organization_id", req.organizationId)
+      .or(referredUserIds.map((id: string) => `creator_id.eq.${id},editor_id.eq.${id}`).join(","))
+      .eq("status", "approved")
+      .order("approved_at", { ascending: false })
+      .limit(50);
+    networkContent = data || [];
+  }
+
+  // Get user points
+  const { data: userPoints } = await supabase
+    .from("up_user_points")
+    .select("*")
+    .eq("user_id", req.userId)
+    .eq("organization_id", req.organizationId)
+    .single();
+
+  const systemPrompt = `Eres un analista de embajadores para una agencia de contenido.
+Los embajadores son actores clave de crecimiento: producen + atraen + validan + representan la marca.
+
+Evalúa:
+1. Impacto de red (referidos activos, contenido generado por su red)
+2. Calidad del trabajo personal
+3. Retención de su red
+4. Potencial de ascenso/descenso de nivel (bronze → silver → gold)
+5. Riesgos (embajador pasivo, red inactiva, pérdida de engagement)`;
+
+  const userPrompt = `Evalúa el rendimiento de este embajador:
+
+Perfil: ${JSON.stringify(profile, null, 2)}
+
+Membresía actual: ${JSON.stringify(membership, null, 2)}
+
+Referidos (${referrals?.length || 0}): ${JSON.stringify(referrals, null, 2)}
+
+Estadísticas de red (últimos 6 meses): ${JSON.stringify(networkStats, null, 2)}
+
+Contenido de su red (últimos 50): ${JSON.stringify(networkContent, null, 2)}
+
+Puntos UP: ${JSON.stringify(userPoints, null, 2)}
+
+Responde en JSON con:
+{
+  "recommended_level": "none" | "bronze" | "silver" | "gold",
+  "current_level": "nivel actual",
+  "level_change": "up" | "down" | "same",
+  "justification": ["razón 1", "razón 2"],
+  "risk_flags": ["riesgo 1", "riesgo 2"],
+  "suggested_actions": [
+    {"type": "ascend" | "descend" | "reward" | "warning" | "training", "description": "descripción", "priority": "high" | "medium" | "low"}
+  ],
+  "network_metrics": {
+    "active_referrals": número,
+    "network_content_count": número,
+    "network_quality_avg": 0-10,
+    "retention_rate": 0-100,
+    "estimated_revenue_impact": número
+  },
+  "confidence": 0-100
+}`;
+
+  const tools = [{
+    type: "function",
+    function: {
+      name: "evaluate_ambassador",
+      description: "Evalúa el rendimiento y potencial del embajador",
+      parameters: {
+        type: "object",
+        properties: {
+          recommended_level: { type: "string", enum: ["none", "bronze", "silver", "gold"] },
+          current_level: { type: "string" },
+          level_change: { type: "string", enum: ["up", "down", "same"] },
+          justification: { type: "array", items: { type: "string" } },
+          risk_flags: { type: "array", items: { type: "string" } },
+          suggested_actions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                type: { type: "string" },
+                description: { type: "string" },
+                priority: { type: "string" }
+              }
+            }
+          },
+          network_metrics: {
+            type: "object",
+            properties: {
+              active_referrals: { type: "number" },
+              network_content_count: { type: "number" },
+              network_quality_avg: { type: "number" },
+              retention_rate: { type: "number" },
+              estimated_revenue_impact: { type: "number" }
+            }
+          },
+          confidence: { type: "number" }
+        },
+        required: ["recommended_level", "justification", "confidence"]
+      }
+    }
+  }];
+
+  const result = await callAI(
+    provider,
+    [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ],
+    apiKey,
+    tools
+  );
+
+  const parsed = typeof result === "string" ? JSON.parse(result) : result;
+
+  // Save evaluation to history
+  await supabase
+    .from("ambassador_ai_evaluations")
+    .insert({
+      organization_id: req.organizationId,
+      user_id: req.userId,
+      recommended_level: parsed.recommended_level,
+      current_level: membership?.ambassador_level || "none",
+      confidence: parsed.confidence || 0,
+      justification: parsed.justification || [],
+      risk_flags: parsed.risk_flags || [],
+      suggested_actions: parsed.suggested_actions || [],
+      network_metrics: parsed.network_metrics || null,
+    });
+
+  return parsed;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -588,6 +765,7 @@ serve(async (req) => {
       quality: "talent.quality.ai",
       risk: "talent.risk.ai",
       reputation: "talent.reputation.ai",
+      ambassador: "talent.ambassador.ai",
     };
 
     const moduleKey = moduleKeyMap[body.action];
@@ -606,6 +784,9 @@ serve(async (req) => {
         break;
       case "reputation":
         result = await handleReputation(supabase, body, aiConfig.provider, aiConfig.apiKey);
+        break;
+      case "ambassador":
+        result = await handleAmbassador(supabase, body as TalentAmbassadorRequest, aiConfig.provider, aiConfig.apiKey);
         break;
       default:
         throw new Error("Invalid action");
