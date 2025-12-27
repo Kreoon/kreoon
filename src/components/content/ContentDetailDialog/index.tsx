@@ -1,0 +1,281 @@
+import { lazy, Suspense, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
+import { STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER } from '@/types/database';
+import { useAuth } from '@/hooks/useAuth';
+import { useContentDetail } from './hooks/useContentDetail';
+import { useContentPermissions } from './hooks/useContentPermissions';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Calendar, Clock, Package, Target, Save, Trash2, Share2 } from 'lucide-react';
+import type { ContentDetailDialogProps } from './types';
+
+// Lazy load tabs
+const ScriptsTab = lazy(() => import('./tabs/ScriptsTab').then(m => ({ default: m.ScriptsTab })));
+const VideoTab = lazy(() => import('./tabs/VideoTab').then(m => ({ default: m.VideoTab })));
+const GeneralTab = lazy(() => import('./tabs/GeneralTab').then(m => ({ default: m.GeneralTab })));
+const TeamTab = lazy(() => import('./tabs/TeamTab').then(m => ({ default: m.TeamTab })));
+const DatesTab = lazy(() => import('./tabs/DatesTab').then(m => ({ default: m.DatesTab })));
+const PaymentsTab = lazy(() => import('./tabs/PaymentsTab').then(m => ({ default: m.PaymentsTab })));
+const MaterialTab = lazy(() => import('./tabs/MaterialTab').then(m => ({ default: m.MaterialTab })));
+
+function TabSkeleton() {
+  return (
+    <div className="space-y-4 p-4">
+      <Skeleton className="h-8 w-1/3" />
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-24 w-full" />
+    </div>
+  );
+}
+
+export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onDelete }: ContentDetailDialogProps) {
+  const { isAdmin, isClient, user } = useAuth();
+  const [showProductDialog, setShowProductDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('scripts');
+  
+  const {
+    loading,
+    editMode,
+    setEditMode,
+    currentStatus,
+    selectedProduct,
+    formData,
+    setFormData,
+    handleStatusChange,
+    handleSave,
+    handleProductChange,
+    autoSaveStatus,
+    lastSaved,
+    hasUnsavedChanges
+  } = useContentDetail({ content, onUpdate });
+  
+  const permissions = useContentPermissions(content);
+
+  if (!content) return null;
+
+  const formatDate = (date: string | null) => {
+    if (!date) return 'Sin fecha';
+    return format(new Date(date), "d 'de' MMMM, yyyy", { locale: es });
+  };
+
+  const tabProps = {
+    content,
+    formData,
+    setFormData,
+    editMode,
+    setEditMode,
+    permissions,
+    onUpdate
+  };
+
+  const TAB_CONFIG: Record<string, { label: string; component: React.ReactNode }> = {
+    scripts: { label: 'Scripts', component: <ScriptsTab {...tabProps} selectedProduct={selectedProduct} onProductChange={handleProductChange} /> },
+    video: { label: 'Video', component: <VideoTab {...tabProps} selectedProduct={selectedProduct} /> },
+    material: { label: 'Material', component: <MaterialTab {...tabProps} /> },
+    general: { label: 'General', component: <GeneralTab {...tabProps} selectedProduct={selectedProduct} onProductChange={handleProductChange} /> },
+    team: { label: 'Equipo', component: <TeamTab {...tabProps} /> },
+    dates: { label: 'Fechas', component: <DatesTab {...tabProps} /> },
+    payments: { label: 'Pagos', component: <PaymentsTab {...tabProps} /> }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0">
+        {/* Hero Header */}
+        <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-6 sm:p-8 border-b">
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0" style={{ 
+              backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
+              backgroundSize: '24px 24px'
+            }} />
+          </div>
+          
+          <div className="relative">
+            {/* Top Row: Status & Actions */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                {permissions.can('content.status', 'edit') ? (
+                  <Select 
+                    value={currentStatus || content.status} 
+                    onValueChange={(v) => handleStatusChange(v as ContentStatus)}
+                    disabled={loading}
+                  >
+                    <SelectTrigger className={`w-auto min-w-[140px] text-sm font-medium ${STATUS_COLORS[currentStatus || content.status]}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_ORDER.map(status => (
+                        <SelectItem key={status} value={status}>
+                          {STATUS_LABELS[status]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge className={`text-sm px-3 py-1 ${STATUS_COLORS[content.status]}`}>
+                    {STATUS_LABELS[content.status]}
+                  </Badge>
+                )}
+                
+                {formData.is_published && (
+                  <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
+                    <Share2 className="h-3 w-3 mr-1" />
+                    Publicado
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {/* AutoSave Indicator */}
+                {editMode && (
+                  <AutoSaveIndicator 
+                    status={autoSaveStatus} 
+                    lastSaved={lastSaved} 
+                  />
+                )}
+                
+                {permissions.canEnterEditMode && (
+                  <Button
+                    variant={editMode ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setEditMode(!editMode)}
+                  >
+                    {editMode ? 'Cancelar' : 'Editar'}
+                  </Button>
+                )}
+                {editMode && (
+                  <Button onClick={handleSave} disabled={loading} size="sm">
+                    <Save className="h-4 w-4 mr-1" />
+                    Guardar
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Title */}
+            <DialogHeader className="space-y-2">
+              <DialogTitle className="text-2xl sm:text-3xl font-bold tracking-tight">
+                {editMode && permissions.can('content.title', 'edit') ? (
+                  <Input
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    className="text-2xl sm:text-3xl font-bold h-auto py-2 bg-background/50"
+                  />
+                ) : (
+                  content.title
+                )}
+              </DialogTitle>
+            </DialogHeader>
+
+            {/* Meta Info Row */}
+            <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
+              {content.client?.name && (
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                  <Package className="h-4 w-4" />
+                  <span>{content.client.name}</span>
+                </div>
+              )}
+              {selectedProduct?.name && (
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                  <Target className="h-4 w-4" />
+                  <span>{selectedProduct.name}</span>
+                </div>
+              )}
+              {content.campaign_week && (
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                  <Calendar className="h-4 w-4" />
+                  <span>{content.campaign_week}</span>
+                </div>
+              )}
+              {content.deadline && (
+                <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                  <Clock className="h-4 w-4" />
+                  <span>Entrega: {formatDate(content.deadline)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area with Tabs */}
+        <div className="overflow-y-auto max-h-[calc(90vh-200px)] p-4 sm:p-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className={`grid w-full h-auto gap-1 mb-6 grid-cols-${permissions.visibleTabs.length}`}>
+              {permissions.visibleTabs.map(tabKey => (
+                <TabsTrigger 
+                  key={tabKey} 
+                  value={tabKey} 
+                  className="text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2"
+                >
+                  {TAB_CONFIG[tabKey]?.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {permissions.visibleTabs.map(tabKey => (
+              <TabsContent key={tabKey} value={tabKey} className="mt-4">
+                <Suspense fallback={<TabSkeleton />}>
+                  {TAB_CONFIG[tabKey]?.component}
+                </Suspense>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+
+        {/* Footer Actions - Delete */}
+        {permissions.can('content.delete', 'edit') && (
+          <div className="border-t p-4 bg-muted/30">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Eliminar Proyecto
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar proyecto?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto "{content.title}".
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      onDelete?.(content.id);
+                      onOpenChange(false);
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
+      </DialogContent>
+
+      {/* Product Dialog */}
+      <ProductDetailDialog
+        product={null}
+        clientId={formData.client_id}
+        open={showProductDialog}
+        onOpenChange={setShowProductDialog}
+        onSave={() => {}}
+      />
+    </Dialog>
+  );
+}
+
+export default ContentDetailDialog;
