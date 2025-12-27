@@ -21,6 +21,7 @@ import {
 import { useBoardAI, CardAnalysis, BoardAnalysis } from '@/hooks/useBoardAI';
 import { useAICopilot } from '@/contexts/AICopilotContext';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface BoardAIPanelProps {
   organizationId: string;
@@ -62,6 +63,7 @@ export function BoardAIPanel({
     cardAnalysis,
     boardAnalysis,
     automationRecommendations,
+    moduleInactive,
     analyzeCard,
     analyzeBoard,
     recommendAutomation,
@@ -131,8 +133,27 @@ export function BoardAIPanel({
         </SheetHeader>
 
         <div className="flex-1 overflow-hidden flex flex-col mt-4">
+          {/* Module Inactive Warning */}
+          {moduleInactive && (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <div className="rounded-full bg-amber-500/10 p-4 mb-4">
+                <AlertTriangle className="h-12 w-12 text-amber-500" />
+              </div>
+              <h3 className="font-medium mb-2 text-lg">IA no habilitada</h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                El módulo de IA para {mode === 'card' ? 'tarjetas' : 'tablero'} no está activado para tu organización.
+              </p>
+              <Badge variant="outline" className="mb-4">
+                Módulo: {moduleInactive}
+              </Badge>
+              <p className="text-xs text-muted-foreground">
+                Un administrador debe habilitarlo en <strong>Configuración → IA & Modelos</strong>
+              </p>
+            </div>
+          )}
+
           {/* Action Button */}
-          {!cardAnalysis && !boardAnalysis && (
+          {!cardAnalysis && !boardAnalysis && !moduleInactive && (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <Brain className="h-16 w-16 text-muted-foreground/30 mb-4" />
               <h3 className="font-medium mb-2">

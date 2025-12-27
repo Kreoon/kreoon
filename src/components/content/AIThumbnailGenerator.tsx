@@ -341,6 +341,16 @@ export function AIThumbnailGenerator({
 
       if (error) throw error;
 
+      // Handle MODULE_INACTIVE error
+      if (data?.error === 'MODULE_INACTIVE') {
+        toast({ 
+          title: "IA no habilitada", 
+          description: "El módulo de IA 'Generación de Miniaturas' no está activado. Un administrador debe habilitarlo en Configuración → IA & Modelos.",
+          variant: "destructive" 
+        });
+        return;
+      }
+
       if (data?.thumbnail_url) {
         setGeneratedThumbnail(data.thumbnail_url);
         setStep("result");
