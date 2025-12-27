@@ -454,15 +454,76 @@ export function ChatConversationView({
                           <img 
                             src={msg.attachment_url} 
                             alt="Imagen" 
-                            className="max-w-full rounded-lg mt-2 cursor-pointer"
+                            className="max-w-full max-h-[300px] rounded-lg mt-2 cursor-pointer object-contain"
                             onClick={() => window.open(msg.attachment_url!, '_blank')}
                           />
+                        ) : msg.attachment_url && msg.attachment_type === 'video' ? (
+                          <div className="mt-2 rounded-lg overflow-hidden max-w-full">
+                            <video 
+                              src={msg.attachment_url}
+                              controls
+                              preload="metadata"
+                              className="max-w-full max-h-[300px] rounded-lg"
+                              playsInline
+                            >
+                              Tu navegador no soporta videos HTML5.
+                            </video>
+                            <a 
+                              href={msg.attachment_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={cn(
+                                "flex items-center gap-1.5 mt-1 text-xs",
+                                isOwn ? "text-primary-foreground/70 hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              <Paperclip className="h-3 w-3" />
+                              <span className="truncate max-w-[180px]">{msg.attachment_name || 'Video'}</span>
+                            </a>
+                          </div>
+                        ) : msg.attachment_url && msg.attachment_type === 'audio' ? (
+                          <div className="mt-2 w-full max-w-[250px]">
+                            <audio 
+                              src={msg.attachment_url}
+                              controls
+                              preload="metadata"
+                              className="w-full h-10"
+                            >
+                              Tu navegador no soporta audio HTML5.
+                            </audio>
+                            <a 
+                              href={msg.attachment_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={cn(
+                                "flex items-center gap-1.5 mt-1 text-xs",
+                                isOwn ? "text-primary-foreground/70 hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              <Paperclip className="h-3 w-3" />
+                              <span className="truncate max-w-[180px]">{msg.attachment_name || 'Audio'}</span>
+                            </a>
+                          </div>
+                        ) : msg.attachment_url && msg.attachment_type === 'application/pdf' ? (
+                          <a 
+                            href={msg.attachment_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors border border-red-500/20"
+                          >
+                            <svg className="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM12 11.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 1 1 0zm-2.5 2a1.5 1.5 0 1 1 0 3H8v-3h1.5zm0 2H9v-1h.5a.5.5 0 0 1 0 1zm5-2v3h-1v-3h.5a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H13v-3h1.5z"/>
+                            </svg>
+                            <span className="text-xs truncate max-w-[150px] text-red-600 dark:text-red-400">
+                              {msg.attachment_name || 'Documento PDF'}
+                            </span>
+                          </a>
                         ) : msg.attachment_url && msg.attachment_type && (
                           <a 
                             href={msg.attachment_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
+                            className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-background/50 hover:bg-background/80 transition-colors border border-border/50"
                           >
                             <Paperclip className="h-4 w-4" />
                             <span className="text-xs truncate max-w-[150px]">
