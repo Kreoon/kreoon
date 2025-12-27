@@ -29,23 +29,7 @@ import {
 } from 'lucide-react';
 import { MedievalBanner } from '@/components/layout/MedievalBanner';
 
-const ROLE_LABELS: Record<AppRole, string> = {
-  admin: 'Administrador',
-  creator: 'Creador',
-  editor: 'Editor',
-  client: 'Cliente',
-  ambassador: 'Embajador',
-  strategist: 'Estratega'
-};
-
-const ROLE_COLORS: Record<AppRole, string> = {
-  admin: 'bg-destructive/20 text-destructive',
-  creator: 'bg-primary/20 text-primary',
-  editor: 'bg-purple-500/20 text-purple-500',
-  client: 'bg-info/20 text-info',
-  ambassador: 'bg-success/20 text-success',
-  strategist: 'bg-orange-500/20 text-orange-500'
-};
+import { ROLE_LABELS, ROLE_COLORS, ORG_ASSIGNABLE_ROLES, getRoleLabel } from '@/lib/roles';
 
 export default function Team() {
   const { user, profile: authProfile } = useAuth();
@@ -85,7 +69,7 @@ export default function Team() {
     }
 
     try {
-      // Fetch organization members first
+      // Fetch organization members with their roles
       const { data: membersData } = await supabase
         .from('organization_members')
         .select('user_id, role, is_owner')
@@ -106,21 +90,17 @@ export default function Team() {
         .in('id', memberUserIds)
         .order('created_at', { ascending: false });
 
-      // Fetch roles for organization members
-      const { data: rolesData } = await supabase
-        .from('user_roles')
-        .select('*')
-        .in('user_id', memberUserIds);
-
-      // Combine profiles with roles and org membership
-      const profilesWithRoles = (profilesData || []).map(profile => ({
-        ...profile,
-        roles: (rolesData || [])
-          .filter(r => r.user_id === profile.id)
-          .map(r => r.role as AppRole),
-        isOrgMember: true,
-        isOwner: membersData?.find(m => m.user_id === profile.id)?.is_owner || false
-      }));
+      // Combine profiles with roles from organization_members
+      const profilesWithRoles = (profilesData || []).map(profile => {
+        const member = membersData?.find(m => m.user_id === profile.id);
+        return {
+          ...profile,
+          // Use organization_members.role as the single source of truth
+          roles: member?.role ? [member.role as AppRole] : [],
+          isOrgMember: true,
+          isOwner: member?.is_owner || false
+        };
+      });
 
       setProfiles(profilesWithRoles as (Profile & { roles: AppRole[]; isOrgMember: boolean })[]); 
 
@@ -132,56 +112,24 @@ export default function Team() {
   };
 
   const handleAddRole = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !currentOrgId) return;
 
     try {
-      // If replacing, first remove all existing roles for this user
-      if (roleAction === 'replace' && selectedUser.roles.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', selectedUser.id);
-
-        if (deleteError) throw deleteError;
-
-        // Also update organization_members role
-        if (currentOrgId) {
-          await supabase
-            .from('organization_members')
-            .update({ role: newRole })
-            .eq('user_id', selectedUser.id)
-            .eq('organization_id', currentOrgId);
-        }
-      }
-
-      // Insert the new role
+      // Update role in organization_members (single source of truth)
       const { error } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: selectedUser.id,
-          role: newRole
-        });
+        .from('organization_members')
+        .update({ role: newRole })
+        .eq('user_id', selectedUser.id)
+        .eq('organization_id', currentOrgId);
 
-      if (error) {
-        if (error.code === '23505') {
-          toast({
-            title: 'Error',
-            description: 'Este usuario ya tiene ese rol',
-            variant: 'destructive'
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        toast({
-          title: roleAction === 'replace' ? 'Rol cambiado' : 'Rol agregado',
-          description: roleAction === 'replace' 
-            ? `Se cambió el rol de ${selectedUser.full_name} a ${ROLE_LABELS[newRole]}`
-            : `Se agregó el rol de ${ROLE_LABELS[newRole]} a ${selectedUser.full_name}`
-        });
-        setAddRoleDialog(false);
-        fetchData();
-      }
+      if (error) throw error;
+
+      toast({
+        title: 'Rol actualizado',
+        description: `Se cambió el rol de ${selectedUser.full_name} a ${ROLE_LABELS[newRole]}`
+      });
+      setAddRoleDialog(false);
+      fetchData();
     } catch (error) {
       console.error('Error managing role:', error);
       toast({
@@ -193,24 +141,27 @@ export default function Team() {
   };
 
   const handleRemoveRole = async (userId: string, role: AppRole) => {
+    if (!currentOrgId) return;
+    
     try {
+      // Set role to null or a default role in organization_members
       const { error } = await supabase
-        .from('user_roles')
-        .delete()
+        .from('organization_members')
+        .update({ role: 'creator' }) // Default to creator when removing role
         .eq('user_id', userId)
-        .eq('role', role);
+        .eq('organization_id', currentOrgId);
 
       if (error) throw error;
 
       toast({
-        title: 'Rol eliminado',
-        description: `Se eliminó el rol de ${ROLE_LABELS[role]}`
+        title: 'Rol actualizado',
+        description: `Se cambió el rol a Creador (por defecto)`
       });
       fetchData();
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'No se pudo eliminar el rol',
+        description: 'No se pudo actualizar el rol',
         variant: 'destructive'
       });
     }

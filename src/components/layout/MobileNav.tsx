@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { getRoleBadgeInfo } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -127,17 +128,7 @@ export function MobileNav() {
   };
 
   const navigation = getNavigation();
-
-  const getRoleBadge = () => {
-    if (isAdmin) return { label: "Admin", color: "bg-primary" };
-    if (isStrategist) return { label: "Estratega", color: "bg-orange-500" };
-    if (isCreator) return { label: "Creador", color: "bg-purple-500" };
-    if (isEditor) return { label: "Editor", color: "bg-blue-500" };
-    if (isClient) return { label: "Cliente", color: "bg-green-500" };
-    return null;
-  };
-
-  const roleBadge = getRoleBadge();
+  const roleBadge = getRoleBadgeInfo(roles);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

@@ -15,6 +15,8 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { getPrimaryRole, getRoleLabelShort, getRoleBadgeColor } from '@/lib/roles';
+import type { AppRole } from '@/types/database';
 
 interface UserPresence {
   user_id: string;
@@ -106,22 +108,14 @@ export function AdminPresencePanel() {
   const onlineUsers = users.filter(u => u.is_online);
   const offlineUsers = users.filter(u => !u.is_online);
 
-  const getRoleBadgeColor = (roles: string[]) => {
-    if (roles.includes('admin')) return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-    if (roles.includes('strategist')) return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    if (roles.includes('editor')) return 'bg-pink-500/10 text-pink-500 border-pink-500/20';
-    if (roles.includes('creator')) return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-    if (roles.includes('client')) return 'bg-green-500/10 text-green-500 border-green-500/20';
-    return '';
+  const getRoleBadgeColorFn = (roles: string[]) => {
+    const primary = getPrimaryRole(roles as AppRole[]);
+    return primary ? getRoleBadgeColor(primary) : '';
   };
 
-  const getRoleLabel = (roles: string[]) => {
-    if (roles.includes('admin')) return 'Admin';
-    if (roles.includes('strategist')) return 'Estratega';
-    if (roles.includes('editor')) return 'Editor';
-    if (roles.includes('creator')) return 'Creador';
-    if (roles.includes('client')) return 'Cliente';
-    return 'Usuario';
+  const getRoleLabelFn = (roles: string[]) => {
+    const primary = getPrimaryRole(roles as AppRole[]);
+    return primary ? getRoleLabelShort(primary) : 'Usuario';
   };
 
   if (!isAdmin) return null;
@@ -180,9 +174,9 @@ export function AdminPresencePanel() {
                         </p>
                         <Badge 
                           variant="outline" 
-                          className={cn('text-xs', getRoleBadgeColor(u.roles || []))}
+                          className={cn('text-xs', getRoleBadgeColorFn(u.roles || []))}
                         >
-                          {getRoleLabel(u.roles || [])}
+                          {getRoleLabelFn(u.roles || [])}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -220,9 +214,9 @@ export function AdminPresencePanel() {
                         </p>
                         <Badge 
                           variant="outline" 
-                          className={cn('text-xs', getRoleBadgeColor(u.roles || []))}
+                          className={cn('text-xs', getRoleBadgeColorFn(u.roles || []))}
                         >
-                          {getRoleLabel(u.roles || [])}
+                          {getRoleLabelFn(u.roles || [])}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
