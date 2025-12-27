@@ -8,6 +8,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   roles: AppRole[];
+  activeRole: AppRole | null;
+  setActiveRole: (role: AppRole) => void;
   loading: boolean;
   rolesLoaded: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -24,11 +26,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Storage key for active role
+const ACTIVE_ROLE_STORAGE_KEY = 'activeRole';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [activeRole, setActiveRoleState] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [rolesLoaded, setRolesLoaded] = useState(false);
 
@@ -44,6 +50,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     rolesLoadedRef.current = rolesLoaded;
   }, [rolesLoaded]);
+
+  // When roles change, set activeRole to the stored one or the first available role
+  useEffect(() => {
+    if (roles.length > 0) {
+      const storedRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY) as AppRole | null;
+      if (storedRole && roles.includes(storedRole)) {
+        setActiveRoleState(storedRole);
+      } else {
+        // Default to first role (priority: admin > ambassador > strategist > creator > editor > client)
+        const priority: AppRole[] = ['admin', 'ambassador', 'strategist', 'creator', 'editor', 'client'];
+        const primaryRole = priority.find(r => roles.includes(r)) || roles[0];
+        setActiveRoleState(primaryRole);
+        localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, primaryRole);
+      }
+    } else {
+      setActiveRoleState(null);
+    }
+  }, [roles]);
+
+  const setActiveRole = (role: AppRole) => {
+    if (roles.includes(role)) {
+      setActiveRoleState(role);
+      localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, role);
+      // Dispatch event for components that need to react to role change
+      window.dispatchEvent(new CustomEvent('active-role-changed', { detail: { role } }));
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -260,16 +293,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    localStorage.removeItem(ACTIVE_ROLE_STORAGE_KEY);
     await supabase.auth.signOut();
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
-  const isAdmin = hasRole('admin');
-  const isCreator = hasRole('creator');
-  const isEditor = hasRole('editor');
-  const isClient = hasRole('client');
-  const isAmbassador = hasRole('ambassador');
-  const isStrategist = hasRole('strategist');
+  
+  // These now check against activeRole for UI purposes, but hasRole checks all roles
+  const isAdmin = activeRole === 'admin';
+  const isCreator = activeRole === 'creator';
+  const isEditor = activeRole === 'editor';
+  const isClient = activeRole === 'client';
+  const isAmbassador = activeRole === 'ambassador';
+  const isStrategist = activeRole === 'strategist';
 
   return (
     <AuthContext.Provider value={{
@@ -277,6 +313,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       profile,
       roles,
+      activeRole,
+      setActiveRole,
       loading,
       rolesLoaded,
       signIn,

@@ -13,9 +13,23 @@ interface ProtectedRouteProps {
   requiresOrg?: boolean; // Whether this route requires an organization
 }
 
-// Helper to get the correct dashboard path based on user roles
-function getDashboardPath(roles: AppRole[]): string {
+// Helper to get the correct dashboard path based on active role or user roles
+function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string {
   if (roles.length === 0) return '/pending-access';
+  
+  // If activeRole is set and valid, use it
+  if (activeRole && roles.includes(activeRole)) {
+    switch (activeRole) {
+      case 'admin': return '/';
+      case 'ambassador': return '/';
+      case 'strategist': return '/strategist-dashboard';
+      case 'creator': return '/creator-dashboard';
+      case 'editor': return '/editor-dashboard';
+      case 'client': return '/client-dashboard';
+    }
+  }
+  
+  // Fallback to role priority
   if (roles.includes('admin')) return '/';
   if (roles.includes('ambassador')) return '/';
   if (roles.includes('strategist')) return '/strategist-dashboard';
@@ -29,7 +43,7 @@ function getDashboardPath(roles: AppRole[]): string {
 const ORG_REQUIRED_ROUTES = ['/', '/board', '/content', '/creators', '/scripts', '/clients', '/team', '/ranking'];
 
 export function ProtectedRoute({ children, allowedRoles, requiresOrg }: ProtectedRouteProps) {
-  const { user, profile, roles: realRoles, loading, rolesLoaded } = useAuth();
+  const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
   const location = useLocation();
@@ -109,7 +123,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg }: Protecte
       const hasAllowedRole = allowedRoles.some(role => effectiveRoles.includes(role));
       if (!hasAllowedRole) {
         // Navigate to the impersonated role's dashboard
-        const correctDashboard = getDashboardPath(effectiveRoles);
+        const correctDashboard = getDashboardPath(effectiveRoles, null);
         return <Navigate to={correctDashboard} replace />;
       }
     }
@@ -133,7 +147,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg }: Protecte
     const hasAllowedRole = allowedRoles.some(role => effectiveRolesToCheck.includes(role));
     if (!hasAllowedRole) {
       // Instead of showing unauthorized, redirect to their appropriate dashboard
-      const correctDashboard = getDashboardPath(rolesToCheck);
+      const correctDashboard = getDashboardPath(rolesToCheck, activeRole);
       return <Navigate to={correctDashboard} replace />;
     }
   }
