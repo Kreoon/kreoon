@@ -15,6 +15,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const bunnyStorageZone = Deno.env.get('BUNNY_STORAGE_ZONE')
     const bunnyStoragePassword = Deno.env.get('BUNNY_STORAGE_PASSWORD')
+    const bunnyStorageHostname = Deno.env.get('BUNNY_STORAGE_HOSTNAME') || 'storage.bunnycdn.com'
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -52,7 +53,7 @@ Deno.serve(async (req) => {
         if (isBunnyStorage && bunnyStorageZone && bunnyStoragePassword) {
           // Delete from Bunny Storage
           const deleteResponse = await fetch(
-            `https://storage.bunnycdn.com/${bunnyStorageZone}/${attachment.storage_path}`,
+            `https://${bunnyStorageHostname}/${bunnyStorageZone}/${attachment.storage_path}`,
             {
               method: 'DELETE',
               headers: { 'AccessKey': bunnyStoragePassword }
