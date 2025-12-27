@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     const bunnyStorageZone = Deno.env.get('BUNNY_STORAGE_ZONE')!
     const bunnyStoragePassword = Deno.env.get('BUNNY_STORAGE_PASSWORD')!
     const bunnyCdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME')!
+    const bunnyStorageHostname = Deno.env.get('BUNNY_STORAGE_HOSTNAME') || 'storage.bunnycdn.com'
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
         try {
           // Delete from Bunny Storage
           const deleteResponse = await fetch(
-            `https://storage.bunnycdn.com/${bunnyStorageZone}/${attachment.storage_path}`,
+            `https://${bunnyStorageHostname}/${bunnyStorageZone}/${attachment.storage_path}`,
             {
               method: 'DELETE',
               headers: { 'AccessKey': bunnyStoragePassword }
@@ -191,9 +192,9 @@ Deno.serve(async (req) => {
     const fileExtension = originalFileName.split('.').pop() || 'bin'
     const storagePath = `chat/${user.id}/${conversationId}/${timestamp}-${randomId}.${fileExtension}`
 
-    // Upload to Bunny Storage
+    // Upload to Bunny Storage (using regional hostname)
     const uploadResponse = await fetch(
-      `https://storage.bunnycdn.com/${bunnyStorageZone}/${storagePath}`,
+      `https://${bunnyStorageHostname}/${bunnyStorageZone}/${storagePath}`,
       {
         method: 'PUT',
         headers: {
