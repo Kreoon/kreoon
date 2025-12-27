@@ -101,6 +101,15 @@ export function useBoardAI(organizationId?: string) {
 
     if (error) {
       console.error('Board AI Error:', error);
+      const msg = (error as any)?.message || '';
+      if (msg.includes('429')) {
+        toast({
+          title: 'Límite de IA alcanzado',
+          description: 'Se alcanzó el límite del proveedor de IA. Espera ~1 minuto e intenta de nuevo.',
+          variant: 'destructive',
+        });
+        return null;
+      }
       throw error;
     }
 

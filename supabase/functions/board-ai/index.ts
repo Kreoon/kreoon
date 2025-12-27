@@ -231,8 +231,22 @@ async function callAI(
 
   if (!response.ok) {
     const errorText = await response.text();
+
+    // Pass-through rate-limit errors with proper status so the client can handle them.
+    if (response.status === 429) {
+      const retryMatch = errorText.match(/retryDelay"\s*:\s*"(\d+)s"/);
+      const retryAfterSeconds = retryMatch ? Number(retryMatch[1]) : null;
+      const err: any = new Error("RATE_LIMIT");
+      err.status = 429;
+      err.retryAfterSeconds = retryAfterSeconds;
+      err.details = errorText;
+      throw err;
+    }
+
     console.error("AI API Error:", response.status, errorText);
-    throw new Error(`AI API Error: ${response.status} ${errorText}`);
+    const err: any = new Error(`AI API Error: ${response.status} ${errorText}`);
+    err.status = response.status;
+    throw err;
   }
 
   const data = await response.json();
@@ -794,12 +808,28 @@ serve(async (req) => {
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
-    console.error("Board AI Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+  } catch (e) {
+    const status = typeof (e as any)?.status === "number" ? (e as any).status : 500;
+
+    if (status === 429) {
+      const retryAfterSeconds = (e as any)?.retryAfterSeconds ?? null;
+      return new Response(
+        JSON.stringify({
+          error: "Límite de solicitudes de IA alcanzado. Intenta de nuevo en unos segundos.",
+          retry_after_seconds: retryAfterSeconds,
+        }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    console.error("Board AI Error:", e);
+    const errorMessage = e instanceof Error ? e.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
