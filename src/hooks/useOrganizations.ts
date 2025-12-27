@@ -253,15 +253,40 @@ export function useOrganizations() {
     }
   };
 
-  // Update member role
+  // Update member role (legacy - updates single role)
   const updateMemberRole = async (memberId: string, newRole: AppRole) => {
     try {
+      // Get the member details first
+      const { data: memberData } = await supabase
+        .from('organization_members')
+        .select('user_id, organization_id')
+        .eq('id', memberId)
+        .single();
+
+      if (!memberData) throw new Error('Member not found');
+
+      // Update organization_members for backward compatibility
       const { error } = await supabase
         .from('organization_members')
         .update({ role: newRole })
         .eq('id', memberId);
 
       if (error) throw error;
+
+      // Replace all roles with the new one in organization_member_roles
+      await supabase
+        .from('organization_member_roles')
+        .delete()
+        .eq('user_id', memberData.user_id)
+        .eq('organization_id', memberData.organization_id);
+
+      await supabase
+        .from('organization_member_roles')
+        .insert({
+          organization_id: memberData.organization_id,
+          user_id: memberData.user_id,
+          role: newRole,
+        });
 
       toast.success('Rol actualizado');
       if (currentOrg) {

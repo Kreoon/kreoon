@@ -292,6 +292,13 @@ export default function Auth() {
             is_owner: true,
           });
 
+          // Also insert into organization_member_roles for multi-role support
+          await supabase.from('organization_member_roles').insert({
+            organization_id: orgData.id,
+            user_id: authData.user.id,
+            role: 'admin',
+          });
+
           // Update profile with current org
           await supabase
             .from('profiles')

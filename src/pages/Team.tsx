@@ -69,10 +69,10 @@ export default function Team() {
     }
 
     try {
-      // Fetch organization members with their roles
+      // Fetch organization members
       const { data: membersData } = await supabase
         .from('organization_members')
-        .select('user_id, role, is_owner')
+        .select('user_id, is_owner')
         .eq('organization_id', currentOrgId);
 
       const memberUserIds = membersData?.map(m => m.user_id) || [];
@@ -83,6 +83,20 @@ export default function Team() {
         return;
       }
 
+      // Fetch multiple roles from the new organization_member_roles table
+      const { data: memberRolesData } = await supabase
+        .from('organization_member_roles')
+        .select('user_id, role')
+        .eq('organization_id', currentOrgId);
+
+      // Group roles by user_id
+      const rolesByUser = new Map<string, AppRole[]>();
+      (memberRolesData || []).forEach(mr => {
+        const existing = rolesByUser.get(mr.user_id) || [];
+        existing.push(mr.role as AppRole);
+        rolesByUser.set(mr.user_id, existing);
+      });
+
       // Fetch profiles only for organization members
       const { data: profilesData } = await supabase
         .from('profiles')
@@ -90,13 +104,13 @@ export default function Team() {
         .in('id', memberUserIds)
         .order('created_at', { ascending: false });
 
-      // Combine profiles with roles from organization_members
+      // Combine profiles with roles from organization_member_roles
       const profilesWithRoles = (profilesData || []).map(profile => {
         const member = membersData?.find(m => m.user_id === profile.id);
+        const userRoles = rolesByUser.get(profile.id) || [];
         return {
           ...profile,
-          // Use organization_members.role as the single source of truth
-          roles: member?.role ? [member.role as AppRole] : [],
+          roles: userRoles,
           isOrgMember: true,
           isOwner: member?.is_owner || false
         };
@@ -115,18 +129,39 @@ export default function Team() {
     if (!selectedUser || !currentOrgId) return;
 
     try {
-      // Update role in organization_members (single source of truth)
+      if (roleAction === 'replace') {
+        // Delete all existing roles for this user in this org
+        await supabase
+          .from('organization_member_roles')
+          .delete()
+          .eq('user_id', selectedUser.id)
+          .eq('organization_id', currentOrgId);
+      }
+
+      // Insert the new role (upsert to handle duplicates)
       const { error } = await supabase
+        .from('organization_member_roles')
+        .upsert({
+          organization_id: currentOrgId,
+          user_id: selectedUser.id,
+          role: newRole,
+          assigned_by: user?.id
+        }, { onConflict: 'organization_id,user_id,role' });
+
+      if (error) throw error;
+
+      // Also update the main role in organization_members for backward compatibility
+      await supabase
         .from('organization_members')
         .update({ role: newRole })
         .eq('user_id', selectedUser.id)
         .eq('organization_id', currentOrgId);
 
-      if (error) throw error;
-
       toast({
-        title: 'Rol actualizado',
-        description: `Se cambió el rol de ${selectedUser.full_name} a ${ROLE_LABELS[newRole]}`
+        title: roleAction === 'replace' ? 'Rol actualizado' : 'Rol agregado',
+        description: roleAction === 'replace' 
+          ? `Se cambió el rol de ${selectedUser.full_name} a ${ROLE_LABELS[newRole]}`
+          : `Se agregó el rol ${ROLE_LABELS[newRole]} a ${selectedUser.full_name}`
       });
       setAddRoleDialog(false);
       fetchData();
@@ -144,24 +179,42 @@ export default function Team() {
     if (!currentOrgId) return;
     
     try {
-      // Set role to null or a default role in organization_members
+      // Remove the specific role from organization_member_roles
       const { error } = await supabase
-        .from('organization_members')
-        .update({ role: 'creator' }) // Default to creator when removing role
+        .from('organization_member_roles')
+        .delete()
         .eq('user_id', userId)
-        .eq('organization_id', currentOrgId);
+        .eq('organization_id', currentOrgId)
+        .eq('role', role);
 
       if (error) throw error;
 
+      // Check if user has any remaining roles
+      const { data: remainingRoles } = await supabase
+        .from('organization_member_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('organization_id', currentOrgId)
+        .limit(1);
+
+      // Update the main role in organization_members for backward compatibility
+      if (remainingRoles && remainingRoles.length > 0) {
+        await supabase
+          .from('organization_members')
+          .update({ role: remainingRoles[0].role })
+          .eq('user_id', userId)
+          .eq('organization_id', currentOrgId);
+      }
+
       toast({
-        title: 'Rol actualizado',
-        description: `Se cambió el rol a Creador (por defecto)`
+        title: 'Rol eliminado',
+        description: `Se eliminó el rol ${ROLE_LABELS[role]}`
       });
       fetchData();
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'No se pudo actualizar el rol',
+        description: 'No se pudo eliminar el rol',
         variant: 'destructive'
       });
     }
