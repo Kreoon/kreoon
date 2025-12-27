@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 import type { 
   BlockConfig, 
   BlockPermission, 
@@ -252,19 +253,28 @@ export function useContentConfig(organizationId: string | null) {
         require_approval_before_advance: config.require_approval_before_advance ?? state.advanced?.require_approval_before_advance ?? false,
         client_read_only_mode: config.client_read_only_mode ?? state.advanced?.client_read_only_mode ?? true,
         enable_custom_fields: config.enable_custom_fields ?? state.advanced?.enable_custom_fields ?? true,
-        content_types: config.content_types ?? state.advanced?.content_types ?? ['UGC', 'Ads', 'Orgánico'],
-        text_editor_features: config.text_editor_features ?? state.advanced?.text_editor_features ?? DEFAULT_TEXT_FEATURES,
+        content_types: (config.content_types ?? state.advanced?.content_types ?? ['UGC', 'Ads', 'Orgánico']) as unknown as Json,
+        text_editor_features: (config.text_editor_features ?? state.advanced?.text_editor_features ?? DEFAULT_TEXT_FEATURES) as unknown as Json,
       };
 
       const { error } = await supabase
         .from('content_advanced_config')
-        .upsert(newConfig, { onConflict: 'organization_id' });
+        .upsert([newConfig], { onConflict: 'organization_id' });
 
       if (error) throw error;
 
       setState(prev => ({
         ...prev,
-        advanced: { ...newConfig, id: prev.advanced?.id ?? '' } as AdvancedConfig
+        advanced: {
+          id: prev.advanced?.id ?? '',
+          organization_id: organizationId,
+          enable_comments: config.enable_comments ?? prev.advanced?.enable_comments ?? true,
+          require_approval_before_advance: config.require_approval_before_advance ?? prev.advanced?.require_approval_before_advance ?? false,
+          client_read_only_mode: config.client_read_only_mode ?? prev.advanced?.client_read_only_mode ?? true,
+          enable_custom_fields: config.enable_custom_fields ?? prev.advanced?.enable_custom_fields ?? true,
+          content_types: config.content_types ?? prev.advanced?.content_types ?? ['UGC', 'Ads', 'Orgánico'],
+          text_editor_features: config.text_editor_features ?? prev.advanced?.text_editor_features ?? DEFAULT_TEXT_FEATURES,
+        }
       }));
 
       toast.success('Configuración avanzada actualizada');
