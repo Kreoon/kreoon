@@ -210,10 +210,17 @@ Deno.serve(async (req) => {
       console.error('Bunny Storage upload error:', uploadResponse.status, errorText)
 
       if (uploadResponse.status === 401) {
+        console.error('Bunny Storage Unauthorized. Check zone/password/hostname.', {
+          storageHostname: bunnyStorageHostname,
+          storageZone: bunnyStorageZone,
+        })
+
         return new Response(
           JSON.stringify({
             error: 'Bunny Storage Unauthorized. Revisa credenciales de Bunny Storage.',
             details: {
+              storageHostname: bunnyStorageHostname,
+              storageZone: bunnyStorageZone,
               hint: 'Verifica que BUNNY_STORAGE_ZONE sea el nombre exacto de la Storage Zone y que BUNNY_STORAGE_PASSWORD sea la Storage Password (no la API Key general).'
             }
           }),
