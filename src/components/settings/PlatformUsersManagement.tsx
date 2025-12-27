@@ -226,24 +226,31 @@ export function PlatformUsersManagement() {
 
     setActionLoading(user.id);
     try {
-      // Remove from organization_members
-      await supabase
+      // Remove from ALL organization_members entries for this user
+      const { error: memberError } = await supabase
         .from('organization_members')
         .delete()
-        .eq('user_id', user.id)
-        .eq('organization_id', user.current_organization_id);
+        .eq('user_id', user.id);
 
-      // Clear current_organization_id
-      await supabase
+      if (memberError) {
+        console.error("Error removing from org members:", memberError);
+      }
+
+      // Clear current_organization_id in profile
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({ current_organization_id: null })
         .eq('id', user.id);
+
+      if (profileError) {
+        throw profileError;
+      }
 
       toast.success(`${user.full_name} removido de la organización`);
       fetchData();
     } catch (error: any) {
       console.error("Error removing user:", error);
-      toast.error("Error al remover usuario");
+      toast.error("Error al remover usuario: " + (error.message || "Error desconocido"));
     } finally {
       setActionLoading(null);
     }
