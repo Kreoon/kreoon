@@ -83,7 +83,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const navigate = useNavigate();
   const { signOut, profile, user, isAdmin, isEditor, isCreator, isStrategist, isClient, roles: realRoles } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin, impersonationTarget } = useImpersonation();
-  const { isPlatformRoot } = useOrgOwner();
+  const { isPlatformRoot, currentOrgName } = useOrgOwner();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
 
@@ -194,9 +194,13 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <span className="text-lg font-bold text-primary-foreground">C</span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-sm font-bold text-sidebar-foreground">Creartor Studio</h1>
-                <p className="text-xs text-sidebar-foreground/60">Content Agency</p>
+                {currentOrgName ? (
+                  <p className="text-xs text-primary/80 truncate font-medium">{currentOrgName}</p>
+                ) : (
+                  <p className="text-xs text-sidebar-foreground/60">Content Agency</p>
+                )}
               </div>
             </div>
           )}
