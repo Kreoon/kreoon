@@ -19,6 +19,7 @@ import {
   Loader2, Clock, AlertCircle, TrendingUp, X
 } from 'lucide-react';
 import { useBoardAI, CardAnalysis, BoardAnalysis } from '@/hooks/useBoardAI';
+import { useAICopilot } from '@/contexts/AICopilotContext';
 import { cn } from '@/lib/utils';
 
 interface BoardAIPanelProps {
@@ -67,13 +68,38 @@ export function BoardAIPanel({
     clearAnalysis
   } = useBoardAI(organizationId);
 
+  const { addNotification } = useAICopilot();
   const [activeTab, setActiveTab] = useState<'analysis' | 'bottlenecks' | 'automation'>('analysis');
 
   const handleAnalyze = async () => {
     if (mode === 'card' && contentId) {
-      await analyzeCard(contentId);
+      const result = await analyzeCard(contentId);
+      if (result) {
+        addNotification({
+          type: result.risk_level === 'alto' ? 'warning' : result.risk_level === 'medio' ? 'insight' : 'success',
+          title: `Análisis: ${contentTitle || 'Tarjeta'}`,
+          message: result.recommendation,
+        });
+      }
     } else {
-      await analyzeBoard();
+      const result = await analyzeBoard();
+      if (result) {
+        const type = result.health_score >= 70 ? 'success' : result.health_score >= 40 ? 'insight' : 'warning';
+        addNotification({
+          type,
+          title: 'Análisis del Tablero',
+          message: result.summary,
+        });
+        
+        // Add bottleneck warnings
+        result.bottlenecks.filter(b => b.severity === 'high').forEach(b => {
+          addNotification({
+            type: 'warning',
+            title: `Cuello de botella: ${b.status}`,
+            message: b.suggestion,
+          });
+        });
+      }
     }
   };
 
