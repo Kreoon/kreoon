@@ -83,8 +83,7 @@ export default function VideosPage() {
               views_count,
               likes_count,
               comments_count,
-              created_at,
-              user:profiles!portfolio_posts_user_id_fkey(id, full_name, avatar_url)
+              created_at
             `)
             .eq('media_type', 'video')
             .order('created_at', { ascending: false })
@@ -115,23 +114,37 @@ export default function VideosPage() {
         })));
       }
 
+      // Fetch user profiles for posts
+      let postsData: any[] = [];
       if (filter === 'all' || filter === 'posts') {
         const postIdx = filter === 'all' ? 1 : 0;
-        const postsData = results[postIdx]?.data || [];
-        allVideos.push(...postsData.map((p: any) => ({
-          id: p.id,
-          type: 'post' as const,
-          caption: p.caption,
-          video_url: p.media_url,
-          thumbnail_url: p.thumbnail_url,
-          user_id: p.user_id,
-          user_name: p.user?.full_name,
-          user_avatar: p.user?.avatar_url,
-          views_count: p.views_count || 0,
-          likes_count: p.likes_count || 0,
-          comments_count: p.comments_count || 0,
-          created_at: p.created_at,
-        })));
+        postsData = results[postIdx]?.data || [];
+      }
+      
+      const postUserIds = [...new Set(postsData.map((p: any) => p.user_id))];
+      const { data: profilesData } = postUserIds.length > 0 
+        ? await supabase.from('profiles').select('id, full_name, avatar_url').in('id', postUserIds)
+        : { data: [] };
+      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
+
+      if (filter === 'all' || filter === 'posts') {
+        allVideos.push(...postsData.map((p: any) => {
+          const profile = profilesMap.get(p.user_id);
+          return {
+            id: p.id,
+            type: 'post' as const,
+            caption: p.caption,
+            video_url: p.media_url,
+            thumbnail_url: p.thumbnail_url,
+            user_id: p.user_id,
+            user_name: profile?.full_name,
+            user_avatar: profile?.avatar_url,
+            views_count: p.views_count || 0,
+            likes_count: p.likes_count || 0,
+            comments_count: p.comments_count || 0,
+            created_at: p.created_at,
+          };
+        }));
       }
 
       // Sort by date

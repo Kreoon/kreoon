@@ -1,6 +1,10 @@
+import { useState, useEffect } from 'react';
 import { ProfileBlock } from '@/hooks/usePortfolioPermissions';
 import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { Play, Image as ImageIcon } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProfileBlocksRendererProps {
   blocks: ProfileBlock[];
@@ -52,7 +56,6 @@ function BlockRenderer({
   userId: string;
   editMode: boolean;
 }) {
-  // Placeholder for each block type
   const renderBlockContent = () => {
     switch (block.key) {
       case 'portfolio_grid':
@@ -88,12 +91,95 @@ function BlockRenderer({
   );
 }
 
+interface Post {
+  id: string;
+  media_url: string;
+  media_type: string;
+  thumbnail_url: string | null;
+  views_count: number | null;
+  likes_count: number | null;
+}
+
 function PortfolioGridBlock({ userId }: { userId: string }) {
-  // Simple placeholder grid
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from('portfolio_posts')
+        .select('id, media_url, media_type, thumbnail_url, views_count, likes_count')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setPosts(data);
+      }
+      setLoading(false);
+    };
+
+    fetchPosts();
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-3 gap-1">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="aspect-square" />
+        ))}
+      </div>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+        <p>No hay publicaciones aún</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-3 gap-1">
-      {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} className="aspect-square bg-muted rounded-sm" />
+      {posts.map(post => (
+        <div
+          key={post.id}
+          className="aspect-square relative group cursor-pointer overflow-hidden rounded-sm bg-muted"
+        >
+          {post.media_type === 'video' ? (
+            <>
+              <img
+                src={post.thumbnail_url || '/placeholder.svg'}
+                alt="Post"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-2 right-2">
+                <Play className="h-4 w-4 text-white drop-shadow-lg" />
+              </div>
+            </>
+          ) : (
+            <img
+              src={post.media_url}
+              alt="Post"
+              className="w-full h-full object-cover"
+            />
+          )}
+          
+          {/* Hover overlay */}
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
+            {(post.likes_count ?? 0) > 0 && (
+              <span className="flex items-center gap-1 text-sm font-semibold">
+                ❤️ {post.likes_count}
+              </span>
+            )}
+            {(post.views_count ?? 0) > 0 && (
+              <span className="flex items-center gap-1 text-sm font-semibold">
+                👁 {post.views_count}
+              </span>
+            )}
+          </div>
+        </div>
       ))}
     </div>
   );
