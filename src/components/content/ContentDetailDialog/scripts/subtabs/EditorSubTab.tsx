@@ -10,9 +10,11 @@ export function EditorSubTab({
   setFormData,
   editMode,
   scriptPermissions,
+  advancedConfig,
 }: SubTabProps) {
   const canEdit = scriptPermissions.canEdit('editor');
   const hasContent = !!formData.editor_guidelines?.trim();
+  const editorFeatures = advancedConfig?.text_editor_features;
 
   return (
     <div className="space-y-6">
@@ -28,6 +30,7 @@ export function EditorSubTab({
               content={formData.editor_guidelines || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, editor_guidelines: value }))}
               placeholder="Describe el estilo de edición, ritmo, transiciones, efectos especiales..."
+              features={editorFeatures}
             />
           ) : hasContent ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">

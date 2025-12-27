@@ -10,9 +10,11 @@ export function StrategistSubTab({
   setFormData,
   editMode,
   scriptPermissions,
+  advancedConfig,
 }: SubTabProps) {
   const canEdit = scriptPermissions.canEdit('strategist');
   const hasContent = !!formData.strategist_guidelines?.trim();
+  const editorFeatures = advancedConfig?.text_editor_features;
 
   return (
     <div className="space-y-6">
@@ -28,6 +30,7 @@ export function StrategistSubTab({
               content={formData.strategist_guidelines || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, strategist_guidelines: value }))}
               placeholder="Define el objetivo, mensaje clave, público objetivo, CTA..."
+              features={editorFeatures}
             />
           ) : hasContent ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">

@@ -10,9 +10,11 @@ export function DesignerSubTab({
   setFormData,
   editMode,
   scriptPermissions,
+  advancedConfig,
 }: SubTabProps) {
   const canEdit = scriptPermissions.canEdit('designer');
   const hasContent = !!formData.designer_guidelines?.trim();
+  const editorFeatures = advancedConfig?.text_editor_features;
 
   return (
     <div className="space-y-6">
@@ -28,6 +30,7 @@ export function DesignerSubTab({
               content={formData.designer_guidelines || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, designer_guidelines: value }))}
               placeholder="Describe el estilo visual, paleta de colores, tipografías, mood..."
+              features={editorFeatures}
             />
           ) : hasContent ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
