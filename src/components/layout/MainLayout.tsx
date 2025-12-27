@@ -6,8 +6,7 @@ import { ChatPanel } from "@/components/chat/ChatPanel";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { AICopilotBubble } from "@/components/ai/AICopilotBubble";
-import { useAICopilot } from "@/contexts/AICopilotContext";
+import { AIAssistantButton } from "@/components/chat/AIAssistantButton";
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
@@ -55,9 +54,6 @@ export function MainLayout({
   
   // Setup chat notifications with sound
   const { unreadCount: unreadChatCount } = useChatNotifications(chatOpen, activeConversationId);
-  
-  // AI Copilot context
-  const { notifications: aiNotifications, dismissNotification, markAsRead } = useAICopilot();
 
   // For editors, show editor-specific layout with bottom nav on mobile
   if (isEditor && !isAdmin) {
@@ -168,12 +164,8 @@ export function MainLayout({
         {/* Chat Panel */}
         <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
-        {/* AI Copilot Bubble */}
-        <AICopilotBubble 
-          notifications={aiNotifications}
-          onNotificationDismiss={dismissNotification}
-          onNotificationAction={markAsRead}
-        />
+        {/* AI Assistant Button */}
+        <AIAssistantButton />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -343,12 +335,8 @@ export function MainLayout({
         {/* Chat Panel */}
         <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
-        {/* AI Copilot Bubble */}
-        <AICopilotBubble 
-          notifications={aiNotifications}
-          onNotificationDismiss={dismissNotification}
-          onNotificationAction={markAsRead}
-        />
+        {/* AI Assistant Button */}
+        <AIAssistantButton />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -445,12 +433,8 @@ export function MainLayout({
       {/* Tour Provider */}
       <TourProvider />
 
-      {/* AI Copilot Bubble */}
-      <AICopilotBubble 
-        notifications={aiNotifications}
-        onNotificationDismiss={dismissNotification}
-        onNotificationAction={markAsRead}
-      />
+      {/* AI Assistant Button */}
+      <AIAssistantButton />
 
       {/* Ambassador Celebration */}
       <AmbassadorCelebration />
