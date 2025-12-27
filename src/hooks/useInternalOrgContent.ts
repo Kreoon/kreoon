@@ -11,9 +11,9 @@ interface AmbassadorWithRole {
 interface InternalOrgContentState {
   /** Whether the current content/client is internal organization content */
   isInternalOrgContent: boolean;
-  /** List of ambassadors who also have the creator role */
+  /** List of ambassadors that can be assigned as creators for internal org content */
   ambassadorCreators: AmbassadorWithRole[];
-  /** List of ambassadors who also have the editor role */
+  /** List of ambassadors who also have the editor role (internal org content editors) */
   ambassadorEditors: AmbassadorWithRole[];
   /** All ambassadors (for backward compatibility) */
   ambassadors: AmbassadorWithRole[];
@@ -46,11 +46,11 @@ export type UseInternalOrgContentReturn = InternalOrgContentState & InternalOrgC
 
 /**
  * Single source of truth for internal organization content detection and handling.
- * 
+ *
  * RULES:
  * 1. isInternalOrgContent = content.client_id matches organization's internal brand client
- * 2. Only ambassadors WITH the creator role can be assigned as creators
- * 3. Only ambassadors WITH the editor role can be assigned as editors
+ * 2. Creator options for internal content are ALL ambassadors with the ambassador badge
+ * 3. Editor options for internal content are ambassadors that also have the editor role
  * 4. Internal content has NO monetary payments (only UP points)
  * 5. Content type is automatically marked as 'ambassador_internal'
  */
@@ -128,8 +128,10 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
           roles: rolesByUser[p.id] || []
         })) || [];
 
-        // Filter ambassadors by role
-        const creatorsWithBadge = ambassadorList.filter(a => a.roles.includes('creator'));
+        // Filter ambassadors for internal content assignments
+        // - creators: ALL ambassadors (badge holders)
+        // - editors: ambassadors who also have the editor role
+        const creatorsWithBadge = ambassadorList;
         const editorsWithBadge = ambassadorList.filter(a => a.roles.includes('editor'));
 
         setAmbassadors(ambassadorList);
