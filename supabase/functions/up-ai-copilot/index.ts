@@ -354,7 +354,7 @@ async function evaluateQualityScore(
         ideal_avatar, sales_angles, brief_url
       ),
       strategist:profiles!content_strategist_id_fkey(full_name),
-      custom_status:organization_statuses(name, label, description)
+      custom_status:organization_statuses(label, status_key, color)
     `)
     .eq("id", req.contentId)
     .single();
