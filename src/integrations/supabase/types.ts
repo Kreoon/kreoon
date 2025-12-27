@@ -3699,19 +3699,34 @@ export type Database = {
         Args: { _org_id: string }
         Returns: undefined
       }
-      emit_up_event: {
-        Args: {
-          _ai_confidence?: number
-          _ai_evidence?: Json
-          _ai_inferred?: boolean
-          _content_id?: string
-          _event_data?: Json
-          _event_type_key: string
-          _org_id: string
-          _user_id: string
-        }
-        Returns: string
+      create_default_up_event_types: {
+        Args: { _org_id: string }
+        Returns: undefined
       }
+      create_default_up_rules: { Args: { _org_id: string }; Returns: undefined }
+      emit_up_event:
+        | {
+            Args: {
+              _content_id?: string
+              _event_data?: Json
+              _event_type_key: string
+              _user_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _ai_confidence?: number
+              _ai_evidence?: Json
+              _ai_inferred?: boolean
+              _content_id?: string
+              _event_data?: Json
+              _event_type_key: string
+              _org_id: string
+              _user_id: string
+            }
+            Returns: string
+          }
       generate_org_slug: { Args: { org_name: string }; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       generate_registration_link: { Args: { _org_id: string }; Returns: string }
