@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   BarChart3, Settings, Brain, Target, 
-  AlertTriangle, Zap, Trophy, Activity
+  AlertTriangle, Zap, Trophy, Activity, Award, Lock
 } from 'lucide-react';
 import { useUPEngine } from '@/hooks/useUPEngine';
 import { UPRulesBuilder } from './UPRulesBuilder';
@@ -13,6 +13,9 @@ import { UPAIPanel } from './UPAIPanel';
 import { UPAnalytics } from './UPAnalytics';
 import { UPSeasonsManager } from './UPSeasonsManager';
 import { UPSettingsPanel } from './UPSettingsPanel';
+import { UPAchievementsManager } from './UPAchievementsManager';
+import { UPLevelsManager } from './UPLevelsManager';
+import { UPPermissionsEditor } from './UPPermissionsEditor';
 import { cn } from '@/lib/utils';
 
 interface UPControlCenterProps {
@@ -109,7 +112,7 @@ export function UPControlCenter({ organizationId }: UPControlCenterProps) {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+        <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Analytics</span>
@@ -118,16 +121,28 @@ export function UPControlCenter({ organizationId }: UPControlCenterProps) {
             <Target className="w-4 h-4" />
             <span className="hidden sm:inline">Reglas</span>
           </TabsTrigger>
-          <TabsTrigger value="seasons" className="flex items-center gap-2">
+          <TabsTrigger value="achievements" className="flex items-center gap-2">
+            <Award className="w-4 h-4" />
+            <span className="hidden sm:inline">Logros</span>
+          </TabsTrigger>
+          <TabsTrigger value="levels" className="flex items-center gap-2">
             <Trophy className="w-4 h-4" />
+            <span className="hidden sm:inline">Niveles</span>
+          </TabsTrigger>
+          <TabsTrigger value="seasons" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
             <span className="hidden sm:inline">Temporadas</span>
           </TabsTrigger>
           <TabsTrigger value="ai" className="flex items-center gap-2">
             <Brain className="w-4 h-4" />
-            <span className="hidden sm:inline">IA Co-Pilot</span>
+            <span className="hidden sm:inline">IA</span>
             {aiConfig?.quality_score_enabled && (
               <Badge variant="secondary" className="ml-1 text-xs">ON</Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="permissions" className="flex items-center gap-2">
+            <Lock className="w-4 h-4" />
+            <span className="hidden sm:inline">RBAC</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -147,6 +162,14 @@ export function UPControlCenter({ organizationId }: UPControlCenterProps) {
           />
         </TabsContent>
 
+        <TabsContent value="achievements">
+          <UPAchievementsManager organizationId={organizationId} />
+        </TabsContent>
+
+        <TabsContent value="levels">
+          <UPLevelsManager organizationId={organizationId} />
+        </TabsContent>
+
         <TabsContent value="seasons">
           <UPSeasonsManager 
             organizationId={organizationId}
@@ -159,6 +182,10 @@ export function UPControlCenter({ organizationId }: UPControlCenterProps) {
             organizationId={organizationId}
             aiConfig={aiConfig}
           />
+        </TabsContent>
+
+        <TabsContent value="permissions">
+          <UPPermissionsEditor organizationId={organizationId} />
         </TabsContent>
 
         <TabsContent value="settings">
