@@ -1,0 +1,1 @@
+export { useContentPermissions } from './useContentPermissions';
