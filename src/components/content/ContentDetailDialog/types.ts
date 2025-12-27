@@ -112,6 +112,7 @@ export interface ContentDetailDialogProps {
 export interface SelectOption {
   id: string;
   name: string;
+  is_internal_brand?: boolean;
 }
 
 export interface ContentCommentWithProfile {
