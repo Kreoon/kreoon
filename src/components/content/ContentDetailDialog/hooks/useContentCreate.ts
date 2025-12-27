@@ -362,6 +362,7 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
       const organizationId = profile?.current_organization_id;
 
       // CRITICAL: Force internal content values on backend - ignore any payment values
+      // CRITICAL: Keep client_id for internal brand content to enable proper detection
       const contentData = {
         title: formData.title.trim(),
         product: selectedProduct?.name || formData.product || null,

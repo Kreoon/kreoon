@@ -329,8 +329,8 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
         title: title.trim(),
         product: selectedProduct?.name || null,
         product_id: productId || null,
-        // For ambassador content, client_id is null (it's the org itself)
-        client_id: isAmbassadorContent ? null : (clientId || null),
+        // CRITICAL: Keep client_id for internal brand content to enable proper detection
+        client_id: clientId || null,
         creator_id: creatorId || null,
         editor_id: editorId || null,
         strategist_id: strategistId || null,
