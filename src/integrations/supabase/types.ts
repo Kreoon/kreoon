@@ -1758,6 +1758,8 @@ export type Database = {
           scripts_provider: string | null
           sistema_up_model: string | null
           sistema_up_provider: string | null
+          tablero_model: string | null
+          tablero_provider: string | null
           thumbnails_model: string | null
           thumbnails_provider: string | null
           updated_at: string
@@ -1774,6 +1776,8 @@ export type Database = {
           scripts_provider?: string | null
           sistema_up_model?: string | null
           sistema_up_provider?: string | null
+          tablero_model?: string | null
+          tablero_provider?: string | null
           thumbnails_model?: string | null
           thumbnails_provider?: string | null
           updated_at?: string
@@ -1790,6 +1794,8 @@ export type Database = {
           scripts_provider?: string | null
           sistema_up_model?: string | null
           sistema_up_provider?: string | null
+          tablero_model?: string | null
+          tablero_provider?: string | null
           thumbnails_model?: string | null
           thumbnails_provider?: string | null
           updated_at?: string

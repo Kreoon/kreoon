@@ -330,19 +330,22 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
               const modelField = `${module.key}_model` as keyof typeof defaults;
               const currentProvider = defaults?.[providerField] as string || defaults?.default_provider || 'lovable';
               const currentModel = defaults?.[modelField] as string || defaults?.default_model || 'google/gemini-2.5-flash';
+              const isCustomized = !!defaults?.[providerField];
 
               return (
-                <Card key={module.key}>
+                <Card key={module.key} className={isCustomized ? 'border-primary/30' : ''}>
                   <CardContent className="pt-4">
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <h4 className="font-medium">{module.label}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Configuración específica para este módulo
-                        </p>
+                        {'description' in module && (
+                          <p className="text-sm text-muted-foreground">
+                            {module.description}
+                          </p>
+                        )}
                       </div>
-                      {defaults?.[providerField] && (
-                        <Badge variant="outline">Personalizado</Badge>
+                      {isCustomized && (
+                        <Badge variant="outline" className="border-primary/50 text-primary">Personalizado</Badge>
                       )}
                     </div>
 
