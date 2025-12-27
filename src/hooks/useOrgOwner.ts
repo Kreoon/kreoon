@@ -12,11 +12,32 @@ export interface OrgOwnerStatus {
   loading: boolean;
 }
 
+const ORG_OWNER_TIMEOUT_MS = 8000;
+
+type PromiseLikeAny<T> = PromiseLike<T>;
+
+function withTimeout<T>(promise: PromiseLikeAny<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const id = window.setTimeout(() => reject(new Error(`timeout:${label}`)), ms);
+
+    promise.then(
+      (res) => {
+        window.clearTimeout(id);
+        resolve(res as T);
+      },
+      (err) => {
+        window.clearTimeout(id);
+        reject(err);
+      }
+    );
+  });
+}
+
 /**
  * Hook to determine if the current user is:
  * - Platform root admin (jacsolucionesgraficas@gmail.com)
  * - Organization owner (is_owner = true in organization_members for their current org)
- * 
+ *
  * This is critical for access control between platform-level and org-level permissions.
  */
 export function useOrgOwner(): OrgOwnerStatus {
@@ -29,8 +50,14 @@ export function useOrgOwner(): OrgOwnerStatus {
   const isPlatformRoot = profile?.email === ROOT_EMAIL;
 
   useEffect(() => {
+    let cancelled = false;
+
     const checkOwnerStatus = async () => {
+      // Always reset loading when inputs change
+      setLoading(true);
+
       if (!user || !profile?.current_organization_id) {
+        if (cancelled) return;
         setIsOrgOwner(false);
         setCurrentOrgId(null);
         setCurrentOrgName(null);
@@ -38,35 +65,55 @@ export function useOrgOwner(): OrgOwnerStatus {
         return;
       }
 
+      const orgId = profile.current_organization_id;
+
       try {
-        // Check if user is owner of their current organization
-        const { data: memberData } = await supabase
-          .from('organization_members')
-          .select('is_owner')
-          .eq('user_id', user.id)
-          .eq('organization_id', profile.current_organization_id)
-          .maybeSingle();
+        // Run queries in parallel + guard against hung network requests
+        const [memberRes, orgRes] = await Promise.all([
+          withTimeout(
+            supabase
+              .from('organization_members')
+              .select('is_owner')
+              .eq('user_id', user.id)
+              .eq('organization_id', orgId)
+              .maybeSingle(),
+            ORG_OWNER_TIMEOUT_MS,
+            'org_owner_member'
+          ),
+          withTimeout(
+            supabase
+              .from('organizations')
+              .select('name')
+              .eq('id', orgId)
+              .maybeSingle(),
+            ORG_OWNER_TIMEOUT_MS,
+            'org_owner_org'
+          ),
+        ]);
 
-        setIsOrgOwner(memberData?.is_owner || false);
-        setCurrentOrgId(profile.current_organization_id);
+        if (cancelled) return;
 
-        // Fetch org name
-        const { data: orgData } = await supabase
-          .from('organizations')
-          .select('name')
-          .eq('id', profile.current_organization_id)
-          .maybeSingle();
-
-        setCurrentOrgName(orgData?.name || null);
+        setIsOrgOwner(memberRes.data?.is_owner || false);
+        setCurrentOrgId(orgId);
+        setCurrentOrgName(orgRes.data?.name || null);
       } catch (error) {
+        // IMPORTANT: never leave the app in an infinite loading state
         console.error('Error checking org owner status:', error);
+        if (cancelled) return;
         setIsOrgOwner(false);
+        setCurrentOrgId(orgId);
+        setCurrentOrgName(null);
       } finally {
+        if (cancelled) return;
         setLoading(false);
       }
     };
 
     checkOwnerStatus();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, profile?.current_organization_id]);
 
   return {
@@ -74,6 +121,7 @@ export function useOrgOwner(): OrgOwnerStatus {
     isPlatformRoot,
     currentOrgId,
     currentOrgName,
-    loading
+    loading,
   };
 }
+
