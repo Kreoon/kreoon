@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye, Castle } from "lucide-react";
+import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye, Castle, Medal } from "lucide-react";
 import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { VipBadge } from "@/components/ui/vip-badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +57,7 @@ interface Client {
   users_count: number;
   is_vip: boolean;
   username: string | null;
+  is_internal_brand: boolean;
 }
 
 interface ClientUser {
@@ -208,8 +209,16 @@ const Clients = () => {
         user_id: c.user_id,
         users_count: usersCountMap.get(c.id) || 0,
         is_vip: c.is_vip ?? false,
-        username: c.username
+        username: c.username,
+        is_internal_brand: c.is_internal_brand ?? false
       }));
+
+      // Sort: internal brand first, then by name
+      clientsList.sort((a, b) => {
+        if (a.is_internal_brand && !b.is_internal_brand) return -1;
+        if (!a.is_internal_brand && b.is_internal_brand) return 1;
+        return a.name.localeCompare(b.name);
+      });
 
       setClients(clientsList);
     } catch (error) {
@@ -463,18 +472,36 @@ const Clients = () => {
                   <div 
                     key={client.id}
                     onClick={() => setSelectedClient(client)}
-                    className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-lg hover:border-primary/20 cursor-pointer"
+                    className={`group rounded-xl border p-5 transition-all duration-200 hover:shadow-lg cursor-pointer ${
+                      client.is_internal_brand 
+                        ? 'border-amber-500/50 bg-gradient-to-br from-amber-500/10 to-amber-600/5 hover:border-amber-500' 
+                        : 'border-border bg-card hover:border-primary/20'
+                    }`}
                   >
+                    {client.is_internal_brand && (
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <Medal className="h-4 w-4 text-amber-500" />
+                        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">Marca Interna</span>
+                      </div>
+                    )}
                     <div className="flex items-start gap-4 mb-4">
                       {client.logo_url ? (
                         <img 
                           src={client.logo_url} 
                           alt={client.name}
-                          className="h-14 w-14 rounded-lg object-cover ring-1 ring-border"
+                          className={`h-14 w-14 rounded-lg object-cover ring-1 ${client.is_internal_brand ? 'ring-amber-500/50' : 'ring-border'}`}
                         />
                       ) : (
-                        <div className="h-14 w-14 rounded-lg bg-primary/10 flex items-center justify-center ring-1 ring-border">
-                          <Building2 className="h-6 w-6 text-primary" />
+                        <div className={`h-14 w-14 rounded-lg flex items-center justify-center ring-1 ${
+                          client.is_internal_brand 
+                            ? 'bg-amber-500/20 ring-amber-500/50' 
+                            : 'bg-primary/10 ring-border'
+                        }`}>
+                          {client.is_internal_brand ? (
+                            <Medal className="h-6 w-6 text-amber-500" />
+                          ) : (
+                            <Building2 className="h-6 w-6 text-primary" />
+                          )}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
