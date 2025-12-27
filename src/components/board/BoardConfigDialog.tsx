@@ -102,20 +102,21 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     return rules.find(r => r.status_id === statusId);
   };
 
-  // Toggle role in advance/retreat arrays
-  const toggleRolePermission = async (statusId: string, role: string, type: 'advance' | 'retreat') => {
+  // Toggle role in advance/retreat/view arrays
+  const toggleRolePermission = async (statusId: string, role: string, type: 'advance' | 'retreat' | 'view') => {
     const rule = getRuleForStatus(statusId);
     const currentRoles = type === 'advance' 
       ? (rule?.can_advance_roles || [])
-      : (rule?.can_retreat_roles || []);
+      : type === 'retreat'
+        ? (rule?.can_retreat_roles || [])
+        : (rule?.can_view_roles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client']);
     
     const newRoles = currentRoles.includes(role)
       ? currentRoles.filter(r => r !== role)
       : [...currentRoles, role];
     
-    await updateStatusRule(statusId, {
-      [type === 'advance' ? 'can_advance_roles' : 'can_retreat_roles']: newRoles
-    });
+    const fieldName = type === 'advance' ? 'can_advance_roles' : type === 'retreat' ? 'can_retreat_roles' : 'can_view_roles';
+    await updateStatusRule(statusId, { [fieldName]: newRoles });
   };
 
   const handleCreateStatus = async () => {
@@ -349,6 +350,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                   const rule = getRuleForStatus(status.id);
                   const canAdvanceRoles = rule?.can_advance_roles || [];
                   const canRetreatRoles = rule?.can_retreat_roles || [];
+                  const canViewRoles = rule?.can_view_roles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
                   
                   return (
                     <Card key={status.id} className="p-4">
@@ -361,6 +363,38 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                         <Badge variant="outline" className="text-xs ml-auto">
                           Orden: {status.sort_order + 1}
                         </Badge>
+                      </div>
+                      
+                      {/* Visibilidad - Quién puede VER este estado */}
+                      <div className="space-y-2 mb-4 pb-4 border-b">
+                        <div className="flex items-center gap-2">
+                          <Eye className="h-4 w-4 text-blue-500" />
+                          <Label className="text-sm font-medium">Puede VER este estado</Label>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Roles que pueden ver esta columna y sus tarjetas (si está vacío, nadie ve este estado)
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {ROLES.map(role => {
+                            const isActive = canViewRoles.includes(role);
+                            return (
+                              <Badge 
+                                key={role}
+                                variant={isActive ? "default" : "outline"}
+                                className={cn(
+                                  "text-xs cursor-pointer transition-all",
+                                  isActive 
+                                    ? "bg-blue-500/20 text-blue-700 border-blue-500 hover:bg-blue-500/30" 
+                                    : "hover:bg-muted opacity-60"
+                                )}
+                                onClick={() => toggleRolePermission(status.id, role, 'view')}
+                              >
+                                {isActive && <Check className="h-3 w-3 mr-1" />}
+                                {ROLE_LABELS[role] || role}
+                              </Badge>
+                            );
+                          })}
+                        </div>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

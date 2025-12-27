@@ -54,6 +54,7 @@ interface StatusRule {
   status_id: string;
   can_advance_roles: string[];
   can_retreat_roles: string[];
+  can_view_roles: string[];
 }
 
 interface OrgStatus {
@@ -259,6 +260,26 @@ export default function ContentBoard() {
   // Determinar el rol principal del usuario
   const primaryRole = isAdmin ? 'admin' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'admin';
 
+  // Helper function to check if a status is visible for the current role
+  const isStatusVisibleForRole = useCallback((statusKey: string): boolean => {
+    // Admin always sees everything
+    if (primaryRole === 'admin') return true;
+    
+    // Find the org status for this status key
+    const orgStatus = orgStatuses.find(s => s.status_key === statusKey);
+    if (!orgStatus) return true; // If no org status config, show by default
+    
+    // Find the rule for this status
+    const rule = rules.find(r => r.status_id === orgStatus.id);
+    if (!rule) return true; // If no rule, show by default
+    
+    // Check if user's role can view this status
+    const canViewRoles = (rule as any).can_view_roles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
+    if (canViewRoles.length === 0) return true; // Empty = show to all
+    
+    return canViewRoles.includes(primaryRole);
+  }, [primaryRole, orgStatuses, rules]);
+
   // Fetch content según rol
   const { content, loading, updateContentStatus, deleteContent, refetch } = useContentWithFilters({
     userId: user?.id,
@@ -373,8 +394,11 @@ export default function ContentBoard() {
     });
   }, [content]);
 
-  // Filtrar contenido por búsqueda, fechas, producto y campaña
-  const filteredContent = content.filter(c => {
+  // Filtrar contenido por búsqueda, fechas, producto, campaña Y visibilidad de estado
+  const filteredContent = useMemo(() => content.filter(c => {
+    // First check if this content's status is visible to the user
+    if (!isStatusVisibleForRole(c.status)) return false;
+    
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       const matchesSearch = (
@@ -406,7 +430,7 @@ export default function ContentBoard() {
     }
     
     return true;
-  });
+  }), [content, isStatusVisibleForRole, searchTerm, startDateFilter, deadlineFilter, filterProductId, filterCampaignWeek]);
 
   // Agrupar contenido por estado
   const getContentByStatus = (status: ContentStatus) => {
@@ -755,7 +779,24 @@ export default function ContentBoard() {
           {/* Kanban View */}
           {currentView === 'kanban' && (
             <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0">
-              {(isCreator && !isAdmin ? CREATOR_COLUMNS : isEditor && !isAdmin ? EDITOR_COLUMNS : BOARD_COLUMNS).map(column => {
+              {(isCreator && !isAdmin ? CREATOR_COLUMNS : isEditor && !isAdmin ? EDITOR_COLUMNS : BOARD_COLUMNS)
+                // Filter columns by visibility permissions
+                .filter(column => {
+                  // Find the org status for this column
+                  const orgStatus = orgStatuses.find(s => s.status_key === column.status);
+                  if (!orgStatus) return true; // If no org status, show by default
+                  
+                  // Find the rule for this status
+                  const rule = rules.find(r => r.status_id === orgStatus.id);
+                  if (!rule) return true; // If no rule, show by default
+                  
+                  // Check if user's role can view this status
+                  const canViewRoles = (rule as any).can_view_roles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
+                  if (canViewRoles.length === 0) return true; // Empty = show to all
+                  
+                  return canViewRoles.includes(primaryRole);
+                })
+                .map(column => {
                 const columnContent = getContentByStatus(column.status);
                 const isCurrentDropTarget = dropTarget === column.status;
                 const canDropHere = draggingContent 

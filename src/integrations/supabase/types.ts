@@ -307,6 +307,7 @@ export type Database = {
           auto_actions: Json | null
           can_advance_roles: string[] | null
           can_retreat_roles: string[] | null
+          can_view_roles: string[] | null
           created_at: string
           id: string
           organization_id: string
@@ -321,6 +322,7 @@ export type Database = {
           auto_actions?: Json | null
           can_advance_roles?: string[] | null
           can_retreat_roles?: string[] | null
+          can_view_roles?: string[] | null
           created_at?: string
           id?: string
           organization_id: string
@@ -335,6 +337,7 @@ export type Database = {
           auto_actions?: Json | null
           can_advance_roles?: string[] | null
           can_retreat_roles?: string[] | null
+          can_view_roles?: string[] | null
           created_at?: string
           id?: string
           organization_id?: string

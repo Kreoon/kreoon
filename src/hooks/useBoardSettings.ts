@@ -35,6 +35,7 @@ export interface BoardStatusRule {
   auto_actions: any[];
   can_advance_roles: string[];
   can_retreat_roles: string[];
+  can_view_roles: string[]; // Roles that can see this status
   created_at: string;
   updated_at: string;
 }
@@ -130,7 +131,8 @@ export function useBoardSettings(organizationId: string | null) {
         allowed_to_statuses: r.allowed_to_statuses || [],
         auto_actions: r.auto_actions as any[],
         can_advance_roles: (r as any).can_advance_roles || [],
-        can_retreat_roles: (r as any).can_retreat_roles || []
+        can_retreat_roles: (r as any).can_retreat_roles || [],
+        can_view_roles: (r as any).can_view_roles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client']
       })));
       setCustomFields((fieldsRes.data || []).map(f => ({
         ...f,
@@ -316,7 +318,8 @@ export function useBoardSettings(organizationId: string | null) {
           allowed_to_statuses: data.allowed_to_statuses || [],
           auto_actions: data.auto_actions as any[],
           can_advance_roles: (data as any).can_advance_roles || [],
-          can_retreat_roles: (data as any).can_retreat_roles || []
+          can_retreat_roles: (data as any).can_retreat_roles || [],
+          can_view_roles: (data as any).can_view_roles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client']
         }]);
       }
 
