@@ -88,7 +88,7 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
 
       setInternalBrandClientId(internalClient?.id || null);
 
-      // Fetch ambassadors from organization_member_badges
+      // Fetch ambassadors (support BOTH legacy badge and current role assignment)
       const { data: ambassadorBadges } = await supabase
         .from('organization_member_badges')
         .select('user_id')
@@ -96,16 +96,27 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
         .eq('badge', 'ambassador')
         .eq('is_active', true);
 
-      if (ambassadorBadges?.length) {
-        const userIds = ambassadorBadges.map(b => b.user_id);
-        
+      const { data: ambassadorRoles } = await supabase
+        .from('organization_member_roles')
+        .select('user_id')
+        .eq('organization_id', currentOrgId)
+        .eq('role', 'ambassador');
+
+      const userIds = Array.from(
+        new Set([
+          ...(ambassadorBadges?.map(b => b.user_id) || []),
+          ...(ambassadorRoles?.map(r => r.user_id) || []),
+        ])
+      );
+
+      if (userIds.length) {
         // Fetch profiles
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, full_name')
           .in('id', userIds);
 
-        // Fetch roles for these ambassadors
+        // Fetch roles for these ambassadors (creator/editor/etc)
         const { data: memberRoles } = await supabase
           .from('organization_member_roles')
           .select('user_id, role')
@@ -122,14 +133,14 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
         });
 
         // Build ambassador list with roles
-        const ambassadorList: AmbassadorWithRole[] = profiles?.map(p => ({ 
-          id: p.id, 
+        const ambassadorList: AmbassadorWithRole[] = profiles?.map(p => ({
+          id: p.id,
           name: p.full_name || 'Sin nombre',
           roles: rolesByUser[p.id] || []
         })) || [];
 
         // Filter ambassadors for internal content assignments
-        // - creators: ALL ambassadors (badge holders)
+        // - creators: ALL ambassadors (badge/role holders)
         // - editors: ambassadors who also have the editor role
         const creatorsWithBadge = ambassadorList;
         const editorsWithBadge = ambassadorList.filter(a => a.roles.includes('editor'));
