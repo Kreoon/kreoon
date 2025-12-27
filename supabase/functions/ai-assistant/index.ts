@@ -265,29 +265,125 @@ serve(async (req) => {
 
     aiMessages.push({ role: 'user', content: message });
 
-    // Call Lovable AI
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }), {
+    // Determine API configuration based on provider
+    const provider = config.provider || 'lovable';
+    let apiUrl = '';
+    let apiKey = '';
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+    if (provider === 'lovable') {
+      apiKey = Deno.env.get('LOVABLE_API_KEY') || '';
+      apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    } else if (provider === 'openai') {
+      // Get API key from organization_ai_providers
+      const { data: providerConfig } = await supabase
+        .from('organization_ai_providers')
+        .select('api_key')
+        .eq('organization_id', organizationId)
+        .eq('provider', 'openai')
+        .single();
+      
+      apiKey = providerConfig?.api_key || '';
+      apiUrl = 'https://api.openai.com/v1/chat/completions';
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    } else if (provider === 'gemini') {
+      const { data: providerConfig } = await supabase
+        .from('organization_ai_providers')
+        .select('api_key')
+        .eq('organization_id', organizationId)
+        .eq('provider', 'gemini')
+        .single();
+      
+      apiKey = providerConfig?.api_key || '';
+      apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent?key=${apiKey}`;
+    } else if (provider === 'anthropic') {
+      const { data: providerConfig } = await supabase
+        .from('organization_ai_providers')
+        .select('api_key')
+        .eq('organization_id', organizationId)
+        .eq('provider', 'anthropic')
+        .single();
+      
+      apiKey = providerConfig?.api_key || '';
+      apiUrl = 'https://api.anthropic.com/v1/messages';
+      headers['x-api-key'] = apiKey;
+      headers['anthropic-version'] = '2023-06-01';
+    }
+
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: `API key not configured for provider: ${provider}` }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('Calling AI with system prompt length:', systemPrompt.length);
+    console.log('Calling AI with provider:', provider, 'model:', config.model);
+    console.log('System prompt length:', systemPrompt.length);
     console.log('Message count:', aiMessages.length);
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: config.model || 'google/gemini-2.5-flash',
-        messages: aiMessages,
-      }),
-    });
+    let aiResponse: Response;
+    let assistantResponse = '';
+
+    if (provider === 'gemini') {
+      // Gemini uses a different API format
+      const geminiMessages = aiMessages.map(m => ({
+        role: m.role === 'assistant' ? 'model' : m.role === 'system' ? 'user' : 'user',
+        parts: [{ text: m.content }]
+      }));
+
+      aiResponse = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          contents: geminiMessages,
+          generationConfig: { maxOutputTokens: 2000 }
+        }),
+      });
+
+      if (aiResponse.ok) {
+        const aiData = await aiResponse.json();
+        assistantResponse = aiData.candidates?.[0]?.content?.parts?.[0]?.text || fallbackMessage;
+      }
+    } else if (provider === 'anthropic') {
+      // Anthropic uses a different API format
+      const systemContent = aiMessages.find(m => m.role === 'system')?.content || '';
+      const userMessages = aiMessages.filter(m => m.role !== 'system').map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+
+      aiResponse = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: config.model,
+          max_tokens: 2000,
+          system: systemContent,
+          messages: userMessages,
+        }),
+      });
+
+      if (aiResponse.ok) {
+        const aiData = await aiResponse.json();
+        assistantResponse = aiData.content?.[0]?.text || fallbackMessage;
+      }
+    } else {
+      // OpenAI-compatible (Lovable, OpenAI)
+      aiResponse = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: config.model || 'google/gemini-2.5-flash',
+          messages: aiMessages,
+        }),
+      });
+
+      if (aiResponse.ok) {
+        const aiData = await aiResponse.json();
+        assistantResponse = aiData.choices?.[0]?.message?.content || fallbackMessage;
+      }
+    }
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
@@ -312,9 +408,6 @@ serve(async (req) => {
       });
     }
 
-    const aiData = await aiResponse.json();
-    const assistantResponse = aiData.choices?.[0]?.message?.content || fallbackMessage;
-
     // Log the conversation
     await supabase.from('ai_assistant_logs').insert({
       organization_id: organizationId,
@@ -322,7 +415,7 @@ serve(async (req) => {
       conversation_id: conversationId || null,
       user_message: message,
       assistant_response: assistantResponse,
-      tokens_used: aiData.usage?.total_tokens || null,
+      tokens_used: null, // Token tracking varies by provider
     });
 
     return new Response(JSON.stringify({ 

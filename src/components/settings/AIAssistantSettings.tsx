@@ -101,14 +101,37 @@ interface AIFeedback {
 }
 
 const PROVIDERS = [
-  { value: 'lovable', label: 'Lovable AI (Recomendado)' },
+  { value: 'lovable', label: 'Lovable AI (Sin API Key requerida)', description: 'Usa modelos de Gemini y GPT-5' },
+  { value: 'openai', label: 'OpenAI', description: 'Requiere API Key configurada' },
+  { value: 'gemini', label: 'Google Gemini', description: 'Requiere API Key configurada' },
+  { value: 'anthropic', label: 'Anthropic Claude', description: 'Requiere API Key configurada' },
 ];
 
-const MODELS = {
+const MODELS: Record<string, { value: string; label: string }[]> = {
   lovable: [
-    { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (Rápido)' },
-    { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro (Potente)' },
-    { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini (Balanceado)' },
+    { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (Recomendado)' },
+    { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro (Más potente)' },
+    { value: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite (Más rápido)' },
+    { value: 'google/gemini-3-pro-preview', label: 'Gemini 3 Pro Preview (Beta)' },
+    { value: 'openai/gpt-5', label: 'GPT-5' },
+    { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini (Rápido)' },
+    { value: 'openai/gpt-5-nano', label: 'GPT-5 Nano (Económico)' },
+  ],
+  openai: [
+    { value: 'gpt-4o', label: 'GPT-4o (Recomendado)' },
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Rápido)' },
+    { value: 'gpt-5', label: 'GPT-5' },
+    { value: 'gpt-5-mini', label: 'GPT-5 Mini' },
+  ],
+  gemini: [
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Recomendado)' },
+    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+  ],
+  anthropic: [
+    { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5 (Recomendado)' },
+    { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
+    { value: 'claude-3-5-haiku', label: 'Claude 3.5 Haiku (Rápido)' },
   ],
 };
 
