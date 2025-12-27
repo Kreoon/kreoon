@@ -24,6 +24,7 @@ interface CreateContentDialogProps {
 interface SelectOption {
   id: string;
   name: string;
+  is_internal_brand?: boolean;
 }
 
 interface ClientPackage {
@@ -95,38 +96,29 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
   // Detect if client is the organization (ambassador content)
   useEffect(() => {
-    if (clientId) {
-      const checkIfOrgClient = async () => {
-        const { data: clientData } = await supabase
-          .from('clients')
-          .select('id, is_internal_brand')
-          .eq('id', clientId)
-          .maybeSingle();
-        
-        // Client is internal brand (organization itself)
-        const isOrgAsClient = clientData?.is_internal_brand === true;
-        
-        const wasAmbassadorContent = isAmbassadorContent;
-        setIsAmbassadorContent(isOrgAsClient);
-        setOrganizationClientId(isOrgAsClient ? clientId : null);
-        
-        // Reset creator selection when switching to/from ambassador content
-        if (isOrgAsClient !== wasAmbassadorContent) {
-          setCreatorId("");
-        }
-        
-        // Clear payments for ambassador content
-        if (isOrgAsClient) {
-          setCreatorPayment("");
-          setEditorPayment("");
-        }
-      };
-      checkIfOrgClient();
-    } else {
+    if (!clientId) {
       setIsAmbassadorContent(false);
       setOrganizationClientId(null);
+      return;
     }
-  }, [clientId]);
+
+    // Prefer local flag (no extra network requests)
+    const selected = clients.find(c => c.id === clientId);
+    const isOrgAsClient = selected?.is_internal_brand === true;
+
+    const wasAmbassadorContent = isAmbassadorContent;
+    setIsAmbassadorContent(isOrgAsClient);
+    setOrganizationClientId(isOrgAsClient ? clientId : null);
+
+    if (isOrgAsClient !== wasAmbassadorContent) {
+      setCreatorId("");
+    }
+
+    if (isOrgAsClient) {
+      setCreatorPayment("");
+      setEditorPayment("");
+    }
+  }, [clientId, clients]);
 
   // Fetch client's packages and products when client changes
   useEffect(() => {
@@ -189,10 +181,10 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   };
 
   const fetchOptions = async () => {
-    // Fetch clients
+    // Fetch clients (include internal-brand flag)
     const { data: clientsData } = await supabase
       .from('clients')
-      .select('id, name')
+      .select('id, name, is_internal_brand')
       .order('name');
     setClients(clientsData || []);
 
