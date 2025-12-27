@@ -206,7 +206,20 @@ Deno.serve(async (req) => {
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text()
-      console.error('Bunny Storage upload error:', errorText)
+      console.error('Bunny Storage upload error:', uploadResponse.status, errorText)
+
+      if (uploadResponse.status === 401) {
+        return new Response(
+          JSON.stringify({
+            error: 'Bunny Storage Unauthorized. Revisa credenciales de Bunny Storage.',
+            details: {
+              hint: 'Verifica que BUNNY_STORAGE_ZONE sea el nombre exacto de la Storage Zone y que BUNNY_STORAGE_PASSWORD sea la Storage Password (no la API Key general).'
+            }
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
       throw new Error(`Failed to upload to Bunny Storage: ${errorText}`)
     }
 
