@@ -100,7 +100,7 @@ export function AIProviderSelector({
             <SelectValue placeholder="Modelo" />
           </SelectTrigger>
           <SelectContent>
-            {currentProviderConfig?.models.map(m => (
+            {currentProviderConfig?.models.filter(m => m.value).map(m => (
               <SelectItem key={m.value} value={m.value}>
                 {m.label}
               </SelectItem>
@@ -166,7 +166,7 @@ export function AIProviderSelector({
               <SelectValue placeholder="Seleccionar modelo" />
             </SelectTrigger>
             <SelectContent>
-              {currentProviderConfig?.models.map(m => (
+              {currentProviderConfig?.models.filter(m => m.value).map(m => (
                 <SelectItem key={m.value} value={m.value}>
                   <div className="flex items-center gap-2">
                     {m.label}
