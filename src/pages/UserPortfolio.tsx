@@ -330,9 +330,9 @@ export default function UserPortfolio() {
         });
         setProfileType('user');
         
-        // Get user roles to determine what content to show
+        // Get user roles from organization_member_roles (all orgs)
         const { data: rolesData } = await supabase
-          .from('user_roles')
+          .from('organization_member_roles')
           .select('role')
           .eq('user_id', id);
 

@@ -133,20 +133,29 @@ export function ClientUsersDialog({ clientId, clientName, open, onOpenChange, on
 
   const fetchAvailableUsers = async () => {
     try {
-      // Get users with client role
-      const { data: clientRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'client');
+      // Get users that are already linked to any client via client_users
+      const { data: existingClientUsers } = await supabase
+        .from('client_users')
+        .select('user_id');
 
-      const clientUserIds = clientRoles?.map(r => r.user_id) || [];
+      const existingUserIds = existingClientUsers?.map(r => r.user_id) || [];
 
-      if (clientUserIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, avatar_url')
-          .in('id', clientUserIds);
+      // Also get current users of this client to exclude them
+      const currentUserIds = users.map(u => u.user_id);
+      const excludeIds = [...new Set([...existingUserIds, ...currentUserIds])];
 
+      // Fetch all profiles that are not already linked to a client
+      let query = supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url');
+      
+      if (excludeIds.length > 0) {
+        // Get profiles NOT in the exclude list
+        const { data: profiles } = await query;
+        const availableProfiles = profiles?.filter(p => !excludeIds.includes(p.id)) || [];
+        setAvailableUsers(availableProfiles);
+      } else {
+        const { data: profiles } = await query;
         setAvailableUsers(profiles || []);
       }
     } catch (error) {

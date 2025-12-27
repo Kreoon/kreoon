@@ -255,9 +255,9 @@ export function useImpersonationData(): ImpersonationData {
           .select('id, full_name, email')
           .order('full_name');
 
-        // Fetch all user roles
+        // Fetch all organization member roles
         const { data: rolesData } = await supabase
-          .from('user_roles')
+          .from('organization_member_roles')
           .select('user_id, role');
 
         // Map roles to users
