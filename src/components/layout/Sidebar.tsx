@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
+import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +36,7 @@ interface NavItem {
   platformRootOnly?: boolean; // Only show for platform root admin
 }
 
-// Full admin navigation - platform root sees all, org owner sees filtered
+// Full admin navigation - organization level modules
 const adminNavigation: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
   { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
@@ -43,7 +44,7 @@ const adminNavigation: NavItem[] = [
   { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators" },
   { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
   { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients" },
-  { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", platformRootOnly: true },
+  { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team" }, // Removed platformRootOnly - belongs to org
   { name: "Sistema UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
@@ -210,6 +211,13 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           )}
         </div>
+
+        {/* Root Admin Organization Switcher */}
+        {isPlatformRoot && !collapsed && (
+          <div className="px-3 py-2 border-b border-sidebar-border">
+            <RootOrgSwitcher />
+          </div>
+        )}
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-3">
