@@ -8,9 +8,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { User, Package } from 'lucide-react';
 
-interface TeamTabProps extends TabProps {
-  clients: SelectOption[];
-}
+// TeamTab fetches its own clients internally
 
 export function TeamTab({
   content,
@@ -18,11 +16,11 @@ export function TeamTab({
   setFormData,
   editMode,
   permissions,
-  onUpdate,
-  clients
-}: TeamTabProps) {
+  onUpdate
+}: TabProps) {
   const canEditTeam = permissions.can('content.team', 'edit');
 
+  const [clients, setClients] = useState<SelectOption[]>([]);
   const [creators, setCreators] = useState<SelectOption[]>([]);
   const [editors, setEditors] = useState<SelectOption[]>([]);
   const [strategists, setStrategists] = useState<SelectOption[]>([]);
@@ -37,6 +35,13 @@ export function TeamTab({
   }, []);
 
   const fetchTeamOptions = async () => {
+    // Fetch clients
+    const { data: clientsData } = await supabase
+      .from('clients')
+      .select('id, name')
+      .order('name');
+    setClients(clientsData?.map(c => ({ id: c.id, name: c.name })) || []);
+
     // Fetch creators
     const { data: creatorRoles } = await supabase
       .from('user_roles')

@@ -9,11 +9,6 @@ import {
   ContentCommentWithProfile 
 } from '../types';
 
-interface UseContentDetailOptions {
-  content: Content | null;
-  onUpdate?: () => void;
-}
-
 const initialFormData: ContentFormData = {
   title: "",
   product: "",
@@ -48,7 +43,7 @@ const initialFormData: ContentFormData = {
   admin_guidelines: ""
 };
 
-export function useContentDetail({ content, onUpdate }: UseContentDetailOptions) {
+export function useContentDetail(content: Content | null, onUpdate?: () => void) {
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
 

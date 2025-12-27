@@ -88,7 +88,6 @@ function DownloadVideoButton({ contentId, videoUrl, variantIndex, title }: {
 
 interface VideoTabProps extends TabProps {
   selectedProduct: any;
-  currentStatus: string | null;
 }
 
 export function VideoTab({
@@ -99,9 +98,9 @@ export function VideoTab({
   setEditMode,
   permissions,
   onUpdate,
-  selectedProduct,
-  currentStatus
+  selectedProduct
 }: VideoTabProps) {
+  const currentStatus = content?.status || null;
   const { user, isAdmin, isClient } = useAuth();
   const canEditVideo = permissions.can('content.video', 'edit');
   const isReadOnly = permissions.isReadOnly('content.video');
