@@ -72,35 +72,40 @@ export function BoardAIPanel({
   const [activeTab, setActiveTab] = useState<'analysis' | 'bottlenecks' | 'automation'>('analysis');
 
   const handleAnalyze = async () => {
-    if (mode === 'card' && contentId) {
-      const result = await analyzeCard(contentId);
-      if (result) {
-        addNotification({
-          type: result.risk_level === 'alto' ? 'warning' : result.risk_level === 'medio' ? 'insight' : 'success',
-          title: `Análisis: ${contentTitle || 'Tarjeta'}`,
-          message: result.recommendation,
-        });
-      }
-    } else {
-      const result = await analyzeBoard();
-      if (result) {
-        const type = result.health_score >= 70 ? 'success' : result.health_score >= 40 ? 'insight' : 'warning';
-        addNotification({
-          type,
-          title: 'Análisis del Tablero',
-          message: result.summary || 'Análisis completado',
-        });
-        
-        // Add bottleneck warnings (with defensive check)
-        const bottlenecks = result.bottlenecks || [];
-        bottlenecks.filter(b => b.severity === 'high').forEach(b => {
+    try {
+      if (mode === 'card' && contentId) {
+        const result = await analyzeCard(contentId);
+        if (result) {
           addNotification({
-            type: 'warning',
-            title: `Cuello de botella: ${b.status}`,
-            message: b.suggestion,
+            type: result.risk_level === 'alto' ? 'warning' : result.risk_level === 'medio' ? 'insight' : 'success',
+            title: `Análisis: ${contentTitle || 'Tarjeta'}`,
+            message: result.recommendation,
           });
-        });
+        }
+      } else {
+        const result = await analyzeBoard();
+        if (result) {
+          const type = result.health_score >= 70 ? 'success' : result.health_score >= 40 ? 'insight' : 'warning';
+          addNotification({
+            type,
+            title: 'Análisis del Tablero',
+            message: result.summary || 'Análisis completado',
+          });
+
+          // Add bottleneck warnings (with defensive check)
+          const bottlenecks = result.bottlenecks || [];
+          bottlenecks.filter(b => b.severity === 'high').forEach(b => {
+            addNotification({
+              type: 'warning',
+              title: `Cuello de botella: ${b.status}`,
+              message: b.suggestion,
+            });
+          });
+        }
       }
+    } catch (e) {
+      // Avoid unhandled promise rejections that can blank the screen
+      console.error('BoardAIPanel handleAnalyze error:', e);
     }
   };
 
