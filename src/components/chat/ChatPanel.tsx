@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useChat, ChatConversation, ChatUser } from '@/hooks/useChat';
+import { useChatTyping } from '@/hooks/useChatTyping';
+import { useChatAttachments } from '@/hooks/useChatAttachments';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +33,12 @@ import {
   Loader2,
   Trash2,
   Check,
-  CheckCheck
+  CheckCheck,
+  Paperclip,
+  Image,
+  FileText,
+  Download,
+  Bot
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -56,8 +63,12 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
     sendMessage,
     startConversation,
     deleteConversation,
-    isAdmin
+    isAdmin,
+    userRole
   } = useChat();
+
+  const { typingUsers, handleTyping, stopTyping } = useChatTyping(activeConversation?.id || null);
+  const { uploadAttachment, uploading, formatFileSize } = useChatAttachments();
 
   // Notify parent when active conversation changes
   useEffect(() => {
@@ -70,6 +81,7 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [groupName, setGroupName] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -78,8 +90,29 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
+    stopTyping();
     await sendMessage(newMessage.trim());
     setNewMessage('');
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeConversation) return;
+
+    const attachment = await uploadAttachment(file, activeConversation.id);
+    if (attachment) {
+      await sendMessage(`📎 ${attachment.name}`, attachment);
+    }
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    handleTyping();
   };
 
   const handleStartConversation = async (userId: string) => {
@@ -102,25 +135,84 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
   };
 
   const getConversationName = (conv: ChatConversation) => {
+    if (conv.chat_type === 'ai_assistant') return 'Asistente IA';
     if (conv.is_group) return conv.name || 'Grupo';
     const otherParticipant = conv.participants?.find(p => p.user_id !== user?.id);
     return otherParticipant?.profile?.full_name || 'Chat';
   };
 
   const getConversationAvatar = (conv: ChatConversation) => {
+    if (conv.chat_type === 'ai_assistant') return null;
     if (conv.is_group) return null;
     const otherParticipant = conv.participants?.find(p => p.user_id !== user?.id);
     return otherParticipant?.profile?.avatar_url;
+  };
+
+  const getConversationIcon = (conv: ChatConversation) => {
+    if (conv.chat_type === 'ai_assistant') return <Bot className="h-4 w-4" />;
+    if (conv.is_group) return <Users className="h-4 w-4" />;
+    return <User className="h-4 w-4" />;
   };
 
   const filteredUsers = availableUsers.filter(u =>
     u.full_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getRoleBadge = (roles: string[]) => {
+  const getRoleBadge = useCallback((roles: string[]) => {
     const { getPrimaryRole, getRoleLabelShort } = require('@/lib/roles');
     const primary = getPrimaryRole(roles);
     return primary ? getRoleLabelShort(primary) : null;
+  }, []);
+
+  const renderMessageStatus = (msg: { sender_id: string; read_at?: string | null; delivered_at?: string | null }) => {
+    const isOwn = msg.sender_id === user?.id;
+    if (!isOwn) return null;
+
+    if (msg.read_at) {
+      return <CheckCheck className="h-3 w-3 text-blue-500" />;
+    }
+    if (msg.delivered_at) {
+      return <CheckCheck className="h-3 w-3 text-muted-foreground" />;
+    }
+    return <Check className="h-3 w-3 text-muted-foreground" />;
+  };
+
+  const renderAttachment = (msg: { 
+    attachment_url?: string | null; 
+    attachment_type?: string | null; 
+    attachment_name?: string | null;
+    attachment_size?: number | null;
+  }) => {
+    if (!msg.attachment_url) return null;
+
+    if (msg.attachment_type === 'image') {
+      return (
+        <img 
+          src={msg.attachment_url} 
+          alt={msg.attachment_name || 'Imagen'} 
+          className="max-w-[200px] rounded-md mt-2 cursor-pointer"
+          onClick={() => window.open(msg.attachment_url!, '_blank')}
+        />
+      );
+    }
+
+    return (
+      <a 
+        href={msg.attachment_url} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 p-2 bg-background/50 rounded mt-2 hover:bg-background"
+      >
+        <FileText className="h-4 w-4" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs truncate">{msg.attachment_name}</p>
+          {msg.attachment_size && (
+            <p className="text-xs text-muted-foreground">{formatFileSize(msg.attachment_size)}</p>
+          )}
+        </div>
+        <Download className="h-4 w-4" />
+      </a>
+    );
   };
 
   if (!isOpen) return null;
@@ -162,7 +254,7 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Eliminar conversación?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acción eliminará permanentemente la conversación y todos sus mensajes. Esta acción no se puede deshacer.
+                    Esta acción eliminará permanentemente la conversación y todos sus mensajes.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -222,17 +314,24 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={getConversationAvatar(conv) || ''} />
                           <AvatarFallback>
-                            {conv.is_group ? <Users className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                            {getConversationIcon(conv)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <p className="font-medium text-sm truncate">{getConversationName(conv)}</p>
-                            {conv.last_message && (
-                              <span className="text-xs text-muted-foreground">
-                                {format(new Date(conv.last_message.created_at), 'HH:mm', { locale: es })}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1">
+                              {conv.unread_count && conv.unread_count > 0 && (
+                                <Badge variant="destructive" className="h-5 min-w-[20px] p-0 flex items-center justify-center text-xs">
+                                  {conv.unread_count > 9 ? '9+' : conv.unread_count}
+                                </Badge>
+                              )}
+                              {conv.last_message && (
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(conv.last_message.created_at), 'HH:mm', { locale: es })}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           {conv.last_message && (
                             <p className="text-xs text-muted-foreground truncate">
@@ -322,7 +421,8 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
                           {!isOwn && (
                             <p className="text-xs font-medium mb-1">{msg.sender?.full_name}</p>
                           )}
-                          <p className="text-sm">{msg.content}</p>
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          {renderAttachment(msg)}
                           <div className={cn(
                             'flex items-center gap-1 mt-1',
                             isOwn ? 'justify-end' : 'justify-start'
@@ -333,18 +433,7 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
                             )}>
                               {format(new Date(msg.created_at), 'HH:mm', { locale: es })}
                             </span>
-                            {isOwn && (
-                              <span className={cn(
-                                'flex items-center',
-                                msg.read_at ? 'text-blue-400' : 'text-primary-foreground/50'
-                              )}>
-                                {msg.read_at ? (
-                                  <CheckCheck className="h-3 w-3" />
-                                ) : (
-                                  <Check className="h-3 w-3" />
-                                )}
-                              </span>
-                            )}
+                            {renderMessageStatus(msg)}
                           </div>
                         </div>
                       </div>
@@ -355,14 +444,41 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
               )}
             </ScrollArea>
 
+            {/* Typing Indicator */}
+            {typingUsers.length > 0 && (
+              <div className="px-4 py-2 text-xs text-muted-foreground animate-pulse">
+                {typingUsers.map(u => u.full_name).join(', ')} escribiendo...
+              </div>
+            )}
+
             {/* Message Input */}
             <div className="p-4 border-t">
               <div className="flex gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+                />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Paperclip className="h-4 w-4" />
+                  )}
+                </Button>
                 <Input
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={handleInputChange}
                   placeholder="Escribe un mensaje..."
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                  className="flex-1"
                 />
                 <Button size="icon" onClick={handleSendMessage} disabled={!newMessage.trim()}>
                   <Send className="h-4 w-4" />
@@ -408,69 +524,76 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
 
             <ScrollArea className="flex-1">
               <div className="divide-y divide-border">
-                {filteredUsers.map(chatUser => (
-                  <div
-                    key={chatUser.id}
-                    onClick={() => {
-                      if (selectedUsers.length === 0) {
-                        handleStartConversation(chatUser.id);
-                      } else {
-                        setSelectedUsers(prev => 
-                          prev.includes(chatUser.id) 
-                            ? prev.filter(id => id !== chatUser.id)
-                            : [...prev, chatUser.id]
-                        );
-                      }
-                    }}
-                    className={cn(
-                      'p-3 hover:bg-muted/50 cursor-pointer transition-colors',
-                      selectedUsers.includes(chatUser.id) && 'bg-primary/10'
+                {filteredUsers.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No hay usuarios disponibles para chatear</p>
+                    {userRole === 'client' && (
+                      <p className="text-xs mt-1">Como cliente, solo puedes chatear con administradores y estrategas</p>
                     )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={chatUser.avatar_url || ''} />
-                          <AvatarFallback>{chatUser.full_name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        {chatUser.is_online && (
-                          <Circle className="absolute -bottom-0.5 -right-0.5 h-3 w-3 fill-success text-success" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-sm truncate">{chatUser.full_name}</p>
-                          {getRoleBadge(chatUser.roles) && (
-                            <Badge variant="secondary" className="text-xs">
-                              {getRoleBadge(chatUser.roles)}
-                            </Badge>
+                  </div>
+                ) : (
+                  filteredUsers.map(chatUser => (
+                    <div
+                      key={chatUser.id}
+                      onClick={() => {
+                        if (!chatUser.can_chat) return;
+                        if (selectedUsers.length === 0) {
+                          handleStartConversation(chatUser.id);
+                        } else {
+                          if (!chatUser.can_add_to_group) return;
+                          setSelectedUsers(prev => 
+                            prev.includes(chatUser.id) 
+                              ? prev.filter(id => id !== chatUser.id)
+                              : [...prev, chatUser.id]
+                          );
+                        }
+                      }}
+                      className={cn(
+                        'p-3 transition-colors',
+                        chatUser.can_chat 
+                          ? 'hover:bg-muted/50 cursor-pointer' 
+                          : 'opacity-50 cursor-not-allowed',
+                        selectedUsers.includes(chatUser.id) && 'bg-primary/10'
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={chatUser.avatar_url || ''} />
+                            <AvatarFallback>{chatUser.full_name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          {chatUser.is_online && (
+                            <Circle className="absolute -bottom-0.5 -right-0.5 h-3 w-3 fill-green-500 text-green-500" />
                           )}
                         </div>
-                        {chatUser.is_online && chatUser.current_page && (
-                          <p className="text-xs text-muted-foreground">
-                            En: {chatUser.current_page}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm truncate">{chatUser.full_name}</p>
+                            {getRoleBadge(chatUser.roles) && (
+                              <Badge variant="secondary" className="text-xs">
+                                {getRoleBadge(chatUser.roles)}
+                              </Badge>
+                            )}
+                          </div>
+                          {chatUser.is_online && chatUser.current_page && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              En: {chatUser.current_page}
+                            </p>
+                          )}
+                          {!chatUser.is_online && (
+                            <p className="text-xs text-muted-foreground">Desconectado</p>
+                          )}
+                        </div>
+                        {selectedUsers.includes(chatUser.id) && (
+                          <Check className="h-4 w-4 text-primary" />
                         )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </ScrollArea>
-
-            {selectedUsers.length === 0 && (
-              <div className="p-4 border-t text-center">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setSelectedUsers(['placeholder'])}
-                  className="text-xs"
-                >
-                  <Users className="h-3 w-3 mr-1" />
-                  Seleccionar múltiples para grupo
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </div>
