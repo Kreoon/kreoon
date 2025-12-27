@@ -1104,6 +1104,47 @@ export type Database = {
           },
         ]
       }
+      chat_attachment_metadata: {
+        Row: {
+          expires_at: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          message_id: string | null
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          expires_at?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          message_id?: string | null
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          expires_at?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          message_id?: string | null
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_attachment_metadata_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           chat_type: Database["public"]["Enums"]["chat_type"] | null
