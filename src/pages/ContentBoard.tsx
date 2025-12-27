@@ -5,7 +5,7 @@ import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanCol
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { CreateContentDialog } from "@/components/content/CreateContentDialog";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog";
-import { Search, Plus, Filter, CalendarIcon, X, Package, Scroll } from "lucide-react";
+import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll } from "lucide-react";
 import { MedievalBanner } from "@/components/layout/MedievalBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { 
+  BoardViewSwitcher, 
+  BoardView, 
+  BoardConfigDialog, 
+  BoardCalendarView, 
+  BoardTableView, 
+  BoardListView,
+  EnhancedKanbanColumn,
+  EnhancedContentCard
+} from "@/components/board";
+import { useBoardSettings } from "@/hooks/useBoardSettings";
 
 // Columnas base del Kanban
 const BOARD_COLUMNS = KANBAN_COLUMNS;
@@ -106,6 +117,14 @@ export default function ContentBoard() {
   
   // Dialog para crear contenido
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  
+  // Vista actual y configuración del board
+  const [currentView, setCurrentView] = useState<BoardView>('kanban');
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [calendarDate, setCalendarDate] = useState<Date>(new Date());
+  
+  // Board settings hook
+  const { settings, statuses, loading: settingsLoading } = useBoardSettings(currentOrgId);
 
   // Determinar el rol principal del usuario
   const primaryRole = isAdmin ? 'admin' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'admin';
@@ -555,46 +574,59 @@ export default function ContentBoard() {
             )}
           </div>
         )}
-        {/* Kanban Board */}
+        {/* Board Header with View Switcher */}
         <div className="rounded-xl border border-border bg-card p-3 md:p-4">
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <h2 className="text-base md:text-lg font-semibold text-card-foreground">Flujo de Trabajo</h2>
-            <Badge variant="outline" className="text-xs">{filteredContent.length} items</Badge>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 md:mb-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-base md:text-lg font-semibold text-card-foreground">Flujo de Trabajo</h2>
+              <Badge variant="outline" className="text-xs">{filteredContent.length} items</Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <BoardViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
+              {isAdmin && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-1.5"
+                  onClick={() => setShowConfigDialog(true)}
+                >
+                  <Settings2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Configurar</span>
+                </Button>
+              )}
+            </div>
           </div>
           
-          <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0">
-            {(isCreator && !isAdmin ? CREATOR_COLUMNS : isEditor && !isAdmin ? EDITOR_COLUMNS : BOARD_COLUMNS).map(column => {
-              const columnContent = getContentByStatus(column.status);
-              const isCurrentDropTarget = dropTarget === column.status;
-              const canDropHere = draggingContent 
-                ? canMoveToStatus(primaryRole, draggingContent.status, column.status, draggingContent, user?.id || '')
-                : true;
+          {/* Kanban View */}
+          {currentView === 'kanban' && (
+            <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0">
+              {(isCreator && !isAdmin ? CREATOR_COLUMNS : isEditor && !isAdmin ? EDITOR_COLUMNS : BOARD_COLUMNS).map(column => {
+                const columnContent = getContentByStatus(column.status);
+                const isCurrentDropTarget = dropTarget === column.status;
+                const canDropHere = draggingContent 
+                  ? canMoveToStatus(primaryRole, draggingContent.status, column.status, draggingContent, user?.id || '')
+                  : true;
 
-              return (
-                <DroppableKanbanColumn
-                  key={column.status}
-                  status={column.status}
-                  title={column.title}
-                  count={columnContent.length}
-                  color={column.color}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  isDropTarget={isCurrentDropTarget}
-                  canDrop={canDropHere}
-                >
-                  <div 
+                return (
+                  <EnhancedKanbanColumn
+                    key={column.status}
+                    id={column.status}
+                    title={column.title}
+                    count={columnContent.length}
+                    color={column.color}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, column.status)}
                     onDragEnter={() => handleDragEnter(column.status)}
-                    className="min-h-[120px] md:min-h-[150px]"
+                    isDropTarget={isCurrentDropTarget}
+                    canDrop={canDropHere}
                   >
                     {columnContent.map(item => (
-                      <DraggableContentCard
+                      <EnhancedContentCard
                         key={item.id}
                         content={item}
-                        onDragStart={handleDragStart}
-                        onClick={setSelectedContent}
+                        onClick={() => setSelectedContent(item)}
+                        onDragStart={(e) => handleDragStart(e, item)}
                         isDragging={draggingContent?.id === item.id}
-                        onPaymentUpdate={refetch}
-                        onStatusChange={handleCreatorStatusChange}
                       />
                     ))}
                     {columnContent.length === 0 && (
@@ -602,13 +634,48 @@ export default function ContentBoard() {
                         Sin contenido
                       </div>
                     )}
-                  </div>
-                </DroppableKanbanColumn>
-              );
-            })}
-          </div>
+                  </EnhancedKanbanColumn>
+                );
+              })}
+            </div>
+          )}
+          
+          {/* List View */}
+          {currentView === 'list' && (
+            <BoardListView 
+              content={filteredContent} 
+              onContentClick={setSelectedContent}
+            />
+          )}
+          
+          {/* Calendar View */}
+          {currentView === 'calendar' && (
+            <BoardCalendarView 
+              content={filteredContent} 
+              currentDate={calendarDate}
+              onDateChange={setCalendarDate}
+              onContentClick={setSelectedContent}
+            />
+          )}
+          
+          {/* Table View */}
+          {currentView === 'table' && (
+            <BoardTableView 
+              content={filteredContent} 
+              onContentClick={setSelectedContent}
+            />
+          )}
         </div>
       </div>
+      
+      {/* Config Dialog */}
+      {isAdmin && (
+        <BoardConfigDialog 
+          organizationId={currentOrgId}
+          open={showConfigDialog}
+          onOpenChange={setShowConfigDialog}
+        />
+      )}
 
       <ContentDetailDialog
         content={selectedContent}

@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 interface BoardConfigDialogProps {
   organizationId: string | null;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const STATUS_COLORS = [
@@ -55,8 +57,10 @@ const VISIBLE_FIELD_OPTIONS = [
 
 const ROLES = ['admin', 'creator', 'editor', 'strategist', 'client'];
 
-export function BoardConfigDialog({ organizationId, trigger }: BoardConfigDialogProps) {
-  const [open, setOpen] = useState(false);
+export function BoardConfigDialog({ organizationId, trigger, open: controlledOpen, onOpenChange }: BoardConfigDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
   const [editingStatus, setEditingStatus] = useState<OrganizationStatus | null>(null);
   const [newStatusLabel, setNewStatusLabel] = useState('');
   const [newStatusColor, setNewStatusColor] = useState('#6b7280');
