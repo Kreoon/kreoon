@@ -195,6 +195,269 @@ export type Database = {
           },
         ]
       }
+      ai_chat_feedback: {
+        Row: {
+          ai_response: string | null
+          comment: string | null
+          conversation_id: string | null
+          created_at: string
+          id: string
+          message_id: string | null
+          organization_id: string
+          rating: string
+          reviewed: boolean
+          reviewed_at: string | null
+          reviewed_by: string | null
+          user_id: string
+          user_question: string | null
+        }
+        Insert: {
+          ai_response?: string | null
+          comment?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          organization_id: string
+          rating: string
+          reviewed?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          user_id: string
+          user_question?: string | null
+        }
+        Update: {
+          ai_response?: string | null
+          comment?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          organization_id?: string
+          rating?: string
+          reviewed?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          user_id?: string
+          user_question?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_feedback_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_chat_feedback_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_conversation_flows: {
+        Row: {
+          created_at: string
+          description: string | null
+          flow_steps: Json
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          priority: number
+          trigger_intent: string | null
+          trigger_keywords: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          flow_steps?: Json
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          priority?: number
+          trigger_intent?: string | null
+          trigger_keywords?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          flow_steps?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          priority?: number
+          trigger_intent?: string | null
+          trigger_keywords?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversation_flows_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_negative_rules: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          pattern: string
+          reason: string | null
+          rule_type: string
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          pattern: string
+          reason?: string | null
+          rule_type: string
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          pattern?: string
+          reason?: string | null
+          rule_type?: string
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_negative_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_positive_examples: {
+        Row: {
+          category: string
+          context_notes: string | null
+          created_at: string
+          id: string
+          ideal_response: string
+          is_active: boolean
+          organization_id: string
+          updated_at: string
+          user_question: string
+        }
+        Insert: {
+          category?: string
+          context_notes?: string | null
+          created_at?: string
+          id?: string
+          ideal_response: string
+          is_active?: boolean
+          organization_id: string
+          updated_at?: string
+          user_question: string
+        }
+        Update: {
+          category?: string
+          context_notes?: string | null
+          created_at?: string
+          id?: string
+          ideal_response?: string
+          is_active?: boolean
+          organization_id?: string
+          updated_at?: string
+          user_question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_positive_examples_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_prompt_config: {
+        Row: {
+          assistant_role: string
+          can_discuss_competitors: boolean
+          can_discuss_pricing: boolean
+          can_share_user_data: boolean
+          created_at: string
+          custom_instructions: string | null
+          fallback_message: string | null
+          greeting: string | null
+          id: string
+          language: string | null
+          max_response_length: number | null
+          organization_id: string
+          personality: string | null
+          tone: string | null
+          updated_at: string
+        }
+        Insert: {
+          assistant_role?: string
+          can_discuss_competitors?: boolean
+          can_discuss_pricing?: boolean
+          can_share_user_data?: boolean
+          created_at?: string
+          custom_instructions?: string | null
+          fallback_message?: string | null
+          greeting?: string | null
+          id?: string
+          language?: string | null
+          max_response_length?: number | null
+          organization_id: string
+          personality?: string | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assistant_role?: string
+          can_discuss_competitors?: boolean
+          can_discuss_pricing?: boolean
+          can_share_user_data?: boolean
+          created_at?: string
+          custom_instructions?: string | null
+          fallback_message?: string | null
+          greeting?: string | null
+          id?: string
+          language?: string | null
+          max_response_length?: number | null
+          organization_id?: string
+          personality?: string | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_prompt_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_usage_logs: {
         Row: {
           action: string
