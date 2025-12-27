@@ -7,13 +7,40 @@ import { Textarea } from "@/components/ui/textarea";
 import { Bold, Italic, List, ListOrdered, Heading2, Undo, Redo, Code, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+export interface TextEditorFeatures {
+  headings?: boolean;
+  bold?: boolean;
+  italic?: boolean;
+  lists?: boolean;
+  quotes?: boolean;
+  code?: boolean;
+  highlight?: boolean;
+  emojis?: boolean;
+  comments?: boolean;
+  history?: boolean;
+}
+
 interface RichTextEditorProps {
   content: string;
   onChange?: (content: string) => void;
   placeholder?: string;
   editable?: boolean;
   className?: string;
+  features?: TextEditorFeatures;
 }
+
+const DEFAULT_FEATURES: TextEditorFeatures = {
+  headings: true,
+  bold: true,
+  italic: true,
+  lists: true,
+  quotes: true,
+  code: true,
+  highlight: true,
+  emojis: true,
+  comments: true,
+  history: true,
+};
 
 export function RichTextEditor({
   content,
@@ -21,6 +48,7 @@ export function RichTextEditor({
   placeholder = "Escribe aquí...",
   editable = true,
   className,
+  features = DEFAULT_FEATURES,
 }: RichTextEditorProps) {
   const [isHtmlMode, setIsHtmlMode] = useState(false);
   const [htmlContent, setHtmlContent] = useState(content);
@@ -86,70 +114,84 @@ export function RichTextEditor({
           <div className="flex flex-wrap gap-1">
             {!isHtmlMode && (
               <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => editor.chain().focus().toggleBold().run()}
-                  className={cn(editor.isActive("bold") && "bg-muted")}
-                >
-                  <Bold className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => editor.chain().focus().toggleItalic().run()}
-                  className={cn(editor.isActive("italic") && "bg-muted")}
-                >
-                  <Italic className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                  className={cn(editor.isActive("heading", { level: 2 }) && "bg-muted")}
-                >
-                  <Heading2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => editor.chain().focus().toggleBulletList().run()}
-                  className={cn(editor.isActive("bulletList") && "bg-muted")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                  className={cn(editor.isActive("orderedList") && "bg-muted")}
-                >
-                  <ListOrdered className="h-4 w-4" />
-                </Button>
-                <div className="h-6 w-px bg-border mx-1" />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => editor.chain().focus().undo().run()}
-                  disabled={!editor.can().undo()}
-                >
-                  <Undo className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => editor.chain().focus().redo().run()}
-                  disabled={!editor.can().redo()}
-                >
-                  <Redo className="h-4 w-4" />
-                </Button>
+                {features.bold !== false && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => editor.chain().focus().toggleBold().run()}
+                    className={cn(editor.isActive("bold") && "bg-muted")}
+                  >
+                    <Bold className="h-4 w-4" />
+                  </Button>
+                )}
+                {features.italic !== false && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => editor.chain().focus().toggleItalic().run()}
+                    className={cn(editor.isActive("italic") && "bg-muted")}
+                  >
+                    <Italic className="h-4 w-4" />
+                  </Button>
+                )}
+                {features.headings !== false && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                    className={cn(editor.isActive("heading", { level: 2 }) && "bg-muted")}
+                  >
+                    <Heading2 className="h-4 w-4" />
+                  </Button>
+                )}
+                {features.lists !== false && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => editor.chain().focus().toggleBulletList().run()}
+                      className={cn(editor.isActive("bulletList") && "bg-muted")}
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                      className={cn(editor.isActive("orderedList") && "bg-muted")}
+                    >
+                      <ListOrdered className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                {features.history !== false && (
+                  <>
+                    <div className="h-6 w-px bg-border mx-1" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => editor.chain().focus().undo().run()}
+                      disabled={!editor.can().undo()}
+                    >
+                      <Undo className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => editor.chain().focus().redo().run()}
+                      disabled={!editor.can().redo()}
+                    >
+                      <Redo className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
               </>
             )}
           </div>

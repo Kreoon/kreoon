@@ -79,6 +79,16 @@ export function ScriptsTabContainer({
     return scriptReadOnly || blockLocked || blockEditDenied;
   };
 
+  // Build advanced config for subtabs
+  const advancedConfig = blockConfig.advanced ? {
+    enable_comments: blockConfig.advanced.enable_comments,
+    require_approval_before_advance: blockConfig.advanced.require_approval_before_advance,
+    client_read_only_mode: blockConfig.advanced.client_read_only_mode,
+    enable_custom_fields: blockConfig.advanced.enable_custom_fields,
+    content_types: blockConfig.advanced.content_types,
+    text_editor_features: blockConfig.advanced.text_editor_features,
+  } : null;
+
   // Common props for all sub-tabs
   const subTabProps = {
     content,
@@ -90,6 +100,7 @@ export function ScriptsTabContainer({
     selectedProduct,
     onProductChange,
     scriptPermissions: scriptPerms,
+    advancedConfig,
   };
 
   // Render the appropriate sub-tab component

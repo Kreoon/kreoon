@@ -10,9 +10,11 @@ export function TraffickerSubTab({
   setFormData,
   editMode,
   scriptPermissions,
+  advancedConfig,
 }: SubTabProps) {
   const canEdit = scriptPermissions.canEdit('trafficker');
   const hasContent = !!formData.trafficker_guidelines?.trim();
+  const editorFeatures = advancedConfig?.text_editor_features;
 
   return (
     <div className="space-y-6">
@@ -28,6 +30,7 @@ export function TraffickerSubTab({
               content={formData.trafficker_guidelines || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, trafficker_guidelines: value }))}
               placeholder="Define objetivo de campaña, audiencia, presupuesto, plataformas..."
+              features={editorFeatures}
             />
           ) : hasContent ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">

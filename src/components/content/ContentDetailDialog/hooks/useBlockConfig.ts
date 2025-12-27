@@ -179,36 +179,44 @@ export function useBlockConfig(
 
   // Check if user can view block
   const canViewBlock = useCallback((blockKey: BlockKey): boolean => {
-    // Admin always can view
-    if (isAdmin) return true;
-    
-    // Check org visibility
+    // FIRST: Check org-level visibility (applies to ALL users including admin)
+    // This is set in the "Bloques" tab - if hidden here, NO ONE sees it
     if (!isBlockVisible(blockKey)) return false;
     
-    // Check status-based hidden
+    // SECOND: Check status-based hidden (applies to all users)
     if (isBlockHidden(blockKey)) return false;
     
-    // Check role permission
+    // THIRD: Check role-based permission from content_block_permissions
+    // This applies to ALL roles including admin
     const perm = permissions.find(p => p.block_key === blockKey);
-    return perm?.can_view ?? true; // Default to true if no permission set
-  }, [isAdmin, isBlockVisible, isBlockHidden, permissions]);
+    if (perm) {
+      // If there's a permission configured for this role, respect it
+      return perm.can_view;
+    }
+    
+    // If no permission configured for this role, default to true
+    return true;
+  }, [isBlockVisible, isBlockHidden, permissions]);
 
   // Check if user can edit block
   const canEditBlock = useCallback((blockKey: BlockKey): boolean => {
-    // Check if block is locked
+    // Check if block is locked for current status
     if (isBlockLocked(blockKey)) return false;
     
     // Check client read-only mode
     if (isClient && advanced?.client_read_only_mode) return false;
     
-    // Check role permission
+    // Check role-based permission from content_block_permissions
     const perm = permissions.find(p => p.block_key === blockKey);
+    if (perm) {
+      // If there's a permission configured for this role, respect it
+      return perm.can_edit;
+    }
     
-    // Admin can always edit unless locked
-    if (isAdmin) return !isBlockLocked(blockKey);
-    
-    return perm?.can_edit ?? false;
-  }, [isAdmin, isClient, isBlockLocked, permissions, advanced?.client_read_only_mode]);
+    // If no permission configured, default based on role
+    // Admin defaults to true, others default to false
+    return isAdmin;
+  }, [isClient, isAdmin, isBlockLocked, permissions, advanced?.client_read_only_mode]);
 
   // Check if user can approve block
   const canApproveBlock = useCallback((blockKey: BlockKey): boolean => {

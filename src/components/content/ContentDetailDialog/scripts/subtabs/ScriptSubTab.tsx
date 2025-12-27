@@ -20,6 +20,7 @@ export function ScriptSubTab({
   setEditMode,
   onUpdate,
   scriptPermissions,
+  advancedConfig,
 }: SubTabProps) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -29,6 +30,7 @@ export function ScriptSubTab({
   const canApprove = scriptPermissions.canApprove();
   const isReadOnly = scriptPermissions.isReadOnly('script');
   const hasScript = !!formData.script?.trim();
+  const editorFeatures = advancedConfig?.text_editor_features;
 
   const handleApproveScript = async () => {
     if (!content?.id) return;
@@ -83,6 +85,7 @@ export function ScriptSubTab({
               content={formData.script || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, script: value }))}
               placeholder="Escribe el guión aquí..."
+              features={editorFeatures}
             />
           ) : hasScript ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">

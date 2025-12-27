@@ -19,6 +19,7 @@ export function AdminSubTab({
   editMode,
   scriptPermissions,
   onUpdate,
+  advancedConfig,
 }: SubTabProps) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -27,6 +28,7 @@ export function AdminSubTab({
   const canEdit = scriptPermissions.canEdit('admin');
   const canLock = scriptPermissions.canLock();
   const hasContent = !!formData.admin_guidelines?.trim();
+  const editorFeatures = advancedConfig?.text_editor_features;
 
   const handleToggleLock = async () => {
     // This would update a lock status in the DB
@@ -100,6 +102,7 @@ export function AdminSubTab({
               content={formData.admin_guidelines || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, admin_guidelines: value }))}
               placeholder="Notas internas, decisiones, historial de cambios..."
+              features={editorFeatures}
             />
           ) : hasContent ? (
             <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
