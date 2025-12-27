@@ -17,6 +17,57 @@ const ROLE_ACCESS_LEVELS: Record<string, string[]> = {
   viewer: ['public_content', 'basic_info'],
 };
 
+// Base knowledge that ALL organizations share - platform capabilities
+const PLATFORM_BASE_KNOWLEDGE = `
+## 🎯 Acerca de la Plataforma UGC Colombia
+
+### ¿Qué es esta plataforma?
+Es un sistema integral de gestión de contenido UGC (User Generated Content) que permite:
+- Gestión completa del ciclo de vida del contenido (desde idea hasta publicación)
+- Colaboración entre equipos: creadores, editores, estrategas, clientes
+- Sistema de recompensas y puntos (UP - Universal Points)
+- Programa de embajadores para crecimiento orgánico
+- Chat interno con soporte de archivos multimedia
+- Portfolios públicos para creadores y marcas
+- Tablero Kanban personalizable por organización
+
+### Roles disponibles en la plataforma:
+- **Admin**: Control total de la organización, finanzas, equipo y configuraciones
+- **Strategist (Estratega)**: Planifica contenido, gestiona clientes y productos
+- **Creator (Creador)**: Genera contenido, graba videos, escribe guiones
+- **Editor**: Post-producción de videos, edición según lineamientos
+- **Client (Cliente)**: Revisa y aprueba contenido de su marca
+- **Ambassador (Embajador)**: Atrae nuevos usuarios, gana comisiones
+- **Viewer**: Solo visualización de contenido público
+
+### Flujo típico de un contenido:
+1. Estratega crea el brief y asigna creador
+2. Creador desarrolla guión y graba
+3. Editor realiza post-producción
+4. Cliente revisa y solicita cambios si es necesario
+5. Admin aprueba final y publica
+
+### Sistema UP (Universal Points):
+- Los usuarios ganan puntos por acciones: completar contenido, puntualidad, calidad
+- Niveles y logros desbloqueables
+- Tabla de clasificación competitiva
+- Los embajadores ganan puntos adicionales por referidos activos
+
+### Características del Chat:
+- Mensajes directos y grupos
+- Soporte para imágenes, videos, PDFs y audio
+- Indicadores de escritura y presencia
+- Menciones con @usuario
+- Búsqueda de mensajes
+
+### Ayuda General:
+- Para cambiar configuraciones: Settings / Ajustes
+- Para ver contenidos: Content Board / Tablero
+- Para gestionar equipo: Team / Equipo (solo admins/estrategas)
+- Para ver estadísticas: Dashboard
+`;
+
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -307,9 +358,12 @@ ${!userAccessLevels.has('financials') ? '- Información financiera detallada, pa
     // Add platform context
     systemPrompt += platformContext;
 
-    // Add knowledge base
+    // Add PLATFORM BASE KNOWLEDGE (same for all organizations)
+    systemPrompt += PLATFORM_BASE_KNOWLEDGE;
+
+    // Add organization-specific knowledge base
     if (knowledge.length > 0) {
-      systemPrompt += '\n## Base de conocimiento de la organización:\n';
+      systemPrompt += '\n## Base de conocimiento específica de esta organización:\n';
       for (const k of knowledge) {
         systemPrompt += `\n### ${k.title} (${k.knowledge_type})\n${k.content}\n`;
       }
@@ -375,6 +429,7 @@ ${!userAccessLevels.has('financials') ? '- Información financiera detallada, pa
 - Solo responde sobre temas de la organización y lo que el usuario puede ver según su rol
 - NUNCA inventes datos, cifras o información que no esté en tu contexto
 - Si el usuario pregunta por algo que no puede ver por su rol, indica amablemente que no tienes acceso a esa información
+- Recuerda: la información base de la plataforma es pública, pero los datos específicos de la organización son privados según el rol
 `;
 
     // Check if message matches any blocking rules
