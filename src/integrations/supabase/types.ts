@@ -938,6 +938,195 @@ export type Database = {
           },
         ]
       }
+      content_advanced_config: {
+        Row: {
+          client_read_only_mode: boolean
+          content_types: Json | null
+          created_at: string
+          enable_comments: boolean
+          enable_custom_fields: boolean
+          id: string
+          organization_id: string
+          require_approval_before_advance: boolean
+          text_editor_features: Json | null
+          updated_at: string
+        }
+        Insert: {
+          client_read_only_mode?: boolean
+          content_types?: Json | null
+          created_at?: string
+          enable_comments?: boolean
+          enable_custom_fields?: boolean
+          id?: string
+          organization_id: string
+          require_approval_before_advance?: boolean
+          text_editor_features?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          client_read_only_mode?: boolean
+          content_types?: Json | null
+          created_at?: string
+          enable_comments?: boolean
+          enable_custom_fields?: boolean
+          id?: string
+          organization_id?: string
+          require_approval_before_advance?: boolean
+          text_editor_features?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_advanced_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_block_config: {
+        Row: {
+          block_key: string
+          created_at: string
+          id: string
+          is_visible: boolean
+          layout_type: string
+          organization_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          block_key: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          layout_type?: string
+          organization_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          block_key?: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          layout_type?: string
+          organization_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_block_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_block_permissions: {
+        Row: {
+          block_key: string
+          can_approve: boolean
+          can_create: boolean
+          can_edit: boolean
+          can_lock: boolean
+          can_view: boolean
+          created_at: string
+          id: string
+          organization_id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          block_key: string
+          can_approve?: boolean
+          can_create?: boolean
+          can_edit?: boolean
+          can_lock?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          organization_id: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          block_key?: string
+          can_approve?: boolean
+          can_create?: boolean
+          can_edit?: boolean
+          can_lock?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_block_permissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_block_state_rules: {
+        Row: {
+          block_key: string
+          created_at: string
+          editable_roles: string[] | null
+          id: string
+          is_hidden: boolean
+          is_locked: boolean
+          organization_id: string
+          status_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          block_key: string
+          created_at?: string
+          editable_roles?: string[] | null
+          id?: string
+          is_hidden?: boolean
+          is_locked?: boolean
+          organization_id: string
+          status_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          block_key?: string
+          created_at?: string
+          editable_roles?: string[] | null
+          id?: string
+          is_hidden?: boolean
+          is_locked?: boolean
+          organization_id?: string
+          status_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_block_state_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_block_state_rules_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "organization_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_collaborators: {
         Row: {
           content_id: string
