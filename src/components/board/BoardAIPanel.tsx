@@ -427,23 +427,25 @@ export function BoardAIPanel({
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {(automationRecommendations.automations || []).map((auto, i) => (
-                          <Card key={i}>
-                            <CardContent className="pt-4">
-                              <div className="flex items-start justify-between mb-2">
-                                <span className="font-medium text-sm">{auto.title}</span>
-                                <Badge variant="outline" className="text-xs capitalize">
-                                  {auto.complexity}
-                                </Badge>
-                              </div>
-                              <div className="space-y-1 text-xs">
-                                <p><strong>Cuando:</strong> {auto.trigger}</p>
-                                <p><strong>Acción:</strong> {auto.action}</p>
-                                <p className="text-green-600"><strong>Beneficio:</strong> {auto.benefit}</p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                        {(automationRecommendations?.automations ?? [])
+                          .filter(Boolean)
+                          .map((auto, i) => (
+                            <Card key={i}>
+                              <CardContent className="pt-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <span className="font-medium text-sm">{auto?.title || 'Automatización'}</span>
+                                  <Badge variant="outline" className="text-xs capitalize">
+                                    {auto?.complexity || 'simple'}
+                                  </Badge>
+                                </div>
+                                <div className="space-y-1 text-xs">
+                                  <p><strong>Cuando:</strong> {auto?.trigger || '-'}</p>
+                                  <p><strong>Acción:</strong> {auto?.action || '-'}</p>
+                                  <p className="text-green-600"><strong>Beneficio:</strong> {auto?.benefit || '-'}</p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
                       </div>
                     )}
                   </TabsContent>
