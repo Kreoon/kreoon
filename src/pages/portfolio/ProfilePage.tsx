@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
 import { useProfileBlocksConfig } from '@/hooks/useProfileBlocksConfig';
+import { useSavedItems } from '@/hooks/useSavedItems';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -310,7 +311,7 @@ function ProfileVideosGrid({ userId }: { userId: string }) {
 }
 
 function ProfileSavedGrid() {
-  const { items, collections, loading } = require('@/hooks/useSavedItems').useSavedItems();
+  const { items, collections, loading } = useSavedItems();
 
   if (loading) {
     return (
@@ -332,14 +333,14 @@ function ProfileSavedGrid() {
       </div>
 
       {/* Collections */}
-      {collections.map((col: any) => (
+      {collections.map((col) => (
         <div 
           key={col.id}
           className="aspect-square bg-muted rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors"
         >
           <Bookmark className="h-8 w-8 mb-2" />
           <span className="font-medium">{col.name}</span>
-          <span className="text-sm text-muted-foreground">{col.items_count} elementos</span>
+          <span className="text-sm text-muted-foreground">{col.items_count || 0} elementos</span>
         </div>
       ))}
     </div>
