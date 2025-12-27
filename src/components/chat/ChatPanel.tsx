@@ -118,12 +118,9 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
   );
 
   const getRoleBadge = (roles: string[]) => {
-    if (roles.includes('admin')) return 'Admin';
-    if (roles.includes('strategist')) return 'Estratega';
-    if (roles.includes('editor')) return 'Editor';
-    if (roles.includes('creator')) return 'Creador';
-    if (roles.includes('client')) return 'Cliente';
-    return null;
+    const { getPrimaryRole, getRoleLabelShort } = require('@/lib/roles');
+    const primary = getPrimaryRole(roles);
+    return primary ? getRoleLabelShort(primary) : null;
   };
 
   if (!isOpen) return null;

@@ -145,21 +145,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserData = async (userId: string, silent = false) => {
     try {
-      const [profileResult, rolesResult] = await Promise.all([
-        // Profile row might not exist (or RLS could block); don't hard-fail auth boot.
-        supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
-        supabase.from('user_roles').select('role').eq('user_id', userId)
-      ]);
+      // First fetch profile to get current_organization_id
+      const profileResult = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
       if (profileResult.error) {
         console.warn('[auth] profile fetch error', profileResult.error);
       }
-      if (rolesResult.error) {
-        console.warn('[auth] roles fetch error', rolesResult.error);
+
+      const userProfile = profileResult.data as Profile | null;
+      setProfile(userProfile);
+
+      // Now fetch role from organization_members based on current_organization_id
+      let userRoles: AppRole[] = [];
+      
+      if (userProfile?.current_organization_id) {
+        const { data: memberData, error: memberError } = await supabase
+          .from('organization_members')
+          .select('role')
+          .eq('user_id', userId)
+          .eq('organization_id', userProfile.current_organization_id)
+          .maybeSingle();
+
+        if (memberError) {
+          console.warn('[auth] org member role fetch error', memberError);
+        }
+
+        if (memberData?.role) {
+          userRoles = [memberData.role as AppRole];
+        }
       }
 
-      setProfile((profileResult.data as Profile) ?? null);
-      setRoles((rolesResult.data || []).map(r => r.role as AppRole));
+      // Fallback: check user_roles for platform-level admin (root admin)
+      // This ensures the root admin still has access even without org membership
+      if (userRoles.length === 0) {
+        const { data: rolesData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId);
+        
+        userRoles = (rolesData || []).map(r => r.role as AppRole);
+      }
+
+      setRoles(userRoles);
     } catch (error) {
       console.error('[auth] Error fetching user data:', error);
     } finally {

@@ -39,14 +39,7 @@ interface Organization {
   organization_type: string | null;
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Admin',
-  strategist: 'Estratega',
-  creator: 'Creador',
-  editor: 'Editor',
-  client: 'Cliente',
-  ambassador: 'Embajador'
-};
+import { ROLE_LABELS_SHORT as ROLE_LABELS } from '@/lib/roles';
 
 export function UserOrganizationAssignment() {
   const { isAdmin } = useAuth();
@@ -91,11 +84,11 @@ export function UserOrganizationAssignment() {
       return;
     }
 
-    // Get roles for each user
+    // Get organization members with roles
     const userIds = profilesData?.map(p => p.id) || [];
-    const { data: rolesData } = await supabase
-      .from('user_roles')
-      .select('user_id, role')
+    const { data: membersData } = await supabase
+      .from('organization_members')
+      .select('user_id, role, organization_id')
       .in('user_id', userIds);
 
     // Get org names
@@ -106,10 +99,16 @@ export function UserOrganizationAssignment() {
       .in('id', orgIds);
 
     const orgNamesMap = new Map(orgNamesData?.map(o => [o.id, o.name]) || []);
+    
+    // Build roles map from organization_members
     const rolesMap = new Map<string, AppRole[]>();
-    rolesData?.forEach(r => {
-      const existing = rolesMap.get(r.user_id) || [];
-      rolesMap.set(r.user_id, [...existing, r.role]);
+    membersData?.forEach(m => {
+      if (m.role) {
+        const existing = rolesMap.get(m.user_id) || [];
+        if (!existing.includes(m.role)) {
+          rolesMap.set(m.user_id, [...existing, m.role]);
+        }
+      }
     });
 
     const usersWithOrgs: UserWithOrg[] = (profilesData || []).map(p => ({

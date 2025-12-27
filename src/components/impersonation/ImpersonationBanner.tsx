@@ -223,14 +223,9 @@ export function ImpersonationBanner() {
   );
 }
 
+// Use centralized role utilities from lib/roles.ts
+import { getRoleLabel as getLabel } from '@/lib/roles';
+
 function getRoleLabel(role: string): string {
-  const labels: Record<string, string> = {
-    admin: 'Administrador',
-    creator: 'Creador',
-    editor: 'Editor',
-    client: 'Cliente',
-    ambassador: 'Embajador',
-    strategist: 'Estratega',
-  };
-  return labels[role] || role;
+  return getLabel(role);
 }

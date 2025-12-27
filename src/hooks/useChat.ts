@@ -56,18 +56,20 @@ export function useChat() {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [orgMemberIds, setOrgMemberIds] = useState<string[]>([]);
 
-  // Fetch user roles
+  // Fetch user roles from organization_members
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !profile?.current_organization_id) return;
     const fetchRoles = async () => {
       const { data } = await supabase
-        .from('user_roles')
+        .from('organization_members')
         .select('role')
-        .eq('user_id', user.id);
-      setUserRoles(data?.map(r => r.role) || []);
+        .eq('user_id', user.id)
+        .eq('organization_id', profile.current_organization_id)
+        .maybeSingle();
+      setUserRoles(data?.role ? [data.role] : []);
     };
     fetchRoles();
-  }, [user?.id]);
+  }, [user?.id, profile?.current_organization_id]);
 
   // Fetch organization members for chat filtering
   useEffect(() => {
