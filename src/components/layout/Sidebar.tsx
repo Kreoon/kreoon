@@ -23,6 +23,7 @@ import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
+import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
 import { Badge } from "@/components/ui/badge";
@@ -83,19 +84,18 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, user, isAdmin, isEditor, isCreator, isStrategist, isClient, roles: realRoles } = useAuth();
+  const { signOut, profile, user, activeRole, roles: realRoles } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin, impersonationTarget } = useImpersonation();
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
 
-  // Use effective roles when impersonating
-  const activeRoles = isImpersonating ? effectiveRoles : realRoles;
-  const activeIsAdmin = activeRoles.includes('admin');
-  const activeIsStrategist = activeRoles.includes('strategist');
-  const activeIsEditor = activeRoles.includes('editor');
-  const activeIsCreator = activeRoles.includes('creator');
-  const activeIsClient = activeRoles.includes('client');
+  // Use effective roles when impersonating, otherwise use activeRole for UI
+  const activeIsAdmin = isImpersonating ? effectiveRoles.includes('admin') : activeRole === 'admin';
+  const activeIsStrategist = isImpersonating ? effectiveRoles.includes('strategist') : activeRole === 'strategist';
+  const activeIsEditor = isImpersonating ? effectiveRoles.includes('editor') : activeRole === 'editor';
+  const activeIsCreator = isImpersonating ? effectiveRoles.includes('creator') : activeRole === 'creator';
+  const activeIsClient = isImpersonating ? effectiveRoles.includes('client') : activeRole === 'client';
 
   // Fetch current client name for client users
   useEffect(() => {
@@ -263,6 +263,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             <div className="px-3 py-2 text-xs text-sidebar-foreground/60 truncate">
               {profile.email}
             </div>
+          )}
+
+          {/* Role Switcher - only show if user has multiple roles */}
+          {realRoles.length > 1 && !isImpersonating && (
+            <RoleSwitcher collapsed={collapsed} />
           )}
 
           {/* Client company switcher */}
