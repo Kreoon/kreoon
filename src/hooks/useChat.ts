@@ -215,9 +215,9 @@ export function useChat() {
 
       if (!allProfiles) return;
 
-      // Get roles for filtered users
+      // Get roles from organization_member_roles for org context
       const { data: allRoles } = await supabase
-        .from('user_roles')
+        .from('organization_member_roles')
         .select('user_id, role');
 
       // Get presence data

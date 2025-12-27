@@ -242,14 +242,29 @@ serve(async (req) => {
       }
     }
 
-    // Creators endpoint
+    // Creators endpoint - now uses organization_member_roles
     if (path === "/creators") {
-      const { data: rolesData } = await supabase
-        .from("user_roles")
+      // Get org_id from query params if provided
+      const orgId = url.searchParams.get("org_id");
+      
+      let query = supabase
+        .from("organization_member_roles")
         .select("user_id")
         .eq("role", "creator");
-
+      
+      if (orgId) {
+        query = query.eq("organization_id", orgId);
+      }
+      
+      const { data: rolesData } = await query;
       const creatorIds = rolesData?.map(r => r.user_id) || [];
+
+      if (creatorIds.length === 0) {
+        return new Response(
+          JSON.stringify({ data: [] }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       const { data, error } = await supabase
         .from("profiles")

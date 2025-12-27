@@ -52,9 +52,9 @@ Deno.serve(async (req) => {
 
     console.log(`Deleting video from content ${content_id} (field: ${targetField}): ${video_url}`)
 
-    // Check permissions
+    // Check permissions from organization_member_roles
     const { data: userRoles } = await supabase
-      .from('user_roles')
+      .from('organization_member_roles')
       .select('role')
       .eq('user_id', user.id)
 

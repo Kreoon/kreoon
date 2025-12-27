@@ -272,20 +272,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (!error && data.user) {
-      // Insert role for the new user
-      await supabase.from('user_roles').insert({
-        user_id: data.user.id,
-        role: role
-      });
+      // Note: Role assignment for organization members should be done
+      // through organization_member_roles when adding to an organization.
+      // user_roles is only for platform-level admins (root admins).
+      // For now, we skip inserting into user_roles here since roles
+      // are managed at the organization level.
 
       // If client role and company name provided, create the client record
       if (role === 'client' && companyName) {
-        await supabase.from('clients').insert({
+        const { data: clientData } = await supabase.from('clients').insert({
           name: companyName,
           user_id: data.user.id,
           contact_email: email,
           created_by: data.user.id
-        });
+        }).select('id').single();
+
+        // Also add user to client_users
+        if (clientData) {
+          await supabase.from('client_users').insert({
+            client_id: clientData.id,
+            user_id: data.user.id,
+            role: 'owner',
+            created_by: data.user.id
+          });
+        }
       }
     }
 

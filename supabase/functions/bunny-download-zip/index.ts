@@ -64,8 +64,9 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Check user roles from organization_member_roles
     const { data: userRoles } = await supabase
-      .from('user_roles')
+      .from('organization_member_roles')
       .select('role')
       .eq('user_id', user.id)
 

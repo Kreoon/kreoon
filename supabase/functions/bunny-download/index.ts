@@ -64,9 +64,9 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Check user roles
+    // Check user roles from organization_member_roles
     const { data: userRoles } = await supabase
-      .from('user_roles')
+      .from('organization_member_roles')
       .select('role')
       .eq('user_id', user.id)
 
@@ -74,7 +74,14 @@ Deno.serve(async (req) => {
     const isAdmin = roles.includes('admin')
     const isEditor = roles.includes('editor')
     const isCreator = roles.includes('creator')
-    const isClient = roles.includes('client')
+    
+    // Check if user is a client via client_users
+    const { data: clientUserData } = await supabase
+      .from('client_users')
+      .select('client_id')
+      .eq('user_id', user.id)
+      .limit(1)
+    const isClient = (clientUserData?.length || 0) > 0
 
     // Check if user is the client associated with this content
     let isContentClient = false

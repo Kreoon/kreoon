@@ -55,9 +55,9 @@ export function AdminPresencePanel() {
         .select('id, full_name, avatar_url')
         .in('id', userIds);
 
-      // Fetch roles
+      // Fetch roles from organization_member_roles
       const { data: roles } = await supabase
-        .from('user_roles')
+        .from('organization_member_roles')
         .select('user_id, role')
         .in('user_id', userIds);
 
