@@ -48,6 +48,8 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
   const [applyingIndex, setApplyingIndex] = useState<number | null>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [fraudAlerts, setFraudAlerts] = useState<any[]>([]);
+  const [generatedQuests, setGeneratedQuests] = useState<any[]>([]);
+  const [lastAction, setLastAction] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   
   // AI provider selection for this module
@@ -114,10 +116,15 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
 
   const handleGetRecommendations = async () => {
     setLoading('recommendations');
+    setLastAction('recommendations');
     try {
       const recs = await getRuleRecommendations();
-      setRecommendations(recs?.recommendations || recs || []);
-      toast({ title: 'Recomendaciones generadas' });
+      const results = recs?.recommendations || recs || [];
+      setRecommendations(results);
+      toast({ 
+        title: results.length > 0 ? 'Recomendaciones generadas' : 'Sin recomendaciones',
+        description: results.length > 0 ? `${results.length} sugerencias encontradas` : 'No hay recomendaciones en este momento'
+      });
     } catch (error) {
       toast({ title: 'Error al generar recomendaciones', variant: 'destructive' });
     } finally {
@@ -127,11 +134,14 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
 
   const handleCheckFraud = async () => {
     setLoading('fraud');
+    setLastAction('fraud');
     try {
       const result = await checkAntiFraud();
-      setFraudAlerts(result?.alerts || []);
+      const alerts = result?.alerts || [];
+      setFraudAlerts(alerts);
       toast({ 
-        title: result?.alerts?.length ? `${result.alerts.length} alertas detectadas` : 'Sin alertas de fraude'
+        title: alerts.length > 0 ? `${alerts.length} alertas detectadas` : 'Sin alertas de fraude',
+        description: alerts.length === 0 ? 'No se detectaron patrones sospechosos' : undefined
       });
     } catch (error) {
       toast({ title: 'Error al verificar fraude', variant: 'destructive' });
@@ -142,11 +152,14 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
 
   const handleGenerateQuests = async () => {
     setLoading('quests');
+    setLastAction('quests');
     try {
       const result = await generateQuests();
+      const quests = result?.quests || [];
+      setGeneratedQuests(quests);
       toast({ 
-        title: 'Misiones generadas', 
-        description: `${result?.quests?.length || 0} misiones sugeridas`
+        title: quests.length > 0 ? 'Misiones generadas' : 'Sin misiones nuevas',
+        description: quests.length > 0 ? `${quests.length} misiones sugeridas` : 'No hay misiones para generar en este momento'
       });
     } catch (error) {
       toast({ title: 'Error al generar misiones', variant: 'destructive' });
@@ -600,125 +613,208 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
             </CardContent>
           </Card>
 
-          {/* Recommendations */}
-          {recommendations.length > 0 && (
-            <Card className="border-2 border-primary/30">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Lightbulb className="w-5 h-5 text-yellow-500" />
-                  Recomendaciones IA
-                  <Badge variant="secondary">{recommendations.length}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[300px]">
-                  <div className="space-y-3 pr-4">
-                    {recommendations.map((rec, index) => (
-                      <div 
-                        key={index}
-                        className="p-4 rounded-lg border bg-gradient-to-r from-primary/5 to-transparent"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <h4 className="font-medium">{rec.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">{rec.why}</p>
-                            <p className="text-xs text-primary mt-2">
-                              Impacto esperado: {rec.impact}
-                            </p>
-                            {rec.proposedRule && (
-                              <div className="mt-2 p-2 rounded bg-muted/50 text-xs">
-                                <span className="text-muted-foreground">Regla propuesta:</span>
-                                <span className="ml-1 font-mono">
-                                  {rec.proposedRule.eventType} → {rec.proposedRule.points > 0 ? '+' : ''}{rec.proposedRule.points} UP
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <Button 
-                            size="sm"
-                            disabled={applyingIndex === index}
-                            onClick={async () => {
-                              if (!rec.proposedRule) {
-                                toast({ title: 'Sin regla propuesta', variant: 'destructive' });
-                                return;
-                              }
-                              setApplyingIndex(index);
-                              try {
-                                const result = await applyRecommendation(rec);
-                                if (result) {
-                                  setRecommendations(prev => prev.filter((_, i) => i !== index));
-                                  toast({ title: 'Regla aplicada', description: `Se creó la regla "${rec.title}"` });
-                                }
-                              } catch (error) {
-                                toast({ title: 'Error al aplicar', variant: 'destructive' });
-                              } finally {
-                                setApplyingIndex(null);
-                              }
-                            }}
-                          >
-                            {applyingIndex === index ? 'Aplicando...' : 'Aplicar'}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          )}
+          {/* Results Panel - Always visible after any action */}
+          <Card className="border-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Sparkles className="w-5 h-5 text-primary" />
+                Resultados
+                {lastAction && (
+                  <Badge variant="outline" className="ml-2 capitalize">
+                    {lastAction === 'recommendations' && 'Recomendaciones'}
+                    {lastAction === 'fraud' && 'Verificación Fraude'}
+                    {lastAction === 'quests' && 'Misiones'}
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!lastAction && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Brain className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">Ejecuta una acción para ver los resultados aquí</p>
+                  <p className="text-xs mt-1">Haz clic en uno de los botones de arriba</p>
+                </div>
+              )}
 
-          {/* Fraud Alerts */}
-          {fraudAlerts.length > 0 && (
-            <Card className="border-2 border-destructive/30">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <AlertTriangle className="w-5 h-5 text-destructive" />
-                  Alertas de Fraude
-                  <Badge variant="destructive">{fraudAlerts.length}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[200px]">
-                  <div className="space-y-3 pr-4">
-                    {fraudAlerts.map((alert, index) => (
-                      <div 
-                        key={index}
-                        className={cn(
-                          "p-4 rounded-lg border",
-                          alert.severity === 'high' && "bg-destructive/10 border-destructive/30",
-                          alert.severity === 'medium' && "bg-warning/10 border-warning/30",
-                          alert.severity === 'low' && "bg-muted"
-                        )}
-                      >
-                        <div className="flex items-start gap-3">
-                          <AlertTriangle className={cn(
-                            "w-5 h-5 shrink-0 mt-0.5",
-                            alert.severity === 'high' && "text-destructive",
-                            alert.severity === 'medium' && "text-warning",
-                            alert.severity === 'low' && "text-muted-foreground"
-                          )} />
-                          <div className="flex-1">
-                            <p className="font-medium">{alert.reason}</p>
-                            <ul className="text-sm text-muted-foreground mt-1 list-disc list-inside">
-                              {alert.evidence?.map((e: string, i: number) => (
-                                <li key={i}>{e}</li>
-                              ))}
-                            </ul>
-                          </div>
-                          <Badge 
-                            variant={alert.severity === 'high' ? 'destructive' : 'secondary'}
-                            className="shrink-0"
+              {/* Recommendations Results */}
+              {lastAction === 'recommendations' && (
+                <div className="space-y-3">
+                  {recommendations.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <Lightbulb className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No hay recomendaciones disponibles</p>
+                      <p className="text-xs mt-1">El sistema no encontró mejoras sugeridas en este momento</p>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[300px]">
+                      <div className="space-y-3 pr-4">
+                        {recommendations.map((rec, index) => (
+                          <div 
+                            key={index}
+                            className="p-4 rounded-lg border bg-gradient-to-r from-primary/5 to-transparent"
                           >
-                            {alert.severity}
-                          </Badge>
-                        </div>
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <h4 className="font-medium">{rec.title}</h4>
+                                <p className="text-sm text-muted-foreground mt-1">{rec.why}</p>
+                                <p className="text-xs text-primary mt-2">
+                                  Impacto esperado: {rec.impact}
+                                </p>
+                                {rec.proposedRule && (
+                                  <div className="mt-2 p-2 rounded bg-muted/50 text-xs">
+                                    <span className="text-muted-foreground">Regla propuesta:</span>
+                                    <span className="ml-1 font-mono">
+                                      {rec.proposedRule.eventType} → {rec.proposedRule.points > 0 ? '+' : ''}{rec.proposedRule.points} UP
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <Button 
+                                size="sm"
+                                disabled={applyingIndex === index}
+                                onClick={async () => {
+                                  if (!rec.proposedRule) {
+                                    toast({ title: 'Sin regla propuesta', variant: 'destructive' });
+                                    return;
+                                  }
+                                  setApplyingIndex(index);
+                                  try {
+                                    const result = await applyRecommendation(rec);
+                                    if (result) {
+                                      setRecommendations(prev => prev.filter((_, i) => i !== index));
+                                      toast({ title: 'Regla aplicada', description: `Se creó la regla "${rec.title}"` });
+                                    }
+                                  } catch (error) {
+                                    toast({ title: 'Error al aplicar', variant: 'destructive' });
+                                  } finally {
+                                    setApplyingIndex(null);
+                                  }
+                                }}
+                              >
+                                {applyingIndex === index ? 'Aplicando...' : 'Aplicar'}
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          )}
+                    </ScrollArea>
+                  )}
+                </div>
+              )}
+
+              {/* Fraud Check Results */}
+              {lastAction === 'fraud' && (
+                <div className="space-y-3">
+                  {fraudAlerts.length === 0 ? (
+                    <div className="text-center py-6">
+                      <Shield className="w-10 h-10 mx-auto mb-2 text-green-500" />
+                      <p className="text-sm font-medium text-green-600">Sin alertas de fraude</p>
+                      <p className="text-xs text-muted-foreground mt-1">No se detectaron patrones sospechosos de gaming</p>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[300px]">
+                      <div className="space-y-3 pr-4">
+                        {fraudAlerts.map((alert, index) => (
+                          <div 
+                            key={index}
+                            className={cn(
+                              "p-4 rounded-lg border",
+                              alert.severity === 'high' && "bg-destructive/10 border-destructive/30",
+                              alert.severity === 'medium' && "bg-amber-500/10 border-amber-500/30",
+                              alert.severity === 'low' && "bg-muted"
+                            )}
+                          >
+                            <div className="flex items-start gap-3">
+                              <AlertTriangle className={cn(
+                                "w-5 h-5 shrink-0 mt-0.5",
+                                alert.severity === 'high' && "text-destructive",
+                                alert.severity === 'medium' && "text-amber-500",
+                                alert.severity === 'low' && "text-muted-foreground"
+                              )} />
+                              <div className="flex-1">
+                                <p className="font-medium">{alert.reason}</p>
+                                {alert.user_id && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Usuario: {alert.user_id}
+                                  </p>
+                                )}
+                                <ul className="text-sm text-muted-foreground mt-2 list-disc list-inside">
+                                  {alert.evidence?.map((e: string, i: number) => (
+                                    <li key={i}>{e}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <Badge 
+                                variant={alert.severity === 'high' ? 'destructive' : 'secondary'}
+                                className="shrink-0"
+                              >
+                                {alert.severity}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+                </div>
+              )}
+
+              {/* Quests Generation Results */}
+              {lastAction === 'quests' && (
+                <div className="space-y-3">
+                  {generatedQuests.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <Target className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No hay misiones nuevas para generar</p>
+                      <p className="text-xs mt-1">Las misiones se generan según los cuellos de botella detectados</p>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[300px]">
+                      <div className="space-y-3 pr-4">
+                        {generatedQuests.map((quest, index) => (
+                          <div 
+                            key={index}
+                            className="p-4 rounded-lg border bg-gradient-to-r from-green-500/5 to-transparent"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <Target className="w-4 h-4 text-green-500" />
+                                  <h4 className="font-medium">{quest.title}</h4>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1">{quest.description}</p>
+                                <div className="flex items-center gap-3 mt-2 text-xs">
+                                  {quest.target_role && (
+                                    <Badge variant="outline" className="capitalize">
+                                      {quest.target_role}
+                                    </Badge>
+                                  )}
+                                  {quest.points_reward && (
+                                    <span className="text-primary font-medium">
+                                      +{quest.points_reward} UP
+                                    </span>
+                                  )}
+                                  {quest.duration && (
+                                    <span className="text-muted-foreground">
+                                      {quest.duration}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <Badge variant="secondary">
+                                {quest.difficulty || 'normal'}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
