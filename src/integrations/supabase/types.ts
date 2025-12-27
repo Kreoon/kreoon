@@ -152,6 +152,207 @@ export type Database = {
         }
         Relationships: []
       }
+      board_custom_fields: {
+        Row: {
+          created_at: string
+          field_type: string
+          id: string
+          is_active: boolean
+          is_required: boolean
+          name: string
+          options: Json | null
+          organization_id: string
+          show_in_card: boolean
+          show_in_detail: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          field_type: string
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          name: string
+          options?: Json | null
+          organization_id: string
+          show_in_card?: boolean
+          show_in_detail?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          field_type?: string
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          name?: string
+          options?: Json | null
+          organization_id?: string
+          show_in_card?: boolean
+          show_in_detail?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_custom_fields_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_permissions: {
+        Row: {
+          allowed_statuses: string[] | null
+          can_approve: boolean
+          can_configure_board: boolean
+          can_create_cards: boolean
+          can_delete_cards: boolean
+          can_edit_fields: boolean
+          can_move_cards: boolean
+          created_at: string
+          id: string
+          organization_id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_statuses?: string[] | null
+          can_approve?: boolean
+          can_configure_board?: boolean
+          can_create_cards?: boolean
+          can_delete_cards?: boolean
+          can_edit_fields?: boolean
+          can_move_cards?: boolean
+          created_at?: string
+          id?: string
+          organization_id: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_statuses?: string[] | null
+          can_approve?: boolean
+          can_configure_board?: boolean
+          can_create_cards?: boolean
+          can_delete_cards?: boolean
+          can_edit_fields?: boolean
+          can_move_cards?: boolean
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_permissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_settings: {
+        Row: {
+          card_size: string
+          created_at: string
+          default_view: string
+          id: string
+          organization_id: string
+          updated_at: string
+          visible_fields: Json
+          visible_sections: Json
+        }
+        Insert: {
+          card_size?: string
+          created_at?: string
+          default_view?: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+          visible_fields?: Json
+          visible_sections?: Json
+        }
+        Update: {
+          card_size?: string
+          created_at?: string
+          default_view?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+          visible_fields?: Json
+          visible_sections?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_status_rules: {
+        Row: {
+          allowed_from_statuses: string[] | null
+          allowed_roles: string[] | null
+          allowed_to_statuses: string[] | null
+          auto_actions: Json | null
+          created_at: string
+          id: string
+          organization_id: string
+          required_fields: Json | null
+          status_id: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_from_statuses?: string[] | null
+          allowed_roles?: string[] | null
+          allowed_to_statuses?: string[] | null
+          auto_actions?: Json | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          required_fields?: Json | null
+          status_id: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_from_statuses?: string[] | null
+          allowed_roles?: string[] | null
+          allowed_to_statuses?: string[] | null
+          auto_actions?: Json | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          required_fields?: Json | null
+          status_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_status_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_status_rules_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "organization_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           content_id: string | null
@@ -520,6 +721,7 @@ export type Database = {
           creator_paid: boolean | null
           creator_payment: number | null
           creator_payment_currency: Database["public"]["Enums"]["currency_type"]
+          custom_status_id: string | null
           deadline: string | null
           delivered_at: string | null
           description: string | null
@@ -581,6 +783,7 @@ export type Database = {
           creator_paid?: boolean | null
           creator_payment?: number | null
           creator_payment_currency?: Database["public"]["Enums"]["currency_type"]
+          custom_status_id?: string | null
           deadline?: string | null
           delivered_at?: string | null
           description?: string | null
@@ -642,6 +845,7 @@ export type Database = {
           creator_paid?: boolean | null
           creator_payment?: number | null
           creator_payment_currency?: Database["public"]["Enums"]["currency_type"]
+          custom_status_id?: string | null
           deadline?: string | null
           delivered_at?: string | null
           description?: string | null
@@ -693,6 +897,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_custom_status_id_fkey"
+            columns: ["custom_status_id"]
+            isOneToOne: false
+            referencedRelation: "organization_statuses"
             referencedColumns: ["id"]
           },
           {
@@ -787,6 +998,48 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_custom_field_values: {
+        Row: {
+          content_id: string
+          created_at: string
+          field_id: string
+          id: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          field_id: string
+          id?: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          field_id?: string
+          id?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_custom_field_values_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_custom_field_values_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "board_custom_fields"
             referencedColumns: ["id"]
           },
         ]
@@ -2378,6 +2631,14 @@ export type Database = {
         Args: { points: number }
         Returns: Database["public"]["Enums"]["up_level"]
       }
+      can_move_to_status: {
+        Args: {
+          _content_id: string
+          _target_status_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       can_users_chat: {
         Args: { _user1_id: string; _user2_id: string }
         Returns: boolean
@@ -2396,6 +2657,10 @@ export type Database = {
           _max_attempts?: number
           _window_minutes?: number
         }
+        Returns: Json
+      }
+      check_status_requirements: {
+        Args: { _content_id: string; _target_status_id: string }
         Returns: Json
       }
       cleanup_expired_stories: { Args: never; Returns: undefined }
@@ -2464,6 +2729,10 @@ export type Database = {
       }
       increment_portfolio_post_views: {
         Args: { post_uuid: string }
+        Returns: undefined
+      }
+      initialize_board_settings: {
+        Args: { _org_id: string }
         Returns: undefined
       }
       is_client_owner: {
