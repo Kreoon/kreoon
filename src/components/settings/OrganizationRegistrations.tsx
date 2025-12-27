@@ -24,8 +24,11 @@ import {
   Check,
   Calendar,
   Mail,
-  Globe
+  Globe,
+  Plus,
+  Loader2
 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { OrganizationProfileEditor } from './OrganizationProfileEditor';
 import type { AppRole } from '@/types/database';
 
@@ -69,9 +72,13 @@ export function OrganizationRegistrations() {
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showAssignOwnerDialog, setShowAssignOwnerDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<Array<{ id: string; full_name: string; email: string }>>([]);
   const [selectedOwnerId, setSelectedOwnerId] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newOrgName, setNewOrgName] = useState('');
+  const [newOrgDescription, setNewOrgDescription] = useState('');
+  const [newOrgType, setNewOrgType] = useState<string>('agency');
 
   useEffect(() => {
     if (isRootAdmin) {
@@ -214,6 +221,50 @@ export function OrganizationRegistrations() {
       fetchOrganizations();
     } catch (error) {
       toast.error('Error al actualizar organización');
+    }
+  };
+
+  const handleCreateOrganization = async () => {
+    if (!newOrgName.trim()) {
+      toast.error('El nombre es requerido');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Generate slug from name
+      const slug = newOrgName
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+
+      const { data, error } = await supabase
+        .from('organizations')
+        .insert({
+          name: newOrgName.trim(),
+          slug: slug + '-' + Date.now().toString(36),
+          description: newOrgDescription.trim() || null,
+          organization_type: newOrgType,
+          created_by: profile?.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success('Organización creada exitosamente');
+      setShowCreateDialog(false);
+      setNewOrgName('');
+      setNewOrgDescription('');
+      setNewOrgType('agency');
+      fetchOrganizations();
+    } catch (error: any) {
+      console.error('Error creating organization:', error);
+      toast.error('Error al crear organización: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -376,11 +427,17 @@ export function OrganizationRegistrations() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Gestión de Organizaciones</h2>
-        <p className="text-muted-foreground">
-          Administra todas las organizaciones registradas en la plataforma
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Gestión de Organizaciones</h2>
+          <p className="text-muted-foreground">
+            Administra todas las organizaciones registradas en la plataforma
+          </p>
+        </div>
+        <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Nueva Organización
+        </Button>
       </div>
 
       {/* Stats */}
@@ -541,6 +598,71 @@ export function OrganizationRegistrations() {
             </Button>
             <Button onClick={handleAssignOwner} disabled={isSubmitting || !selectedOwnerId}>
               {isSubmitting ? 'Asignando...' : 'Asignar Propietario'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Organization Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Crear Nueva Organización</DialogTitle>
+            <DialogDescription>
+              Crea una nueva organización manualmente desde el panel de administración
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="org-name">Nombre *</Label>
+              <Input
+                id="org-name"
+                placeholder="Nombre de la organización"
+                value={newOrgName}
+                onChange={(e) => setNewOrgName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="org-type">Tipo</Label>
+              <Select value={newOrgType} onValueChange={setNewOrgType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agency">Agencia</SelectItem>
+                  <SelectItem value="community">Comunidad</SelectItem>
+                  <SelectItem value="academy">Academia</SelectItem>
+                  <SelectItem value="company">Empresa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="org-desc">Descripción (opcional)</Label>
+              <Textarea
+                id="org-desc"
+                placeholder="Describe la organización..."
+                value={newOrgDescription}
+                onChange={(e) => setNewOrgDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCreateOrganization} 
+              disabled={isSubmitting || !newOrgName.trim()}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                'Crear Organización'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
