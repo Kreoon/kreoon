@@ -53,14 +53,35 @@ export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
   const [existingGoalId, setExistingGoalId] = useState<string | null>(null);
 
   // Fetch existing goal when period changes
+  // Fetch current organization id from profile
+  const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchOrg = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('current_organization_id')
+          .eq('id', user.id)
+          .maybeSingle();
+        setCurrentOrgId(profile?.current_organization_id || null);
+      }
+    };
+    fetchOrg();
+  }, []);
+  
   useEffect(() => {
     const fetchExistingGoal = async () => {
+      if (!currentOrgId) return;
+      
       const { data } = await supabase
         .from('goals')
         .select('*')
         .eq('period_type', goal.period_type)
         .eq('period_value', goal.period_value)
         .eq('year', goal.year)
+        .eq('organization_id', currentOrgId)
         .maybeSingle();
 
       if (data) {
@@ -88,10 +109,10 @@ export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
       }
     };
 
-    if (open) {
+    if (open && currentOrgId) {
       fetchExistingGoal();
     }
-  }, [goal.period_type, goal.period_value, goal.year, open]);
+  }, [goal.period_type, goal.period_value, goal.year, open, currentOrgId]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -110,9 +131,13 @@ export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
 
         if (error) throw error;
       } else {
+        if (!currentOrgId) {
+          throw new Error('No organization selected');
+        }
         const { error } = await supabase
           .from('goals')
           .insert({
+            organization_id: currentOrgId,
             period_type: goal.period_type,
             period_value: goal.period_value,
             year: goal.year,

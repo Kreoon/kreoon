@@ -490,15 +490,21 @@ export default function Dashboard() {
                          currentYear;
       
       // Fetch current month/quarter goal - check both current year and filter year
-      const { data: goalData } = await supabase
+      // Always filter goals by organization
+      let goalQuery = supabase
         .from('goals')
         .select('*')
         .eq('period_type', 'month')
         .eq('period_value', currentMonth)
         .in('year', [currentYear, currentYear + 1, filterYear])
         .order('year', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+      
+      if (currentOrgId) {
+        goalQuery = goalQuery.eq('organization_id', currentOrgId);
+      }
+      
+      const { data: goalData } = await goalQuery.maybeSingle();
 
       if (goalData) {
         setCurrentGoal({
@@ -510,11 +516,17 @@ export default function Dashboard() {
 
       // Fetch all goals for chart - include current year, next year, and filter year
       const yearsToFetch = [...new Set([currentYear, currentYear + 1, filterYear])];
-      const { data: allGoalsData } = await supabase
+      let allGoalsQuery = supabase
         .from('goals')
         .select('*')
         .in('year', yearsToFetch)
         .eq('period_type', 'month');
+      
+      if (currentOrgId) {
+        allGoalsQuery = allGoalsQuery.eq('organization_id', currentOrgId);
+      }
+      
+      const { data: allGoalsData } = await allGoalsQuery;
       
       setAllGoals(allGoalsData || []);
 
@@ -1332,13 +1344,17 @@ export default function Dashboard() {
           const fetchGoal = async () => {
             const currentMonth = new Date().getMonth() + 1;
             const currentYear = new Date().getFullYear();
-            const { data } = await supabase
+            let goalQuery = supabase
               .from('goals')
               .select('*')
               .eq('period_type', 'month')
               .eq('period_value', currentMonth)
-              .eq('year', currentYear)
-              .maybeSingle();
+              .eq('year', currentYear);
+            
+            if (currentOrgId) {
+              goalQuery = goalQuery.eq('organization_id', currentOrgId);
+            }
+            const { data } = await goalQuery.maybeSingle();
             if (data) {
               setCurrentGoal({
                 revenue_goal: data.revenue_goal || 0,
