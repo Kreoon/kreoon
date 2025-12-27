@@ -347,14 +347,12 @@ async function evaluateQualityScore(
       admin_guidelines, trafficker_guidelines,
       status, video_url, thumbnail_url, raw_video_urls, hooks_count,
       deadline, start_date, created_at, updated_at,
-      creator_payment, editor_payment,
+      creator_payment, editor_payment, creator_id, editor_id,
       client:clients(name, category, bio, notes),
       product:products(
         name, description, strategy, market_research, 
         ideal_avatar, sales_angles, brief_url
       ),
-      creator:profiles!content_creator_id_fkey(full_name, role),
-      editor:profiles!content_editor_id_fkey(full_name, role),
       strategist:profiles!content_strategist_id_fkey(full_name),
       custom_status:organization_statuses(name, label, description)
     `)
@@ -364,6 +362,28 @@ async function evaluateQualityScore(
   if (error) {
     console.error("Error fetching content for quality score:", error);
     throw error;
+  }
+
+  // Fetch creator and editor profiles separately (no FK exists)
+  let creatorName = null;
+  let editorName = null;
+  
+  if (content.creator_id) {
+    const { data: creatorProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", content.creator_id)
+      .single();
+    creatorName = creatorProfile?.full_name;
+  }
+  
+  if (content.editor_id) {
+    const { data: editorProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", content.editor_id)
+      .single();
+    editorName = editorProfile?.full_name;
   }
 
   // Fetch content comments for additional context
@@ -481,8 +501,8 @@ ${content.script || "⚠️ SIN GUIÓN - Esto afecta significativamente la evalu
 ═══════════════════════════════════════
 👥 EQUIPO ASIGNADO
 ═══════════════════════════════════════
-• Creator: ${content.creator?.full_name || "Sin asignar"}
-• Editor: ${content.editor?.full_name || "Sin asignar"}
+• Creator: ${creatorName || "Sin asignar"}
+• Editor: ${editorName || "Sin asignar"}
 • Estratega: ${content.strategist?.full_name || "Sin asignar"}
 
 ═══════════════════════════════════════
