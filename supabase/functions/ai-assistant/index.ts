@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Role-based access levels for information
+const ROLE_ACCESS_LEVELS: Record<string, string[]> = {
+  admin: ['all', 'financials', 'team_management', 'client_details', 'payments', 'analytics', 'settings'],
+  strategist: ['content_strategy', 'clients', 'creators', 'scripts', 'products', 'analytics'],
+  editor: ['content_editing', 'assigned_content', 'scripts', 'video_guidelines'],
+  creator: ['own_content', 'own_assignments', 'own_scripts', 'own_payments'],
+  client: ['own_brand_content', 'own_packages', 'own_products'],
+  ambassador: ['referrals', 'own_network', 'commissions', 'own_content'],
+  viewer: ['public_content', 'basic_info'],
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -64,48 +75,10 @@ serve(async (req) => {
       });
     }
 
-    // Get prompt config (personalidad, tono, etc.)
-    const { data: promptConfig } = await supabase
-      .from('ai_prompt_config')
-      .select('*')
-      .eq('organization_id', organizationId)
-      .single();
-
-    // Get knowledge base
-    const { data: knowledge } = await supabase
-      .from('ai_assistant_knowledge')
-      .select('title, content, knowledge_type')
-      .eq('organization_id', organizationId)
-      .eq('is_active', true);
-
-    // Get positive examples
-    const { data: positiveExamples } = await supabase
-      .from('ai_positive_examples')
-      .select('category, user_question, ideal_response')
-      .eq('organization_id', organizationId)
-      .eq('is_active', true)
-      .limit(20);
-
-    // Get negative rules
-    const { data: negativeRules } = await supabase
-      .from('ai_negative_rules')
-      .select('rule_type, pattern, reason, severity')
-      .eq('organization_id', organizationId)
-      .eq('is_active', true)
-      .eq('severity', 'block');
-
-    // Get conversation flows that might match
-    const { data: flows } = await supabase
-      .from('ai_conversation_flows')
-      .select('name, trigger_keywords, trigger_intent, flow_steps, priority')
-      .eq('organization_id', organizationId)
-      .eq('is_active', true)
-      .order('priority', { ascending: false });
-
-    // Get user context
+    // Get user profile and roles
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('full_name, current_organization_id')
+      .select('full_name, current_organization_id, username')
       .eq('id', user.id)
       .single();
 
@@ -115,124 +88,313 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .eq('organization_id', organizationId);
 
-    // Build the system prompt with all training data
-    let systemPrompt = '';
+    const { data: memberInfo } = await supabase
+      .from('organization_members')
+      .select('is_owner, ambassador_level')
+      .eq('user_id', user.id)
+      .eq('organization_id', organizationId)
+      .single();
 
-    // 1. Basic identity
+    const userRolesList = userRoles?.map(r => r.role) || ['viewer'];
+    const isOwner = memberInfo?.is_owner || false;
+    const isAdmin = userRolesList.includes('admin') || isOwner;
+    const ambassadorLevel = memberInfo?.ambassador_level;
+
+    // Determine user's access level
+    const userAccessLevels = new Set<string>();
+    for (const role of userRolesList) {
+      const levels = ROLE_ACCESS_LEVELS[role] || ROLE_ACCESS_LEVELS.viewer;
+      levels.forEach(l => userAccessLevels.add(l));
+    }
+    if (isOwner || isAdmin) {
+      ROLE_ACCESS_LEVELS.admin.forEach(l => userAccessLevels.add(l));
+    }
+
+    // Fetch all training data in parallel
+    const [
+      promptConfigRes,
+      knowledgeRes,
+      positiveExamplesRes,
+      negativeRulesRes,
+      flowsRes,
+      orgInfoRes,
+      statusesRes,
+      contentStatsRes,
+    ] = await Promise.all([
+      supabase.from('ai_prompt_config').select('*').eq('organization_id', organizationId).single(),
+      supabase.from('ai_assistant_knowledge').select('title, content, knowledge_type, metadata').eq('organization_id', organizationId).eq('is_active', true),
+      supabase.from('ai_positive_examples').select('category, user_question, ideal_response').eq('organization_id', organizationId).eq('is_active', true).limit(30),
+      supabase.from('ai_negative_rules').select('rule_type, pattern, reason, severity').eq('organization_id', organizationId).eq('is_active', true),
+      supabase.from('ai_conversation_flows').select('name, trigger_keywords, trigger_intent, flow_steps, priority').eq('organization_id', organizationId).eq('is_active', true).order('priority', { ascending: false }),
+      supabase.from('organizations').select('name, logo_url').eq('id', organizationId).single(),
+      supabase.from('organization_statuses').select('name, color, sort_order, description').eq('organization_id', organizationId).order('sort_order'),
+      supabase.from('content').select('id, status, custom_status_id').eq('organization_id', organizationId),
+    ]);
+
+    const promptConfig = promptConfigRes.data;
+    const knowledge = knowledgeRes.data || [];
+    const positiveExamples = positiveExamplesRes.data || [];
+    const negativeRules = negativeRulesRes.data || [];
+    const flows = flowsRes.data || [];
+    const orgInfo = orgInfoRes.data;
+    const statuses = statusesRes.data || [];
+    const allContent = contentStatsRes.data || [];
+
+    // Fetch role-specific platform data
+    let platformContext = '';
+    
+    // Always include basic org info
+    platformContext += `\n## Información de la Organización
+- Nombre: ${orgInfo?.name || 'Organización'}
+- Estados de contenido disponibles: ${statuses.map(s => s.name).join(', ')}
+`;
+
+    // Content statistics (visible to most roles)
+    const contentStats = {
+      total: allContent.length,
+      byStatus: {} as Record<string, number>,
+    };
+    for (const c of allContent) {
+      const statusId = c.custom_status_id || c.status || 'unknown';
+      contentStats.byStatus[statusId] = (contentStats.byStatus[statusId] || 0) + 1;
+    }
+    platformContext += `\n## Estadísticas de Contenido
+- Total de contenidos: ${contentStats.total}
+`;
+
+    // Role-specific data
+    if (userAccessLevels.has('all') || userAccessLevels.has('client_details')) {
+      // Admin/Strategist can see client info
+      const { data: clients } = await supabase
+        .from('clients')
+        .select('id, name, category, is_vip')
+        .eq('organization_id', organizationId)
+        .limit(50);
+      
+      if (clients && clients.length > 0) {
+        platformContext += `\n## Clientes de la organización (${clients.length} total)
+${clients.slice(0, 20).map(c => `- ${c.name}${c.is_vip ? ' (VIP)' : ''}${c.category ? ` - ${c.category}` : ''}`).join('\n')}
+`;
+      }
+    }
+
+    if (userAccessLevels.has('all') || userAccessLevels.has('team_management')) {
+      // Admin can see team info
+      const { data: team } = await supabase
+        .from('organization_members')
+        .select('user_id, profiles!inner(full_name)')
+        .eq('organization_id', organizationId)
+        .limit(30);
+      
+      const { data: teamRoles } = await supabase
+        .from('organization_member_roles')
+        .select('user_id, role')
+        .eq('organization_id', organizationId);
+
+      const rolesByUser: Record<string, string[]> = {};
+      for (const r of (teamRoles || [])) {
+        if (!rolesByUser[r.user_id]) rolesByUser[r.user_id] = [];
+        rolesByUser[r.user_id].push(r.role);
+      }
+
+      if (team && team.length > 0) {
+        platformContext += `\n## Equipo de la organización (${team.length} miembros)
+${team.slice(0, 15).map((m: any) => `- ${m.profiles?.full_name || 'Usuario'}: ${(rolesByUser[m.user_id] || ['miembro']).join(', ')}`).join('\n')}
+`;
+      }
+    }
+
+    if (userAccessLevels.has('own_content') || userAccessLevels.has('assigned_content')) {
+      // Creators/Editors see their assigned content
+      const { data: myContent } = await supabase
+        .from('content')
+        .select('id, title, status, custom_status_id, deadline')
+        .eq('organization_id', organizationId)
+        .or(`creator_id.eq.${user.id},editor_id.eq.${user.id}`)
+        .limit(20);
+      
+      if (myContent && myContent.length > 0) {
+        platformContext += `\n## Tus contenidos asignados (${myContent.length})
+${myContent.map(c => `- "${c.title}" - Estado: ${c.status}${c.deadline ? ` - Deadline: ${c.deadline}` : ''}`).join('\n')}
+`;
+      }
+    }
+
+    if (userAccessLevels.has('referrals') || ambassadorLevel) {
+      // Ambassadors see their network
+      const { data: referrals } = await supabase
+        .from('ambassador_referrals')
+        .select('id, referred_email, status, referred_type')
+        .eq('ambassador_id', user.id)
+        .eq('organization_id', organizationId);
+      
+      if (referrals && referrals.length > 0) {
+        const pending = referrals.filter(r => r.status === 'pending').length;
+        const active = referrals.filter(r => r.status === 'active').length;
+        platformContext += `\n## Tu red de embajador
+- Nivel: ${ambassadorLevel || 'Básico'}
+- Referidos totales: ${referrals.length}
+- Pendientes: ${pending}
+- Activos: ${active}
+`;
+      }
+    }
+
+    if (userAccessLevels.has('own_brand_content')) {
+      // Clients see their brand content
+      const { data: clientAssoc } = await supabase
+        .from('client_users')
+        .select('client_id')
+        .eq('user_id', user.id);
+      
+      if (clientAssoc && clientAssoc.length > 0) {
+        const clientIds = clientAssoc.map(c => c.client_id);
+        const { data: brandContent } = await supabase
+          .from('content')
+          .select('id, title, status')
+          .in('client_id', clientIds)
+          .limit(20);
+        
+        if (brandContent && brandContent.length > 0) {
+          platformContext += `\n## Contenido de tu marca (${brandContent.length})
+${brandContent.map(c => `- "${c.title}" - ${c.status}`).join('\n')}
+`;
+        }
+      }
+    }
+
+    // Build the system prompt
+    let systemPrompt = '';
+    
     const assistantRole = promptConfig?.assistant_role || 'asistente virtual';
     const personality = promptConfig?.personality || 'profesional y amigable';
     const tone = promptConfig?.tone || 'formal pero cercano';
     const language = promptConfig?.language || 'español';
+    const greeting = promptConfig?.greeting || 'Hola, ¿en qué puedo ayudarte?';
+    const fallbackMessage = promptConfig?.fallback_message || 'Lo siento, no tengo información sobre eso. ¿Puedo ayudarte con algo más?';
+    const maxLength = promptConfig?.max_response_length || 500;
 
-    systemPrompt = `Eres ${config.assistant_name}, ${assistantRole} de esta organización.
+    systemPrompt = `Eres ${config.assistant_name}, ${assistantRole} de la organización "${orgInfo?.name || 'esta organización'}".
 
-## Tu personalidad y tono
+## Tu personalidad y comportamiento
 - Personalidad: ${personality}
 - Tono de comunicación: ${tone}
 - Idioma principal: ${language}
+- Saludo inicial: "${greeting}"
+
+## Contexto del usuario actual
+- Nombre: ${userProfile?.full_name || 'Usuario'}
+- Usuario: @${userProfile?.username || user.id.slice(0, 8)}
+- Rol(es): ${userRolesList.join(', ')}${isOwner ? ' (Propietario)' : ''}${ambassadorLevel ? ` - Embajador ${ambassadorLevel}` : ''}
+- Permisos de información: ${Array.from(userAccessLevels).join(', ')}
+
+## IMPORTANTE - Restricciones por rol
+⚠️ Este usuario tiene rol "${userRolesList.join('/')}" y SOLO puede acceder a información relacionada con:
+${Array.from(userAccessLevels).map(a => `- ${a}`).join('\n')}
+
+NO debes revelar información sobre:
+${!userAccessLevels.has('financials') ? '- Información financiera detallada, pagos de otros usuarios, tarifas internas\n' : ''}${!userAccessLevels.has('team_management') ? '- Gestión de equipo, roles de otros, configuraciones administrativas\n' : ''}${!userAccessLevels.has('all') ? '- Configuraciones de seguridad, API keys, datos sensibles del sistema\n' : ''}
 `;
 
+    // Add custom instructions
     if (config.system_prompt) {
-      systemPrompt += `\n## Instrucciones adicionales del administrador:\n${config.system_prompt}\n`;
+      systemPrompt += `\n## Instrucciones del administrador:\n${config.system_prompt}\n`;
     }
-
     if (promptConfig?.custom_instructions) {
       systemPrompt += `\n## Instrucciones personalizadas:\n${promptConfig.custom_instructions}\n`;
     }
 
-    // 2. User context
-    const userRolesList = userRoles?.map(r => r.role).join(', ') || 'usuario';
-    systemPrompt += `\n## Contexto del usuario actual
-- Nombre: ${userProfile?.full_name || 'Usuario'}
-- Rol(es): ${userRolesList}
-`;
+    // Add platform context
+    systemPrompt += platformContext;
 
-    // 3. Knowledge base
-    if (knowledge && knowledge.length > 0) {
+    // Add knowledge base
+    if (knowledge.length > 0) {
       systemPrompt += '\n## Base de conocimiento de la organización:\n';
       for (const k of knowledge) {
         systemPrompt += `\n### ${k.title} (${k.knowledge_type})\n${k.content}\n`;
       }
     }
 
-    // 4. Conversation flows
-    if (flows && flows.length > 0) {
-      systemPrompt += '\n## Flujos conversacionales disponibles:\n';
-      systemPrompt += 'Cuando el usuario pregunte sobre estos temas, sigue el flujo indicado:\n';
+    // Add conversation flows
+    if (flows.length > 0) {
+      systemPrompt += '\n## Flujos conversacionales:\nCuando detectes estas intenciones, sigue el flujo:\n';
       for (const flow of flows) {
         const keywords = flow.trigger_keywords?.join(', ') || '';
-        systemPrompt += `\n### ${flow.name}\n`;
-        if (keywords) systemPrompt += `- Palabras clave: ${keywords}\n`;
-        if (flow.trigger_intent) systemPrompt += `- Intención: ${flow.trigger_intent}\n`;
-        if (flow.flow_steps) {
-          systemPrompt += `- Pasos del flujo: ${JSON.stringify(flow.flow_steps)}\n`;
+        systemPrompt += `\n### ${flow.name}`;
+        if (keywords) systemPrompt += `\n- Palabras clave: ${keywords}`;
+        if (flow.trigger_intent) systemPrompt += `\n- Intención: ${flow.trigger_intent}`;
+        if (flow.flow_steps && Array.isArray(flow.flow_steps) && flow.flow_steps.length > 0) {
+          systemPrompt += `\n- Pasos: ${JSON.stringify(flow.flow_steps)}`;
         }
       }
     }
 
-    // 5. Positive examples (how to respond)
-    if (positiveExamples && positiveExamples.length > 0) {
-      systemPrompt += '\n## Ejemplos de respuestas ideales:\n';
-      systemPrompt += 'Aprende de estos ejemplos cómo debes responder:\n';
+    // Add positive examples
+    if (positiveExamples.length > 0) {
+      systemPrompt += '\n\n## Ejemplos de respuestas ideales (aprende de estos):\n';
       for (const ex of positiveExamples) {
-        systemPrompt += `\nCategoría: ${ex.category}\nUsuario: "${ex.user_question}"\nRespuesta ideal: "${ex.ideal_response}"\n`;
+        systemPrompt += `\n[${ex.category}]\nUsuario: "${ex.user_question}"\nResponde así: "${ex.ideal_response}"\n`;
       }
     }
 
-    // 6. Negative rules (what NOT to do) - CRITICAL
-    if (negativeRules && negativeRules.length > 0) {
-      systemPrompt += '\n## REGLAS CRÍTICAS - Respuestas prohibidas:\n';
-      systemPrompt += '⚠️ NUNCA debes hacer o decir lo siguiente:\n';
-      for (const rule of negativeRules) {
-        systemPrompt += `\n- ${rule.rule_type.toUpperCase()}: "${rule.pattern}"`;
-        if (rule.reason) systemPrompt += ` - Razón: ${rule.reason}`;
+    // Add negative rules - CRITICAL
+    const blockingRules = negativeRules.filter(r => r.severity === 'critical' || r.severity === 'high');
+    const warningRules = negativeRules.filter(r => r.severity === 'medium' || r.severity === 'low');
+
+    if (blockingRules.length > 0) {
+      systemPrompt += '\n## ⛔ REGLAS CRÍTICAS - NUNCA hagas esto:\n';
+      for (const rule of blockingRules) {
+        systemPrompt += `- ${rule.rule_type}: "${rule.pattern}"${rule.reason ? ` (${rule.reason})` : ''}\n`;
       }
-      systemPrompt += '\n\nSi alguien te pide algo de lo anterior, declina amablemente sin dar la información.\n';
     }
 
-    // 7. Capability restrictions
+    if (warningRules.length > 0) {
+      systemPrompt += '\n## ⚠️ Advertencias - Evita estos temas:\n';
+      for (const rule of warningRules) {
+        systemPrompt += `- ${rule.pattern}${rule.reason ? `: ${rule.reason}` : ''}\n`;
+      }
+    }
+
+    // Capability restrictions from prompt config
     if (promptConfig) {
       const restrictions = [];
-      if (!promptConfig.can_discuss_pricing) restrictions.push('precios o tarifas');
-      if (!promptConfig.can_share_user_data) restrictions.push('datos personales de usuarios');
+      if (!promptConfig.can_discuss_pricing) restrictions.push('precios internos o tarifas');
+      if (!promptConfig.can_share_user_data) restrictions.push('datos personales de otros usuarios');
       if (!promptConfig.can_discuss_competitors) restrictions.push('competidores o comparaciones');
       
       if (restrictions.length > 0) {
-        systemPrompt += `\n## Temas restringidos:\nNo puedes discutir: ${restrictions.join(', ')}. Si te preguntan, sugiere contactar al equipo directamente.\n`;
+        systemPrompt += `\n## Temas que NO puedes discutir:\n${restrictions.map(r => `- ${r}`).join('\n')}\nSi preguntan, sugiere contactar al equipo.\n`;
       }
     }
 
-    // 8. Fallback behavior
-    const fallbackMessage = promptConfig?.fallback_message || 'Lo siento, no tengo información sobre eso. ¿Puedo ayudarte con algo más?';
-    const maxLength = promptConfig?.max_response_length || 500;
-
-    systemPrompt += `\n## Comportamiento general:
-- Si no tienes información sobre algo, di: "${fallbackMessage}"
-- Mantén tus respuestas concisas (máximo ~${maxLength} caracteres)
-- Solo responde sobre temas de la organización
-- Nunca inventes información que no está en tu base de conocimiento
+    // Final behavior rules
+    systemPrompt += `
+## Comportamiento general
+- Si no tienes información, responde: "${fallbackMessage}"
+- Mantén respuestas concisas (~${maxLength} caracteres máximo)
+- Solo responde sobre temas de la organización y lo que el usuario puede ver según su rol
+- NUNCA inventes datos, cifras o información que no esté en tu contexto
+- Si el usuario pregunta por algo que no puede ver por su rol, indica amablemente que no tienes acceso a esa información
 `;
 
-    // Check negative rules against user message
-    const blockedPatterns = negativeRules?.filter(rule => {
+    // Check if message matches any blocking rules
+    const blockedPatterns = blockingRules.filter(rule => {
       const pattern = rule.pattern.toLowerCase();
       const msg = message.toLowerCase();
       return msg.includes(pattern);
     });
 
-    if (blockedPatterns && blockedPatterns.length > 0) {
-      // Log the blocked attempt
+    if (blockedPatterns.length > 0) {
       await supabase.from('ai_assistant_logs').insert({
         organization_id: organizationId,
         user_id: user.id,
         conversation_id: conversationId || null,
         user_message: message,
-        assistant_response: '[BLOCKED BY NEGATIVE RULE]',
-        tokens_used: 0,
+        assistant_response: '[BLOCKED BY RULE]',
       });
 
       return new Response(JSON.stringify({ 
-        response: 'Lo siento, no puedo ayudarte con esa solicitud. ¿Hay algo más en lo que pueda asistirte?',
+        response: 'Lo siento, no puedo ayudarte con esa solicitud específica. ¿Hay algo más en lo que pueda asistirte?',
         assistant_name: config.assistant_name,
         blocked: true
       }), {
@@ -240,32 +402,33 @@ serve(async (req) => {
       });
     }
 
-    // Get conversation history for context
+    // Get conversation history
     const { data: history } = await supabase
       .from('ai_assistant_logs')
       .select('user_message, assistant_response')
       .eq('organization_id', organizationId)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(5);
+      .limit(8);
 
-    // Build messages array with history
+    // Build messages array
     const aiMessages: { role: string; content: string }[] = [
       { role: 'system', content: systemPrompt }
     ];
 
-    // Add conversation history (reversed to be chronological)
     if (history && history.length > 0) {
       const reversedHistory = [...history].reverse();
       for (const h of reversedHistory) {
-        aiMessages.push({ role: 'user', content: h.user_message });
-        aiMessages.push({ role: 'assistant', content: h.assistant_response });
+        if (h.assistant_response !== '[BLOCKED BY RULE]') {
+          aiMessages.push({ role: 'user', content: h.user_message });
+          aiMessages.push({ role: 'assistant', content: h.assistant_response });
+        }
       }
     }
 
     aiMessages.push({ role: 'user', content: message });
 
-    // Determine API configuration based on provider
+    // Determine API configuration
     const provider = config.provider || 'lovable';
     let apiUrl = '';
     let apiKey = '';
@@ -276,7 +439,6 @@ serve(async (req) => {
       apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
       headers['Authorization'] = `Bearer ${apiKey}`;
     } else if (provider === 'openai') {
-      // Get API key from organization_ai_providers
       const { data: providerConfig } = await supabase
         .from('organization_ai_providers')
         .select('api_key_encrypted')
@@ -318,17 +480,15 @@ serve(async (req) => {
       });
     }
 
-    console.log('Calling AI with provider:', provider, 'model:', config.model);
-    console.log('System prompt length:', systemPrompt.length);
-    console.log('Message count:', aiMessages.length);
+    console.log('AI Request - Provider:', provider, 'Model:', config.model, 'User role:', userRolesList.join(','));
+    console.log('System prompt length:', systemPrompt.length, 'chars');
 
     let aiResponse: Response;
     let assistantResponse = '';
 
     if (provider === 'gemini') {
-      // Gemini uses a different API format
       const geminiMessages = aiMessages.map(m => ({
-        role: m.role === 'assistant' ? 'model' : m.role === 'system' ? 'user' : 'user',
+        role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }]
       }));
 
@@ -346,7 +506,6 @@ serve(async (req) => {
         assistantResponse = aiData.candidates?.[0]?.content?.parts?.[0]?.text || fallbackMessage;
       }
     } else if (provider === 'anthropic') {
-      // Anthropic uses a different API format
       const systemContent = aiMessages.find(m => m.role === 'system')?.content || '';
       const userMessages = aiMessages.filter(m => m.role !== 'system').map(m => ({
         role: m.role,
@@ -369,7 +528,6 @@ serve(async (req) => {
         assistantResponse = aiData.content?.[0]?.text || fallbackMessage;
       }
     } else {
-      // OpenAI-compatible (Lovable, OpenAI)
       aiResponse = await fetch(apiUrl, {
         method: 'POST',
         headers,
@@ -390,19 +548,19 @@ serve(async (req) => {
       console.error('AI gateway error:', aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
+        return new Response(JSON.stringify({ error: 'Límite de solicitudes excedido. Intenta de nuevo en unos momentos.' }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please contact support.' }), {
+        return new Response(JSON.stringify({ error: 'Créditos de IA agotados. Contacta al administrador.' }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       
-      return new Response(JSON.stringify({ error: 'AI service error' }), {
+      return new Response(JSON.stringify({ error: 'Error en el servicio de IA' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -415,7 +573,6 @@ serve(async (req) => {
       conversation_id: conversationId || null,
       user_message: message,
       assistant_response: assistantResponse,
-      tokens_used: null, // Token tracking varies by provider
     });
 
     return new Response(JSON.stringify({ 
@@ -427,7 +584,7 @@ serve(async (req) => {
 
   } catch (error: unknown) {
     console.error('AI assistant error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
