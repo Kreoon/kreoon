@@ -1,4 +1,13 @@
+// Ambassador is now primarily a BADGE, not a role
+// The role type still includes 'ambassador' for backward compatibility with existing data
+// New implementations should use organization_member_badges table instead
 export type AppRole = 'admin' | 'creator' | 'editor' | 'client' | 'ambassador' | 'strategist';
+
+// Ambassador badge levels (new system - preferred)
+export type AmbassadorLevel = 'bronze' | 'silver' | 'gold';
+
+// Badge types available in the system
+export type BadgeType = 'ambassador';
 
 export type ContentStatus = 
   | 'draft'           // Creado

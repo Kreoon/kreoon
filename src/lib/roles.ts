@@ -1,12 +1,14 @@
-import { AppRole } from '@/types/database';
+import { AppRole, AmbassadorLevel } from '@/types/database';
 
 // ============= LABELS =============
+// Note: Ambassador role is DEPRECATED - use organization_member_badges instead
+// Kept here for backward compatibility
 export const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Administrador',
   creator: 'Creador',
   editor: 'Editor',
   client: 'Cliente',
-  ambassador: 'Embajador',
+  ambassador: 'Embajador (Legacy)', // Deprecated - use badge instead
   strategist: 'Estratega'
 };
 
@@ -47,6 +49,27 @@ export const ROLE_SOLID_COLORS: Record<AppRole, string> = {
   strategist: 'bg-orange-500'
 };
 
+// ============= AMBASSADOR BADGE STYLING =============
+// Ambassador is now a badge/privilege, not a role
+// Use these for the new badge-based system
+export const AMBASSADOR_BADGE_LABELS: Record<AmbassadorLevel, string> = {
+  bronze: 'Embajador Bronce',
+  silver: 'Embajador Plata',
+  gold: 'Embajador Oro'
+};
+
+export const AMBASSADOR_BADGE_COLORS: Record<AmbassadorLevel, string> = {
+  bronze: 'bg-amber-600/20 text-amber-600',
+  silver: 'bg-slate-400/20 text-slate-400',
+  gold: 'bg-yellow-500/20 text-yellow-500'
+};
+
+export const AMBASSADOR_BADGE_SOLID_COLORS: Record<AmbassadorLevel, string> = {
+  bronze: 'bg-amber-600',
+  silver: 'bg-slate-400',
+  gold: 'bg-yellow-500'
+};
+
 // ============= HELPER FUNCTIONS =============
 export function getRoleLabel(role: AppRole | string): string {
   return ROLE_LABELS[role as AppRole] || role;
@@ -69,10 +92,12 @@ export function getRoleSolidColor(role: AppRole | string): string {
 }
 
 // Get the primary role from an array (priority order)
+// Note: Ambassador role is deprecated - badge system should be used instead
 export function getPrimaryRole(roles: AppRole[]): AppRole | null {
   if (roles.length === 0) return null;
   
-  const priority: AppRole[] = ['admin', 'ambassador', 'strategist', 'creator', 'editor', 'client'];
+  // Ambassador excluded from priority as it's deprecated (use badge system)
+  const priority: AppRole[] = ['admin', 'strategist', 'creator', 'editor', 'client', 'ambassador'];
   
   for (const role of priority) {
     if (roles.includes(role)) {
@@ -100,7 +125,12 @@ export function isAdminRole(roles: AppRole[]): boolean {
 }
 
 // All available roles for selection
+// Note: Ambassador role is deprecated - use badge system for new implementations
 export const ALL_ROLES: AppRole[] = ['admin', 'strategist', 'creator', 'editor', 'client', 'ambassador'];
 
 // Roles that can be assigned by org owners (not platform-level)
-export const ORG_ASSIGNABLE_ROLES: AppRole[] = ['strategist', 'creator', 'editor', 'client', 'ambassador'];
+// Ambassador excluded - use badge system instead
+export const ORG_ASSIGNABLE_ROLES: AppRole[] = ['strategist', 'creator', 'editor', 'client'];
+
+// Ambassador badge levels for selection (new system)
+export const AMBASSADOR_LEVELS: AmbassadorLevel[] = ['bronze', 'silver', 'gold'];
