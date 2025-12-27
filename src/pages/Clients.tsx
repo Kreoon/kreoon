@@ -73,7 +73,7 @@ interface ClientUser {
 const Clients = () => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
-  const { isPlatformRoot, currentOrgId } = useOrgOwner();
+  const { isPlatformRoot, currentOrgId, currentOrgName } = useOrgOwner();
   const [clients, setClients] = useState<Client[]>([]);
   const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,14 +94,17 @@ const Clients = () => {
 
   const fetchClients = async () => {
     setLoading(true);
+    // Clear previous org data immediately to avoid "bleed" while loading
+    setClients([]);
+    setClientUsers([]);
+
     try {
-      // Fetch company clients - filter by organization if not platform root
+      // Fetch company clients - always scoped to selected organization (including for root)
       let clientsQuery = supabase
         .from('clients')
         .select('*')
         .order('name');
-      
-      // Filter by organization - always apply when org is selected (including for root)
+
       if (currentOrgId) {
         clientsQuery = clientsQuery.eq('organization_id', currentOrgId);
       }
@@ -256,7 +259,8 @@ const Clients = () => {
           name: newClientData.name,
           contact_email: newClientData.contact_email || null,
           contact_phone: newClientData.contact_phone || null,
-          notes: newClientData.notes || null
+          notes: newClientData.notes || null,
+          organization_id: currentOrgId,
         });
 
       if (error) throw error;
@@ -384,6 +388,13 @@ const Clients = () => {
               )
             }
           />
+
+          {isPlatformRoot && (
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">Org actual: {currentOrgName || '—'}</Badge>
+              {currentOrgId && <Badge variant="outline" className="font-mono text-xs">{currentOrgId}</Badge>}
+            </div>
+          )}
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
