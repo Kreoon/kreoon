@@ -248,35 +248,67 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-screen w-80 md:w-96 bg-card border-l border-border shadow-xl z-50 flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          {view !== 'list' && (
-            <Button variant="ghost" size="icon" onClick={() => {
+    <div className={cn(
+      "fixed z-50 flex flex-col bg-background shadow-2xl",
+      "right-0 top-0 h-screen w-full sm:w-96 md:w-[420px]",
+      "border-l border-border"
+    )}>
+      {/* WhatsApp-style Header */}
+      <div className={cn(
+        "flex items-center gap-3 p-3",
+        "bg-gradient-to-r from-emerald-600 to-teal-600 text-white"
+      )}>
+        {view !== 'list' && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
               setView('list');
               setActiveConversation(null);
-            }}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          )}
-          <MessageCircle className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold">
-            {view === 'list' && 'Mensajes'}
+            }}
+            className="text-white hover:bg-white/20"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+        )}
+        
+        {view === 'chat' && activeConversation && (
+          <Avatar className="h-10 w-10 border-2 border-white/30">
+            <AvatarImage src={getConversationAvatar(activeConversation) || ''} />
+            <AvatarFallback className="bg-white/20 text-white">
+              {getConversationIcon(activeConversation)}
+            </AvatarFallback>
+          </Avatar>
+        )}
+        
+        <div className="flex-1 min-w-0">
+          <h2 className="font-semibold text-lg truncate">
+            {view === 'list' && 'Chats'}
             {view === 'chat' && getConversationName(activeConversation!)}
             {view === 'new' && 'Nueva conversación'}
           </h2>
+          {view === 'chat' && activeConversation && (
+            <p className="text-xs text-white/70">
+              {isAIConversation ? 'Siempre disponible' : 'En línea'}
+            </p>
+          )}
         </div>
+        
         <div className="flex items-center gap-1">
           {view === 'list' && (
-            <Button variant="ghost" size="icon" onClick={() => setView('new')}>
-              <Plus className="h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setView('new')}
+              className="text-white hover:bg-white/20"
+            >
+              <Plus className="h-5 w-5" />
             </Button>
           )}
-          {view === 'chat' && isAdmin && activeConversation && (
+          {view === 'chat' && isAdmin && activeConversation && !isAIConversation && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
@@ -302,8 +334,13 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
               </AlertDialogContent>
             </AlertDialog>
           )}
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose}
+            className="text-white hover:bg-white/20"
+          >
+            <X className="h-5 w-5" />
           </Button>
         </div>
       </div>
@@ -551,37 +588,53 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
               </div>
             )}
 
-            {/* Message Input */}
-            <div className="p-4 border-t">
-              <div className="flex gap-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
-                />
+            {/* WhatsApp-style Message Input */}
+            <div className="p-3 bg-muted/30">
+              <div className="flex items-end gap-2">
+                {!isAIConversation && (
+                  <>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="h-10 w-10 rounded-full shrink-0"
+                    >
+                      {uploading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Paperclip className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </>
+                )}
+                <div className="flex-1 relative">
+                  <Input
+                    value={newMessage}
+                    onChange={handleInputChange}
+                    placeholder={isAIConversation ? "Pregunta algo..." : "Escribe un mensaje..."}
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                    className="pr-4 rounded-full bg-background border-border"
+                  />
+                </div>
                 <Button 
-                  variant="ghost" 
                   size="icon" 
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
+                  onClick={handleSendMessage} 
+                  disabled={!newMessage.trim() || (isAIConversation && aiLoading)}
+                  className="h-10 w-10 rounded-full shrink-0 bg-emerald-600 hover:bg-emerald-700"
                 >
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                  {isAIConversation && aiLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
-                    <Paperclip className="h-4 w-4" />
+                    <Send className="h-5 w-5" />
                   )}
-                </Button>
-                <Input
-                  value={newMessage}
-                  onChange={handleInputChange}
-                  placeholder="Escribe un mensaje..."
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-                  className="flex-1"
-                />
-                <Button size="icon" onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                  <Send className="h-4 w-4" />
                 </Button>
               </div>
             </div>

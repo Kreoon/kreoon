@@ -3,17 +3,17 @@ import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { IntegratedNotificationHeader } from "@/components/notifications/IntegratedNotificationHeader";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { FloatingChatButton } from "@/components/chat/FloatingChatButton";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-// AIAssistantButton removed - AI chat is now integrated into ChatPanel
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors, MessageCircle, Briefcase } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, LogOut, Building2, Video, Sparkles, Scissors, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -94,22 +94,6 @@ export function MainLayout({
             >
               <Briefcase className="h-4 w-4" />
             </Button>
-            <Button
-              variant={chatOpen ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setChatOpen(!chatOpen)}
-              className={cn(
-                "relative h-9 w-9 rounded-full",
-                unreadChatCount > 0 && !chatOpen && "bg-blue-500/20"
-              )}
-            >
-              <MessageCircle className="h-4 w-4" />
-              {unreadChatCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white animate-pulse">
-                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
-                </span>
-              )}
-            </Button>
             <NotificationBell />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
@@ -160,6 +144,13 @@ export function MainLayout({
             {children}
           </div>
         </main>
+
+        {/* Floating Chat Button */}
+        <FloatingChatButton 
+          onClick={() => setChatOpen(!chatOpen)} 
+          isOpen={chatOpen} 
+          unreadCount={unreadChatCount} 
+        />
 
         {/* Chat Panel */}
         <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
@@ -264,22 +255,6 @@ export function MainLayout({
             >
               <Briefcase className="h-4 w-4" />
             </Button>
-            <Button
-              variant={chatOpen ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setChatOpen(!chatOpen)}
-              className={cn(
-                "relative h-9 w-9 rounded-full",
-                unreadChatCount > 0 && !chatOpen && "bg-blue-500/20"
-              )}
-            >
-              <MessageCircle className="h-4 w-4" />
-              {unreadChatCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white animate-pulse">
-                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
-                </span>
-              )}
-            </Button>
             <NotificationBell />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
@@ -329,6 +304,13 @@ export function MainLayout({
             {children}
           </div>
         </main>
+
+        {/* Floating Chat Button */}
+        <FloatingChatButton 
+          onClick={() => setChatOpen(!chatOpen)} 
+          isOpen={chatOpen} 
+          unreadCount={unreadChatCount} 
+        />
 
         {/* Chat Panel */}
         <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
@@ -381,22 +363,6 @@ export function MainLayout({
           >
             <Briefcase className="h-4 w-4" />
           </Button>
-          <Button
-            variant={chatOpen ? "default" : "ghost"}
-            size="icon"
-            onClick={() => setChatOpen(!chatOpen)}
-            className={cn(
-              "relative h-9 w-9 rounded-full",
-              unreadChatCount > 0 && !chatOpen && "bg-blue-500/20"
-            )}
-          >
-            <MessageCircle className="h-4 w-4" />
-            {unreadChatCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white animate-pulse">
-                {unreadChatCount > 9 ? '9+' : unreadChatCount}
-              </span>
-            )}
-          </Button>
           <NotificationBell />
         </div>
       </header>
@@ -422,6 +388,13 @@ export function MainLayout({
           {children}
         </div>
       </main>
+
+      {/* Floating Chat Button */}
+      <FloatingChatButton 
+        onClick={() => setChatOpen(!chatOpen)} 
+        isOpen={chatOpen} 
+        unreadCount={unreadChatCount} 
+      />
 
       {/* Chat Panel */}
       <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />

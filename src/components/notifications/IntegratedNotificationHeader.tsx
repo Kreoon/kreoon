@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, MessageCircle, Briefcase, Eye, Building2, Shield, User, Sparkles, Zap } from "lucide-react";
+import { Bell, Briefcase, Eye, Building2, Shield, User, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
 import { Badge } from "@/components/ui/badge";
@@ -449,32 +449,7 @@ export function IntegratedNotificationHeader({
         <span className="hidden sm:inline">Portafolio</span>
       </Button>
       
-      {/* Chat Button */}
-      <Button
-        variant={isChatOpen ? "default" : "outline"}
-        size="sm"
-        onClick={onChatClick}
-        className={cn(
-          "relative gap-2 transition-all duration-300",
-          isChatOpen && "bg-primary text-primary-foreground",
-          isChatAnimating && "animate-pulse ring-2 ring-blue-500",
-          !isChatOpen && unreadChatCount > 0 && "border-blue-500 bg-blue-500/10 hover:bg-blue-500/20"
-        )}
-      >
-        <MessageCircle className="h-4 w-4" />
-        <span className="hidden sm:inline">Chat</span>
-        {unreadChatCount > 0 && (
-          <Badge 
-            variant="secondary" 
-            className={cn(
-              "ml-1 bg-blue-500 text-white text-xs px-1.5 py-0",
-              isChatAnimating && "animate-bounce"
-            )}
-          >
-            {unreadChatCount > 9 ? '9+' : unreadChatCount}
-          </Badge>
-        )}
-      </Button>
+      {/* Chat Button removed - now using floating button */}
 
       {/* Notification Button */}
       <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
