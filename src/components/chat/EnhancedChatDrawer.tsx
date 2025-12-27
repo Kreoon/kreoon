@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useChat, ChatConversation, ChatUser } from '@/hooks/useChat';
 import { useChatTyping } from '@/hooks/useChatTyping';
 import { useChatAttachments } from '@/hooks/useChatAttachments';
+import { useChatNotifications } from '@/hooks/useChatNotifications';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -21,10 +22,11 @@ import {
   MessageCircle,
   Loader2,
   Check,
-  Circle
+  Bell
 } from 'lucide-react';
 import { ChatListItem } from './ChatListItem';
 import { ChatConversationView } from './ChatConversationView';
+import { PresenceIndicator } from './PresenceIndicator';
 import { getPrimaryRole, getRoleLabelShort } from '@/lib/roles';
 
 interface EnhancedChatDrawerProps {
@@ -65,7 +67,12 @@ export function EnhancedChatDrawer({
 
   const { typingUsers, handleTyping, stopTyping } = useChatTyping(activeConversation?.id || null);
   const { uploadAttachment, uploading, formatFileSize } = useChatAttachments();
+  const { requestPermission, unreadCount } = useChatNotifications(!!activeConversation?.id);
 
+  // Request notification permission on mount
+  useEffect(() => {
+    requestPermission();
+  }, [requestPermission]);
   const [view, setView] = useState<'list' | 'chat' | 'new'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -308,9 +315,9 @@ export function EnhancedChatDrawer({
                                     <AvatarImage src={chatUser.avatar_url || ''} />
                                     <AvatarFallback>{chatUser.full_name.charAt(0)}</AvatarFallback>
                                   </Avatar>
-                                  {chatUser.is_online && (
-                                    <Circle className="absolute -bottom-0.5 -right-0.5 h-3 w-3 fill-green-500 text-green-500 border-2 border-background rounded-full" />
-                                  )}
+                                  <div className="absolute -bottom-0.5 -right-0.5">
+                                    <PresenceIndicator isOnline={chatUser.is_online || false} size="md" />
+                                  </div>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
