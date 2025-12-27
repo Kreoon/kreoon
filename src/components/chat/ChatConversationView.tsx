@@ -462,9 +462,13 @@ export function ChatConversationView({
                             <video 
                               src={msg.attachment_url}
                               controls
-                              preload="metadata"
-                              className="max-w-full max-h-[300px] rounded-lg"
+                              preload="none"
+                              className="max-w-full max-h-[300px] rounded-lg bg-black/10"
                               playsInline
+                              onPlay={(e) => {
+                                // Load more data when user starts playing
+                                e.currentTarget.preload = 'auto';
+                              }}
                             >
                               Tu navegador no soporta videos HTML5.
                             </video>
