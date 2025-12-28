@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 export type ReportReason = 'spam' | 'harassment' | 'hate_speech' | 'violence' | 'nudity' | 'false_info' | 'other';
-export type ContentType = 'post' | 'story' | 'profile' | 'comment';
+export type ContentType = 'post' | 'story' | 'profile' | 'comment' | 'content';
 
 interface SubmitReportParams {
   contentId?: string;
