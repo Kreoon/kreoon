@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,10 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import { 
   Edit, Settings, MapPin, Briefcase, Link2, Instagram, 
   Play, Grid, Bookmark, Star, Eye, Heart, Users, Calendar,
-  ExternalLink, Mail, Globe, X, Camera
+  ExternalLink, Mail, Globe, X, Camera, Plus, Upload, Sparkles,
+  Image as ImageIcon, Video, FolderOpen, Wand2, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,6 +45,7 @@ interface ProfileData {
 
 interface ProfileStats {
   posts_count: number;
+  portfolio_count: number;
   videos_count: number;
   followers_count: number;
   following_count: number;
@@ -62,6 +69,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [stats, setStats] = useState<ProfileStats>({
     posts_count: 0,
+    portfolio_count: 0,
     videos_count: 0,
     followers_count: 0,
     following_count: 0,
@@ -69,18 +77,26 @@ export const PortfolioProfile = memo(function PortfolioProfile({
     likes_count: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'grid' | 'videos' | 'about'>('grid');
+  const [activeTab, setActiveTab] = useState<'portfolio' | 'posts' | 'videos' | 'about'>('portfolio');
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showAIProfileDialog, setShowAIProfileDialog] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profileRes, postsRes, videosRes, followersRes, followingRes] = await Promise.all([
+        const [profileRes, postsRes, portfolioRes, videosRes, followersRes, followingRes] = await Promise.all([
           supabase.from('profiles').select('*').eq('id', userId).single(),
           supabase
             .from('portfolio_posts')
             .select('id, views_count, likes_count', { count: 'exact' })
-            .eq('user_id', userId),
+            .eq('user_id', userId)
+            .eq('post_type', 'personal'),
+          supabase
+            .from('portfolio_posts')
+            .select('id', { count: 'exact' })
+            .eq('user_id', userId)
+            .eq('post_type', 'portfolio'),
           supabase
             .from('portfolio_posts')
             .select('id', { count: 'exact' })
@@ -105,6 +121,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
 
         setStats({
           posts_count: postsRes.count || 0,
+          portfolio_count: portfolioRes.count || 0,
           videos_count: videosRes.count || 0,
           followers_count: followersRes.count || 0,
           following_count: followingRes.count || 0,
@@ -222,16 +239,26 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   {isOwner ? (
                     <>
+                      <Button onClick={() => setShowUploadDialog(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Subir contenido
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setShowAIProfileDialog(true)}>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        IA Perfil
+                      </Button>
                       <Button variant="outline" size="sm" onClick={onEditProfile}>
                         <Edit className="h-4 w-4 mr-2" />
-                        Editar perfil
+                        Editar
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={onEditBlocks}>
-                        <Settings className="h-4 w-4" />
-                      </Button>
+                      {onEditBlocks && (
+                        <Button variant="ghost" size="icon" onClick={onEditBlocks}>
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      )}
                     </>
                   ) : (
                     <>
@@ -253,45 +280,57 @@ export const PortfolioProfile = memo(function PortfolioProfile({
 
       {/* Stats Bar */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-6">
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 p-4 bg-card rounded-xl border shadow-sm">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-4 p-4 bg-card rounded-xl border shadow-sm">
+          <StatItem icon={<FolderOpen className="h-4 w-4" />} value={stats.portfolio_count} label="Portafolio" />
           <StatItem icon={<Grid className="h-4 w-4" />} value={stats.posts_count} label="Posts" />
           <StatItem icon={<Play className="h-4 w-4" />} value={stats.videos_count} label="Videos" />
           <StatItem icon={<Users className="h-4 w-4" />} value={stats.followers_count} label="Seguidores" />
-          <StatItem icon={<Users className="h-4 w-4" />} value={stats.following_count} label="Siguiendo" />
-          <StatItem icon={<Eye className="h-4 w-4" />} value={stats.views_count} label="Vistas" />
-          <StatItem icon={<Heart className="h-4 w-4" />} value={stats.likes_count} label="Likes" />
+          <StatItem icon={<Users className="h-4 w-4" />} value={stats.following_count} label="Siguiendo" className="hidden sm:block" />
+          <StatItem icon={<Eye className="h-4 w-4" />} value={stats.views_count} label="Vistas" className="hidden sm:block" />
+          <StatItem icon={<Heart className="h-4 w-4" />} value={stats.likes_count} label="Likes" className="hidden sm:block" />
         </div>
       </section>
 
       {/* Content Tabs */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-8">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none h-12 p-0 gap-6">
+          <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none h-12 p-0 gap-4 sm:gap-6 overflow-x-auto">
             <TabsTrigger 
-              value="grid" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1"
+              value="portfolio" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1 whitespace-nowrap"
+            >
+              <FolderOpen className="h-4 w-4 mr-2" />
+              Portafolio
+            </TabsTrigger>
+            <TabsTrigger 
+              value="posts" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1 whitespace-nowrap"
             >
               <Grid className="h-4 w-4 mr-2" />
-              Galería
+              Posts
             </TabsTrigger>
             <TabsTrigger 
               value="videos"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1 whitespace-nowrap"
             >
               <Play className="h-4 w-4 mr-2" />
               Videos
             </TabsTrigger>
             <TabsTrigger 
               value="about"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1 whitespace-nowrap"
             >
               <Briefcase className="h-4 w-4 mr-2" />
               Sobre mí
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="grid" className="mt-6">
-            <PortfolioMosaic userId={userId} onSelect={setSelectedMedia} />
+          <TabsContent value="portfolio" className="mt-6">
+            <PortfolioWorkSection userId={userId} isOwner={isOwner} onSelect={setSelectedMedia} onUpload={() => setShowUploadDialog(true)} />
+          </TabsContent>
+
+          <TabsContent value="posts" className="mt-6">
+            <PersonalFeedSection userId={userId} isOwner={isOwner} onSelect={setSelectedMedia} onUpload={() => setShowUploadDialog(true)} />
           </TabsContent>
 
           <TabsContent value="videos" className="mt-6">
@@ -314,6 +353,23 @@ export const PortfolioProfile = memo(function PortfolioProfile({
           <MediaViewer media={selectedMedia} onClose={() => setSelectedMedia(null)} />
         )}
       </AnimatePresence>
+
+      {/* Upload Dialog */}
+      <UploadContentDialog 
+        open={showUploadDialog} 
+        onOpenChange={setShowUploadDialog}
+        userId={userId}
+      />
+
+      {/* AI Profile Generator */}
+      <AIProfileDialog
+        open={showAIProfileDialog}
+        onOpenChange={setShowAIProfileDialog}
+        profile={profile}
+        onApply={(updates) => {
+          setProfile(prev => prev ? { ...prev, ...updates } : null);
+        }}
+      />
     </div>
   );
 });
@@ -322,7 +378,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
 // Sub Components
 // =============================================================================
 
-function StatItem({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+function StatItem({ icon, value, label, className }: { icon: React.ReactNode; value: number; label: string; className?: string }) {
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
@@ -330,17 +386,18 @@ function StatItem({ icon, value, label }: { icon: React.ReactNode; value: number
   };
 
   return (
-    <div className="text-center">
+    <div className={cn("text-center", className)}>
       <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
         {icon}
       </div>
-      <div className="text-xl font-bold">{formatNumber(value)}</div>
+      <div className="text-lg sm:text-xl font-bold">{formatNumber(value)}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }
 
-function PortfolioMosaic({ userId, onSelect }: { userId: string; onSelect: (media: any) => void }) {
+// Portfolio Work Section (Professional work)
+function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId: string; isOwner: boolean; onSelect: (media: any) => void; onUpload: () => void }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -350,6 +407,7 @@ function PortfolioMosaic({ userId, onSelect }: { userId: string; onSelect: (medi
         .from('portfolio_posts')
         .select('*')
         .eq('user_id', userId)
+        .or('post_type.eq.portfolio,post_type.is.null')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -361,9 +419,9 @@ function PortfolioMosaic({ userId, onSelect }: { userId: string; onSelect: (medi
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className={cn("rounded-lg", i === 0 ? "col-span-2 row-span-2 aspect-square" : "aspect-square")} />
+          <Skeleton key={i} className="aspect-square rounded-lg" />
         ))}
       </div>
     );
@@ -371,64 +429,174 @@ function PortfolioMosaic({ userId, onSelect }: { userId: string; onSelect: (medi
 
   if (posts.length === 0) {
     return (
-      <Card className="p-12 text-center">
-        <Grid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="font-semibold mb-2">Sin publicaciones aún</h3>
-        <p className="text-sm text-muted-foreground">Las imágenes y videos aparecerán aquí</p>
+      <Card className="p-12 text-center border-dashed">
+        <FolderOpen className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-xl font-semibold mb-2">Tu portafolio profesional</h3>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+          Sube tus mejores trabajos, proyectos y colaboraciones para mostrar tu talento
+        </p>
+        {isOwner && (
+          <Button onClick={onUpload} size="lg">
+            <Upload className="h-5 w-5 mr-2" />
+            Subir primer trabajo
+          </Button>
+        )}
       </Card>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 auto-rows-[200px]">
-      {posts.map((post, index) => {
-        // First item takes 2x2 space
-        const isLarge = index === 0;
-        // Every 5th item after first takes 2 columns
-        const isWide = index > 0 && index % 5 === 0;
-        
-        return (
-          <motion.div
+    <div className="space-y-4">
+      {isOwner && (
+        <div className="flex justify-end">
+          <Button onClick={onUpload} variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            Agregar trabajo
+          </Button>
+        </div>
+      )}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-[200px]">
+        {posts.map((post, index) => {
+          const isLarge = index === 0;
+          const isWide = index > 0 && index % 5 === 0;
+          
+          return (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.05 }}
+              onClick={() => onSelect(post)}
+              className={cn(
+                "relative group cursor-pointer overflow-hidden rounded-lg bg-muted",
+                isLarge && "col-span-2 row-span-2",
+                isWide && "col-span-2"
+              )}
+            >
+              <img
+                src={post.thumbnail_url || post.media_url}
+                alt=""
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              
+              {post.media_type === 'video' && (
+                <div className="absolute top-3 right-3">
+                  <Play className="h-5 w-5 text-white drop-shadow-lg fill-white/60" />
+                </div>
+              )}
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="absolute bottom-3 left-3 right-3">
+                  {post.caption && (
+                    <p className="text-white text-sm font-medium line-clamp-2 mb-2">{post.caption}</p>
+                  )}
+                  <div className="flex items-center gap-4 text-white text-sm">
+                    <span className="flex items-center gap-1">
+                      <Heart className="h-4 w-4" />
+                      {post.likes_count || 0}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-4 w-4" />
+                      {post.views_count || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Personal Feed Section (Casual posts)
+function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: string; isOwner: boolean; onSelect: (media: any) => void; onUpload: () => void }) {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const { data } = await supabase
+        .from('portfolio_posts')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('post_type', 'personal')
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      setPosts(data || []);
+      setLoading(false);
+    };
+    fetchPosts();
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-3 gap-1">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <Skeleton key={i} className="aspect-square" />
+        ))}
+      </div>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <Card className="p-12 text-center border-dashed">
+        <Grid className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-xl font-semibold mb-2">Tu feed personal</h3>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+          Comparte momentos, detrás de cámaras y contenido más casual
+        </p>
+        {isOwner && (
+          <Button onClick={onUpload} size="lg" variant="outline">
+            <Upload className="h-5 w-5 mr-2" />
+            Crear post
+          </Button>
+        )}
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {isOwner && (
+        <div className="flex justify-end">
+          <Button onClick={onUpload} variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo post
+          </Button>
+        </div>
+      )}
+      <div className="grid grid-cols-3 gap-1">
+        {posts.map((post) => (
+          <div
             key={post.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.05 }}
             onClick={() => onSelect(post)}
-            className={cn(
-              "relative group cursor-pointer overflow-hidden rounded-lg bg-muted",
-              isLarge && "col-span-2 row-span-2",
-              isWide && "col-span-2"
-            )}
+            className="aspect-square relative group cursor-pointer overflow-hidden bg-muted"
           >
             <img
               src={post.thumbnail_url || post.media_url}
               alt=""
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
             />
             
-            {/* Video indicator */}
             {post.media_type === 'video' && (
-              <div className="absolute top-3 right-3">
-                <Play className="h-5 w-5 text-white drop-shadow-lg fill-white/60" />
+              <div className="absolute top-2 right-2">
+                <Play className="h-4 w-4 text-white drop-shadow-lg fill-white/50" />
               </div>
             )}
 
-            {/* Hover overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <div className="absolute bottom-3 left-3 right-3 flex items-center gap-4 text-white text-sm">
-                <span className="flex items-center gap-1">
-                  <Heart className="h-4 w-4" />
-                  {post.likes_count || 0}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Eye className="h-4 w-4" />
-                  {post.views_count || 0}
-                </span>
-              </div>
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
+              <span className="flex items-center gap-1 text-sm">
+                <Heart className="h-4 w-4 fill-white" />
+                {post.likes_count || 0}
+              </span>
             </div>
-          </motion.div>
-        );
-      })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -439,7 +607,6 @@ function PresentationVideoSection({ userId, isOwner }: { userId: string; isOwner
 
   useEffect(() => {
     const fetchVideo = async () => {
-      // Get the first video as presentation
       const { data: firstVideo } = await supabase
         .from('portfolio_posts')
         .select('id, media_url, thumbnail_url, caption, views_count, likes_count, media_type')
@@ -461,7 +628,7 @@ function PresentationVideoSection({ userId, isOwner }: { userId: string; isOwner
 
   if (!video) {
     return (
-      <Card className="aspect-video flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+      <Card className="aspect-video flex items-center justify-center bg-gradient-to-br from-muted to-muted/50 border-dashed">
         <div className="text-center p-8">
           <Play className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Video de presentación</h3>
@@ -470,7 +637,7 @@ function PresentationVideoSection({ userId, isOwner }: { userId: string; isOwner
           </p>
           {isOwner && (
             <Button variant="outline">
-              <Camera className="h-4 w-4 mr-2" />
+              <Video className="h-4 w-4 mr-2" />
               Subir video
             </Button>
           )}
@@ -562,7 +729,6 @@ function VideoGallery({ userId, onSelect }: { userId: string; onSelect: (media: 
 function AboutSection({ profile }: { profile: ProfileData }) {
   return (
     <div className="grid md:grid-cols-2 gap-6">
-      {/* Bio Card */}
       <Card className="p-6">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <Briefcase className="h-4 w-4" />
@@ -582,7 +748,6 @@ function AboutSection({ profile }: { profile: ProfileData }) {
         )}
       </Card>
 
-      {/* Skills & Tags */}
       <div className="space-y-6">
         {profile.specialties_tags?.length > 0 && (
           <Card className="p-6">
@@ -617,7 +782,6 @@ function AboutSection({ profile }: { profile: ProfileData }) {
           </Card>
         )}
 
-      {/* Social Links */}
         {(profile.instagram || profile.tiktok || profile.portfolio_url) && (
           <Card className="p-6">
             <h3 className="font-semibold mb-3">Enlaces</h3>
@@ -654,7 +818,7 @@ function AboutSection({ profile }: { profile: ProfileData }) {
                   className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
                 >
                   <Globe className="h-4 w-4" />
-                  {new URL(profile.portfolio_url).hostname}
+                  <span>{(() => { try { return new URL(profile.portfolio_url).hostname; } catch { return profile.portfolio_url; } })()}</span>
                   <ExternalLink className="h-3 w-3 ml-auto" />
                 </a>
               )}
@@ -707,7 +871,6 @@ function MediaViewer({ media, onClose }: { media: any; onClose: () => void }) {
           />
         )}
 
-        {/* Media info */}
         <div className="mt-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1">
@@ -725,6 +888,353 @@ function MediaViewer({ media, onClose }: { media: any; onClose: () => void }) {
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+// Upload Content Dialog
+function UploadContentDialog({ open, onOpenChange, userId }: { open: boolean; onOpenChange: (open: boolean) => void; userId: string }) {
+  const [uploading, setUploading] = useState(false);
+  const [postType, setPostType] = useState<'portfolio' | 'personal'>('portfolio');
+  const [caption, setCaption] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      toast.error('Solo se permiten imágenes y videos');
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error('El archivo es demasiado grande (máx 100MB)');
+      return;
+    }
+
+    setSelectedFile(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+
+    setUploading(true);
+    try {
+      const ext = selectedFile.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio')
+        .upload(fileName, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from('portfolio').getPublicUrl(fileName);
+
+      const mediaType = selectedFile.type.startsWith('video/') ? 'video' : 'image';
+
+      const { error: insertError } = await supabase
+        .from('portfolio_posts')
+        .insert({
+          user_id: userId,
+          media_url: urlData.publicUrl,
+          media_type: mediaType,
+          post_type: postType,
+          caption: caption || null,
+        });
+
+      if (insertError) throw insertError;
+
+      toast.success('Contenido subido exitosamente');
+      onOpenChange(false);
+      setSelectedFile(null);
+      setPreview(null);
+      setCaption('');
+    } catch (error) {
+      console.error('[Upload] Error:', error);
+      toast.error('Error al subir contenido');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Subir contenido</DialogTitle>
+          <DialogDescription>
+            Comparte tu trabajo o momentos con tu audiencia
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Post Type Selector */}
+          <div className="flex gap-2">
+            <Button
+              variant={postType === 'portfolio' ? 'default' : 'outline'}
+              className="flex-1"
+              onClick={() => setPostType('portfolio')}
+            >
+              <FolderOpen className="h-4 w-4 mr-2" />
+              Portafolio
+            </Button>
+            <Button
+              variant={postType === 'personal' ? 'default' : 'outline'}
+              className="flex-1"
+              onClick={() => setPostType('personal')}
+            >
+              <Grid className="h-4 w-4 mr-2" />
+              Post personal
+            </Button>
+          </div>
+
+          {/* File Upload Area */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(
+              "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+              preview ? "border-primary" : "border-muted-foreground/25 hover:border-primary/50"
+            )}
+          >
+            {preview ? (
+              <div className="relative">
+                {selectedFile?.type.startsWith('video/') ? (
+                  <video src={preview} className="max-h-64 mx-auto rounded" controls />
+                ) : (
+                  <img src={preview} alt="Preview" className="max-h-64 mx-auto rounded" />
+                )}
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedFile(null);
+                    setPreview(null);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  Haz clic para seleccionar una imagen o video
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Máximo 100MB
+                </p>
+              </>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+
+          {/* Caption */}
+          <div>
+            <Label htmlFor="caption">Descripción (opcional)</Label>
+            <Textarea
+              id="caption"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder={postType === 'portfolio' ? 'Describe tu trabajo...' : 'Escribe algo...'}
+              rows={3}
+            />
+          </div>
+
+          {/* Upload Button */}
+          <Button 
+            onClick={handleUpload} 
+            disabled={!selectedFile || uploading}
+            className="w-full"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Subiendo...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Publicar
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// AI Profile Generator Dialog
+function AIProfileDialog({ 
+  open, 
+  onOpenChange, 
+  profile,
+  onApply 
+}: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void; 
+  profile: ProfileData;
+  onApply: (updates: Partial<ProfileData>) => void;
+}) {
+  const { user } = useAuth();
+  const [generating, setGenerating] = useState(false);
+  const [suggestions, setSuggestions] = useState<{
+    bio?: string;
+    tagline?: string;
+    best_at?: string;
+  } | null>(null);
+  const [context, setContext] = useState('');
+
+  const generateProfile = async () => {
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('portfolio-ai', {
+        body: {
+          action: 'bio',
+          payload: {
+            current_bio: profile.bio || '',
+            profession: profile.tagline || 'Creador de contenido',
+            skills: profile.specialties_tags?.join(', ') || '',
+            context: context,
+            language: 'es'
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      // Also generate tagline
+      const { data: taglineData } = await supabase.functions.invoke('portfolio-ai', {
+        body: {
+          action: 'bio',
+          payload: {
+            current_bio: profile.tagline || '',
+            profession: 'Tagline profesional corto',
+            skills: profile.specialties_tags?.join(', ') || '',
+            context: `Genera solo un tagline de máximo 10 palabras. ${context}`,
+            language: 'es'
+          }
+        }
+      });
+
+      setSuggestions({
+        bio: data?.data?.improved_bio || '',
+        tagline: taglineData?.data?.improved_bio || '',
+      });
+
+    } catch (error) {
+      console.error('[AI Profile] Error:', error);
+      toast.error('Error al generar perfil con IA');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const applyChanges = async () => {
+    if (!suggestions || !user?.id) return;
+
+    try {
+      const updates: any = {};
+      if (suggestions.bio) updates.bio = suggestions.bio;
+      if (suggestions.tagline) updates.tagline = suggestions.tagline;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      onApply(updates);
+      toast.success('Perfil actualizado con IA');
+      onOpenChange(false);
+      setSuggestions(null);
+    } catch (error) {
+      toast.error('Error al guardar cambios');
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Generar perfil con IA
+          </DialogTitle>
+          <DialogDescription>
+            Deja que la IA mejore tu bio y tagline profesional
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="context">Contexto adicional (opcional)</Label>
+            <Textarea
+              id="context"
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              placeholder="Ej: Enfócate en mi experiencia en moda, soy carismático y creativo..."
+              rows={2}
+            />
+          </div>
+
+          {!suggestions ? (
+            <Button onClick={generateProfile} disabled={generating} className="w-full">
+              {generating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Generar sugerencias
+                </>
+              )}
+            </Button>
+          ) : (
+            <div className="space-y-4">
+              {suggestions.tagline && (
+                <Card className="p-4">
+                  <h4 className="text-sm font-medium mb-2">Tagline sugerido</h4>
+                  <p className="text-muted-foreground">{suggestions.tagline}</p>
+                </Card>
+              )}
+
+              {suggestions.bio && (
+                <Card className="p-4">
+                  <h4 className="text-sm font-medium mb-2">Bio sugerida</h4>
+                  <p className="text-muted-foreground text-sm">{suggestions.bio}</p>
+                </Card>
+              )}
+
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setSuggestions(null)} className="flex-1">
+                  Regenerar
+                </Button>
+                <Button onClick={applyChanges} className="flex-1">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Aplicar
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
