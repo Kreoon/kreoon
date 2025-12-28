@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ProfileTrustBadges } from './ProfileTrustBadges';
 
 interface ProfileData {
   id: string;
@@ -77,7 +78,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
     likes_count: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'portfolio' | 'posts' | 'videos' | 'about'>('portfolio');
+  const [activeTab, setActiveTab] = useState<'portfolio' | 'posts' | 'videos' | 'badges' | 'about'>('portfolio');
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showAIProfileDialog, setShowAIProfileDialog] = useState(false);
@@ -278,6 +279,11 @@ export const PortfolioProfile = memo(function PortfolioProfile({
         </div>
       </section>
 
+      {/* Trust Badges - Compact version under avatar */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-4">
+        <ProfileTrustBadges userId={userId} compact />
+      </section>
+
       {/* Stats Bar */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-6">
         <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-4 p-4 bg-social-card rounded-xl border border-social-border shadow-sm">
@@ -317,6 +323,13 @@ export const PortfolioProfile = memo(function PortfolioProfile({
               Videos
             </TabsTrigger>
             <TabsTrigger 
+              value="badges"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
+            >
+              <Star className="h-4 w-4 mr-2" />
+              Logros
+            </TabsTrigger>
+            <TabsTrigger 
               value="about"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
             >
@@ -336,9 +349,13 @@ export const PortfolioProfile = memo(function PortfolioProfile({
           <TabsContent value="videos" className="mt-6">
             <PresentationVideoSection userId={userId} isOwner={isOwner} />
             <div className="mt-8">
-              <h3 className="text-lg font-semibold mb-4">Todos los videos</h3>
+              <h3 className="text-lg font-semibold text-social-foreground mb-4">Todos los videos</h3>
               <VideoGallery userId={userId} onSelect={setSelectedMedia} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="badges" className="mt-6">
+            <ProfileTrustBadges userId={userId} />
           </TabsContent>
 
           <TabsContent value="about" className="mt-6">
