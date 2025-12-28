@@ -187,7 +187,7 @@ export function SmartSearch({
     setQuery('');
     setShowResults(false);
     if (variant === 'icon') setIsExpanded(false);
-    navigate(`/p/${userId}`);
+    navigate(`/profile/${userId}`);
   };
 
   const handleContentClick = (contentId: string, title: string) => {
@@ -207,7 +207,7 @@ export function SmartSearch({
     setQuery('');
     setShowResults(false);
     if (variant === 'icon') setIsExpanded(false);
-    navigate(`/p/${clientId}`);
+    navigate(`/company/${clientId}`);
   };
 
   const handleRecentClick = (term: string) => {
