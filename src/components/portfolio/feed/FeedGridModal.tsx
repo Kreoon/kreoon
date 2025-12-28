@@ -46,6 +46,7 @@ interface VideoSlideProps {
   onSave: () => void;
   isSaved: boolean;
   onCompanyClick?: (username: string) => void;
+  onProfileClick?: (userId: string) => void;
 }
 
 const VideoSlide = memo(function VideoSlide({ 
@@ -55,7 +56,8 @@ const VideoSlide = memo(function VideoSlide({
   onMuteToggle, 
   onSave,
   isSaved,
-  onCompanyClick
+  onCompanyClick,
+  onProfileClick
 }: VideoSlideProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
@@ -116,13 +118,16 @@ const VideoSlide = memo(function VideoSlide({
       {/* Overlay info - bottom gradient */}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pb-8 pointer-events-none">
         {/* User info */}
-        <div className="flex items-center gap-3 mb-3 pointer-events-auto">
+        <div 
+          className="flex items-center gap-3 mb-3 pointer-events-auto cursor-pointer"
+          onClick={() => onProfileClick?.(item.user_id)}
+        >
           <Avatar className="h-10 w-10 ring-2 ring-white/30">
             <AvatarImage src={item.user_avatar} />
             <AvatarFallback className="text-white bg-white/20">{item.user_name?.[0]}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-white truncate">{item.user_name}</div>
+            <div className="font-semibold text-white truncate hover:underline">{item.user_name}</div>
             <div className="text-xs text-white/70">
               {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: es })}
             </div>
@@ -214,6 +219,11 @@ function FeedGridModalComponent({
   const handleCompanyClick = useCallback((username: string) => {
     onClose();
     navigate(`/company/${username}`);
+  }, [navigate, onClose]);
+
+  const handleProfileClick = useCallback((userId: string) => {
+    onClose();
+    navigate(`/profile/${userId}`);
   }, [navigate, onClose]);
 
   // Scroll to initial index on open
@@ -310,6 +320,7 @@ function FeedGridModalComponent({
               onSave={() => onSave(item)}
               isSaved={isSaved(item)}
               onCompanyClick={handleCompanyClick}
+              onProfileClick={handleProfileClick}
             />
           </div>
         ))}

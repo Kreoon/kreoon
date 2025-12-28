@@ -123,7 +123,7 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }
   };
 
   const handleProfileClick = (profileId: string) => {
-    navigate(`/portfolio/${profileId}`);
+    navigate(`/profile/${profileId}`);
   };
 
   if (loading || profiles.length === 0) return null;
