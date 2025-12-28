@@ -280,7 +280,7 @@ export default function FeedPage() {
   };
 
   return (
-    <div ref={containerRef} className="h-full overflow-y-auto md:ml-20 lg:ml-64">
+    <div ref={containerRef} className="h-full overflow-y-auto">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-3">
