@@ -74,6 +74,12 @@ export default function PortfolioShell() {
   }, [activeTab]);
 
   const handleTabChange = useCallback((tab: TabKey) => {
+    // Pause all videos when switching tabs to avoid audio overlap
+    document.querySelectorAll('video').forEach((video) => {
+      video.pause();
+      video.muted = true;
+    });
+    
     setActiveTab(tab);
     localStorage.setItem(TAB_STORAGE_KEY, tab);
     // Update URL hash without navigation

@@ -226,19 +226,30 @@ function FeedGridModalComponent({
     navigate(`/profile/${userId}`);
   }, [navigate, onClose]);
 
-  // Scroll to initial index on open
+  // Pause all background videos when modal opens and scroll to initial index
   useEffect(() => {
-    if (isOpen && containerRef.current) {
-      const slideHeight = window.innerHeight;
-      containerRef.current.scrollTo({
-        top: initialIndex * slideHeight,
-        behavior: 'instant'
+    if (isOpen) {
+      // Pause all videos in the background (grid cards)
+      document.querySelectorAll('video').forEach((video) => {
+        if (!containerRef.current?.contains(video)) {
+          video.pause();
+          video.muted = true;
+        }
       });
-      setActiveIndex(initialIndex);
+      
+      // Scroll to initial index
+      if (containerRef.current) {
+        const slideHeight = window.innerHeight;
+        containerRef.current.scrollTo({
+          top: initialIndex * slideHeight,
+          behavior: 'instant'
+        });
+        setActiveIndex(initialIndex);
+      }
     }
   }, [isOpen, initialIndex]);
 
-  // Handle scroll snap
+  // Handle scroll snap and pause non-active videos
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -247,6 +258,13 @@ function FeedGridModalComponent({
       const slideHeight = window.innerHeight;
       const newIndex = Math.round(container.scrollTop / slideHeight);
       if (newIndex !== activeIndex && newIndex >= 0 && newIndex < items.length) {
+        // Pause all videos in the modal container except the new active one
+        const videos = container.querySelectorAll('video');
+        videos.forEach((video, idx) => {
+          if (idx !== newIndex) {
+            video.pause();
+          }
+        });
         setActiveIndex(newIndex);
       }
     };
@@ -254,6 +272,15 @@ function FeedGridModalComponent({
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
   }, [activeIndex, items.length]);
+
+  // Pause all videos when modal closes
+  useEffect(() => {
+    if (!isOpen && containerRef.current) {
+      containerRef.current.querySelectorAll('video').forEach((video) => {
+        video.pause();
+      });
+    }
+  }, [isOpen]);
 
   // Keyboard navigation
   useEffect(() => {
