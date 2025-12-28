@@ -51,26 +51,29 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
       return (
         <>
           {effectiveThumbnail && !imageError ? (
-            <img
-              src={effectiveThumbnail}
-              alt={item.title || item.caption || 'Video'}
-              className={cn(
-                "w-full h-full object-cover transition-all duration-300",
-                "group-hover:scale-105",
-                imageLoaded ? "opacity-100" : "opacity-0"
+            <>
+              <img
+                src={effectiveThumbnail}
+                alt={item.title || item.caption || 'Video'}
+                className={cn(
+                  "w-full h-full object-cover transition-transform duration-300",
+                  "group-hover:scale-105",
+                  !imageLoaded && "scale-[1.02] blur-sm"
+                )}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageError(true)}
+              />
+
+              {!imageLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                  <Play className="h-8 w-8 text-muted-foreground" />
+                </div>
               )}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-            />
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-muted">
               <Play className="h-8 w-8 text-muted-foreground" />
             </div>
-          )}
-          
-          {/* Loading skeleton */}
-          {!imageLoaded && effectiveThumbnail && !imageError && (
-            <div className="absolute inset-0 bg-muted animate-pulse" />
           )}
           
           {/* Video indicator */}
