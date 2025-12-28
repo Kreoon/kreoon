@@ -254,6 +254,12 @@ export function useHLSPlayer(
       playWithFallback(video);
     } else {
       video.pause();
+      // Reset so no audio keeps playing / no hidden loop when leaving viewport
+      try {
+        video.currentTime = 0;
+      } catch {
+        // ignore
+      }
     }
   }, [autoPlay, hlsUrl, playWithFallback]);
 
@@ -308,27 +314,19 @@ export function useHLSPlayer(
 
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
-    const handleEnded = () => {
-      if (loop) {
-        video.currentTime = 0;
-        video.play().catch(() => {});
-      } else {
-        setIsPlaying(false);
-      }
-    };
     const handleWaiting = () => setIsLoading(true);
     const handlePlaying = () => setIsLoading(false);
 
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
-    video.addEventListener('ended', handleEnded);
+    // NOTE: do not force replay on "ended" here; native video.loop handles looping.
+    // Forcing play() on ended can cause "audio fantasma" when the video leaves viewport.
     video.addEventListener('waiting', handleWaiting);
     video.addEventListener('playing', handlePlaying);
 
     return () => {
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
-      video.removeEventListener('ended', handleEnded);
       video.removeEventListener('waiting', handleWaiting);
       video.removeEventListener('playing', handlePlaying);
     };
@@ -346,7 +344,14 @@ export function useHLSPlayer(
   }, []);
 
   const pause = useCallback(() => {
-    videoRef.current?.pause();
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    try {
+      video.currentTime = 0;
+    } catch {
+      // ignore
+    }
   }, []);
 
   const toggleMute = useCallback(() => {
