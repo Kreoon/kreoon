@@ -103,12 +103,14 @@ export default function FeedPage() {
       const isFollowing = activeTab === 'following';
       
       // Fetch work content (published videos) - from ALL organizations
+      // Include video_urls array for direct Bunny CDN access
       let workQuery = supabase
         .from('content')
         .select(`
           id,
           title,
           video_url,
+          video_urls,
           bunny_embed_url,
           thumbnail_url,
           creator_id,
@@ -118,7 +120,7 @@ export default function FeedPage() {
           created_at
         `)
         .eq('is_published', true)
-        .or('video_url.not.is.null,bunny_embed_url.not.is.null')
+        .or('video_url.not.is.null,bunny_embed_url.not.is.null,video_urls.not.is.null')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -180,16 +182,23 @@ export default function FeedPage() {
 
       // Transform and merge
       const workItems: FeedItem[] = (workData || [])
-        .filter(w => w.video_url || (w as any).bunny_embed_url)
+        .filter(w => w.video_url || (w as any).bunny_embed_url || ((w as any).video_urls && (w as any).video_urls.length > 0))
         .map(w => {
           const profile = profilesMap.get(w.creator_id);
           const client = clientsMap.get((w as any).client_id);
+          
+          // Prioritize direct Bunny CDN URLs for better loading
+          // video_urls array contains direct CDN links, video_url may be embed URL
+          const videoUrls = (w as any).video_urls as string[] | null;
+          const directVideoUrl = videoUrls && videoUrls.length > 0 
+            ? videoUrls[0] // First video URL from array (direct CDN)
+            : w.video_url || (w as any).bunny_embed_url;
 
           return {
             id: w.id,
             type: 'work' as const,
             title: w.title,
-            media_url: w.video_url || (w as any).bunny_embed_url,
+            media_url: directVideoUrl,
             media_type: 'video' as const,
             thumbnail_url: w.thumbnail_url || undefined,
             user_id: w.creator_id,
