@@ -26,6 +26,7 @@ import StrategistDashboard from "./pages/StrategistDashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import ClientContentBoard from "./pages/ClientContentBoard";
 import PortfolioShell from "./pages/portfolio/PortfolioShell";
+import ExplorePage from "./pages/portfolio/ExplorePage";
 import CompanyProfilePage from "./pages/portfolio/CompanyProfilePage";
 import PublicProfilePage from "./pages/portfolio/PublicProfilePage";
 import Ranking from "./pages/Ranking";
@@ -72,6 +73,7 @@ function AppRoutes() {
     <Routes key={impersonationKey}>
       <Route path="/social" element={<ProtectedRoute><PortfolioShell /></ProtectedRoute>} />
       <Route path="/social/*" element={<ProtectedRoute><PortfolioShell /></ProtectedRoute>} />
+      <Route path="/explore" element={<ProtectedRoute><ExplorePage /></ProtectedRoute>} />
       <Route path="/company/:username" element={<CompanyProfilePage />} />
       <Route path="/profile/:userId" element={<PublicProfilePage />} />
       <Route path="/profile" element={<ProfileRedirect />} />

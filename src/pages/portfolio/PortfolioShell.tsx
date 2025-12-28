@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Play, User, Bookmark, MessageCircle } from 'lucide-react';
+import { Home, Play, User, Bookmark, MessageCircle, Compass, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SocialNotificationsDropdown } from '@/components/portfolio/SocialNotificationsDropdown';
 
 // Lazy load pages for performance
 const FeedPage = lazy(() => import('./FeedPage'));
@@ -107,8 +108,24 @@ export default function PortfolioShell() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      {/* Mobile header with notifications */}
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-background/95 backdrop-blur-lg border-b border-border z-50 flex items-center justify-between px-4">
+        <span className="text-lg font-bold text-primary">Portfolio</span>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => navigate('/explore')}
+          >
+            <Compass className="h-5 w-5" />
+          </Button>
+          <SocialNotificationsDropdown />
+        </div>
+      </header>
+
       {/* Main content area */}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-hidden pt-14 md:pt-0">
         {renderTabContent()}
       </main>
 
@@ -140,10 +157,23 @@ export default function PortfolioShell() {
 
       {/* Desktop sidebar navigation - shown on md+ */}
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-20 lg:w-64 bg-card border-r border-border flex-col z-40">
-        {/* Logo area */}
-        <div className="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-border">
-          <span className="text-xl font-bold text-primary hidden lg:block">Portfolio</span>
-          <span className="text-xl font-bold text-primary lg:hidden">P</span>
+        {/* Logo area with notifications */}
+        <div className="h-16 flex items-center justify-between lg:px-6 border-b border-border px-4">
+          <div className="flex items-center">
+            <span className="text-xl font-bold text-primary hidden lg:block">Portfolio</span>
+            <span className="text-xl font-bold text-primary lg:hidden">P</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => navigate('/explore')}
+            >
+              <Compass className="h-4 w-4" />
+            </Button>
+            <SocialNotificationsDropdown />
+          </div>
         </div>
 
         {/* Navigation items */}

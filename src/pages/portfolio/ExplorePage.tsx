@@ -144,7 +144,7 @@ export default function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-24 md:ml-20 lg:ml-64">
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="mb-6">
           <div className="relative">
@@ -303,6 +303,6 @@ export default function ExplorePage() {
           </TabsContent>
         </Tabs>
       </div>
-    </PortfolioShell>
+    </div>
   );
 }
