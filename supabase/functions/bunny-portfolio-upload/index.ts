@@ -116,6 +116,9 @@ Deno.serve(async (req) => {
           user_id: userId,
           media_url: embedUrl, // Use Bunny embed URL
           media_type: 'video',
+          thumbnail_url: thumbnailUrl,
+          caption: caption,
+          expires_at: expiresAt,
         })
         .select()
         .single()

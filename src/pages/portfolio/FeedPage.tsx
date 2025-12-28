@@ -12,6 +12,7 @@ import SmartSearchBar from '@/components/portfolio/feed/SmartSearchBar';
 import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
+import { MediaUploader } from '@/components/portfolio/MediaUploader';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -52,6 +53,7 @@ export default function FeedPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showSuggestions, setShowSuggestions] = usePersistedValue('feed_show_suggestions', true);
+  const [showStoryUploader, setShowStoryUploader] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Persist scroll position
@@ -322,7 +324,10 @@ export default function FeedPage() {
         />
       )}
 
-      <StoriesBar followingIds={followingIds} />
+      <StoriesBar 
+        followingIds={followingIds} 
+        onAddStory={() => setShowStoryUploader(true)}
+      />
 
       {/* Feed content - 3 column grid */}
       <div className="max-w-4xl mx-auto px-1 py-2 pb-20">
@@ -360,6 +365,21 @@ export default function FeedPage() {
         onSave={handleSave}
         isSaved={checkIsSaved}
       />
+
+      {/* Story Uploader */}
+      {user?.id && (
+        <MediaUploader
+          userId={user.id}
+          type="story"
+          isOpen={showStoryUploader}
+          onClose={() => setShowStoryUploader(false)}
+          onSuccess={() => {
+            setShowStoryUploader(false);
+            // Refresh page to show new story
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

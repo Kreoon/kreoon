@@ -3797,6 +3797,7 @@ export type Database = {
           profile_type: string
           updated_at: string
           updated_by: string | null
+          user_id: string | null
         }
         Insert: {
           blocks?: Json
@@ -3806,6 +3807,7 @@ export type Database = {
           profile_type?: string
           updated_at?: string
           updated_by?: string | null
+          user_id?: string | null
         }
         Update: {
           blocks?: Json
@@ -3815,6 +3817,7 @@ export type Database = {
           profile_type?: string
           updated_at?: string
           updated_by?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -3822,6 +3825,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_blocks_config_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

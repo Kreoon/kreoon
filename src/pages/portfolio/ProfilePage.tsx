@@ -7,15 +7,17 @@ import { usePortfolioAIConfig } from '@/hooks/usePortfolioAIConfig';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Settings, Edit, Grid, Bookmark, Play } from 'lucide-react';
+import { Settings, Edit, Grid, Bookmark, Play, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ProfileBlocksRenderer from '@/components/portfolio/profile/ProfileBlocksRenderer';
 import BlocksEditorDialog from '@/components/portfolio/profile/BlocksEditorDialog';
+import { ProfileBuilder } from '@/components/portfolio/profile/ProfileBuilder';
 import { AIBioHelper } from '@/components/portfolio/AIBioHelper';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 interface ProfileStats {
   posts_count: number;
@@ -55,6 +57,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [showBlocksEditor, setShowBlocksEditor] = useState(false);
+  const [showProfileBuilder, setShowProfileBuilder] = useState(false);
   const [activeTab, setActiveTab] = useState<'grid' | 'videos' | 'saved'>('grid');
 
   useEffect(() => {
@@ -167,7 +170,8 @@ export default function ProfilePage() {
             {/* Actions */}
             {canEdit && (
               <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
-                <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
+                <Button variant="outline" size="sm" onClick={() => setShowProfileBuilder(true)}>
+                  <Edit className="h-4 w-4 mr-1" />
                   Editar perfil
                 </Button>
                 {aiBioEnabled && (
@@ -246,6 +250,13 @@ export default function ProfilePage() {
           onOpenChange={setShowBlocksEditor}
         />
       )}
+
+      {/* Profile Builder Sheet */}
+      <Sheet open={showProfileBuilder} onOpenChange={setShowProfileBuilder}>
+        <SheetContent side="right" className="w-full sm:max-w-xl p-0 overflow-hidden">
+          <ProfileBuilder onClose={() => setShowProfileBuilder(false)} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

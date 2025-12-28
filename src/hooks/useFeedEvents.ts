@@ -38,6 +38,7 @@ export function useFeedEvents() {
         event_type: eventType,
         duration_ms: durationMs ?? null,
         metadata: metadata || {},
+        created_at: new Date().toISOString(),
       };
 
       if (user?.id) {
@@ -46,7 +47,16 @@ export function useFeedEvents() {
         eventData.viewer_id = getAnonymousViewerId();
       }
 
-      await supabase.from('user_feed_events').insert(eventData as any);
+      // Get current organization if available
+      const currentOrgId = sessionStorage.getItem('current_org_id');
+      if (currentOrgId) {
+        eventData.organization_id = currentOrgId;
+      }
+
+      const { error } = await supabase.from('user_feed_events').insert(eventData as any);
+      if (error) {
+        console.error('[useFeedEvents] Error tracking event:', error);
+      }
     } catch (error) {
       console.error('[useFeedEvents] Error tracking event:', error);
     }
