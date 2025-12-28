@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { UserPlus, UserMinus, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,21 +8,42 @@ import { cn } from '@/lib/utils';
 
 interface CompanyFollowButtonProps {
   companyId: string;
-  isFollowing: boolean;
-  onFollowChange: (isFollowing: boolean) => void;
+  initialIsFollowing?: boolean;
+  onFollowChange?: (isFollowing: boolean) => void;
   size?: 'sm' | 'default' | 'lg';
   className?: string;
 }
 
 export function CompanyFollowButton({
   companyId,
-  isFollowing,
+  initialIsFollowing,
   onFollowChange,
   size = 'default',
   className,
 }: CompanyFollowButtonProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(initialIsFollowing ?? false);
+  const [initialized, setInitialized] = useState(initialIsFollowing !== undefined);
+
+  // Check if user is following on mount
+  useEffect(() => {
+    if (!user?.id || initialized) return;
+
+    const checkFollowing = async () => {
+      const { data } = await supabase
+        .from('company_followers')
+        .select('id')
+        .eq('company_id', companyId)
+        .eq('follower_id', user.id)
+        .single();
+
+      setIsFollowing(!!data);
+      setInitialized(true);
+    };
+
+    checkFollowing();
+  }, [companyId, user?.id, initialized]);
 
   const handleToggleFollow = async () => {
     if (!user) {
@@ -32,14 +53,29 @@ export function CompanyFollowButton({
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('toggle_company_follow', {
-        _company_id: companyId,
-      });
+      if (isFollowing) {
+        // Unfollow
+        const { error } = await supabase
+          .from('company_followers')
+          .delete()
+          .eq('company_id', companyId)
+          .eq('follower_id', user.id);
 
-      if (error) throw error;
+        if (error) throw error;
+        setIsFollowing(false);
+        onFollowChange?.(false);
+        toast.success('Dejaste de seguir');
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from('company_followers')
+          .insert({ company_id: companyId, follower_id: user.id });
 
-      onFollowChange(data);
-      toast.success(data ? 'Siguiendo empresa' : 'Dejaste de seguir');
+        if (error) throw error;
+        setIsFollowing(true);
+        onFollowChange?.(true);
+        toast.success('Siguiendo empresa');
+      }
     } catch (error) {
       console.error('Error toggling follow:', error);
       toast.error('Error al seguir la empresa');

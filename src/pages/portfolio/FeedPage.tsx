@@ -31,6 +31,7 @@ interface FeedItem {
   user_name?: string;
   user_avatar?: string;
   client_name?: string;
+  client_username?: string;
   views_count: number;
   likes_count: number;
   comments_count: number;
@@ -184,12 +185,12 @@ export default function FeedPage() {
 
       const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
 
-      // Fetch client names for work items
+      // Fetch client names and usernames for work items
       const clientIds = [...new Set((workData || []).map(w => (w as any).client_id).filter(Boolean))] as string[];
       const { data: clientsData } = clientIds.length > 0
         ? await supabase
             .from('clients')
-            .select('id, name')
+            .select('id, name, username')
             .in('id', clientIds)
         : { data: [] };
 
@@ -220,6 +221,7 @@ export default function FeedPage() {
             user_name: profile?.full_name,
             user_avatar: profile?.avatar_url,
             client_name: client?.name,
+            client_username: client?.username || undefined,
             views_count: w.views_count || 0,
             likes_count: w.likes_count || 0,
             comments_count: 0,
