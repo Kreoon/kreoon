@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.feed-recommendations]
 verify_jwt = false
+
+[functions.interest-extractor]
+verify_jwt = false
