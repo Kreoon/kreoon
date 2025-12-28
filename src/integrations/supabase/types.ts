@@ -3597,6 +3597,7 @@ export type Database = {
           media_type: string
           media_url: string
           pinned_at: string | null
+          post_type: string | null
           thumbnail_url: string | null
           updated_at: string
           user_id: string
@@ -3612,6 +3613,7 @@ export type Database = {
           media_type?: string
           media_url: string
           pinned_at?: string | null
+          post_type?: string | null
           thumbnail_url?: string | null
           updated_at?: string
           user_id: string
@@ -3627,6 +3629,7 @@ export type Database = {
           media_type?: string
           media_url?: string
           pinned_at?: string | null
+          post_type?: string | null
           thumbnail_url?: string | null
           updated_at?: string
           user_id?: string
