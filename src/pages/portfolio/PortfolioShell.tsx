@@ -113,15 +113,15 @@ export default function PortfolioShell() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-social-background">
       {/* Mobile header with notifications */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-background/95 backdrop-blur-lg border-b border-border z-50 flex items-center justify-between px-4">
-        <span className="text-lg font-bold text-primary">Portfolio</span>
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-social-background/95 backdrop-blur-lg border-b border-social-border z-50 flex items-center justify-between px-4">
+        <span className="text-lg font-bold text-social-accent">Social Creator</span>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9"
+            className="h-9 w-9 text-social-foreground hover:bg-social-muted"
             onClick={() => navigate('/explore')}
           >
             <Compass className="h-5 w-5" />
@@ -136,7 +136,7 @@ export default function PortfolioShell() {
       </main>
 
       {/* Mobile bottom navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-lg border-t border-border z-50 safe-area-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-social-background/95 backdrop-blur-lg border-t border-social-border z-50 safe-area-bottom">
         <div className="flex items-center justify-around h-16 px-2">
           {visibleTabs.map(tab => {
             const Icon = tab.icon;
@@ -149,8 +149,8 @@ export default function PortfolioShell() {
                 className={cn(
                   "flex flex-col items-center justify-center flex-1 h-full transition-colors",
                   isActive 
-                    ? "text-primary" 
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "text-social-accent" 
+                    : "text-social-muted-foreground hover:text-social-foreground"
                 )}
               >
                 <Icon className={cn("h-5 w-5", isActive && "scale-110")} />
@@ -162,18 +162,18 @@ export default function PortfolioShell() {
       </nav>
 
       {/* Desktop sidebar navigation - shown on md+ */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-20 lg:w-64 bg-card border-r border-border flex-col z-40">
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-20 lg:w-64 bg-social-card border-r border-social-border flex-col z-40">
         {/* Logo area with notifications */}
-        <div className="h-16 flex items-center justify-between lg:px-6 border-b border-border px-4">
+        <div className="h-16 flex items-center justify-between lg:px-6 border-b border-social-border px-4">
           <div className="flex items-center">
-            <span className="text-xl font-bold text-primary hidden lg:block">Portfolio</span>
-            <span className="text-xl font-bold text-primary lg:hidden">P</span>
+            <span className="text-xl font-bold text-social-accent hidden lg:block">Social Creator</span>
+            <span className="text-xl font-bold text-social-accent lg:hidden">SC</span>
           </div>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 text-social-foreground hover:bg-social-muted"
               onClick={() => navigate('/explore')}
             >
               <Compass className="h-4 w-4" />
@@ -195,8 +195,8 @@ export default function PortfolioShell() {
                 className={cn(
                   "w-full flex items-center gap-4 px-4 lg:px-6 py-3 transition-colors",
                   isActive 
-                    ? "bg-primary/10 text-primary border-r-2 border-primary" 
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-social-accent/10 text-social-accent border-r-2 border-social-accent" 
+                    : "text-social-muted-foreground hover:bg-social-muted hover:text-social-foreground"
                 )}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
@@ -208,14 +208,14 @@ export default function PortfolioShell() {
 
         {/* User section */}
         {user && (
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-social-border">
             <Button
               variant="ghost"
-              className="w-full justify-start gap-3"
+              className="w-full justify-start gap-3 text-social-foreground hover:bg-social-muted"
               onClick={() => navigate('/settings')}
             >
-              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <User className="h-4 w-4 text-primary" />
+              <div className="h-8 w-8 rounded-full bg-social-accent/20 flex items-center justify-center">
+                <User className="h-4 w-4 text-social-accent" />
               </div>
               <span className="hidden lg:block text-sm truncate">
                 Configuración

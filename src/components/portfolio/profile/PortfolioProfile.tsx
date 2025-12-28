@@ -151,7 +151,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-social-background text-social-foreground">
       {/* Hero Banner Section */}
       <section className="relative">
         {/* Cover Image */}
@@ -163,16 +163,16 @@ export const PortfolioProfile = memo(function PortfolioProfile({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/30 via-primary/20 to-secondary/30" />
+            <div className="w-full h-full bg-gradient-to-br from-social-accent/30 via-social-accent/20 to-social-muted" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-social-background via-social-background/50 to-transparent" />
           
           {/* Edit Cover Button */}
           {isOwner && (
             <Button
               variant="secondary"
               size="sm"
-              className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm"
+              className="absolute top-4 right-4 bg-social-card/80 backdrop-blur-sm text-social-foreground border-social-border hover:bg-social-muted"
               onClick={onEditProfile}
             >
               <Camera className="h-4 w-4 mr-2" />
@@ -190,14 +190,14 @@ export const PortfolioProfile = memo(function PortfolioProfile({
               animate={{ scale: 1, opacity: 1 }}
               className="relative z-10 flex-shrink-0"
             >
-              <Avatar className="h-28 w-28 sm:h-36 sm:w-36 ring-4 ring-background shadow-2xl">
+              <Avatar className="h-28 w-28 sm:h-36 sm:w-36 ring-4 ring-social-background shadow-2xl">
                 <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback className="text-4xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
+                <AvatarFallback className="text-4xl bg-gradient-to-br from-social-accent to-social-accent/60 text-social-accent-foreground">
                   {profile.full_name?.[0]?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               {/* Online indicator */}
-              <div className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-success ring-4 ring-background" />
+              <div className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-green-500 ring-4 ring-social-background" />
             </motion.div>
 
             {/* Name & Info */}
@@ -208,16 +208,16 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                     {profile.full_name}
                   </h1>
                   {profile.username && (
-                    <p className="text-muted-foreground">@{profile.username}</p>
+                    <p className="text-social-muted-foreground">@{profile.username}</p>
                   )}
                   {profile.tagline && (
-                    <p className="text-lg text-foreground/80 mt-1 max-w-xl">
+                    <p className="text-lg text-social-foreground/80 mt-1 max-w-xl">
                       {profile.tagline}
                     </p>
                   )}
                   
                   {/* Location & Links */}
-                  <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-social-muted-foreground">
                     {(profile.city || profile.country) && (
                       <span className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
@@ -229,7 +229,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                         href={profile.portfolio_url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 hover:text-primary transition-colors"
+                        className="flex items-center gap-1 hover:text-social-accent transition-colors"
                       >
                         <Link2 className="h-4 w-4" />
                         Portfolio
@@ -242,30 +242,30 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                 <div className="flex items-center gap-2 flex-wrap">
                   {isOwner ? (
                     <>
-                      <Button onClick={() => setShowUploadDialog(true)}>
+                      <Button onClick={() => setShowUploadDialog(true)} className="bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground">
                         <Plus className="h-4 w-4 mr-2" />
                         Subir contenido
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => setShowAIProfileDialog(true)}>
+                      <Button variant="outline" size="sm" onClick={() => setShowAIProfileDialog(true)} className="border-social-border text-social-foreground hover:bg-social-muted">
                         <Sparkles className="h-4 w-4 mr-2" />
                         IA Perfil
                       </Button>
-                      <Button variant="outline" size="sm" onClick={onEditProfile}>
+                      <Button variant="outline" size="sm" onClick={onEditProfile} className="border-social-border text-social-foreground hover:bg-social-muted">
                         <Edit className="h-4 w-4 mr-2" />
                         Editar
                       </Button>
                       {onEditBlocks && (
-                        <Button variant="ghost" size="icon" onClick={onEditBlocks}>
+                        <Button variant="ghost" size="icon" onClick={onEditBlocks} className="text-social-foreground hover:bg-social-muted">
                           <Settings className="h-4 w-4" />
                         </Button>
                       )}
                     </>
                   ) : (
                     <>
-                      <Button className="bg-gradient-to-r from-primary to-primary/80">
+                      <Button className="bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground">
                         Seguir
                       </Button>
-                      <Button variant="outline">
+                      <Button variant="outline" className="border-social-border text-social-foreground hover:bg-social-muted">
                         <Mail className="h-4 w-4 mr-2" />
                         Mensaje
                       </Button>
@@ -280,7 +280,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
 
       {/* Stats Bar */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-6">
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-4 p-4 bg-card rounded-xl border shadow-sm">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-4 p-4 bg-social-card rounded-xl border border-social-border shadow-sm">
           <StatItem icon={<FolderOpen className="h-4 w-4" />} value={stats.portfolio_count} label="Portafolio" />
           <StatItem icon={<Grid className="h-4 w-4" />} value={stats.posts_count} label="Posts" />
           <StatItem icon={<Play className="h-4 w-4" />} value={stats.videos_count} label="Videos" />
@@ -294,31 +294,31 @@ export const PortfolioProfile = memo(function PortfolioProfile({
       {/* Content Tabs */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-8">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none h-12 p-0 gap-4 sm:gap-6 overflow-x-auto">
+          <TabsList className="w-full justify-start bg-transparent border-b border-social-border rounded-none h-12 p-0 gap-4 sm:gap-6 overflow-x-auto">
             <TabsTrigger 
               value="portfolio" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1 whitespace-nowrap"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
             >
               <FolderOpen className="h-4 w-4 mr-2" />
               Portafolio
             </TabsTrigger>
             <TabsTrigger 
               value="posts" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1 whitespace-nowrap"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
             >
               <Grid className="h-4 w-4 mr-2" />
               Posts
             </TabsTrigger>
             <TabsTrigger 
               value="videos"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1 whitespace-nowrap"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
             >
               <Play className="h-4 w-4 mr-2" />
               Videos
             </TabsTrigger>
             <TabsTrigger 
               value="about"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent h-12 px-1 whitespace-nowrap"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
             >
               <Briefcase className="h-4 w-4 mr-2" />
               Sobre mí
@@ -387,11 +387,11 @@ function StatItem({ icon, value, label, className }: { icon: React.ReactNode; va
 
   return (
     <div className={cn("text-center", className)}>
-      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+      <div className="flex items-center justify-center gap-1 text-social-muted-foreground mb-1">
         {icon}
       </div>
-      <div className="text-lg sm:text-xl font-bold">{formatNumber(value)}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-lg sm:text-xl font-bold text-social-foreground">{formatNumber(value)}</div>
+      <div className="text-xs text-social-muted-foreground">{label}</div>
     </div>
   );
 }

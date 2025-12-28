@@ -16,8 +16,8 @@ export default function ProfilePage() {
 
   if (!user || !profile) {
     return (
-      <div className="h-full flex items-center justify-center md:ml-20 lg:ml-64">
-        <div className="text-muted-foreground">Inicia sesión para ver tu perfil</div>
+      <div className="h-full flex items-center justify-center md:ml-20 lg:ml-64 bg-social-background">
+        <div className="text-social-muted-foreground">Inicia sesión para ver tu perfil</div>
       </div>
     );
   }
@@ -25,7 +25,7 @@ export default function ProfilePage() {
   const canEdit = can('portfolio.profile.edit');
 
   return (
-    <div className="h-full overflow-y-auto md:ml-20 lg:ml-64 pb-20">
+    <div className="h-full overflow-y-auto md:ml-20 lg:ml-64 pb-20 bg-social-background">
       <PortfolioProfile
         userId={user.id}
         isOwner={true}

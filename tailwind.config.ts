@@ -85,6 +85,19 @@ export default {
         leather: "hsl(var(--leather))",
         parchment: "hsl(var(--parchment))",
         iron: "hsl(var(--iron))",
+        // Social Creator Theme
+        social: {
+          background: "hsl(var(--social-background))",
+          foreground: "hsl(var(--social-foreground))",
+          card: "hsl(var(--social-card))",
+          "card-foreground": "hsl(var(--social-card-foreground))",
+          muted: "hsl(var(--social-muted))",
+          "muted-foreground": "hsl(var(--social-muted-foreground))",
+          accent: "hsl(var(--social-accent))",
+          "accent-foreground": "hsl(var(--social-accent-foreground))",
+          border: "hsl(var(--social-border))",
+          input: "hsl(var(--social-input))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

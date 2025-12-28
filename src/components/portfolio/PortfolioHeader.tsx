@@ -54,9 +54,9 @@ export function PortfolioHeader({
           {/* Logo - Always visible */}
           <button 
             onClick={() => navigate('/portfolio')}
-            className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+            className="h-8 w-8 rounded-lg bg-social-accent flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
           >
-            <span className="text-black font-bold text-sm">C</span>
+            <span className="text-white font-bold text-xs">SC</span>
           </button>
           
           {onRefresh && (

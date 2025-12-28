@@ -93,6 +93,18 @@
     --level-silver: 220 10% 65%;
     --level-gold: 38 75% 50%;
     --level-diamond: 200 80% 60%;
+
+    /* Social Creator Theme - TikTok Style Dark */
+    --social-background: 0 0% 0%;
+    --social-foreground: 0 0% 98%;
+    --social-card: 0 0% 7%;
+    --social-card-foreground: 0 0% 98%;
+    --social-muted: 0 0% 12%;
+    --social-muted-foreground: 0 0% 60%;
+    --social-accent: 349 100% 60%;
+    --social-accent-foreground: 0 0% 100%;
+    --social-border: 0 0% 15%;
+    --social-input: 0 0% 12%;
   }
 
   .dark {
