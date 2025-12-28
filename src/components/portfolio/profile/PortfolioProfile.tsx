@@ -403,11 +403,12 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
 
   useEffect(() => {
     const fetchPosts = async () => {
+      // Fetch portfolio posts (default type for backwards compatibility)
       const { data } = await supabase
         .from('portfolio_posts')
-        .select('*')
+        .select('id, media_url, thumbnail_url, caption, media_type, views_count, likes_count, post_type, created_at')
         .eq('user_id', userId)
-        .or('post_type.eq.portfolio,post_type.is.null')
+        .neq('post_type', 'personal')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -519,7 +520,7 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
     const fetchPosts = async () => {
       const { data } = await supabase
         .from('portfolio_posts')
-        .select('*')
+        .select('id, media_url, thumbnail_url, caption, media_type, views_count, likes_count, post_type, created_at')
         .eq('user_id', userId)
         .eq('post_type', 'personal')
         .order('created_at', { ascending: false })
