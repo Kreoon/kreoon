@@ -357,24 +357,37 @@ export default function VideosPage() {
     fetchVideos();
   }, [fetchVideos]);
 
-  // Handle scroll snap
+  // Pause videos immediately when they leave the viewport (scroll)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const handleScroll = () => {
-      const scrollTop = container.scrollTop;
-      const height = container.clientHeight;
-      const newIndex = Math.round(scrollTop / height);
-      
-      if (newIndex !== activeIndex && newIndex >= 0 && newIndex < videos.length) {
-        setActiveIndex(newIndex);
-      }
-    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const idx = Number((entry.target as HTMLElement).dataset.index);
+          const videoEl = (entry.target as HTMLElement).querySelector('video') as HTMLVideoElement | null;
 
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [activeIndex, videos.length]);
+          // If the slide is leaving the viewport, force pause immediately
+          if (videoEl && entry.intersectionRatio < 0.25) {
+            videoEl.pause();
+            videoEl.muted = true;
+          }
+
+          // Track active slide
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.7 && !Number.isNaN(idx)) {
+            setActiveIndex(idx);
+          }
+        }
+      },
+      { root: container, threshold: [0, 0.25, 0.7] }
+    );
+
+    const slides = container.querySelectorAll<HTMLElement>('[data-index]');
+    slides.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [videos.length]);
 
   const handleSave = async (video: VideoItem) => {
     const itemType = video.type === 'work' ? 'work_video' : 'post';
@@ -440,6 +453,7 @@ export default function VideosPage() {
         {videos.map((video, index) => (
           <div
             key={`${video.type}-${video.id}`}
+            data-index={index}
             className="h-full w-full"
           >
             <VideoSlide

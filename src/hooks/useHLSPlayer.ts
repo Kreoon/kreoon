@@ -336,17 +336,38 @@ export function useHLSPlayer(
 
   const play = useCallback(() => {
     const video = videoRef.current;
-    if (video) {
-      video.play().catch(() => {
-        video.muted = true;
-        setCurrentMuted(true);
-        video.play().catch(() => {});
-      });
+    if (!video) return;
+
+    // Resume HLS network loading if applicable
+    if (hlsRef.current) {
+      try {
+        hlsRef.current.startLoad();
+      } catch {
+        // ignore
+      }
     }
+
+    video.play().catch(() => {
+      video.muted = true;
+      setCurrentMuted(true);
+      video.play().catch(() => {});
+    });
   }, []);
 
   const pause = useCallback(() => {
-    videoRef.current?.pause();
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.pause();
+
+    // Stop HLS network loading to guarantee audio stops when offscreen
+    if (hlsRef.current) {
+      try {
+        hlsRef.current.stopLoad();
+      } catch {
+        // ignore
+      }
+    }
   }, []);
 
   const toggleMute = useCallback(() => {
