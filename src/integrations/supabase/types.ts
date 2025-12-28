@@ -3844,8 +3844,12 @@ export type Database = {
           ambassador_celebration_pending: boolean | null
           availability_status: string | null
           avatar_url: string | null
+          best_at: string | null
           bio: string | null
           city: string | null
+          content_categories: string[]
+          country: string | null
+          cover_url: string | null
           created_at: string | null
           current_organization_id: string | null
           document_number: string | null
@@ -3854,18 +3858,30 @@ export type Database = {
           editor_on_time_count: number | null
           editor_rating: number | null
           email: string
+          experience_level: string | null
           facebook: string | null
           full_name: string
           has_seen_tour: boolean | null
           id: string
+          industries: string[]
           instagram: string | null
+          interests: string[]
           is_active: boolean | null
           is_ambassador: boolean | null
           is_public: boolean | null
+          languages: string[]
           phone: string | null
           portfolio_url: string | null
           quality_score_avg: number | null
+          rate_currency: string | null
+          rate_per_content: number | null
           reliability_score: number | null
+          social_linkedin: string | null
+          social_twitter: string | null
+          social_youtube: string | null
+          specialties_tags: string[]
+          style_keywords: string[]
+          tagline: string | null
           tiktok: string | null
           updated_at: string | null
           username: string | null
@@ -3878,8 +3894,12 @@ export type Database = {
           ambassador_celebration_pending?: boolean | null
           availability_status?: string | null
           avatar_url?: string | null
+          best_at?: string | null
           bio?: string | null
           city?: string | null
+          content_categories?: string[]
+          country?: string | null
+          cover_url?: string | null
           created_at?: string | null
           current_organization_id?: string | null
           document_number?: string | null
@@ -3888,18 +3908,30 @@ export type Database = {
           editor_on_time_count?: number | null
           editor_rating?: number | null
           email: string
+          experience_level?: string | null
           facebook?: string | null
           full_name: string
           has_seen_tour?: boolean | null
           id: string
+          industries?: string[]
           instagram?: string | null
+          interests?: string[]
           is_active?: boolean | null
           is_ambassador?: boolean | null
           is_public?: boolean | null
+          languages?: string[]
           phone?: string | null
           portfolio_url?: string | null
           quality_score_avg?: number | null
+          rate_currency?: string | null
+          rate_per_content?: number | null
           reliability_score?: number | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          specialties_tags?: string[]
+          style_keywords?: string[]
+          tagline?: string | null
           tiktok?: string | null
           updated_at?: string | null
           username?: string | null
@@ -3912,8 +3944,12 @@ export type Database = {
           ambassador_celebration_pending?: boolean | null
           availability_status?: string | null
           avatar_url?: string | null
+          best_at?: string | null
           bio?: string | null
           city?: string | null
+          content_categories?: string[]
+          country?: string | null
+          cover_url?: string | null
           created_at?: string | null
           current_organization_id?: string | null
           document_number?: string | null
@@ -3922,18 +3958,30 @@ export type Database = {
           editor_on_time_count?: number | null
           editor_rating?: number | null
           email?: string
+          experience_level?: string | null
           facebook?: string | null
           full_name?: string
           has_seen_tour?: boolean | null
           id?: string
+          industries?: string[]
           instagram?: string | null
+          interests?: string[]
           is_active?: boolean | null
           is_ambassador?: boolean | null
           is_public?: boolean | null
+          languages?: string[]
           phone?: string | null
           portfolio_url?: string | null
           quality_score_avg?: number | null
+          rate_currency?: string | null
+          rate_per_content?: number | null
           reliability_score?: number | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          specialties_tags?: string[]
+          style_keywords?: string[]
+          tagline?: string | null
           tiktok?: string | null
           updated_at?: string | null
           username?: string | null
