@@ -50,33 +50,48 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
 
 /**
  * Generate Bunny.net HLS, MP4 and thumbnail URLs from any Bunny URL format
+ * Supports:
+ * - iframe.mediadelivery.net/embed/{libraryId}/{videoId}
+ * - vz-{hash}.b-cdn.net/{videoId}
+ * - Direct playlist/mp4/thumbnail URLs
  */
 export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
   if (!url) return null;
-  
-  // If it's already a direct HLS/MP4/thumbnail URL, extract the base
-  const hlsMatch = url.match(/(https:\/\/vz-[a-f0-9-]+\.b-cdn\.net\/[a-f0-9-]+)/i);
-  if (hlsMatch) {
-    const baseUrl = hlsMatch[1];
+
+  // Known Bunny CDN host for this project (from network logs)
+  const BUNNY_CDN_HOST = 'vz-78fcd769-050.b-cdn.net';
+
+  // 1. Already a CDN URL (vz-*.b-cdn.net)
+  const cdnMatch = url.match(/https:\/\/(vz-[a-f0-9-]+\.b-cdn\.net)\/([a-f0-9-]+)/i);
+  if (cdnMatch) {
+    const host = cdnMatch[1];
+    const videoId = cdnMatch[2];
     return {
-      hls: `${baseUrl}/playlist.m3u8`,
-      mp4: `${baseUrl}/play_720p.mp4`,
-      thumbnail: `${baseUrl}/thumbnail.jpg`
+      hls: `https://${host}/${videoId}/playlist.m3u8`,
+      mp4: `https://${host}/${videoId}/play_720p.mp4`,
+      thumbnail: `https://${host}/${videoId}/thumbnail.jpg`,
     };
   }
-  
-  // If it's an iframe embed URL, we need to find the CDN base from thumbnail if available
+
+  // 2. Iframe embed URL (iframe.mediadelivery.net/embed/{libraryId}/{videoId})
   const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
   if (embedMatch) {
     const videoId = embedMatch[2];
-    // Use the known CDN pattern from network logs
-    // The CDN uses a hash format like vz-78fcd769-050.b-cdn.net
-    // We'll construct URLs using the video ID and hope the CDN resolves it
-    // For now, try common CDN patterns - the actual CDN hostname is project-specific
     return {
-      hls: `https://vz-78fcd769-050.b-cdn.net/${videoId}/playlist.m3u8`,
-      mp4: `https://vz-78fcd769-050.b-cdn.net/${videoId}/play_720p.mp4`,
-      thumbnail: `https://vz-78fcd769-050.b-cdn.net/${videoId}/thumbnail.jpg`
+      hls: `https://${BUNNY_CDN_HOST}/${videoId}/playlist.m3u8`,
+      mp4: `https://${BUNNY_CDN_HOST}/${videoId}/play_720p.mp4`,
+      thumbnail: `https://${BUNNY_CDN_HOST}/${videoId}/thumbnail.jpg`,
+    };
+  }
+
+  // 3. Direct mediadelivery.net URL ({libraryId}.mediadelivery.net/{videoId})
+  const directMatch = url.match(/(\d+)\.mediadelivery\.net\/([a-f0-9-]+)/i);
+  if (directMatch) {
+    const videoId = directMatch[2];
+    return {
+      hls: `https://${BUNNY_CDN_HOST}/${videoId}/playlist.m3u8`,
+      mp4: `https://${BUNNY_CDN_HOST}/${videoId}/play_720p.mp4`,
+      thumbnail: `https://${BUNNY_CDN_HOST}/${videoId}/thumbnail.jpg`,
     };
   }
 
