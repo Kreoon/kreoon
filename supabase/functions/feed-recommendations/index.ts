@@ -26,6 +26,16 @@ interface RecommendationRequest {
   limit?: number;
 }
 
+interface UserInterestProfile {
+  top_tags: string[];
+  top_categories: string[];
+  top_creators: string[];
+  engagement_stats: {
+    avg_watch_time?: number;
+    preferred_media_type?: string;
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -38,13 +48,64 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Fetch user interest profile if available
+    let userInterests: UserInterestProfile | null = null;
+    if (user_id) {
+      const { data: interestData } = await supabase
+        .from('user_interest_profile')
+        .select('top_tags, top_categories, top_creators, engagement_stats')
+        .eq('user_id', user_id)
+        .single();
+      
+      if (interestData) {
+        userInterests = {
+          top_tags: (interestData.top_tags as string[]) || [],
+          top_categories: (interestData.top_categories as string[]) || [],
+          top_creators: (interestData.top_creators as string[]) || [],
+          engagement_stats: (interestData.engagement_stats as any) || {},
+        };
+      }
+    }
+
+    // Fetch user's recent engagement events for personalization
+    let recentlyEngagedCreators: string[] = [];
+    if (user_id) {
+      const { data: recentEvents } = await supabase
+        .from('user_feed_events')
+        .select('item_id, item_type, event_type, duration_ms')
+        .eq('user_id', user_id)
+        .in('event_type', ['like', 'save', 'view_end'])
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (recentEvents && recentEvents.length > 0) {
+        // Get creator IDs from recently engaged content
+        const engagedContentIds = recentEvents
+          .filter(e => e.item_type === 'content')
+          .map(e => e.item_id);
+        
+        if (engagedContentIds.length > 0) {
+          const { data: engagedContent } = await supabase
+            .from('content')
+            .select('creator_id')
+            .in('id', engagedContentIds.slice(0, 50));
+          
+          recentlyEngagedCreators = [...new Set(
+            (engagedContent || [])
+              .map(c => c.creator_id)
+              .filter(Boolean) as string[]
+          )];
+        }
+      }
+    }
+
     // Fetch all available content
     const [{ data: contentData }, { data: postData }] = await Promise.all([
       supabase
         .from('content')
         .select('id, title, creator_id, client_id, created_at, views_count, likes_count')
         .eq('is_published', true)
-        .or('video_url.not.is.null,video_urls.not.is.null')
+        .or('video_url.not.is.null,bunny_embed_url.not.is.null,video_urls.not.is.null')
         .order('created_at', { ascending: false })
         .limit(200),
       supabase
@@ -120,13 +181,31 @@ serve(async (req) => {
         score -= 30;
       }
 
-      // 5. Similar content boost (if user liked content from same creator/client)
+      // 5. Creator affinity boost (based on recent engagement)
+      if (item.creator_id && recentlyEngagedCreators.includes(item.creator_id)) {
+        score += 25;
+      }
+
+      // 6. User interest profile boost
+      if (userInterests && item.creator_id) {
+        if (userInterests.top_creators.includes(item.creator_id)) {
+          score += 30;
+        }
+      }
+
+      // 7. Media type preference
+      if (userInterests?.engagement_stats?.preferred_media_type) {
+        if (item.media_type === userInterests.engagement_stats.preferred_media_type) {
+          score += 10;
+        }
+      }
+
+      // 8. Liked content creator boost
       if (item.creator_id && liked_content_ids.length > 0) {
-        // This would ideally check if creator has other liked content
         score += 5;
       }
 
-      // 6. Random factor for variety (changes periodically)
+      // 9. Random factor for variety (changes hourly)
       const seed = new Date().toISOString().slice(0, 13) + item.id;
       let hash = 0;
       for (let i = 0; i < seed.length; i++) {
@@ -146,7 +225,11 @@ serve(async (req) => {
       .map(({ score, ...item }) => item);
 
     return new Response(
-      JSON.stringify({ success: true, recommendations: recommended }),
+      JSON.stringify({ 
+        success: true, 
+        recommendations: recommended,
+        has_personalization: !!userInterests || recentlyEngagedCreators.length > 0,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
