@@ -65,6 +65,7 @@ export function ReportDialog({
     story: 'historia',
     profile: 'perfil',
     comment: 'comentario',
+    content: 'contenido',
   };
 
   return (
