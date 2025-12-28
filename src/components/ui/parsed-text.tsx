@@ -98,9 +98,8 @@ export function ParsedText({
     if (onMentionClick) {
       onMentionClick(username);
     } else {
-      // Default: navigate to user search or profile
-      // For now, we'll just log it - could integrate with user search later
-      console.log('Mention clicked:', username);
+      // Navigate to the user's profile page
+      navigate('/social#profile');
     }
   };
   
