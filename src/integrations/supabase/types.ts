@@ -4374,6 +4374,87 @@ export type Database = {
         }
         Relationships: []
       }
+      story_views: {
+        Row: {
+          id: string
+          story_id: string
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suggested_profiles_cache: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          reason: string | null
+          score: number | null
+          suggested_user_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          reason?: string | null
+          score?: number | null
+          suggested_user_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          reason?: string | null
+          score?: number | null
+          suggested_user_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggested_profiles_cache_suggested_user_id_fkey"
+            columns: ["suggested_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggested_profiles_cache_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       talent_ai_recommendations: {
         Row: {
           actioned_at: string | null
@@ -5229,6 +5310,91 @@ export type Database = {
             columns: ["achievement_id"]
             isOneToOne: false
             referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_feed_events: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          event_type: string
+          id: string
+          item_id: string
+          item_type: string
+          metadata: Json | null
+          user_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          event_type: string
+          id?: string
+          item_id: string
+          item_type: string
+          metadata?: Json | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          event_type?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          metadata?: Json | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feed_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_interest_profile: {
+        Row: {
+          engagement_stats: Json | null
+          id: string
+          top_categories: Json | null
+          top_creators: Json | null
+          top_tags: Json | null
+          updated_at: string
+          user_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          engagement_stats?: Json | null
+          id?: string
+          top_categories?: Json | null
+          top_creators?: Json | null
+          top_tags?: Json | null
+          updated_at?: string
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          engagement_stats?: Json | null
+          id?: string
+          top_categories?: Json | null
+          top_creators?: Json | null
+          top_tags?: Json | null
+          updated_at?: string
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interest_profile_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

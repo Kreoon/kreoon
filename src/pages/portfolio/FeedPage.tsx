@@ -5,10 +5,12 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
 import { useSavedItems } from '@/hooks/useSavedItems';
+import { useFeedEvents } from '@/hooks/useFeedEvents';
 import StoriesBar from '@/components/portfolio/feed/StoriesBar';
 import SmartSearchBar from '@/components/portfolio/feed/SmartSearchBar';
 import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
+import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -38,6 +40,7 @@ export default function FeedPage() {
   const { user } = useAuth();
   const { can } = usePortfolioPermissions();
   const { isSaved, toggleSave } = useSavedItems();
+  const { startViewTimer, endViewTimer, trackLike, trackSave } = useFeedEvents();
   
   const [activeTab, setActiveTab] = useState<FeedTab>('for-you');
   const [items, setItems] = useState<FeedItem[]>([]);
@@ -46,6 +49,7 @@ export default function FeedPage() {
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch following users
@@ -212,13 +216,26 @@ export default function FeedPage() {
   }, [fetchFeed]);
 
   const handleCardClick = (index: number) => {
+    const item = items[index];
+    if (item) {
+      startViewTimer(item.type === 'work' ? 'content' : 'post', item.id);
+    }
     setSelectedIndex(index);
     setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    const item = items[selectedIndex];
+    if (item) {
+      endViewTimer(item.type === 'work' ? 'content' : 'post', item.id);
+    }
+    setModalOpen(false);
   };
 
   const handleSave = async (item: FeedItem) => {
     const itemType = item.type === 'work' ? 'work_video' : 'post';
     await toggleSave(itemType, item.id);
+    trackSave(item.type === 'work' ? 'content' : 'post', item.id);
   };
 
   const checkIsSaved = (item: FeedItem) => {
@@ -260,6 +277,15 @@ export default function FeedPage() {
       </header>
 
       {/* Stories bar */}
+      {/* Suggested profiles (shown once per session) */}
+      {showSuggestions && activeTab === 'for-you' && (
+        <SuggestedProfiles 
+          variant="carousel" 
+          limit={5}
+          onDismiss={() => setShowSuggestions(false)}
+        />
+      )}
+
       <StoriesBar followingIds={followingIds} />
 
       {/* Feed content - 3 column grid */}
@@ -294,7 +320,7 @@ export default function FeedPage() {
         items={items}
         initialIndex={selectedIndex}
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={handleModalClose}
         onSave={handleSave}
         isSaved={checkIsSaved}
       />
