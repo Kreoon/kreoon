@@ -13,22 +13,46 @@ interface ProtectedRouteProps {
   requiresOrg?: boolean; // Whether this route requires an organization
 }
 
+const CLIENT_COMPANY_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const id = window.setTimeout(() => reject(new Error(`timeout:${label}`)), ms);
+    Promise.resolve(promise).then(
+      (res) => {
+        window.clearTimeout(id);
+        resolve(res as T);
+      },
+      (err) => {
+        window.clearTimeout(id);
+        reject(err);
+      }
+    );
+  });
+}
+
 // Helper to get the correct dashboard path based on active role or user roles
 function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string {
   if (roles.length === 0) return '/pending-access';
-  
+
   // If activeRole is set and valid, use it
   if (activeRole && roles.includes(activeRole)) {
     switch (activeRole) {
-      case 'admin': return '/';
-      case 'ambassador': return '/';
-      case 'strategist': return '/strategist-dashboard';
-      case 'creator': return '/creator-dashboard';
-      case 'editor': return '/editor-dashboard';
-      case 'client': return '/client-dashboard';
+      case 'admin':
+        return '/';
+      case 'ambassador':
+        return '/';
+      case 'strategist':
+        return '/strategist-dashboard';
+      case 'creator':
+        return '/creator-dashboard';
+      case 'editor':
+        return '/editor-dashboard';
+      case 'client':
+        return '/client-dashboard';
     }
   }
-  
+
   // Fallback to role priority
   if (roles.includes('admin')) return '/';
   if (roles.includes('ambassador')) return '/';
@@ -47,14 +71,14 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg }: Protecte
   const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
   const location = useLocation();
-  
+
   const [clientHasCompany, setClientHasCompany] = useState<boolean | null>(null);
   const [checkingCompany, setCheckingCompany] = useState(false);
 
   // Use effective roles when impersonating, otherwise real roles
   const rolesToCheck = isImpersonating ? effectiveRoles : realRoles;
   const isClient = rolesToCheck.includes('client');
-  
+
   // Check if current route requires org
   const routeRequiresOrg = requiresOrg ?? ORG_REQUIRED_ROUTES.includes(location.pathname);
 
@@ -65,7 +89,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg }: Protecte
         setClientHasCompany(true);
         return;
       }
-      
+
       if (!user || !isClient) {
         setClientHasCompany(true); // Non-clients don't need company
         return;
@@ -73,20 +97,24 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg }: Protecte
 
       setCheckingCompany(true);
       try {
-        const { data, error } = await supabase
-          .from('client_users')
-          .select('id')
-          .eq('user_id', user.id)
-          .limit(1);
+        const result = await withTimeout(
+          supabase.from('client_users').select('id').eq('user_id', user.id).limit(1),
+          CLIENT_COMPANY_TIMEOUT_MS,
+          'client_users'
+        );
+
+        const { data, error } = result as { data: unknown[] | null; error: unknown | null };
 
         if (error) {
           console.error('Error checking client company:', error);
           setClientHasCompany(false);
         } else {
-          setClientHasCompany(data && data.length > 0);
+          setClientHasCompany(!!(data && data.length > 0));
         }
       } catch (err) {
-        console.error('Error:', err);
+        console.error('Error checking client company:', err);
+        // If this check fails/times out, don't block the app in a loading state.
+        // We default to "has company = false" which will redirect clients to /no-company.
         setClientHasCompany(false);
       } finally {
         setCheckingCompany(false);
@@ -120,7 +148,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg }: Protecte
   if (isRootAdmin && isImpersonating) {
     // When impersonating, we allow access based on the impersonated role
     if (allowedRoles && allowedRoles.length > 0) {
-      const hasAllowedRole = allowedRoles.some(role => effectiveRoles.includes(role));
+      const hasAllowedRole = allowedRoles.some((role) => effectiveRoles.includes(role));
       if (!hasAllowedRole) {
         // Navigate to the impersonated role's dashboard
         const correctDashboard = getDashboardPath(effectiveRoles, null);
@@ -144,7 +172,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg }: Protecte
   if (allowedRoles && allowedRoles.length > 0) {
     // Platform root with org selected is treated as admin
     const effectiveRolesToCheck = isPlatformRoot && currentOrgId ? ['admin', ...rolesToCheck] : rolesToCheck;
-    const hasAllowedRole = allowedRoles.some(role => effectiveRolesToCheck.includes(role));
+    const hasAllowedRole = allowedRoles.some((role) => effectiveRolesToCheck.includes(role));
     if (!hasAllowedRole) {
       // Instead of showing unauthorized, redirect to their appropriate dashboard
       const correctDashboard = getDashboardPath(rolesToCheck, activeRole);
@@ -154,3 +182,4 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg }: Protecte
 
   return <>{children}</>;
 }
+
