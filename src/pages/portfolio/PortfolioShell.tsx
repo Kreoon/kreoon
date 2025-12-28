@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Play, User, Bookmark, MessageCircle, Compass, Bell } from 'lucide-react';
+import { Home, Play, User, Bookmark, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
 import { useAuth } from '@/hooks/useAuth';
@@ -225,14 +225,7 @@ export default function PortfolioShell() {
         )}
       </aside>
 
-      {/* Floating chat button (placeholder for future) */}
-      <Button
-        size="icon"
-        className="fixed bottom-20 md:bottom-6 right-4 h-12 w-12 rounded-full shadow-lg z-50"
-        onClick={() => {/* Chat functionality */}}
-      >
-        <MessageCircle className="h-5 w-5" />
-      </Button>
+      {/* Chat button removed - using comments instead */}
 
       {/* Spacer for mobile bottom nav */}
       <div className="h-16 md:hidden" />
