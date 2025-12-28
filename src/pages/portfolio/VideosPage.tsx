@@ -1,13 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSavedItems } from '@/hooks/useSavedItems';
 import { cn } from '@/lib/utils';
-import { Heart, MessageCircle, Bookmark, Share2, Play, Volume2, VolumeX } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Share2, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { HLSVideoPlayer } from '@/components/video';
+import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 
 interface VideoItem {
   id: string;
@@ -28,6 +30,170 @@ interface VideoItem {
 
 type VideoFilter = 'all' | 'work' | 'posts';
 
+// Memoized video slide component
+interface VideoSlideProps {
+  video: VideoItem;
+  isActive: boolean;
+  isMuted: boolean;
+  onMuteToggle: () => void;
+  onSave: () => void;
+  isSaved: boolean;
+  onProfileClick: (userId: string) => void;
+}
+
+const VideoSlide = memo(function VideoSlide({
+  video,
+  isActive,
+  isMuted,
+  onMuteToggle,
+  onSave,
+  isSaved,
+  onProfileClick
+}: VideoSlideProps) {
+  const [isLiked, setIsLiked] = useState(false);
+  const [showHeart, setShowHeart] = useState(false);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+
+  // Get video source - try Bunny HLS first, fallback to direct URL
+  const bunnyUrls = getBunnyVideoUrls(video.video_url);
+  const videoSrc = bunnyUrls?.hls || video.video_url;
+  const posterSrc = video.thumbnail_url || bunnyUrls?.thumbnail;
+
+  // Check if it's a direct video file (mp4, etc) vs HLS/embed
+  const isDirectVideo = video.video_url.match(/\.(mp4|webm|mov)(\?|$)/i) || 
+                        video.video_url.includes('supabase.co/storage');
+
+  const handleDoubleTap = useCallback(() => {
+    if (!isLiked) {
+      setIsLiked(true);
+      setShowHeart(true);
+      setTimeout(() => setShowHeart(false), 1000);
+    }
+  }, [isLiked]);
+
+  return (
+    <div 
+      ref={videoContainerRef}
+      className="h-full w-full snap-start relative flex items-center justify-center bg-black"
+      onDoubleClick={handleDoubleTap}
+    >
+      {isDirectVideo ? (
+        // For direct video files (from Supabase storage), use native video element
+        <video
+          src={video.video_url}
+          poster={posterSrc}
+          autoPlay={isActive}
+          loop
+          muted={isMuted}
+          playsInline
+          className="h-full w-full object-contain"
+        />
+      ) : (
+        // For Bunny videos, use HLS player
+        <HLSVideoPlayer
+          src={videoSrc}
+          poster={posterSrc}
+          autoPlay={isActive}
+          muted={isMuted}
+          loop={true}
+          className="w-full h-full"
+          aspectRatio="auto"
+          objectFit="contain"
+        />
+      )}
+
+      {/* Double-tap heart animation */}
+      {showHeart && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <Heart className="h-24 w-24 text-white fill-white animate-ping" />
+        </div>
+      )}
+
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+
+      {/* Content info */}
+      <div className="absolute bottom-20 left-4 right-16 text-white">
+        <button 
+          className="flex items-center gap-2 mb-2"
+          onClick={() => onProfileClick(video.user_id)}
+        >
+          <Avatar className="h-10 w-10 border-2 border-white">
+            <AvatarImage src={video.user_avatar} />
+            <AvatarFallback>{video.user_name?.[0]}</AvatarFallback>
+          </Avatar>
+          <span className="font-semibold">{video.user_name}</span>
+        </button>
+        
+        {video.client_name && (
+          <Badge variant="secondary" className="mb-2 bg-white/20">
+            {video.client_name}
+          </Badge>
+        )}
+        
+        <p className="text-sm line-clamp-2">
+          {video.title || video.caption}
+        </p>
+      </div>
+
+      {/* Action buttons */}
+      <div className="absolute bottom-20 right-4 flex flex-col gap-4 items-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
+          onClick={() => setIsLiked(!isLiked)}
+        >
+          <Heart className={cn("h-6 w-6", isLiked && "fill-red-500 text-red-500")} />
+        </Button>
+        <span className="text-white text-xs">
+          {video.likes_count > 0 ? video.likes_count : ''}
+        </span>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </Button>
+        <span className="text-white text-xs">
+          {video.comments_count > 0 ? video.comments_count : ''}
+        </span>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50",
+            isSaved && "text-yellow-400"
+          )}
+          onClick={onSave}
+        >
+          <Bookmark className={cn("h-6 w-6", isSaved && "fill-current")} />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
+        >
+          <Share2 className="h-6 w-6" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
+          onClick={onMuteToggle}
+        >
+          {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+        </Button>
+      </div>
+    </div>
+  );
+});
+
 export default function VideosPage() {
   const { user } = useAuth();
   const { isSaved, toggleSave } = useSavedItems();
@@ -40,7 +206,6 @@ export default function VideosPage() {
   const [isMuted, setIsMuted] = useState(true);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const fetchVideos = useCallback(async () => {
     setLoading(true);
@@ -78,6 +243,7 @@ export default function VideosPage() {
               id,
               user_id,
               media_url,
+              media_type,
               thumbnail_url,
               caption,
               views_count,
@@ -93,42 +259,42 @@ export default function VideosPage() {
 
       const results = await Promise.all(queries);
       
-      let allVideos: VideoItem[] = [];
+      // Process content videos
+      const contentVideos = filter !== 'posts' && results[0]?.data 
+        ? results[0].data.map((c: any) => ({
+            id: c.id,
+            type: 'work' as const,
+            title: c.title,
+            video_url: c.video_url,
+            thumbnail_url: c.thumbnail_url,
+            user_id: c.creator?.id,
+            user_name: c.creator?.full_name,
+            user_avatar: c.creator?.avatar_url,
+            client_name: c.client?.name,
+            views_count: c.views_count || 0,
+            likes_count: c.likes_count || 0,
+            comments_count: 0,
+            created_at: c.created_at,
+          }))
+        : [];
 
-      if (filter === 'all' || filter === 'work') {
-        const workData = results[0]?.data || [];
-        allVideos.push(...workData.map((w: any) => ({
-          id: w.id,
-          type: 'work' as const,
-          title: w.title,
-          video_url: w.video_url,
-          thumbnail_url: w.thumbnail_url,
-          user_id: w.creator_id,
-          user_name: w.creator?.full_name,
-          user_avatar: w.creator?.avatar_url,
-          client_name: w.client?.name,
-          views_count: w.views_count || 0,
-          likes_count: w.likes_count || 0,
-          comments_count: 0,
-          created_at: w.created_at,
-        })));
-      }
-
-      // Fetch user profiles for posts
-      let postsData: any[] = [];
-      if (filter === 'all' || filter === 'posts') {
-        const postIdx = filter === 'all' ? 1 : 0;
-        postsData = results[postIdx]?.data || [];
-      }
+      // Process post videos - need to fetch profiles separately
+      let postVideos: VideoItem[] = [];
+      const postsResult = filter === 'posts' ? results[0] : results[1];
       
-      const postUserIds = [...new Set(postsData.map((p: any) => p.user_id))];
-      const { data: profilesData } = postUserIds.length > 0 
-        ? await supabase.from('profiles').select('id, full_name, avatar_url').in('id', postUserIds)
-        : { data: [] };
-      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
-
-      if (filter === 'all' || filter === 'posts') {
-        allVideos.push(...postsData.map((p: any) => {
+      if (postsResult?.data && postsResult.data.length > 0) {
+        const userIdSet = new Set<string>();
+        postsResult.data.forEach((p: any) => userIdSet.add(p.user_id as string));
+        const userIds = Array.from(userIdSet);
+        
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', userIds);
+        
+        const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+        
+        postVideos = postsResult.data.map((p: any) => {
           const profile = profilesMap.get(p.user_id);
           return {
             id: p.id,
@@ -144,11 +310,11 @@ export default function VideosPage() {
             comments_count: p.comments_count || 0,
             created_at: p.created_at,
           };
-        }));
+        });
       }
 
-      // Sort by date
-      allVideos.sort((a, b) => 
+      // Combine and sort
+      const allVideos = [...contentVideos, ...postVideos].sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
@@ -184,19 +350,6 @@ export default function VideosPage() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [activeIndex, videos.length]);
 
-  // Play/pause videos based on active index
-  useEffect(() => {
-    videoRefs.current.forEach((video, index) => {
-      if (video) {
-        if (index === activeIndex) {
-          video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
-      }
-    });
-  }, [activeIndex]);
-
   const handleSave = async (video: VideoItem) => {
     const itemType = video.type === 'work' ? 'work_video' : 'post';
     await toggleSave(itemType, video.id);
@@ -204,6 +357,11 @@ export default function VideosPage() {
 
   const handleProfileClick = (userId: string) => {
     navigate(`/profile/${userId}`);
+  };
+
+  const checkIsSaved = (video: VideoItem) => {
+    const itemType = video.type === 'work' ? 'work_video' : 'post';
+    return isSaved(itemType, video.id);
   };
 
   if (loading) {
@@ -214,10 +372,18 @@ export default function VideosPage() {
     );
   }
 
+  if (videos.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center md:ml-20 lg:ml-64 text-muted-foreground">
+        No hay videos disponibles
+      </div>
+    );
+  }
+
   return (
     <div className="h-full bg-black md:ml-20 lg:ml-64">
       {/* Filter chips */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-2 md:left-auto md:right-1/2 md:translate-x-1/2">
         {(['all', 'work', 'posts'] as VideoFilter[]).map((f) => (
           <Badge
             key={f}
@@ -235,126 +401,32 @@ export default function VideosPage() {
         ))}
       </div>
 
+      {/* Counter */}
+      <div className="absolute top-4 left-4 z-20 text-sm text-white/80 bg-black/40 px-3 py-1 rounded-full md:left-auto md:ml-24 lg:ml-72">
+        {activeIndex + 1} / {videos.length}
+      </div>
+
       {/* Video container with snap scroll */}
       <div
         ref={containerRef}
         className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
-        style={{ scrollBehavior: 'smooth' }}
       >
         {videos.map((video, index) => (
           <div
             key={`${video.type}-${video.id}`}
-            className="h-full w-full snap-start relative flex items-center justify-center"
+            className="h-full w-full"
           >
-            {/* Video */}
-            <video
-              ref={el => { videoRefs.current[index] = el; }}
-              src={video.video_url}
-              poster={video.thumbnail_url}
-              loop
-              muted={isMuted}
-              playsInline
-              className="h-full w-full object-contain"
-              onClick={() => {
-                const videoEl = videoRefs.current[index];
-                if (videoEl) {
-                  if (videoEl.paused) videoEl.play();
-                  else videoEl.pause();
-                }
-              }}
+            <VideoSlide
+              video={video}
+              isActive={index === activeIndex}
+              isMuted={isMuted}
+              onMuteToggle={() => setIsMuted(!isMuted)}
+              onSave={() => handleSave(video)}
+              isSaved={checkIsSaved(video)}
+              onProfileClick={handleProfileClick}
             />
-
-            {/* Overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
-
-            {/* Content info */}
-            <div className="absolute bottom-20 left-4 right-16 text-white">
-              <button 
-                className="flex items-center gap-2 mb-2"
-                onClick={() => handleProfileClick(video.user_id)}
-              >
-                <Avatar className="h-10 w-10 border-2 border-white">
-                  <AvatarImage src={video.user_avatar} />
-                  <AvatarFallback>{video.user_name?.[0]}</AvatarFallback>
-                </Avatar>
-                <span className="font-semibold">{video.user_name}</span>
-              </button>
-              
-              {video.client_name && (
-                <Badge variant="secondary" className="mb-2 bg-white/20">
-                  {video.client_name}
-                </Badge>
-              )}
-              
-              <p className="text-sm line-clamp-2">
-                {video.title || video.caption}
-              </p>
-            </div>
-
-            {/* Action buttons */}
-            <div className="absolute bottom-20 right-4 flex flex-col gap-4 items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
-              >
-                <Heart className="h-6 w-6" />
-              </Button>
-              <span className="text-white text-xs">
-                {video.likes_count > 0 ? video.likes_count : ''}
-              </span>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
-              >
-                <MessageCircle className="h-6 w-6" />
-              </Button>
-              <span className="text-white text-xs">
-                {video.comments_count > 0 ? video.comments_count : ''}
-              </span>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "h-12 w-12 rounded-full bg-black/30 hover:bg-black/50",
-                  isSaved(video.type === 'work' ? 'work_video' : 'post', video.id) 
-                    ? 'text-yellow-400' 
-                    : 'text-white'
-                )}
-                onClick={() => handleSave(video)}
-              >
-                <Bookmark className="h-6 w-6" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
-              >
-                <Share2 className="h-6 w-6" />
-              </Button>
-            </div>
-
-            {/* Mute button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute bottom-20 left-4 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50"
-              onClick={() => setIsMuted(!isMuted)}
-            >
-              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </Button>
           </div>
         ))}
-
-        {videos.length === 0 && (
-          <div className="h-full flex items-center justify-center text-white/70">
-            No hay videos disponibles
-          </div>
-        )}
       </div>
     </div>
   );
