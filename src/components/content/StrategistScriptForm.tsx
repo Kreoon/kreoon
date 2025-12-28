@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
@@ -40,6 +41,7 @@ interface StrategistScriptFormProps {
   product: Product | null;
   contentId: string;
   onScriptGenerated: (content: GeneratedContent) => void;
+  organizationId?: string;
 }
 
 interface DocumentContent {
@@ -220,8 +222,10 @@ Usa etiquetas HTML semánticas y emojis.`,
 Usa etiquetas HTML semánticas y emojis estratégicos.`,
 };
 
-export function StrategistScriptForm({ product, contentId, onScriptGenerated }: StrategistScriptFormProps) {
+export function StrategistScriptForm({ product, contentId, onScriptGenerated, organizationId: propOrgId }: StrategistScriptFormProps) {
   const { toast } = useToast();
+  const { profile } = useAuth();
+  const organizationId = propOrgId || profile?.current_organization_id;
   const [loading, setLoading] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [loadingPrompts, setLoadingPrompts] = useState(false);
@@ -437,6 +441,7 @@ Responde SOLO en formato JSON con esta estructura exacta:
       const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
         body: {
           action: "generate_script",
+          organizationId,
           prompt: promptGenerationRequest,
           product: { id: product.id, name: product.name },
           ai_provider: formData.ai_provider,
@@ -576,6 +581,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
     const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
       body: {
         action: "generate_script",
+        organizationId,
         prompt: fullPrompt,
         product: {
           id: product?.id,
