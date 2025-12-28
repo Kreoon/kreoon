@@ -10,7 +10,7 @@ import { useInterestExtractor } from '@/hooks/useInterestExtractor';
 import { useRecommendations } from '@/hooks/useRecommendations';
 import { usePersistedValue } from '@/hooks/useStatePersistence';
 import StoriesBar from '@/components/portfolio/feed/StoriesBar';
-import SmartSearchBar from '@/components/portfolio/feed/SmartSearchBar';
+import { EnhancedSmartSearch } from '@/components/portfolio/EnhancedSmartSearch';
 import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
@@ -322,8 +322,8 @@ export default function FeedPage() {
       {/* Header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-3">
-          {/* Search bar */}
-          <SmartSearchBar className="mb-3" />
+          {/* Enhanced search bar */}
+          <EnhancedSmartSearch className="mb-3" />
           
           {/* Tab switcher */}
           <div className="flex items-center justify-between">
