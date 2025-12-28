@@ -276,7 +276,11 @@ function FeedGridModalComponent({
       const slideHeight = window.innerHeight;
       const newIndex = Math.round(container.scrollTop / slideHeight);
       if (newIndex !== activeIndex && newIndex >= 0 && newIndex < items.length) {
-        pauseNonActive(newIndex);
+        // Pause ALL videos in the modal immediately when scrolling away
+        container.querySelectorAll('video').forEach(v => {
+          v.pause();
+          v.currentTime = 0; // Reset to start
+        });
         setActiveIndex(newIndex);
       }
     };
