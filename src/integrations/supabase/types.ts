@@ -3842,6 +3842,7 @@ export type Database = {
           ai_recommended_level: string | null
           ai_risk_flag: string | null
           ambassador_celebration_pending: boolean | null
+          availability_status: string | null
           avatar_url: string | null
           bio: string | null
           city: string | null
@@ -3875,6 +3876,7 @@ export type Database = {
           ai_recommended_level?: string | null
           ai_risk_flag?: string | null
           ambassador_celebration_pending?: boolean | null
+          availability_status?: string | null
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
@@ -3908,6 +3910,7 @@ export type Database = {
           ai_recommended_level?: string | null
           ai_risk_flag?: string | null
           ambassador_celebration_pending?: boolean | null
+          availability_status?: string | null
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
