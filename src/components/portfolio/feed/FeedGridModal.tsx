@@ -257,36 +257,37 @@ function FeedGridModalComponent({
     }
   }, [isOpen, initialIndex]);
 
-  // Handle scroll snap and pause/play based on active slide
+  // Pause videos immediately when they leave the viewport (scroll)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const pauseNonActive = (active: number) => {
-      const slides = Array.from(container.querySelectorAll<HTMLElement>('[data-feed-slide]'));
-      slides.forEach((slide) => {
-        const idx = Number(slide.dataset.feedIndex);
-        const video = slide.querySelector('video');
-        if (!video) return;
-        if (idx !== active) {
-          video.pause();
-          video.muted = true;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const slide = entry.target as HTMLElement;
+          const idx = Number(slide.dataset.feedIndex);
+          const video = slide.querySelector('video') as HTMLVideoElement | null;
+
+          // Leaving viewport -> pause immediately
+          if (video && entry.intersectionRatio < 0.25) {
+            video.pause();
+            video.muted = true;
+          }
+
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.7 && !Number.isNaN(idx) && idx !== activeIndex) {
+            setActiveIndex(idx);
+          }
         }
-      });
-    };
+      },
+      { root: container, threshold: [0, 0.25, 0.7] }
+    );
 
-    const handleScroll = () => {
-      const slideHeight = window.innerHeight;
-      const newIndex = Math.round(container.scrollTop / slideHeight);
-      if (newIndex !== activeIndex && newIndex >= 0 && newIndex < items.length) {
-        pauseNonActive(newIndex);
-        setActiveIndex(newIndex);
-      }
-    };
+    const slides = container.querySelectorAll<HTMLElement>('[data-feed-slide]');
+    slides.forEach((el) => observer.observe(el));
 
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [activeIndex, items.length]);
+    return () => observer.disconnect();
+  }, [items.length, activeIndex]);
 
   // Pause all videos when modal closes
   useEffect(() => {
