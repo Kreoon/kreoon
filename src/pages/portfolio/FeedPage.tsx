@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
 import { useSavedItems } from '@/hooks/useSavedItems';
 import { useFeedEvents } from '@/hooks/useFeedEvents';
+import { usePersistedValue } from '@/hooks/useStatePersistence';
 import StoriesBar from '@/components/portfolio/feed/StoriesBar';
 import SmartSearchBar from '@/components/portfolio/feed/SmartSearchBar';
 import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
@@ -42,15 +43,41 @@ export default function FeedPage() {
   const { isSaved, toggleSave } = useSavedItems();
   const { startViewTimer, endViewTimer, trackLike, trackSave } = useFeedEvents();
   
-  const [activeTab, setActiveTab] = useState<FeedTab>('for-you');
+  // Persist tab and scroll position to avoid losing state on tab change/blur
+  const [activeTab, setActiveTab] = usePersistedValue<FeedTab>('feed_active_tab', 'for-you');
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [showSuggestions, setShowSuggestions] = useState(true);
+  const [showSuggestions, setShowSuggestions] = usePersistedValue('feed_show_suggestions', true);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Persist scroll position
+  const scrollPositionRef = useRef(0);
+  
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      scrollPositionRef.current = container.scrollTop;
+      sessionStorage.setItem('feed_scroll', String(container.scrollTop));
+    };
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Restore scroll position
+    const savedScroll = sessionStorage.getItem('feed_scroll');
+    if (savedScroll) {
+      requestAnimationFrame(() => {
+        container.scrollTop = parseInt(savedScroll, 10);
+      });
+    }
+    
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [loading]);
 
   // Fetch following users
   useEffect(() => {
