@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const userIdRef = useRef<string | null>(null);
   const rolesLoadedRef = useRef<boolean>(false);
   const bootstrappedRef = useRef<boolean>(false);
+  const bootTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     userIdRef.current = user?.id ?? null;
@@ -83,7 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Mobile browsers can sometimes block storage/cookies and auth bootstrapping never resolves.
     // This prevents an infinite spinner by timing out to the login screen.
-    const bootTimeout = window.setTimeout(() => {
+    // IMPORTANT: Don't clear this timeout just because getSession resolved; only clear when bootstrapping finishes.
+    bootTimeoutRef.current = window.setTimeout(() => {
       if (!isMounted) return;
       console.warn('[auth] bootstrap timeout');
       setRolesLoaded(true);
@@ -139,6 +141,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles([]);
         setRolesLoaded(true);
         setLoading(false);
+        if (bootTimeoutRef.current) {
+          window.clearTimeout(bootTimeoutRef.current);
+          bootTimeoutRef.current = null;
+        }
       }
     });
 
@@ -157,6 +163,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setRolesLoaded(true);
           setLoading(false);
+          if (bootTimeoutRef.current) {
+            window.clearTimeout(bootTimeoutRef.current);
+            bootTimeoutRef.current = null;
+          }
         }
       })
       .catch((err) => {
@@ -164,14 +174,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!isMounted) return;
         setRolesLoaded(true);
         setLoading(false);
-      })
-      .finally(() => {
-        window.clearTimeout(bootTimeout);
+        if (bootTimeoutRef.current) {
+          window.clearTimeout(bootTimeoutRef.current);
+          bootTimeoutRef.current = null;
+        }
       });
 
     return () => {
       isMounted = false;
-      window.clearTimeout(bootTimeout);
+      if (bootTimeoutRef.current) {
+        window.clearTimeout(bootTimeoutRef.current);
+        bootTimeoutRef.current = null;
+      }
       subscription.unsubscribe();
     };
   }, []);
@@ -265,6 +279,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoles([]);
     } finally {
       bootstrappedRef.current = true;
+
+      if (bootTimeoutRef.current) {
+        window.clearTimeout(bootTimeoutRef.current);
+        bootTimeoutRef.current = null;
+      }
 
       if (!silent) {
         setRolesLoaded(true);
