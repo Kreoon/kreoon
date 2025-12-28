@@ -264,14 +264,14 @@ export default function CompanyProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-social-background">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex items-start gap-6">
-            <Skeleton className="w-24 h-24 rounded-full" />
+            <Skeleton className="w-24 h-24 rounded-full bg-social-muted" />
             <div className="flex-1 space-y-3">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-64" />
+              <Skeleton className="h-6 w-48 bg-social-muted" />
+              <Skeleton className="h-4 w-32 bg-social-muted" />
+              <Skeleton className="h-4 w-64 bg-social-muted" />
             </div>
           </div>
         </div>
@@ -281,12 +281,15 @@ export default function CompanyProfilePage() {
 
   if (notFound || !company) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-social-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Building2 className="h-16 w-16 mx-auto text-muted-foreground" />
-          <h1 className="text-xl font-semibold">Empresa no encontrada</h1>
-          <p className="text-muted-foreground">Este perfil no existe o no es público.</p>
-          <Button onClick={() => navigate('/social')}>
+          <Building2 className="h-16 w-16 mx-auto text-social-muted-foreground" />
+          <h1 className="text-xl font-semibold text-social-foreground">Empresa no encontrada</h1>
+          <p className="text-social-muted-foreground">Este perfil no existe o no es público.</p>
+          <Button 
+            onClick={() => navigate('/social')}
+            className="bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver al feed
           </Button>
@@ -296,18 +299,18 @@ export default function CompanyProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-social-background text-social-foreground pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border">
+      <header className="sticky top-0 z-30 bg-social-background/95 backdrop-blur-lg border-b border-social-border">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-social-foreground hover:bg-social-muted">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
             <h1 className="font-semibold truncate">{company.name}</h1>
           </div>
           {isOwner && (
-            <Button variant="outline" size="sm" onClick={() => setShowEditor(true)}>
+            <Button variant="outline" size="sm" onClick={() => setShowEditor(true)} className="border-social-border text-social-foreground hover:bg-social-muted">
               <Settings className="h-4 w-4 mr-1" />
               Editar
             </Button>
@@ -320,9 +323,9 @@ export default function CompanyProfilePage() {
           {/* Profile Section */}
           <div className="flex flex-col md:flex-row items-start gap-6 mb-8">
             {/* Avatar */}
-            <Avatar className="w-24 h-24 md:w-32 md:h-32 border-2 border-border">
+            <Avatar className="w-24 h-24 md:w-32 md:h-32 border-2 border-social-border">
               <AvatarImage src={company.logo_url || undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+              <AvatarFallback className="bg-social-accent/10 text-social-accent text-2xl">
                 <Building2 className="w-10 h-10" />
               </AvatarFallback>
             </Avatar>
@@ -337,22 +340,22 @@ export default function CompanyProfilePage() {
               </div>
 
               {company.username && (
-                <p className="text-muted-foreground">@{company.username}</p>
+                <p className="text-social-muted-foreground">@{company.username}</p>
               )}
 
               {/* Stats */}
               <div className="flex items-center gap-6 text-sm">
                 <div className="text-center">
                   <span className="font-bold">{contentCount}</span>
-                  <span className="text-muted-foreground ml-1">contenidos</span>
+                  <span className="text-social-muted-foreground ml-1">contenidos</span>
                 </div>
                 <div className="text-center">
                   <span className="font-bold">{formatCount(followersCount)}</span>
-                  <span className="text-muted-foreground ml-1">seguidores</span>
+                  <span className="text-social-muted-foreground ml-1">seguidores</span>
                 </div>
                 <div className="text-center">
                   <span className="font-bold">{formatCount(totalViews)}</span>
-                  <span className="text-muted-foreground ml-1">views</span>
+                  <span className="text-social-muted-foreground ml-1">views</span>
                 </div>
               </div>
 
@@ -362,9 +365,9 @@ export default function CompanyProfilePage() {
               )}
 
               {/* Meta info */}
-              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-social-muted-foreground">
                 {company.category && (
-                  <Badge variant="secondary">{company.category}</Badge>
+                  <Badge variant="secondary" className="bg-social-muted text-social-muted-foreground border-social-border">{company.category}</Badge>
                 )}
                 {(company.city || company.country) && (
                   <span className="flex items-center gap-1">
@@ -377,7 +380,7 @@ export default function CompanyProfilePage() {
               {/* Links */}
               <div className="flex flex-wrap items-center gap-2">
                 {company.website && (
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild className="border-social-border text-social-foreground hover:bg-social-muted">
                     <a href={company.website} target="_blank" rel="noopener noreferrer">
                       <Globe className="h-4 w-4 mr-1" />
                       Website
@@ -385,7 +388,7 @@ export default function CompanyProfilePage() {
                   </Button>
                 )}
                 {company.instagram && (
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild className="border-social-border text-social-foreground hover:bg-social-muted">
                     <a href={`https://instagram.com/${company.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer">
                       <Instagram className="h-4 w-4" />
                     </a>
@@ -402,17 +405,17 @@ export default function CompanyProfilePage() {
 
           {/* Content Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full justify-start border-b rounded-none bg-transparent p-0">
+            <TabsList className="w-full justify-start border-b border-social-border rounded-none bg-transparent p-0">
               <TabsTrigger 
                 value="content" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent text-social-muted-foreground"
               >
                 <Grid3X3 className="h-4 w-4 mr-2" />
                 Contenido
               </TabsTrigger>
               <TabsTrigger 
                 value="creators"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent text-social-muted-foreground"
               >
                 <Users className="h-4 w-4 mr-2" />
                 Creadores
@@ -423,11 +426,11 @@ export default function CompanyProfilePage() {
               {loadingContent ? (
                 <div className="grid grid-cols-3 gap-1">
                   {Array.from({ length: 9 }).map((_, i) => (
-                    <Skeleton key={i} className="aspect-square" />
+                    <Skeleton key={i} className="aspect-square bg-social-muted" />
                   ))}
                 </div>
               ) : content.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-12 text-social-muted-foreground">
                   <Play className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Aún no hay contenido publicado</p>
                 </div>
@@ -449,16 +452,16 @@ export default function CompanyProfilePage() {
                 <div className="space-y-3">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} className="flex items-center gap-3 p-3">
-                      <Skeleton className="w-12 h-12 rounded-full" />
+                      <Skeleton className="w-12 h-12 rounded-full bg-social-muted" />
                       <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-4 w-32 bg-social-muted" />
+                        <Skeleton className="h-3 w-20 bg-social-muted" />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : creators.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-12 text-social-muted-foreground">
                   <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Aún no hay creadores asociados</p>
                 </div>
@@ -467,20 +470,20 @@ export default function CompanyProfilePage() {
                   {creators.map(creator => (
                     <div 
                       key={creator.id}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-social-muted cursor-pointer transition-colors"
                       onClick={() => navigate(`/profile/${creator.id}`)}
                     >
-                      <Avatar className="w-12 h-12 border">
+                      <Avatar className="w-12 h-12 border border-social-border">
                         <AvatarImage src={creator.avatar_url || undefined} />
-                        <AvatarFallback>{creator.full_name?.charAt(0) || 'U'}</AvatarFallback>
+                        <AvatarFallback className="bg-social-muted text-social-foreground">{creator.full_name?.charAt(0) || 'U'}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-medium">{creator.full_name}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-medium text-social-foreground">{creator.full_name}</p>
+                        <p className="text-sm text-social-muted-foreground">
                           {creator.content_count} {creator.content_count === 1 ? 'contenido' : 'contenidos'}
                         </p>
                       </div>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      <ExternalLink className="h-4 w-4 text-social-muted-foreground" />
                     </div>
                   ))}
                 </div>
