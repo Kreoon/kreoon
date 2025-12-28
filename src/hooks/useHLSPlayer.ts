@@ -230,6 +230,18 @@ export function useHLSPlayer(
     });
   }, [currentMuted]);
 
+  // React to autoPlay changes without re-initializing HLS
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (autoPlay) {
+      playWithFallback(video);
+    } else {
+      video.pause();
+    }
+  }, [autoPlay, hlsUrl, playWithFallback]);
+
   // Helper: Fallback to MP4 when HLS fails
   const fallbackToMp4 = useCallback((video: HTMLVideoElement, mp4: string | null) => {
     if (mp4) {
