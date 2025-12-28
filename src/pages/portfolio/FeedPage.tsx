@@ -6,6 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
 import { useSavedItems } from '@/hooks/useSavedItems';
 import { useFeedEvents } from '@/hooks/useFeedEvents';
+import { useInterestExtractor } from '@/hooks/useInterestExtractor';
+import { useRecommendations } from '@/hooks/useRecommendations';
 import { usePersistedValue } from '@/hooks/useStatePersistence';
 import StoriesBar from '@/components/portfolio/feed/StoriesBar';
 import SmartSearchBar from '@/components/portfolio/feed/SmartSearchBar';
@@ -13,8 +15,9 @@ import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface FeedItem {
   id: string;
@@ -43,6 +46,7 @@ export default function FeedPage() {
   const { can } = usePortfolioPermissions();
   const { isSaved, toggleSave } = useSavedItems();
   const { startViewTimer, endViewTimer, trackLike, trackSave } = useFeedEvents();
+  const { trackEvent: trackInterestEvent } = useInterestExtractor();
   
   // Persist tab and scroll position to avoid losing state on tab change/blur
   const [activeTab, setActiveTab] = usePersistedValue<FeedTab>('feed_active_tab', 'for-you');
@@ -54,7 +58,16 @@ export default function FeedPage() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showSuggestions, setShowSuggestions] = usePersistedValue('feed_show_suggestions', true);
   const [showStoryUploader, setShowStoryUploader] = useState(false);
+  const [useAIRecommendations, setUseAIRecommendations] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // AI Recommendations hook
+  const { 
+    recommendations, 
+    loading: loadingRecs, 
+    hasPersonalization,
+    fetchRecommendations 
+  } = useRecommendations({ followingIds, limit: 50 });
   
   // Persist scroll position
   const scrollPositionRef = useRef(0);
@@ -249,14 +262,28 @@ export default function FeedPage() {
     }
   }, [activeTab, followingIds, isSaved]);
 
+  // Fetch AI recommendations for "For You" tab
+  useEffect(() => {
+    if (activeTab === 'for-you' && useAIRecommendations) {
+      const viewedIds = items.filter(i => i.type === 'work').map(i => i.id);
+      fetchRecommendations([], viewedIds);
+    }
+  }, [activeTab, useAIRecommendations, followingIds]);
+
   useEffect(() => {
     fetchFeed();
   }, [fetchFeed]);
+
+  // Track interaction for interest extraction
+  const handleInteraction = useCallback(() => {
+    trackInterestEvent();
+  }, [trackInterestEvent]);
 
   const handleCardClick = (index: number) => {
     const item = items[index];
     if (item) {
       startViewTimer(item.type === 'work' ? 'content' : 'post', item.id);
+      handleInteraction();
     }
     setSelectedIndex(index);
     setModalOpen(true);
@@ -293,8 +320,11 @@ export default function FeedPage() {
           <div className="flex items-center justify-between">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FeedTab)}>
               <TabsList className="bg-muted/50">
-                <TabsTrigger value="for-you" className="text-sm">
+                <TabsTrigger value="for-you" className="text-sm flex items-center gap-1">
                   Para Ti
+                  {hasPersonalization && activeTab === 'for-you' && (
+                    <Sparkles className="h-3 w-3 text-primary" />
+                  )}
                 </TabsTrigger>
                 <TabsTrigger value="following" className="text-sm">
                   Siguiendo
@@ -302,14 +332,22 @@ export default function FeedPage() {
               </TabsList>
             </Tabs>
             
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => fetchFeed(true)}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
+            <div className="flex items-center gap-1">
+              {hasPersonalization && (
+                <Badge variant="secondary" className="text-xs">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  IA
+                </Badge>
+              )}
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => fetchFeed(true)}
+                disabled={refreshing}
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
