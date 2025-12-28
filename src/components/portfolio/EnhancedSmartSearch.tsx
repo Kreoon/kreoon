@@ -5,8 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Search, User, Video, Building2, X, Loader2, 
-  Trophy, Shield, Crown, Verified, Sparkles,
-  TrendingUp
+  Trophy, Shield, Crown, Sparkles, TrendingUp, MapPin, Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,13 +16,20 @@ interface EnhancedUserResult {
   username: string | null;
   avatar_url: string | null;
   bio: string | null;
+  tagline: string | null;
   city: string | null;
-  city: string | null;
+  country: string | null;
   is_ambassador: boolean;
-  is_verified: boolean;
-  is_vip: boolean;
+  // Profile enrichment
+  best_at: string | null;
+  interests: string[] | null;
+  specialties_tags: string[] | null;
+  content_categories: string[] | null;
+  industries: string[] | null;
+  experience_level: string | null;
+  quality_score_avg: number | null;
   // Trust indicators
-  current_level?: number;
+  current_level?: number | string;
   total_points?: number;
   achievements_count?: number;
   followers_count?: number;
@@ -84,9 +90,7 @@ export function EnhancedSmartSearch({
         setRecentSearches(JSON.parse(stored));
       } catch {}
     }
-    
-    // Trending searches
-    setTrendingSearches(['creadores', 'UGC', 'fitness', 'moda', 'tech']);
+    setTrendingSearches(['UGC', 'fitness', 'moda', 'tech', 'belleza']);
   }, []);
 
   // Click outside handler
@@ -135,6 +139,12 @@ export function EnhancedSmartSearch({
       const isUsernameSearch = trimmed.startsWith('@');
       const searchTerm = isUsernameSearch ? trimmed.slice(1) : trimmed;
 
+      // Build comprehensive search filter for profiles
+      // Searches across: name, username, bio, tagline, city, country, best_at, interests, specialties, categories, industries
+      const profileSearchFilter = isUsernameSearch 
+        ? `username.ilike.%${searchTerm}%`
+        : `full_name.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%,tagline.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,country.ilike.%${searchTerm}%,best_at.ilike.%${searchTerm}%`;
+
       // Parallel search
       const [usersResult, contentResult, clientsResult] = await Promise.all([
         // Enhanced user search with all profile data
@@ -146,18 +156,21 @@ export function EnhancedSmartSearch({
             username, 
             avatar_url, 
             bio,
+            tagline,
             city,
+            country,
             is_ambassador,
-            is_verified,
-            is_vip
+            best_at,
+            interests,
+            specialties_tags,
+            content_categories,
+            industries,
+            experience_level,
+            quality_score_avg
           `)
-          .or(
-            isUsernameSearch 
-              ? `username.ilike.%${searchTerm}%`
-              : `full_name.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%`
-          )
+          .or(profileSearchFilter)
           .eq('is_public', true)
-          .limit(10),
+          .limit(12),
 
         // Content search
         !isUsernameSearch ? supabase
@@ -177,31 +190,63 @@ export function EnhancedSmartSearch({
           .limit(4) : { data: [] }
       ]);
 
+      // Also search in array fields (interests, specialties, categories, industries)
+      let additionalUsers: typeof usersResult.data = [];
+      if (!isUsernameSearch && usersResult.data && usersResult.data.length < 10) {
+        // Search in array fields using contains
+        const { data: arraySearchResult } = await supabase
+          .from('profiles')
+          .select(`
+            id, 
+            full_name, 
+            username, 
+            avatar_url, 
+            bio,
+            tagline,
+            city,
+            country,
+            is_ambassador,
+            best_at,
+            interests,
+            specialties_tags,
+            content_categories,
+            industries,
+            experience_level,
+            quality_score_avg
+          `)
+          .eq('is_public', true)
+          .or(`interests.cs.{${searchTerm}},specialties_tags.cs.{${searchTerm}},content_categories.cs.{${searchTerm}},industries.cs.{${searchTerm}}`)
+          .limit(5);
+        
+        additionalUsers = arraySearchResult || [];
+      }
+
+      // Merge and dedupe users
+      const allUsersData = [...(usersResult.data || []), ...additionalUsers];
+      const uniqueUsersMap = new Map(allUsersData.map(u => [u.id, u]));
+      const uniqueUsers = Array.from(uniqueUsersMap.values());
+
       // Enrich users with UP data, achievements, and followers
-      if (usersResult.data && usersResult.data.length > 0) {
-        const userIds = usersResult.data.map(u => u.id);
+      if (uniqueUsers.length > 0) {
+        const userIds = uniqueUsers.map(u => u.id);
         
         // Fetch all enrichment data in parallel
         const [pointsResult, achievementsResult, followersResult, contentCountResult] = await Promise.all([
-          // User points and levels
           supabase
             .from('user_points')
             .select('user_id, total_points, current_level')
             .in('user_id', userIds),
           
-          // Achievements count per user
           supabase
             .from('user_achievements')
             .select('user_id')
             .in('user_id', userIds),
           
-          // Followers count
           supabase
             .from('followers')
             .select('following_id')
             .in('following_id', userIds),
           
-          // Content count per creator
           supabase
             .from('content')
             .select('creator_id')
@@ -232,13 +277,25 @@ export function EnhancedSmartSearch({
         });
 
         // Enrich users
-        const enrichedUsers: EnhancedUserResult[] = usersResult.data.map(user => {
+        const enrichedUsers: EnhancedUserResult[] = uniqueUsers.map(user => {
           const points = pointsMap.get(user.id);
           return {
-            ...user,
+            id: user.id,
+            full_name: user.full_name,
+            username: user.username,
+            avatar_url: user.avatar_url,
+            bio: user.bio,
+            tagline: user.tagline,
+            city: user.city,
+            country: user.country,
             is_ambassador: user.is_ambassador || false,
-            is_verified: user.is_verified || false,
-            is_vip: user.is_vip || false,
+            best_at: user.best_at,
+            interests: user.interests as string[] | null,
+            specialties_tags: user.specialties_tags as string[] | null,
+            content_categories: user.content_categories as string[] | null,
+            industries: user.industries as string[] | null,
+            experience_level: user.experience_level,
+            quality_score_avg: user.quality_score_avg,
             current_level: points?.current_level,
             total_points: points?.total_points,
             achievements_count: achievementsCount.get(user.id) || 0,
@@ -247,14 +304,22 @@ export function EnhancedSmartSearch({
           };
         });
 
-        // Sort by relevance (verified, VIP, ambassador, followers, points)
+        // Sort by relevance
         enrichedUsers.sort((a, b) => {
-          const scoreA = (a.is_verified ? 100 : 0) + (a.is_vip ? 50 : 0) + (a.is_ambassador ? 30 : 0) + (a.followers_count || 0) * 0.01 + (a.total_points || 0) * 0.001;
-          const scoreB = (b.is_verified ? 100 : 0) + (b.is_vip ? 50 : 0) + (b.is_ambassador ? 30 : 0) + (b.followers_count || 0) * 0.01 + (b.total_points || 0) * 0.001;
+          const scoreA = (a.is_ambassador ? 50 : 0) + 
+                        (a.quality_score_avg || 0) * 10 + 
+                        (a.followers_count || 0) * 0.01 + 
+                        (a.total_points || 0) * 0.001 +
+                        (a.achievements_count || 0) * 2;
+          const scoreB = (b.is_ambassador ? 50 : 0) + 
+                        (b.quality_score_avg || 0) * 10 + 
+                        (b.followers_count || 0) * 0.01 + 
+                        (b.total_points || 0) * 0.001 +
+                        (b.achievements_count || 0) * 2;
           return scoreB - scoreA;
         });
 
-        setUsers(enrichedUsers);
+        setUsers(enrichedUsers.slice(0, 10));
       } else {
         setUsers([]);
       }
@@ -363,22 +428,45 @@ export function EnhancedSmartSearch({
 
   const renderUserBadges = (user: EnhancedUserResult) => (
     <div className="flex items-center gap-1 flex-wrap">
-      {user.is_verified && (
-        <Verified className="h-3.5 w-3.5 text-blue-400" />
-      )}
-      {user.is_vip && (
-        <Crown className="h-3.5 w-3.5 text-yellow-400" />
-      )}
       {user.is_ambassador && (
         <Shield className="h-3.5 w-3.5 text-primary" />
       )}
-      {user.current_level && user.current_level > 1 && (
+      {user.quality_score_avg && user.quality_score_avg >= 4 && (
+        <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 bg-yellow-500/20 text-yellow-500 rounded-full">
+          <Star className="h-2.5 w-2.5 fill-current" /> {user.quality_score_avg.toFixed(1)}
+        </span>
+      )}
+      {user.current_level && Number(user.current_level) > 1 && (
         <span className="text-[10px] px-1.5 py-0.5 bg-primary/20 text-primary rounded-full flex items-center gap-0.5">
           <Trophy className="h-2.5 w-2.5" /> Nv.{user.current_level}
         </span>
       )}
     </div>
   );
+
+  const renderUserMeta = (user: EnhancedUserResult) => {
+    // Show specialties, categories or interests as tags
+    const tags: string[] = [];
+    if (user.best_at) tags.push(user.best_at);
+    if (user.specialties_tags) tags.push(...user.specialties_tags.slice(0, 2));
+    if (user.content_categories) tags.push(...user.content_categories.slice(0, 2));
+    if (user.industries) tags.push(...user.industries.slice(0, 1));
+    
+    const uniqueTags = [...new Set(tags)].slice(0, 3);
+    
+    if (uniqueTags.length > 0) {
+      return (
+        <div className="flex flex-wrap gap-1 mt-1">
+          {uniqueTags.map((tag, i) => (
+            <span key={i} className="text-[10px] px-1.5 py-0.5 bg-social-muted rounded text-social-muted-foreground">
+              {tag}
+            </span>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   const renderUserStats = (user: EnhancedUserResult) => {
     const stats = [];
@@ -391,10 +479,7 @@ export function EnhancedSmartSearch({
     if (user.achievements_count && user.achievements_count > 0) {
       stats.push(`${user.achievements_count} logros`);
     }
-    if (user.total_points && user.total_points > 0) {
-      stats.push(`${formatCount(user.total_points)} UP`);
-    }
-    return stats.slice(0, 3).join(' · ');
+    return stats.slice(0, 2).join(' · ');
   };
 
   const formatCount = (num: number) => {
@@ -470,7 +555,7 @@ export function EnhancedSmartSearch({
         <div className="p-4 text-center">
           <Sparkles className="h-6 w-6 mx-auto mb-2 text-primary/50" />
           <p className="text-social-muted-foreground text-xs">
-            Usa <span className="text-primary">@usuario</span> para buscar por username
+            Busca por nombre, nicho, especialidad, industria, ciudad o país
           </p>
         </div>
       )}
@@ -496,19 +581,12 @@ export function EnhancedSmartSearch({
               onClick={() => handleUserClick(user)}
               className="w-full flex items-center gap-3 px-3 py-3 hover:bg-social-muted rounded-lg transition text-left"
             >
-              <div className="relative">
-                <Avatar className="h-12 w-12 ring-2 ring-social-border">
-                  <AvatarImage src={user.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/20 text-primary">
-                    {user.full_name?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                {user.is_verified && (
-                  <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5">
-                    <Verified className="h-3 w-3 text-white" />
-                  </div>
-                )}
-              </div>
+              <Avatar className="h-12 w-12 ring-2 ring-social-border flex-shrink-0">
+                <AvatarImage src={user.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary/20 text-primary">
+                  {user.full_name?.charAt(0) || 'U'}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-social-foreground font-medium text-sm truncate">{user.full_name}</span>
@@ -517,12 +595,21 @@ export function EnhancedSmartSearch({
                 {user.username && (
                   <span className="text-social-muted-foreground text-xs block">@{user.username}</span>
                 )}
-                <span className="text-social-muted-foreground/70 text-[11px] block mt-0.5">
-                  {user.city || renderUserStats(user)}
-                </span>
+                {(user.city || user.country) && (
+                  <span className="text-social-muted-foreground/70 text-[11px] flex items-center gap-1">
+                    <MapPin className="h-2.5 w-2.5" />
+                    {[user.city, user.country].filter(Boolean).join(', ')}
+                  </span>
+                )}
+                {renderUserMeta(user)}
+                {!user.city && !user.country && (
+                  <span className="text-social-muted-foreground/70 text-[11px] block mt-0.5">
+                    {renderUserStats(user)}
+                  </span>
+                )}
               </div>
               {(user.followers_count || 0) > 0 && (
-                <div className="text-right">
+                <div className="text-right flex-shrink-0">
                   <span className="text-social-foreground text-sm font-medium">{formatCount(user.followers_count || 0)}</span>
                   <span className="text-social-muted-foreground text-[10px] block">seguidores</span>
                 </div>
@@ -627,7 +714,7 @@ export function EnhancedSmartSearch({
                 <Input
                   ref={inputRef}
                   type="text"
-                  placeholder="Buscar @usuario, creadores..."
+                  placeholder="Buscar creadores, nichos..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onFocus={() => setShowResults(true)}
@@ -643,7 +730,7 @@ export function EnhancedSmartSearch({
             </div>
 
             {showDropdown && (
-              <div className="absolute top-full right-0 mt-2 w-[300px] sm:w-[360px] bg-social-card border border-social-border rounded-xl shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto">
+              <div className="absolute top-full right-0 mt-2 w-[320px] sm:w-[380px] bg-social-card border border-social-border rounded-xl shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto">
                 {renderDropdownContent()}
               </div>
             )}
