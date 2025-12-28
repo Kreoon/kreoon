@@ -71,13 +71,14 @@ export default function FeedPage() {
     try {
       const isFollowing = activeTab === 'following';
       
-      // Fetch work content (published videos)
+      // Fetch work content (published videos) - from ALL organizations
       let workQuery = supabase
         .from('content')
         .select(`
           id,
           title,
           video_url,
+          bunny_embed_url,
           thumbnail_url,
           creator_id,
           views_count,
@@ -87,7 +88,7 @@ export default function FeedPage() {
           client:clients!content_client_id_fkey(name)
         `)
         .eq('is_published', true)
-        .not('video_url', 'is', null)
+        .or('video_url.not.is.null,bunny_embed_url.not.is.null')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -134,23 +135,25 @@ export default function FeedPage() {
       const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
 
       // Transform and merge
-      const workItems: FeedItem[] = (workData || []).map(w => ({
-        id: w.id,
-        type: 'work' as const,
-        title: w.title,
-        media_url: w.video_url!,
-        media_type: 'video' as const,
-        thumbnail_url: w.thumbnail_url || undefined,
-        user_id: w.creator_id,
-        user_name: (w.creator as any)?.full_name,
-        user_avatar: (w.creator as any)?.avatar_url,
-        client_name: (w.client as any)?.name,
-        views_count: w.views_count || 0,
-        likes_count: w.likes_count || 0,
-        comments_count: 0,
-        created_at: w.created_at,
-        is_saved: isSaved('work_video', w.id),
-      }));
+      const workItems: FeedItem[] = (workData || [])
+        .filter(w => w.video_url || (w as any).bunny_embed_url)
+        .map(w => ({
+          id: w.id,
+          type: 'work' as const,
+          title: w.title,
+          media_url: w.video_url || (w as any).bunny_embed_url,
+          media_type: 'video' as const,
+          thumbnail_url: w.thumbnail_url || undefined,
+          user_id: w.creator_id,
+          user_name: (w.creator as any)?.full_name,
+          user_avatar: (w.creator as any)?.avatar_url,
+          client_name: (w.client as any)?.name,
+          views_count: w.views_count || 0,
+          likes_count: w.likes_count || 0,
+          comments_count: 0,
+          created_at: w.created_at,
+          is_saved: isSaved('work_video', w.id),
+        }));
 
       const postItems: FeedItem[] = (postsData || []).map(p => {
         const profile = profilesMap.get(p.user_id);
