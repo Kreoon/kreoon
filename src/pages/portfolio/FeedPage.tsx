@@ -15,9 +15,15 @@ import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
-import { RefreshCw, Sparkles } from 'lucide-react';
+import { RefreshCw, Sparkles, Plus, ImageIcon, Film } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface FeedItem {
   id: string;
@@ -59,6 +65,7 @@ export default function FeedPage() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showSuggestions, setShowSuggestions] = usePersistedValue('feed_show_suggestions', true);
   const [showStoryUploader, setShowStoryUploader] = useState(false);
+  const [showPostUploader, setShowPostUploader] = useState(false);
   const [useAIRecommendations, setUseAIRecommendations] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -415,10 +422,49 @@ export default function FeedPage() {
           onClose={() => setShowStoryUploader(false)}
           onSuccess={() => {
             setShowStoryUploader(false);
-            // Refresh page to show new story
             window.location.reload();
           }}
         />
+      )}
+
+      {/* Post Uploader */}
+      {user?.id && (
+        <MediaUploader
+          userId={user.id}
+          type="post"
+          isOpen={showPostUploader}
+          onClose={() => setShowPostUploader(false)}
+          onSuccess={() => {
+            setShowPostUploader(false);
+            fetchFeed(true);
+          }}
+        />
+      )}
+
+      {/* FAB for creating content */}
+      {can('portfolio.posts.create') && (
+        <div className="fixed bottom-24 right-4 z-40 md:bottom-8">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                size="lg" 
+                className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+              >
+                <Plus className="h-6 w-6" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => setShowPostUploader(true)}>
+                <ImageIcon className="h-4 w-4 mr-2" />
+                Crear post
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowStoryUploader(true)}>
+                <Film className="h-4 w-4 mr-2" />
+                Agregar historia
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
     </div>
   );
