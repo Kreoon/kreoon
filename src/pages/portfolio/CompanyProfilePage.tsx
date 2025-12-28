@@ -79,6 +79,10 @@ export default function CompanyProfilePage() {
   const [loadingContent, setLoadingContent] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
   
+  // Creators
+  const [creators, setCreators] = useState<{ id: string; full_name: string; avatar_url: string | null; content_count: number }[]>([]);
+  const [loadingCreators, setLoadingCreators] = useState(false);
+  
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -123,6 +127,7 @@ export default function CompanyProfilePage() {
       await Promise.all([
         fetchFollowersCount(companyData.id),
         fetchContent(companyData.id),
+        fetchCreators(companyData.id),
       ]);
     } catch (error) {
       console.error('Error fetching company:', error);
@@ -205,6 +210,50 @@ export default function CompanyProfilePage() {
       console.error('Error fetching content:', error);
     } finally {
       setLoadingContent(false);
+    }
+  };
+
+  const fetchCreators = async (companyId: string) => {
+    setLoadingCreators(true);
+    try {
+      // Get all creator_ids from content for this company
+      const { data: contentData } = await supabase
+        .from('content')
+        .select('creator_id')
+        .eq('client_id', companyId)
+        .not('creator_id', 'is', null);
+
+      if (!contentData || contentData.length === 0) {
+        setCreators([]);
+        return;
+      }
+
+      // Count content per creator
+      const creatorCounts = new Map<string, number>();
+      contentData.forEach(c => {
+        if (c.creator_id) {
+          creatorCounts.set(c.creator_id, (creatorCounts.get(c.creator_id) || 0) + 1);
+        }
+      });
+
+      const creatorIds = [...creatorCounts.keys()];
+      
+      // Get creator profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', creatorIds);
+
+      const creatorsWithCount = (profiles || []).map(p => ({
+        ...p,
+        content_count: creatorCounts.get(p.id) || 0
+      })).sort((a, b) => b.content_count - a.content_count);
+
+      setCreators(creatorsWithCount);
+    } catch (error) {
+      console.error('Error fetching creators:', error);
+    } finally {
+      setLoadingCreators(false);
     }
   };
 
@@ -396,10 +445,46 @@ export default function CompanyProfilePage() {
             </TabsContent>
 
             <TabsContent value="creators" className="mt-4">
-              <div className="text-center py-12 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Próximamente: creadores asociados</p>
-              </div>
+              {loadingCreators ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3">
+                      <Skeleton className="w-12 h-12 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : creators.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Aún no hay creadores asociados</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {creators.map(creator => (
+                    <div 
+                      key={creator.id}
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => navigate(`/profile/${creator.id}`)}
+                    >
+                      <Avatar className="w-12 h-12 border">
+                        <AvatarImage src={creator.avatar_url || undefined} />
+                        <AvatarFallback>{creator.full_name?.charAt(0) || 'U'}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-medium">{creator.full_name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {creator.content_count} {creator.content_count === 1 ? 'contenido' : 'contenidos'}
+                        </p>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
