@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
-import { X, Heart, MessageCircle, Bookmark, Share2, ChevronLeft, ChevronRight, Volume2, VolumeX } from 'lucide-react';
+import { useState, useEffect, memo, useCallback } from 'react';
+import { X, Heart, MessageCircle, Bookmark, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { BunnyVideoPlayer } from '@/components/video/BunnyVideoPlayer';
 
 interface FeedItem {
   id: string;
@@ -35,7 +36,7 @@ interface FeedGridModalProps {
   isSaved: (item: FeedItem) => boolean;
 }
 
-export default function FeedGridModal({
+function FeedGridModalComponent({
   items,
   initialIndex,
   isOpen,
@@ -44,8 +45,6 @@ export default function FeedGridModal({
   isSaved,
 }: FeedGridModalProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [isMuted, setIsMuted] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   const currentItem = items[currentIndex];
 
@@ -53,11 +52,13 @@ export default function FeedGridModal({
     setCurrentIndex(initialIndex);
   }, [initialIndex]);
 
-  useEffect(() => {
-    if (isOpen && videoRef.current && currentItem?.media_type === 'video') {
-      videoRef.current.play().catch(() => {});
-    }
-  }, [isOpen, currentIndex, currentItem?.media_type]);
+  const goToPrevious = useCallback(() => {
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : items.length - 1));
+  }, [items.length]);
+
+  const goToNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev < items.length - 1 ? prev + 1 : 0));
+  }, [items.length]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -69,17 +70,9 @@ export default function FeedGridModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, currentIndex, items.length]);
+  }, [isOpen, goToPrevious, goToNext, onClose]);
 
   if (!isOpen || !currentItem) return null;
-
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : items.length - 1));
-  };
-
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev < items.length - 1 ? prev + 1 : 0));
-  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
@@ -117,31 +110,23 @@ export default function FeedGridModal({
 
       {/* Content container */}
       <div className="flex flex-col md:flex-row h-full w-full max-w-6xl mx-auto">
-        {/* Media */}
         <div className="flex-1 flex items-center justify-center p-4 md:p-8">
           <div className="relative w-full h-full max-h-[70vh] md:max-h-[80vh] flex items-center justify-center">
             {currentItem.media_type === 'video' ? (
-              <div className="relative w-full h-full flex items-center justify-center">
-                <video
-                  ref={videoRef}
-                  src={currentItem.media_url}
-                  poster={currentItem.thumbnail_url}
-                  controls
-                  muted={isMuted}
-                  loop
-                  playsInline
-                  className="max-w-full max-h-full object-contain rounded-lg"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute bottom-4 left-4 h-10 w-10 bg-black/50 text-white hover:bg-black/70"
-                  onClick={() => setIsMuted(!isMuted)}
-                >
-                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                </Button>
-              </div>
+              <BunnyVideoPlayer
+                key={currentItem.id}
+                src={currentItem.media_url}
+                poster={currentItem.thumbnail_url}
+                autoPlay={true}
+                muted={false}
+                loop={true}
+                showControls={true}
+                showMuteButton={true}
+                objectFit="contain"
+                aspectRatio="auto"
+                preload="auto"
+                className="max-w-full max-h-full rounded-lg"
+              />
             ) : (
               <img
                 src={currentItem.media_url}
@@ -220,3 +205,6 @@ export default function FeedGridModal({
     </div>
   );
 }
+
+const FeedGridModal = memo(FeedGridModalComponent);
+export default FeedGridModal;
