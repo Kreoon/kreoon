@@ -25,16 +25,12 @@ import EditorDashboard from "./pages/EditorDashboard";
 import StrategistDashboard from "./pages/StrategistDashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import ClientContentBoard from "./pages/ClientContentBoard";
-import Portfolio from "./pages/Portfolio";
 import PortfolioShell from "./pages/portfolio/PortfolioShell";
-import ClientPortfolio from "./pages/ClientPortfolio";
-import UserPortfolio from "./pages/UserPortfolio";
 import Ranking from "./pages/Ranking";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import NoCompany from "./pages/NoCompany";
 import NoOrganization from "./pages/NoOrganization";
-import CompanyPortfolio from "./pages/CompanyPortfolio";
 import PendingAccess from "./pages/PendingAccess";
 import UPDocumentation from "./pages/UPDocumentation";
 import OrgAuth from "./pages/OrgAuth";
@@ -52,7 +48,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Component to redirect /profile to user's own portfolio
+// Component to redirect /profile to social
 function ProfileRedirect() {
   const { user, loading } = useAuth();
   
@@ -64,7 +60,7 @@ function ProfileRedirect() {
     return <Navigate to="/auth" replace />;
   }
   
-  return <Navigate to={`/p/${user.id}`} replace />;
+  return <Navigate to="/social#profile" replace />;
 }
 
 function AppRoutes() {
@@ -72,12 +68,6 @@ function AppRoutes() {
   
   return (
     <Routes key={impersonationKey}>
-      <Route path="/portfolio" element={<Portfolio />} />
-      <Route path="/portfolio/:clientId" element={<ClientPortfolio />} />
-      <Route path="/p/:id" element={<UserPortfolio />} />
-      <Route path="/@:id" element={<UserPortfolio />} />
-      <Route path="/empresa/:id" element={<CompanyPortfolio />} />
-      <Route path="/empresa/@:id" element={<CompanyPortfolio />} />
       <Route path="/social" element={<ProtectedRoute><PortfolioShell /></ProtectedRoute>} />
       <Route path="/social/*" element={<ProtectedRoute><PortfolioShell /></ProtectedRoute>} />
       <Route path="/profile" element={<ProfileRedirect />} />
