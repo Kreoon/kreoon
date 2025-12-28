@@ -53,6 +53,8 @@ const VideoSlide = memo(function VideoSlide({
   const [isLiked, setIsLiked] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
   const videoContainerRef = useRef<HTMLDivElement>(null);
+  const directVideoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<import('@/components/video').HLSVideoPlayerRef>(null);
 
   // Get video source - try Bunny HLS first, fallback to direct URL
   const bunnyUrls = getBunnyVideoUrls(video.video_url);
@@ -60,8 +62,31 @@ const VideoSlide = memo(function VideoSlide({
   const posterSrc = video.thumbnail_url || bunnyUrls?.thumbnail;
 
   // Check if it's a direct video file (mp4, etc) vs HLS/embed
-  const isDirectVideo = video.video_url.match(/\.(mp4|webm|mov)(\?|$)/i) || 
+  const isDirectVideo = video.video_url.match(/\.(mp4|webm|mov)(\?|$)/i) ||
                         video.video_url.includes('supabase.co/storage');
+
+  // Hard guarantee: pause when not active (fixes audio continuing on scroll)
+  useEffect(() => {
+    if (isDirectVideo) {
+      const el = directVideoRef.current;
+      if (!el) return;
+      el.muted = isMuted;
+      if (isActive) {
+        el.play().catch(() => {
+          el.muted = true;
+          el.play().catch(() => {});
+        });
+      } else {
+        el.pause();
+      }
+      return;
+    }
+
+    // HLS player
+    hlsRef.current?.setMuted(isMuted);
+    if (isActive) hlsRef.current?.play();
+    else hlsRef.current?.pause();
+  }, [isActive, isMuted, isDirectVideo]);
 
   const handleDoubleTap = useCallback(() => {
     if (!isLiked) {
@@ -72,7 +97,7 @@ const VideoSlide = memo(function VideoSlide({
   }, [isLiked]);
 
   return (
-    <div 
+    <div
       ref={videoContainerRef}
       className="h-full w-full snap-start relative flex items-center justify-center bg-black"
       onDoubleClick={handleDoubleTap}
@@ -80,9 +105,9 @@ const VideoSlide = memo(function VideoSlide({
       {isDirectVideo ? (
         // For direct video files (from Supabase storage), use native video element
         <video
+          ref={directVideoRef}
           src={video.video_url}
           poster={posterSrc}
-          autoPlay={isActive}
           loop
           muted={isMuted}
           playsInline
@@ -91,9 +116,10 @@ const VideoSlide = memo(function VideoSlide({
       ) : (
         // For Bunny videos, use HLS player
         <HLSVideoPlayer
+          ref={hlsRef}
           src={videoSrc}
           poster={posterSrc}
-          autoPlay={isActive}
+          autoPlay={false}
           muted={isMuted}
           loop={true}
           className="w-full h-full"
@@ -114,7 +140,7 @@ const VideoSlide = memo(function VideoSlide({
 
       {/* Content info */}
       <div className="absolute bottom-20 left-4 right-16 text-white">
-        <button 
+        <button
           className="flex items-center gap-2 mb-2"
           onClick={() => onProfileClick(video.user_id)}
         >
@@ -124,13 +150,13 @@ const VideoSlide = memo(function VideoSlide({
           </Avatar>
           <span className="font-semibold">{video.user_name}</span>
         </button>
-        
+
         {video.client_name && (
           <Badge variant="secondary" className="mb-2 bg-white/20">
             {video.client_name}
           </Badge>
         )}
-        
+
         <p className="text-sm line-clamp-2">
           {video.title || video.caption}
         </p>

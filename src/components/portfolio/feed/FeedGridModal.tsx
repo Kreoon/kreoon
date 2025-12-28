@@ -257,7 +257,7 @@ function FeedGridModalComponent({
     }
   }, [isOpen, initialIndex]);
 
-  // Handle scroll snap and pause non-active videos
+  // Handle scroll snap and pause/play based on active slide
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -268,7 +268,10 @@ function FeedGridModalComponent({
         const idx = Number(slide.dataset.feedIndex);
         const video = slide.querySelector('video');
         if (!video) return;
-        if (idx !== active) video.pause();
+        if (idx !== active) {
+          video.pause();
+          video.muted = true;
+        }
       });
     };
 
@@ -276,11 +279,7 @@ function FeedGridModalComponent({
       const slideHeight = window.innerHeight;
       const newIndex = Math.round(container.scrollTop / slideHeight);
       if (newIndex !== activeIndex && newIndex >= 0 && newIndex < items.length) {
-        // Pause ALL videos in the modal immediately when scrolling away
-        container.querySelectorAll('video').forEach(v => {
-          v.pause();
-          v.currentTime = 0; // Reset to start
-        });
+        pauseNonActive(newIndex);
         setActiveIndex(newIndex);
       }
     };
