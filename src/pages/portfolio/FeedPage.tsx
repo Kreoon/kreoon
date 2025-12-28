@@ -81,11 +81,10 @@ export default function FeedPage() {
           bunny_embed_url,
           thumbnail_url,
           creator_id,
+          client_id,
           views_count,
           likes_count,
-          created_at,
-          creator:profiles!content_creator_id_fkey(id, full_name, avatar_url),
-          client:clients!content_client_id_fkey(name)
+          created_at
         `)
         .eq('is_published', true)
         .or('video_url.not.is.null,bunny_embed_url.not.is.null')
@@ -123,37 +122,56 @@ export default function FeedPage() {
         postsQuery,
       ]);
 
-      // Fetch user profiles for posts
+      // Fetch user profiles (for posts + work creators)
       const postUserIds = [...new Set((postsData || []).map(p => p.user_id))];
-      const { data: profilesData } = postUserIds.length > 0 
+      const workCreatorIds = [...new Set((workData || []).map(w => w.creator_id).filter(Boolean))] as string[];
+      const allUserIds = [...new Set([...postUserIds, ...workCreatorIds])];
+
+      const { data: profilesData } = allUserIds.length > 0
         ? await supabase
             .from('profiles')
             .select('id, full_name, avatar_url')
-            .in('id', postUserIds)
+            .in('id', allUserIds)
         : { data: [] };
-      
+
       const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
+
+      // Fetch client names for work items
+      const clientIds = [...new Set((workData || []).map(w => (w as any).client_id).filter(Boolean))] as string[];
+      const { data: clientsData } = clientIds.length > 0
+        ? await supabase
+            .from('clients')
+            .select('id, name')
+            .in('id', clientIds)
+        : { data: [] };
+
+      const clientsMap = new Map((clientsData || []).map(c => [c.id, c]));
 
       // Transform and merge
       const workItems: FeedItem[] = (workData || [])
         .filter(w => w.video_url || (w as any).bunny_embed_url)
-        .map(w => ({
-          id: w.id,
-          type: 'work' as const,
-          title: w.title,
-          media_url: w.video_url || (w as any).bunny_embed_url,
-          media_type: 'video' as const,
-          thumbnail_url: w.thumbnail_url || undefined,
-          user_id: w.creator_id,
-          user_name: (w.creator as any)?.full_name,
-          user_avatar: (w.creator as any)?.avatar_url,
-          client_name: (w.client as any)?.name,
-          views_count: w.views_count || 0,
-          likes_count: w.likes_count || 0,
-          comments_count: 0,
-          created_at: w.created_at,
-          is_saved: isSaved('work_video', w.id),
-        }));
+        .map(w => {
+          const profile = profilesMap.get(w.creator_id);
+          const client = clientsMap.get((w as any).client_id);
+
+          return {
+            id: w.id,
+            type: 'work' as const,
+            title: w.title,
+            media_url: w.video_url || (w as any).bunny_embed_url,
+            media_type: 'video' as const,
+            thumbnail_url: w.thumbnail_url || undefined,
+            user_id: w.creator_id,
+            user_name: profile?.full_name,
+            user_avatar: profile?.avatar_url,
+            client_name: client?.name,
+            views_count: w.views_count || 0,
+            likes_count: w.likes_count || 0,
+            comments_count: 0,
+            created_at: w.created_at,
+            is_saved: isSaved('work_video', w.id),
+          };
+        });
 
       const postItems: FeedItem[] = (postsData || []).map(p => {
         const profile = profilesMap.get(p.user_id);
