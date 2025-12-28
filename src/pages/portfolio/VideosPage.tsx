@@ -7,9 +7,11 @@ import { Heart, MessageCircle, Bookmark, Share2, Volume2, VolumeX } from 'lucide
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useNavigate } from 'react-router-dom';
 import { HLSVideoPlayer } from '@/components/video';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+import { PortfolioCommentsSection } from '@/components/content/PortfolioCommentsSection';
 
 interface VideoItem {
   id: string;
@@ -39,6 +41,7 @@ interface VideoSlideProps {
   onSave: () => void;
   isSaved: boolean;
   onProfileClick: (userId: string) => void;
+  onOpenComments: () => void;
 }
 
 const VideoSlide = memo(function VideoSlide({
@@ -48,7 +51,8 @@ const VideoSlide = memo(function VideoSlide({
   onMuteToggle,
   onSave,
   isSaved,
-  onProfileClick
+  onProfileClick,
+  onOpenComments
 }: VideoSlideProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
@@ -180,6 +184,7 @@ const VideoSlide = memo(function VideoSlide({
           variant="ghost"
           size="icon"
           className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
+          onClick={onOpenComments}
         >
           <MessageCircle className="h-6 w-6" />
         </Button>
@@ -230,8 +235,15 @@ export default function VideosPage() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [filter, setFilter] = useState<VideoFilter>('all');
   const [isMuted, setIsMuted] = useState(true);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsVideoId, setCommentsVideoId] = useState<string | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleOpenComments = useCallback((videoId: string) => {
+    setCommentsVideoId(videoId);
+    setCommentsOpen(true);
+  }, []);
 
   const fetchVideos = useCallback(async () => {
     setLoading(true);
@@ -450,10 +462,24 @@ export default function VideosPage() {
               onSave={() => handleSave(video)}
               isSaved={checkIsSaved(video)}
               onProfileClick={handleProfileClick}
+              onOpenComments={() => handleOpenComments(video.id)}
             />
           </div>
         ))}
       </div>
+
+      {/* Comments Drawer */}
+      <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
+        <DrawerContent className="h-[70vh] bg-zinc-900 border-0">
+          {commentsVideoId && (
+            <PortfolioCommentsSection 
+              postId={commentsVideoId} 
+              isOpen={commentsOpen}
+              onClose={() => setCommentsOpen(false)}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
