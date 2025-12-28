@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, memo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Heart, MessageCircle, Bookmark, Share2, Volume2, VolumeX } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ interface FeedItem {
   user_name?: string;
   user_avatar?: string;
   client_name?: string;
+  client_username?: string;
   views_count: number;
   likes_count: number;
   comments_count: number;
@@ -43,6 +45,7 @@ interface VideoSlideProps {
   onMuteToggle: () => void;
   onSave: () => void;
   isSaved: boolean;
+  onCompanyClick?: (username: string) => void;
 }
 
 const VideoSlide = memo(function VideoSlide({ 
@@ -51,7 +54,8 @@ const VideoSlide = memo(function VideoSlide({
   isMuted, 
   onMuteToggle, 
   onSave,
-  isSaved 
+  isSaved,
+  onCompanyClick
 }: VideoSlideProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
@@ -124,7 +128,14 @@ const VideoSlide = memo(function VideoSlide({
             </div>
           </div>
           {item.client_name && (
-            <Badge variant="secondary" className="text-xs bg-white/20 text-white border-0">
+            <Badge 
+              variant="secondary" 
+              className={cn(
+                "text-xs bg-white/20 text-white border-0",
+                item.client_username && "cursor-pointer hover:bg-white/30 transition-colors"
+              )}
+              onClick={() => item.client_username && onCompanyClick?.(item.client_username)}
+            >
               {item.client_name}
             </Badge>
           )}
@@ -195,9 +206,15 @@ function FeedGridModalComponent({
   onSave,
   isSaved,
 }: FeedGridModalProps) {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [isMuted, setIsMuted] = useState(false);
+
+  const handleCompanyClick = useCallback((username: string) => {
+    onClose();
+    navigate(`/company/${username}`);
+  }, [navigate, onClose]);
 
   // Scroll to initial index on open
   useEffect(() => {
@@ -292,6 +309,7 @@ function FeedGridModalComponent({
               onMuteToggle={() => setIsMuted(!isMuted)}
               onSave={() => onSave(item)}
               isSaved={isSaved(item)}
+              onCompanyClick={handleCompanyClick}
             />
           </div>
         ))}

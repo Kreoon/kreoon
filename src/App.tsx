@@ -26,6 +26,7 @@ import StrategistDashboard from "./pages/StrategistDashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import ClientContentBoard from "./pages/ClientContentBoard";
 import PortfolioShell from "./pages/portfolio/PortfolioShell";
+import CompanyProfilePage from "./pages/portfolio/CompanyProfilePage";
 import Ranking from "./pages/Ranking";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
@@ -70,6 +71,7 @@ function AppRoutes() {
     <Routes key={impersonationKey}>
       <Route path="/social" element={<ProtectedRoute><PortfolioShell /></ProtectedRoute>} />
       <Route path="/social/*" element={<ProtectedRoute><PortfolioShell /></ProtectedRoute>} />
+      <Route path="/company/:username" element={<CompanyProfilePage />} />
       <Route path="/profile" element={<ProfileRedirect />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/no-company" element={<NoCompany />} />
