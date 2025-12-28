@@ -228,24 +228,32 @@ function FeedGridModalComponent({
 
   // Pause all background videos when modal opens and scroll to initial index
   useEffect(() => {
-    if (isOpen) {
-      // Pause all videos in the background (grid cards)
-      document.querySelectorAll('video').forEach((video) => {
-        if (!containerRef.current?.contains(video)) {
-          video.pause();
-          video.muted = true;
-        }
-      });
-      
-      // Scroll to initial index
-      if (containerRef.current) {
-        const slideHeight = window.innerHeight;
-        containerRef.current.scrollTo({
-          top: initialIndex * slideHeight,
-          behavior: 'instant'
-        });
-        setActiveIndex(initialIndex);
+    if (!isOpen) return;
+
+    // Pause all videos in the background (grid cards)
+    document.querySelectorAll('video').forEach((video) => {
+      if (!containerRef.current?.contains(video)) {
+        video.pause();
+        video.muted = true;
       }
+    });
+
+    // Scroll to initial index
+    if (containerRef.current) {
+      const slideHeight = window.innerHeight;
+      containerRef.current.scrollTo({
+        top: initialIndex * slideHeight,
+        behavior: 'instant',
+      });
+      setActiveIndex(initialIndex);
+
+      // Ensure any non-active videos inside the modal are paused (index-safe)
+      const slides = Array.from(containerRef.current.querySelectorAll<HTMLElement>('[data-feed-slide]'));
+      slides.forEach((slide) => {
+        const idx = Number(slide.dataset.feedIndex);
+        const video = slide.querySelector('video');
+        if (video && idx !== initialIndex) video.pause();
+      });
     }
   }, [isOpen, initialIndex]);
 
@@ -254,17 +262,21 @@ function FeedGridModalComponent({
     const container = containerRef.current;
     if (!container) return;
 
+    const pauseNonActive = (active: number) => {
+      const slides = Array.from(container.querySelectorAll<HTMLElement>('[data-feed-slide]'));
+      slides.forEach((slide) => {
+        const idx = Number(slide.dataset.feedIndex);
+        const video = slide.querySelector('video');
+        if (!video) return;
+        if (idx !== active) video.pause();
+      });
+    };
+
     const handleScroll = () => {
       const slideHeight = window.innerHeight;
       const newIndex = Math.round(container.scrollTop / slideHeight);
       if (newIndex !== activeIndex && newIndex >= 0 && newIndex < items.length) {
-        // Pause all videos in the modal container except the new active one
-        const videos = container.querySelectorAll('video');
-        videos.forEach((video, idx) => {
-          if (idx !== newIndex) {
-            video.pause();
-          }
-        });
+        pauseNonActive(newIndex);
         setActiveIndex(newIndex);
       }
     };
@@ -335,8 +347,10 @@ function FeedGridModalComponent({
         style={{ scrollSnapType: 'y mandatory' }}
       >
         {items.map((item, index) => (
-          <div 
-            key={item.id} 
+          <div
+            key={item.id}
+            data-feed-slide
+            data-feed-index={index}
             className="h-screen w-full max-w-[calc(100vh*9/16)] mx-auto"
           >
             <VideoSlide
