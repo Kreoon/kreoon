@@ -75,7 +75,7 @@ function FeedGridModalComponent({
   if (!isOpen || !currentItem) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
       {/* Close button */}
       <Button
         variant="ghost"
@@ -92,112 +92,113 @@ function FeedGridModalComponent({
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 h-12 w-12"
+            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 h-10 w-10 md:h-12 md:w-12"
             onClick={goToPrevious}
           >
-            <ChevronLeft className="h-8 w-8" />
+            <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 h-12 w-12"
+            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 h-10 w-10 md:h-12 md:w-12"
             onClick={goToNext}
           >
-            <ChevronRight className="h-8 w-8" />
+            <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
           </Button>
         </>
       )}
 
-      {/* Content container */}
-      <div className="flex flex-col md:flex-row h-full w-full max-w-6xl mx-auto">
-        <div className="flex-1 flex items-center justify-center p-4 md:p-8">
-          <div className="relative w-full h-full max-h-[70vh] md:max-h-[80vh] flex items-center justify-center">
-            {currentItem.media_type === 'video' ? (
-              <BunnyVideoPlayer
-                key={currentItem.id}
-                src={currentItem.media_url}
-                poster={currentItem.thumbnail_url}
-                autoPlay={true}
-                muted={false}
-                loop={true}
-                showControls={true}
-                showMuteButton={true}
-                objectFit="contain"
-                aspectRatio="auto"
-                preload="auto"
-                className="max-w-full max-h-full rounded-lg"
-              />
-            ) : (
+      {/* 9:16 Content container - TikTok/Reels style */}
+      <div className="relative h-full w-full max-w-[calc(100vh*9/16)] mx-auto flex flex-col">
+        {/* Video/Image area - 9:16 */}
+        <div className="relative flex-1 flex items-center justify-center bg-black">
+          {currentItem.media_type === 'video' ? (
+            <BunnyVideoPlayer
+              key={currentItem.id}
+              src={currentItem.media_url}
+              poster={currentItem.thumbnail_url}
+              autoPlay={true}
+              muted={false}
+              loop={true}
+              showControls={true}
+              showMuteButton={true}
+              objectFit="cover"
+              aspectRatio="9:16"
+              preload="auto"
+              className="w-full h-full"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
               <img
                 src={currentItem.media_url}
                 alt={currentItem.title || currentItem.caption || 'Post'}
-                className="max-w-full max-h-full object-contain rounded-lg"
+                className="w-full h-full object-cover"
               />
-            )}
-          </div>
-        </div>
-
-        {/* Info sidebar */}
-        <div className="w-full md:w-80 bg-card/90 backdrop-blur-lg p-4 flex flex-col max-h-[30vh] md:max-h-full overflow-y-auto">
-          {/* User info */}
-          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={currentItem.user_avatar} />
-              <AvatarFallback>{currentItem.user_name?.[0]}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium truncate">{currentItem.user_name}</div>
-              <div className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(currentItem.created_at), { addSuffix: true, locale: es })}
-              </div>
             </div>
-            {currentItem.client_name && (
-              <Badge variant="secondary" className="text-xs">{currentItem.client_name}</Badge>
-            )}
-          </div>
-
-          {/* Caption */}
-          {(currentItem.title || currentItem.caption) && (
-            <p className="text-sm mb-4 flex-1">
-              <span className="font-medium mr-1">{currentItem.user_name}</span>
-              {currentItem.title || currentItem.caption}
-            </p>
           )}
 
-          {/* Stats */}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-            {currentItem.views_count > 0 && (
-              <span>{currentItem.views_count} vistas</span>
+          {/* Overlay info - bottom gradient */}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pb-6">
+            {/* User info */}
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar className="h-10 w-10 ring-2 ring-white/30">
+                <AvatarImage src={currentItem.user_avatar} />
+                <AvatarFallback className="text-white bg-white/20">{currentItem.user_name?.[0]}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-white truncate">{currentItem.user_name}</div>
+                <div className="text-xs text-white/70">
+                  {formatDistanceToNow(new Date(currentItem.created_at), { addSuffix: true, locale: es })}
+                </div>
+              </div>
+              {currentItem.client_name && (
+                <Badge variant="secondary" className="text-xs bg-white/20 text-white border-0">
+                  {currentItem.client_name}
+                </Badge>
+              )}
+            </div>
+
+            {/* Caption */}
+            {(currentItem.title || currentItem.caption) && (
+              <p className="text-sm text-white/90 line-clamp-2 mb-3">
+                {currentItem.title || currentItem.caption}
+              </p>
             )}
-            {currentItem.likes_count > 0 && (
-              <span>{currentItem.likes_count} me gusta</span>
-            )}
+
+            {/* Stats row */}
+            <div className="flex items-center gap-4 text-xs text-white/70">
+              {currentItem.views_count > 0 && (
+                <span>{currentItem.views_count.toLocaleString()} vistas</span>
+              )}
+              {currentItem.likes_count > 0 && (
+                <span>{currentItem.likes_count.toLocaleString()} me gusta</span>
+              )}
+            </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-4 border-t border-border">
-            <Button variant="ghost" size="icon" className="h-10 w-10">
-              <Heart className="h-5 w-5" />
+          {/* Side actions - TikTok style */}
+          <div className="absolute right-3 bottom-24 flex flex-col items-center gap-5">
+            <Button variant="ghost" size="icon" className="h-12 w-12 text-white hover:bg-white/20 rounded-full">
+              <Heart className="h-7 w-7" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-10 w-10">
-              <MessageCircle className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="h-12 w-12 text-white hover:bg-white/20 rounded-full">
+              <MessageCircle className="h-7 w-7" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-10 w-10">
-              <Share2 className="h-5 w-5" />
-            </Button>
-            <div className="flex-1" />
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-10 w-10"
+              className="h-12 w-12 text-white hover:bg-white/20 rounded-full"
               onClick={() => onSave(currentItem)}
             >
-              <Bookmark className={cn("h-5 w-5", isSaved(currentItem) && "fill-current text-yellow-500")} />
+              <Bookmark className={cn("h-7 w-7", isSaved(currentItem) && "fill-yellow-500 text-yellow-500")} />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-12 w-12 text-white hover:bg-white/20 rounded-full">
+              <Share2 className="h-7 w-7" />
             </Button>
           </div>
 
           {/* Counter */}
-          <div className="text-center text-xs text-muted-foreground mt-4">
+          <div className="absolute top-4 left-4 text-sm text-white/80 bg-black/40 px-2 py-1 rounded-full">
             {currentIndex + 1} / {items.length}
           </div>
         </div>
