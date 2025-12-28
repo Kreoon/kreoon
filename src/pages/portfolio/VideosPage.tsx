@@ -203,7 +203,7 @@ export default function VideosPage() {
   };
 
   const handleProfileClick = (userId: string) => {
-    navigate(`/p/${userId}`);
+    navigate(`/profile/${userId}`);
   };
 
   if (loading) {
