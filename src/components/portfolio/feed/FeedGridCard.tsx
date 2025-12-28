@@ -88,17 +88,30 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
     }
     
     return (
-      <img
-        src={item.media_url}
-        alt={item.title || item.caption || 'Post'}
-        className={cn(
-          "w-full h-full object-cover transition-all duration-300",
-          "group-hover:scale-105",
-          imageLoaded ? "opacity-100" : "opacity-0"
+      <>
+        {!imageError ? (
+          <img
+            src={item.media_url}
+            alt={item.title || item.caption || 'Post'}
+            className={cn(
+              "w-full h-full object-cover transition-all duration-300",
+              "group-hover:scale-105",
+              imageLoaded ? "opacity-100" : "opacity-0"
+            )}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted">
+            <span className="text-sm text-muted-foreground">No se pudo cargar</span>
+          </div>
         )}
-        onLoad={() => setImageLoaded(true)}
-        onError={() => setImageError(true)}
-      />
+
+        {/* Loading skeleton */}
+        {!imageLoaded && !imageError && (
+          <div className="absolute inset-0 bg-muted animate-pulse" />
+        )}
+      </>
     );
   };
 
