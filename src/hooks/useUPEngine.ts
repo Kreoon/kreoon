@@ -327,12 +327,12 @@ export function useUPEngine(organizationId?: string) {
       .single();
 
     if (error) {
-      toast({ title: 'Error', description: 'No se pudo crear la misión', variant: 'destructive' });
+      toast({ title: 'Error', description: 'No se pudo crear el objetivo', variant: 'destructive' });
       return null;
     }
 
     await fetchQuestsInternal();
-    toast({ title: 'Misión creada', description: `${data.title} se ha creado correctamente` });
+    toast({ title: 'Objetivo creado', description: `${data.title} se ha creado correctamente` });
     return data;
   };
 

@@ -264,7 +264,7 @@ const Creators = () => {
           {/* Medieval Banner */}
           <MedievalBanner
             icon={Sword}
-            title="Cuartel de Guerreros"
+            title="Creadores"
             subtitle="Sistema de Talento Inteligente"
             action={
               isAdmin && (

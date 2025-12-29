@@ -388,8 +388,8 @@ const Clients = () => {
           {/* Medieval Banner */}
           <MedievalBanner
             icon={Castle}
-            title="Sala de los Mecenas"
-            subtitle="Gestiona las casas nobles y sus representantes"
+            title="Clientes"
+            subtitle="Gestiona empresas y sus representantes"
             action={
               isAdmin && (
                 <Button 

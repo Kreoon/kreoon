@@ -30,10 +30,10 @@ const LEVEL_ICONS = {
 };
 
 const LEVEL_LABELS = {
-  bronze: 'Escudero',
-  silver: 'Caballero',
-  gold: 'Comandante',
-  diamond: 'Gran Maestre'
+  bronze: 'Bronce',
+  silver: 'Plata',
+  gold: 'Oro',
+  diamond: 'Diamante'
 };
 
 const LEVEL_COLORS = {
