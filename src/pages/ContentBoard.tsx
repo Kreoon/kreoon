@@ -86,24 +86,38 @@ const canMoveToStatusWithRules = (
     return canMoveToStatusLegacy(role, currentStatus, targetStatus, content, userId);
   }
 
-  // Determinar si es avance o retroceso
-  const isForward = targetOrgStatus.sort_order > currentOrgStatus.sort_order;
-  
-  // Buscar la regla para el estado actual
-  const rule = rules.find(r => r.status_id === currentOrgStatus.id);
-  
-  if (!rule) {
-    // Sin regla = permitir a todos por defecto
+  // Estados especiales que requieren verificar reglas del estado destino
+  const specialTargetStates = ['issue', 'corrected'];
+  const isSpecialTargetState = specialTargetStates.includes(targetStatus);
+
+  // Buscar las reglas para estado actual y destino
+  const currentRule = rules.find(r => r.status_id === currentOrgStatus.id);
+  const targetRule = rules.find(r => r.status_id === targetOrgStatus.id);
+
+  // Para estados especiales (issue, corrected), verificar quién puede RETROCEDER desde ese estado
+  // Esto significa: ¿quién puede mover tarjetas HACIA ese estado?
+  if (isSpecialTargetState && targetRule) {
+    const canRetreatRoles = targetRule.can_retreat_roles || [];
+    if (canRetreatRoles.length > 0 && !canRetreatRoles.includes(role)) {
+      return false;
+    }
+  }
+
+  // Si no hay regla para el estado actual, permitir por defecto
+  if (!currentRule) {
     return true;
   }
 
-  // Verificar permisos según dirección
+  // Determinar si es avance o retroceso basado en sort_order
+  const isForward = targetOrgStatus.sort_order > currentOrgStatus.sort_order;
+
+  // Verificar permisos según dirección desde el estado actual
   if (isForward) {
-    const canAdvanceRoles = rule.can_advance_roles || [];
+    const canAdvanceRoles = currentRule.can_advance_roles || [];
     if (canAdvanceRoles.length === 0) return true; // Sin restricciones
     return canAdvanceRoles.includes(role);
   } else {
-    const canRetreatRoles = rule.can_retreat_roles || [];
+    const canRetreatRoles = currentRule.can_retreat_roles || [];
     if (canRetreatRoles.length === 0) return true; // Sin restricciones
     return canRetreatRoles.includes(role);
   }
