@@ -46,6 +46,7 @@ export interface Profile {
   document_type: string | null;
   document_number: string | null;
   current_organization_id: string | null;
+  organization_status?: string;
   created_at: string;
   updated_at: string;
 }

@@ -163,6 +163,11 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg }: Protecte
     return <Navigate to="/pending-access" replace />;
   }
 
+  // Users with pending_assignment status are blocked from app
+  if (profile?.organization_status === 'pending_assignment') {
+    return <Navigate to="/pending-access" replace />;
+  }
+
   // Client users without an associated company cannot access the app
   if (isClient && !clientHasCompany) {
     return <Navigate to="/no-company" replace />;

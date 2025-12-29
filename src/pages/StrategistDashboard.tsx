@@ -272,10 +272,10 @@ export default function StrategistDashboard() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      {/* Medieval Banner */}
+      {/* Banner */}
       <MedievalBanner
         icon={Scroll}
-        title="Torre del Estratega"
+        title="KREOON Board"
         subtitle={`Bienvenido, ${profile?.full_name}`}
       />
 

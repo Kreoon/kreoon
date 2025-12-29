@@ -114,8 +114,8 @@ const Scripts = () => {
         {/* Header */}
         <MedievalBanner
           icon={Scroll}
-          title="Scriptorium"
-          subtitle="Gestiona y visualiza todos los bloques de guiones"
+          title="KREOON IA"
+          subtitle="Gestiona guiones, instrucciones y automatizaciones IA"
           action={
             <Button 
               variant="outline" 

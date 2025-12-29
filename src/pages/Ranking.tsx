@@ -93,9 +93,9 @@ export default function RankingPage() {
       {/* Medieval Banner */}
       <MedievalBanner
         icon={Castle}
-        title="Salón de la Gloria"
-        subtitle="Orden de los Caballeros Creadores — Sistema de Honor UP"
-        badge={!isSystemEnabled() ? { text: "⚠️ Orden Suspendida", variant: "destructive" as const } : undefined}
+        title="KREOON UP"
+        subtitle="Sistema de puntos, logros y ranking de rendimiento"
+        badge={!isSystemEnabled() ? { text: "⚠️ Sistema Suspendido", variant: "destructive" as const } : undefined}
         action={currentUserRank ? (
           <Badge className="text-sm px-3 py-1 font-medieval level-gold" variant="outline">
             <Sword className="w-3 h-3 mr-1" />

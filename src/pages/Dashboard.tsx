@@ -757,8 +757,8 @@ export default function Dashboard() {
       <div className="p-4 md:p-6">
         <MedievalBanner
           icon={Crown}
-          title="Sala del Trono"
-          subtitle="Centro de comando del reino"
+          title="KREOON Board"
+          subtitle="Centro de comando y métricas"
           action={
             <div className="flex items-center gap-2">
               {(isAmbassador || profile?.is_ambassador) && (

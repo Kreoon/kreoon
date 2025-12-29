@@ -116,7 +116,7 @@ export default function PortfolioShell() {
     <div className="flex flex-col h-screen bg-social-background">
       {/* Mobile header with notifications */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-social-background/95 backdrop-blur-lg border-b border-social-border z-50 flex items-center justify-between px-4">
-        <span className="text-lg font-bold text-social-accent">Social Creator</span>
+        <span className="text-lg font-bold text-social-accent">KREOON Network</span>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
