@@ -23,6 +23,10 @@ import {
   SistemaUPSection,
   SocialCreatorsSection,
   PricingSection,
+  IndividualPlansSection,
+  TalentAccessSection,
+  TokenSystemSection,
+  WhyThisModelSection,
   PrivacySection,
   CTASection,
   LandingFooter
@@ -306,6 +310,10 @@ export default function Auth() {
         <SistemaUPSection />
         <SocialCreatorsSection />
         <PricingSection onRegister={openRegister} />
+        <IndividualPlansSection onRegister={openRegister} />
+        <TalentAccessSection />
+        <TokenSystemSection onRegister={openRegister} />
+        <WhyThisModelSection />
         <PrivacySection />
         <CTASection onRegister={openRegister} />
       </main>

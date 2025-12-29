@@ -7,7 +7,7 @@ import {
   Target, Settings, UserPlus, Layers, LineChart,
   Trophy, Star, TrendingUp, Award, Zap,
   Video, Bookmark, Sparkles, Globe, Search,
-  CheckCircle2, ArrowRight
+  CheckCircle2, ArrowRight, MessageSquare, Bell, Ticket, Ban
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -433,83 +433,463 @@ export function SocialCreatorsSection() {
   );
 }
 
-// Section 8: Pricing
+// Section 8: Pricing - Organizations
 export function PricingSection({ onRegister }: SectionProps) {
+  const orgPlans = [
+    {
+      name: 'Starter',
+      badge: 'Ideal para equipos pequeños',
+      price: '$59',
+      period: '/mes',
+      features: [
+        { icon: Users, text: 'Hasta 10 usuarios' },
+        { icon: Layers, text: 'Tablero configurable' },
+        { icon: Cpu, text: 'IA integrada (API propia)' },
+        { icon: Lock, text: 'Permisos por rol' },
+        { icon: Video, text: 'Gestión de contenido y video' },
+        { icon: Trophy, text: 'Sistema UP básico' },
+        { icon: MessageSquare, text: 'Chat interno + IA' },
+        { icon: Globe, text: 'Red social activa' },
+      ],
+      cta: 'Crear Organización Starter',
+      featured: false,
+    },
+    {
+      name: 'Growth',
+      badge: 'Más popular',
+      price: '$139',
+      period: '/mes',
+      features: [
+        { icon: Users, text: '10 a 30 usuarios' },
+        { icon: CheckCircle2, text: 'Todo lo Starter +' },
+        { icon: Cpu, text: 'IA avanzada por módulo' },
+        { icon: LineChart, text: 'Dashboards personalizables' },
+        { icon: Trophy, text: 'Sistema UP configurable' },
+        { icon: Bell, text: 'Notificaciones inteligentes' },
+        { icon: Settings, text: 'Flujos y reglas avanzadas' },
+      ],
+      cta: 'Crear Organización Growth',
+      featured: true,
+    },
+    {
+      name: 'Scale',
+      badge: 'Equipos grandes',
+      price: '$279',
+      period: '/mes',
+      features: [
+        { icon: Users, text: '30 a 50 usuarios' },
+        { icon: CheckCircle2, text: 'Todo lo Growth +' },
+        { icon: Cpu, text: 'IA entrenable por organización' },
+        { icon: Lock, text: 'Permisos ultra detallados' },
+        { icon: LineChart, text: 'Analytics avanzados' },
+        { icon: Zap, text: 'Soporte prioritario' },
+      ],
+      cta: 'Crear Organización Scale',
+      featured: false,
+    },
+    {
+      name: 'Enterprise',
+      badge: 'Personalizado',
+      price: 'Contactar',
+      period: '',
+      features: [
+        { icon: Users, text: '+50 usuarios' },
+        { icon: Cpu, text: 'IA dedicada' },
+        { icon: Settings, text: 'Integraciones custom' },
+        { icon: Shield, text: 'SLA garantizado' },
+        { icon: UserPlus, text: 'Onboarding asistido' },
+      ],
+      cta: 'Contactar al equipo',
+      featured: false,
+      isEnterprise: true,
+    },
+  ];
+
   return (
-    <section id="precios" className="py-24 px-4 bg-gradient-to-b from-muted/20 to-background">
+    <section id="precios" className="py-24 px-4 bg-[#0B0B0F]">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
+            <Building2 className="h-3 w-3 mr-1" />
+            Planes para Organizaciones
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+            Planes para Organizaciones
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Gestiona talento, contenido, IA y proyectos en un solo sistema.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {orgPlans.map((plan, i) => (
+            <div 
+              key={i} 
+              className={cn(
+                "relative rounded-xl p-6 transition-all duration-300 group",
+                "bg-[#12121A] border border-border/30",
+                "hover:shadow-[0_0_30px_hsl(252_100%_68%/0.15)] hover:border-primary/40",
+                plan.featured && "border-primary/50 shadow-[0_0_40px_hsl(252_100%_68%/0.2)]"
+              )}
+            >
+              {plan.featured && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4">
+                    {plan.badge}
+                  </Badge>
+                </div>
+              )}
+              
+              {!plan.featured && (
+                <Badge variant="outline" className="mb-4 text-xs border-border/50 text-muted-foreground">
+                  {plan.badge}
+                </Badge>
+              )}
+              
+              <h3 className={cn(
+                "text-2xl font-bold text-foreground mb-2",
+                plan.featured && "mt-4"
+              )}>
+                {plan.name}
+              </h3>
+              
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className={cn(
+                  "text-4xl font-bold",
+                  plan.featured ? "text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70" : "text-foreground"
+                )}>
+                  {plan.isEnterprise ? '' : '💰 USD '}{plan.price}
+                </span>
+                <span className="text-muted-foreground">{plan.period}</span>
+              </div>
+              
+              <ul className="space-y-3 mb-8">
+                {plan.features.map((feature, j) => (
+                  <li key={j} className="flex items-center gap-3 text-sm">
+                    <feature.icon className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-muted-foreground group-hover:text-foreground transition-colors">
+                      {feature.text}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              
+              <Button 
+                className={cn(
+                  "w-full",
+                  plan.featured 
+                    ? "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25" 
+                    : plan.isEnterprise 
+                      ? "bg-transparent border border-primary/50 text-primary hover:bg-primary/10"
+                      : "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                )}
+                onClick={onRegister}
+              >
+                {plan.cta}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Section 8b: Individual Plans
+export function IndividualPlansSection({ onRegister }: SectionProps) {
+  const plans = [
+    {
+      name: 'Free',
+      price: '$0',
+      color: 'green',
+      features: [
+        'Perfil público',
+        'Subir videos e imágenes',
+        'Stories 24h',
+        'Guardados',
+        'Likes y seguidores',
+        'Aparición en recomendaciones',
+      ],
+      note: 'No incluye contacto directo.',
+      cta: 'Crear perfil gratis',
+    },
+    {
+      name: 'Pro',
+      price: '$12',
+      period: '/mes',
+      color: 'primary',
+      featured: true,
+      features: [
+        'Todo lo Free +',
+        '📊 Estadísticas de perfil',
+        '🧠 IA para optimizar perfil',
+        '🖼️ Portafolio avanzado por bloques',
+        '🔗 Contacto profesional visible',
+        '🏆 Sistema UP personal',
+      ],
+      cta: 'Mejorar a Pro',
+    },
+  ];
+
+  return (
+    <section className="py-24 px-4 bg-gradient-to-b from-[#0B0B0F] to-muted/10">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
-            Planes
+            <UserCircle className="h-3 w-3 mr-1" />
+            Planes Individuales
           </Badge>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Precios simples y transparentes
+            Planes Individuales
           </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Construye tu portafolio y muestra tu talento.
+          </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Free Plan */}
-          <Card className="bg-card/50 border-border/50">
-            <CardContent className="p-8">
-              <h3 className="text-xl font-semibold text-foreground mb-2">Demo</h3>
-              <p className="text-muted-foreground mb-6">Explora la plataforma</p>
-              <div className="text-4xl font-bold text-foreground mb-6">
-                Gratis
+          {plans.map((plan, i) => (
+            <div 
+              key={i} 
+              className={cn(
+                "relative rounded-xl p-8 transition-all duration-300 group",
+                "bg-[#12121A] border border-border/30",
+                "hover:shadow-[0_0_30px_hsl(252_100%_68%/0.15)] hover:border-primary/40",
+                plan.featured && "border-primary/50"
+              )}
+            >
+              {plan.featured && (
+                <div className="absolute -top-3 right-6">
+                  <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
+                    Recomendado
+                  </Badge>
+                </div>
+              )}
+              
+              <h3 className="text-2xl font-bold text-foreground mb-2">{plan.name}</h3>
+              
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-4xl font-bold text-foreground">USD {plan.price}</span>
+                {plan.period && <span className="text-muted-foreground">{plan.period}</span>}
               </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  Acceso limitado a funciones
-                </li>
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  1 organización de prueba
-                </li>
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  Soporte por comunidad
-                </li>
+              
+              <ul className="space-y-3 mb-6">
+                {plan.features.map((feature, j) => (
+                  <li key={j} className="flex items-center gap-3 text-sm">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-muted-foreground group-hover:text-foreground transition-colors">
+                      {feature}
+                    </span>
+                  </li>
+                ))}
               </ul>
-              <Button variant="outline" className="w-full" onClick={onRegister}>
-                Comenzar gratis
+              
+              {plan.note && (
+                <p className="text-xs text-muted-foreground mb-6 italic">
+                  ⚠️ {plan.note}
+                </p>
+              )}
+              
+              <Button 
+                className={cn(
+                  "w-full",
+                  plan.featured 
+                    ? "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" 
+                    : "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                )}
+                onClick={onRegister}
+              >
+                {plan.cta}
               </Button>
-            </CardContent>
-          </Card>
-
-          {/* Pro Plan */}
-          <Card className="bg-gradient-to-b from-primary/10 to-card border-primary/30 relative overflow-hidden">
-            <div className="absolute top-4 right-4">
-              <Badge className="bg-primary text-primary-foreground">Popular</Badge>
             </div>
-            <CardContent className="p-8">
-              <h3 className="text-xl font-semibold text-foreground mb-2">Organización</h3>
-              <p className="text-muted-foreground mb-6">Para equipos serios</p>
-              <div className="text-4xl font-bold text-foreground mb-6">
-                Personalizado
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Section 8c: Talent Access
+export function TalentAccessSection() {
+  const rules = [
+    {
+      icon: Building2,
+      title: 'Creador en organización',
+      desc: 'El contacto se gestiona vía la organización a la que pertenece.',
+    },
+    {
+      icon: UserCircle,
+      title: 'Creador independiente',
+      desc: 'El contacto directo requiere tokens. Sin spam, sin DMs desordenados.',
+    },
+    {
+      icon: Shield,
+      title: 'Todo registrado',
+      desc: 'Cada interacción queda protegida y documentada.',
+    },
+  ];
+
+  return (
+    <section className="py-24 px-4 bg-[#0B0B0F]">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-16">
+          <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
+            <Lock className="h-3 w-3 mr-1" />
+            Acceso al Talento
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+            Contacto profesional, sin spam
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {rules.map((rule, i) => (
+            <div 
+              key={i} 
+              className="rounded-xl p-6 bg-[#12121A] border border-border/30 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_0_25px_hsl(252_100%_68%/0.12)]"
+            >
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                <rule.icon className="h-6 w-6 text-primary" />
               </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2 text-sm text-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  Acceso completo a todas las funciones
-                </li>
-                <li className="flex items-center gap-2 text-sm text-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  Usuarios ilimitados
-                </li>
-                <li className="flex items-center gap-2 text-sm text-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  IA personalizada
-                </li>
-                <li className="flex items-center gap-2 text-sm text-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  Soporte prioritario
-                </li>
-              </ul>
-              <Button className="w-full" onClick={onRegister}>
-                Solicitar acceso
+              <h3 className="text-lg font-semibold text-foreground mb-2">{rule.title}</h3>
+              <p className="text-sm text-muted-foreground">{rule.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Section 8d: Token System
+export function TokenSystemSection({ onRegister }: SectionProps) {
+  const tokenPackages = [
+    { name: 'Starter Tokens', tokens: 5, price: 9 },
+    { name: 'Growth Tokens', tokens: 20, price: 29 },
+    { name: 'Scale Tokens', tokens: 50, price: 59 },
+    { name: 'Pro Tokens', tokens: 100, price: 99 },
+  ];
+
+  return (
+    <section className="py-24 px-4 bg-gradient-to-b from-muted/10 to-[#0B0B0F]">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <Badge variant="outline" className="mb-4 border-amber-500/30 text-amber-500">
+            <Ticket className="h-3 w-3 mr-1" />
+            Sistema de Tokens
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+            Tokens de Contacto
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Accede a datos de contacto de forma profesional.
+          </p>
+        </div>
+
+        {/* Explanation */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          <div className="rounded-xl p-4 bg-[#12121A] border border-border/30 text-center">
+            <div className="text-2xl mb-2">🎟️</div>
+            <p className="text-sm text-muted-foreground">1 token = revelar contacto de 1 usuario</p>
+          </div>
+          <div className="rounded-xl p-4 bg-[#12121A] border border-border/30 text-center">
+            <div className="text-2xl mb-2">📧</div>
+            <p className="text-sm text-muted-foreground">Email + WhatsApp / Teléfono</p>
+          </div>
+          <div className="rounded-xl p-4 bg-[#12121A] border border-border/30 text-center">
+            <div className="text-2xl mb-2">🚫</div>
+            <p className="text-sm text-muted-foreground">Sin spam</p>
+          </div>
+          <div className="rounded-xl p-4 bg-[#12121A] border border-border/30 text-center">
+            <div className="text-2xl mb-2">🔒</div>
+            <p className="text-sm text-muted-foreground">Privacidad protegida</p>
+          </div>
+        </div>
+
+        {/* Token Packages */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {tokenPackages.map((pkg, i) => (
+            <div 
+              key={i} 
+              className="rounded-xl p-6 bg-[#12121A] border border-border/30 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_0_25px_hsl(252_100%_68%/0.12)] text-center"
+            >
+              <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
+                {pkg.name}
+              </Badge>
+              
+              <div className="text-4xl font-bold text-foreground mb-2">
+                🎟️ {pkg.tokens}
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">Tokens</p>
+              
+              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70 mb-6">
+                💰 USD ${pkg.price}
+              </div>
+              
+              <Button 
+                variant="outline"
+                className="w-full border-primary/30 text-primary hover:bg-primary/10"
+                onClick={onRegister}
+              >
+                Comprar
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          ))}
+        </div>
+
+        {/* Notes */}
+        <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-primary" />
+            Los tokens no expiran
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-primary" />
+            Cada uso queda registrado
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Section 8e: Why This Model
+export function WhyThisModelSection() {
+  const reasons = [
+    { icon: Shield, title: 'Protege a los creadores', desc: 'Sus datos están seguros' },
+    { icon: Ban, title: 'Evita spam', desc: 'Solo contactos intencionados' },
+    { icon: Briefcase, title: 'Profesionaliza contrataciones', desc: 'Proceso ordenado y serio' },
+    { icon: Layers, title: 'Ordena relaciones', desc: 'Todo documentado' },
+    { icon: TrendingUp, title: 'Escala sin fricción', desc: 'Crece manteniendo el control' },
+  ];
+
+  return (
+    <section className="py-24 px-4 bg-[#0B0B0F]">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
+            <Sparkles className="h-3 w-3 mr-1" />
+            Filosofía
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+            ¿Por qué este modelo?
+          </h2>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {reasons.map((reason, i) => (
+            <div 
+              key={i} 
+              className="rounded-xl p-5 bg-[#12121A] border border-border/30 hover:border-primary/40 transition-all duration-300 text-center group hover:shadow-[0_0_20px_hsl(252_100%_68%/0.1)]"
+            >
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
+                <reason.icon className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground mb-1">{reason.title}</h3>
+              <p className="text-xs text-muted-foreground">{reason.desc}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
