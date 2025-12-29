@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -23,13 +22,13 @@ import {
   Facebook, 
   Linkedin,
   Save,
-  Shield,
   Ban,
-  CheckCircle2,
   Loader2,
-  Palette
+  Palette,
+  Clock,
+  Users,
+  Link2
 } from 'lucide-react';
-import { OrganizationAISettings } from './OrganizationAISettings';
 
 interface OrganizationProfile {
   id: string;
@@ -244,44 +243,24 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
         </div>
       )}
 
-      {/* Basic Info */}
+      {/* Información Principal */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Información de la Organización
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Building2 className="h-5 w-5 text-primary" />
+            Información Principal
           </CardTitle>
-          <CardDescription>Datos principales de la agencia o comunidad</CardDescription>
+          <CardDescription>Datos básicos de la organización</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre de la Organización *</Label>
-              <Input
-                id="name"
-                value={profile.name}
-                onChange={(e) => updateField('name', e.target.value)}
-                placeholder="Nombre de tu agencia o comunidad"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="org_type">Tipo de Organización</Label>
-              <Select
-                value={profile.organization_type || 'agency'}
-                onValueChange={(v) => updateField('organization_type', v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ORG_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="name">Nombre de la Organización *</Label>
+            <Input
+              id="name"
+              value={profile.name}
+              onChange={(e) => updateField('name', e.target.value)}
+              placeholder="Nombre de tu agencia o comunidad"
+            />
           </div>
 
           <div className="space-y-2">
@@ -295,100 +274,116 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="slug">Slug (URL)</Label>
-              <Input id="slug" value={profile.slug} disabled className="bg-muted" />
-              <p className="text-xs text-muted-foreground">
-                URL: {window.location.origin}/org/{profile.slug}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="logo_url">URL del Logo</Label>
-              <Input
-                id="logo_url"
-                value={profile.logo_url || ''}
-                onChange={(e) => updateField('logo_url', e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="org_type">Tipo de Organización</Label>
+            <Select
+              value={profile.organization_type || 'agency'}
+              onValueChange={(v) => updateField('organization_type', v)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ORG_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="slug">Slug (URL)</Label>
+            <Input id="slug" value={profile.slug} disabled className="bg-muted font-mono text-sm" />
+            <p className="text-xs text-muted-foreground">
+              URL de acceso: {window.location.origin}/org/{profile.slug}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="logo_url">URL del Logo</Label>
+            <Input
+              id="logo_url"
+              value={profile.logo_url || ''}
+              onChange={(e) => updateField('logo_url', e.target.value)}
+              placeholder="https://..."
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* Admin Contact */}
+      {/* Contacto del Administrador */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Administrador Principal (Root)
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <User className="h-5 w-5 text-primary" />
+            Administrador Principal
           </CardTitle>
-          <CardDescription>Datos del administrador principal de la organización</CardDescription>
+          <CardDescription>Datos del responsable de la organización</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="admin_name">Nombre del Administrador</Label>
+          <div className="space-y-2">
+            <Label htmlFor="admin_name">Nombre Completo</Label>
+            <Input
+              id="admin_name"
+              value={profile.admin_name || ''}
+              onChange={(e) => updateField('admin_name', e.target.value)}
+              placeholder="Nombre del administrador"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="admin_email">Correo Electrónico</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="admin_name"
-                value={profile.admin_name || ''}
-                onChange={(e) => updateField('admin_name', e.target.value)}
-                placeholder="Nombre completo"
+                id="admin_email"
+                type="email"
+                value={profile.admin_email || ''}
+                onChange={(e) => updateField('admin_email', e.target.value)}
+                placeholder="admin@organizacion.com"
+                className="pl-10"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="admin_email">Correo Root</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="admin_email"
-                  type="email"
-                  value={profile.admin_email || ''}
-                  onChange={(e) => updateField('admin_email', e.target.value)}
-                  placeholder="admin@organizacion.com"
-                  className="pl-10"
-                />
-              </div>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="admin_phone">Teléfono (WhatsApp)</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="admin_phone"
-                  value={profile.admin_phone || ''}
-                  onChange={(e) => updateField('admin_phone', e.target.value)}
-                  placeholder="+57 300 123 4567"
-                  className="pl-10"
-                />
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="admin_phone">Teléfono (WhatsApp)</Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="admin_phone"
+                value={profile.admin_phone || ''}
+                onChange={(e) => updateField('admin_phone', e.target.value)}
+                placeholder="+57 300 123 4567"
+                className="pl-10"
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="billing_email">Correo de Facturación</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="billing_email"
-                  type="email"
-                  value={profile.billing_email || ''}
-                  onChange={(e) => updateField('billing_email', e.target.value)}
-                  placeholder="facturacion@organizacion.com"
-                  className="pl-10"
-                />
-              </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="billing_email">Correo de Facturación</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="billing_email"
+                type="email"
+                value={profile.billing_email || ''}
+                onChange={(e) => updateField('billing_email', e.target.value)}
+                placeholder="facturacion@organizacion.com"
+                className="pl-10"
+              />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Location */}
+      {/* Ubicación y Zona Horaria */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MapPin className="h-5 w-5 text-primary" />
             Ubicación
           </CardTitle>
         </CardHeader>
@@ -402,221 +397,230 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
               placeholder="Calle, número, edificio..."
             />
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="city">Ciudad</Label>
-              <Input
-                id="city"
-                value={profile.city || ''}
-                onChange={(e) => updateField('city', e.target.value)}
-                placeholder="Ciudad"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="country">País</Label>
-              <Input
-                id="country"
-                value={profile.country || ''}
-                onChange={(e) => updateField('country', e.target.value)}
-                placeholder="País"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="timezone">Zona Horaria</Label>
-              <Select
-                value={profile.timezone || 'America/Bogota'}
-                onValueChange={(v) => updateField('timezone', v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIMEZONES.map((tz) => (
-                    <SelectItem key={tz.value} value={tz.value}>
-                      {tz.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="city">Ciudad</Label>
+            <Input
+              id="city"
+              value={profile.city || ''}
+              onChange={(e) => updateField('city', e.target.value)}
+              placeholder="Ciudad"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="country">País</Label>
+            <Input
+              id="country"
+              value={profile.country || ''}
+              onChange={(e) => updateField('country', e.target.value)}
+              placeholder="País"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="timezone" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Zona Horaria
+            </Label>
+            <Select
+              value={profile.timezone || 'America/Bogota'}
+              onValueChange={(v) => updateField('timezone', v)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIMEZONES.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Social & Web */}
+      {/* Redes Sociales */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Globe className="h-5 w-5 text-primary" />
             Web y Redes Sociales
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="website">Sitio Web</Label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="website"
-                  value={profile.website || ''}
-                  onChange={(e) => updateField('website', e.target.value)}
-                  placeholder="https://www.tuorganizacion.com"
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="instagram">Instagram</Label>
-              <div className="relative">
-                <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="instagram"
-                  value={profile.instagram || ''}
-                  onChange={(e) => updateField('instagram', e.target.value)}
-                  placeholder="@tuorganizacion"
-                  className="pl-10"
-                />
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="website">Sitio Web</Label>
+            <div className="relative">
+              <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="website"
+                value={profile.website || ''}
+                onChange={(e) => updateField('website', e.target.value)}
+                placeholder="https://www.tuorganizacion.com"
+                className="pl-10"
+              />
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="tiktok">TikTok</Label>
+          <div className="space-y-2">
+            <Label htmlFor="instagram">Instagram</Label>
+            <div className="relative">
+              <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="tiktok"
-                value={profile.tiktok || ''}
-                onChange={(e) => updateField('tiktok', e.target.value)}
+                id="instagram"
+                value={profile.instagram || ''}
+                onChange={(e) => updateField('instagram', e.target.value)}
                 placeholder="@tuorganizacion"
+                className="pl-10"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="facebook">Facebook</Label>
-              <div className="relative">
-                <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="facebook"
-                  value={profile.facebook || ''}
-                  onChange={(e) => updateField('facebook', e.target.value)}
-                  placeholder="tuorganizacion"
-                  className="pl-10"
-                />
-              </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tiktok">TikTok</Label>
+            <Input
+              id="tiktok"
+              value={profile.tiktok || ''}
+              onChange={(e) => updateField('tiktok', e.target.value)}
+              placeholder="@tuorganizacion"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="facebook">Facebook</Label>
+            <div className="relative">
+              <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="facebook"
+                value={profile.facebook || ''}
+                onChange={(e) => updateField('facebook', e.target.value)}
+                placeholder="tuorganizacion"
+                className="pl-10"
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="linkedin">LinkedIn</Label>
-              <div className="relative">
-                <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="linkedin"
-                  value={profile.linkedin || ''}
-                  onChange={(e) => updateField('linkedin', e.target.value)}
-                  placeholder="company/tuorganizacion"
-                  className="pl-10"
-                />
-              </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="linkedin">LinkedIn</Label>
+            <div className="relative">
+              <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="linkedin"
+                value={profile.linkedin || ''}
+                onChange={(e) => updateField('linkedin', e.target.value)}
+                placeholder="company/tuorganizacion"
+                className="pl-10"
+              />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Settings */}
+      {/* Configuración */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            Configuración
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Palette className="h-5 w-5 text-primary" />
+            Personalización
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="primary_color">Color Principal</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="primary_color"
-                  type="color"
-                  value={profile.primary_color || '#8B5CF6'}
-                  onChange={(e) => updateField('primary_color', e.target.value)}
-                  className="w-14 h-10 p-1"
-                />
-                <Input
-                  value={profile.primary_color || '#8B5CF6'}
-                  onChange={(e) => updateField('primary_color', e.target.value)}
-                  placeholder="#8B5CF6"
-                  className="flex-1"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="max_members">Límite de Miembros</Label>
+          <div className="space-y-2">
+            <Label htmlFor="primary_color">Color Principal</Label>
+            <div className="flex gap-2">
               <Input
-                id="max_members"
-                type="number"
-                value={profile.max_members || ''}
-                onChange={(e) => updateField('max_members', e.target.value ? parseInt(e.target.value) : null)}
-                placeholder="Sin límite"
+                id="primary_color"
+                type="color"
+                value={profile.primary_color || '#8B5CF6'}
+                onChange={(e) => updateField('primary_color', e.target.value)}
+                className="w-14 h-10 p-1 cursor-pointer"
+              />
+              <Input
+                value={profile.primary_color || '#8B5CF6'}
+                onChange={(e) => updateField('primary_color', e.target.value)}
+                placeholder="#8B5CF6"
+                className="flex-1 font-mono"
               />
             </div>
           </div>
 
           <Separator />
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Registro Público Abierto</Label>
-              <p className="text-sm text-muted-foreground">
-                Permite que nuevos usuarios se registren en la organización
-              </p>
-            </div>
-            <Switch
-              checked={profile.is_registration_open || false}
-              onCheckedChange={(checked) => updateField('is_registration_open', checked)}
+          <div className="space-y-2">
+            <Label htmlFor="max_members" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Límite de Miembros
+            </Label>
+            <Input
+              id="max_members"
+              type="number"
+              value={profile.max_members || ''}
+              onChange={(e) => updateField('max_members', e.target.value ? parseInt(e.target.value) : null)}
+              placeholder="Sin límite"
             />
+            <p className="text-xs text-muted-foreground">
+              Deja vacío para no limitar el número de miembros
+            </p>
           </div>
 
-          {profile.is_registration_open && (
-            <div className="space-y-2">
-              <Label>Rol por Defecto para Nuevos Usuarios</Label>
-              <Select
-                value={profile.default_role || 'creator'}
-                onValueChange={(v) => updateField('default_role', v)}
-              >
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="creator">Creador</SelectItem>
-                  <SelectItem value="editor">Editor</SelectItem>
-                  <SelectItem value="strategist">Estratega</SelectItem>
-                  <SelectItem value="client">Cliente</SelectItem>
-                </SelectContent>
-              </Select>
+          <Separator />
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Registro Público Abierto</Label>
+                <p className="text-sm text-muted-foreground">
+                  Permite que nuevos usuarios se registren
+                </p>
+              </div>
+              <Switch
+                checked={profile.is_registration_open || false}
+                onCheckedChange={(checked) => updateField('is_registration_open', checked)}
+              />
             </div>
-          )}
+
+            {profile.is_registration_open && (
+              <div className="space-y-2 pl-0 border-l-2 border-primary/20 ml-0">
+                <Label>Rol por Defecto</Label>
+                <Select
+                  value={profile.default_role || 'creator'}
+                  onValueChange={(v) => updateField('default_role', v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="creator">Creador</SelectItem>
+                    <SelectItem value="editor">Editor</SelectItem>
+                    <SelectItem value="strategist">Estratega</SelectItem>
+                    <SelectItem value="client">Cliente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* AI Settings */}
-      <OrganizationAISettings organizationId={organizationId} />
-
       {/* Actions */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center pt-4">
         <div>
           {isRootAdmin && !profile.is_blocked && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="gap-2">
+                <Button variant="destructive" size="sm" className="gap-2">
                   <Ban className="h-4 w-4" />
-                  Bloquear Organización
+                  Bloquear
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Bloquear esta organización?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Los usuarios de esta organización no podrán acceder a la plataforma mientras esté bloqueada.
+                    Los usuarios no podrán acceder mientras esté bloqueada.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="py-4">
