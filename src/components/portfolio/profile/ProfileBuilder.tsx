@@ -1,6 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,73 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
+import { useProfile, ProfileData } from '@/hooks/useProfile';
 import { 
   User, MapPin, Briefcase, Star, Camera, Save, X, 
   Instagram, Music2, Globe, Linkedin, Youtube, Twitter,
-  DollarSign, Tags, Sparkles, Eye
+  DollarSign, Tags, Sparkles, Eye, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface ProfileData {
-  full_name: string;
-  username: string;
-  bio: string;
-  tagline: string;
-  avatar_url: string;
-  cover_url: string;
-  city: string;
-  country: string;
-  best_at: string;
-  interests: string[];
-  specialties_tags: string[];
-  content_categories: string[];
-  industries: string[];
-  style_keywords: string[];
-  languages: string[];
-  experience_level: string;
-  availability_status: string;
-  rate_per_content: number | null;
-  rate_currency: string;
-  instagram: string;
-  tiktok: string;
-  facebook: string;
-  social_linkedin: string;
-  social_youtube: string;
-  social_twitter: string;
-  portfolio_url: string;
-  is_public: boolean;
-}
-
-const DEFAULT_PROFILE: ProfileData = {
-  full_name: '',
-  username: '',
-  bio: '',
-  tagline: '',
-  avatar_url: '',
-  cover_url: '',
-  city: '',
-  country: '',
-  best_at: '',
-  interests: [],
-  specialties_tags: [],
-  content_categories: [],
-  industries: [],
-  style_keywords: [],
-  languages: [],
-  experience_level: 'junior',
-  availability_status: 'available',
-  rate_per_content: null,
-  rate_currency: 'COP',
-  instagram: '',
-  tiktok: '',
-  facebook: '',
-  social_linkedin: '',
-  social_youtube: '',
-  social_twitter: '',
-  portfolio_url: '',
-  is_public: true,
-};
 
 const EXPERIENCE_LEVELS = [
   { value: 'junior', label: 'Junior (0-2 años)' },
@@ -98,152 +36,38 @@ interface ProfileBuilderProps {
 }
 
 export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [activeTab, setActiveTab] = useState('basic');
+  const {
+    profile,
+    loading,
+    saving,
+    hasChanges,
+    updateField,
+    save,
+    uploadAvatar,
+    uploadCover,
+    addTag,
+    removeTag,
+  } = useProfile({ useSonner: true });
 
-  // Tag inputs
+  const [activeTab, setActiveTab] = useState('basic');
   const [newTag, setNewTag] = useState('');
   const [activeTagField, setActiveTagField] = useState<keyof ProfileData | null>(null);
 
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const fetchProfile = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (data && !error) {
-        // Cast to any for new columns not yet in generated types
-        const profileData = data as any;
-        setProfile({
-          ...DEFAULT_PROFILE,
-          ...profileData,
-          interests: profileData.interests || [],
-          specialties_tags: profileData.specialties_tags || [],
-          content_categories: profileData.content_categories || [],
-          industries: profileData.industries || [],
-          style_keywords: profileData.style_keywords || [],
-          languages: profileData.languages || [],
-        });
-      }
-      setLoading(false);
-    };
-
-    fetchProfile();
-  }, [user?.id]);
-
-  const updateField = useCallback(<K extends keyof ProfileData>(
-    field: K,
-    value: ProfileData[K]
-  ) => {
-    setProfile(prev => ({ ...prev, [field]: value }));
-    setHasChanges(true);
-  }, []);
-
-  const addTag = useCallback((field: keyof ProfileData, tag: string) => {
-    if (!tag.trim()) return;
-    const currentTags = profile[field] as string[];
-    if (!currentTags.includes(tag.trim())) {
-      updateField(field, [...currentTags, tag.trim()] as ProfileData[typeof field]);
+  const handleAddTag = (field: keyof ProfileData) => {
+    if (newTag.trim()) {
+      addTag(field, newTag.trim());
+      setNewTag('');
     }
-    setNewTag('');
-  }, [profile, updateField]);
-
-  const removeTag = useCallback((field: keyof ProfileData, tag: string) => {
-    const currentTags = profile[field] as string[];
-    updateField(field, currentTags.filter(t => t !== tag) as ProfileData[typeof field]);
-  }, [profile, updateField]);
+  };
 
   const handleSave = async () => {
-    if (!user?.id) return;
-
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profile.full_name,
-          username: profile.username,
-          bio: profile.bio,
-          tagline: profile.tagline,
-          avatar_url: profile.avatar_url,
-          cover_url: profile.cover_url,
-          city: profile.city,
-          country: profile.country,
-          best_at: profile.best_at,
-          interests: profile.interests,
-          specialties_tags: profile.specialties_tags,
-          content_categories: profile.content_categories,
-          industries: profile.industries,
-          style_keywords: profile.style_keywords,
-          languages: profile.languages,
-          experience_level: profile.experience_level,
-          availability_status: profile.availability_status,
-          rate_per_content: profile.rate_per_content,
-          rate_currency: profile.rate_currency,
-          instagram: profile.instagram,
-          tiktok: profile.tiktok,
-          facebook: profile.facebook,
-          social_linkedin: profile.social_linkedin,
-          social_youtube: profile.social_youtube,
-          social_twitter: profile.social_twitter,
-          portfolio_url: profile.portfolio_url,
-          is_public: profile.is_public,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      toast.success('Perfil actualizado');
-      setHasChanges(false);
-    } catch (error) {
-      console.error('[ProfileBuilder] Error saving:', error);
-      toast.error('Error al guardar');
-    } finally {
-      setSaving(false);
-    }
+    await save();
   };
 
-  const handleImageUpload = async (
-    type: 'avatar' | 'cover',
-    file: File
-  ) => {
-    if (!user?.id) return;
-
-    const ext = file.name.split('.').pop();
-    const fileName = `${user.id}/${type}_${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('portfolio')
-      .upload(fileName, file, { upsert: true });
-
-    if (uploadError) {
-      toast.error('Error al subir imagen');
-      return;
-    }
-
-    const { data } = supabase.storage.from('portfolio').getPublicUrl(fileName);
-    
-    if (type === 'avatar') {
-      updateField('avatar_url', data.publicUrl);
-    } else {
-      updateField('cover_url', data.publicUrl);
-    }
-    toast.success('Imagen actualizada');
-  };
-
-  if (loading) {
+  if (loading || !profile) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -314,7 +138,7 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) => e.target.files?.[0] && handleImageUpload('cover', e.target.files[0])}
+                          onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])}
                         />
                       </div>
 
@@ -337,11 +161,11 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) => e.target.files?.[0] && handleImageUpload('avatar', e.target.files[0])}
+                          onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])}
                         />
                         <div>
                           <p className="text-sm font-medium">Foto de perfil</p>
-                          <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máx 2MB</p>
+                          <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máx 5MB</p>
                         </div>
                       </div>
                     </CardContent>
@@ -370,7 +194,7 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
                           <Input
                             id="username"
                             value={profile.username || ''}
-                            onChange={(e) => updateField('username', e.target.value)}
+                            onChange={(e) => updateField('username', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                             placeholder="@usuario"
                           />
                         </div>
@@ -482,12 +306,12 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
                           value={activeTagField === 'interests' ? newTag : ''}
                           onFocus={() => setActiveTagField('interests')}
                           onChange={(e) => setNewTag(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag('interests', newTag))}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag('interests'))}
                         />
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => addTag('interests', newTag)}
+                          onClick={() => handleAddTag('interests')}
                         >
                           Agregar
                         </Button>
@@ -523,9 +347,9 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
                           value={activeTagField === 'specialties_tags' ? newTag : ''}
                           onFocus={() => setActiveTagField('specialties_tags')}
                           onChange={(e) => setNewTag(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag('specialties_tags', newTag))}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag('specialties_tags'))}
                         />
-                        <Button variant="outline" size="sm" onClick={() => addTag('specialties_tags', newTag)}>+</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleAddTag('specialties_tags')}>+</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -553,9 +377,9 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
                           value={activeTagField === 'content_categories' ? newTag : ''}
                           onFocus={() => setActiveTagField('content_categories')}
                           onChange={(e) => setNewTag(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag('content_categories', newTag))}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag('content_categories'))}
                         />
-                        <Button variant="outline" size="sm" onClick={() => addTag('content_categories', newTag)}>+</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleAddTag('content_categories')}>+</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -583,9 +407,9 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
                           value={activeTagField === 'industries' ? newTag : ''}
                           onFocus={() => setActiveTagField('industries')}
                           onChange={(e) => setNewTag(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag('industries', newTag))}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag('industries'))}
                         />
-                        <Button variant="outline" size="sm" onClick={() => addTag('industries', newTag)}>+</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleAddTag('industries')}>+</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -772,9 +596,9 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
                           value={activeTagField === 'languages' ? newTag : ''}
                           onFocus={() => setActiveTagField('languages')}
                           onChange={(e) => setNewTag(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag('languages', newTag))}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag('languages'))}
                         />
-                        <Button variant="outline" size="sm" onClick={() => addTag('languages', newTag)}>+</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleAddTag('languages')}>+</Button>
                       </div>
                     </CardContent>
                   </Card>
