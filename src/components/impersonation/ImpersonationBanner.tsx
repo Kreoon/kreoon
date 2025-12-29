@@ -12,7 +12,7 @@ const ROLE_OPTIONS: { value: AppRole; label: string; defaultRoute: string }[] = 
   { value: 'admin', label: 'Admin', defaultRoute: '/' },
   { value: 'strategist', label: 'Estratega', defaultRoute: '/strategist-dashboard' },
   { value: 'creator', label: 'Creador', defaultRoute: '/creator-dashboard' },
-  { value: 'editor', label: 'Editor', defaultRoute: '/editor-dashboard' },
+  { value: 'editor', label: 'Productor AV', defaultRoute: '/editor-dashboard' },
   { value: 'client', label: 'Cliente', defaultRoute: '/client-dashboard' },
   { value: 'ambassador', label: 'Embajador', defaultRoute: '/creator-dashboard' },
 ];

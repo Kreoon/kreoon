@@ -203,8 +203,8 @@ export function TeamTab({
           />
         </FieldRow>
 
-        {/* Editor - For internal content, only ambassadors */}
-        <FieldRow label={isInternalOrgContent ? "Editor (Embajador)" : "Editor"} icon={isInternalOrgContent ? Medal : User}>
+        {/* Productor AV - For internal content, only ambassadors */}
+        <FieldRow label={isInternalOrgContent ? "Productor AV (Embajador)" : "Productor Audio-Visual"} icon={isInternalOrgContent ? Medal : User}>
           <EditableField
             permissions={permissions}
             resource="content.team"

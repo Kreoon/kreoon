@@ -1079,7 +1079,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 </TabsTrigger>
                 <TabsTrigger value="editor" className="text-xs px-2 py-1.5 gap-1">
                   <Video className="h-3 w-3" />
-                  <span className="hidden sm:inline">Editor</span>
+                  <span className="hidden sm:inline">Productor AV</span>
                   <span className="sm:hidden">✂️</span>
                 </TabsTrigger>
                 <TabsTrigger value="trafficker" className="text-xs px-2 py-1.5 gap-1">

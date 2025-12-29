@@ -185,11 +185,11 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }
                 </button>
                 <div className="flex items-center gap-1 flex-wrap">
                   {profile.role && (
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1 capitalize">
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1">
                       {profile.role === 'creator' && <Palette className="h-2.5 w-2.5 mr-0.5" />}
                       {profile.role === 'editor' && <Film className="h-2.5 w-2.5 mr-0.5" />}
                       {profile.role === 'strategist' && <Target className="h-2.5 w-2.5 mr-0.5" />}
-                      {profile.role}
+                      {profile.role === 'editor' ? 'Productor AV' : profile.role === 'creator' ? 'Creador' : profile.role === 'strategist' ? 'Estratega' : profile.role}
                     </Badge>
                   )}
                   {profile.is_independent ? (
@@ -253,8 +253,8 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }
               </button>
               <div className="flex items-center justify-center gap-1 flex-wrap mb-1">
                 {profile.role && (
-                  <Badge variant="secondary" className="text-[10px] h-4 px-1 capitalize">
-                    {profile.role}
+                  <Badge variant="secondary" className="text-[10px] h-4 px-1">
+                    {profile.role === 'editor' ? 'Productor AV' : profile.role === 'creator' ? 'Creador' : profile.role === 'strategist' ? 'Estratega' : profile.role}
                   </Badge>
                 )}
               </div>

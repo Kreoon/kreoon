@@ -19,7 +19,7 @@ interface InvitationRequest {
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador",
   creator: "Creador de Contenido",
-  editor: "Editor",
+  editor: "Productor Audio-Visual",
   client: "Cliente",
 };
 
