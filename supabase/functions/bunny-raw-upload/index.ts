@@ -109,6 +109,7 @@ serve(async (req: Request) => {
           );
         }
 
+        // Always return public CDN URL (not storage URL)
         const cdnUrl = cdnHostname 
           ? `https://${cdnHostname}/${storagePath}`
           : `https://${storageZone}.b-cdn.net/${storagePath}`;
