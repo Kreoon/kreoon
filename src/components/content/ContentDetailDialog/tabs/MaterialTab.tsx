@@ -1,10 +1,10 @@
 import { Input } from '@/components/ui/input';
-import { RawVideoUploader } from '@/components/content/RawVideoUploader';
+import { RawAssetsUploader } from '@/components/content/RawAssetsUploader';
 import { SectionCard, FieldRow } from '../components/SectionCard';
 import { EditableField, PermissionsGate } from '../components/PermissionsGate';
 import { TabProps } from '../types';
 import { useAuth } from '@/hooks/useAuth';
-import { Video, FolderOpen, ExternalLink } from 'lucide-react';
+import { FolderOpen, ExternalLink } from 'lucide-react';
 
 export function MaterialTab({
   content,
@@ -15,12 +15,21 @@ export function MaterialTab({
   onUpdate,
   readOnly = false,
 }: TabProps) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const effectiveEditMode = editMode && !readOnly;
-  const canEditMaterial = permissions.can('content.material', 'edit') && !readOnly;
   const canEditDrive = permissions.can('content.material.drive', 'edit') && !readOnly;
+  
+  // Check if user can upload (creator, editor assigned, or admin)
+  const canUpload = !readOnly && (
+    isAdmin ||
+    content?.creator_id === user?.id ||
+    content?.editor_id === user?.id
+  );
+  
+  // Check if user can delete (uploader or admin)
+  const canDelete = !readOnly && (isAdmin || content?.creator_id === user?.id);
 
-  // Video embed helper
+  // Video embed helper for reference video
   const renderVideoEmbed = (url: string) => {
     if (!url) return null;
     
@@ -92,20 +101,29 @@ export function MaterialTab({
         )}
       </SectionCard>
 
-      {/* Raw Videos */}
-      <PermissionsGate permissions={permissions} resource="content.material.raw_videos" action="edit" showLockOnReadOnly={false}>
-        <SectionCard title="Videos Crudos (Material Original)" iconEmoji="📹">
-          <RawVideoUploader
-            contentId={content?.id || ''}
-            currentUrls={formData.raw_video_urls || []}
-            onUploadComplete={(urls) => {
-              setFormData(prev => ({ ...prev, raw_video_urls: urls }));
-              onUpdate?.();
-            }}
-            disabled={!effectiveEditMode || !canEditMaterial}
+      {/* Raw Assets - New Bunny Storage Uploader */}
+      <SectionCard title="Material Crudo" iconEmoji="📁">
+        <p className="text-sm text-muted-foreground mb-4">
+          Sube archivos de video y audio originales (material sin editar). 
+          Los archivos no se reproducen en la plataforma, solo se almacenan para descarga.
+        </p>
+        
+        {content?.id ? (
+          <RawAssetsUploader
+            contentId={content.id}
+            organizationId={(content as any).organization_id || ''}
+            clientId={(content as any).client_id || undefined}
+            disabled={readOnly}
+            canUpload={canUpload}
+            canDelete={canDelete}
           />
-        </SectionCard>
-      </PermissionsGate>
+        ) : (
+          <div className="p-8 text-center text-muted-foreground">
+            <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Guarda el proyecto primero para gestionar el material crudo</p>
+          </div>
+        )}
+      </SectionCard>
 
       {/* Google Drive */}
       <SectionCard title="Carpeta de Google Drive" icon={FolderOpen}>
