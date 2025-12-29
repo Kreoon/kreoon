@@ -765,7 +765,7 @@ export default function Dashboard() {
                 <AmbassadorBadge size="sm" variant="glow" />
               )}
               {isAdmin && (
-                <Button variant="medieval" size="sm" onClick={() => setGoalsDialogOpen(true)} className="h-8 px-2 md:px-3">
+                <Button variant="outline" size="sm" onClick={() => setGoalsDialogOpen(true)} className="h-8 px-2 md:px-3 border-primary/30 hover:bg-primary/10">
                   <Target className="h-4 w-4 md:mr-2" />
                   <span className="hidden md:inline">Metas</span>
                 </Button>

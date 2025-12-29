@@ -141,7 +141,7 @@ export function UPLevelsManager({ organizationId }: UPLevelsManagerProps) {
                     <Icon className={cn("w-6 h-6", level.color)} />
                   </div>
                   <div>
-                    <span className={cn("font-medieval", level.color)}>{level.label}</span>
+                    <span className={cn("font-semibold", level.color)}>{level.label}</span>
                     <Badge variant="outline" className="ml-2 text-xs">
                       {level.key}
                     </Badge>

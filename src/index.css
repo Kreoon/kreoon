@@ -4,142 +4,106 @@
 
 @layer base {
   :root {
-    /* Medieval Theme - Parchment & Stone */
-    --background: 35 25% 94%;
-    --foreground: 25 30% 12%;
+    /* KREOON_OS Theme - Dark Mode First */
+    /* Base Colors */
+    --background: 240 10% 4%; /* #0B0B0F */
+    --foreground: 0 0% 100%; /* #FFFFFF */
 
-    --card: 38 30% 96%;
-    --card-foreground: 25 30% 12%;
+    --card: 240 12% 8%; /* #12121A */
+    --card-foreground: 0 0% 100%;
 
-    --popover: 38 30% 98%;
-    --popover-foreground: 25 30% 12%;
+    --popover: 240 14% 10%; /* #181826 */
+    --popover-foreground: 0 0% 100%;
 
-    /* Royal Gold - Primary */
-    --primary: 38 75% 45%;
-    --primary-foreground: 38 30% 98%;
+    /* Electric Violet - Primary */
+    --primary: 252 100% 68%; /* #7C5CFF */
+    --primary-foreground: 0 0% 100%;
 
-    /* Aged Leather - Secondary */
-    --secondary: 25 20% 88%;
-    --secondary-foreground: 25 30% 20%;
+    /* Secondary Surface */
+    --secondary: 240 12% 12%;
+    --secondary-foreground: 240 10% 80%;
 
-    /* Worn Parchment - Muted */
-    --muted: 35 18% 90%;
-    --muted-foreground: 25 15% 45%;
+    /* Muted */
+    --muted: 240 10% 14%;
+    --muted-foreground: 240 10% 70%; /* #B3B3C6 */
 
-    /* Castle Stone - Accent */
-    --accent: 30 25% 85%;
-    --accent-foreground: 25 30% 15%;
+    /* Accent */
+    --accent: 252 60% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    /* Blood Red - Destructive */
-    --destructive: 0 70% 45%;
+    /* Destructive */
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Forest Green - Success */
-    --success: 120 35% 35%;
+    /* Success */
+    --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
 
-    /* Amber Warning */
-    --warning: 35 85% 50%;
-    --warning-foreground: 25 30% 12%;
+    /* Warning */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
 
-    /* Royal Blue - Info */
-    --info: 220 55% 45%;
+    /* Info */
+    --info: 200 100% 50%;
     --info-foreground: 0 0% 100%;
 
-    --border: 30 20% 80%;
-    --input: 30 20% 82%;
-    --ring: 38 75% 45%;
+    --border: 240 10% 18%;
+    --input: 240 10% 16%;
+    --ring: 252 100% 68%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    /* Dark Castle Sidebar */
-    --sidebar-background: 25 25% 10%;
-    --sidebar-foreground: 35 20% 80%;
-    --sidebar-primary: 38 75% 50%;
-    --sidebar-primary-foreground: 25 25% 8%;
-    --sidebar-accent: 25 20% 18%;
-    --sidebar-accent-foreground: 35 25% 90%;
-    --sidebar-border: 25 20% 18%;
-    --sidebar-ring: 38 75% 50%;
+    /* Sidebar - Dark */
+    --sidebar-background: 240 10% 4%;
+    --sidebar-foreground: 240 10% 80%;
+    --sidebar-primary: 252 100% 68%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 12% 12%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 10% 15%;
+    --sidebar-ring: 252 100% 68%;
 
-    /* Medieval Custom Tokens */
-    --gold: 38 75% 50%;
-    --gold-light: 42 80% 60%;
-    --gold-dark: 35 70% 38%;
-    --bronze: 30 60% 40%;
-    --silver: 220 10% 65%;
-    --iron: 220 5% 35%;
-    --rust: 15 55% 35%;
-    --parchment: 38 35% 92%;
-    --leather: 25 35% 25%;
-    
-    /* Medieval Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(38 75% 45%) 0%, hsl(42 80% 55%) 50%, hsl(38 75% 45%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(35 70% 38%) 0%, hsl(38 75% 50%) 50%, hsl(42 80% 60%) 100%);
-    --gradient-royal: linear-gradient(135deg, hsl(25 25% 10%) 0%, hsl(38 75% 45%) 50%, hsl(25 25% 10%) 100%);
-    --gradient-parchment: linear-gradient(180deg, hsl(38 35% 96%) 0%, hsl(35 30% 88%) 100%);
-    --gradient-stone: linear-gradient(180deg, hsl(25 15% 25%) 0%, hsl(25 20% 15%) 100%);
-    --gradient-banner: linear-gradient(180deg, hsl(0 70% 40%) 0%, hsl(0 65% 30%) 100%);
-    
-    /* Medieval Shadows */
-    --shadow-glow: 0 0 40px hsl(38 75% 50% / 0.25);
-    --shadow-gold: 0 4px 20px hsl(38 75% 50% / 0.3);
-    --shadow-card: 0 4px 24px hsl(25 30% 10% / 0.08);
-    --shadow-hover: 0 8px 32px hsl(25 30% 10% / 0.12);
-    --shadow-emboss: inset 0 2px 4px hsl(0 0% 100% / 0.1), 0 2px 4px hsl(25 30% 10% / 0.15);
+    /* KREOON Tokens */
+    --violet: 252 100% 68%;
+    --violet-light: 252 100% 78%;
+    --violet-dark: 252 80% 55%;
+    --violet-glow: 252 100% 68%;
 
-    /* Level Colors - Medieval Ranks */
-    --level-bronze: 30 60% 40%;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(252 100% 68%) 0%, hsl(252 100% 78%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(240 12% 8%) 0%, hsl(240 10% 6%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(240 12% 10%) 0%, hsl(240 12% 8%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(252 100% 68% / 0.15) 0%, transparent 70%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.3);
+    --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 40px hsl(252 100% 68% / 0.25);
+    --shadow-violet: 0 4px 20px hsl(252 100% 68% / 0.3);
+
+    /* Level Colors */
+    --level-bronze: 30 60% 45%;
     --level-silver: 220 10% 65%;
-    --level-gold: 38 75% 50%;
+    --level-gold: 45 90% 55%;
     --level-diamond: 200 80% 60%;
 
-    /* Social Creator Theme - TikTok Style Dark */
+    /* Social Theme */
     --social-background: 0 0% 0%;
     --social-foreground: 0 0% 98%;
     --social-card: 0 0% 7%;
     --social-card-foreground: 0 0% 98%;
     --social-muted: 0 0% 12%;
     --social-muted-foreground: 0 0% 60%;
-    --social-accent: 349 100% 60%;
+    --social-accent: 252 100% 68%;
     --social-accent-foreground: 0 0% 100%;
     --social-border: 0 0% 15%;
     --social-input: 0 0% 12%;
   }
 
+  /* No light mode - dark mode is default */
   .dark {
-    /* Dark Medieval Theme - Castle Interior */
-    --background: 25 20% 8%;
-    --foreground: 35 15% 90%;
-
-    --card: 25 18% 12%;
-    --card-foreground: 35 15% 92%;
-
-    --popover: 25 18% 14%;
-    --popover-foreground: 35 15% 92%;
-
-    --primary: 38 75% 50%;
-    --primary-foreground: 25 25% 8%;
-
-    --secondary: 25 15% 18%;
-    --secondary-foreground: 35 15% 88%;
-
-    --muted: 25 12% 16%;
-    --muted-foreground: 35 10% 55%;
-
-    --accent: 25 15% 20%;
-    --accent-foreground: 35 15% 92%;
-
-    --destructive: 0 65% 50%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 25 15% 20%;
-    --input: 25 15% 20%;
-    --ring: 38 75% 50%;
-
-    --gradient-parchment: linear-gradient(180deg, hsl(25 18% 14%) 0%, hsl(25 15% 10%) 100%);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
-    --shadow-hover: 0 8px 32px hsl(0 0% 0% / 0.5);
+    /* Same as root for now */
   }
 }
 
@@ -149,301 +113,290 @@
   }
 
   html {
-    font-family: 'Crimson Text', Georgia, serif;
+    font-family: 'Inter', 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
+    line-height: 1.6;
   }
 
-  /* Medieval Typography */
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cinzel', serif;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+  /* KREOON Typography */
+  h1 {
+    @apply text-3xl md:text-4xl font-bold tracking-tight;
+    line-height: 1.2;
   }
 
-  .font-display {
-    font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  h2 {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+    line-height: 1.3;
   }
 
-  .font-medieval {
-    font-family: 'Cinzel', serif;
+  h3 {
+    @apply text-xl md:text-2xl font-semibold;
+    line-height: 1.4;
   }
 
-  .font-body {
-    font-family: 'Crimson Text', Georgia, serif;
+  h4 {
+    @apply text-lg font-medium;
+  }
+
+  h5, h6 {
+    @apply text-base font-medium;
   }
 }
 
 @layer utilities {
+  /* Gradient Text */
   .text-gradient {
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-primary);
   }
 
-  .text-gradient-gold {
+  .text-gradient-violet {
     @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-gold);
+    background-image: linear-gradient(135deg, hsl(252 100% 68%) 0%, hsl(252 100% 78%) 100%);
   }
 
-  .text-gradient-royal {
-    @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-royal);
+  /* Background Gradients */
+  .bg-gradient-primary {
+    background-image: var(--gradient-primary);
   }
 
-  .bg-gradient-gold {
-    background-image: var(--gradient-gold);
+  .bg-gradient-subtle {
+    background-image: var(--gradient-subtle);
   }
 
-  .bg-gradient-parchment {
-    background-image: var(--gradient-parchment);
+  .bg-gradient-card {
+    background-image: var(--gradient-card);
   }
 
-  .bg-gradient-stone {
-    background-image: var(--gradient-stone);
+  .bg-gradient-glow {
+    background-image: var(--gradient-glow);
   }
 
-  .bg-gradient-banner {
-    background-image: var(--gradient-banner);
-  }
-
-  /* Medieval Glass Effect */
+  /* Glass Effect */
   .glass {
     @apply backdrop-blur-xl;
-    background: hsl(var(--card) / 0.85);
+    background: hsl(var(--card) / 0.8);
   }
 
   .glass-dark {
     @apply backdrop-blur-xl;
-    background: hsl(25 20% 8% / 0.9);
+    background: hsl(240 10% 4% / 0.9);
   }
 
-  /* Embossed Metal Effect */
-  .emboss {
-    box-shadow: var(--shadow-emboss);
-  }
-
+  /* Glow Effects */
   .glow {
     box-shadow: var(--shadow-glow);
   }
 
-  .glow-gold {
-    box-shadow: var(--shadow-gold);
+  .glow-violet {
+    box-shadow: var(--shadow-violet);
   }
 
-  /* Medieval Border */
-  .border-medieval {
-    border: 2px solid hsl(var(--border));
-    box-shadow: 
-      inset 0 1px 0 hsl(0 0% 100% / 0.1),
-      0 2px 4px hsl(25 30% 10% / 0.1);
+  .glow-sm {
+    box-shadow: 0 0 15px hsl(252 100% 68% / 0.2);
   }
 
+  /* Hover Effects */
+  .hover-glow {
+    @apply transition-all duration-200;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 20px hsl(252 100% 68% / 0.3);
+  }
+
+  .hover-lift {
+    @apply transition-all duration-200;
+  }
+
+  .hover-lift:hover {
+    @apply -translate-y-0.5;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200;
+  }
+
+  .hover-scale:hover {
+    @apply scale-[1.02];
+  }
+
+  /* Interactive */
+  .interactive {
+    @apply transition-all duration-150 cursor-pointer;
+  }
+
+  .interactive:hover {
+    @apply bg-accent/10;
+  }
+
+  .interactive:active {
+    @apply scale-[0.98];
+  }
+
+  /* Border Effects */
   .border-gradient {
-    border: 2px solid transparent;
+    border: 1px solid transparent;
     background: linear-gradient(hsl(var(--background)), hsl(var(--background))) padding-box,
-                var(--gradient-gold) border-box;
+                var(--gradient-primary) border-box;
   }
 
-  /* Shield Badge */
-  .shield-badge {
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  .border-glow {
+    @apply border border-primary/30;
+    box-shadow: 0 0 10px hsl(252 100% 68% / 0.1);
   }
 
-  /* Banner Shape */
-  .banner-shape {
-    clip-path: polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%);
+  /* Cards */
+  .card-hover {
+    @apply transition-all duration-200;
   }
 
-  /* Medieval Animations */
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
+  .card-hover:hover {
+    @apply border-primary/40;
+    box-shadow: 0 4px 20px hsl(0 0% 0% / 0.4), 0 0 0 1px hsl(252 100% 68% / 0.1);
   }
 
-  .animate-pulse-slow {
-    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  /* Level Badges */
+  .level-bronze {
+    background: linear-gradient(135deg, hsl(30 50% 40%) 0%, hsl(30 60% 50%) 100%);
+    @apply text-white;
+  }
+
+  .level-silver {
+    background: linear-gradient(135deg, hsl(220 8% 55%) 0%, hsl(220 12% 70%) 100%);
+    @apply text-black;
+  }
+
+  .level-gold {
+    background: linear-gradient(135deg, hsl(45 80% 45%) 0%, hsl(45 90% 60%) 100%);
+    @apply text-black;
+  }
+
+  .level-diamond {
+    background: linear-gradient(135deg, hsl(200 70% 50%) 0%, hsl(200 85% 70%) 100%);
+    @apply text-black;
+  }
+
+  /* AI Indicator */
+  .ai-indicator {
+    @apply relative;
+  }
+
+  .ai-indicator::before {
+    content: '';
+    @apply absolute -inset-0.5 rounded-lg opacity-0 transition-opacity duration-200;
+    background: var(--gradient-primary);
+  }
+
+  .ai-indicator:hover::before {
+    @apply opacity-30;
+  }
+
+  /* Progress Bar Gradient */
+  .progress-gradient {
+    background: var(--gradient-primary);
+  }
+
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-fade-up {
+    animation: fadeUp 0.25s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.15s ease-out;
   }
 
   .animate-slide-up {
-    animation: slideUp 0.5s ease-out;
+    animation: slideUp 0.25s ease-out;
   }
 
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
+  .animate-glow-pulse {
+    animation: glowPulse 2s ease-in-out infinite;
   }
 
   .animate-shimmer {
     animation: shimmer 2s linear infinite;
   }
 
-  .animate-torch {
-    animation: torchFlicker 2s ease-in-out infinite;
+  /* Scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
   }
 
-  .animate-torch-icon {
-    animation: torchFlicker 2s ease-in-out infinite, ember-glow 3s ease-in-out infinite;
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
 
-  .animate-bounce-subtle {
-    animation: bounceSubtle 2s ease-in-out infinite;
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
   }
 
-  .animate-scroll-unfurl {
-    animation: scrollUnfurl 0.6s ease-out forwards;
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 3px;
   }
 
-  .animate-sword-slash {
-    animation: swordSlash 0.4s ease-out;
-  }
-
-  .animate-shield-pulse {
-    animation: shieldPulse 2s ease-in-out infinite;
-  }
-
-  .animate-crown-float {
-    animation: crownFloat 4s ease-in-out infinite;
-  }
-
-  .animate-banner-wave {
-    animation: bannerWave 3s ease-in-out infinite;
-  }
-
-  .animate-parchment-reveal {
-    animation: parchmentReveal 0.8s ease-out forwards;
-  }
-
-  /* Enhanced Medieval Effects */
-  .torch-button {
-    @apply relative overflow-hidden;
-    background: linear-gradient(135deg, hsl(25 80% 45%) 0%, hsl(35 85% 50%) 50%, hsl(25 80% 45%) 100%);
-  }
-
-  .torch-button::before {
-    content: '';
-    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
-    background: radial-gradient(circle at center, hsl(45 90% 60% / 0.4) 0%, transparent 70%);
-  }
-
-  .torch-button:hover::before {
-    @apply opacity-100;
-    animation: torch-inner-glow 1.5s ease-in-out infinite;
-  }
-
-  .ember-effect {
-    @apply relative;
-  }
-
-  .ember-effect::after {
-    content: '✦';
-    @apply absolute -top-1 -right-1 text-xs text-amber-400 opacity-0;
-    animation: magic-sparkle 2s ease-in-out infinite;
-  }
-
-  .ember-effect:hover::after {
-    @apply opacity-100;
-  }
-
-  .golden-glow {
-    box-shadow: 
-      0 0 10px hsl(38 75% 50% / 0.3),
-      0 0 20px hsl(38 75% 50% / 0.2),
-      0 0 30px hsl(38 75% 50% / 0.1);
-    animation: golden-pulse 3s ease-in-out infinite;
-  }
-
-  .sword-gleam {
-    @apply relative overflow-hidden;
-  }
-
-  .sword-gleam::before {
-    content: '';
-    @apply absolute inset-0 opacity-0;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      hsl(0 0% 100% / 0.4) 50%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: sword-gleam 3s ease-in-out infinite;
-  }
-
-  .sword-gleam:hover::before {
-    @apply opacity-100;
-  }
-
-  .fire-border {
-    @apply relative;
-    border: 2px solid transparent;
-    background: 
-      linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
-      linear-gradient(90deg, hsl(25 80% 50%), hsl(38 85% 55%), hsl(25 80% 50%)) border-box;
-    animation: fire-border-dance 2s ease-in-out infinite;
-  }
-
-  .hover-torch {
-    @apply transition-all duration-300;
-  }
-
-  .hover-torch:hover {
-    box-shadow: 
-      0 0 15px hsl(38 75% 50% / 0.4),
-      0 0 30px hsl(38 75% 50% / 0.2);
-    transform: translateY(-2px);
-  }
-
-  .interactive-medieval {
-    @apply transition-all duration-200 cursor-pointer;
-  }
-
-  .interactive-medieval:hover {
-    @apply scale-[1.02];
-    box-shadow: 0 4px 20px hsl(38 75% 50% / 0.25);
-  }
-
-  .interactive-medieval:active {
-    @apply scale-[0.98];
-  }
-
-  /* Level Badges */
-  .level-bronze {
-    background: linear-gradient(135deg, hsl(30 50% 35%) 0%, hsl(30 60% 45%) 50%, hsl(30 50% 35%) 100%);
-    color: hsl(35 30% 95%);
-  }
-
-  .level-silver {
-    background: linear-gradient(135deg, hsl(220 8% 55%) 0%, hsl(220 12% 70%) 50%, hsl(220 8% 55%) 100%);
-    color: hsl(220 5% 15%);
-  }
-
-  .level-gold {
-    background: linear-gradient(135deg, hsl(38 70% 40%) 0%, hsl(42 80% 55%) 50%, hsl(38 70% 40%) 100%);
-    color: hsl(25 25% 8%);
-  }
-
-  .level-diamond {
-    background: linear-gradient(135deg, hsl(200 70% 50%) 0%, hsl(200 85% 70%) 50%, hsl(200 70% 50%) 100%);
-    color: hsl(200 30% 10%);
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
   }
 }
 
-@keyframes torchFlicker {
-  0%, 100% { 
-    filter: brightness(1);
-    transform: scale(1);
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(8px); 
   }
-  25% { 
-    filter: brightness(1.1);
-    transform: scale(1.02);
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(16px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% { 
+    box-shadow: 0 0 10px hsl(252 100% 68% / 0.3);
   }
   50% { 
-    filter: brightness(0.95);
-    transform: scale(0.98);
-  }
-  75% { 
-    filter: brightness(1.05);
-    transform: scale(1.01);
+    box-shadow: 0 0 25px hsl(252 100% 68% / 0.5);
   }
 }
 
@@ -452,336 +405,24 @@
   100% { background-position: 200% 0; }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+/* Accordion Animation */
+@keyframes accordion-down {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-accordion-content-height); opacity: 1; }
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Focus States */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
 }
 
-@keyframes bounceSubtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-@keyframes scrollUnfurl {
-  0% { 
-    transform: scaleY(0) rotateX(90deg); 
-    opacity: 0;
-    transform-origin: top;
-  }
-  100% { 
-    transform: scaleY(1) rotateX(0deg); 
-    opacity: 1;
-    transform-origin: top;
-  }
-}
-
-@keyframes swordSlash {
-  0% { transform: rotate(-45deg) translateX(-10px); opacity: 0; }
-  50% { transform: rotate(0deg) translateX(0); opacity: 1; }
-  100% { transform: rotate(15deg) translateX(5px); opacity: 0.8; }
-}
-
-@keyframes shieldPulse {
-  0%, 100% { 
-    transform: scale(1);
-    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
-  }
-  50% { 
-    transform: scale(1.05);
-    box-shadow: 0 0 20px 5px hsl(var(--primary) / 0.2);
-  }
-}
-
-@keyframes crownFloat {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  25% { transform: translateY(-3px) rotate(0deg); }
-  50% { transform: translateY(-5px) rotate(2deg); }
-  75% { transform: translateY(-2px) rotate(0deg); }
-}
-
-@keyframes bannerWave {
-  0%, 100% { transform: skewX(0deg); }
-  25% { transform: skewX(1deg); }
-  75% { transform: skewX(-1deg); }
-}
-
-@keyframes parchmentReveal {
-  0% { 
-    clip-path: inset(0 100% 0 0);
-    opacity: 0;
-  }
-  100% { 
-    clip-path: inset(0 0 0 0);
-    opacity: 1;
-  }
-}
-
-/* Enhanced Torch Animations */
-@keyframes torch-inner-glow {
-  0%, 100% { 
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  50% { 
-    opacity: 0.8;
-    transform: scale(1.1);
-  }
-}
-
-@keyframes ember-glow {
-  0%, 100% { 
-    text-shadow: 0 0 5px hsl(38 75% 50% / 0.5);
-  }
-  50% { 
-    text-shadow: 0 0 15px hsl(38 75% 50% / 0.8), 0 0 25px hsl(25 80% 50% / 0.4);
-  }
-}
-
-@keyframes golden-pulse {
-  0%, 100% { 
-    box-shadow: 0 0 5px hsl(38 75% 50% / 0.3), inset 0 0 10px hsl(38 75% 50% / 0.1);
-  }
-  50% { 
-    box-shadow: 0 0 20px hsl(38 75% 50% / 0.5), inset 0 0 20px hsl(38 75% 50% / 0.2);
-  }
-}
-
-@keyframes fire-border-dance {
-  0%, 100% { 
-    background-position: 0% center;
-  }
-  50% { 
-    background-position: 100% center;
-  }
-}
-
-@keyframes magic-sparkle {
-  0%, 100% { 
-    opacity: 0;
-    transform: scale(0) rotate(0deg);
-  }
-  50% { 
-    opacity: 1;
-    transform: scale(1) rotate(180deg);
-  }
-}
-
-@keyframes sword-gleam {
-  0% { 
-    background-position: -200% center;
-  }
-  100% { 
-    background-position: 200% center;
-  }
-}
-
-/* Scrollbar styling - Medieval */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: hsl(var(--muted) / 0.5);
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, hsl(30 25% 45%) 0%, hsl(25 20% 35%) 100%);
-  border-radius: 2px;
-  border: 2px solid hsl(var(--muted) / 0.3);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, hsl(38 50% 50%) 0%, hsl(30 40% 40%) 100%);
-}
-
-/* Tour highlight effect */
-.tour-highlight {
-  position: relative;
-  z-index: 9997 !important;
-  box-shadow: 0 0 0 4px hsl(var(--primary)), 0 0 0 8px hsl(var(--primary) / 0.3);
-  border-radius: var(--radius);
-  animation: tour-pulse 2s ease-in-out infinite;
-}
-
-@keyframes tour-pulse {
-  0%, 100% { box-shadow: 0 0 0 4px hsl(var(--primary)), 0 0 0 8px hsl(var(--primary) / 0.3); }
-  50% { box-shadow: 0 0 0 4px hsl(var(--primary)), 0 0 0 12px hsl(var(--primary) / 0.15); }
-}
-
-/* Hide scrollbar for TikTok-style feed */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Floating heart animation for TikTok double-tap */
-@keyframes floating-heart {
-  0% {
-    opacity: 1;
-    transform: scale(0) translateY(0);
-  }
-  15% {
-    opacity: 1;
-    transform: scale(1.2) translateY(-10px);
-  }
-  30% {
-    transform: scale(1) translateY(-30px) rotate(-5deg);
-  }
-  50% {
-    transform: scale(1.1) translateY(-60px) rotate(5deg);
-  }
-  70% {
-    opacity: 0.8;
-    transform: scale(0.9) translateY(-100px) rotate(-3deg);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.6) translateY(-150px) rotate(0deg);
-  }
-}
-
-.animate-floating-heart {
-  animation: floating-heart 1s ease-out forwards;
-}
-
-/* Celebration animations */
-@keyframes celebration-particle {
-  0% {
-    opacity: 1;
-    transform: scale(0) translate(0, 0);
-  }
-  20% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.5) translate(
-      calc((var(--random-x, 0) - 0.5) * 100px),
-      calc((var(--random-y, 0) - 0.5) * 100px - 50px)
-    );
-  }
-}
-
-@keyframes confetti-fall {
-  0% {
-    opacity: 1;
-    transform: translateY(0) rotate(0deg) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(400px) rotate(720deg) scale(0.4);
-  }
-}
-
-/* Tour highlight styles */
-.tour-highlight {
-  position: relative;
-  z-index: 10000 !important;
-  background: hsl(var(--card)) !important;
-  border-radius: var(--radius);
-  transform: scale(1.02);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.tour-highlight::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: calc(var(--radius) + 4px);
-  background: linear-gradient(
-    135deg,
-    hsl(var(--primary)) 0%,
-    hsl(var(--primary) / 0.5) 50%,
-    hsl(var(--primary)) 100%
-  );
-  z-index: -1;
-  animation: tour-border-pulse 2s infinite;
-}
-
-@keyframes tour-border-pulse {
-  0%, 100% {
-    opacity: 0.8;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.01);
-  }
-}
-
-@keyframes tour-glow-pulse {
-  0%, 100% {
-    opacity: 0.6;
-    box-shadow: 0 0 30px 8px hsl(var(--primary) / 0.4);
-  }
-  50% {
-    opacity: 1;
-    box-shadow: 0 0 50px 12px hsl(var(--primary) / 0.6);
-  }
-}
-
-/* TikTok-style floating heart animation */
-@keyframes floating-heart {
-  0% {
-    opacity: 1;
-    transform: scale(0.5) translateY(0);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2) translateY(-30px);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1) translateY(-80px);
-  }
-}
-
-.animate-floating-heart {
-  animation: floating-heart 1s ease-out forwards;
-}
-
-/* Scale in animation for play/pause icons */
-@keyframes scale-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-}
-
-.animate-scale-in {
-  animation: scale-in 0.6s ease-out forwards;
-}
-
-/* Hide scrollbar for TikTok feed */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+/* Selection */
+::selection {
+  background: hsl(252 100% 68% / 0.3);
+  color: white;
 }

@@ -114,7 +114,7 @@ export const AchievementBadge: React.FC<AchievementBadgeProps> = ({
         >
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="font-medieval font-bold text-foreground">
+              <span className="font-semibold text-foreground">
                 {achievement.name}
               </span>
               <span className={cn(
