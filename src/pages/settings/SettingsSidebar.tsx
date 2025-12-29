@@ -53,7 +53,6 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'ambassadors', icon: Star, title: 'Embajadores', description: 'Red de referidos' },
       { key: 'permissions', icon: UserCog, title: 'Permisos', description: 'Por rol' },
       { key: 'audit_log', icon: History, title: 'Historial', description: 'Actividad' },
-      { key: 'tracking', icon: BarChart3, title: 'Tracking', description: 'Analytics y píxeles' },
     ],
   },
   {
@@ -68,6 +67,7 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'billing', icon: CreditCard, title: 'Facturación', description: 'Planes y cobros' },
       { key: 'platform_config', icon: Settings2, title: 'Configuración', description: 'Ajustes globales' },
       { key: 'platform_admin', icon: ShieldCheck, title: 'Administración', description: 'Seguridad y datos' },
+      { key: 'tracking', icon: BarChart3, title: 'Tracking', description: 'Analytics y píxeles' },
     ],
   },
 ];
