@@ -33,10 +33,18 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
     : 0;
 
   const getWhatsAppUrl = (phone: string) => {
-    // Remove all non-numeric characters except +
-    const cleanPhone = phone.replace(/[^\d+]/g, '').replace(/^\+/, '');
+    // WhatsApp expects E.164 without "+" and without spaces/symbols.
+    // Our user base is mostly Colombia; if user entered a local 10-digit mobile, prepend 57.
+    let digits = phone.replace(/\D/g, '');
+
+    // Remove leading 00 (international prefix)
+    if (digits.startsWith('00')) digits = digits.slice(2);
+
+    // If looks like a Colombian local mobile (10 digits), add country code.
+    if (digits.length === 10) digits = `57${digits}`;
+
     const message = encodeURIComponent('Acabo de ver tu contacto en Kreoon y me gustaría trabajar contigo.');
-    return `https://wa.me/${cleanPhone}?text=${message}`;
+    return `https://wa.me/${digits}?text=${message}`;
   };
 
   const hasContactInfo = profileData.instagram || profileData.tiktok || profileData.portfolio_url || profileData.email || profileData.phone;
