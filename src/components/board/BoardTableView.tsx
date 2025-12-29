@@ -49,21 +49,13 @@ export function BoardTableView({
   onContentClick,
   selectedIds = [],
   onSelectionChange,
-  visibleFields = ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']
+  visibleFields = ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline'],
+  organizationStatuses = []
 }: BoardTableViewProps) {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const showField = (field: string) => visibleFields.includes(field);
-
-  const getProgress = (status: string): number => {
-    const statusProgress: Record<string, number> = {
-      'draft': 5, 'pending_script': 10, 'script_review': 20, 'script_approved': 30,
-      'assigned': 40, 'recording': 50, 'recorded': 60, 'editing': 70,
-      'delivered': 80, 'issue': 75, 'approved': 90, 'paid': 100
-    };
-    return statusProgress[status] || 0;
-  };
 
   const sortedContent = useMemo(() => {
     return [...content].sort((a, b) => {
@@ -225,13 +217,22 @@ export function BoardTableView({
                 )}
 
                 {/* Status */}
-                {showField('status') && (
-                  <TableCell>
-                    <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[c.status])}>
-                      {STATUS_LABELS[c.status]}
-                    </Badge>
-                  </TableCell>
-                )}
+                {showField('status') && (() => {
+                  const statusStyle = getStatusColorStyle(c.status, organizationStatuses);
+                  const statusClass = getStatusFallbackClass(c.status, organizationStatuses);
+                  const label = getStatusLabel(c.status, organizationStatuses);
+                  return (
+                    <TableCell>
+                      <Badge 
+                        variant="secondary" 
+                        className={cn("text-xs", statusClass)}
+                        style={statusStyle || undefined}
+                      >
+                        {label}
+                      </Badge>
+                    </TableCell>
+                  );
+                })()}
 
                 {/* Client */}
                 {showField('client') && (
@@ -273,7 +274,7 @@ export function BoardTableView({
                 {showField('progress') && (
                   <TableCell>
                     <div className="w-20">
-                      <Progress value={getProgress(c.status)} className="h-1.5" />
+                      <Progress value={getStatusProgress(c.status, organizationStatuses)} className="h-1.5" />
                     </div>
                   </TableCell>
                 )}
