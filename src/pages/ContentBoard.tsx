@@ -561,28 +561,28 @@ export default function ContentBoard() {
   return (
     <div className="min-h-screen">
       <div className="p-4 md:p-6 space-y-6">
-        {/* Medieval Banner */}
+        {/* Banner */}
         <MedievalBanner
           icon={Scroll}
-          title="Mesa de Batallas"
-          subtitle="Gestiona las misiones del reino"
+          title="KREOON Projects"
+          subtitle="Gestiona todos los proyectos y contenidos"
           action={
             <div className="flex items-center gap-2">
               <div className="relative hidden sm:block">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input 
                   type="text"
-                  placeholder="Buscar misión..."
+                  placeholder="Buscar proyecto..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="h-9 md:h-10 w-40 md:w-64 rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
               {isAdmin && (
-                <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm font-medieval" onClick={() => setShowCreateDialog(true)}>
+                <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm" onClick={() => setShowCreateDialog(true)}>
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nueva Misión</span>
-                  <span className="sm:hidden">Nueva</span>
+                  <span className="hidden sm:inline">Nuevo Proyecto</span>
+                  <span className="sm:hidden">Nuevo</span>
                 </Button>
               )}
             </div>

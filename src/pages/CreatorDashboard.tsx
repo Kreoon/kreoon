@@ -138,10 +138,10 @@ export default function CreatorDashboard() {
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      {/* Medieval Banner */}
+      {/* Banner */}
       <MedievalBanner
         icon={Sword}
-        title="Armería del Guerrero"
+        title="KREOON Board"
         subtitle={`Bienvenido, ${profile?.full_name}`}
         action={
           <div className="flex flex-wrap items-center gap-3">

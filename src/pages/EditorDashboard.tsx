@@ -143,10 +143,10 @@ export default function EditorDashboard() {
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      {/* Medieval Banner */}
+      {/* Banner */}
       <MedievalBanner
         icon={Hammer}
-        title="Forja del Artesano"
+        title="KREOON Board"
         subtitle={`Bienvenido, ${profile?.full_name}`}
         action={
           <div className="flex flex-wrap items-center gap-3">
