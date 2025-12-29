@@ -51,6 +51,7 @@ interface FeedItem {
 type FeedTab = 'for-you' | 'following';
 
 export default function FeedPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { can } = usePortfolioPermissions();
   const { isSaved, toggleSave } = useSavedItems();
