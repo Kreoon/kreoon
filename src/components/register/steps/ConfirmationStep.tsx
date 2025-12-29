@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2, Check, Building2, User, Crown, Sparkles, Rocket } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ArrowLeft, Loader2, Check, Building2, User, Crown, Sparkles, Rocket, Users } from 'lucide-react';
 import { StepProps } from '../types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
-export function ConfirmationStep({ data, updateData, onNext, onBack }: StepProps) {
+export function ConfirmationStep({ data, onBack }: StepProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const isOrgFlow = data.registrationMode === 'create_org';
+  const isJoinFlow = data.registrationMode === 'join_org';
 
   const getOrgTypeLabel = () => {
     switch (data.organizationType) {
@@ -46,7 +46,6 @@ export function ConfirmationStep({ data, updateData, onNext, onBack }: StepProps
     setLoading(true);
 
     try {
-      // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -54,7 +53,7 @@ export function ConfirmationStep({ data, updateData, onNext, onBack }: StepProps
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: data.fullName,
-            account_type: isOrgFlow ? 'organization' : 'individual',
+            account_type: isOrgFlow ? 'organization' : isJoinFlow ? 'join_org' : 'individual',
             country: data.country,
             user_role_primary: data.userRolePrimary,
           }
@@ -68,7 +67,6 @@ export function ConfirmationStep({ data, updateData, onNext, onBack }: StepProps
       }
 
       if (isOrgFlow) {
-        // Create organization
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .insert({
@@ -90,7 +88,6 @@ export function ConfirmationStep({ data, updateData, onNext, onBack }: StepProps
         if (orgError) throw orgError;
 
         if (orgData) {
-          // Add user as org member and owner
           await supabase.from('organization_members').insert({
             organization_id: orgData.id,
             user_id: authData.user.id,
@@ -104,7 +101,6 @@ export function ConfirmationStep({ data, updateData, onNext, onBack }: StepProps
             role: 'admin',
           });
 
-          // Update profile
           await supabase
             .from('profiles')
             .update({ 
@@ -119,8 +115,50 @@ export function ConfirmationStep({ data, updateData, onNext, onBack }: StepProps
           title: '¡Organización creada!',
           description: 'Tu prueba de 30 días ha comenzado',
         });
+      } else if (isJoinFlow) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('id, default_role')
+          .eq('slug', data.joinLink)
+          .single();
+
+        if (org) {
+          const role = org.default_role || 'creator';
+          
+          await supabase.from('organization_members').insert({
+            organization_id: org.id,
+            user_id: authData.user.id,
+            role: role,
+          });
+
+          await supabase.from('organization_member_roles').insert({
+            organization_id: org.id,
+            user_id: authData.user.id,
+            role: role,
+          });
+
+          await supabase
+            .from('profiles')
+            .update({ 
+              current_organization_id: org.id,
+              organization_status: 'active',
+              country: data.country,
+            })
+            .eq('id', authData.user.id);
+
+          if (data.inviteCode) {
+            await supabase
+              .from('organization_invitations')
+              .update({ accepted_at: new Date().toISOString() })
+              .eq('token', data.inviteCode);
+          }
+        }
+
+        toast({
+          title: '¡Te has unido!',
+          description: 'Ya eres parte de la organización',
+        });
       } else {
-        // Individual user - update profile
         await supabase
           .from('profiles')
           .update({ 
@@ -150,17 +188,33 @@ export function ConfirmationStep({ data, updateData, onNext, onBack }: StepProps
     }
   };
 
-  const summaryItems = isOrgFlow ? [
-    { label: 'Tipo de acceso', value: 'Nueva organización', icon: Building2 },
-    { label: 'Tipo de organización', value: getOrgTypeLabel(), icon: Building2 },
-    { label: 'Nombre', value: data.organizationName, icon: Sparkles },
-    { label: 'Plan seleccionado', value: getPlanLabel(), icon: Crown },
-    { label: 'Prueba gratis', value: '30 días activos', icon: Rocket },
-  ] : [
-    { label: 'Tipo de acceso', value: 'Perfil individual', icon: User },
-    { label: 'Rol principal', value: getUserRoleLabel(), icon: Sparkles },
-    { label: 'Acceso inmediato', value: 'Portafolio + Red social', icon: Rocket },
-  ];
+  const getSummaryItems = () => {
+    if (isOrgFlow) {
+      return [
+        { label: 'Tipo de acceso', value: 'Nueva organización', icon: Building2 },
+        { label: 'Tipo de organización', value: getOrgTypeLabel(), icon: Building2 },
+        { label: 'Nombre', value: data.organizationName, icon: Sparkles },
+        { label: 'Plan seleccionado', value: getPlanLabel(), icon: Crown },
+        { label: 'Prueba gratis', value: '30 días activos', icon: Rocket },
+      ];
+    }
+    
+    if (isJoinFlow) {
+      return [
+        { label: 'Tipo de acceso', value: 'Unirse a organización', icon: Users },
+        { label: 'Organización', value: data.joinLink, icon: Building2 },
+        { label: 'Acceso inmediato', value: 'Panel de la organización', icon: Rocket },
+      ];
+    }
+    
+    return [
+      { label: 'Tipo de acceso', value: 'Perfil individual', icon: User },
+      { label: 'Rol principal', value: getUserRoleLabel(), icon: Sparkles },
+      { label: 'Acceso inmediato', value: 'Portafolio + Red social', icon: Rocket },
+    ];
+  };
+
+  const summaryItems = getSummaryItems();
 
   return (
     <div className="w-full max-w-lg mx-auto">
