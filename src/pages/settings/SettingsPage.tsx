@@ -8,36 +8,27 @@ import { SettingsSidebar } from './SettingsSidebar';
 import { useSettingsPermissions, SettingsSectionKey } from '@/hooks/useSettingsPermissions';
 import { cn } from '@/lib/utils';
 
-// Lazy load all sections
+// Lazy load all sections - CONSOLIDATED
 const ProfileSection = lazy(() => import('./sections/ProfileSection'));
-const NotificationsSection = lazy(() => import('./sections/NotificationsSection'));
+const NotificationsUnifiedSection = lazy(() => import('./sections/NotificationsUnifiedSection'));
 const SecuritySection = lazy(() => import('./sections/SecuritySection'));
 const TourSection = lazy(() => import('./sections/TourSection'));
 
-// Organization level
+// Organization level - CONSOLIDATED
 const OrganizationSection = lazy(() => import('./sections/OrganizationSection'));
 const OrganizationPlansSection = lazy(() => import('./sections/OrganizationPlansSection'));
-const ChatNotificationsSection = lazy(() => import('./sections/ChatNotificationsSection'));
+const AISettingsSection = lazy(() => import('./sections/AISettingsSection'));
 const AmbassadorsSection = lazy(() => import('./sections/AmbassadorsSection'));
-const PortfolioAISection = lazy(() => import('./sections/PortfolioAISection'));
-const OrganizationAISection = lazy(() => import('./sections/OrganizationAISection'));
+const PermissionsUnifiedSection = lazy(() => import('./sections/PermissionsUnifiedSection'));
 const AuditLogSection = lazy(() => import('./sections/AuditLogSection'));
-const OrganizationPermissionsSection = lazy(() => import('./sections/OrganizationPermissionsSection'));
 
-// Platform level
+// Platform level - CONSOLIDATED
 const OrganizationRegistrationsSection = lazy(() => import('./sections/OrganizationRegistrationsSection'));
 const PlatformUsersSection = lazy(() => import('./sections/PlatformUsersSection'));
 const ReferralSection = lazy(() => import('./sections/ReferralSection'));
-const GlobalPermissionsSection = lazy(() => import('./sections/GlobalPermissionsSection'));
-const SubscriptionManagementSection = lazy(() => import('./sections/SubscriptionManagementSection'));
-const UserPlansSection = lazy(() => import('./sections/UserPlansSection'));
-const CurrencySection = lazy(() => import('./sections/CurrencySection'));
-const AppSettingsSection = lazy(() => import('./sections/AppSettingsSection'));
-const PlatformSecuritySection = lazy(() => import('./sections/PlatformSecuritySection'));
-const AppearanceSection = lazy(() => import('./sections/AppearanceSection'));
-const IntegrationsSection = lazy(() => import('./sections/IntegrationsSection'));
-const BillingControlSection = lazy(() => import('./sections/BillingControlSection'));
-const RootAdminSection = lazy(() => import('./sections/RootAdminSection'));
+const BillingUnifiedSection = lazy(() => import('./sections/BillingUnifiedSection'));
+const PlatformConfigSection = lazy(() => import('./sections/PlatformConfigSection'));
+const PlatformAdminSection = lazy(() => import('./sections/PlatformAdminSection'));
 
 // Loading fallback
 const SectionLoader = memo(() => (
@@ -47,37 +38,31 @@ const SectionLoader = memo(() => (
 ));
 SectionLoader.displayName = 'SectionLoader';
 
-// Section components map
+// Section components map - CONSOLIDATED (reduced from 25 to 16)
 const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<React.ComponentType>> = {
+  // User level
   profile: ProfileSection,
-  notifications: NotificationsSection,
+  notifications: NotificationsUnifiedSection,
   security: SecuritySection,
   tour: TourSection,
+  // Organization level
   organization: OrganizationSection,
   organization_plans: OrganizationPlansSection,
-  chat_notifications: ChatNotificationsSection,
+  ai_settings: AISettingsSection,
   ambassadors: AmbassadorsSection,
-  portfolio_ai: PortfolioAISection,
-  organization_ai: OrganizationAISection,
+  permissions: PermissionsUnifiedSection,
   audit_log: AuditLogSection,
-  organization_permissions: OrganizationPermissionsSection,
+  // Platform level
   organization_registrations: OrganizationRegistrationsSection,
   platform_users: PlatformUsersSection,
   referrals: ReferralSection,
-  global_permissions: GlobalPermissionsSection,
-  subscription_management: SubscriptionManagementSection,
-  user_plans: UserPlansSection,
-  currency: CurrencySection,
-  app_settings: AppSettingsSection,
-  platform_security: PlatformSecuritySection,
-  appearance: AppearanceSection,
-  integrations: IntegrationsSection,
-  billing_control: BillingControlSection,
-  root_admin: RootAdminSection,
+  billing: BillingUnifiedSection,
+  platform_config: PlatformConfigSection,
+  platform_admin: PlatformAdminSection,
 };
 
 // Wide sections that need more space
-const WIDE_SECTIONS: SettingsSectionKey[] = ['user_plans', 'platform_users', 'organization_registrations'];
+const WIDE_SECTIONS: SettingsSectionKey[] = ['billing', 'platform_users', 'organization_registrations'];
 
 const SettingsPage = memo(() => {
   const [searchParams, setSearchParams] = useSearchParams();

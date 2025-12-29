@@ -1,8 +1,8 @@
 import { memo, useMemo } from 'react';
 import { 
-  User, Bell, Shield, HelpCircle, Building2, Crown, Star, Sparkles, History,
-  Landmark, Users, Share2, Lock, CreditCard, Coins, Settings2, ShieldCheck,
-  Palette, Globe, Receipt, Trash2, Bot, UserCog, ChevronRight, LockKeyhole
+  User, Bell, Shield, HelpCircle, Building2, Crown, Star, History,
+  Landmark, Users, Share2, CreditCard, Settings2, ShieldCheck,
+  Bot, UserCog, ChevronRight, LockKeyhole
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SettingsPermissions, SettingsSectionKey } from '@/hooks/useSettingsPermissions';
@@ -27,7 +27,7 @@ interface SectionGroup {
   sections: SectionItem[];
 }
 
-// All section definitions with better grouping
+// Consolidated section definitions (reduced from 25 to ~15)
 const ALL_SECTIONS: SectionGroup[] = [
   {
     id: 'user',
@@ -36,7 +36,7 @@ const ALL_SECTIONS: SectionGroup[] = [
     icon: User,
     sections: [
       { key: 'profile', icon: User, title: 'Perfil', description: 'Información personal' },
-      { key: 'notifications', icon: Bell, title: 'Notificaciones', description: 'Alertas y avisos' },
+      { key: 'notifications', icon: Bell, title: 'Notificaciones', description: 'Alertas y chat' },
       { key: 'security', icon: Shield, title: 'Seguridad', description: 'Contraseña y 2FA' },
       { key: 'tour', icon: HelpCircle, title: 'Tour Guiado', description: 'Introducción' },
     ],
@@ -49,11 +49,9 @@ const ALL_SECTIONS: SectionGroup[] = [
     sections: [
       { key: 'organization', icon: Building2, title: 'Datos', description: 'Info de organización' },
       { key: 'organization_plans', icon: Crown, title: 'Plan', description: 'Suscripción activa' },
-      { key: 'chat_notifications', icon: Bell, title: 'Chat', description: 'RBAC y asistente' },
+      { key: 'ai_settings', icon: Bot, title: 'IA & Modelos', description: 'Proveedores y asistente' },
       { key: 'ambassadors', icon: Star, title: 'Embajadores', description: 'Red de referidos' },
-      { key: 'portfolio_ai', icon: Sparkles, title: 'Portfolio IA', description: 'Red social IA' },
-      { key: 'organization_ai', icon: Bot, title: 'Modelos IA', description: 'Proveedores' },
-      { key: 'organization_permissions', icon: UserCog, title: 'Permisos', description: 'Por rol' },
+      { key: 'permissions', icon: UserCog, title: 'Permisos', description: 'Por rol' },
       { key: 'audit_log', icon: History, title: 'Historial', description: 'Actividad' },
     ],
   },
@@ -66,16 +64,9 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'organization_registrations', icon: Landmark, title: 'Organizaciones', description: 'Gestionar' },
       { key: 'platform_users', icon: Users, title: 'Usuarios', description: 'Todos' },
       { key: 'referrals', icon: Share2, title: 'Referidos', description: 'Sistema' },
-      { key: 'global_permissions', icon: Lock, title: 'Permisos', description: 'Globales' },
-      { key: 'subscription_management', icon: Crown, title: 'Planes', description: 'Gestionar' },
-      { key: 'user_plans', icon: CreditCard, title: 'Facturación', description: 'Usuarios' },
-      { key: 'currency', icon: Coins, title: 'Monedas', description: 'Tasas' },
-      { key: 'app_settings', icon: Settings2, title: 'Ajustes', description: 'Globales' },
-      { key: 'platform_security', icon: ShieldCheck, title: 'Seguridad', description: 'Plataforma' },
-      { key: 'appearance', icon: Palette, title: 'Apariencia', description: 'Tema' },
-      { key: 'integrations', icon: Globe, title: 'Integraciones', description: 'Externas' },
-      { key: 'billing_control', icon: Receipt, title: 'Cobros', description: 'Activar' },
-      { key: 'root_admin', icon: Trash2, title: 'Eliminar', description: 'Datos' },
+      { key: 'billing', icon: CreditCard, title: 'Facturación', description: 'Planes y cobros' },
+      { key: 'platform_config', icon: Settings2, title: 'Configuración', description: 'Ajustes globales' },
+      { key: 'platform_admin', icon: ShieldCheck, title: 'Administración', description: 'Seguridad y datos' },
     ],
   },
 ];
