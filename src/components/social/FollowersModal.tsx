@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -7,7 +7,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFollowersList, FollowerProfile } from '@/hooks/useFollowersList';
 import { useNavigate } from 'react-router-dom';
-import { Users, Heart, UserPlus } from 'lucide-react';
+import { Users, Heart, UserPlus, UserMinus, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface FollowersModalProps {
   isOpen: boolean;
@@ -16,12 +19,32 @@ interface FollowersModalProps {
   initialTab?: 'followers' | 'following' | 'likers';
 }
 
-function ProfileItem({ profile, onClose }: { profile: FollowerProfile; onClose: () => void }) {
+interface ProfileItemProps {
+  profile: FollowerProfile;
+  onClose: () => void;
+  showUnfollow?: boolean;
+  onUnfollow?: (profileId: string) => Promise<void>;
+}
+
+function ProfileItem({ profile, onClose, showUnfollow, onUnfollow }: ProfileItemProps) {
   const navigate = useNavigate();
+  const [unfollowing, setUnfollowing] = useState(false);
 
   const handleClick = () => {
     onClose();
     navigate(`/profile/${profile.id}`);
+  };
+
+  const handleUnfollow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onUnfollow) return;
+    
+    setUnfollowing(true);
+    try {
+      await onUnfollow(profile.id);
+    } finally {
+      setUnfollowing(false);
+    }
   };
 
   return (
@@ -41,9 +64,26 @@ function ProfileItem({ profile, onClose }: { profile: FollowerProfile; onClose: 
           <p className="text-sm text-social-muted-foreground truncate">@{profile.username}</p>
         )}
       </div>
-      <Button variant="outline" size="sm" className="shrink-0">
-        Ver perfil
-      </Button>
+      <div className="flex items-center gap-2">
+        {showUnfollow && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="shrink-0 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+            onClick={handleUnfollow}
+            disabled={unfollowing}
+          >
+            {unfollowing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <UserMinus className="h-4 w-4" />
+            )}
+          </Button>
+        )}
+        <Button variant="outline" size="sm" className="shrink-0" onClick={(e) => { e.stopPropagation(); handleClick(); }}>
+          Ver perfil
+        </Button>
+      </div>
     </div>
   );
 }
@@ -82,8 +122,12 @@ function EmptyState({ type }: { type: 'followers' | 'following' | 'likers' }) {
 }
 
 export function FollowersModal({ isOpen, onClose, userId, initialTab = 'followers' }: FollowersModalProps) {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState(initialTab);
   const { followers, following, likers, loading, fetchFollowers, fetchFollowing, fetchLikers } = useFollowersList(userId);
+  
+  // Check if viewing own profile
+  const isOwnProfile = user?.id === userId;
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab as typeof activeTab);
@@ -94,13 +138,36 @@ export function FollowersModal({ isOpen, onClose, userId, initialTab = 'follower
   };
 
   // Fetch initial data when modal opens
-  useState(() => {
+  useEffect(() => {
     if (isOpen) {
+      setActiveTab(initialTab);
       if (initialTab === 'followers') fetchFollowers();
       else if (initialTab === 'following') fetchFollowing();
       else if (initialTab === 'likers') fetchLikers();
     }
-  });
+  }, [isOpen, initialTab]);
+
+  // Handle unfollow action (only for "following" tab on own profile)
+  const handleUnfollow = async (profileId: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('followers')
+        .delete()
+        .eq('follower_id', user.id)
+        .eq('following_id', profileId);
+      
+      if (error) throw error;
+      
+      toast.success('Dejaste de seguir a este usuario');
+      // Refresh the following list
+      fetchFollowing();
+    } catch (error) {
+      console.error('Error unfollowing:', error);
+      toast.error('Error al dejar de seguir');
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -113,15 +180,15 @@ export function FollowersModal({ isOpen, onClose, userId, initialTab = 'follower
           <TabsList className="w-full bg-social-muted">
             <TabsTrigger value="followers" className="flex-1 data-[state=active]:bg-social-accent data-[state=active]:text-white">
               <Users className="h-4 w-4 mr-2" />
-              Seguidores
+              Seguidores ({followers.length})
             </TabsTrigger>
             <TabsTrigger value="following" className="flex-1 data-[state=active]:bg-social-accent data-[state=active]:text-white">
               <UserPlus className="h-4 w-4 mr-2" />
-              Siguiendo
+              Siguiendo ({following.length})
             </TabsTrigger>
             <TabsTrigger value="likers" className="flex-1 data-[state=active]:bg-social-accent data-[state=active]:text-white">
               <Heart className="h-4 w-4 mr-2" />
-              Likes
+              Likes ({likers.length})
             </TabsTrigger>
           </TabsList>
 
@@ -148,7 +215,13 @@ export function FollowersModal({ isOpen, onClose, userId, initialTab = 'follower
               ) : (
                 <div className="space-y-1">
                   {following.map(profile => (
-                    <ProfileItem key={profile.id} profile={profile} onClose={onClose} />
+                    <ProfileItem 
+                      key={profile.id} 
+                      profile={profile} 
+                      onClose={onClose}
+                      showUnfollow={isOwnProfile}
+                      onUnfollow={handleUnfollow}
+                    />
                   ))}
                 </div>
               )}
