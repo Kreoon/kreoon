@@ -19,18 +19,24 @@ export function useFollowersList(userId: string | undefined) {
     if (!userId) return;
     setLoading(true);
 
-    const { data } = await supabase
+    // Get follower IDs first, then fetch profiles separately
+    const { data: followerData } = await supabase
       .from('followers')
-      .select(`
-        follower_id,
-        profiles:follower_id (
-          id, full_name, username, avatar_url, bio
-        )
-      `)
+      .select('follower_id')
       .eq('following_id', userId);
 
-    if (data) {
-      setFollowers(data.map((d: any) => d.profiles).filter(Boolean));
+    if (followerData && followerData.length > 0) {
+      const followerIds = followerData.map(f => f.follower_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, username, avatar_url, bio')
+        .in('id', followerIds);
+      
+      if (profiles) {
+        setFollowers(profiles);
+      }
+    } else {
+      setFollowers([]);
     }
     setLoading(false);
   }, [userId]);
@@ -39,18 +45,24 @@ export function useFollowersList(userId: string | undefined) {
     if (!userId) return;
     setLoading(true);
 
-    const { data } = await supabase
+    // Get following IDs first, then fetch profiles separately
+    const { data: followingData } = await supabase
       .from('followers')
-      .select(`
-        following_id,
-        profiles:following_id (
-          id, full_name, username, avatar_url, bio
-        )
-      `)
+      .select('following_id')
       .eq('follower_id', userId);
 
-    if (data) {
-      setFollowing(data.map((d: any) => d.profiles).filter(Boolean));
+    if (followingData && followingData.length > 0) {
+      const followingIds = followingData.map(f => f.following_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, username, avatar_url, bio')
+        .in('id', followingIds);
+      
+      if (profiles) {
+        setFollowing(profiles);
+      }
+    } else {
+      setFollowing([]);
     }
     setLoading(false);
   }, [userId]);
