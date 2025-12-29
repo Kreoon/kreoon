@@ -86,22 +86,8 @@ const canMoveToStatusWithRules = (
     return canMoveToStatusLegacy(role, currentStatus, targetStatus, content, userId);
   }
 
-  // Estados especiales que requieren verificar reglas del estado destino
-  const specialTargetStates = ['issue', 'corrected'];
-  const isSpecialTargetState = specialTargetStates.includes(targetStatus);
-
-  // Buscar las reglas para estado actual y destino
+  // Buscar las reglas para el estado actual
   const currentRule = rules.find(r => r.status_id === currentOrgStatus.id);
-  const targetRule = rules.find(r => r.status_id === targetOrgStatus.id);
-
-  // Para estados especiales (issue, corrected), verificar quién puede RETROCEDER desde ese estado
-  // Esto significa: ¿quién puede mover tarjetas HACIA ese estado?
-  if (isSpecialTargetState && targetRule) {
-    const canRetreatRoles = targetRule.can_retreat_roles || [];
-    if (canRetreatRoles.length > 0 && !canRetreatRoles.includes(role)) {
-      return false;
-    }
-  }
 
   // Si no hay regla para el estado actual, permitir por defecto
   if (!currentRule) {
@@ -165,7 +151,7 @@ const canMoveToStatusLegacy = (
 };
 
 export default function ContentBoard() {
-  const { user, isAdmin, isStrategist, isCreator, isEditor, isClient, profile } = useAuth();
+  const { user, isAdmin, isStrategist, isCreator, isEditor, isClient, activeRole } = useAuth();
   const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
   const { guardAction, isReadOnly } = useTrialGuard();
@@ -279,9 +265,11 @@ export default function ContentBoard() {
   // Board settings hook
   const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings } = useBoardSettings(currentOrgId);
 
-  // Determinar el rol activo del usuario (desde el selector de roles)
-  const primaryRole = (profile as any)?.active_role || (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client');
-
+  // Rol efectivo para permisos del board
+  const primaryRole = (
+    activeRole ||
+    (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client')
+  );
   // Helper function to check if a status is visible for the current role
   const isStatusVisibleForRole = useCallback((statusKey: string): boolean => {
     // Admin always sees everything
@@ -831,23 +819,9 @@ export default function ContentBoard() {
           {/* Kanban View */}
           {currentView === 'kanban' && (
             <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0">
-              {(isCreator && !isAdmin ? CREATOR_COLUMNS : isEditor && !isAdmin ? EDITOR_COLUMNS : BOARD_COLUMNS)
-                // Filter columns by visibility permissions
-                .filter(column => {
-                  // Find the org status for this column
-                  const orgStatus = orgStatuses.find(s => s.status_key === column.status);
-                  if (!orgStatus) return true; // If no org status, show by default
-                  
-                  // Find the rule for this status
-                  const rule = rules.find(r => r.status_id === orgStatus.id);
-                  if (!rule) return true; // If no rule, show by default
-                  
-                  // Check if user's role can view this status
-                  const canViewRoles = (rule as any).can_view_roles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
-                  if (canViewRoles.length === 0) return true; // Empty = show to all
-                  
-                  return canViewRoles.includes(primaryRole);
-                })
+              {(isAdmin ? BOARD_COLUMNS : (orgStatuses.length > 0 && rules.length > 0 ? BOARD_COLUMNS : (isCreator ? CREATOR_COLUMNS : isEditor ? EDITOR_COLUMNS : BOARD_COLUMNS)))
+                // Filter columns by visibility permissions (board config)
+                .filter((column) => isStatusVisibleForRole(column.status))
                 .map(column => {
                 const columnContent = getContentByStatus(column.status);
                 const isCurrentDropTarget = dropTarget === column.status;
