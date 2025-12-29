@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useUnsavedChangesSafe } from '@/contexts/UnsavedChangesContext';
+import { useTrialGuard } from '@/hooks/useTrialGuard';
 
 interface UseContentDetailOptions {
   content: Content | null;
@@ -16,6 +17,7 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
   const { toast } = useToast();
   const { isAdmin, isClient, isCreator, isEditor, user } = useAuth();
   const { markAsChanged, markAsSaved, registerSaveHandler, unregisterSaveHandler } = useUnsavedChangesSafe();
+  const { guardAction, isReadOnly } = useTrialGuard();
   
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -195,6 +197,13 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
 
   const handleSave = async () => {
     if (!content) return;
+    
+    // Check trial status before saving
+    if (isReadOnly) {
+      guardAction(() => {});
+      return;
+    }
+    
     setLoading(true);
 
     try {

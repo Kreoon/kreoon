@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useInternalOrgContent } from '@/hooks/useInternalOrgContent';
+import { useTrialGuard } from '@/hooks/useTrialGuard';
 
 interface UseContentCreateOptions {
   onSuccess?: () => void;
@@ -36,6 +37,7 @@ interface Product {
 export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { guardAction, isReadOnly } = useTrialGuard();
   
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -319,6 +321,12 @@ export function useContentCreate({ onSuccess, onClose }: UseContentCreateOptions
   };
 
   const handleCreate = async () => {
+    // Check trial status before creating
+    if (isReadOnly) {
+      guardAction(() => {});
+      return;
+    }
+    
     if (!formData.title.trim()) {
       toast({
         title: 'Error',

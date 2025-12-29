@@ -15,6 +15,7 @@ import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp, Medal, I
 import { ScriptGenerator } from "./ScriptGenerator";
 import { useInternalBrandClient } from "@/hooks/useInternalBrandClient";
 import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
+import { useTrialGuard } from "@/hooks/useTrialGuard";
 
 interface CreateContentDialogProps {
   open: boolean;
@@ -48,6 +49,7 @@ interface Product {
 export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateContentDialogProps) {
   const { toast } = useToast();
   const { internalBrandClient, isInternalBrand, currentOrgId } = useInternalBrandClient();
+  const { guardAction, isReadOnly } = useTrialGuard();
   const [loading, setLoading] = useState(false);
   
   // Form state
@@ -286,6 +288,12 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check trial status before creating
+    if (isReadOnly) {
+      guardAction(() => {});
+      return;
+    }
     
     if (!title.trim()) {
       toast({
