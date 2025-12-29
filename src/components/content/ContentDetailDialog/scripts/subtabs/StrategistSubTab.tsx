@@ -37,9 +37,8 @@ export function StrategistSubTab({
               />
             </div>
           ) : hasContent ? (
-            <div className="max-h-[400px] overflow-y-auto prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
-              <RichTextViewer content={formData.strategist_guidelines || ''} />
-            </div>
+            <RichTextViewer content={formData.strategist_guidelines || ''} maxHeight="max-h-[400px]" />
+          
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-lg">
               <Target className="h-8 w-8 text-muted-foreground/50 mb-2" />
