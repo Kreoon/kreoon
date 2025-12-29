@@ -6,6 +6,36 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function safeCdnHostname(raw: string | undefined) {
+  if (!raw) return undefined;
+  // Misconfig guard: sometimes people set the storage hostname as CDN hostname.
+  if (raw.includes('storage.bunnycdn.com')) return undefined;
+  return raw;
+}
+
+function extractStorageZoneFromStorageUrl(url: string): string | undefined {
+  try {
+    const u = new URL(url);
+    if (!u.hostname.includes('storage.bunnycdn.com')) return undefined;
+    const [first] = u.pathname.replace(/^\//, '').split('/');
+    return first || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function extractPathAfterFirstSegment(url: string): string | undefined {
+  // For storage URLs, pathname is /<zone>/<path...>. We want <path...>
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.replace(/^\//, '').split('/');
+    if (parts.length < 2) return undefined;
+    return parts.slice(1).join('/');
+  } catch {
+    return undefined;
+  }
+}
+
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -23,14 +53,14 @@ serve(async (req: Request) => {
     }
 
     // Get Bunny credentials for authenticated downloads
-    const storageZone = Deno.env.get('BUNNY_STORAGE_ZONE');
+    const envStorageZone = Deno.env.get('BUNNY_STORAGE_ZONE');
     const storagePassword = Deno.env.get('BUNNY_STORAGE_PASSWORD');
     const storageHostname = Deno.env.get('BUNNY_STORAGE_HOSTNAME') || 'storage.bunnycdn.com';
-    const cdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME');
+    const cdnHostname = safeCdnHostname(Deno.env.get('BUNNY_CDN_HOSTNAME'));
 
-    console.log('Bunny config:', { 
-      storageZone: storageZone ? 'SET' : 'NOT SET', 
-      storagePassword: storagePassword ? 'SET (length: ' + storagePassword.length + ')' : 'NOT SET',
+    console.log('Bunny config:', {
+      envStorageZone: envStorageZone ? 'SET' : 'NOT SET',
+      storagePassword: storagePassword ? `SET (length: ${storagePassword.length})` : 'NOT SET',
       storageHostname,
       cdnHostname: cdnHostname || 'NOT SET'
     });
@@ -57,77 +87,74 @@ serve(async (req: Request) => {
     for (const asset of assets) {
       try {
         console.log(`Downloading: ${asset.filename} from ${asset.url}`);
-        
-        let downloadUrl = asset.url;
-        let downloadHeaders: Record<string, string> = {};
 
-        // Extract the path from the URL to construct proper URLs
-        // URLs can be:
-        // 1. Storage URL: https://ny.storage.bunnycdn.com/raw-assets/org_.../raw/file.mp4
-        // 2. CDN URL: https://hostname.b-cdn.net/org_.../raw/file.mp4
-        // 3. Path only: raw-assets/org_.../raw/file.mp4
-        
-        // Extract the path portion after the storage zone or from the URL
+        // Extract a usable asset path
+        // storage URL: https://<region>.storage.bunnycdn.com/<zone>/<path...>
+        // cdn URL: https://<cdnHost>/<path...>
+        // path only: raw-assets/... (legacy)
+
         let assetPath = '';
-        
-        if (asset.url.includes('storage.bunnycdn.com')) {
-          // Extract path after storage zone name
-          // URL format: https://ny.storage.bunnycdn.com/raw-assets/org_.../file.mp4
-          // We need: org_.../file.mp4 (path after 'raw-assets/')
-          const match = asset.url.match(/storage\.bunnycdn\.com\/[^/]+\/(.+)$/);
-          if (match) {
-            assetPath = match[1];
+        const urlStr: string = asset.url;
+
+        if (urlStr.startsWith('raw-assets/')) {
+          // If caller gives us a path including zone, keep as-is.
+          assetPath = urlStr;
+        } else if (urlStr.includes('storage.bunnycdn.com')) {
+          const afterZone = extractPathAfterFirstSegment(urlStr);
+          if (afterZone) assetPath = afterZone;
+        } else {
+          // generic: take everything after host
+          try {
+            const u = new URL(urlStr);
+            assetPath = u.pathname.replace(/^\//, '');
+          } catch {
+            assetPath = '';
           }
-        } else if (asset.url.includes('.b-cdn.net')) {
-          // CDN URL - extract path after domain
-          const match = asset.url.match(/\.b-cdn\.net\/(.+)$/);
-          if (match) {
-            assetPath = match[1];
-          }
-        } else if (asset.url.startsWith('raw-assets/')) {
-          assetPath = asset.url;
-        } else if (cdnHostname && asset.url.includes(cdnHostname)) {
-          const match = asset.url.match(new RegExp(cdnHostname.replace('.', '\\.') + '/(.+)$'));
-          if (match) {
-            assetPath = match[1];
-          }
+        }
+
+        // If assetPath still contains zone prefix (raw-assets/...), normalize to remove it
+        if (assetPath.startsWith('raw-assets/')) {
+          assetPath = assetPath.replace(/^raw-assets\//, '');
         }
 
         console.log(`Extracted asset path: ${assetPath}`);
 
-        // First try CDN URL (public, no auth needed)
-        if (cdnHostname && assetPath) {
-          downloadUrl = `https://${cdnHostname}/${assetPath}`;
-          downloadHeaders = {}; // CDN doesn't need auth
-          console.log(`Trying CDN URL: ${downloadUrl}`);
-        } else if (assetPath) {
-          // Fallback to default CDN pattern
-          downloadUrl = `https://${storageZone}.b-cdn.net/${assetPath}`;
-          downloadHeaders = {};
-          console.log(`Trying default CDN URL: ${downloadUrl}`);
-        }
-        
-        let response = await fetch(downloadUrl, { headers: downloadHeaders });
-        
-        // If CDN fails, try storage URL with authentication
-        if (!response.ok && storageZone && storagePassword && assetPath) {
-          console.log(`CDN failed (${response.status}), trying storage with auth...`);
-          downloadUrl = `https://${storageHostname}/${storageZone}/${assetPath}`;
-          downloadHeaders = { 'AccessKey': storagePassword };
-          console.log(`Trying storage URL: ${downloadUrl}`);
-          response = await fetch(downloadUrl, { headers: downloadHeaders });
+        // 1) Try CDN (public)
+        let response: Response | null = null;
+        let lastTriedUrl = '';
+
+        if (assetPath) {
+          const defaultCdnHost = envStorageZone ? `${envStorageZone}.b-cdn.net` : undefined;
+          const cdnHostToUse = cdnHostname || defaultCdnHost;
+
+          if (cdnHostToUse) {
+            const cdnUrl = `https://${cdnHostToUse}/${assetPath}`;
+            lastTriedUrl = cdnUrl;
+            console.log(`Trying CDN URL: ${cdnUrl}`);
+            response = await fetch(cdnUrl);
+          }
         }
 
-        // If still failing, try the original URL with auth (in case it's a storage URL)
-        if (!response.ok && storagePassword) {
-          console.log(`Storage with path failed (${response.status}), trying original URL with auth...`);
-          downloadUrl = asset.url;
-          downloadHeaders = { 'AccessKey': storagePassword };
-          response = await fetch(downloadUrl, { headers: downloadHeaders });
+        // 2) If CDN failed, try storage with auth
+        if ((!response || !response.ok) && storagePassword && assetPath) {
+          const zoneFromUrl = extractStorageZoneFromStorageUrl(urlStr);
+          const zoneForStorage = zoneFromUrl || envStorageZone || 'raw-assets';
+
+          const storageUrl = `https://${storageHostname}/${zoneForStorage}/${assetPath}`;
+          lastTriedUrl = storageUrl;
+          console.log(`Trying storage URL with auth: ${storageUrl}`);
+          response = await fetch(storageUrl, { headers: { 'AccessKey': storagePassword } });
         }
-        
-        if (!response.ok) {
-          console.error(`Failed to download ${asset.filename}: ${response.status} from ${downloadUrl}`);
+
+        // 3) Last resort: original URL with auth (if it's a storage URL)
+        if ((!response || !response.ok) && storagePassword) {
+          lastTriedUrl = urlStr;
+          console.log(`Trying original URL with auth: ${urlStr}`);
+          response = await fetch(urlStr, { headers: { 'AccessKey': storagePassword } });
+        }
+
+        if (!response || !response.ok) {
+          console.error(`Failed to download ${asset.filename}: ${response?.status ?? 'NO_RESPONSE'} from ${lastTriedUrl}`);
           errorCount++;
           continue;
         }
@@ -135,10 +162,10 @@ serve(async (req: Request) => {
         console.log(`Successfully downloaded ${asset.filename}`);
         const arrayBuffer = await response.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
-        
+
         await zipWriter.add(asset.filename, new Uint8ArrayReader(uint8Array));
         successCount++;
-        
+
       } catch (fileError) {
         console.error(`Error processing ${asset.filename}:`, fileError);
         errorCount++;
@@ -147,13 +174,13 @@ serve(async (req: Request) => {
 
     await zipWriter.close();
     const zipBlob = await blobWriter.getData();
-    
+
     console.log(`ZIP created: ${successCount} files, ${errorCount} errors, size: ${zipBlob.size} bytes`);
 
     if (successCount === 0) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
+        JSON.stringify({
+          success: false,
           error: 'No se pudo descargar ningún archivo para el ZIP'
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -170,8 +197,8 @@ serve(async (req: Request) => {
     const dataUrl = `data:application/zip;base64,${base64}`;
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         url: dataUrl,
         filename: `material_crudo_${projectId.slice(0, 8)}.zip`,
         fileCount: successCount,
