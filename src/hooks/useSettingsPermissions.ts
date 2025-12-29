@@ -87,7 +87,7 @@ const SECTION_TO_MODULE: Partial<Record<SettingsSectionKey, string>> = {
 const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
 
 export function useSettingsPermissions(): SettingsPermissions {
-  const { profile, isAdmin, roles } = useAuth();
+  const { profile, isAdmin, roles, activeRole } = useAuth();
   const { isOrgOwner, isPlatformRoot: isPlatformRootFromHook, currentOrgId, loading: orgLoading } = useOrgOwner();
   
   const [orgPermissions, setOrgPermissions] = useState<Record<string, { can_view: boolean; can_create: boolean; can_modify: boolean }>>({});
@@ -98,10 +98,10 @@ export function useSettingsPermissions(): SettingsPermissions {
     return profile?.email === ROOT_EMAIL || isPlatformRootFromHook;
   }, [profile?.email, isPlatformRootFromHook]);
 
-  // Determine if user is org admin (has admin role within org)
+  // Determine if user is org admin (uses activeRole for current context)
   const isOrgAdmin = useMemo(() => {
-    return isAdmin || roles.includes('admin');
-  }, [isAdmin, roles]);
+    return activeRole === 'admin' || isAdmin;
+  }, [isAdmin, activeRole]);
 
   // Fetch organization-level permission overrides
   const fetchOrgPermissions = useCallback(async () => {
@@ -111,8 +111,8 @@ export function useSettingsPermissions(): SettingsPermissions {
     }
 
     try {
-      // Get user's primary role in the organization
-      const userRole = roles[0] || 'creator';
+      // Use activeRole instead of roles[0] to respect role switching
+      const userRole = activeRole || roles[0] || 'creator';
       
       // Fetch org overrides for this role (use any to handle new table not in types yet)
       const { data: orgData } = await supabase
@@ -139,7 +139,8 @@ export function useSettingsPermissions(): SettingsPermissions {
     } finally {
       setLoading(false);
     }
-  }, [currentOrgId, profile?.id, roles]);
+  // Include activeRole in dependencies to refetch when role changes
+  }, [currentOrgId, profile?.id, roles, activeRole]);
 
   useEffect(() => {
     if (!orgLoading) {
