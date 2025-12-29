@@ -17,7 +17,7 @@ import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
-import { RefreshCw, Sparkles, Plus, ImageIcon, Film, Compass } from 'lucide-react';
+import { RefreshCw, Sparkles, Plus, ImageIcon, Film, Compass, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -378,14 +378,27 @@ export default function FeedPage() {
         </div>
       </header>
 
-      {/* Stories bar */}
-      {/* Suggested profiles (shown once per session) */}
-      {showSuggestions && activeTab === 'for-you' && (
-        <SuggestedProfiles 
-          variant="carousel" 
-          limit={5}
-          onDismiss={() => setShowSuggestions(false)}
-        />
+      {/* Suggested profiles */}
+      {activeTab === 'for-you' && (
+        showSuggestions ? (
+          <SuggestedProfiles 
+            variant="carousel" 
+            limit={5}
+            onDismiss={() => setShowSuggestions(false)}
+          />
+        ) : (
+          <div className="max-w-4xl mx-auto px-4 py-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => setShowSuggestions(true)}
+            >
+              <Users className="h-3 w-3 mr-1" />
+              Mostrar sugerencias de perfiles
+            </Button>
+          </div>
+        )
       )}
 
       <StoriesBar 
