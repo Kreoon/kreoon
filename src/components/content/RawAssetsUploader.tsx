@@ -224,7 +224,7 @@ export function RawAssetsUploader({
     return true;
   };
 
-  // Upload files to Bunny Storage
+  // Upload files to Bunny Storage using FormData (streaming)
   const handleUpload = async () => {
     if (!validateFiles()) return;
     if (!user?.id) {
@@ -250,30 +250,41 @@ export function RawAssetsUploader({
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.access_token) throw new Error('No autenticado');
 
-        // Simulate progress while uploading
+        // Progress simulation
         const progressInterval = setInterval(() => {
           setFilesToUpload(prev =>
             prev.map(f => f.id === fileToUpload.id && f.progress < 80 
-              ? { ...f, progress: f.progress + 10 } 
+              ? { ...f, progress: f.progress + 5 } 
               : f
             )
           );
-        }, 500);
+        }, 800);
 
-        // Upload to Bunny via edge function
-        const { data, error } = await supabase.functions.invoke('bunny-raw-upload', {
-          body: {
-            filename: customFilename,
-            storagePath,
-            contentType: fileToUpload.file.type,
-            fileSize: fileToUpload.file.size,
-            fileData: await fileToBase64(fileToUpload.file)
-          }
+        // Use FormData for streaming upload (avoids memory issues with large files)
+        const formData = new FormData();
+        formData.append('file', fileToUpload.file);
+        formData.append('storagePath', storagePath);
+        formData.append('contentType', fileToUpload.file.type);
+
+        // Get Supabase URL from environment
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        
+        const response = await fetch(`${supabaseUrl}/functions/v1/bunny-raw-upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: formData
         });
 
         clearInterval(progressInterval);
 
-        if (error) throw error;
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData?.error || `Error HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
         if (!data?.success) throw new Error(data?.error || 'Error de subida');
 
         // Save to database
@@ -320,21 +331,6 @@ export function RawAssetsUploader({
     if (successCount > 0) {
       toast.success(`${successCount} archivo(s) subido(s) correctamente`);
     }
-  };
-
-  // Convert file to base64
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const result = reader.result as string;
-        // Remove data:mime/type;base64, prefix
-        const base64 = result.split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = error => reject(error);
-    });
   };
 
   // Download individual file
