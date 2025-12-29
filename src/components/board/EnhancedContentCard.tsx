@@ -149,7 +149,7 @@ export function EnhancedContentCard({
   return (
     <Card
       className={cn(
-        "group cursor-pointer relative overflow-hidden",
+        "group cursor-pointer relative",
         "transition-all duration-200 ease-out",
         "hover:shadow-lg hover:shadow-primary/10 hover:border-primary/40 hover:-translate-y-1",
         "bg-card/95 backdrop-blur-sm border-border/50",
