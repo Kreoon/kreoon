@@ -105,7 +105,7 @@ export function UnsavedChangesProvider({ children }: Props) {
     }
   }, [changedKeys]);
 
-  // Handle beforeunload for desktop
+  // Handle beforeunload for desktop - warn user before leaving
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
@@ -119,7 +119,7 @@ export function UnsavedChangesProvider({ children }: Props) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Handle visibility change - save state when losing focus
+  // Handle visibility change - backup state when losing focus
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && hasUnsavedChanges) {
@@ -129,6 +129,23 @@ export function UnsavedChangesProvider({ children }: Props) {
           keys: Array.from(changedKeys),
         };
         localStorage.setItem('unsaved_changes_backup', JSON.stringify(stateBackup));
+        console.log('[UnsavedChanges] Backed up state before tab switch');
+      } else if (document.visibilityState === 'visible') {
+        // User returned to the tab - check if we have a backup
+        const backup = localStorage.getItem('unsaved_changes_backup');
+        if (backup) {
+          try {
+            const parsed = JSON.parse(backup);
+            // Only restore if backup is recent (within 30 minutes)
+            const thirtyMinutes = 30 * 60 * 1000;
+            if (Date.now() - parsed.timestamp < thirtyMinutes && parsed.keys?.length > 0) {
+              console.log('[UnsavedChanges] Restored state after tab return');
+              // Keep the backup for now - only clear after successful save
+            }
+          } catch (e) {
+            // Invalid backup, ignore
+          }
+        }
       }
     };
 

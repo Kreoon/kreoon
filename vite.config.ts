@@ -44,14 +44,15 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        // Prevent immediate takeover (and reload) on updates.
+        // CRITICAL: Prevent any automatic takeover that could cause reloads
         skipWaiting: false,
         clientsClaim: false,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
-        // Listen for SKIP_WAITING message from the app
-        // This allows the UpdatePrompt component to trigger the new SW activation
+        // Disable navigateFallback to prevent SW interference
         navigateFallback: undefined,
+        // Disable navigation preload to prevent race conditions
+        navigationPreload: false,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
@@ -69,12 +70,11 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
-      // InjectManifest allows custom SW code including SKIP_WAITING handler
-      // But for simplicity, we use generateSW with the built-in message listener
-      injectRegister: 'auto',
+      // Disable automatic SW injection - we control it manually
+      injectRegister: false,
       devOptions: {
-        // Disable SW in preview/dev to avoid controller changes that look like a reload on tab switch.
-        enabled: mode === 'production'
+        // ALWAYS disable SW in development to prevent reload issues during testing
+        enabled: false
       }
     })
   ].filter(Boolean),

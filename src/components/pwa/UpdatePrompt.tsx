@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -6,10 +6,16 @@ import { cn } from '@/lib/utils';
 /**
  * Watches for SW updates and shows a toast prompting the user to refresh.
  * Works with vite-plugin-pwa's generated registration.
+ * 
+ * IMPORTANT: This component does NOT auto-reload on tab/window focus.
+ * The user must explicitly click "Actualizar ahora" to apply updates.
  */
 export function UpdatePrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [waitingSW, setWaitingSW] = useState<ServiceWorker | null>(null);
+  
+  // Track if user initiated the update to allow reload only in that case
+  const userInitiatedUpdate = useRef(false);
 
   const checkForUpdates = useCallback(async () => {
     if (!('serviceWorker' in navigator)) return;
@@ -25,7 +31,7 @@ export function UpdatePrompt() {
 
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New SW is installed and waiting
+            // New SW is installed and waiting - show prompt but DON'T auto-reload
             setWaitingSW(newWorker);
             setShowPrompt(true);
           }
@@ -38,10 +44,10 @@ export function UpdatePrompt() {
         setShowPrompt(true);
       }
 
-      // Periodically check for updates (every 60s)
+      // Check for updates periodically (every 5 minutes instead of 60s to be less aggressive)
       const interval = setInterval(() => {
         registration.update().catch(() => {});
-      }, 60 * 1000);
+      }, 5 * 60 * 1000);
 
       return () => clearInterval(interval);
     } catch (err) {
@@ -52,9 +58,14 @@ export function UpdatePrompt() {
   useEffect(() => {
     checkForUpdates();
 
-    // Also listen for controlled change (SW took over)
+    // CRITICAL: Only reload if the user explicitly clicked "Update now"
+    // This prevents automatic reloads when switching tabs/windows
     const handleControllerChange = () => {
-      window.location.reload();
+      if (userInitiatedUpdate.current) {
+        // User clicked update - safe to reload
+        window.location.reload();
+      }
+      // Otherwise, do nothing - the new SW will be used on next natural navigation
     };
 
     navigator.serviceWorker?.addEventListener('controllerchange', handleControllerChange);
@@ -65,6 +76,8 @@ export function UpdatePrompt() {
 
   const handleUpdate = () => {
     if (waitingSW) {
+      // Mark that user initiated the update
+      userInitiatedUpdate.current = true;
       waitingSW.postMessage({ type: 'SKIP_WAITING' });
     }
   };
@@ -92,7 +105,7 @@ export function UpdatePrompt() {
             Nueva versión disponible
           </h4>
           <p className="text-muted-foreground text-xs mt-1">
-            Hay una actualización lista. Actualiza para obtener las últimas mejoras.
+            Hay una actualización lista. Tus cambios no guardados se conservarán hasta que decidas actualizar.
           </p>
           <div className="flex gap-2 mt-3">
             <Button size="sm" onClick={handleUpdate} className="text-xs">
