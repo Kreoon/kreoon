@@ -267,15 +267,13 @@ export function EnhancedChatDrawer({
                     <div className="flex flex-col h-full">
                       <div className="p-3 space-y-3">
                         <div className="flex items-center gap-2">
-                          {isMobile && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => setView('list')}
-                            >
-                              ← Atrás
-                            </Button>
-                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setView('list')}
+                          >
+                            ← Atrás
+                          </Button>
                           <h3 className="font-medium">Nueva conversación</h3>
                         </div>
                         <div className="relative">
