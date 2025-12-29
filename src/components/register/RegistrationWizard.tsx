@@ -12,6 +12,7 @@ import {
   PlanSelectionStep,
   TalentAccessStep,
   ConfirmationStep,
+  JoinOrgStep,
 } from './steps';
 import { RegistrationData, initialRegistrationData } from './types';
 
@@ -48,6 +49,18 @@ export function RegistrationWizard() {
     }
   }, [user, authLoading, rolesLoaded, roles, navigate]);
 
+  // If slug is provided, pre-select join_org mode
+  useEffect(() => {
+    if (slug) {
+      setData(prev => ({ 
+        ...prev, 
+        registrationMode: 'join_org',
+        joinLink: slug 
+      }));
+      setCurrentStep(1); // Skip to join step
+    }
+  }, [slug]);
+
   const updateData = (updates: Partial<RegistrationData>) => {
     setData((prev) => ({ ...prev, ...updates }));
   };
@@ -75,6 +88,15 @@ export function RegistrationWizard() {
         { label: 'Datos', component: BasicDataStep },
         { label: 'Plan', component: PlanSelectionStep },
         { label: 'Talento', component: TalentAccessStep },
+        { label: 'Confirmar', component: ConfirmationStep },
+      ];
+    }
+
+    if (isJoinFlow) {
+      return [
+        { label: 'Tipo', component: AccessTypeStep },
+        { label: 'Unirse', component: JoinOrgStep },
+        { label: 'Datos', component: BasicDataStep },
         { label: 'Confirmar', component: ConfirmationStep },
       ];
     }
