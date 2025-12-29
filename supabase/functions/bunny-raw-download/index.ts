@@ -33,48 +33,84 @@ serve(async (req: Request) => {
       });
     }
 
+    const storageZone = (Deno.env.get("BUNNY_STORAGE_ZONE") || "").trim() || undefined;
+    const storageHostname = (Deno.env.get("BUNNY_STORAGE_HOSTNAME") || "storage.bunnycdn.com").trim();
     const storagePassword = (Deno.env.get("BUNNY_STORAGE_PASSWORD") || "").trim() || undefined;
-    if (!storagePassword) {
+    if (!storagePassword || !storageZone) {
       return new Response(JSON.stringify({ success: false, error: "Configuración de storage incompleta" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { url, filename } = await req.json();
-    if (!url || typeof url !== "string") {
-      return new Response(JSON.stringify({ success: false, error: "URL requerida" }), {
+    const body = await req.json().catch(() => ({}));
+    const url: unknown = body?.url;
+    const storagePath: unknown = body?.storagePath;
+    const filename: unknown = body?.filename;
+
+    const rawInput = (typeof storagePath === "string" && storagePath.trim())
+      ? storagePath.trim()
+      : (typeof url === "string" && url.trim())
+        ? url.trim()
+        : "";
+
+    if (!rawInput) {
+      return new Response(JSON.stringify({ success: false, error: "URL o storagePath requerido" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    let u: URL;
-    try {
-      u = new URL(url);
-    } catch {
-      return new Response(JSON.stringify({ success: false, error: "URL inválida" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Normalize to a RELATIVE path inside the storage zone.
+    // Accepts:
+    // - full storage URL: https://<region>.storage.bunnycdn.com/<zone>/<path>
+    // - full CDN URL: https://<cdnHost>/<path>
+    // - legacy paths that include a zone prefix: raw-assets/<path>
+    let normalizedPath = "";
+    let hostForStorage = storageHostname;
 
-    if (!u.hostname.includes("storage.bunnycdn.com")) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "La descarga segura requiere una URL de Bunny Storage (storage.bunnycdn.com)",
-        }),
-        {
+    if (/^https?:\/\//i.test(rawInput)) {
+      let u: URL;
+      try {
+        u = new URL(rawInput);
+      } catch {
+        return new Response(JSON.stringify({ success: false, error: "URL inválida" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+        });
+      }
+
+      if (u.hostname.includes("storage.bunnycdn.com")) {
+        // /<zone>/<path...>
+        const parts = u.pathname.replace(/^\//, "").split("/");
+        if (parts.length >= 2) normalizedPath = parts.slice(1).join("/");
+        hostForStorage = u.hostname; // keep region if provided
+      } else {
+        normalizedPath = u.pathname.replace(/^\//, "");
+      }
+    } else {
+      normalizedPath = rawInput.replace(/^\//, "");
     }
 
-    console.log("Downloading raw asset via storage URL:", url);
+    // Strip accidental/legacy zone prefixes
+    if (normalizedPath.startsWith("raw-assets/")) {
+      normalizedPath = normalizedPath.replace(/^raw-assets\//, "");
+    }
+    if (normalizedPath.startsWith(`${storageZone}/`)) {
+      normalizedPath = normalizedPath.slice(storageZone.length + 1);
+    }
 
-    const upstream = await fetch(url, {
+    if (!normalizedPath) {
+      return new Response(JSON.stringify({ success: false, error: "Ruta inválida" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const finalUrl = `https://${hostForStorage}/${storageZone}/${normalizedPath}`;
+    console.log("Downloading raw asset via normalized storage URL:", finalUrl);
+
+    const upstream = await fetch(finalUrl, {
       headers: {
         AccessKey: storagePassword,
       },
