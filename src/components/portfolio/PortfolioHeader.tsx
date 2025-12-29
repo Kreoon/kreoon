@@ -24,17 +24,17 @@ export function PortfolioHeader({
   const location = useLocation();
   const isLoggedIn = !!user;
   
-  // Check if we're on a profile page (not the main portfolio)
+  // Check if we're on a profile page (not the main social feed)
   const isProfilePage = location.pathname.startsWith('/p/') || 
                         location.pathname.startsWith('/@') ||
-                        (location.pathname !== '/portfolio' && !location.pathname.startsWith('/portfolio'));
+                        (location.pathname !== '/social' && !location.pathname.startsWith('/social'));
 
   const getDashboardRoute = () => {
     if (roles.includes('admin')) return '/';
     if (roles.includes('creator')) return '/creator-dashboard';
     if (roles.includes('editor')) return '/editor-dashboard';
     if (roles.includes('client')) return '/client-dashboard';
-    return '/portfolio';
+    return '/social';
   };
 
   return (
@@ -44,7 +44,7 @@ export function PortfolioHeader({
           {/* Back button when on profile page */}
           {isProfilePage && (
             <button 
-              onClick={() => navigate('/portfolio')}
+              onClick={() => navigate('/social')}
               className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
             >
               <ChevronLeft className="h-4 w-4 text-white" />
@@ -53,7 +53,7 @@ export function PortfolioHeader({
           
           {/* Logo - Always visible */}
           <button 
-            onClick={() => navigate('/portfolio')}
+            onClick={() => navigate('/social')}
             className="h-8 w-8 rounded-lg bg-social-accent flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
           >
             <span className="text-white font-bold text-xs">SC</span>

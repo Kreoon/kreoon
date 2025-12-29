@@ -12,7 +12,6 @@ const PAGE_NAMES: Record<string, string> = {
   '/clients': 'Clientes',
   '/team': 'Equipo',
   '/settings': 'Configuración',
-  '/portfolio': 'Portafolio',
   '/social': 'Red Social',
   '/creator-dashboard': 'Dashboard Creador',
   '/editor-dashboard': 'Dashboard Editor',

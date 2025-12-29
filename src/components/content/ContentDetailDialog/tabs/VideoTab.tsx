@@ -97,7 +97,7 @@ export function VideoTab({
             </div>
             <div>
               <p className="font-medium">Publicar en Portafolio</p>
-              <p className="text-xs text-muted-foreground">Visible públicamente en /portfolio</p>
+              <p className="text-xs text-muted-foreground">Visible públicamente en la red social</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

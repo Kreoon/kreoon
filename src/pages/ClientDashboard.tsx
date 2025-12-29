@@ -732,7 +732,7 @@ export default function ClientDashboard() {
           Tu cuenta aún no está vinculada a una empresa. Contacta al administrador para completar la configuración.
         </p>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => navigate('/portfolio')}>
+          <Button variant="outline" onClick={() => navigate('/social')}>
             Ver Portafolio
           </Button>
           <Button variant="ghost" onClick={signOut}>

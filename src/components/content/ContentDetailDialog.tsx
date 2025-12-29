@@ -795,7 +795,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   <div>
                     <p className="font-medium">Publicar en Portafolio</p>
                     <p className="text-xs text-muted-foreground">
-                      Este video será visible públicamente en /portfolio
+                      Este video será visible públicamente en la red social
                     </p>
                   </div>
                 </div>
