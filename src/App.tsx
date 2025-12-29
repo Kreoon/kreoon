@@ -13,6 +13,7 @@ import { ImpersonationBanner } from "@/components/impersonation/ImpersonationBan
 import { AICopilotProvider } from "@/contexts/AICopilotContext";
 import { TrialProvider } from "@/contexts/TrialContext";
 import { TrackingProvider } from "@/contexts/TrackingContext";
+import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import Dashboard from "./pages/Dashboard";
 import ContentBoard from "./pages/ContentBoard";
 import Auth from "./pages/Auth";
@@ -124,6 +125,7 @@ function AppContent() {
                       <ImpersonationBanner />
                       <Toaster />
                       <Sonner />
+                      <UpdatePrompt />
                       <AppRoutes />
                     </TooltipProvider>
                   </AICopilotProvider>
