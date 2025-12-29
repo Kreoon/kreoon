@@ -83,14 +83,16 @@ export function ScriptSubTab({
 
           {/* Script editor/viewer */}
           {editMode && canEdit ? (
-            <RichTextEditor
-              content={formData.script || ''}
-              onChange={(value) => setFormData(prev => ({ ...prev, script: value }))}
-              placeholder="Escribe el guión aquí..."
-              features={editorFeatures}
-            />
+            <div className="max-h-[400px] overflow-y-auto">
+              <RichTextEditor
+                content={formData.script || ''}
+                onChange={(value) => setFormData(prev => ({ ...prev, script: value }))}
+                placeholder="Escribe el guión aquí..."
+                features={editorFeatures}
+              />
+            </div>
           ) : hasScript ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
+            <div className="max-h-[400px] overflow-y-auto prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
               <RichTextViewer content={formData.script || ''} />
             </div>
           ) : (

@@ -28,14 +28,16 @@ export function EditorSubTab({
           </p>
 
           {editMode && canEdit ? (
-            <RichTextEditor
-              content={formData.editor_guidelines || ''}
-              onChange={(value) => setFormData(prev => ({ ...prev, editor_guidelines: value }))}
-              placeholder="Describe el estilo de edición, ritmo, transiciones, efectos especiales..."
-              features={editorFeatures}
-            />
+            <div className="max-h-[400px] overflow-y-auto">
+              <RichTextEditor
+                content={formData.editor_guidelines || ''}
+                onChange={(value) => setFormData(prev => ({ ...prev, editor_guidelines: value }))}
+                placeholder="Describe el estilo de edición, ritmo, transiciones, efectos especiales..."
+                features={editorFeatures}
+              />
+            </div>
           ) : hasContent ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
+            <div className="max-h-[400px] overflow-y-auto prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
               <RichTextViewer content={formData.editor_guidelines || ''} />
             </div>
           ) : (
