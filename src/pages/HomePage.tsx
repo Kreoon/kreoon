@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Brain, 
   Video, 
@@ -21,8 +23,51 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+function getDashboardPath(roles: string[], activeRole?: string | null): string {
+  if (roles.length === 0) return '/pending-access';
+  if (activeRole && roles.includes(activeRole)) {
+    switch (activeRole) {
+      case 'admin':
+      case 'ambassador':
+        return '/dashboard';
+      case 'strategist':
+        return '/strategist-dashboard';
+      case 'creator':
+        return '/creator-dashboard';
+      case 'editor':
+        return '/editor-dashboard';
+      case 'client':
+        return '/client-dashboard';
+    }
+  }
+  if (roles.includes('admin')) return '/dashboard';
+  if (roles.includes('ambassador')) return '/dashboard';
+  if (roles.includes('strategist')) return '/strategist-dashboard';
+  if (roles.includes('creator')) return '/creator-dashboard';
+  if (roles.includes('editor')) return '/editor-dashboard';
+  if (roles.includes('client')) return '/client-dashboard';
+  return '/pending-access';
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
+  const { user, loading, rolesLoaded, roles, activeRole } = useAuth();
+
+  useEffect(() => {
+    // SEO (simple per-route metadata without extra deps)
+    const title = 'KREOON | Creative Operating System';
+    const description = 'KREOON: sistema operativo creativo para gestionar creadores, contenido, proyectos y resultados en un solo lugar.';
+    document.title = title;
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', description);
+  }, []);
+
+  useEffect(() => {
+    // If logged in, send the user to the right dashboard (avoid showing landing page)
+    if (user && !loading && rolesLoaded) {
+      navigate(getDashboardPath(roles, activeRole), { replace: true });
+    }
+  }, [user, loading, rolesLoaded, roles, activeRole, navigate]);
 
   const modules = [
     {
@@ -108,12 +153,68 @@ export default function HomePage() {
     }
   ];
 
+  const dashboardPath = getDashboardPath(roles, activeRole);
+
+  if (user) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <header className="px-4 pt-10">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="text-left"
+              aria-label="Ir a inicio"
+            >
+              <span className="text-lg font-semibold text-gradient-violet">KREOON</span>
+            </button>
+            <Button variant="outline" onClick={() => navigate('/settings')}>
+              Configuración
+            </Button>
+          </div>
+        </header>
+
+        <main className="px-4 py-16">
+          <section className="max-w-5xl mx-auto">
+            <div className="relative overflow-hidden rounded-3xl border border-border bg-card">
+              <div className="absolute inset-0 bg-gradient-glow opacity-60 pointer-events-none" />
+              <div className="relative p-8 md:p-12">
+                <p className="text-sm text-muted-foreground mb-2">Sesión activa</p>
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                  Continuar en tu panel
+                </h1>
+                <p className="text-muted-foreground max-w-2xl">
+                  Ya estás logueado. Te llevamos automáticamente a tu dashboard, o puedes entrar manualmente.
+                </p>
+
+                <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                  <Button size="lg" onClick={() => navigate(dashboardPath, { replace: true })}>
+                    Ir al dashboard
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={() => navigate('/social')}>
+                    Abrir red social
+                  </Button>
+                </div>
+
+                <div className="mt-6 text-sm text-muted-foreground">
+                  Si te quedas aquí, en segundos te redirigimos automáticamente…
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-20">
+      <main>
+        <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-20">
         {/* Background effects */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px]" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px]" />
         </div>
@@ -149,7 +250,7 @@ export default function HomePage() {
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/auth')}
               className="border-border text-muted-foreground hover:text-foreground hover:border-primary/50 px-8 py-6 text-lg rounded-xl transition-all hover:scale-105"
             >
               <Users className="w-5 h-5 mr-2" />
@@ -164,7 +265,8 @@ export default function HomePage() {
             <div className="w-1.5 h-3 bg-primary rounded-full animate-pulse" />
           </div>
         </div>
-      </section>
+        </section>
+      </main>
 
       {/* What is KREOON Section */}
       <section className="py-24 px-4">
@@ -264,7 +366,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto text-center">
           <div className="relative">
             {/* Glow effect */}
-            <div className="absolute inset-0 bg-primary/10 blur-[100px] rounded-full" />
+            <div className="absolute inset-0 bg-primary/10 blur-[100px] rounded-full pointer-events-none" />
             
             <div className="relative bg-card border border-border rounded-3xl p-12 md:p-16">
               <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-8">
