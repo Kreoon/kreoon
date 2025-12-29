@@ -388,22 +388,17 @@ export function RawAssetsUploader({
     toast.success('Descargas iniciadas');
   };
 
-  // Download all as ZIP
+  // Download all as ZIP - downloads the entire project folder from storage
   const handleDownloadZip = async () => {
-    if (uploadedAssets.length === 0) {
-      toast.error('No hay archivos para descargar');
-      return;
-    }
-
     setDownloadingZip(true);
     try {
+      // Build the folder path: raw-assets/org_xxx/client_xxx/project_xxx
+      const folderPath = `raw-assets/org_${organizationId}/client_${clientId || 'none'}/project_${contentId}`;
+      
       const { data, error } = await supabase.functions.invoke('bunny-raw-zip', {
         body: {
           projectId: contentId,
-          assets: uploadedAssets.map(a => ({
-            url: a.storage_path, // keep storage URL so the backend can auth correctly
-            filename: a.custom_filename,
-          })),
+          folderPath,
         },
         // @ts-expect-error - supported by supabase-js runtime
         responseType: 'blob',

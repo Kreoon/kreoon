@@ -6,34 +6,60 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-function safeCdnHostname(raw: string | undefined) {
-  if (!raw) return undefined;
-  // Misconfig guard: sometimes people set the storage hostname as CDN hostname.
-  if (raw.includes('storage.bunnycdn.com')) return undefined;
-  return raw;
+interface BunnyFile {
+  Guid: string;
+  StorageZoneName: string;
+  Path: string;
+  ObjectName: string;
+  Length: number;
+  LastChanged: string;
+  ServerId: number;
+  IsDirectory: boolean;
+  UserId: string;
+  DateCreated: string;
+  StorageZoneId: number;
+  Checksum: string | null;
+  ReplicatedZones: string | null;
 }
 
-function extractStorageZoneFromStorageUrl(url: string): string | undefined {
-  try {
-    const u = new URL(url);
-    if (!u.hostname.includes('storage.bunnycdn.com')) return undefined;
-    const [first] = u.pathname.replace(/^\//, '').split('/');
-    return first || undefined;
-  } catch {
-    return undefined;
-  }
-}
+/**
+ * Recursively list all files in a Bunny Storage folder.
+ */
+async function listFilesRecursive(
+  storageHostname: string,
+  storageZone: string,
+  folderPath: string,
+  accessKey: string
+): Promise<{ path: string; name: string }[]> {
+  const url = `https://${storageHostname}/${storageZone}/${folderPath}/`;
+  console.log(`Listing folder: ${url}`);
 
-function extractPathAfterFirstSegment(url: string): string | undefined {
-  // For storage URLs, pathname is /<zone>/<path...>. We want <path...>
-  try {
-    const u = new URL(url);
-    const parts = u.pathname.replace(/^\//, '').split('/');
-    if (parts.length < 2) return undefined;
-    return parts.slice(1).join('/');
-  } catch {
-    return undefined;
+  const response = await fetch(url, {
+    headers: { AccessKey: accessKey, Accept: 'application/json' },
+  });
+
+  if (!response.ok) {
+    console.error(`Failed to list folder ${folderPath}: ${response.status}`);
+    return [];
   }
+
+  const items: BunnyFile[] = await response.json();
+  const files: { path: string; name: string }[] = [];
+
+  for (const item of items) {
+    if (item.IsDirectory) {
+      // Recurse into subdirectory
+      const subPath = folderPath ? `${folderPath}/${item.ObjectName}` : item.ObjectName;
+      const subFiles = await listFilesRecursive(storageHostname, storageZone, subPath, accessKey);
+      files.push(...subFiles);
+    } else {
+      // It's a file
+      const filePath = folderPath ? `${folderPath}/${item.ObjectName}` : item.ObjectName;
+      files.push({ path: filePath, name: item.ObjectName });
+    }
+  }
+
+  return files;
 }
 
 serve(async (req: Request) => {
@@ -55,10 +81,9 @@ serve(async (req: Request) => {
     // Get Bunny credentials for authenticated downloads
     const envStorageZone = (Deno.env.get('BUNNY_STORAGE_ZONE') || '').trim() || undefined;
     const storagePassword = (Deno.env.get('BUNNY_STORAGE_PASSWORD') || '').trim() || undefined;
-    const storageHostname = (Deno.env.get('BUNNY_STORAGE_HOSTNAME') || 'storage.bunnycdn.com').trim();
-    const cdnHostname = safeCdnHostname((Deno.env.get('BUNNY_CDN_HOSTNAME') || '').trim() || undefined);
+    const storageHostname = (Deno.env.get('BUNNY_STORAGE_HOSTNAME') || 'ny.storage.bunnycdn.com').trim();
 
-    if (!storagePassword) {
+    if (!storagePassword || !envStorageZone) {
       return new Response(
         JSON.stringify({ success: false, error: 'Configuración de storage incompleta' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -66,22 +91,47 @@ serve(async (req: Request) => {
     }
 
     console.log('Bunny config:', {
-      envStorageZone: envStorageZone ? `SET (${envStorageZone})` : 'NOT SET',
-      storagePassword: storagePassword ? `SET (length: ${storagePassword.length})` : 'NOT SET',
+      envStorageZone,
+      storagePassword: `SET (length: ${storagePassword.length})`,
       storageHostname,
-      cdnHostname: cdnHostname || 'NOT SET'
     });
 
-    const { projectId, assets } = await req.json();
+    const body = await req.json();
+    const { projectId, folderPath } = body;
 
-    if (!projectId || !assets || !Array.isArray(assets) || assets.length === 0) {
+    if (!projectId) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Datos incompletos' }),
+        JSON.stringify({ success: false, error: 'projectId requerido' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Generating ZIP for project ${projectId} with ${assets.length} files`);
+    // Use provided folderPath or build a default one
+    // Expected folderPath: raw-assets/org_xxx/client_xxx/project_xxx
+    let targetFolder = folderPath;
+    if (!targetFolder || typeof targetFolder !== 'string') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'folderPath requerido' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Normalize: remove leading/trailing slashes
+    targetFolder = targetFolder.replace(/^\/+|\/+$/g, '');
+
+    console.log(`Generating ZIP for project ${projectId} from folder: ${targetFolder}`);
+
+    // List all files in the folder recursively
+    const files = await listFilesRecursive(storageHostname, envStorageZone, targetFolder, storagePassword);
+
+    if (files.length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'No se encontraron archivos en la carpeta' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Found ${files.length} files to download`);
 
     // Create ZIP in memory
     const blobWriter = new BlobWriter("application/zip");
@@ -91,113 +141,31 @@ serve(async (req: Request) => {
     let errorCount = 0;
 
     // Download each file and add to ZIP
-    for (const asset of assets) {
+    for (const file of files) {
       try {
-        console.log(`Downloading: ${asset.filename} from ${asset.url}`);
+        const fileUrl = `https://${storageHostname}/${envStorageZone}/${file.path}`;
+        console.log(`Downloading: ${file.name} from ${fileUrl}`);
 
-        // Extract a usable asset path
-        // storage URL: https://<region>.storage.bunnycdn.com/<zone>/<path...>
-        // cdn URL: https://<cdnHost>/<path...>
-        // path only: raw-assets/... (legacy)
+        const response = await fetch(fileUrl, {
+          headers: { AccessKey: storagePassword },
+        });
 
-        let assetPath = '';
-        const urlStr: string = asset.url;
-
-        if (urlStr.includes('storage.bunnycdn.com')) {
-          // Take full pathname as the path inside our configured storage zone.
-          // Old URLs may have been stored without the zone prefix.
-          try {
-            const u = new URL(urlStr);
-            assetPath = u.pathname.replace(/^\//, '');
-          } catch {
-            assetPath = '';
-          }
-        } else if (/^https?:\/\//i.test(urlStr)) {
-          // CDN or other URL: take pathname
-          try {
-            const u = new URL(urlStr);
-            assetPath = u.pathname.replace(/^\//, '');
-          } catch {
-            assetPath = '';
-          }
-        } else {
-          // Relative path
-          assetPath = urlStr.replace(/^\//, '');
-        }
-
-        // Strip our configured zone if accidentally doubled
-        if (assetPath.startsWith(`${envStorageZone}/`)) {
-          assetPath = assetPath.slice(envStorageZone!.length + 1);
-        }
-
-        console.log(`Extracted asset path: ${assetPath}`);
-
-        // 1) Try CDN (public)
-        let response: Response | null = null;
-        let lastTriedUrl = '';
-
-        if (assetPath) {
-          const zoneFromUrl = extractStorageZoneFromStorageUrl(urlStr);
-          const defaultCdnHost = (zoneFromUrl || envStorageZone) ? `${zoneFromUrl || envStorageZone}.b-cdn.net` : undefined;
-          const cdnHostToUse = cdnHostname || defaultCdnHost;
-
-          if (cdnHostToUse) {
-            const cdnUrl = `https://${cdnHostToUse}/${assetPath}`;
-            lastTriedUrl = cdnUrl;
-            console.log(`Trying CDN URL: ${cdnUrl}`);
-            response = await fetch(cdnUrl);
-          }
-        }
-
-        // 2) If CDN failed (or skipped), try storage with auth
-        if ((!response || !response.ok) && assetPath) {
-          const zoneFromUrl = extractStorageZoneFromStorageUrl(urlStr);
-          const zoneForStorage = zoneFromUrl || envStorageZone;
-
-          if (!zoneForStorage) {
-            console.error(`Missing storage zone for ${asset.filename}. Provide a storage URL or set BUNNY_STORAGE_ZONE.`);
-            errorCount++;
-            continue;
-          }
-
-          // Prefer the exact regional hostname from the original storage URL when available
-          let hostForStorage = storageHostname;
-          try {
-            if (urlStr.includes('storage.bunnycdn.com')) {
-              hostForStorage = new URL(urlStr).hostname;
-            }
-          } catch {
-            // ignore
-          }
-
-          const storageUrl = `https://${hostForStorage}/${zoneForStorage}/${assetPath}`;
-          lastTriedUrl = storageUrl;
-          console.log(`Trying storage URL with auth: ${storageUrl}`);
-          response = await fetch(storageUrl, { headers: { 'AccessKey': storagePassword } });
-        }
-
-        // 3) Last resort: original URL with auth (if it's a storage URL)
-        if ((!response || !response.ok) && urlStr.includes('storage.bunnycdn.com')) {
-          lastTriedUrl = urlStr;
-          console.log(`Trying original URL with auth: ${urlStr}`);
-          response = await fetch(urlStr, { headers: { 'AccessKey': storagePassword } });
-        }
-
-        if (!response || !response.ok) {
-          console.error(`Failed to download ${asset.filename}: ${response?.status ?? 'NO_RESPONSE'} from ${lastTriedUrl}`);
+        if (!response.ok) {
+          console.error(`Failed to download ${file.name}: ${response.status}`);
           errorCount++;
           continue;
         }
 
-        console.log(`Successfully downloaded ${asset.filename}`);
+        console.log(`Successfully downloaded ${file.name}`);
         const arrayBuffer = await response.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
 
-        await zipWriter.add(asset.filename, new Uint8ArrayReader(uint8Array));
+        // Use the relative path from the target folder for ZIP structure
+        const relativePath = file.path.replace(`${targetFolder}/`, '');
+        await zipWriter.add(relativePath, new Uint8ArrayReader(uint8Array));
         successCount++;
-
       } catch (fileError) {
-        console.error(`Error processing ${asset.filename}:`, fileError);
+        console.error(`Error processing ${file.name}:`, fileError);
         errorCount++;
       }
     }
@@ -217,7 +185,7 @@ serve(async (req: Request) => {
       );
     }
 
-    // Return ZIP as binary (avoid base64 for large files)
+    // Return ZIP as binary
     const filename = `material_crudo_${projectId.slice(0, 8)}.zip`;
 
     return new Response(zipBlob, {
