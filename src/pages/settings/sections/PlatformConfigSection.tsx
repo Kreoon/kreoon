@@ -1,0 +1,47 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Settings2, Palette, Globe } from 'lucide-react';
+import { AppSettingsManagement } from '@/components/settings/AppSettingsManagement';
+import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
+import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
+
+export default function PlatformConfigSection() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Configuración de Plataforma</h2>
+        <p className="text-muted-foreground">
+          Ajustes globales, apariencia e integraciones externas
+        </p>
+      </div>
+
+      <Tabs defaultValue="settings" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="settings" className="gap-2">
+            <Settings2 className="h-4 w-4" />
+            Ajustes
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="gap-2">
+            <Palette className="h-4 w-4" />
+            Apariencia
+          </TabsTrigger>
+          <TabsTrigger value="integrations" className="gap-2">
+            <Globe className="h-4 w-4" />
+            Integraciones
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="settings">
+          <AppSettingsManagement />
+        </TabsContent>
+
+        <TabsContent value="appearance">
+          <AppearanceSettings />
+        </TabsContent>
+
+        <TabsContent value="integrations">
+          <IntegrationsSettings />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

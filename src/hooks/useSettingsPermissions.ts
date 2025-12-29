@@ -3,36 +3,27 @@ import { useAuth } from './useAuth';
 import { useOrgOwner } from './useOrgOwner';
 import { supabase } from '@/integrations/supabase/client';
 
-// Section keys for settings module
+// Section keys for settings module (CONSOLIDATED - reduced from 25 to 16)
 export type SettingsSectionKey = 
   // User level
   | 'profile'
-  | 'notifications'
+  | 'notifications'      // Merged: personal notifications + org preferences + chat RBAC
   | 'security'
   | 'tour'
   // Organization level
   | 'organization'
   | 'organization_plans'
-  | 'chat_notifications'
+  | 'ai_settings'        // Merged: portfolio_ai + organization_ai + assistant
   | 'ambassadors'
-  | 'portfolio_ai'
-  | 'organization_ai'
+  | 'permissions'        // Merged: organization_permissions + global_permissions
   | 'audit_log'
-  | 'organization_permissions'
   // Platform level (Root only)
   | 'organization_registrations'
   | 'platform_users'
   | 'referrals'
-  | 'global_permissions'
-  | 'subscription_management'
-  | 'user_plans'
-  | 'currency'
-  | 'app_settings'
-  | 'platform_security'
-  | 'appearance'
-  | 'integrations'
-  | 'billing_control'
-  | 'root_admin';
+  | 'billing'            // Merged: subscription_management + user_plans + currency + billing_control
+  | 'platform_config'    // Merged: app_settings + appearance + integrations
+  | 'platform_admin';    // Merged: platform_security + root_admin
 
 export interface SectionPermission {
   canAccess: boolean;
@@ -66,26 +57,17 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   // Organization level - org admin/owner only
   organization: 'organization',
   organization_plans: 'organization',
-  chat_notifications: 'organization',
+  ai_settings: 'organization',
   ambassadors: 'organization',
-  portfolio_ai: 'organization',
-  organization_ai: 'organization',
+  permissions: 'organization',
   audit_log: 'organization',
-  organization_permissions: 'organization',
   // Platform level - root only
   organization_registrations: 'platform',
   platform_users: 'platform',
   referrals: 'platform',
-  global_permissions: 'platform',
-  subscription_management: 'platform',
-  user_plans: 'platform',
-  currency: 'platform',
-  app_settings: 'platform',
-  platform_security: 'platform',
-  appearance: 'platform',
-  integrations: 'platform',
-  billing_control: 'platform',
-  root_admin: 'platform',
+  billing: 'platform',
+  platform_config: 'platform',
+  platform_admin: 'platform',
 };
 
 // Module key mapping for database lookup
@@ -94,10 +76,9 @@ const SECTION_TO_MODULE: Partial<Record<SettingsSectionKey, string>> = {
   organization: 'settings_organization',
   organization_plans: 'settings_plans',
   ambassadors: 'settings_ambassadors',
-  portfolio_ai: 'settings_portfolio_ai',
-  organization_ai: 'settings_ai',
+  ai_settings: 'settings_ai',
   audit_log: 'settings_audit',
-  organization_permissions: 'settings_permissions',
+  permissions: 'settings_permissions',
 };
 
 const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
