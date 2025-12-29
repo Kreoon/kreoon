@@ -47,7 +47,7 @@ const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
 
 const ROLE_LABELS: Record<AppRole, string> = {
   admin: "Administrador",
-  creator: "Creador",
+  creator: "Creador de Contenido",
   editor: "Productor Audio-Visual",
   client: "Cliente",
   ambassador: "Embajador", // legacy - kept for display only

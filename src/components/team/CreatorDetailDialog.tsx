@@ -161,7 +161,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
   if (!creator) return null;
 
   const roleLabels = {
-    creator: { label: "Creador", className: "bg-primary/10 text-primary" },
+    creator: { label: "Creador de Contenido", className: "bg-primary/10 text-primary" },
     editor: { label: "Productor Audio-Visual", className: "bg-info/10 text-info" }
   };
 

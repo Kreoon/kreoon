@@ -42,7 +42,7 @@ interface TalentCardProps {
 }
 
 const ROLE_STYLES = {
-  creator: { label: "Creador", className: "bg-primary/10 text-primary border-primary/20" },
+  creator: { label: "Creador de Contenido", className: "bg-primary/10 text-primary border-primary/20" },
   editor: { label: "Productor Audio-Visual", className: "bg-info/10 text-info border-info/20" }
 };
 

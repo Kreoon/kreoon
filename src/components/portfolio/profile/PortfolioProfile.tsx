@@ -65,6 +65,8 @@ interface ProfileData {
   instagram: string;
   tiktok: string;
   portfolio_url: string;
+  email: string;
+  phone: string;
   is_public: boolean;
   featured_video_url?: string;
   featured_video_thumbnail?: string;
@@ -392,6 +394,8 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                           instagram: profile.instagram,
                           tiktok: profile.tiktok,
                           portfolio_url: profile.portfolio_url,
+                          email: profile.email,
+                          phone: profile.phone,
                         }}
                       />
                     </>
@@ -1027,49 +1031,7 @@ function AboutSection({ profile }: { profile: ProfileData }) {
           </Card>
         )}
 
-        {(profile.instagram || profile.tiktok || profile.portfolio_url) && (
-          <Card className="p-6">
-            <h3 className="font-semibold mb-3">Enlaces</h3>
-            <div className="space-y-2">
-              {profile.instagram && (
-                <a 
-                  href={`https://instagram.com/${profile.instagram}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
-                >
-                  <Instagram className="h-4 w-4" />
-                  <span>@{profile.instagram}</span>
-                  <ExternalLink className="h-3 w-3 ml-auto" />
-                </a>
-              )}
-              {profile.tiktok && (
-                <a 
-                  href={`https://tiktok.com/@${profile.tiktok}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
-                >
-                  <Play className="h-4 w-4" />
-                  <span>@{profile.tiktok}</span>
-                  <ExternalLink className="h-3 w-3 ml-auto" />
-                </a>
-              )}
-              {profile.portfolio_url && (
-                <a 
-                  href={profile.portfolio_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
-                >
-                  <Globe className="h-4 w-4" />
-                  <span>{(() => { try { return new URL(profile.portfolio_url).hostname; } catch { return profile.portfolio_url; } })()}</span>
-                  <ExternalLink className="h-3 w-3 ml-auto" />
-                </a>
-              )}
-            </div>
-          </Card>
-        )}
+        {/* Contact info and social links are shown in the Contact Reveal popup only */}
       </div>
     </div>
   );
