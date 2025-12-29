@@ -13,6 +13,7 @@ import { ImpersonationBanner } from "@/components/impersonation/ImpersonationBan
 import { AICopilotProvider } from "@/contexts/AICopilotContext";
 import { TrialProvider } from "@/contexts/TrialContext";
 import { TrackingProvider } from "@/contexts/TrackingContext";
+import { BrandingProvider } from "@/contexts/BrandingContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import Dashboard from "./pages/Dashboard";
 import ContentBoard from "./pages/ContentBoard";
@@ -114,27 +115,29 @@ function AppRoutes() {
 function AppContent() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <TrackingProvider>
-          <ImpersonationProvider>
-            <TrialProvider>
-              <UnsavedChangesProvider>
-                <AchievementNotificationProvider>
-                  <AICopilotProvider>
-                    <TooltipProvider delayDuration={0}>
-                      <ImpersonationBanner />
-                      <Toaster />
-                      <Sonner />
-                      <UpdatePrompt />
-                      <AppRoutes />
-                    </TooltipProvider>
-                  </AICopilotProvider>
-                </AchievementNotificationProvider>
-              </UnsavedChangesProvider>
-            </TrialProvider>
-          </ImpersonationProvider>
-        </TrackingProvider>
-      </AuthProvider>
+      <BrandingProvider>
+        <AuthProvider>
+          <TrackingProvider>
+            <ImpersonationProvider>
+              <TrialProvider>
+                <UnsavedChangesProvider>
+                  <AchievementNotificationProvider>
+                    <AICopilotProvider>
+                      <TooltipProvider delayDuration={0}>
+                        <ImpersonationBanner />
+                        <Toaster />
+                        <Sonner />
+                        <UpdatePrompt />
+                        <AppRoutes />
+                      </TooltipProvider>
+                    </AICopilotProvider>
+                  </AchievementNotificationProvider>
+                </UnsavedChangesProvider>
+              </TrialProvider>
+            </ImpersonationProvider>
+          </TrackingProvider>
+        </AuthProvider>
+      </BrandingProvider>
     </BrowserRouter>
   );
 }
