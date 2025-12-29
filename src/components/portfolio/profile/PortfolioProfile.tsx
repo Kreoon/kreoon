@@ -20,6 +20,8 @@ import {
   Building2, UserCircle, Palette, Film, Target
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Pin } from 'lucide-react';
+import { PostActionsMenu } from '@/components/portfolio/PostActionsMenu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProfileTrustBadges } from './ProfileTrustBadges';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
@@ -607,23 +609,29 @@ function StatItem({ icon, value, label, className, onClick }: { icon: React.Reac
 function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId: string; isOwner: boolean; onSelect: (items: FeedItem[], index: number) => void; onUpload: () => void }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const fetchPosts = useCallback(async () => {
+    // Fetch portfolio posts ordered by pinned first, then by created_at
+    const { data } = await supabase
+      .from('portfolio_posts')
+      .select('id, media_url, thumbnail_url, caption, media_type, views_count, likes_count, post_type, is_pinned, pinned_at, created_at')
+      .eq('user_id', userId)
+      .neq('post_type', 'personal')
+      .order('is_pinned', { ascending: false, nullsFirst: false })
+      .order('pinned_at', { ascending: false, nullsFirst: true })
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    setPosts(data || []);
+    setLoading(false);
+  }, [userId]);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      // Fetch portfolio posts (default type for backwards compatibility)
-      const { data } = await supabase
-        .from('portfolio_posts')
-        .select('id, media_url, thumbnail_url, caption, media_type, views_count, likes_count, post_type, created_at')
-        .eq('user_id', userId)
-        .neq('post_type', 'personal')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      setPosts(data || []);
-      setLoading(false);
-    };
     fetchPosts();
-  }, [userId]);
+  }, [fetchPosts, refreshKey]);
+
+  const handleRefresh = () => setRefreshKey((k) => k + 1);
 
   if (loading) {
     return (
@@ -691,6 +699,15 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
             
+            {/* Pinned badge */}
+            {post.is_pinned && (
+              <div className="absolute top-2 left-2 z-10">
+                <div className="bg-amber-500 text-white p-1 rounded-full">
+                  <Pin className="h-3 w-3" />
+                </div>
+              </div>
+            )}
+            
             {post.media_type === 'video' && (
               <>
                 <div className="absolute top-2 right-2">
@@ -703,7 +720,19 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
               </>
             )}
 
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
+            {/* Actions menu for owner */}
+            {isOwner && (
+              <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                <PostActionsMenu
+                  postId={post.id}
+                  isPinned={post.is_pinned || false}
+                  caption={post.caption}
+                  onUpdate={handleRefresh}
+                />
+              </div>
+            )}
+
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white pointer-events-none">
               {(post.likes_count || 0) > 0 && (
                 <span className="flex items-center gap-1 text-sm font-semibold">
                   <Heart className="h-5 w-5 fill-white" />
@@ -722,22 +751,28 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
 function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: string; isOwner: boolean; onSelect: (items: FeedItem[], index: number) => void; onUpload: () => void }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const fetchPosts = useCallback(async () => {
+    const { data } = await supabase
+      .from('portfolio_posts')
+      .select('id, media_url, thumbnail_url, caption, media_type, views_count, likes_count, post_type, is_pinned, pinned_at, created_at')
+      .eq('user_id', userId)
+      .eq('post_type', 'personal')
+      .order('is_pinned', { ascending: false, nullsFirst: false })
+      .order('pinned_at', { ascending: false, nullsFirst: true })
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    setPosts(data || []);
+    setLoading(false);
+  }, [userId]);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const { data } = await supabase
-        .from('portfolio_posts')
-        .select('id, media_url, thumbnail_url, caption, media_type, views_count, likes_count, post_type, created_at')
-        .eq('user_id', userId)
-        .eq('post_type', 'personal')
-        .order('created_at', { ascending: false })
-        .limit(30);
-
-      setPosts(data || []);
-      setLoading(false);
-    };
     fetchPosts();
-  }, [userId]);
+  }, [fetchPosts, refreshKey]);
+
+  const handleRefresh = () => setRefreshKey((k) => k + 1);
 
   if (loading) {
     return (
@@ -805,9 +840,18 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
             
+            {/* Pinned badge */}
+            {post.is_pinned && (
+              <div className="absolute top-2 left-2 z-10">
+                <div className="bg-amber-500 text-white p-1 rounded-full">
+                  <Pin className="h-3 w-3" />
+                </div>
+              </div>
+            )}
+            
             {post.media_type === 'video' && (
               <>
-                <div className="absolute top-2 right-2">
+                <div className={cn("absolute top-2 right-2", isOwner && "right-10")}>
                   <Play className="h-5 w-5 text-white drop-shadow-lg fill-white/30" />
                 </div>
                 <div className="absolute bottom-2 left-2 flex items-center gap-1 text-white text-xs font-medium drop-shadow-lg">
@@ -817,7 +861,19 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
               </>
             )}
 
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
+            {/* Actions menu for owner */}
+            {isOwner && (
+              <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                <PostActionsMenu
+                  postId={post.id}
+                  isPinned={post.is_pinned || false}
+                  caption={post.caption}
+                  onUpdate={handleRefresh}
+                />
+              </div>
+            )}
+
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white pointer-events-none">
               {(post.likes_count || 0) > 0 && (
                 <span className="flex items-center gap-1 text-sm font-semibold">
                   <Heart className="h-5 w-5 fill-white" />
