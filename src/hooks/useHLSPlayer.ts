@@ -127,11 +127,61 @@ export function useHLSPlayer(
   const hlsUrl = bunnyUrls?.hls || null;
   const mp4Url = bunnyUrls?.mp4 || null;
   const thumbnailUrl = poster || bunnyUrls?.thumbnail || null;
+  
+  // Check if it's a direct MP4 URL (not from Bunny)
+  const isDirectMp4 = videoUrl && !bunnyUrls && (videoUrl.endsWith('.mp4') || videoUrl.includes('.mp4?'));
 
   // Initialize HLS player - setup only, no autoplay
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !hlsUrl) return;
+    if (!video) return;
+    
+    // If no Bunny URLs and not a direct MP4, nothing to play
+    if (!hlsUrl && !isDirectMp4) return;
+    
+    // Handle direct MP4 files (e.g., from Supabase storage)
+    if (isDirectMp4 && videoUrl) {
+      setIsLoading(true);
+      setError(null);
+      
+      video.playsInline = true;
+      video.loop = loop;
+      video.preload = 'metadata';
+      video.muted = currentMuted;
+      video.src = videoUrl;
+      
+      const handleCanPlay = () => {
+        setIsLoading(false);
+        if (autoPlay) {
+          // Inline play with fallback for direct MP4
+          video.muted = currentMuted;
+          video.play().catch(() => {
+            video.muted = true;
+            setCurrentMuted(true);
+            video.play().catch(() => {
+              console.warn('[MP4] Autoplay completely blocked');
+            });
+          });
+        }
+      };
+      
+      const handleError = () => {
+        setError('Error al cargar el video');
+        setIsLoading(false);
+      };
+      
+      video.addEventListener('canplay', handleCanPlay, { once: true });
+      video.addEventListener('error', handleError, { once: true });
+      video.load();
+      
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+        video.removeEventListener('error', handleError);
+      };
+    }
+    
+    // Continue with HLS logic for Bunny videos
+    if (!hlsUrl) return;
 
     setIsLoading(true);
     setError(null);
@@ -230,7 +280,7 @@ export function useHLSPlayer(
 
     // Fallback to MP4 for browsers without HLS support
     fallbackToMp4(video, mp4Url);
-  }, [hlsUrl, mp4Url, loop]); // Removed autoPlay and currentMuted from deps to prevent re-init
+  }, [hlsUrl, mp4Url, loop, isDirectMp4, videoUrl, autoPlay, currentMuted]); // Added isDirectMp4 and videoUrl for direct MP4 support
 
   // Helper: Play video with muted fallback for autoplay policy
   const playWithFallback = useCallback((video: HTMLVideoElement) => {
