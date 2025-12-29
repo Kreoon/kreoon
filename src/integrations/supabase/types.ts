@@ -4000,6 +4000,63 @@ export type Database = {
           },
         ]
       }
+      project_raw_assets: {
+        Row: {
+          created_at: string
+          custom_filename: string
+          file_size: number
+          file_type: string
+          id: string
+          organization_id: string
+          original_filename: string
+          project_id: string
+          storage_path: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          custom_filename: string
+          file_size?: number
+          file_type: string
+          id?: string
+          organization_id: string
+          original_filename: string
+          project_id: string
+          storage_path: string
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          custom_filename?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          organization_id?: string
+          original_filename?: string
+          project_id?: string
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_raw_assets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_raw_assets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           action_type: string

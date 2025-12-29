@@ -34,12 +34,14 @@ const TeamTab = lazy(() => import('./tabs/TeamTab').then(m => ({ default: m.Team
 const DatesTab = lazy(() => import('./tabs/DatesTab').then(m => ({ default: m.DatesTab })));
 const PaymentsTab = lazy(() => import('./tabs/PaymentsTab').then(m => ({ default: m.PaymentsTab })));
 const MaterialTab = lazy(() => import('./tabs/MaterialTab').then(m => ({ default: m.MaterialTab })));
+const RawMaterialTab = lazy(() => import('./tabs/RawMaterialTab').then(m => ({ default: m.RawMaterialTab })));
 
 // Map tab keys to block keys
 const TAB_TO_BLOCK: Record<string, BlockKey> = {
   scripts: 'script',
   video: 'video',
   material: 'material',
+  rawmaterial: 'material',
   general: 'script',
   team: 'team',
   dates: 'dates',
@@ -215,6 +217,7 @@ export function ContentDetailDialog({
     scripts: { label: 'Scripts', component: <ScriptsTab {...tabProps} selectedProduct={selectedProduct} onProductChange={handleProductChange} /> },
     video: { label: 'Video', component: <VideoTab {...tabProps} selectedProduct={selectedProduct} /> },
     material: { label: 'Material', component: <MaterialTab {...tabProps} /> },
+    rawmaterial: { label: '📁 Material Crudo', component: <RawMaterialTab {...tabProps} /> },
     general: { label: 'General', component: <GeneralTab {...tabProps} selectedProduct={selectedProduct} onProductChange={handleProductChange} /> },
     team: { label: 'Equipo', component: <TeamTab {...tabProps} /> },
     dates: { label: 'Fechas', component: <DatesTab {...tabProps} /> },
