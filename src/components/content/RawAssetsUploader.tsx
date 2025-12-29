@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import { 
   Upload, 
   X, 
-  Download, 
   Trash2, 
   FileVideo, 
   FileAudio, 
@@ -352,52 +351,6 @@ export function RawAssetsUploader({
     window.URL.revokeObjectURL(url);
   }, []);
 
-  // Download individual file using fetch for proper blob handling
-  const handleDownload = async (asset: UploadedAsset) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No autenticado');
-
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/bunny-raw-download`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: asset.storage_path, filename: asset.custom_filename }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData?.error || `Error HTTP ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      triggerBlobDownload(blob, asset.custom_filename);
-    } catch (error: any) {
-      console.error('Download error:', error);
-      toast.error('Error al descargar: ' + (error.message || 'Error desconocido'));
-    }
-  };
-
-  // Download all files (one by one)
-  const handleDownloadAllFiles = async () => {
-    if (uploadedAssets.length === 0) {
-      toast.error('No hay archivos para descargar');
-      return;
-    }
-
-    // Stagger to avoid browser/UI overload.
-    uploadedAssets.forEach((asset, idx) => {
-      window.setTimeout(() => {
-        void handleDownload(asset);
-      }, idx * 400);
-    });
-
-    toast.success('Descargas iniciadas');
-  };
-
   // Download all as ZIP - downloads the entire project folder from storage
   const handleDownloadZip = async () => {
     setDownloadingZip(true);
@@ -650,35 +603,24 @@ export function RawAssetsUploader({
           <CardTitle className="text-base flex items-center justify-between gap-3">
             <span>Material Crudo ({uploadedAssets.length})</span>
             {uploadedAssets.length > 0 && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadAllFiles}
-                >
-                  <FolderDown className="h-4 w-4 mr-2" />
-                  Descargar archivos
-                </Button>
-
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleDownloadZip}
-                  disabled={downloadingZip}
-                >
-                  {downloadingZip ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generando ZIP...
-                    </>
-                  ) : (
-                    <>
-                      <FolderDown className="h-4 w-4 mr-2" />
-                      Descargar ZIP
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleDownloadZip}
+                disabled={downloadingZip}
+              >
+                {downloadingZip ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generando ZIP...
+                  </>
+                ) : (
+                  <>
+                    <FolderDown className="h-4 w-4 mr-2" />
+                    Descargar ZIP
+                  </>
+                )}
+              </Button>
             )}
           </CardTitle>
         </CardHeader>
@@ -713,16 +655,6 @@ export function RawAssetsUploader({
                       <Badge variant="secondary" className="text-xs">
                         {asset.file_type.toUpperCase()}
                       </Badge>
-                      
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleDownload(asset)}
-                        title="Descargar"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
                       
                       {canDelete && (
                         <Button
