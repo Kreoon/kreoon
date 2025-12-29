@@ -17,6 +17,7 @@ export type SettingsSectionKey =
   | 'ambassadors'
   | 'permissions'        // Merged: organization_permissions + global_permissions
   | 'audit_log'
+  | 'tracking'           // Tracking & Analytics engine
   // Platform level (Root only)
   | 'organization_registrations'
   | 'platform_users'
@@ -61,6 +62,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   ambassadors: 'organization',
   permissions: 'organization',
   audit_log: 'organization',
+  tracking: 'organization',
   // Platform level - root only
   organization_registrations: 'platform',
   platform_users: 'platform',
@@ -79,6 +81,7 @@ const SECTION_TO_MODULE: Partial<Record<SettingsSectionKey, string>> = {
   ai_settings: 'settings_ai',
   audit_log: 'settings_audit',
   permissions: 'settings_permissions',
+  tracking: 'settings_tracking',
 };
 
 const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
