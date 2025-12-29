@@ -269,8 +269,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         )}>
           {!collapsed && (
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <span className="text-lg font-bold text-primary-foreground">K</span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden">
+                <img src="/favicon.png" alt="KREOON" className="h-9 w-9 object-cover" />
               </div>
               <div className="min-w-0">
                 <h1 className="text-sm font-bold text-sidebar-foreground">KREOON</h1>
@@ -283,8 +283,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           )}
           {collapsed && (
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">K</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden">
+              <img src="/favicon.png" alt="KREOON" className="h-9 w-9 object-cover" />
             </div>
           )}
         </div>

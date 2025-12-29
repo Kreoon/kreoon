@@ -66,8 +66,8 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
             onClick={() => handleNavClick('inicio')}
             className="flex items-center gap-3 group"
           >
-            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow">
-              <span className="text-primary-foreground font-bold text-xl">K</span>
+            <div className="h-10 w-10 rounded-xl overflow-hidden shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow">
+              <img src="/favicon.png" alt="KREOON" className="h-10 w-10 object-cover" />
             </div>
             <span className="text-foreground font-bold text-xl tracking-tight">KREOON</span>
           </button>

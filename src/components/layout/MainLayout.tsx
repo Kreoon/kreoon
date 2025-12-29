@@ -173,12 +173,12 @@ export function MainLayout({
             {/* Logo */}
             <div className="flex h-16 items-center border-b border-sidebar-border px-4 justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                  <Building2 className="h-5 w-5 text-primary-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden">
+                  <img src="/favicon.png" alt="KREOON" className="h-9 w-9 object-cover" />
                 </div>
                 <div>
-                  <h1 className="text-sm font-bold text-sidebar-foreground">Portal Cliente</h1>
-                  <p className="text-xs text-sidebar-foreground/60">Creartor Studio</p>
+                  <h1 className="text-sm font-bold text-sidebar-foreground">KREOON</h1>
+                  <p className="text-xs text-sidebar-foreground/60">Portal Cliente</p>
                 </div>
               </div>
             </div>
@@ -342,10 +342,10 @@ export function MainLayout({
         <MobileNav />
         <div className="flex-1 flex justify-center">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
-              <span className="text-sm font-bold text-primary-foreground">C</span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden">
+              <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" />
             </div>
-            <span className="text-sm font-bold">Creartor Studio</span>
+            <span className="text-sm font-bold">KREOON</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
