@@ -28,6 +28,7 @@ interface UserWithOrg {
   full_name: string;
   avatar_url: string | null;
   roles: AppRole[];
+  active_role?: AppRole | null;
   current_organization_id: string | null;
   organization_name: string | null;
 }

@@ -52,11 +52,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     rolesLoadedRef.current = rolesLoaded;
   }, [rolesLoaded]);
 
-  // When roles change, set activeRole to the stored one or the first available role
+  // When roles change, set activeRole from profile DB, localStorage, or default
   useEffect(() => {
     if (roles.length > 0) {
+      // Priority: 1) profile.active_role from DB, 2) localStorage, 3) default by priority
+      const dbRole = (profile as any)?.active_role as AppRole | null;
       const storedRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY) as AppRole | null;
-      if (storedRole && roles.includes(storedRole)) {
+      
+      if (dbRole && roles.includes(dbRole)) {
+        setActiveRoleState(dbRole);
+        localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, dbRole);
+      } else if (storedRole && roles.includes(storedRole)) {
         setActiveRoleState(storedRole);
       } else {
         // Default to first role (priority: admin > ambassador > strategist > creator > editor > client)
@@ -68,12 +74,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setActiveRoleState(null);
     }
-  }, [roles]);
+  }, [roles, profile]);
 
-  const setActiveRole = (role: AppRole) => {
+  const setActiveRole = async (role: AppRole) => {
     if (roles.includes(role)) {
       setActiveRoleState(role);
       localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, role);
+      
+      // Persist to database
+      if (user?.id) {
+        supabase
+          .from('profiles')
+          .update({ active_role: role })
+          .eq('id', user.id)
+          .then(({ error }) => {
+            if (error) console.warn('[auth] Failed to persist active_role:', error);
+          });
+      }
+      
       // Dispatch event for components that need to react to role change
       window.dispatchEvent(new CustomEvent('active-role-changed', { detail: { role } }));
     }

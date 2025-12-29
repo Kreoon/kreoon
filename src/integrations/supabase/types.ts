@@ -4003,6 +4003,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_role: string | null
           address: string | null
           ai_recommended_level: string | null
           ai_risk_flag: string | null
@@ -4054,6 +4055,7 @@ export type Database = {
           velocity_score: number | null
         }
         Insert: {
+          active_role?: string | null
           address?: string | null
           ai_recommended_level?: string | null
           ai_risk_flag?: string | null
@@ -4105,6 +4107,7 @@ export type Database = {
           velocity_score?: number | null
         }
         Update: {
+          active_role?: string | null
           address?: string | null
           ai_recommended_level?: string | null
           ai_risk_flag?: string | null
