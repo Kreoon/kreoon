@@ -81,21 +81,10 @@ serve(async (req: Request) => {
       }
 
       if (u.hostname.includes("storage.bunnycdn.com")) {
-        // /<zone>/<path...>
-        const parts = u.pathname.replace(/^\//, "").split("/");
-        const zoneFromUrl = parts[0];
-        const restPath = parts.slice(1).join("/");
-
-        // If the URL zone is not our configured storageZone, treat it as a folder prefix.
-        // This happens when older code stored URLs like:
-        //   https://<region>.storage.bunnycdn.com/raw-assets/<path>
-        // but the real zone is e.g. "ugc-colombia".
-        if (zoneFromUrl && zoneFromUrl !== storageZone) {
-          normalizedPath = `${zoneFromUrl}/${restPath}`;
-        } else {
-          normalizedPath = restPath;
-        }
-
+        // Old URLs may have been stored as https://<region>.storage.bunnycdn.com/<folder>/...
+        // where <folder> (e.g. "raw-assets") is NOT the zone, but a folder inside the zone.
+        // We take the FULL pathname as the path inside our configured storageZone.
+        normalizedPath = u.pathname.replace(/^\//, "");
         hostForStorage = u.hostname; // keep region if provided
       } else {
         normalizedPath = u.pathname.replace(/^\//, "");
@@ -104,8 +93,7 @@ serve(async (req: Request) => {
       normalizedPath = rawInput.replace(/^\//, "");
     }
 
-    // Strip accidental zone prefix only if it matches our configured zone.
-    // NOTE: Do NOT strip "raw-assets/" here; it may be a real folder in the zone.
+    // Strip configured zone prefix if someone accidentally doubled it
     if (normalizedPath.startsWith(`${storageZone}/`)) {
       normalizedPath = normalizedPath.slice(storageZone.length + 1);
     }
