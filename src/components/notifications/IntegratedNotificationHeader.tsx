@@ -413,19 +413,17 @@ export function IntegratedNotificationHeader({
       {/* Profile Button with Avatar - navigates to user's social profile */}
       <Button
         variant="ghost"
-        size="sm"
-        onClick={() => navigate(user?.id ? `/p/${user.id}` : '/portfolio')}
-        className="gap-2 px-2"
+        size="icon"
+        onClick={() => navigate('/social#profile')}
+        className="h-9 w-9 rounded-full p-0"
+        aria-label="Ver mi perfil"
       >
-        <Avatar className="h-7 w-7">
+        <Avatar className="h-8 w-8">
           <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
           <AvatarFallback className="text-xs bg-primary text-primary-foreground">
             {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
-        <span className="hidden sm:inline text-sm font-medium">
-          @{profile?.username || profile?.full_name?.split(' ')[0]?.toLowerCase() || 'usuario'}
-        </span>
       </Button>
 
       {/* Root Org Switcher - only for root admin */}
