@@ -22,6 +22,12 @@ serve(async (req: Request) => {
       );
     }
 
+    // Get Bunny credentials for authenticated downloads
+    const storageZone = Deno.env.get('BUNNY_STORAGE_ZONE');
+    const storagePassword = Deno.env.get('BUNNY_STORAGE_PASSWORD');
+    const storageHostname = Deno.env.get('BUNNY_STORAGE_HOSTNAME') || 'storage.bunnycdn.com';
+    const cdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME');
+
     const { projectId, assets } = await req.json();
 
     if (!projectId || !assets || !Array.isArray(assets) || assets.length === 0) {
@@ -43,11 +49,54 @@ serve(async (req: Request) => {
     // Download each file and add to ZIP
     for (const asset of assets) {
       try {
-        console.log(`Downloading: ${asset.filename}`);
+        console.log(`Downloading: ${asset.filename} from ${asset.url}`);
         
-        const response = await fetch(asset.url);
+        let downloadUrl = asset.url;
+        let headers: Record<string, string> = {};
+
+        // Check if URL is a storage URL (needs authentication) or CDN URL
+        if (asset.url.includes('storage.bunnycdn.com') || asset.url.includes('.storage.bunnycdn.com')) {
+          // Storage URL - needs AccessKey
+          headers['AccessKey'] = storagePassword || '';
+          console.log(`Using authenticated download for storage URL`);
+        } else if (asset.url.includes('.b-cdn.net') || (cdnHostname && asset.url.includes(cdnHostname))) {
+          // CDN URL - should be public, no auth needed
+          console.log(`Using public CDN URL`);
+        } else if (asset.url.startsWith('raw-assets/')) {
+          // Path only - construct storage URL with auth
+          downloadUrl = `https://${storageHostname}/${storageZone}/${asset.url}`;
+          headers['AccessKey'] = storagePassword || '';
+          console.log(`Constructed storage URL: ${downloadUrl}`);
+        }
+        
+        const response = await fetch(downloadUrl, { headers });
+        
         if (!response.ok) {
           console.error(`Failed to download ${asset.filename}: ${response.status}`);
+          
+          // Try alternate URL if first attempt failed
+          if (!asset.url.includes('storage.bunnycdn.com') && storageZone && storagePassword) {
+            // Extract path from URL and try storage directly
+            const pathMatch = asset.url.match(/raw-assets\/.+$/);
+            if (pathMatch) {
+              const storagePath = pathMatch[0];
+              const altUrl = `https://${storageHostname}/${storageZone}/${storagePath}`;
+              console.log(`Trying alternate storage URL: ${altUrl}`);
+              
+              const altResponse = await fetch(altUrl, {
+                headers: { 'AccessKey': storagePassword }
+              });
+              
+              if (altResponse.ok) {
+                const arrayBuffer = await altResponse.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+                await zipWriter.add(asset.filename, new Uint8ArrayReader(uint8Array));
+                successCount++;
+                continue;
+              }
+            }
+          }
+          
           errorCount++;
           continue;
         }
@@ -67,7 +116,17 @@ serve(async (req: Request) => {
     await zipWriter.close();
     const zipBlob = await blobWriter.getData();
     
-    console.log(`ZIP created: ${successCount} files, ${errorCount} errors`);
+    console.log(`ZIP created: ${successCount} files, ${errorCount} errors, size: ${zipBlob.size} bytes`);
+
+    if (successCount === 0) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'No se pudo descargar ningún archivo para el ZIP'
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Convert blob to base64 for transfer
     const arrayBuffer = await zipBlob.arrayBuffer();
