@@ -49,6 +49,9 @@ export default defineConfig(({ mode }) => ({
         clientsClaim: false,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
+        // Listen for SKIP_WAITING message from the app
+        // This allows the UpdatePrompt component to trigger the new SW activation
+        navigateFallback: undefined,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
@@ -66,6 +69,9 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
+      // InjectManifest allows custom SW code including SKIP_WAITING handler
+      // But for simplicity, we use generateSW with the built-in message listener
+      injectRegister: 'auto',
       devOptions: {
         // Disable SW in preview/dev to avoid controller changes that look like a reload on tab switch.
         enabled: mode === 'production'
