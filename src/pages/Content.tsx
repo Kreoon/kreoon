@@ -312,8 +312,8 @@ const Content = () => {
           {/* Medieval Banner */}
           <MedievalBanner
             icon={Film}
-            title="Galería de Reliquias"
-            subtitle="Videos finales y portafolio público del reino"
+            title="Portafolio"
+            subtitle="Videos finales y contenido público"
             action={
               isAdmin && (
                 <Dialog open={newVideoOpen} onOpenChange={setNewVideoOpen}>

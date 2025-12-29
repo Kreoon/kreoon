@@ -296,8 +296,8 @@ const Settings = () => {
         {/* Medieval Banner */}
         <MedievalBanner
           icon={Cog}
-          title="Cámara del Consejo"
-          subtitle="Configura los decretos y ordenanzas del reino"
+          title="Configuración"
+          subtitle="Configura tu cuenta y organización"
           action={activeSection !== 'main' ? (
             <Button 
               variant="ghost" 

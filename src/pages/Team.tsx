@@ -350,7 +350,7 @@ export default function Team() {
       {/* Medieval Banner with org info */}
       <MedievalBanner
         icon={Swords}
-        title={currentOrg?.name ? `Equipo de ${currentOrg.name}` : "Consejo del Reino"}
+        title={currentOrg?.name ? `Equipo de ${currentOrg.name}` : "Equipo"}
         subtitle={`Administra los miembros de tu organización (${profiles.length} miembros)`}
         action={
           <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>

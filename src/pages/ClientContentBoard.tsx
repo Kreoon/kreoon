@@ -309,8 +309,8 @@ export default function ClientContentBoard() {
         {/* Medieval Banner */}
         <MedievalBanner
           icon={Scroll}
-          title="Mesa de Batallas"
-          subtitle={`${clientInfo.name} - Revisión y aprobación de misiones`}
+          title="KREOON Projects"
+          subtitle={`${clientInfo.name} - Revisión y aprobación de proyectos`}
         />
 
         {/* Search and Review All Button */}
