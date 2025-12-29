@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,11 +12,12 @@ import { useRecommendations } from '@/hooks/useRecommendations';
 import { usePersistedValue } from '@/hooks/useStatePersistence';
 import StoriesBar from '@/components/portfolio/feed/StoriesBar';
 import { EnhancedSmartSearch } from '@/components/portfolio/EnhancedSmartSearch';
+import { SocialNotificationsDropdown } from '@/components/portfolio/SocialNotificationsDropdown';
 import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
-import { RefreshCw, Sparkles, Plus, ImageIcon, Film } from 'lucide-react';
+import { RefreshCw, Sparkles, Plus, ImageIcon, Film, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -322,8 +324,22 @@ export default function FeedPage() {
       {/* Header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-3">
-          {/* Enhanced search bar */}
-          <EnhancedSmartSearch className="mb-3" />
+          {/* Search + actions (desktop) */}
+          <div className="flex items-center gap-2 mb-3">
+            <EnhancedSmartSearch className="mb-0 flex-1" />
+            <div className="hidden md:flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-foreground hover:bg-muted"
+                onClick={() => navigate('/explore')}
+                aria-label="Explorar"
+              >
+                <Compass className="h-5 w-5" />
+              </Button>
+              <SocialNotificationsDropdown />
+            </div>
+          </div>
           
           {/* Tab switcher */}
           <div className="flex items-center justify-between">
