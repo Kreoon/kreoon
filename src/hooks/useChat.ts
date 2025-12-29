@@ -103,83 +103,78 @@ export function useChat() {
         .select('conversation_id')
         .eq('user_id', user.id);
 
-      if (!participations?.length) {
-        setConversations([]);
-        setLoading(false);
-        return;
-      }
+      let convsWithDetails: any[] = [];
 
-      const conversationIds = participations.map(p => p.conversation_id);
+      if (participations?.length) {
+        const conversationIds = participations.map(p => p.conversation_id);
 
-      let query = supabase
-        .from('chat_conversations')
-        .select('*')
-        .in('id', conversationIds)
-        .order('updated_at', { ascending: false });
-
-      // Filter by org if user has one
-      if (orgId) {
-        query = query.or(`organization_id.eq.${orgId},organization_id.is.null`);
-      }
-
-      const { data: convs } = await query;
-
-      if (!convs) {
-        setConversations([]);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch participants for each conversation
-      const convsWithDetails = await Promise.all(convs.map(async (conv) => {
-        const { data: participants } = await supabase
-          .from('chat_participants')
-          .select('user_id')
-          .eq('conversation_id', conv.id);
-
-        const participantIds = participants?.map(p => p.user_id) || [];
-        
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in('id', participantIds);
-
-        const { data: lastMessage } = await supabase
-          .from('chat_messages')
+        let query = supabase
+          .from('chat_conversations')
           .select('*')
-          .eq('conversation_id', conv.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .in('id', conversationIds)
+          .order('updated_at', { ascending: false });
 
-        // Count unread messages
-        const { data: participant } = await supabase
-          .from('chat_participants')
-          .select('last_read_at')
-          .eq('conversation_id', conv.id)
-          .eq('user_id', user.id)
-          .maybeSingle();
+        // Filter by org if user has one
+        if (orgId) {
+          query = query.or(`organization_id.eq.${orgId},organization_id.is.null`);
+        }
 
-        const { count: unreadCount } = await supabase
-          .from('chat_messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('conversation_id', conv.id)
-          .neq('sender_id', user.id)
-          .gt('created_at', participant?.last_read_at || '1970-01-01');
+        const { data: convs } = await query;
 
-        return {
-          ...conv,
-          chat_type: conv.chat_type || 'direct',
-          participants: participants?.map(p => ({
-            user_id: p.user_id,
-            profile: profiles?.find(pr => pr.id === p.user_id)
-          })),
-          last_message: lastMessage || undefined,
-          unread_count: unreadCount || 0
-        };
-      }));
+        if (convs) {
+          // Fetch participants for each conversation
+          convsWithDetails = await Promise.all(convs.map(async (conv) => {
+            const { data: participants } = await supabase
+              .from('chat_participants')
+              .select('user_id')
+              .eq('conversation_id', conv.id);
+
+            const participantIds = participants?.map(p => p.user_id) || [];
+            
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, full_name, avatar_url')
+              .in('id', participantIds);
+
+            const { data: lastMessage } = await supabase
+              .from('chat_messages')
+              .select('*')
+              .eq('conversation_id', conv.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            // Count unread messages
+            const { data: participant } = await supabase
+              .from('chat_participants')
+              .select('last_read_at')
+              .eq('conversation_id', conv.id)
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+            const { count: unreadCount } = await supabase
+              .from('chat_messages')
+              .select('*', { count: 'exact', head: true })
+              .eq('conversation_id', conv.id)
+              .neq('sender_id', user.id)
+              .gt('created_at', participant?.last_read_at || '1970-01-01');
+
+            return {
+              ...conv,
+              chat_type: conv.chat_type || 'direct',
+              participants: participants?.map(p => ({
+                user_id: p.user_id,
+                profile: profiles?.find(pr => pr.id === p.user_id)
+              })),
+              last_message: lastMessage || undefined,
+              unread_count: unreadCount || 0
+            };
+          }));
+        }
+      }
 
       // Add virtual AI assistant conversation if org has it enabled
+      // This should happen even if user has no other conversations
       if (orgId) {
         // Fetch organization name
         const { data: orgData } = await supabase
