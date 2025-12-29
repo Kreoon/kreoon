@@ -110,44 +110,44 @@ export default function PendingAccess() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <Button
           variant="ghost"
           onClick={() => navigate('/')}
-          className="mb-6 text-slate-400 hover:text-white"
+          className="mb-6 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver a KREOON
         </Button>
 
-        <Card className="bg-slate-900/80 border-slate-800 text-center">
+        <Card className="text-center">
           <CardHeader className="space-y-4">
-            <div className="mx-auto w-20 h-20 rounded-full bg-violet-500/20 flex items-center justify-center">
-              <Clock className="w-10 h-10 text-violet-400 animate-pulse" />
+            <div className="mx-auto w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
+              <Clock className="w-10 h-10 text-primary animate-pulse" />
             </div>
-            <CardTitle className="text-2xl text-white">¡Registro exitoso!</CardTitle>
-            <CardDescription className="text-slate-400 text-base">
+            <CardTitle className="text-2xl font-display">¡Registro exitoso!</CardTitle>
+            <CardDescription className="text-base">
               Tu cuenta ha sido creada. Ahora necesitas solicitar acceso para poder usar la plataforma.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
-                <Sparkles className="w-4 h-4 text-violet-400" />
+            <div className="p-4 rounded-xl bg-muted/50 border border-border">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <Sparkles className="w-4 h-4 text-primary" />
                 <span>Tu cuenta está registrada como:</span>
               </div>
-              <p className="font-medium text-white">{user?.email}</p>
+              <p className="font-medium text-foreground">{user?.email}</p>
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Para activar tu cuenta, escríbenos por WhatsApp indicando qué rol deseas:
               </p>
-              <ul className="text-sm text-left space-y-1 text-slate-400 pl-4">
-                <li>• <strong className="text-white">Creador:</strong> Graba contenido para marcas</li>
-                <li>• <strong className="text-white">Editor:</strong> Edita videos profesionalmente</li>
-                <li>• <strong className="text-white">Cliente:</strong> Contrata creadores para tu marca</li>
+              <ul className="text-sm text-left space-y-1 text-muted-foreground pl-4">
+                <li>• <strong className="text-foreground">Creador:</strong> Graba contenido para marcas</li>
+                <li>• <strong className="text-foreground">Editor:</strong> Edita videos profesionalmente</li>
+                <li>• <strong className="text-foreground">Cliente:</strong> Contrata creadores para tu marca</li>
               </ul>
             </div>
 
@@ -160,12 +160,12 @@ export default function PendingAccess() {
               Solicitar mi acceso por WhatsApp
             </Button>
 
-            <div className="pt-4 border-t border-slate-700">
+            <div className="pt-4 border-t border-border">
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={handleSignOut}
-                className="text-slate-400 hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Cerrar sesión
