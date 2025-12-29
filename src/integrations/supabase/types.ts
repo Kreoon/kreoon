@@ -1629,6 +1629,45 @@ export type Database = {
           },
         ]
       }
+      contact_reveals: {
+        Row: {
+          id: string
+          revealed_at: string
+          revealed_profile_id: string
+          revealer_id: string
+          tokens_spent: number
+        }
+        Insert: {
+          id?: string
+          revealed_at?: string
+          revealed_profile_id: string
+          revealer_id: string
+          tokens_spent?: number
+        }
+        Update: {
+          id?: string
+          revealed_at?: string
+          revealed_profile_id?: string
+          revealer_id?: string
+          tokens_spent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_reveals_revealed_profile_id_fkey"
+            columns: ["revealed_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_reveals_revealer_id_fkey"
+            columns: ["revealer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content: {
         Row: {
           admin_guidelines: string | null
@@ -3391,6 +3430,7 @@ export type Database = {
           admin_email: string | null
           admin_name: string | null
           admin_phone: string | null
+          allow_public_network: boolean | null
           billing_email: string | null
           blocked_at: string | null
           blocked_by: string | null
@@ -3430,6 +3470,7 @@ export type Database = {
           admin_email?: string | null
           admin_name?: string | null
           admin_phone?: string | null
+          allow_public_network?: boolean | null
           billing_email?: string | null
           blocked_at?: string | null
           blocked_by?: string | null
@@ -3469,6 +3510,7 @@ export type Database = {
           admin_email?: string | null
           admin_name?: string | null
           admin_phone?: string | null
+          allow_public_network?: boolean | null
           billing_email?: string | null
           blocked_at?: string | null
           blocked_by?: string | null
@@ -4026,6 +4068,8 @@ export type Database = {
           email: string
           experience_level: string | null
           facebook: string | null
+          featured_video_thumbnail: string | null
+          featured_video_url: string | null
           full_name: string
           has_seen_tour: boolean | null
           id: string
@@ -4043,6 +4087,7 @@ export type Database = {
           rate_currency: string | null
           rate_per_content: number | null
           reliability_score: number | null
+          reveal_tokens: number | null
           social_linkedin: string | null
           social_twitter: string | null
           social_youtube: string | null
@@ -4078,6 +4123,8 @@ export type Database = {
           email: string
           experience_level?: string | null
           facebook?: string | null
+          featured_video_thumbnail?: string | null
+          featured_video_url?: string | null
           full_name: string
           has_seen_tour?: boolean | null
           id: string
@@ -4095,6 +4142,7 @@ export type Database = {
           rate_currency?: string | null
           rate_per_content?: number | null
           reliability_score?: number | null
+          reveal_tokens?: number | null
           social_linkedin?: string | null
           social_twitter?: string | null
           social_youtube?: string | null
@@ -4130,6 +4178,8 @@ export type Database = {
           email?: string
           experience_level?: string | null
           facebook?: string | null
+          featured_video_thumbnail?: string | null
+          featured_video_url?: string | null
           full_name?: string
           has_seen_tour?: boolean | null
           id?: string
@@ -4147,6 +4197,7 @@ export type Database = {
           rate_currency?: string | null
           rate_per_content?: number | null
           reliability_score?: number | null
+          reveal_tokens?: number | null
           social_linkedin?: string | null
           social_twitter?: string | null
           social_youtube?: string | null
@@ -4662,6 +4713,57 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      social_notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          is_read: boolean
+          message: string | null
+          notification_type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          notification_type: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          notification_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       story_views: {
         Row: {
