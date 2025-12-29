@@ -2794,6 +2794,56 @@ export type Database = {
           },
         ]
       }
+      organization_ai_insights_config: {
+        Row: {
+          analysis_frequency: string | null
+          auto_alerts_enabled: boolean | null
+          auto_recommendations_enabled: boolean | null
+          created_at: string
+          enabled: boolean | null
+          id: string
+          last_analysis_at: string | null
+          model: string | null
+          organization_id: string
+          provider: string | null
+          updated_at: string
+        }
+        Insert: {
+          analysis_frequency?: string | null
+          auto_alerts_enabled?: boolean | null
+          auto_recommendations_enabled?: boolean | null
+          created_at?: string
+          enabled?: boolean | null
+          id?: string
+          last_analysis_at?: string | null
+          model?: string | null
+          organization_id: string
+          provider?: string | null
+          updated_at?: string
+        }
+        Update: {
+          analysis_frequency?: string | null
+          auto_alerts_enabled?: boolean | null
+          auto_recommendations_enabled?: boolean | null
+          created_at?: string
+          enabled?: boolean | null
+          id?: string
+          last_analysis_at?: string | null
+          model?: string | null
+          organization_id?: string
+          provider?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_ai_insights_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_ai_modules: {
         Row: {
           category: string | null
@@ -3231,6 +3281,103 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "organization_statuses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_tracking_config: {
+        Row: {
+          allowed_event_categories: string[] | null
+          anonymize_sensitive_data: boolean | null
+          created_at: string
+          debug_mode: boolean | null
+          external_tracking_enabled: boolean | null
+          id: string
+          organization_id: string
+          require_consent: boolean | null
+          retention_days: number | null
+          tracking_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          allowed_event_categories?: string[] | null
+          anonymize_sensitive_data?: boolean | null
+          created_at?: string
+          debug_mode?: boolean | null
+          external_tracking_enabled?: boolean | null
+          id?: string
+          organization_id: string
+          require_consent?: boolean | null
+          retention_days?: number | null
+          tracking_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          allowed_event_categories?: string[] | null
+          anonymize_sensitive_data?: boolean | null
+          created_at?: string
+          debug_mode?: boolean | null
+          external_tracking_enabled?: boolean | null
+          id?: string
+          organization_id?: string
+          require_consent?: boolean | null
+          retention_days?: number | null
+          tracking_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_tracking_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_tracking_integrations: {
+        Row: {
+          api_key: string | null
+          config: Json | null
+          created_at: string
+          enabled: boolean | null
+          events_allowed: string[] | null
+          id: string
+          organization_id: string
+          provider: string
+          provider_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string | null
+          config?: Json | null
+          created_at?: string
+          enabled?: boolean | null
+          events_allowed?: string[] | null
+          id?: string
+          organization_id: string
+          provider: string
+          provider_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string | null
+          config?: Json | null
+          created_at?: string
+          enabled?: boolean | null
+          events_allowed?: string[] | null
+          id?: string
+          organization_id?: string
+          provider?: string
+          provider_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_tracking_integrations_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -4706,6 +4853,496 @@ export type Database = {
           },
         ]
       }
+      tracking_ai_insights: {
+        Row: {
+          action_taken: boolean | null
+          action_taken_at: string | null
+          action_taken_by: string | null
+          created_at: string
+          description: string
+          dismissed: boolean | null
+          dismissed_at: string | null
+          dismissed_by: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          insight_type: string
+          metadata: Json | null
+          organization_id: string
+          severity: string | null
+          title: string
+        }
+        Insert: {
+          action_taken?: boolean | null
+          action_taken_at?: string | null
+          action_taken_by?: string | null
+          created_at?: string
+          description: string
+          dismissed?: boolean | null
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          insight_type: string
+          metadata?: Json | null
+          organization_id: string
+          severity?: string | null
+          title: string
+        }
+        Update: {
+          action_taken?: boolean | null
+          action_taken_at?: string | null
+          action_taken_by?: string | null
+          created_at?: string
+          description?: string
+          dismissed?: boolean | null
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          insight_type?: string
+          metadata?: Json | null
+          organization_id?: string
+          severity?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_ai_insights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracking_event_definitions: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          event_name: string
+          id: string
+          is_active: boolean | null
+          is_sensitive: boolean | null
+          schema: Json | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          event_name: string
+          id?: string
+          is_active?: boolean | null
+          is_sensitive?: boolean | null
+          schema?: Json | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          event_name?: string
+          id?: string
+          is_active?: boolean | null
+          is_sensitive?: boolean | null
+          schema?: Json | null
+        }
+        Relationships: []
+      }
+      tracking_events: {
+        Row: {
+          context: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_category: string
+          event_name: string
+          id: string
+          is_sensitive: boolean | null
+          metadata: Json | null
+          organization_id: string | null
+          processed_at: string | null
+          user_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name?: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracking_events_2024_12: {
+        Row: {
+          context: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_category: string
+          event_name: string
+          id: string
+          is_sensitive: boolean | null
+          metadata: Json | null
+          organization_id: string | null
+          processed_at: string | null
+          user_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name?: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: []
+      }
+      tracking_events_2025_01: {
+        Row: {
+          context: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_category: string
+          event_name: string
+          id: string
+          is_sensitive: boolean | null
+          metadata: Json | null
+          organization_id: string | null
+          processed_at: string | null
+          user_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name?: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: []
+      }
+      tracking_events_2025_02: {
+        Row: {
+          context: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_category: string
+          event_name: string
+          id: string
+          is_sensitive: boolean | null
+          metadata: Json | null
+          organization_id: string | null
+          processed_at: string | null
+          user_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name?: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: []
+      }
+      tracking_events_2025_03: {
+        Row: {
+          context: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_category: string
+          event_name: string
+          id: string
+          is_sensitive: boolean | null
+          metadata: Json | null
+          organization_id: string | null
+          processed_at: string | null
+          user_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name?: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: []
+      }
+      tracking_events_2025_04: {
+        Row: {
+          context: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_category: string
+          event_name: string
+          id: string
+          is_sensitive: boolean | null
+          metadata: Json | null
+          organization_id: string | null
+          processed_at: string | null
+          user_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name?: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: []
+      }
+      tracking_events_2025_05: {
+        Row: {
+          context: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_category: string
+          event_name: string
+          id: string
+          is_sensitive: boolean | null
+          metadata: Json | null
+          organization_id: string | null
+          processed_at: string | null
+          user_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name?: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: []
+      }
+      tracking_events_2025_06: {
+        Row: {
+          context: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_category: string
+          event_name: string
+          id: string
+          is_sensitive: boolean | null
+          metadata: Json | null
+          organization_id: string | null
+          processed_at: string | null
+          user_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_category?: string
+          event_name?: string
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          processed_at?: string | null
+          user_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: []
+      }
       up_ai_config: {
         Row: {
           anti_fraud_enabled: boolean | null
@@ -5878,6 +6515,7 @@ export type Database = {
       }
       cleanup_expired_stories: { Args: never; Returns: undefined }
       cleanup_old_audit_logs: { Args: never; Returns: undefined }
+      cleanup_old_tracking_events: { Args: never; Returns: undefined }
       create_chat_conversation: {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
         Returns: string
@@ -5899,6 +6537,7 @@ export type Database = {
         Returns: undefined
       }
       create_default_up_rules: { Args: { _org_id: string }; Returns: undefined }
+      create_tracking_partition: { Args: never; Returns: undefined }
       emit_up_event:
         | {
             Args: {
