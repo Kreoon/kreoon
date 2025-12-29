@@ -586,8 +586,8 @@ Responde SOLO en formato JSON con esta estructura exacta:
       // Handle MODULE_INACTIVE error
       if (data?.error === 'MODULE_INACTIVE') {
         toast({ 
-          title: "IA no habilitada", 
-          description: data?.message || "El módulo de IA 'Generación de Guiones' no está activado. Un administrador debe habilitarlo en Configuración → IA & Modelos.",
+          title: "Asistente no habilitado", 
+          description: data?.message || "El módulo de asistencia IA 'Generación de Guiones' no está activado. Un administrador debe habilitarlo en Configuración → IA & Modelos.",
           variant: "destructive" 
         });
         return;

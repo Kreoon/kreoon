@@ -21,12 +21,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-// Medieval Rank Icons & Labels
+// Prestige Level Icons & Labels
 const LEVEL_ICONS = {
-  bronze: '⚔️',
-  silver: '🛡️',
-  gold: '👑',
-  diamond: '🏰'
+  bronze: '🥉',
+  silver: '🥈',
+  gold: '🥇',
+  diamond: '💎'
 };
 
 const LEVEL_LABELS = {
@@ -52,8 +52,8 @@ const LEVEL_BG_COLORS = {
 
 const RANK_STYLES = [
   { icon: Crown, color: 'text-yellow-600', bg: 'bg-gradient-to-br from-yellow-600/30 to-yellow-700/10 border-yellow-600/50' },
-  { icon: Shield, color: 'text-slate-400', bg: 'bg-gradient-to-br from-slate-400/30 to-slate-500/10 border-slate-400/50' },
-  { icon: Sword, color: 'text-amber-700', bg: 'bg-gradient-to-br from-amber-700/30 to-amber-800/10 border-amber-700/50' }
+  { icon: Medal, color: 'text-slate-400', bg: 'bg-gradient-to-br from-slate-400/30 to-slate-500/10 border-slate-400/50' },
+  { icon: Award, color: 'text-amber-700', bg: 'bg-gradient-to-br from-amber-700/30 to-amber-800/10 border-amber-700/50' }
 ];
 
 export default function RankingPage() {
@@ -545,14 +545,14 @@ function GlobalPointsHistory() {
   };
 
   const TRANSACTION_LABELS: Record<string, string> = {
-    base_completion: 'Misión Cumplida',
-    early_delivery: 'Entrega Veloz',
-    late_delivery: 'Tardanza',
-    correction_needed: 'Corrección Requerida',
-    perfect_streak: 'Racha de Victoria',
-    five_star_rating: 'Honor por Excelencia',
-    viral_hook: 'Golpe Certero',
-    manual_adjustment: 'Decreto Real'
+    base_completion: 'Entrega Completada',
+    early_delivery: 'Entrega Anticipada',
+    late_delivery: 'Entrega Tardía',
+    correction_needed: 'Ajuste Requerido',
+    perfect_streak: 'Racha de Excelencia',
+    five_star_rating: 'Calidad Premium',
+    viral_hook: 'Alto Impacto',
+    manual_adjustment: 'Ajuste Administrativo'
   };
 
   if (loading) {
@@ -569,8 +569,8 @@ function GlobalPointsHistory() {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p className="text-lg font-medium font-medieval">Las crónicas están en blanco</p>
-        <p className="text-sm font-body">Las hazañas de los caballeros aparecerán aquí</p>
+        <p className="text-lg font-medium">Sin actividad reciente</p>
+        <p className="text-sm">El historial de actividad aparecerá aquí</p>
       </div>
     );
   }
@@ -584,25 +584,25 @@ function GlobalPointsHistory() {
         >
           <Avatar className="h-10 w-10 border-2 border-border">
             <AvatarImage src={tx.profiles?.avatar_url || undefined} />
-            <AvatarFallback className="text-xs font-medieval">
+            <AvatarFallback className="text-xs">
               {tx.profiles?.full_name?.slice(0, 2).toUpperCase() || '??'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm truncate font-medieval">{tx.profiles?.full_name || 'Guerrero'}</p>
-            <p className="text-xs text-muted-foreground font-body">
+            <p className="font-medium text-sm truncate">{tx.profiles?.full_name || 'Usuario'}</p>
+            <p className="text-xs text-muted-foreground">
               {TRANSACTION_LABELS[tx.transaction_type] || tx.transaction_type}
               {tx.description && ` — ${tx.description}`}
             </p>
           </div>
           <div className="text-right">
             <p className={cn(
-              "font-bold font-medieval",
+              "font-bold",
               tx.points > 0 ? "text-success" : "text-destructive"
             )}>
-              {tx.points > 0 ? '+' : ''}{tx.points} ⚔️
+              {tx.points > 0 ? '+' : ''}{tx.points} UP
             </p>
-            <p className="text-xs text-muted-foreground font-body">
+            <p className="text-xs text-muted-foreground">
               {format(new Date(tx.created_at), "d MMM HH:mm", { locale: es })}
             </p>
           </div>

@@ -20,10 +20,10 @@ interface UPMyProgressProps {
 }
 
 const LEVEL_ICONS = {
-  bronze: '⚔️',
-  silver: '🛡️',
-  gold: '👑',
-  diamond: '🏰'
+  bronze: '🥉',
+  silver: '🥈',
+  gold: '🥇',
+  diamond: '💎'
 };
 
 const LEVEL_LABELS = {
@@ -142,7 +142,7 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
                 <Flame className="w-6 h-6 text-orange-500" />
                 <div>
                   <p className="text-2xl font-bold text-orange-500">{streak}</p>
-                  <p className="text-xs text-orange-400">Racha</p>
+                  <p className="text-xs text-orange-400">Racha Activa</p>
                 </div>
               </div>
             )}
@@ -176,9 +176,9 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Target className="w-5 h-5 text-purple-500" />
-              Misiones Activas
+              Objetivos Activos
             </CardTitle>
-            <CardDescription>Completa misiones para ganar UP extra</CardDescription>
+            <CardDescription>Completa objetivos para ganar UP extra</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {activeQuests.length > 0 ? (
@@ -216,7 +216,7 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
             ) : (
               <div className="text-center py-6 text-muted-foreground">
                 <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>No hay misiones activas</p>
+                <p>No hay objetivos activos</p>
               </div>
             )}
           </CardContent>
@@ -357,14 +357,14 @@ function getAIExplanation(transaction: any): string {
   const points = transaction.points;
 
   const explanations: Record<string, string> = {
-    base_completion: `Ganaste ${points} UP por completar una entrega. Cada entrega completada suma puntos base a tu nivel.`,
+    base_completion: `Ganaste ${points} UP por completar una entrega. Cada entrega completada suma puntos a tu nivel.`,
     early_delivery: `¡Excelente! Recibiste ${points} UP extra por entregar antes del deadline. Las entregas anticipadas acumulan bonificaciones.`,
     late_delivery: `Perdiste ${Math.abs(points)} UP por entregar después del deadline. Intenta entregar a tiempo para mantener tu racha.`,
-    perfect_streak: `¡Racha perfecta! Ganaste ${points} UP por mantener entregas consecutivas a tiempo. Sigue así para más bonificaciones.`,
-    five_star_rating: `Recibiste ${points} UP por una aprobación sin correcciones. La calidad de tu trabajo se refleja en tus puntos.`,
+    perfect_streak: `¡Racha de excelencia! Ganaste ${points} UP por mantener entregas consecutivas a tiempo. Sigue así para más bonificaciones.`,
+    five_star_rating: `Recibiste ${points} UP por una aprobación sin correcciones. La calidad de tu trabajo se refleja en tu prestigio.`,
     correction_needed: `Perdiste ${Math.abs(points)} UP porque se solicitaron correcciones. Revisa el feedback para mejorar.`,
     manual_adjustment: `Un administrador ajustó tus puntos. ${points > 0 ? 'Esto puede ser por logros especiales o reconocimientos.' : 'Consulta con tu equipo para más detalles.'}`,
-    quest_completion: `¡Misión completada! Ganaste ${points} UP por cumplir un objetivo especial.`,
+    quest_completion: `¡Objetivo completado! Ganaste ${points} UP por cumplir una meta especial.`,
     achievement_bonus: `Desbloqueaste un logro y ganaste ${points} UP como recompensa.`
   };
 

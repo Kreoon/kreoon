@@ -122,11 +122,11 @@ export function BoardAIPanel({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
-            {mode === 'card' ? 'Análisis de Tarjeta' : 'Análisis de Tablero'}
+            {mode === 'card' ? 'Análisis de Proyecto' : 'Análisis Estratégico'}
           </SheetTitle>
           <SheetDescription>
             {mode === 'card' 
-              ? `Análisis IA para: ${contentTitle || 'Tarjeta seleccionada'}`
+              ? `Análisis inteligente: ${contentTitle || 'Proyecto seleccionado'}`
               : 'Análisis inteligente del estado del tablero'
             }
           </SheetDescription>
@@ -139,9 +139,9 @@ export function BoardAIPanel({
               <div className="rounded-full bg-amber-500/10 p-4 mb-4">
                 <AlertTriangle className="h-12 w-12 text-amber-500" />
               </div>
-              <h3 className="font-medium mb-2 text-lg">IA no habilitada</h3>
+              <h3 className="font-medium mb-2 text-lg">Asistente no habilitado</h3>
               <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-                El módulo de IA para {mode === 'card' ? 'tarjetas' : 'tablero'} no está activado para tu organización.
+                El asistente estratégico para {mode === 'card' ? 'proyectos' : 'tablero'} no está activado para tu organización.
               </p>
               <Badge variant="outline" className="mb-4">
                 Módulo: {moduleInactive}
@@ -157,12 +157,12 @@ export function BoardAIPanel({
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <Brain className="h-16 w-16 text-muted-foreground/30 mb-4" />
               <h3 className="font-medium mb-2">
-                {mode === 'card' ? 'Analizar esta tarjeta' : 'Analizar el tablero'}
+                {mode === 'card' ? 'Analizar este proyecto' : 'Análisis estratégico'}
               </h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-sm">
                 {mode === 'card' 
-                  ? 'La IA analizará el estado, riesgos y recomendará acciones para esta tarjeta.'
-                  : 'La IA detectará cuellos de botella, problemas de flujo y oportunidades de mejora.'
+                  ? 'El asistente analizará el estado, riesgos y recomendará acciones para este proyecto.'
+                  : 'El asistente detectará cuellos de botella, problemas de flujo y oportunidades de mejora.'
                 }
               </p>
               <Button 

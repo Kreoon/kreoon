@@ -965,12 +965,12 @@ export default function Auth() {
                   <span className="font-bold text-lg font-display">KREOON</span>
                 </div>
                 <CardTitle className="text-2xl">
-                  {authTab === 'login' ? 'Bienvenido de vuelta' : 'Crear cuenta'}
+                  {authTab === 'login' ? 'Accede a tu cuenta' : 'Crear cuenta'}
                 </CardTitle>
                 <CardDescription>
                   {authTab === 'login' 
                     ? 'Ingresa tus credenciales para continuar' 
-                    : 'Completa tus datos para registrarte'}
+                    : 'Completa tus datos para comenzar'}
                 </CardDescription>
               </CardHeader>
               <CardContent>

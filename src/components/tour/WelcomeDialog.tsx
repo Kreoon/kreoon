@@ -36,10 +36,10 @@ export function WelcomeDialog({
               <Sparkles className="h-10 w-10 text-primary-foreground" />
             </div>
             <DialogTitle className="text-2xl font-bold">
-              ¡Bienvenido, {userName}! 👋
+              Bienvenido, {userName}
             </DialogTitle>
             <DialogDescription className="text-base pt-2">
-              Has iniciado sesión como{" "}
+              Estás accediendo como{" "}
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold bg-primary/20 text-primary">
                 {roleName}
               </span>
