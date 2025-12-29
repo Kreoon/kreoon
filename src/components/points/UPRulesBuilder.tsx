@@ -38,7 +38,7 @@ const EVENT_TYPES = [
 ];
 
 const APPLICABLE_ROLES = [
-  { value: 'creator', label: 'Creador' },
+  { value: 'creator', label: 'Creador de Contenido' },
   { value: 'editor', label: 'Productor Audio-Visual' },
   { value: 'strategist', label: 'Estratega' },
   { value: 'designer', label: 'Diseñador' },

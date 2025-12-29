@@ -5,7 +5,7 @@ import { AppRole, AmbassadorLevel } from '@/types/database';
 // Kept here for backward compatibility
 export const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Administrador',
-  creator: 'Creador',
+  creator: 'Creador de Contenido',
   editor: 'Productor Audio-Visual',
   client: 'Cliente',
   ambassador: 'Embajador (Legacy)', // Deprecated - use badge instead

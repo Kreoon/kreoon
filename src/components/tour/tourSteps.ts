@@ -173,8 +173,8 @@ export const tourConfigs: Record<string, RoleTourConfig> = {
     ]
   },
   creator: {
-    roleName: "Creador",
-    roleDescription: "Como creador, grabas contenido para las marcas. Sigue los scripts aprobados y entrega videos de alta calidad que conecten con la audiencia.",
+    roleName: "Creador de Contenido",
+    roleDescription: "Como creador de contenido, grabas contenido para las marcas. Sigue los scripts aprobados y entrega videos de alta calidad que conecten con la audiencia.",
     steps: [
       {
         target: "[data-tour='creator-stats']",
