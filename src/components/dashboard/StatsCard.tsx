@@ -20,8 +20,10 @@ export function StatsCard({ title, value, icon, trend, trendLabel, className, on
     <div 
       onClick={onClick}
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border bg-card p-4 md:p-6 transition-all duration-300 hover:shadow-lg hover:border-primary/20",
-        onClick && "cursor-pointer",
+        "group relative overflow-hidden rounded-xl border border-border/50 bg-card p-4 md:p-6",
+        "transition-all duration-200 ease-out",
+        "hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30 hover:-translate-y-0.5",
+        onClick && "cursor-pointer active:scale-[0.99]",
         className
       )}
     >
@@ -47,13 +49,13 @@ export function StatsCard({ title, value, icon, trend, trendLabel, className, on
             </div>
           )}
         </div>
-        <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
+        <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-200 group-hover:scale-105 group-hover:bg-primary/15">
           {icon}
         </div>
       </div>
       
       {/* Decorative gradient */}
-      <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/5 transition-transform duration-500 group-hover:scale-150" />
+      <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/5 transition-all duration-300 group-hover:scale-150 group-hover:bg-primary/8" />
     </div>
   );
 }

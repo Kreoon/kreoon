@@ -29,10 +29,11 @@ export function EnhancedKanbanColumn({
   return (
     <div
       className={cn(
-        "flex flex-col min-w-[280px] md:min-w-[300px] max-w-[320px] rounded-xl transition-all duration-200",
-        "bg-muted/30 backdrop-blur-sm",
-        isDropTarget && canDrop && "ring-2 ring-primary/40 bg-primary/5",
-        isDropTarget && !canDrop && "ring-2 ring-destructive/40 bg-destructive/5"
+        "flex flex-col min-w-[280px] md:min-w-[300px] max-w-[320px] rounded-xl",
+        "transition-all duration-200 ease-out",
+        "bg-muted/20 backdrop-blur-sm border border-border/30",
+        isDropTarget && canDrop && "ring-2 ring-primary/50 bg-primary/5 shadow-lg shadow-primary/10",
+        isDropTarget && !canDrop && "ring-2 ring-destructive/50 bg-destructive/5"
       )}
       onDragOver={onDragOver}
       onDrop={onDrop}
@@ -40,16 +41,16 @@ export function EnhancedKanbanColumn({
     >
       {/* Column Header */}
       <div className="flex items-center justify-between p-3 pb-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div 
-            className="h-3 w-3 rounded-full shadow-sm" 
+            className="h-3 w-3 rounded-full shadow-sm ring-2 ring-background" 
             style={{ backgroundColor: color }}
           />
-          <h3 className="font-semibold text-sm text-foreground">{title}</h3>
+          <h3 className="font-semibold text-sm text-foreground tracking-tight">{title}</h3>
         </div>
         <span className={cn(
-          "flex items-center justify-center h-6 min-w-6 px-2 rounded-full text-xs font-medium",
-          "bg-background/80 text-muted-foreground shadow-sm"
+          "flex items-center justify-center h-6 min-w-6 px-2 rounded-full text-xs font-semibold",
+          "bg-primary/10 text-primary border border-primary/20"
         )}>
           {count}
         </span>

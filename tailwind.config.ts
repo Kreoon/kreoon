@@ -130,9 +130,21 @@ export default {
           from: { opacity: "0", transform: "translateY(16px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "slide-down": {
+          from: { opacity: "0", transform: "translateY(-8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
         "glow-pulse": {
           "0%, 100%": { boxShadow: "0 0 10px hsl(252 100% 68% / 0.3)" },
           "50%": { boxShadow: "0 0 25px hsl(252 100% 68% / 0.5)" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-4px)" },
+        },
+        "pulse-subtle": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
         },
       },
       animation: {
@@ -140,10 +152,13 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 2s infinite",
         "fade-in": "fade-in 0.2s ease-out",
-        "fade-up": "fade-up 0.25s ease-out",
+        "fade-up": "fade-up 0.2s ease-out",
         "scale-in": "scale-in 0.15s ease-out",
-        "slide-up": "slide-up 0.25s ease-out",
+        "slide-up": "slide-up 0.2s ease-out",
+        "slide-down": "slide-down 0.2s ease-out",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "float": "float 3s ease-in-out infinite",
+        "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',
