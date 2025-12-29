@@ -17,8 +17,8 @@ export function useTrialGuard() {
       toast.error('Periodo de prueba expirado', {
         description: 'Activa tu plan para continuar creando y editando contenido.',
         action: {
-          label: 'Activar plan',
-          onClick: () => window.location.href = '/settings',
+          label: 'Ver planes',
+          onClick: () => window.location.href = '/settings?section=planes-org',
         },
       });
       return false;
@@ -35,8 +35,8 @@ export function useTrialGuard() {
       toast.error('Periodo de prueba expirado', {
         description: 'Activa tu plan para continuar creando y editando contenido.',
         action: {
-          label: 'Activar plan',
-          onClick: () => window.location.href = '/settings',
+          label: 'Ver planes',
+          onClick: () => window.location.href = '/settings?section=planes-org',
         },
       });
       return null;

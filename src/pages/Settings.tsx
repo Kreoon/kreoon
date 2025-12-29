@@ -25,6 +25,7 @@ import { AmbassadorDashboard } from "@/components/ambassador";
 import { ChatNotificationsSettings } from "@/components/settings/ChatNotificationsSettings";
 import { PortfolioAISettings } from "@/components/settings/PortfolioAISettings";
 import { BillingControlPanel } from "@/components/settings/BillingControlPanel";
+import { OrganizationPlansPage } from "@/components/settings/OrganizationPlansPage";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -68,7 +69,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios-plataforma' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'gestion-orgs' | 'embajadores' | 'chat-notificaciones' | 'portfolio-ai' | 'facturacion';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios-plataforma' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'gestion-orgs' | 'embajadores' | 'chat-notificaciones' | 'portfolio-ai' | 'facturacion' | 'planes-org';
 
 interface SettingsSectionItem {
   id: SettingsSection;
@@ -112,6 +113,12 @@ const orgLevelSections: SettingsSectionItem[] = [
     icon: Building2, 
     title: "Mi Organización", 
     description: "Datos y configuración de tu organización",
+  },
+  { 
+    id: 'planes-org',
+    icon: Crown, 
+    title: "Plan y Suscripción", 
+    description: "Gestiona el plan de tu organización",
   },
   { 
     id: 'chat-notificaciones',
@@ -225,7 +232,16 @@ const Settings = () => {
   const { isAdmin, isClient, profile } = useAuth();
   const { resetTour } = useTour();
   const { isOrgOwner, isPlatformRoot, loading: orgLoading } = useOrgOwner();
-  const [activeSection, setActiveSection] = useState<SettingsSection>('main');
+  
+  // Read section from URL query params
+  const searchParams = new URLSearchParams(window.location.search);
+  const sectionFromUrl = searchParams.get('section') as SettingsSection | null;
+  
+  const [activeSection, setActiveSection] = useState<SettingsSection>(
+    sectionFromUrl && ['planes-org', 'facturacion', 'mi-organizacion', 'perfil'].includes(sectionFromUrl) 
+      ? sectionFromUrl 
+      : 'main'
+  );
 
   // Build sections dynamically based on role
   const visibleSections = (() => {
@@ -294,6 +310,8 @@ const Settings = () => {
         return <TourSection onStartTour={() => { resetTour(); setActiveSection('main'); }} />;
       case 'facturacion':
         return <BillingControlPanel />;
+      case 'planes-org':
+        return <OrganizationPlansPage />;
       default:
         return null;
     }
