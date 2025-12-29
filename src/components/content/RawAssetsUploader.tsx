@@ -239,7 +239,9 @@ export function RawAssetsUploader({
 
       const ext = getFileExtension(fileToUpload.originalName);
       const customFilename = `${fileToUpload.customName}.${ext}`;
-      const storagePath = `raw-assets/org_${organizationId}/client_${clientId || 'none'}/project_${contentId}/raw/${customFilename}`;
+      // IMPORTANT: storagePath must be RELATIVE to the Bunny Storage Zone.
+      // The backend function will prefix it with BUNNY_STORAGE_ZONE.
+      const storagePath = `org_${organizationId}/client_${clientId || 'none'}/project_${contentId}/raw/${customFilename}`;
 
       try {
         setFilesToUpload(prev =>
@@ -296,10 +298,13 @@ export function RawAssetsUploader({
             uploaded_by: user.id,
             original_filename: fileToUpload.originalName,
             custom_filename: customFilename,
-            storage_path: data.url || storagePath,
+            // Store the relative path (not CDN URL) so backend downloads can reliably auth.
+            storage_path: storagePath,
             file_type: ext,
             file_size: fileToUpload.file.size
           });
+
+        if (dbError) throw dbError;
 
         if (dbError) throw dbError;
 
