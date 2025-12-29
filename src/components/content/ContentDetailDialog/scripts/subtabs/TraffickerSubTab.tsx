@@ -28,16 +28,14 @@ export function TraffickerSubTab({
           </p>
 
           {editMode && canEdit ? (
-            <div className="max-h-[400px] overflow-y-auto">
-              <RichTextEditor
-                content={formData.trafficker_guidelines || ''}
-                onChange={(value) => setFormData(prev => ({ ...prev, trafficker_guidelines: value }))}
-                placeholder="Define objetivo de campaña, audiencia, presupuesto, plataformas..."
-                features={editorFeatures}
-              />
-            </div>
+            <RichTextEditor
+              content={formData.trafficker_guidelines || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, trafficker_guidelines: value }))}
+              placeholder="Define objetivo de campaña, audiencia, presupuesto, plataformas..."
+              features={editorFeatures}
+            />
           ) : hasContent ? (
-            <RichTextViewer content={formData.trafficker_guidelines || ''} maxHeight="max-h-[400px]" />
+            <RichTextViewer content={formData.trafficker_guidelines || ''} maxHeight="" />
           
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-lg">

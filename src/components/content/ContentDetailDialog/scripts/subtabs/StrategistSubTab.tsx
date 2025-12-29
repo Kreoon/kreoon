@@ -28,16 +28,14 @@ export function StrategistSubTab({
           </p>
 
           {editMode && canEdit ? (
-            <div className="max-h-[400px] overflow-y-auto">
-              <RichTextEditor
-                content={formData.strategist_guidelines || ''}
-                onChange={(value) => setFormData(prev => ({ ...prev, strategist_guidelines: value }))}
-                placeholder="Define el objetivo, mensaje clave, público objetivo, CTA..."
-                features={editorFeatures}
-              />
-            </div>
+            <RichTextEditor
+              content={formData.strategist_guidelines || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, strategist_guidelines: value }))}
+              placeholder="Define el objetivo, mensaje clave, público objetivo, CTA..."
+              features={editorFeatures}
+            />
           ) : hasContent ? (
-            <RichTextViewer content={formData.strategist_guidelines || ''} maxHeight="max-h-[400px]" />
+            <RichTextViewer content={formData.strategist_guidelines || ''} maxHeight="" />
           
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-lg">

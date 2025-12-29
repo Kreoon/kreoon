@@ -83,16 +83,15 @@ export function ScriptSubTab({
 
           {/* Script editor/viewer */}
           {editMode && canEdit ? (
-            <div className="max-h-[400px] overflow-y-auto">
-              <RichTextEditor
-                content={formData.script || ''}
-                onChange={(value) => setFormData(prev => ({ ...prev, script: value }))}
-                placeholder="Escribe el guión aquí..."
-                features={editorFeatures}
-              />
-            </div>
+            <RichTextEditor
+              content={formData.script || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, script: value }))}
+              placeholder="Escribe el guión aquí..."
+              features={editorFeatures}
+            />
           ) : hasScript ? (
-            <RichTextViewer content={formData.script || ''} maxHeight="max-h-[400px]" />
+            <RichTextViewer content={formData.script || ''} maxHeight="" />
+          
           
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/30 rounded-lg">

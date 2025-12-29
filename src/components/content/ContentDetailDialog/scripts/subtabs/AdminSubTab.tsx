@@ -100,16 +100,14 @@ export function AdminSubTab({
           </p>
 
           {editMode && canEdit ? (
-            <div className="max-h-[400px] overflow-y-auto">
-              <RichTextEditor
-                content={formData.admin_guidelines || ''}
-                onChange={(value) => setFormData(prev => ({ ...prev, admin_guidelines: value }))}
-                placeholder="Notas internas, decisiones, historial de cambios..."
-                features={editorFeatures}
-              />
-            </div>
+            <RichTextEditor
+              content={formData.admin_guidelines || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, admin_guidelines: value }))}
+              placeholder="Notas internas, decisiones, historial de cambios..."
+              features={editorFeatures}
+            />
           ) : hasContent ? (
-            <RichTextViewer content={formData.admin_guidelines || ''} maxHeight="max-h-[400px]" />
+            <RichTextViewer content={formData.admin_guidelines || ''} maxHeight="" />
           
           ) : (
             <div className="flex flex-col items-center justify-center py-6 text-center bg-muted/30 rounded-lg">
