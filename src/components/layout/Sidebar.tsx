@@ -155,6 +155,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
+  const [clientCount, setClientCount] = useState(0);
 
   // Use effective roles when impersonating, otherwise use activeRole for UI
   const activeIsAdmin = isImpersonating ? effectiveRoles.includes('admin') : activeRole === 'admin';
@@ -163,16 +164,26 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const activeIsCreator = isImpersonating ? effectiveRoles.includes('creator') : activeRole === 'creator';
   const activeIsClient = isImpersonating ? effectiveRoles.includes('client') : activeRole === 'client';
 
-  // Fetch current client name for client users
+  // Fetch current client name and count for client users
   useEffect(() => {
     // When impersonating a client, use impersonation target
     if (isImpersonating && activeIsClient && impersonationTarget.clientId) {
       setCurrentClientName(impersonationTarget.clientName);
+      setClientCount(1);
       return;
     }
     
     if (activeIsClient && user) {
       const fetchCurrentClient = async () => {
+        // Get all client associations to determine count
+        const { data: associations } = await supabase
+          .from('client_users')
+          .select('client_id')
+          .eq('user_id', user.id);
+
+        const totalClients = associations?.length || 0;
+        setClientCount(totalClients);
+
         const savedClientId = localStorage.getItem('selectedClientId');
         
         if (savedClientId) {
@@ -188,13 +199,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           }
         }
 
-        // Get first client from user's associations
-        const { data: associations } = await supabase
-          .from('client_users')
-          .select('client_id')
-          .eq('user_id', user.id)
-          .limit(1);
-
+        // Get first client from associations
         if (associations && associations.length > 0) {
           const { data: client } = await supabase
             .from('clients')
@@ -352,16 +357,21 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             <RoleSwitcher collapsed={collapsed} />
           )}
 
-          {/* Client company switcher */}
+          {/* Client company switcher - only show if user has multiple brands */}
           {activeIsClient && (
             <div className="space-y-1">
               {!collapsed && currentClientName && (
                 <div className="px-3 py-1 text-xs text-sidebar-foreground/60 truncate flex items-center gap-2">
                   <Building2 className="h-3 w-3" />
                   {currentClientName}
+                  {clientCount > 1 && (
+                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                      +{clientCount - 1}
+                    </span>
+                  )}
                 </div>
               )}
-              {!isImpersonating && (
+              {!isImpersonating && clientCount > 1 && (
                 <Button
                   variant="ghost"
                   size="sm"
