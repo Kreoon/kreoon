@@ -117,10 +117,10 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
             </TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab - 2 Column Layout */}
+          {/* Overview Tab - Single Column Layout */}
           <TabsContent value="overview" className="mt-6">
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* LEFT COLUMN - Providers Summary */}
+            <div className="space-y-6">
+              {/* Providers Summary */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Cpu className="h-5 w-5 text-primary" />
@@ -203,7 +203,9 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                 </Button>
               </div>
 
-              {/* RIGHT COLUMN - Modules */}
+              <Separator />
+
+              {/* Modules */}
               <div className="space-y-4">
                 <AIModulesManager 
                   organizationId={organizationId} 
