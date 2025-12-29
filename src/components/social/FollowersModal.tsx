@@ -137,13 +137,14 @@ export function FollowersModal({ isOpen, onClose, userId, initialTab = 'follower
     else if (tab === 'likers') fetchLikers();
   };
 
-  // Fetch initial data when modal opens
+  // Fetch all data when modal opens
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
-      if (initialTab === 'followers') fetchFollowers();
-      else if (initialTab === 'following') fetchFollowing();
-      else if (initialTab === 'likers') fetchLikers();
+      // Fetch all data to show correct counts in tabs
+      fetchFollowers();
+      fetchFollowing();
+      fetchLikers();
     }
   }, [isOpen, initialTab]);
 
