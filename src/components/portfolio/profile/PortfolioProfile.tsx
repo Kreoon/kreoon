@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useRef } from 'react';
+import { useState, useEffect, memo, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,25 @@ import {
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProfileTrustBadges } from './ProfileTrustBadges';
+import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
+
+// FeedItem interface for modal compatibility
+interface FeedItem {
+  id: string;
+  type: 'work' | 'post';
+  title?: string;
+  caption?: string;
+  media_url: string;
+  media_type: 'image' | 'video';
+  thumbnail_url?: string;
+  user_id: string;
+  user_name?: string;
+  user_avatar?: string;
+  views_count: number;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+}
 
 interface ProfileData {
   id: string;
@@ -85,9 +104,13 @@ export const PortfolioProfile = memo(function PortfolioProfile({
   });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'posts' | 'videos' | 'badges' | 'about'>('portfolio');
-  const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showAIProfileDialog, setShowAIProfileDialog] = useState(false);
+  
+  // Modal state for FeedGridModal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -345,18 +368,43 @@ export const PortfolioProfile = memo(function PortfolioProfile({
           </TabsList>
 
           <TabsContent value="portfolio" className="mt-6">
-            <PortfolioWorkSection userId={userId} isOwner={isOwner} onSelect={setSelectedMedia} onUpload={() => setShowUploadDialog(true)} />
+            <PortfolioWorkSection 
+              userId={userId} 
+              isOwner={isOwner} 
+              onSelect={(items, index) => {
+                setFeedItems(items);
+                setSelectedIndex(index);
+                setModalOpen(true);
+              }} 
+              onUpload={() => setShowUploadDialog(true)} 
+            />
           </TabsContent>
 
           <TabsContent value="posts" className="mt-6">
-            <PersonalFeedSection userId={userId} isOwner={isOwner} onSelect={setSelectedMedia} onUpload={() => setShowUploadDialog(true)} />
+            <PersonalFeedSection 
+              userId={userId} 
+              isOwner={isOwner} 
+              onSelect={(items, index) => {
+                setFeedItems(items);
+                setSelectedIndex(index);
+                setModalOpen(true);
+              }} 
+              onUpload={() => setShowUploadDialog(true)} 
+            />
           </TabsContent>
 
           <TabsContent value="videos" className="mt-6">
             <PresentationVideoSection userId={userId} isOwner={isOwner} />
             <div className="mt-8">
               <h3 className="text-lg font-semibold text-social-foreground mb-4">Todos los videos</h3>
-              <VideoGallery userId={userId} onSelect={setSelectedMedia} />
+              <VideoGallery 
+                userId={userId} 
+                onSelect={(items, index) => {
+                  setFeedItems(items);
+                  setSelectedIndex(index);
+                  setModalOpen(true);
+                }} 
+              />
             </div>
           </TabsContent>
 
@@ -370,12 +418,15 @@ export const PortfolioProfile = memo(function PortfolioProfile({
         </Tabs>
       </section>
 
-      {/* Media Viewer Modal */}
-      <AnimatePresence>
-        {selectedMedia && (
-          <MediaViewer media={selectedMedia} onClose={() => setSelectedMedia(null)} />
-        )}
-      </AnimatePresence>
+      {/* Feed Grid Modal - same as main feed */}
+      <FeedGridModal
+        items={feedItems}
+        initialIndex={selectedIndex}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={() => {}}
+        isSaved={() => false}
+      />
 
       {/* Upload Dialog */}
       <UploadContentDialog 
@@ -420,7 +471,7 @@ function StatItem({ icon, value, label, className }: { icon: React.ReactNode; va
 }
 
 // Portfolio Work Section (Professional work)
-function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId: string; isOwner: boolean; onSelect: (media: any) => void; onUpload: () => void }) {
+function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId: string; isOwner: boolean; onSelect: (items: FeedItem[], index: number) => void; onUpload: () => void }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -469,6 +520,21 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
     );
   }
 
+  // Convert posts to FeedItem format
+  const feedItems: FeedItem[] = posts.map(post => ({
+    id: post.id,
+    type: 'post' as const,
+    caption: post.caption,
+    media_url: post.media_url,
+    media_type: post.media_type || 'image',
+    thumbnail_url: post.thumbnail_url,
+    user_id: userId,
+    views_count: post.views_count || 0,
+    likes_count: post.likes_count || 0,
+    comments_count: 0,
+    created_at: post.created_at,
+  }));
+
   return (
     <div className="space-y-4">
       {isOwner && (
@@ -483,7 +549,7 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
         {posts.map((post, index) => (
           <div
             key={post.id}
-            onClick={() => onSelect(post)}
+            onClick={() => onSelect(feedItems, index)}
             className="aspect-square relative group cursor-pointer overflow-hidden bg-muted"
           >
             <img
@@ -520,7 +586,7 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
 }
 
 // Personal Feed Section (Casual posts)
-function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: string; isOwner: boolean; onSelect: (media: any) => void; onUpload: () => void }) {
+function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: string; isOwner: boolean; onSelect: (items: FeedItem[], index: number) => void; onUpload: () => void }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -568,6 +634,21 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
     );
   }
 
+  // Convert posts to FeedItem format
+  const feedItems: FeedItem[] = posts.map(post => ({
+    id: post.id,
+    type: 'post' as const,
+    caption: post.caption,
+    media_url: post.media_url,
+    media_type: post.media_type || 'image',
+    thumbnail_url: post.thumbnail_url,
+    user_id: userId,
+    views_count: post.views_count || 0,
+    likes_count: post.likes_count || 0,
+    comments_count: 0,
+    created_at: post.created_at,
+  }));
+
   return (
     <div className="space-y-4">
       {isOwner && (
@@ -579,10 +660,10 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
         </div>
       )}
       <div className="grid grid-cols-3 gap-1">
-        {posts.map((post) => (
+        {posts.map((post, index) => (
           <div
             key={post.id}
-            onClick={() => onSelect(post)}
+            onClick={() => onSelect(feedItems, index)}
             className="aspect-square relative group cursor-pointer overflow-hidden bg-muted"
           >
             <img
@@ -679,7 +760,7 @@ function PresentationVideoSection({ userId, isOwner }: { userId: string; isOwner
   );
 }
 
-function VideoGallery({ userId, onSelect }: { userId: string; onSelect: (media: any) => void }) {
+function VideoGallery({ userId, onSelect }: { userId: string; onSelect: (items: FeedItem[], index: number) => void }) {
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -712,6 +793,21 @@ function VideoGallery({ userId, onSelect }: { userId: string; onSelect: (media: 
     return null;
   }
 
+  // Convert videos to FeedItem format
+  const feedItems: FeedItem[] = videos.map(video => ({
+    id: video.id,
+    type: 'post' as const,
+    caption: video.caption,
+    media_url: video.media_url,
+    media_type: 'video' as const,
+    thumbnail_url: video.thumbnail_url,
+    user_id: userId,
+    views_count: video.views_count || 0,
+    likes_count: video.likes_count || 0,
+    comments_count: 0,
+    created_at: video.created_at,
+  }));
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {videos.map((video, index) => (
@@ -720,7 +816,7 @@ function VideoGallery({ userId, onSelect }: { userId: string; onSelect: (media: 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
-          onClick={() => onSelect(video)}
+          onClick={() => onSelect(feedItems, index)}
           className="aspect-[9/16] relative group cursor-pointer overflow-hidden rounded-lg bg-muted"
         >
           <img
@@ -844,67 +940,6 @@ function AboutSection({ profile }: { profile: ProfileData }) {
         )}
       </div>
     </div>
-  );
-}
-
-function MediaViewer({ media, onClose }: { media: any; onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
-      onClick={onClose}
-    >
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-4 right-4 text-white hover:bg-white/20"
-        onClick={onClose}
-      >
-        <X className="h-6 w-6" />
-      </Button>
-
-      <motion.div
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.9 }}
-        className="max-w-4xl max-h-[90vh] w-full mx-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {media.media_type === 'video' ? (
-          <video
-            src={media.media_url}
-            poster={media.thumbnail_url}
-            controls
-            autoPlay
-            className="w-full h-full object-contain rounded-lg"
-          />
-        ) : (
-          <img
-            src={media.media_url}
-            alt=""
-            className="w-full h-full object-contain rounded-lg"
-          />
-        )}
-
-        <div className="mt-4 flex items-center justify-between text-white">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              <Heart className="h-4 w-4" />
-              {media.likes_count || 0}
-            </span>
-            <span className="flex items-center gap-1">
-              <Eye className="h-4 w-4" />
-              {media.views_count || 0}
-            </span>
-          </div>
-          {media.caption && (
-            <p className="text-sm text-white/80 max-w-md truncate">{media.caption}</p>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
   );
 }
 
