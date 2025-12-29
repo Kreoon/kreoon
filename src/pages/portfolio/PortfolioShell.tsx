@@ -165,9 +165,13 @@ export default function PortfolioShell() {
       {/* Desktop sidebar navigation - shown on md+ */}
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-20 lg:w-64 bg-social-card border-r border-social-border flex-col z-40">
         {/* Logo area with notifications */}
-        <div className="h-16 flex items-center justify-between lg:px-6 border-b border-social-border px-4">
-          <KreoonSocialLogo />
-          <div className="flex items-center gap-1">
+        <div className="h-16 flex items-center gap-3 lg:px-6 border-b border-social-border px-4">
+          {/* In md (mini sidebar) show only the mark to avoid overlap */}
+          <div className="flex items-center min-w-0 flex-1">
+            <img src="/favicon.png" alt="KREOON" className="h-9 w-9 rounded-md lg:hidden" />
+            <KreoonSocialLogo className="hidden lg:flex" />
+          </div>
+          <div className="flex items-center gap-1 ml-auto">
             <Button
               variant="ghost"
               size="icon"
