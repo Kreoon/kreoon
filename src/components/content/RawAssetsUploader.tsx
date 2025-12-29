@@ -334,8 +334,8 @@ export function RawAssetsUploader({
   };
 
   // Normalize Bunny URLs: convert storage URLs to public CDN URLs
-  // Uses the configured CDN hostname (e.g., Creartor.b-cdn.net or cdn.kreoon.com)
-  const CDN_HOSTNAME = 'Creartor.b-cdn.net'; // Your Bunny CDN hostname
+  // Uses the configured CDN hostname
+  const CDN_HOSTNAME = 'cdn.kreoon.com'; // Your Bunny CDN hostname
   
   const toPublicAssetUrl = useCallback((url: string) => {
     try {
