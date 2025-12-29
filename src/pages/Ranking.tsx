@@ -276,38 +276,38 @@ function RankingContent({
     <>
       {/* Stats Overview - Medieval Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/15 to-primary/5 emboss">
+        <Card className="border border-primary/30 bg-primary/5">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/25 border border-primary/30">
-              <Flame className="w-5 h-5 text-primary animate-torch" />
+            <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+              <Flame className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold font-medieval">{totalPoints.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground font-body">Puntos de Honor</p>
+              <p className="text-2xl font-bold">{totalPoints.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Puntos UP</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-cyan-400/40 bg-gradient-to-br from-cyan-400/15 to-cyan-400/5 emboss">
+        <Card className="border border-cyan-400/30 bg-cyan-400/5">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cyan-400/25 border border-cyan-400/30">
+            <div className="p-2 rounded-lg bg-cyan-400/10 border border-cyan-400/20">
               <Castle className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-cyan-400 font-medieval">{diamondCount}</p>
-              <p className="text-xs text-muted-foreground font-body">Gran Maestre ({thresholds.diamond}+)</p>
+              <p className="text-2xl font-bold text-cyan-400">{diamondCount}</p>
+              <p className="text-xs text-muted-foreground">Diamante ({thresholds.diamond}+)</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-yellow-600/40 bg-gradient-to-br from-yellow-600/15 to-yellow-600/5 emboss">
+        <Card className="border border-yellow-500/30 bg-yellow-500/5">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-yellow-600/25 border border-yellow-600/30">
-              <Crown className="w-5 h-5 text-yellow-600" />
+            <div className="p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <Crown className="w-5 h-5 text-yellow-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-yellow-600 font-medieval">{goldCount}</p>
-              <p className="text-xs text-muted-foreground font-body">Comandante ({thresholds.gold}+)</p>
+              <p className="text-2xl font-bold text-yellow-500">{goldCount}</p>
+              <p className="text-xs text-muted-foreground">Oro ({thresholds.gold}+)</p>
             </div>
           </CardContent>
         </Card>

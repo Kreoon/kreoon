@@ -106,7 +106,7 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
                 {LEVEL_ICONS[level]}
               </div>
               <div>
-                <h2 className={cn("text-3xl font-bold font-medieval", LEVEL_COLORS[level])}>
+                <h2 className={cn("text-3xl font-bold", LEVEL_COLORS[level])}>
                   {totalPoints} UP
                 </h2>
                 <p className={cn("text-lg font-medium", LEVEL_COLORS[level])}>

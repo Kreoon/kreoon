@@ -24,32 +24,33 @@ export function MedievalBanner({
 }: MedievalBannerProps) {
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-lg bg-gradient-stone p-6 border-2 border-primary/30 hover-torch",
+      "relative overflow-hidden rounded-xl bg-card p-6 border border-border/50",
       className
     )}>
-      <div className="absolute inset-0 bg-primary/5 opacity-50" />
-      {/* Ember particles effect */}
-      <div className="absolute top-2 right-4 text-amber-400/40 animate-magic-sparkle">✦</div>
-      <div className="absolute top-4 right-12 text-amber-500/30 animate-magic-sparkle" style={{ animationDelay: '0.5s' }}>✧</div>
-      <div className="absolute top-6 right-8 text-orange-400/35 animate-magic-sparkle" style={{ animationDelay: '1s' }}>✦</div>
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-50" />
+      
       <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-lg bg-primary/30 border-2 border-primary/50 emboss animate-torch-glow">
-            <Icon className="h-8 w-8 text-primary animate-torch" />
+          <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+            <Icon className="h-7 w-7 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-medieval font-bold text-primary-foreground">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">
               {title}
             </h1>
-            <p className="text-sm text-primary-foreground/70 font-body">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {subtitle}
             </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {badge && (
-            <Badge variant={badge.variant || 'outline'} className="font-medieval">
+            <Badge 
+              variant={badge.variant || 'outline'} 
+              className="bg-primary/10 text-primary border-primary/30"
+            >
               {badge.text}
             </Badge>
           )}
