@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { useTrialGuard } from '@/hooks/useTrialGuard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +36,7 @@ export default function Team() {
   const { user, profile: authProfile } = useAuth();
   const { toast } = useToast();
   const { currentOrg } = useOrganizations();
+  const { guardAction, isReadOnly } = useTrialGuard();
   
   const [profiles, setProfiles] = useState<(Profile & { roles: AppRole[]; isOrgMember: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -222,6 +224,12 @@ export default function Team() {
 
 
   const handleSendInvitation = async () => {
+    // Check trial status before inviting
+    if (isReadOnly) {
+      guardAction(() => {});
+      return;
+    }
+    
     if (!inviteData.email) {
       toast({
         title: 'Error',
@@ -355,7 +363,16 @@ export default function Team() {
         action={
           <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
             <DialogTrigger asChild>
-              <Button className="gap-2 font-medieval">
+              <Button 
+                className="gap-2 font-medieval" 
+                onClick={(e) => {
+                  if (isReadOnly) {
+                    e.preventDefault();
+                    guardAction(() => {});
+                  }
+                }}
+                disabled={isReadOnly}
+              >
                 <UserPlus className="w-4 h-4" />
                 Invitar Vasallo
               </Button>
