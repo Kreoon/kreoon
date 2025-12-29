@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { useTrialGuard } from "@/hooks/useTrialGuard";
 import { useContentWithFilters } from "@/hooks/useContent";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_ORDER, STATUS_LABELS, Product } from "@/types/database";
@@ -153,6 +154,7 @@ export default function ContentBoard() {
   const { user, isAdmin, isCreator, isEditor, isClient, profile } = useAuth();
   const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
+  const { guardAction, isReadOnly } = useTrialGuard();
   
   // Board persistence hook - saves view, filters, scroll, selected content
   const persistence = useBoardPersistence({ organizationId: currentOrgId });
@@ -579,7 +581,13 @@ export default function ContentBoard() {
                 />
               </div>
               {isAdmin && (
-                <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm" onClick={() => setShowCreateDialog(true)}>
+                <Button 
+                  variant="glow" 
+                  size="sm" 
+                  className="gap-1 md:gap-2 text-xs md:text-sm" 
+                  onClick={() => guardAction(() => setShowCreateDialog(true))}
+                  disabled={isReadOnly}
+                >
                   <Plus className="h-4 w-4" />
                   <span className="hidden sm:inline">Nuevo Proyecto</span>
                   <span className="sm:hidden">Nuevo</span>
