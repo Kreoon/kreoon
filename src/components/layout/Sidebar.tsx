@@ -35,51 +35,111 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   tourId: string;
   isDynamic?: boolean;
-  platformRootOnly?: boolean; // Only show for platform root admin
-  requiresOrg?: boolean; // Requires an organization to be selected
+  platformRootOnly?: boolean;
+  requiresOrg?: boolean;
 }
 
-// Full admin navigation - organization level modules
-const adminNavigation: NavItem[] = [
-  { name: "KREOON Board", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
-  { name: "KREOON Projects", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
-  { name: "Contenido", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
-  { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
-  { name: "KREOON IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
-  { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
-  { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
-  { name: "KREOON Network", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
-  { name: "KREOON UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
-  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+// Admin navigation organized in sections
+const adminSections: NavSection[] = [
+  {
+    label: "PRINCIPAL",
+    items: [
+      { name: "Board", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
+      { name: "Projects", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
+      { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+      { name: "UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
+      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
+    ]
+  },
+  {
+    label: "GESTIÓN",
+    items: [
+      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
+      { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
+      { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
+    ]
+  },
+  {
+    label: "CUENTA",
+    items: [
+      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+    ]
+  }
 ];
 
-const strategistNavigation: NavItem[] = [
-  { name: "KREOON Board", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-  { name: "KREOON IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-  { name: "KREOON Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
-  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+const strategistSections: NavSection[] = [
+  {
+    label: "PRINCIPAL",
+    items: [
+      { name: "Board", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
+    ]
+  },
+  {
+    label: "CUENTA",
+    items: [
+      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+    ]
+  }
 ];
 
-const editorNavigation: NavItem[] = [
-  { name: "KREOON Board", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-  { name: "KREOON Projects", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-  { name: "KREOON IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-  { name: "KREOON Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
-  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+const editorSections: NavSection[] = [
+  {
+    label: "PRINCIPAL",
+    items: [
+      { name: "Board", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Projects", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
+    ]
+  },
+  {
+    label: "CUENTA",
+    items: [
+      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+    ]
+  }
 ];
 
-const creatorNavigation: NavItem[] = [
-  { name: "KREOON Board", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-  { name: "KREOON Projects", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-  { name: "KREOON IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-  { name: "KREOON Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
-  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+const creatorSections: NavSection[] = [
+  {
+    label: "PRINCIPAL",
+    items: [
+      { name: "Board", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Projects", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
+    ]
+  },
+  {
+    label: "CUENTA",
+    items: [
+      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+    ]
+  }
 ];
 
-const clientNavigation: NavItem[] = [
-  { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-  { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
-  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+const clientSections: NavSection[] = [
+  {
+    label: "PRINCIPAL",
+    items: [
+      { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
+    ]
+  },
+  {
+    label: "CUENTA",
+    items: [
+      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+    ]
+  }
 ];
 
 interface SidebarProps {
@@ -152,34 +212,34 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     }
   }, [activeIsClient, user, isImpersonating, impersonationTarget]);
 
-  // Filter navigation based on platform root vs org owner and org selection
-  const filteredNavigation = useMemo(() => {
-    let baseNav = activeIsAdmin 
-      ? adminNavigation 
+  // Filter navigation sections based on platform root vs org owner and org selection
+  const filteredSections = useMemo(() => {
+    let baseSections = activeIsAdmin 
+      ? adminSections 
       : activeIsStrategist 
-      ? strategistNavigation 
+      ? strategistSections 
       : activeIsEditor 
-      ? editorNavigation 
+      ? editorSections 
       : activeIsCreator 
-      ? creatorNavigation 
+      ? creatorSections 
       : activeIsClient 
-      ? clientNavigation 
-      : adminNavigation;
+      ? clientSections 
+      : adminSections;
 
-    // For org owners (not platform root), filter out platformRootOnly items
-    if (!isPlatformRoot) {
-      baseNav = baseNav.filter(item => !item.platformRootOnly);
-    }
-
-    // For platform root without org selected, hide org-specific modules
-    if (isPlatformRoot && !profile?.current_organization_id) {
-      baseNav = baseNav.filter(item => !item.requiresOrg);
-    }
-
-    return baseNav;
+    // Filter items within sections
+    return baseSections.map(section => ({
+      ...section,
+      items: section.items.filter(item => {
+        // For org owners (not platform root), filter out platformRootOnly items
+        if (!isPlatformRoot && item.platformRootOnly) return false;
+        
+        // For platform root without org selected, hide org-specific modules
+        if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
+        
+        return true;
+      })
+    })).filter(section => section.items.length > 0); // Remove empty sections
   }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, profile?.current_organization_id]);
-
-  const navigation = filteredNavigation;
 
   const userId = user?.id || '';
 
@@ -205,21 +265,21 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           {!collapsed && (
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <span className="text-lg font-bold text-primary-foreground">C</span>
+                <span className="text-lg font-bold text-primary-foreground">K</span>
               </div>
               <div className="min-w-0">
-                <h1 className="text-sm font-bold text-sidebar-foreground">Creartor Studio</h1>
+                <h1 className="text-sm font-bold text-sidebar-foreground">KREOON</h1>
                 {currentOrgName ? (
                   <p className="text-xs text-primary/80 truncate font-medium">{currentOrgName}</p>
                 ) : (
-                  <p className="text-xs text-sidebar-foreground/60">Content Agency</p>
+                  <p className="text-xs text-sidebar-foreground/60">Content Platform</p>
                 )}
               </div>
             </div>
           )}
           {collapsed && (
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">C</span>
+              <span className="text-lg font-bold text-primary-foreground">K</span>
             </div>
           )}
         </div>
@@ -231,31 +291,47 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           </div>
         )}
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-3">
-          {navigation.map((item) => {
-            const href = item.isDynamic && typeof item.href === 'function' 
-              ? item.href(userId) 
-              : item.href as string;
-            const isActive = location.pathname === href;
-            return (
-              <NavLink
-                key={item.name}
-                to={href}
-                data-tour={item.tourId}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                  isActive 
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" 
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  collapsed && "justify-center px-2"
-                )}
-              >
-                <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-sidebar-primary-foreground")} />
-                {!collapsed && <span>{item.name}</span>}
-              </NavLink>
-            );
-          })}
+        {/* Navigation with Sections */}
+        <nav className="flex-1 overflow-y-auto p-3">
+          {filteredSections.map((section, sectionIndex) => (
+            <div key={section.label} className={cn(sectionIndex > 0 && "mt-6")}>
+              {/* Section Label */}
+              {!collapsed && (
+                <div className="px-3 mb-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+                    {section.label}
+                  </span>
+                </div>
+              )}
+              
+              {/* Section Items */}
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const href = item.isDynamic && typeof item.href === 'function' 
+                    ? item.href(userId) 
+                    : item.href as string;
+                  const isActive = location.pathname === href;
+                  return (
+                    <NavLink
+                      key={item.name}
+                      to={href}
+                      data-tour={item.tourId}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                        isActive 
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" 
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        collapsed && "justify-center px-2"
+                      )}
+                    >
+                      <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-sidebar-primary-foreground")} />
+                      {!collapsed && <span>{item.name}</span>}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Achievements Widget */}
