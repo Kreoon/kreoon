@@ -93,6 +93,14 @@ export default {
           border: "hsl(var(--social-border))",
           input: "hsl(var(--social-input))",
         },
+        // Reaction colors
+        reaction: {
+          love: "hsl(var(--reaction-love))",
+          fire: "hsl(var(--reaction-fire))",
+          clap: "hsl(var(--reaction-clap))",
+          wow: "hsl(var(--reaction-wow))",
+          sad: "hsl(var(--reaction-sad))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -146,6 +154,30 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
         },
+        "bounce-heart": {
+          "0%, 100%": { transform: "scale(1)" },
+          "25%": { transform: "scale(1.3)" },
+          "50%": { transform: "scale(0.95)" },
+          "75%": { transform: "scale(1.1)" },
+        },
+        "pop-in": {
+          "0%": { transform: "scale(0)", opacity: "0" },
+          "50%": { transform: "scale(1.2)" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "slide-in-bottom": {
+          "0%": { transform: "translateY(100%)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "wiggle": {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "25%": { transform: "rotate(-5deg)" },
+          "75%": { transform: "rotate(5deg)" },
+        },
+        "confetti": {
+          "0%": { transform: "translateY(0) rotate(0deg)", opacity: "1" },
+          "100%": { transform: "translateY(-100px) rotate(720deg)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -159,6 +191,11 @@ export default {
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         "float": "float 3s ease-in-out infinite",
         "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
+        "bounce-heart": "bounce-heart 0.4s ease-out",
+        "pop-in": "pop-in 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "slide-in-bottom": "slide-in-bottom 0.3s ease-out",
+        "wiggle": "wiggle 0.3s ease-in-out",
+        "confetti": "confetti 0.8s ease-out forwards",
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',
