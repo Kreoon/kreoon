@@ -25,7 +25,8 @@ export function BoardCalendarView({
   onDateChange,
   onContentClick,
   cardSize = 'normal',
-  visibleFields = ['title', 'status', 'responsible']
+  visibleFields = ['title', 'status', 'responsible'],
+  organizationStatuses = []
 }: BoardCalendarViewProps) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -127,6 +128,8 @@ export function BoardCalendarView({
                 <div className="space-y-1 mt-1">
                   {dayContent.slice(0, maxItems).map(c => {
                     const hasVideo = c.video_url || (c.video_urls && c.video_urls.length > 0);
+                    const statusStyle = getStatusColorStyle(c.status, organizationStatuses);
+                    const statusClass = getStatusFallbackClass(c.status, organizationStatuses);
                     
                     return (
                       <div
@@ -134,9 +137,10 @@ export function BoardCalendarView({
                         onClick={() => onContentClick(c)}
                         className={cn(
                           "rounded cursor-pointer hover:opacity-80 transition-opacity",
-                          STATUS_COLORS[c.status],
+                          statusClass,
                           cardSize === 'compact' ? "p-0.5" : "p-1"
                         )}
+                        style={statusStyle || undefined}
                       >
                         {/* Title */}
                         {showField('title') && (

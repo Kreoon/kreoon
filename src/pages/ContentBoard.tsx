@@ -888,6 +888,7 @@ export default function ContentBoard() {
               onContentClick={setSelectedContent}
               cardSize={settings?.card_size || 'normal'}
               visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
+              organizationStatuses={orgStatuses}
             />
           )}
           
@@ -900,6 +901,7 @@ export default function ContentBoard() {
               onContentClick={setSelectedContent}
               cardSize={settings?.card_size || 'normal'}
               visibleFields={settings?.visible_fields || ['title', 'status', 'responsible']}
+              organizationStatuses={orgStatuses}
             />
           )}
           
@@ -909,6 +911,7 @@ export default function ContentBoard() {
               content={filteredContent} 
               onContentClick={setSelectedContent}
               visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
+              organizationStatuses={orgStatuses}
             />
           )}
         </div>
