@@ -5983,6 +5983,19 @@ export type Database = {
         Returns: string
       }
       get_default_profile_blocks: { Args: never; Returns: Json }
+      get_effective_permission: {
+        Args: {
+          _module_key: string
+          _org_id: string
+          _role: string
+          _user_id: string
+        }
+        Returns: {
+          can_create: boolean
+          can_modify: boolean
+          can_view: boolean
+        }[]
+      }
       get_exchange_rate: {
         Args: {
           _from: Database["public"]["Enums"]["currency_type"]
