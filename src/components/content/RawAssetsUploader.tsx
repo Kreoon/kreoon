@@ -333,31 +333,10 @@ export function RawAssetsUploader({
     }
   };
 
-  // Normalize Bunny URLs: convert storage URLs to public CDN URLs
-  // Uses the configured CDN hostname
-  const CDN_HOSTNAME = 'cdn.kreoon.com'; // Your Bunny CDN hostname
-  
-  const toPublicAssetUrl = useCallback((url: string) => {
-    try {
-      const u = new URL(url);
-      // Bunny Storage URL: https://<region>.storage.bunnycdn.com/<zone>/<path...>
-      if (u.hostname.includes('storage.bunnycdn.com')) {
-        const parts = u.pathname.replace(/^\//, '').split('/');
-        // Skip the first segment (storage zone name) and get the rest of the path
-        const rest = parts.slice(1).join('/');
-        if (rest) return `https://${CDN_HOSTNAME}/${rest}`;
-      }
-      // Already a b-cdn.net URL, normalize to use our hostname
-      if (u.hostname.includes('b-cdn.net')) {
-        return `https://${CDN_HOSTNAME}${u.pathname}`;
-      }
-      return url;
-    } catch {
-      return url;
-    }
-  }, []);
-
-  const triggerBrowserDownload = useCallback((url: string, filename: string) => {
+  // Downloads are done via backend function (authenticated) because the raw-assets storage zone
+  // is not publicly accessible via CDN.
+  const triggerBlobDownload = useCallback((blob: Blob, filename: string) => {
+    const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
@@ -365,25 +344,40 @@ export function RawAssetsUploader({
     document.body.appendChild(a);
     a.click();
     a.remove();
+    window.URL.revokeObjectURL(url);
   }, []);
 
   // Download individual file
-  const handleDownload = (asset: UploadedAsset) => {
-    const url = toPublicAssetUrl(asset.storage_path);
-    triggerBrowserDownload(url, asset.custom_filename);
+  const handleDownload = async (asset: UploadedAsset) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('bunny-raw-download', {
+        body: { url: asset.storage_path, filename: asset.custom_filename },
+        // @ts-expect-error - supported by supabase-js runtime
+        responseType: 'blob',
+      });
+
+      if (error) throw error;
+      if (!data) throw new Error('No se pudo descargar el archivo');
+
+      triggerBlobDownload(data as Blob, asset.custom_filename);
+    } catch (error: any) {
+      console.error('Download error:', error);
+      toast.error('Error al descargar: ' + (error.message || 'Error desconocido'));
+    }
   };
 
-  // Download all files (one by one, started together)
+  // Download all files (one by one)
   const handleDownloadAllFiles = async () => {
     if (uploadedAssets.length === 0) {
       toast.error('No hay archivos para descargar');
       return;
     }
 
-    // Browsers may block too many simultaneous downloads; stagger them slightly.
+    // Stagger to avoid browser/UI overload.
     uploadedAssets.forEach((asset, idx) => {
-      const url = toPublicAssetUrl(asset.storage_path);
-      window.setTimeout(() => triggerBrowserDownload(url, asset.custom_filename), idx * 450);
+      window.setTimeout(() => {
+        void handleDownload(asset);
+      }, idx * 400);
     });
 
     toast.success('Descargas iniciadas');
@@ -402,18 +396,19 @@ export function RawAssetsUploader({
         body: {
           projectId: contentId,
           assets: uploadedAssets.map(a => ({
-            // Prefer public CDN URLs to avoid storage auth issues
-            url: toPublicAssetUrl(a.storage_path),
+            url: a.storage_path, // keep storage URL so the backend can auth correctly
             filename: a.custom_filename,
           })),
         },
+        // @ts-expect-error - supported by supabase-js runtime
+        responseType: 'blob',
       });
 
       if (error) throw error;
-      if (!data?.url) throw new Error('No se pudo generar el ZIP');
+      if (!data) throw new Error('No se pudo generar el ZIP');
 
-      // Download ZIP
-      window.open(data.url, '_blank');
+      const zipName = `material_crudo_${String(contentId).slice(0, 8)}.zip`;
+      triggerBlobDownload(data as Blob, zipName);
       toast.success('Descarga iniciada');
     } catch (error: any) {
       console.error('ZIP error:', error);

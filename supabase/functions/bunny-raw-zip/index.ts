@@ -58,6 +58,13 @@ serve(async (req: Request) => {
     const storageHostname = (Deno.env.get('BUNNY_STORAGE_HOSTNAME') || 'storage.bunnycdn.com').trim();
     const cdnHostname = safeCdnHostname((Deno.env.get('BUNNY_CDN_HOSTNAME') || '').trim() || undefined);
 
+    if (!storagePassword) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Configuración de storage incompleta' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Bunny config:', {
       envStorageZone: envStorageZone ? `SET (${envStorageZone})` : 'NOT SET',
       storagePassword: storagePassword ? `SET (length: ${storagePassword.length})` : 'NOT SET',
@@ -136,10 +143,16 @@ serve(async (req: Request) => {
           }
         }
 
-        // 2) If CDN failed, try storage with auth
-        if ((!response || !response.ok) && storagePassword && assetPath) {
+        // 2) If CDN failed (or skipped), try storage with auth
+        if ((!response || !response.ok) && assetPath) {
           const zoneFromUrl = extractStorageZoneFromStorageUrl(urlStr);
-          const zoneForStorage = zoneFromUrl || envStorageZone || 'raw-assets';
+          const zoneForStorage = zoneFromUrl || envStorageZone;
+
+          if (!zoneForStorage) {
+            console.error(`Missing storage zone for ${asset.filename}. Provide a storage URL or set BUNNY_STORAGE_ZONE.`);
+            errorCount++;
+            continue;
+          }
 
           // Prefer the exact regional hostname from the original storage URL when available
           let hostForStorage = storageHostname;
@@ -158,7 +171,7 @@ serve(async (req: Request) => {
         }
 
         // 3) Last resort: original URL with auth (if it's a storage URL)
-        if ((!response || !response.ok) && storagePassword) {
+        if ((!response || !response.ok) && urlStr.includes('storage.bunnycdn.com')) {
           lastTriedUrl = urlStr;
           console.log(`Trying original URL with auth: ${urlStr}`);
           response = await fetch(urlStr, { headers: { 'AccessKey': storagePassword } });
@@ -198,25 +211,18 @@ serve(async (req: Request) => {
       );
     }
 
-    // Convert blob to base64 for transfer
-    const arrayBuffer = await zipBlob.arrayBuffer();
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
+    // Return ZIP as binary (avoid base64 for large files)
+    const filename = `material_crudo_${projectId.slice(0, 8)}.zip`;
 
-    // Create a data URL that can be downloaded directly
-    const dataUrl = `data:application/zip;base64,${base64}`;
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        url: dataUrl,
-        filename: `material_crudo_${projectId.slice(0, 8)}.zip`,
-        fileCount: successCount,
-        errors: errorCount
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(zipBlob, {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/zip',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-store'
+      }
+    });
 
   } catch (error: unknown) {
     console.error('ZIP generation error:', error);
