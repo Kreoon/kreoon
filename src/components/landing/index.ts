@@ -8,6 +8,7 @@ export {
   SistemaUPSection,
   SocialCreatorsSection,
   PricingSection,
+  PrivacySection,
   CTASection,
   LandingFooter 
 } from './LandingSections';
