@@ -17,14 +17,14 @@ export type SettingsSectionKey =
   | 'ambassadors'
   | 'permissions'        // Merged: organization_permissions + global_permissions
   | 'audit_log'
-  | 'tracking'           // Tracking & Analytics engine
   // Platform level (Root only)
   | 'organization_registrations'
   | 'platform_users'
   | 'referrals'
   | 'billing'            // Merged: subscription_management + user_plans + currency + billing_control
   | 'platform_config'    // Merged: app_settings + appearance + integrations
-  | 'platform_admin';    // Merged: platform_security + root_admin
+  | 'platform_admin'     // Merged: platform_security + root_admin
+  | 'tracking';          // Tracking & Analytics engine (platform level)
 
 export interface SectionPermission {
   canAccess: boolean;
@@ -62,7 +62,6 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   ambassadors: 'organization',
   permissions: 'organization',
   audit_log: 'organization',
-  tracking: 'organization',
   // Platform level - root only
   organization_registrations: 'platform',
   platform_users: 'platform',
@@ -70,6 +69,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   billing: 'platform',
   platform_config: 'platform',
   platform_admin: 'platform',
+  tracking: 'platform',
 };
 
 // Module key mapping for database lookup
