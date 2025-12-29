@@ -103,24 +103,31 @@ serve(async (req: Request) => {
         let assetPath = '';
         const urlStr: string = asset.url;
 
-        if (urlStr.startsWith('raw-assets/')) {
-          // Legacy: treat as a path (folder) inside the configured storage zone.
-          assetPath = urlStr;
-        } else if (urlStr.includes('storage.bunnycdn.com')) {
-          const zoneFromUrl = extractStorageZoneFromStorageUrl(urlStr);
-          const afterZone = extractPathAfterFirstSegment(urlStr);
-          if (zoneFromUrl && afterZone) {
-            // If the URL zone differs from our configured zone, keep it as a folder prefix.
-            assetPath = zoneFromUrl !== envStorageZone ? `${zoneFromUrl}/${afterZone}` : afterZone;
-          }
-        } else {
-          // generic: take everything after host
+        if (urlStr.includes('storage.bunnycdn.com')) {
+          // Take full pathname as the path inside our configured storage zone.
+          // Old URLs may have been stored without the zone prefix.
           try {
             const u = new URL(urlStr);
             assetPath = u.pathname.replace(/^\//, '');
           } catch {
             assetPath = '';
           }
+        } else if (/^https?:\/\//i.test(urlStr)) {
+          // CDN or other URL: take pathname
+          try {
+            const u = new URL(urlStr);
+            assetPath = u.pathname.replace(/^\//, '');
+          } catch {
+            assetPath = '';
+          }
+        } else {
+          // Relative path
+          assetPath = urlStr.replace(/^\//, '');
+        }
+
+        // Strip our configured zone if accidentally doubled
+        if (assetPath.startsWith(`${envStorageZone}/`)) {
+          assetPath = assetPath.slice(envStorageZone!.length + 1);
         }
 
         console.log(`Extracted asset path: ${assetPath}`);
