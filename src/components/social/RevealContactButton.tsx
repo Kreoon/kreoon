@@ -33,7 +33,8 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
     : 0;
 
   const getWhatsAppUrl = (phone: string) => {
-    const cleanPhone = phone.replace(/\D/g, '');
+    // Remove all non-numeric characters except +
+    const cleanPhone = phone.replace(/[^\d+]/g, '').replace(/^\+/, '');
     const message = encodeURIComponent('Acabo de ver tu contacto en Kreoon y me gustaría trabajar contigo.');
     return `https://wa.me/${cleanPhone}?text=${message}`;
   };

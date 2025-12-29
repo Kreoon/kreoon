@@ -429,7 +429,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
             icon={<Users className="h-4 w-4" />} 
             value={stats.following_count} 
             label="Siguiendo" 
-            className="hidden sm:flex cursor-pointer hover:text-social-accent"
+            className="hidden sm:block cursor-pointer hover:text-social-accent"
             onClick={() => { setFollowersModalTab('following'); setFollowersModalOpen(true); }}
           />
           <StatItem icon={<Eye className="h-4 w-4" />} value={stats.views_count} label="Vistas" className="hidden sm:block" />
