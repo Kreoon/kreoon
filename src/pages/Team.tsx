@@ -404,7 +404,7 @@ export default function Team() {
                     <SelectContent>
                       <SelectItem value="admin">Administrador</SelectItem>
                       <SelectItem value="creator">Creador</SelectItem>
-                      <SelectItem value="editor">Editor</SelectItem>
+                      <SelectItem value="editor">Productor Audio-Visual</SelectItem>
                       <SelectItem value="client">Cliente</SelectItem>
                       <SelectItem value="strategist">Estratega</SelectItem>
                       <SelectItem value="ambassador">Embajador</SelectItem>

@@ -228,8 +228,8 @@ export const tourConfigs: Record<string, RoleTourConfig> = {
     ]
   },
   editor: {
-    roleName: "Editor",
-    roleDescription: "Como editor, recibes videos grabados para editar. Tu trabajo es crear ediciones profesionales con música, efectos y entregarlas a tiempo.",
+    roleName: "Productor Audio-Visual",
+    roleDescription: "Como productor audio-visual, recibes videos grabados para editar. Tu trabajo es crear ediciones profesionales con música, efectos y entregarlas a tiempo.",
     steps: [
       {
         target: "[data-tour='editor-stats']",

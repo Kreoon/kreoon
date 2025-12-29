@@ -301,12 +301,12 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                       <span className="text-social-muted-foreground/50">•</span>
                     )}
                     {membership.role && (
-                      <span className="capitalize flex items-center gap-1">
+                      <span className="flex items-center gap-1">
                         {membership.role === 'creator' && <Palette className="h-3 w-3" />}
                         {membership.role === 'editor' && <Film className="h-3 w-3" />}
                         {membership.role === 'strategist' && <Target className="h-3 w-3" />}
                         {membership.role === 'admin' && <Settings className="h-3 w-3" />}
-                        {membership.role}
+                        {membership.role === 'editor' ? 'Productor AV' : membership.role === 'creator' ? 'Creador' : membership.role === 'strategist' ? 'Estratega' : membership.role === 'admin' ? 'Admin' : membership.role}
                       </span>
                     )}
                     {membership.role && (membership.organization || membership.is_independent) && (

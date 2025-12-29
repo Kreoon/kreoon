@@ -721,7 +721,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                   className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-2 px-3"
                 >
                   <Scissors className="h-4 w-4 mr-1.5" />
-                  Editor
+                  Productor AV
                 </TabsTrigger>
                 <TabsTrigger 
                   value="estratega" 

@@ -495,7 +495,7 @@ export function UserOrganizationAssignment() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="creator">Creador</SelectItem>
-                  <SelectItem value="editor">Editor</SelectItem>
+                  <SelectItem value="editor">Productor Audio-Visual</SelectItem>
                   <SelectItem value="strategist">Estratega</SelectItem>
                   <SelectItem value="client">Cliente</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>

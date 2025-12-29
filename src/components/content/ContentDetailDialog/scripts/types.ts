@@ -70,7 +70,7 @@ export interface ScriptSubTabConfig {
 export const SCRIPT_SUB_TABS: ScriptSubTabConfig[] = [
   { key: 'ia', label: 'IA', icon: '🤖', description: 'Generación de guiones con IA' },
   { key: 'script', label: 'Guión', icon: '📝', description: 'Guión completo del contenido' },
-  { key: 'editor', label: 'Editor', icon: '🎬', description: 'Indicaciones de edición' },
+  { key: 'editor', label: 'Productor AV', icon: '🎬', description: 'Indicaciones de producción audio-visual' },
   { key: 'strategist', label: 'Estratega', icon: '🧠', description: 'Estrategia y objetivos' },
   { key: 'designer', label: 'Diseñador', icon: '🎨', description: 'Indicaciones visuales' },
   { key: 'trafficker', label: 'Trafficker', icon: '📈', description: 'Pauta y campañas' },

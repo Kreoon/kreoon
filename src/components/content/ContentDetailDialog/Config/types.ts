@@ -91,7 +91,7 @@ export interface ContentConfigState {
 export const BLOCK_METADATA: Record<BlockKey, { label: string; icon: string; description: string }> = {
   ia: { label: 'IA', icon: '🤖', description: 'Asistente de inteligencia artificial' },
   script: { label: 'Guión', icon: '📝', description: 'Contenido del guión principal' },
-  editor: { label: 'Editor', icon: '🎬', description: 'Instrucciones para el editor' },
+  editor: { label: 'Productor AV', icon: '🎬', description: 'Instrucciones para el productor audio-visual' },
   strategist: { label: 'Estratega', icon: '🧠', description: 'Estrategia de contenido' },
   designer: { label: 'Diseñador', icon: '🎨', description: 'Lineamientos gráficos' },
   trafficker: { label: 'Trafficker', icon: '💰', description: 'Indicaciones de pauta' },

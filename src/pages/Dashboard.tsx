@@ -897,7 +897,7 @@ export default function Dashboard() {
 
                     <Select value={filterEditorId} onValueChange={setFilterEditorId}>
                       <SelectTrigger className="w-full h-9 text-xs">
-                        <SelectValue placeholder="Editor" />
+                        <SelectValue placeholder="Productor AV" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todos</SelectItem>
