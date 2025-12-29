@@ -122,11 +122,21 @@ const TAB_VISIBILITY: Record<string, TabKey[]> = {
  * Uses RBAC matrix instead of hardcoded role checks
  */
 export function useContentPermissions(content: Content | null): ContentPermissions {
-  const { user, isAdmin, isCreator, isEditor, isClient } = useAuth();
+  const { user, isAdmin, isCreator, isEditor, isClient, isStrategist, activeRole } = useAuth();
 
   return useMemo(() => {
-    // Determine effective role
+    // Determine effective role - prioritize activeRole for role switching
     const getEffectiveRole = (): string => {
+      // If user has explicitly switched roles, respect that
+      if (activeRole) {
+        // Special case: check if they're assigned to this content
+        if (activeRole === 'strategist' && content?.strategist_id === user?.id) return 'strategist';
+        if (activeRole === 'creator' && content?.creator_id === user?.id) return 'creator';
+        if (activeRole === 'editor' && content?.editor_id === user?.id) return 'editor';
+        return activeRole;
+      }
+      
+      // Fallback to checking boolean flags (for backwards compatibility)
       if (isAdmin) return 'admin';
       if (content?.strategist_id === user?.id) return 'strategist';
       if (isCreator && content?.creator_id === user?.id) return 'creator';
@@ -164,5 +174,5 @@ export function useContentPermissions(content: Content | null): ContentPermissio
       isReadOnly,
       canEnterEditMode,
     };
-  }, [content, user?.id, isAdmin, isCreator, isEditor, isClient]);
+  }, [content, user?.id, isAdmin, isCreator, isEditor, isClient, isStrategist, activeRole]);
 }

@@ -55,7 +55,7 @@ const ADMIN_PERMISSIONS: UPPermissions = {
 };
 
 export function useUPPermissions() {
-  const { user, roles } = useAuth();
+  const { user, roles, activeRole } = useAuth();
   const { currentOrgId, isOrgOwner } = useOrgOwner();
   const [permissions, setPermissions] = useState<UPPermissions>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,7 @@ export function useUPPermissions() {
     } else {
       setLoading(false);
     }
-  }, [user, currentOrgId, roles]);
+  }, [user, currentOrgId, roles, activeRole]);
 
   const fetchPermissions = async () => {
     if (!user || !currentOrgId) return;
@@ -74,7 +74,8 @@ export function useUPPermissions() {
     setLoading(true);
     try {
       // Check if user is admin or org owner - they get full permissions
-      const isAdmin = roles.includes('admin');
+      // Use activeRole to determine current context
+      const isAdmin = activeRole === 'admin';
       
       if (isAdmin || isOrgOwner) {
         setPermissions(ADMIN_PERMISSIONS);
@@ -82,8 +83,8 @@ export function useUPPermissions() {
         return;
       }
 
-      // Get user's primary role for this org
-      const userRole = roles[0] || 'creator';
+      // Use activeRole instead of roles[0] to respect role switching
+      const userRole = activeRole || roles[0] || 'creator';
 
       // Try to fetch permissions for this role from up_permissions table
       const { data, error } = await supabase
@@ -126,8 +127,11 @@ export function useUPPermissions() {
     }
   };
 
+  // Use activeRole for role-based permission fallback
   const getRoleBasedPermissions = (): UPPermissions => {
-    if (roles.includes('strategist')) {
+    const currentRole = activeRole || roles[0];
+    
+    if (currentRole === 'strategist') {
       return {
         ...DEFAULT_PERMISSIONS,
         canViewOthersUP: true,
@@ -136,10 +140,19 @@ export function useUPPermissions() {
       };
     }
 
-    if (roles.includes('editor') || roles.includes('creator')) {
+    if (currentRole === 'editor' || currentRole === 'creator') {
       return {
         ...DEFAULT_PERMISSIONS,
         canViewQualityScore: true,
+      };
+    }
+
+    // Client role gets minimal permissions
+    if (currentRole === 'client') {
+      return {
+        ...DEFAULT_PERMISSIONS,
+        canViewOwnUP: false,
+        canViewRanking: false,
       };
     }
 
@@ -150,6 +163,7 @@ export function useUPPermissions() {
     permissions,
     loading,
     refetch: fetchPermissions,
-    isAdmin: roles.includes('admin') || isOrgOwner,
+    isAdmin: activeRole === 'admin' || isOrgOwner,
+    activeRole,
   };
 }

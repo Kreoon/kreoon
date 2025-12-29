@@ -73,7 +73,7 @@ const CREATOR_PERMISSIONS: Record<PortfolioPermission, boolean> = {
 };
 
 export function usePortfolioPermissions(): PortfolioPermissions {
-  const { user, profile, isAdmin, isCreator, roles } = useAuth();
+  const { user, profile, isAdmin, isCreator, isClient, roles, activeRole } = useAuth();
   const organizationId = profile?.current_organization_id;
   const [permissions, setPermissions] = useState<Record<PortfolioPermission, boolean>>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(true);
@@ -132,8 +132,16 @@ export function usePortfolioPermissions(): PortfolioPermissions {
         }
       }
 
-      // Fallback to role-based defaults
-      if (isCreator) {
+      // Fallback to role-based defaults using activeRole
+      // Client role = company context, limited portfolio access
+      if (isClient || activeRole === 'client') {
+        setPermissions({
+          ...DEFAULT_PERMISSIONS,
+          'portfolio.profile.view': true,
+          'portfolio.feed.view': true,
+          'portfolio.videos.view': true,
+        });
+      } else if (isCreator || activeRole === 'creator') {
         setPermissions(CREATOR_PERMISSIONS);
       } else {
         setPermissions(DEFAULT_PERMISSIONS);
@@ -144,7 +152,7 @@ export function usePortfolioPermissions(): PortfolioPermissions {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, isAdmin, isCreator, roles, organizationId]);
+  }, [user?.id, isAdmin, isCreator, isClient, roles, activeRole, organizationId]);
 
   useEffect(() => {
     fetchPermissions();
