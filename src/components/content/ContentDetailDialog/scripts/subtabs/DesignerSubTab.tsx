@@ -28,16 +28,14 @@ export function DesignerSubTab({
           </p>
 
           {editMode && canEdit ? (
-            <div className="max-h-[400px] overflow-y-auto">
-              <RichTextEditor
-                content={formData.designer_guidelines || ''}
-                onChange={(value) => setFormData(prev => ({ ...prev, designer_guidelines: value }))}
-                placeholder="Describe el estilo visual, paleta de colores, tipografías, mood..."
-                features={editorFeatures}
-              />
-            </div>
+            <RichTextEditor
+              content={formData.designer_guidelines || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, designer_guidelines: value }))}
+              placeholder="Describe el estilo visual, paleta de colores, tipografías, mood..."
+              features={editorFeatures}
+            />
           ) : hasContent ? (
-            <RichTextViewer content={formData.designer_guidelines || ''} maxHeight="max-h-[400px]" />
+            <RichTextViewer content={formData.designer_guidelines || ''} maxHeight="" />
           
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-lg">
