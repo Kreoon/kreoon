@@ -333,9 +333,53 @@ export function RawAssetsUploader({
     }
   };
 
+  // Normalize Bunny URLs: convert storage URLs to public CDN URLs when possible
+  const toPublicAssetUrl = useCallback((url: string) => {
+    try {
+      const u = new URL(url);
+      // Bunny Storage URL: https://<region>.storage.bunnycdn.com/<zone>/<path...>
+      if (u.hostname.includes('storage.bunnycdn.com')) {
+        const parts = u.pathname.replace(/^\//, '').split('/');
+        const zone = parts[0];
+        const rest = parts.slice(1).join('/');
+        if (zone && rest) return `https://${zone}.b-cdn.net/${rest}`;
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  }, []);
+
+  const triggerBrowserDownload = useCallback((url: string, filename: string) => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }, []);
+
   // Download individual file
   const handleDownload = (asset: UploadedAsset) => {
-    window.open(asset.storage_path, '_blank');
+    const url = toPublicAssetUrl(asset.storage_path);
+    triggerBrowserDownload(url, asset.custom_filename);
+  };
+
+  // Download all files (one by one, started together)
+  const handleDownloadAllFiles = async () => {
+    if (uploadedAssets.length === 0) {
+      toast.error('No hay archivos para descargar');
+      return;
+    }
+
+    // Browsers may block too many simultaneous downloads; stagger them slightly.
+    uploadedAssets.forEach((asset, idx) => {
+      const url = toPublicAssetUrl(asset.storage_path);
+      window.setTimeout(() => triggerBrowserDownload(url, asset.custom_filename), idx * 450);
+    });
+
+    toast.success('Descargas iniciadas');
   };
 
   // Download all as ZIP
@@ -351,10 +395,11 @@ export function RawAssetsUploader({
         body: {
           projectId: contentId,
           assets: uploadedAssets.map(a => ({
-            url: a.storage_path,
-            filename: a.custom_filename
-          }))
-        }
+            // Prefer public CDN URLs to avoid storage auth issues
+            url: toPublicAssetUrl(a.storage_path),
+            filename: a.custom_filename,
+          })),
+        },
       });
 
       if (error) throw error;
@@ -580,27 +625,38 @@ export function RawAssetsUploader({
       {/* Uploaded Assets List */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center justify-between">
+          <CardTitle className="text-base flex items-center justify-between gap-3">
             <span>Material Crudo ({uploadedAssets.length})</span>
             {uploadedAssets.length > 0 && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleDownloadZip}
-                disabled={downloadingZip}
-              >
-                {downloadingZip ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generando ZIP...
-                  </>
-                ) : (
-                  <>
-                    <FolderDown className="h-4 w-4 mr-2" />
-                    Descargar todo
-                  </>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadAllFiles}
+                >
+                  <FolderDown className="h-4 w-4 mr-2" />
+                  Descargar archivos
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleDownloadZip}
+                  disabled={downloadingZip}
+                >
+                  {downloadingZip ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generando ZIP...
+                    </>
+                  ) : (
+                    <>
+                      <FolderDown className="h-4 w-4 mr-2" />
+                      Descargar ZIP
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
           </CardTitle>
         </CardHeader>
