@@ -212,18 +212,23 @@ export function EnhancedChatDrawer({
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             className={cn(
-              "fixed z-50 flex flex-col bg-background shadow-2xl border-l border-border",
+              "fixed z-50 flex flex-col bg-background shadow-2xl border-l border-border/50",
               "right-0 top-0 h-screen",
               isMobile ? "w-full" : "w-[600px] max-w-[90vw]"
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b bg-card shrink-0">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold text-lg">Chat</h2>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-gradient-to-r from-card to-background shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-base">Mensajes</h2>
+                  <p className="text-xs text-muted-foreground">Comunicación directa</p>
+                </div>
                 {conversations.reduce((acc, c) => acc + (c.unread_count || 0), 0) > 0 && (
-                  <Badge variant="destructive" className="h-5">
+                  <Badge variant="destructive" className="h-5 text-xs animate-pulse">
                     {conversations.reduce((acc, c) => acc + (c.unread_count || 0), 0)}
                   </Badge>
                 )}
@@ -233,7 +238,7 @@ export function EnhancedChatDrawer({
                   variant="ghost" 
                   size="icon" 
                   onClick={() => setView('new')}
-                  className="h-9 w-9"
+                  className="h-9 w-9 hover:bg-primary/10 transition-colors duration-200"
                 >
                   <Plus className="h-5 w-5" />
                 </Button>
@@ -241,7 +246,7 @@ export function EnhancedChatDrawer({
                   variant="ghost" 
                   size="icon" 
                   onClick={onClose}
-                  className="h-9 w-9"
+                  className="h-9 w-9 hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
                 >
                   <X className="h-5 w-5" />
                 </Button>
@@ -327,17 +332,17 @@ export function EnhancedChatDrawer({
                                   }
                                 }}
                                 className={cn(
-                                  'p-3 flex items-center gap-3 transition-colors',
+                                  'p-3 flex items-center gap-3 transition-all duration-200',
                                   chatUser.can_chat 
-                                    ? 'hover:bg-accent cursor-pointer' 
+                                    ? 'hover:bg-accent/50 cursor-pointer hover:translate-x-1' 
                                     : 'opacity-50 cursor-not-allowed',
-                                  selectedUsers.includes(chatUser.id) && 'bg-primary/10'
+                                  selectedUsers.includes(chatUser.id) && 'bg-primary/10 border-l-2 border-primary'
                                 )}
                               >
                                 <div className="relative">
-                                  <Avatar className="h-10 w-10">
+                                  <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm transition-transform duration-200 hover:scale-105">
                                     <AvatarImage src={chatUser.avatar_url || ''} />
-                                    <AvatarFallback>{chatUser.full_name.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5">{chatUser.full_name.charAt(0)}</AvatarFallback>
                                   </Avatar>
                                   <div className="absolute -bottom-0.5 -right-0.5">
                                     <PresenceIndicator isOnline={chatUser.is_online || false} size="md" />
@@ -373,17 +378,19 @@ export function EnhancedChatDrawer({
                           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         </div>
                       ) : conversations.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-64 text-center p-4">
-                          <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
-                          <p className="text-muted-foreground">No tienes conversaciones</p>
+                        <div className="flex flex-col items-center justify-center h-64 text-center p-6">
+                          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                            <MessageCircle className="h-8 w-8 text-primary/60" />
+                          </div>
+                          <p className="text-muted-foreground font-medium">Sin conversaciones activas</p>
+                          <p className="text-xs text-muted-foreground/60 mt-1">Inicia una nueva conversación</p>
                           <Button 
-                            variant="outline" 
-                            className="mt-4" 
+                            className="mt-4 bg-primary/10 hover:bg-primary/20 text-primary border-0" 
                             onClick={() => setView('new')}
                             size="sm"
                           >
                             <Plus className="h-4 w-4 mr-2" />
-                            Iniciar chat
+                            Nueva conversación
                           </Button>
                         </div>
                       ) : (

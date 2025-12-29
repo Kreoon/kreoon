@@ -286,7 +286,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
 
       {/* Stats Bar */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-6">
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-4 p-4 bg-social-card rounded-xl border border-social-border shadow-sm">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-4 p-4 bg-social-card rounded-xl border border-social-border shadow-sm hover:shadow-md transition-shadow duration-300">
           <StatItem icon={<FolderOpen className="h-4 w-4" />} value={stats.portfolio_count} label="Portafolio" />
           <StatItem icon={<Grid className="h-4 w-4" />} value={stats.posts_count} label="Posts" />
           <StatItem icon={<Play className="h-4 w-4" />} value={stats.videos_count} label="Videos" />
@@ -300,41 +300,41 @@ export const PortfolioProfile = memo(function PortfolioProfile({
       {/* Content Tabs */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-8">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="w-full justify-start bg-transparent border-b border-social-border rounded-none h-12 p-0 gap-4 sm:gap-6 overflow-x-auto">
+          <TabsList className="w-full justify-start bg-transparent border-b border-social-border rounded-none h-12 p-0 gap-2 sm:gap-4 overflow-x-auto">
             <TabsTrigger 
               value="portfolio" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-2 whitespace-nowrap transition-all duration-200 hover:text-social-foreground"
             >
-              <FolderOpen className="h-4 w-4 mr-2" />
-              Portafolio
+              <FolderOpen className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">Portafolio</span>
             </TabsTrigger>
             <TabsTrigger 
               value="posts" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-2 whitespace-nowrap transition-all duration-200 hover:text-social-foreground"
             >
-              <Grid className="h-4 w-4 mr-2" />
-              Posts
+              <Grid className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">Posts</span>
             </TabsTrigger>
             <TabsTrigger 
               value="videos"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-2 whitespace-nowrap transition-all duration-200 hover:text-social-foreground"
             >
-              <Play className="h-4 w-4 mr-2" />
-              Videos
+              <Play className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">Videos</span>
             </TabsTrigger>
             <TabsTrigger 
               value="badges"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-2 whitespace-nowrap transition-all duration-200 hover:text-social-foreground"
             >
-              <Star className="h-4 w-4 mr-2" />
-              Logros
+              <Star className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">Logros</span>
             </TabsTrigger>
             <TabsTrigger 
               value="about"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-1 whitespace-nowrap"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-2 whitespace-nowrap transition-all duration-200 hover:text-social-foreground"
             >
-              <Briefcase className="h-4 w-4 mr-2" />
-              Sobre mí
+              <Briefcase className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">Sobre mí</span>
             </TabsTrigger>
           </TabsList>
 
@@ -403,11 +403,11 @@ function StatItem({ icon, value, label, className }: { icon: React.ReactNode; va
   };
 
   return (
-    <div className={cn("text-center", className)}>
-      <div className="flex items-center justify-center gap-1 text-social-muted-foreground mb-1">
+    <div className={cn("text-center group cursor-default", className)}>
+      <div className="flex items-center justify-center gap-1 text-social-muted-foreground mb-1 group-hover:text-social-accent transition-colors duration-200">
         {icon}
       </div>
-      <div className="text-lg sm:text-xl font-bold text-social-foreground">{formatNumber(value)}</div>
+      <div className="text-lg sm:text-xl font-bold text-social-foreground group-hover:scale-105 transition-transform duration-200">{formatNumber(value)}</div>
       <div className="text-xs text-social-muted-foreground">{label}</div>
     </div>
   );

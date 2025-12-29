@@ -211,14 +211,14 @@ export function ContentDetailDialog({
     readOnly: isTabReadOnly(activeTab),
   };
 
-  const TAB_CONFIG: Record<string, { label: string; component: React.ReactNode }> = {
-    scripts: { label: 'Scripts', component: <ScriptsTab {...tabProps} selectedProduct={selectedProduct} onProductChange={handleProductChange} /> },
-    video: { label: 'Video', component: <VideoTab {...tabProps} selectedProduct={selectedProduct} /> },
-    material: { label: '📁 Material', component: <MaterialTab {...tabProps} /> },
-    general: { label: 'General', component: <GeneralTab {...tabProps} selectedProduct={selectedProduct} onProductChange={handleProductChange} /> },
-    team: { label: 'Equipo', component: <TeamTab {...tabProps} /> },
-    dates: { label: 'Fechas', component: <DatesTab {...tabProps} /> },
-    payments: { label: 'Pagos', component: <PaymentsTab {...tabProps} /> }
+  const TAB_CONFIG: Record<string, { label: string; icon?: string; component: React.ReactNode }> = {
+    scripts: { label: 'Guion', icon: '📝', component: <ScriptsTab {...tabProps} selectedProduct={selectedProduct} onProductChange={handleProductChange} /> },
+    video: { label: 'Video', icon: '🎬', component: <VideoTab {...tabProps} selectedProduct={selectedProduct} /> },
+    material: { label: 'Material', icon: '📁', component: <MaterialTab {...tabProps} /> },
+    general: { label: 'General', icon: '⚙️', component: <GeneralTab {...tabProps} selectedProduct={selectedProduct} onProductChange={handleProductChange} /> },
+    team: { label: 'Equipo', icon: '👥', component: <TeamTab {...tabProps} /> },
+    dates: { label: 'Fechas', icon: '📅', component: <DatesTab {...tabProps} /> },
+    payments: { label: 'Finanzas', icon: '💰', component: <PaymentsTab {...tabProps} /> }
   };
 
   const handleSave = () => {
@@ -486,22 +486,26 @@ export function ContentDetailDialog({
         {/* Content Area with Tabs */}
         <div className="overflow-y-auto max-h-[calc(90vh-220px)] p-4 sm:p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className={`grid w-full h-auto gap-1 mb-6 grid-cols-${effectiveVisibleTabs.length}`}>
+            <TabsList className="w-full h-auto gap-1 mb-6 flex flex-wrap justify-start bg-muted/30 p-1 rounded-lg">
               {effectiveVisibleTabs.map(tabKey => {
                 const locked = isTabLocked(tabKey);
                 const readOnly = isTabReadOnly(tabKey);
+                const config = TAB_CONFIG[tabKey];
                 
                 return (
                   <TabsTrigger 
                     key={tabKey} 
                     value={tabKey} 
                     className={cn(
-                      "text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2 flex items-center gap-1",
+                      "text-xs sm:text-sm px-3 py-2 flex items-center gap-1.5 rounded-md transition-all duration-200",
+                      "data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground",
+                      "hover:bg-background/50",
                       locked && "border-warning/50",
                       readOnly && !locked && "border-dashed"
                     )}
                   >
-                    {TAB_CONFIG[tabKey]?.label}
+                    {config?.icon && <span className="text-sm">{config.icon}</span>}
+                    <span className="hidden sm:inline">{config?.label}</span>
                     {locked && <Lock className="h-3 w-3 text-warning" />}
                     {readOnly && !locked && <Eye className="h-3 w-3 text-muted-foreground" />}
                   </TabsTrigger>
