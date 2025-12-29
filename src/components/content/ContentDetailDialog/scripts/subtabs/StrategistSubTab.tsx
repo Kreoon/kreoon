@@ -28,14 +28,16 @@ export function StrategistSubTab({
           </p>
 
           {editMode && canEdit ? (
-            <RichTextEditor
-              content={formData.strategist_guidelines || ''}
-              onChange={(value) => setFormData(prev => ({ ...prev, strategist_guidelines: value }))}
-              placeholder="Define el objetivo, mensaje clave, público objetivo, CTA..."
-              features={editorFeatures}
-            />
+            <div className="max-h-[400px] overflow-y-auto">
+              <RichTextEditor
+                content={formData.strategist_guidelines || ''}
+                onChange={(value) => setFormData(prev => ({ ...prev, strategist_guidelines: value }))}
+                placeholder="Define el objetivo, mensaje clave, público objetivo, CTA..."
+                features={editorFeatures}
+              />
+            </div>
           ) : hasContent ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
+            <div className="max-h-[400px] overflow-y-auto prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
               <RichTextViewer content={formData.strategist_guidelines || ''} />
             </div>
           ) : (
