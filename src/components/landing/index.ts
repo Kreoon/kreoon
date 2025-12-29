@@ -8,6 +8,10 @@ export {
   SistemaUPSection,
   SocialCreatorsSection,
   PricingSection,
+  IndividualPlansSection,
+  TalentAccessSection,
+  TokenSystemSection,
+  WhyThisModelSection,
   PrivacySection,
   CTASection,
   LandingFooter 
