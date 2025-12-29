@@ -6492,6 +6492,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_see_user_in_list: {
+        Args: {
+          _org_id: string
+          _source_user_id: string
+          _target_user_id: string
+        }
+        Returns: boolean
+      }
       can_users_chat: {
         Args: { _user1_id: string; _user2_id: string }
         Returns: boolean
