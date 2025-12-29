@@ -442,7 +442,7 @@ export function IntegratedNotificationHeader({
       <Button
         variant="outline"
         size="sm"
-        onClick={() => navigate('/portfolio')}
+        onClick={() => navigate('/social')}
         className="gap-2"
       >
         <Briefcase className="h-4 w-4" />

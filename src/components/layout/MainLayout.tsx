@@ -32,7 +32,7 @@ const clientNavigation = [
 const editorMobileNavigation = [
   { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard },
   { name: "Tablero", href: "/board", icon: Kanban },
-  { name: "Contenido", href: "/portfolio", icon: Video },
+  { name: "Contenido", href: "/social", icon: Video },
   { name: "Guiones", href: "/scripts", icon: Sparkles },
   { name: "Config", href: "/settings", icon: Settings },
 ];
@@ -77,7 +77,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/portfolio')}
+              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/social')}
               className="h-9 w-9 rounded-full p-0"
             >
               <Avatar className="h-8 w-8">
@@ -90,7 +90,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/portfolio')}
+              onClick={() => navigate('/social')}
               className="h-9 w-9 rounded-full"
             >
               <Briefcase className="h-4 w-4" />
@@ -238,7 +238,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/portfolio')}
+              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/social')}
               className="h-9 w-9 rounded-full p-0"
             >
               <Avatar className="h-8 w-8">
@@ -251,7 +251,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/portfolio')}
+              onClick={() => navigate('/social')}
               className="h-9 w-9 rounded-full"
             >
               <Briefcase className="h-4 w-4" />
@@ -352,7 +352,7 @@ export function MainLayout({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(user?.id ? `/p/${user.id}` : '/portfolio')}
+            onClick={() => navigate(user?.id ? `/p/${user.id}` : '/social')}
             className="h-9 w-9 rounded-full p-0"
           >
             <Avatar className="h-8 w-8">
@@ -365,7 +365,7 @@ export function MainLayout({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/portfolio')}
+            onClick={() => navigate('/social')}
             className="h-9 w-9 rounded-full"
           >
             <Briefcase className="h-4 w-4" />
