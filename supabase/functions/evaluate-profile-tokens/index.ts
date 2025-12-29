@@ -183,20 +183,50 @@ DEBES responder SOLO con un JSON válido con esta estructura exacta:
 
     const userPrompt = `Evalúa este perfil de creador:
 
-PERFIL:
+PERFIL BÁSICO:
 - Nombre: ${profile.full_name || 'No especificado'}
 - Usuario: ${profile.username ? '@' + profile.username : 'No especificado'}
 - Bio: ${profile.bio || 'Sin bio'}
 - Tagline: ${profile.tagline || 'Sin tagline'}
 - Ubicación: ${[profile.city, profile.country].filter(Boolean).join(', ') || 'No especificada'}
 - Nivel de experiencia: ${profile.experience_level || 'No especificado'}
+- Es embajador: ${profile.is_ambassador ? 'Sí' : 'No'}
+- Estado de disponibilidad: ${profile.availability_status || 'No especificado'}
+
+ESPECIALIZACIÓN:
+- Mejor en: ${profile.best_at || 'No especificado'}
 - Especialidades: ${profile.specialties_tags?.join(', ') || 'No especificadas'}
-- Categorías: ${profile.content_categories?.join(', ') || 'No especificadas'}
+- Categorías de contenido: ${profile.content_categories?.join(', ') || 'No especificadas'}
+- Industrias: ${profile.industries?.join(', ') || 'No especificadas'}
+- Palabras clave de estilo: ${profile.style_keywords?.join(', ') || 'No especificadas'}
+- Idiomas: ${profile.languages?.join(', ') || 'No especificados'}
+- Intereses: ${profile.interests?.join(', ') || 'No especificados'}
+
+PRESENCIA DIGITAL:
 - Tiene avatar: ${profile.avatar_url ? 'Sí' : 'No'}
 - Tiene portada: ${profile.cover_url ? 'Sí' : 'No'}
-- Redes sociales: ${[profile.instagram && 'Instagram', profile.tiktok && 'TikTok', profile.portfolio_url && 'Portfolio'].filter(Boolean).join(', ') || 'Ninguna'}
+- Video destacado: ${profile.featured_video_url ? 'Sí' : 'No'}
+- Instagram: ${profile.instagram ? 'Sí' : 'No'}
+- TikTok: ${profile.tiktok ? 'Sí' : 'No'}
+- YouTube: ${profile.social_youtube ? 'Sí' : 'No'}
+- LinkedIn: ${profile.social_linkedin ? 'Sí' : 'No'}
+- Twitter: ${profile.social_twitter ? 'Sí' : 'No'}
+- Portfolio URL: ${profile.portfolio_url ? 'Sí' : 'No'}
 
-ESTADÍSTICAS:
+MÉTRICAS DE DESEMPEÑO:
+- Calificación de calidad promedio: ${profile.quality_score_avg ? `${profile.quality_score_avg}/5` : 'Sin calificación'}
+- Puntuación de confiabilidad: ${profile.reliability_score ? `${profile.reliability_score}/100` : 'Sin puntuación'}
+- Puntuación de velocidad: ${profile.velocity_score ? `${profile.velocity_score}/100` : 'Sin puntuación'}
+
+HISTORIAL COMO EDITOR:
+- Calificación como editor: ${profile.editor_rating ? `${profile.editor_rating}/5` : 'Sin calificación'}
+- Trabajos completados como editor: ${profile.editor_completed_count || 0}
+- Entregas a tiempo: ${profile.editor_on_time_count || 0}
+
+TARIFA PROFESIONAL:
+- Tarifa por contenido: ${profile.rate_per_content ? `${profile.rate_per_content} ${profile.rate_currency || 'USD'}` : 'No especificada'}
+
+ESTADÍSTICAS DE ACTIVIDAD:
 - Posts personales: ${stats.posts_count}
 - Trabajos en portafolio: ${stats.portfolio_count}
 - Seguidores: ${stats.followers_count}
