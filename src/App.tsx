@@ -77,9 +77,9 @@ function AppRoutes() {
   
   return (
     <Routes key={impersonationKey}>
-      <Route path="/social" element={<ProtectedRoute><PortfolioShell /></ProtectedRoute>} />
-      <Route path="/social/*" element={<ProtectedRoute><PortfolioShell /></ProtectedRoute>} />
-      <Route path="/explore" element={<ProtectedRoute><ExplorePage /></ProtectedRoute>} />
+      <Route path="/social" element={<ProtectedRoute allowNoRoles><PortfolioShell /></ProtectedRoute>} />
+      <Route path="/social/*" element={<ProtectedRoute allowNoRoles><PortfolioShell /></ProtectedRoute>} />
+      <Route path="/explore" element={<ProtectedRoute allowNoRoles><ExplorePage /></ProtectedRoute>} />
       <Route path="/company/:username" element={<CompanyProfilePage />} />
       <Route path="/profile/:userId" element={<PublicProfilePage />} />
       <Route path="/profile" element={<ProfileRedirect />} />
@@ -100,7 +100,7 @@ function AppRoutes() {
       <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
       <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
       <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
       <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
       <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
       <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />

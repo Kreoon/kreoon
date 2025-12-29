@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageCircle, Clock, LogOut, Sparkles, Loader2, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { MessageCircle, Clock, LogOut, Sparkles, Loader2, ArrowLeft, Users, Briefcase } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,7 +15,7 @@ export default function PendingAccess() {
   const [loadingWhatsapp, setLoadingWhatsapp] = useState(true);
 
   // Check if user should be here
-  const isPending = profile?.organization_status === 'pending_assignment' || roles.length === 0;
+  const isPending = profile?.organization_status === 'pending_assignment';
 
   // If user has roles and is active, redirect to their dashboard
   useEffect(() => {
@@ -100,8 +100,17 @@ export default function PendingAccess() {
     );
   }
 
-  // Don't render if user should be elsewhere
-  if (!user || roles.length > 0) {
+  // If user has no roles, show options for social network or request access
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Users with roles but pending assignment
+  if (roles.length > 0 && !isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -126,9 +135,9 @@ export default function PendingAccess() {
             <div className="mx-auto w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
               <Clock className="w-10 h-10 text-primary animate-pulse" />
             </div>
-            <CardTitle className="text-2xl font-display">¡Registro exitoso!</CardTitle>
+            <CardTitle className="text-2xl font-display">¡Bienvenido a KREOON!</CardTitle>
             <CardDescription className="text-base">
-              Tu cuenta ha sido creada. Ahora necesitas solicitar acceso para poder usar la plataforma.
+              Tu cuenta está lista. Puedes explorar la red social o solicitar acceso para trabajar con organizaciones.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -140,9 +149,32 @@ export default function PendingAccess() {
               <p className="font-medium text-foreground">{user?.email}</p>
             </div>
 
+            {/* Social Network Access */}
+            <Link to="/social" className="block">
+              <Button 
+                size="lg" 
+                variant="default"
+                className="w-full gap-2"
+              >
+                <Users className="w-5 h-5" />
+                Ir a la red social
+              </Button>
+            </Link>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">
+                  ¿Quieres trabajar?
+                </span>
+              </div>
+            </div>
+
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Para activar tu cuenta, escríbenos por WhatsApp indicando qué rol deseas:
+                Para unirte a una organización como creador, editor o cliente, solicita acceso:
               </p>
               <ul className="text-sm text-left space-y-1 text-muted-foreground pl-4">
                 <li>• <strong className="text-foreground">Creador:</strong> Graba contenido para marcas</li>
@@ -153,11 +185,12 @@ export default function PendingAccess() {
 
             <Button 
               size="lg" 
-              className="w-full gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white"
+              variant="outline"
+              className="w-full gap-2"
               onClick={handleRequestAccess}
             >
-              <MessageCircle className="w-5 h-5" />
-              Solicitar mi acceso por WhatsApp
+              <Briefcase className="w-5 h-5" />
+              Solicitar acceso a una organización
             </Button>
 
             <div className="pt-4 border-t border-border">

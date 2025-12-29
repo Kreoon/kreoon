@@ -11,6 +11,7 @@ interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles?: AppRole[];
   requiresOrg?: boolean; // Whether this route requires an organization
+  allowNoRoles?: boolean; // Allow users without any roles (for social routes)
 }
 
 const CLIENT_COMPANY_TIMEOUT_MS = 8000;
@@ -33,7 +34,8 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number, label: string): Pro
 
 // Helper to get the correct dashboard path based on active role or user roles
 function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string {
-  if (roles.length === 0) return '/pending-access';
+  // Users without roles go to social network
+  if (roles.length === 0) return '/social';
 
   // If activeRole is set and valid, use it
   if (activeRole && roles.includes(activeRole)) {
@@ -60,13 +62,16 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string
   if (roles.includes('creator')) return '/creator-dashboard';
   if (roles.includes('editor')) return '/editor-dashboard';
   if (roles.includes('client')) return '/client-dashboard';
-  return '/pending-access';
+  return '/social';
 }
 
 // Routes that require an organization to be selected
 const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/creators', '/scripts', '/clients', '/team', '/ranking'];
 
-export function ProtectedRoute({ children, allowedRoles, requiresOrg }: ProtectedRouteProps) {
+// Routes that users without roles can access (social network)
+const SOCIAL_ROUTES = ['/social', '/explore', '/profile', '/settings'];
+
+export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRoles }: ProtectedRouteProps) {
   const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
@@ -158,9 +163,16 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg }: Protecte
     return <>{children}</>;
   }
 
-  // Users without any roles need to request access
+  // Check if current route is a social route (accessible without roles)
+  const isSocialRoute = SOCIAL_ROUTES.some(route => location.pathname.startsWith(route)) || allowNoRoles;
+  
+  // Users without any roles can only access social routes
   if (realRoles.length === 0 && !isPlatformRoot) {
-    return <Navigate to="/pending-access" replace />;
+    if (!isSocialRoute) {
+      return <Navigate to="/social" replace />;
+    }
+    // Allow access to social routes for users without roles
+    return <>{children}</>;
   }
 
   // Users with pending_assignment status are blocked from app
