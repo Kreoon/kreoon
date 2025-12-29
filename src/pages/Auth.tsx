@@ -339,8 +339,8 @@ export default function Auth() {
             
             <CardHeader className="text-center pt-8">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/25">
-                  <span className="text-primary-foreground font-bold text-xl">K</span>
+                <div className="h-10 w-10 rounded-xl overflow-hidden shadow-lg shadow-primary/25">
+                  <img src="/favicon.png" alt="KREOON" className="h-10 w-10 object-cover" />
                 </div>
               </div>
               <CardTitle className="text-2xl">
