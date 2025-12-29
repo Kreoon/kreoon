@@ -238,9 +238,9 @@ export function ContentDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0 flex flex-col">
         {/* Hero Header */}
-        <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-6 sm:p-8 border-b">
+        <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-4 sm:p-6 border-b shrink-0">
           <div className="absolute inset-0 opacity-5">
             <div className="absolute inset-0" style={{ 
               backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
@@ -484,7 +484,7 @@ export function ContentDetailDialog({
         </div>
 
         {/* Content Area with Tabs */}
-        <div className="overflow-y-auto max-h-[calc(90vh-220px)] p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full h-auto gap-1 mb-6 flex flex-wrap justify-start bg-muted/30 p-1 rounded-lg">
               {effectiveVisibleTabs.map(tabKey => {
