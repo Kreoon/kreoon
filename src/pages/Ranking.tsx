@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Settings, Users, History, Sword, Shield, Castle, Swords, Award } from 'lucide-react';
-import { MedievalBanner } from '@/components/layout/MedievalBanner';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
 import { UPSettingsPanel } from '@/components/points/UPSettingsPanel';
 import { UPManualAdjustment } from '@/components/points/UPManualAdjustment';
@@ -90,8 +90,8 @@ export default function RankingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Medieval Banner */}
-      <MedievalBanner
+      {/* Page Header */}
+      <PageHeader
         icon={Castle}
         title="KREOON UP"
         subtitle="Sistema de puntos, logros y ranking de rendimiento"

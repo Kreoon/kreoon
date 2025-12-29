@@ -31,7 +31,7 @@ import {
   ArrowRight,
   Hammer
 } from 'lucide-react';
-import { MedievalBanner } from '@/components/layout/MedievalBanner';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
 
 // Premium Stats Card Component
@@ -143,8 +143,8 @@ export default function EditorDashboard() {
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      {/* Banner */}
-      <MedievalBanner
+      {/* Page Header */}
+      <PageHeader
         icon={Hammer}
         title="KREOON Board"
         subtitle={`Bienvenido, ${profile?.full_name}`}

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Plus, Play, Eye, Heart, ExternalLink, Film, MoreVertical, Image, Settings } from "lucide-react";
-import { MedievalBanner } from '@/components/layout/MedievalBanner';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -309,8 +309,8 @@ const Content = () => {
     <VideoPlayerProvider>
       <div className="min-h-screen">
         <div className="p-4 md:p-6 space-y-6">
-          {/* Banner */}
-          <MedievalBanner
+          {/* Page Header */}
+          <PageHeader
             icon={Film}
             title="Portafolio"
             subtitle="Videos finales y contenido público"

@@ -2,7 +2,7 @@ import { useState, useEffect, type MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Star, User, Sword, Users, Edit3, Trophy } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MedievalBanner } from "@/components/layout/MedievalBanner";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -261,8 +261,8 @@ const Creators = () => {
     <>
       <div className="min-h-screen">
         <div className="p-4 md:p-6 space-y-6">
-          {/* Medieval Banner */}
-          <MedievalBanner
+          {/* Page Header */}
+          <PageHeader
             icon={Sword}
             title="Creadores"
             subtitle="Sistema de Talento Inteligente"

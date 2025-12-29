@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye, Castle, Medal } from "lucide-react";
-import { MedievalBanner } from "@/components/layout/MedievalBanner";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { VipBadge } from "@/components/ui/vip-badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -385,8 +385,8 @@ const Clients = () => {
     <>
       <div className="min-h-screen">
         <div className="p-4 md:p-6 space-y-6">
-          {/* Medieval Banner */}
-          <MedievalBanner
+          {/* Page Header */}
+          <PageHeader
             icon={Castle}
             title="Clientes"
             subtitle="Gestiona empresas y sus representantes"
