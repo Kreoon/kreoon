@@ -140,15 +140,25 @@ export function MobileNav() {
   const [open, setOpen] = useState(false);
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
+  const [clientCount, setClientCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, user, isAdmin, isCreator, isEditor, isClient, isStrategist, roles } = useAuth();
   const { currentOrgName } = useOrgOwner();
 
-  // Fetch current client name for client users
+  // Fetch current client name and count for client users
   useEffect(() => {
     if (isClient && user) {
       const fetchCurrentClient = async () => {
+        // Get all client associations to determine count
+        const { data: associations } = await supabase
+          .from('client_users')
+          .select('client_id')
+          .eq('user_id', user.id);
+
+        const totalClients = associations?.length || 0;
+        setClientCount(totalClients);
+
         const savedClientId = localStorage.getItem('selectedClientId');
         
         if (savedClientId) {
@@ -164,13 +174,7 @@ export function MobileNav() {
           }
         }
 
-        // Get first client from user's associations
-        const { data: associations } = await supabase
-          .from('client_users')
-          .select('client_id')
-          .eq('user_id', user.id)
-          .limit(1);
-
+        // Get first client from associations
         if (associations && associations.length > 0) {
           const { data: client } = await supabase
             .from('clients')
@@ -306,20 +310,27 @@ export function MobileNav() {
                   <div className="px-3 py-1 text-xs text-sidebar-foreground/60 truncate flex items-center gap-2">
                     <Building2 className="h-3 w-3" />
                     {currentClientName}
+                    {clientCount > 1 && (
+                      <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                        +{clientCount - 1}
+                      </span>
+                    )}
                   </div>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setOpen(false);
-                    setShowClientSelector(true);
-                  }}
-                  className="w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground justify-start py-3"
-                >
-                  <RefreshCw className="h-5 w-5 mr-3" />
-                  Cambiar Empresa
-                </Button>
+                {clientCount > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setOpen(false);
+                      setShowClientSelector(true);
+                    }}
+                    className="w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground justify-start py-3"
+                  >
+                    <RefreshCw className="h-5 w-5 mr-3" />
+                    Cambiar Empresa
+                  </Button>
+                )}
               </div>
             )}
             <Button
