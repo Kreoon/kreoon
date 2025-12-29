@@ -12,6 +12,7 @@ import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { ImpersonationBanner } from "@/components/impersonation/ImpersonationBanner";
 import { AICopilotProvider } from "@/contexts/AICopilotContext";
 import { TrialProvider } from "@/contexts/TrialContext";
+import { TrackingProvider } from "@/contexts/TrackingContext";
 import Dashboard from "./pages/Dashboard";
 import ContentBoard from "./pages/ContentBoard";
 import Auth from "./pages/Auth";
@@ -113,22 +114,24 @@ function AppContent() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ImpersonationProvider>
-          <TrialProvider>
-            <UnsavedChangesProvider>
-              <AchievementNotificationProvider>
-                <AICopilotProvider>
-                  <TooltipProvider delayDuration={0}>
-                    <ImpersonationBanner />
-                    <Toaster />
-                    <Sonner />
-                    <AppRoutes />
-                  </TooltipProvider>
-                </AICopilotProvider>
-              </AchievementNotificationProvider>
-            </UnsavedChangesProvider>
-          </TrialProvider>
-        </ImpersonationProvider>
+        <TrackingProvider>
+          <ImpersonationProvider>
+            <TrialProvider>
+              <UnsavedChangesProvider>
+                <AchievementNotificationProvider>
+                  <AICopilotProvider>
+                    <TooltipProvider delayDuration={0}>
+                      <ImpersonationBanner />
+                      <Toaster />
+                      <Sonner />
+                      <AppRoutes />
+                    </TooltipProvider>
+                  </AICopilotProvider>
+                </AchievementNotificationProvider>
+              </UnsavedChangesProvider>
+            </TrialProvider>
+          </ImpersonationProvider>
+        </TrackingProvider>
       </AuthProvider>
     </BrowserRouter>
   );
