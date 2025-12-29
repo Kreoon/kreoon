@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User, ArrowLeft } from 'lucide-react';
 import { PortfolioProfile } from '@/components/portfolio/profile/PortfolioProfile';
+import { KreoonSocialLogo } from '@/components/social/KreoonSocialBrand';
 
 export default function PublicProfilePage() {
   const { userId } = useParams<{ userId: string }>();
@@ -92,15 +93,18 @@ export default function PublicProfilePage() {
     <div className="min-h-screen bg-social-background pb-20">
       {/* Back button header */}
       <header className="sticky top-0 z-30 bg-social-background/95 backdrop-blur-lg border-b border-social-border">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate(-1)}
-            className="text-social-foreground hover:bg-social-muted"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate(-1)}
+              className="text-social-foreground hover:bg-social-muted"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <KreoonSocialLogo />
+          </div>
         </div>
       </header>
 

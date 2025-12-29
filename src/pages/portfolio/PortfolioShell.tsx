@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SocialNotificationsDropdown } from '@/components/portfolio/SocialNotificationsDropdown';
+import { KreoonSocialLogo } from '@/components/social/KreoonSocialBrand';
 
 // Lazy load pages for performance
 const FeedPage = lazy(() => import('./FeedPage'));
@@ -116,7 +117,7 @@ export default function PortfolioShell() {
     <div className="flex flex-col h-screen bg-social-background">
       {/* Mobile header with notifications */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-social-background/95 backdrop-blur-lg border-b border-social-border z-50 flex items-center justify-between px-4">
-        <span className="text-lg font-bold text-social-accent">KREOON Network</span>
+        <KreoonSocialLogo />
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
@@ -165,10 +166,7 @@ export default function PortfolioShell() {
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-20 lg:w-64 bg-social-card border-r border-social-border flex-col z-40">
         {/* Logo area with notifications */}
         <div className="h-16 flex items-center justify-between lg:px-6 border-b border-social-border px-4">
-          <div className="flex items-center">
-            <span className="text-xl font-bold text-social-accent hidden lg:block">Social Creator</span>
-            <span className="text-xl font-bold text-social-accent lg:hidden">SC</span>
-          </div>
+          <KreoonSocialLogo />
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"

@@ -24,6 +24,8 @@ import { ProfileTrustBadges } from './ProfileTrustBadges';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { FollowersModal } from '@/components/social/FollowersModal';
 import { RevealContactButton } from '@/components/social/RevealContactButton';
+import { FollowButton } from '@/components/social/FollowButton';
+import { FeaturedVideoUploader } from '@/components/social/FeaturedVideoUploader';
 
 // FeedItem interface for modal compatibility
 interface FeedItem {
@@ -63,6 +65,8 @@ interface ProfileData {
   tiktok: string;
   portfolio_url: string;
   is_public: boolean;
+  featured_video_url?: string;
+  featured_video_thumbnail?: string;
 }
 
 interface ProfileStats {
@@ -298,9 +302,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                     </>
                   ) : (
                     <>
-                      <Button className="bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground">
-                        Seguir
-                      </Button>
+                      <FollowButton profileId={userId} />
                       <RevealContactButton 
                         profileId={userId}
                         profileData={{
@@ -430,7 +432,15 @@ export const PortfolioProfile = memo(function PortfolioProfile({
           </TabsContent>
 
           <TabsContent value="videos" className="mt-6">
-            <PresentationVideoSection userId={userId} isOwner={isOwner} />
+            <PresentationVideoSection 
+              userId={userId} 
+              isOwner={isOwner}
+              featuredVideoUrl={profile?.featured_video_url}
+              featuredVideoThumbnail={profile?.featured_video_thumbnail}
+              onVideoUpdate={(url, thumb) => {
+                setProfile(prev => prev ? { ...prev, featured_video_url: url, featured_video_thumbnail: thumb } : prev);
+              }}
+            />
             <div className="mt-8">
               <h3 className="text-lg font-semibold text-social-foreground mb-4">Todos los videos</h3>
               <VideoGallery 
@@ -735,45 +745,39 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
   );
 }
 
-function PresentationVideoSection({ userId, isOwner }: { userId: string; isOwner: boolean }) {
-  const [video, setVideo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+interface PresentationVideoProps {
+  userId: string;
+  isOwner: boolean;
+  featuredVideoUrl?: string;
+  featuredVideoThumbnail?: string;
+  onVideoUpdate?: (url: string, thumbnail: string) => void;
+}
 
-  useEffect(() => {
-    const fetchVideo = async () => {
-      const { data: firstVideo } = await supabase
-        .from('portfolio_posts')
-        .select('id, media_url, thumbnail_url, caption, views_count, likes_count, media_type')
-        .eq('user_id', userId)
-        .eq('media_type', 'video')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      setVideo(firstVideo);
-      setLoading(false);
-    };
-    fetchVideo();
-  }, [userId]);
+function PresentationVideoSection({ 
+  userId, 
+  isOwner, 
+  featuredVideoUrl, 
+  featuredVideoThumbnail,
+  onVideoUpdate 
+}: PresentationVideoProps) {
+  // Use featured video from profile if available
+  const videoUrl = featuredVideoUrl;
+  const thumbnailUrl = featuredVideoThumbnail;
 
-  if (loading) {
-    return <Skeleton className="aspect-video rounded-xl" />;
-  }
-
-  if (!video) {
+  if (!videoUrl) {
     return (
-      <Card className="aspect-video flex items-center justify-center bg-gradient-to-br from-muted to-muted/50 border-dashed">
+      <Card className="aspect-video flex items-center justify-center bg-gradient-to-br from-social-muted to-social-muted/50 border-dashed border-social-border">
         <div className="text-center p-8">
-          <Play className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Video de presentación</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Muestra tu mejor trabajo con un video destacado
+          <Play className="h-16 w-16 mx-auto text-social-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2 text-social-foreground">Video de presentación</h3>
+          <p className="text-sm text-social-muted-foreground mb-4">
+            Sube un video horizontal (16:9) que destaque tu perfil
           </p>
-          {isOwner && (
-            <Button variant="outline">
-              <Video className="h-4 w-4 mr-2" />
-              Subir video
-            </Button>
+          {isOwner && onVideoUpdate && (
+            <FeaturedVideoUploader
+              userId={userId}
+              onUploadComplete={onVideoUpdate}
+            />
           )}
         </div>
       </Card>
@@ -783,15 +787,24 @@ function PresentationVideoSection({ userId, isOwner }: { userId: string; isOwner
   return (
     <div className="relative aspect-video rounded-xl overflow-hidden bg-black">
       <video
-        src={video.media_url}
-        poster={video.thumbnail_url}
+        src={videoUrl}
+        poster={thumbnailUrl}
         controls
         className="w-full h-full object-contain"
       />
-      <Badge className="absolute top-4 left-4 bg-primary/90">
+      <Badge className="absolute top-4 left-4 bg-social-accent/90 text-social-accent-foreground">
         <Star className="h-3 w-3 mr-1" />
         Video destacado
       </Badge>
+      {isOwner && onVideoUpdate && (
+        <div className="absolute top-4 right-4">
+          <FeaturedVideoUploader
+            userId={userId}
+            currentVideoUrl={videoUrl}
+            onUploadComplete={onVideoUpdate}
+          />
+        </div>
+      )}
     </div>
   );
 }
