@@ -30,13 +30,13 @@ export default defineConfig(({ mode }) => ({
         scope: '/',
         icons: [
           {
-            src: 'https://hfooshsteglylhvrpuka.supabase.co/storage/v1/object/public/public-assets/branding/pwa_icon_192_1767022950844.png',
+            src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: 'https://hfooshsteglylhvrpuka.supabase.co/storage/v1/object/public/public-assets/branding/pwa_icon_512_1767022962174.png',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
