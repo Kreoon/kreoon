@@ -54,7 +54,7 @@ const MODULES = [
 
 const ROLES = [
   { id: 'admin', label: 'Administrador', color: 'bg-primary' },
-  { id: 'ambassador', label: 'Embajador', color: 'bg-amber-500' },
+  { id: 'strategist', label: 'Estratega', color: 'bg-orange-500' },
   { id: 'creator', label: 'Creador', color: 'bg-purple-500' },
   { id: 'editor', label: 'Editor', color: 'bg-blue-500' },
   { id: 'client', label: 'Cliente', color: 'bg-green-500' },

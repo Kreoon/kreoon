@@ -26,7 +26,6 @@ const ROLE_OPTIONS: { value: AppRole; label: string }[] = [
   { value: 'creator', label: 'Creador' },
   { value: 'editor', label: 'Editor' },
   { value: 'client', label: 'Cliente' },
-  { value: 'ambassador', label: 'Embajador' },
 ];
 
 const QUICK_PRESETS = [

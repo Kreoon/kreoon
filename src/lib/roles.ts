@@ -124,8 +124,11 @@ export function isAdminRole(roles: AppRole[]): boolean {
   return roles.includes('admin');
 }
 
-// All available roles for selection
-// Note: Ambassador role is deprecated - use badge system for new implementations
+// Roles that can appear in UI selectors (e.g., role pickers, assignment dropdowns)
+// Ambassador excluded: use badge system instead
+export const SELECTABLE_ROLES: AppRole[] = ['admin', 'strategist', 'creator', 'editor', 'client'];
+
+// All available roles for internal use (includes deprecated ambassador for backward compat)
 export const ALL_ROLES: AppRole[] = ['admin', 'strategist', 'creator', 'editor', 'client', 'ambassador'];
 
 // Roles that can be assigned by org owners (not platform-level)
