@@ -15,8 +15,8 @@
     --popover: 240 14% 10%; /* #181826 */
     --popover-foreground: 0 0% 100%;
 
-    /* Electric Violet - Primary */
-    --primary: 252 100% 68%; /* #7C5CFF */
+    /* KREOON Purple - Primary (configurable via BrandingProvider) */
+    --primary: 282 100% 36%; /* #7700b8 - Base value, overridden dynamically */
     --primary-foreground: 0 0% 100%;
 
     /* Secondary Surface */
@@ -49,38 +49,38 @@
 
     --border: 240 10% 18%;
     --input: 240 10% 16%;
-    --ring: 252 100% 68%;
+    --ring: 282 100% 36%;
 
     --radius: 0.75rem;
 
     /* Sidebar - Dark */
     --sidebar-background: 240 10% 4%;
     --sidebar-foreground: 240 10% 80%;
-    --sidebar-primary: 252 100% 68%;
+    --sidebar-primary: 282 100% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 12% 12%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 240 10% 15%;
-    --sidebar-ring: 252 100% 68%;
+    --sidebar-ring: 282 100% 36%;
 
-    /* KREOON Tokens */
-    --violet: 252 100% 68%;
-    --violet-light: 252 100% 78%;
-    --violet-dark: 252 80% 55%;
-    --violet-glow: 252 100% 68%;
+    /* KREOON Tokens - Purple Theme */
+    --violet: 282 100% 36%;
+    --violet-light: 282 90% 50%;
+    --violet-dark: 282 100% 28%;
+    --violet-glow: 282 100% 36%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(252 100% 68%) 0%, hsl(252 100% 78%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(282 100% 36%) 0%, hsl(282 90% 50%) 100%);
     --gradient-subtle: linear-gradient(180deg, hsl(240 12% 8%) 0%, hsl(240 10% 6%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(240 12% 10%) 0%, hsl(240 12% 8%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(252 100% 68% / 0.15) 0%, transparent 70%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(282 100% 36% / 0.15) 0%, transparent 70%);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.3);
     --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.4);
     --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 40px hsl(252 100% 68% / 0.25);
-    --shadow-violet: 0 4px 20px hsl(252 100% 68% / 0.3);
+    --shadow-glow: 0 0 40px hsl(282 100% 36% / 0.25);
+    --shadow-violet: 0 4px 20px hsl(282 100% 36% / 0.3);
 
     /* Level Colors */
     --level-bronze: 30 60% 45%;
@@ -95,7 +95,7 @@
     --social-card-foreground: 0 0% 98%;
     --social-muted: 0 0% 12%;
     --social-muted-foreground: 0 0% 60%;
-    --social-accent: 252 100% 68%;
+    --social-accent: 282 100% 36%;
     --social-accent-foreground: 0 0% 100%;
     --social-border: 0 0% 15%;
     --social-input: 0 0% 12%;
@@ -157,7 +157,7 @@
 
   .text-gradient-violet {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(252 100% 68%) 0%, hsl(252 100% 78%) 100%);
+    background-image: linear-gradient(135deg, hsl(282 100% 36%) 0%, hsl(282 90% 50%) 100%);
   }
 
   /* Background Gradients */
@@ -198,7 +198,7 @@
   }
 
   .glow-sm {
-    box-shadow: 0 0 15px hsl(252 100% 68% / 0.2);
+    box-shadow: 0 0 15px hsl(282 100% 36% / 0.2);
   }
 
   /* Hover Effects */
@@ -207,7 +207,7 @@
   }
 
   .hover-glow:hover {
-    box-shadow: 0 0 20px hsl(252 100% 68% / 0.3);
+    box-shadow: 0 0 20px hsl(282 100% 36% / 0.3);
   }
 
   .hover-lift {
@@ -249,7 +249,7 @@
 
   .border-glow {
     @apply border border-primary/30;
-    box-shadow: 0 0 10px hsl(252 100% 68% / 0.1);
+    box-shadow: 0 0 10px hsl(282 100% 36% / 0.1);
   }
 
   /* Cards */
@@ -259,7 +259,7 @@
 
   .card-hover:hover {
     @apply border-primary/40;
-    box-shadow: 0 4px 20px hsl(0 0% 0% / 0.4), 0 0 0 1px hsl(252 100% 68% / 0.1);
+    box-shadow: 0 4px 20px hsl(0 0% 0% / 0.4), 0 0 0 1px hsl(282 100% 36% / 0.1);
   }
 
   /* Level Badges */
@@ -393,10 +393,10 @@
 
 @keyframes glowPulse {
   0%, 100% { 
-    box-shadow: 0 0 10px hsl(252 100% 68% / 0.3);
+    box-shadow: 0 0 10px hsl(282 100% 36% / 0.3);
   }
   50% { 
-    box-shadow: 0 0 25px hsl(252 100% 68% / 0.5);
+    box-shadow: 0 0 25px hsl(282 100% 36% / 0.5);
   }
 }
 
@@ -423,7 +423,7 @@
 
 /* Selection */
 ::selection {
-  background: hsl(252 100% 68% / 0.3);
+  background: hsl(282 100% 36% / 0.3);
   color: white;
 }
 
@@ -455,7 +455,7 @@
     @apply transition-smooth;
   }
   .hover-glow:hover {
-    box-shadow: 0 0 20px hsl(252 100% 68% / 0.3);
+    box-shadow: 0 0 20px hsl(282 100% 36% / 0.3);
   }
 
   /* Active press effect */

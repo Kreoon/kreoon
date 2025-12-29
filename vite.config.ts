@@ -19,10 +19,10 @@ export default defineConfig(({ mode }) => ({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'Creartor Studio',
-        short_name: 'Creartor Studio',
-        description: 'Plataforma de gestión de contenido UGC',
-        theme_color: '#F5A623',
+        name: 'KREOON',
+        short_name: 'KREOON',
+        description: 'El sistema operativo creativo. Gestiona creadores, contenido, proyectos y resultados.',
+        theme_color: '#7700b8',
         background_color: '#0D0D0D',
         display: 'standalone',
         orientation: 'portrait-primary',
@@ -30,13 +30,13 @@ export default defineConfig(({ mode }) => ({
         scope: '/',
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: 'https://hfooshsteglylhvrpuka.supabase.co/storage/v1/object/public/public-assets/branding/pwa_icon_192_1767022950844.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/pwa-512x512.png',
+            src: 'https://hfooshsteglylhvrpuka.supabase.co/storage/v1/object/public/public-assets/branding/pwa_icon_512_1767022962174.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'

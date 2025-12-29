@@ -110,7 +110,7 @@ export function PlanSelectionStep({ data, updateData, onNext, onBack }: StepProp
               className={cn(
                 'relative p-6 rounded-2xl border text-left transition-all duration-300',
                 isSelected 
-                  ? 'border-primary bg-primary/5 shadow-[0_0_30px_hsl(252_100%_68%_/_0.15)]' 
+                  ? 'border-primary bg-primary/5 shadow-[0_0_30px_hsl(var(--primary)_/_0.15)]' 
                   : 'border-border bg-card/50 hover:border-primary/40',
                 plan.popular && 'ring-2 ring-primary/50'
               )}

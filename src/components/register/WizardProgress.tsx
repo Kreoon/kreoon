@@ -16,7 +16,7 @@ export function WizardProgress({ currentStep, totalSteps, steps }: WizardProgres
       {/* Progress bar */}
       <div className="relative h-1 bg-muted rounded-full overflow-hidden mb-6">
         <motion.div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-violet-400 rounded-full"
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/60 rounded-full"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
