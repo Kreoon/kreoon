@@ -352,19 +352,29 @@ export function RawAssetsUploader({
     window.URL.revokeObjectURL(url);
   }, []);
 
-  // Download individual file
+  // Download individual file using fetch for proper blob handling
   const handleDownload = async (asset: UploadedAsset) => {
     try {
-      const { data, error } = await supabase.functions.invoke('bunny-raw-download', {
-        body: { url: asset.storage_path, filename: asset.custom_filename },
-        // @ts-expect-error - supported by supabase-js runtime
-        responseType: 'blob',
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No autenticado');
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/bunny-raw-download`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: asset.storage_path, filename: asset.custom_filename }),
       });
 
-      if (error) throw error;
-      if (!data) throw new Error('No se pudo descargar el archivo');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error || `Error HTTP ${response.status}`);
+      }
 
-      triggerBlobDownload(data as Blob, asset.custom_filename);
+      const blob = await response.blob();
+      triggerBlobDownload(blob, asset.custom_filename);
     } catch (error: any) {
       console.error('Download error:', error);
       toast.error('Error al descargar: ' + (error.message || 'Error desconocido'));
@@ -392,23 +402,33 @@ export function RawAssetsUploader({
   const handleDownloadZip = async () => {
     setDownloadingZip(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No autenticado');
+
       // Build the folder path: raw-assets/org_xxx/client_xxx/project_xxx
       const folderPath = `raw-assets/org_${organizationId}/client_${clientId || 'none'}/project_${contentId}`;
       
-      const { data, error } = await supabase.functions.invoke('bunny-raw-zip', {
-        body: {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/bunny-raw-zip`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           projectId: contentId,
           folderPath,
-        },
-        // @ts-expect-error - supported by supabase-js runtime
-        responseType: 'blob',
+        }),
       });
 
-      if (error) throw error;
-      if (!data) throw new Error('No se pudo generar el ZIP');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error || `Error HTTP ${response.status}`);
+      }
 
+      const blob = await response.blob();
       const zipName = `material_crudo_${String(contentId).slice(0, 8)}.zip`;
-      triggerBlobDownload(data as Blob, zipName);
+      triggerBlobDownload(blob, zipName);
       toast.success('Descarga iniciada');
     } catch (error: any) {
       console.error('ZIP error:', error);
