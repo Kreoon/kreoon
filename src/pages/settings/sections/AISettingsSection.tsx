@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Sparkles, MessageSquare, Cpu, Blocks, Zap, Brain } from 'lucide-react';
+import { Bot, Sparkles, MessageSquare, Cpu, Blocks, Zap, Brain, BarChart3 } from 'lucide-react';
 import { OrganizationAISettings } from '@/components/settings/OrganizationAISettings';
 import { PortfolioAISettings } from '@/components/settings/PortfolioAISettings';
 import { AIAssistantSettings } from '@/components/settings/AIAssistantSettings';
+import { AIUsageDashboard } from '@/components/settings/ai/AIUsageDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -58,7 +59,7 @@ export default function AISettingsSection() {
 
       {/* Tabs principales */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
           <TabsTrigger 
             value="providers" 
             className="flex flex-col sm:flex-row items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -67,11 +68,18 @@ export default function AISettingsSection() {
             <span>Proveedores</span>
           </TabsTrigger>
           <TabsTrigger 
+            value="usage" 
+            className="flex flex-col sm:flex-row items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span>Uso</span>
+          </TabsTrigger>
+          <TabsTrigger 
             value="portfolio" 
             className="flex flex-col sm:flex-row items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <Sparkles className="h-4 w-4" />
-            <span>Portfolio IA</span>
+            <span>Portfolio</span>
           </TabsTrigger>
           <TabsTrigger 
             value="assistant" 
@@ -84,6 +92,14 @@ export default function AISettingsSection() {
 
         <TabsContent value="providers" className="mt-0">
           <OrganizationAISettings organizationId={profile.current_organization_id} />
+        </TabsContent>
+
+        <TabsContent value="usage" className="mt-0">
+          <Card>
+            <CardContent className="pt-6">
+              <AIUsageDashboard organizationId={profile.current_organization_id} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="portfolio" className="mt-0">
