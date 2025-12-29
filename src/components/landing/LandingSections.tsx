@@ -441,6 +441,7 @@ export function PricingSection({ onRegister }: SectionProps) {
       badge: 'Ideal para equipos pequeños',
       price: '$59',
       period: '/mes',
+      hasTrial: true,
       features: [
         { icon: Users, text: 'Hasta 10 usuarios' },
         { icon: Layers, text: 'Tablero configurable' },
@@ -451,7 +452,7 @@ export function PricingSection({ onRegister }: SectionProps) {
         { icon: MessageSquare, text: 'Chat interno + IA' },
         { icon: Globe, text: 'Red social activa' },
       ],
-      cta: 'Crear Organización Starter',
+      cta: 'Empezar gratis',
       featured: false,
     },
     {
@@ -459,6 +460,7 @@ export function PricingSection({ onRegister }: SectionProps) {
       badge: 'Más popular',
       price: '$139',
       period: '/mes',
+      hasTrial: true,
       features: [
         { icon: Users, text: '10 a 30 usuarios' },
         { icon: CheckCircle2, text: 'Todo lo Starter +' },
@@ -468,7 +470,7 @@ export function PricingSection({ onRegister }: SectionProps) {
         { icon: Bell, text: 'Notificaciones inteligentes' },
         { icon: Settings, text: 'Flujos y reglas avanzadas' },
       ],
-      cta: 'Crear Organización Growth',
+      cta: 'Empezar gratis',
       featured: true,
     },
     {
@@ -476,6 +478,7 @@ export function PricingSection({ onRegister }: SectionProps) {
       badge: 'Equipos grandes',
       price: '$279',
       period: '/mes',
+      hasTrial: true,
       features: [
         { icon: Users, text: '30 a 50 usuarios' },
         { icon: CheckCircle2, text: 'Todo lo Growth +' },
@@ -484,7 +487,7 @@ export function PricingSection({ onRegister }: SectionProps) {
         { icon: LineChart, text: 'Analytics avanzados' },
         { icon: Zap, text: 'Soporte prioritario' },
       ],
-      cta: 'Crear Organización Scale',
+      cta: 'Empezar gratis',
       featured: false,
     },
     {
@@ -492,6 +495,7 @@ export function PricingSection({ onRegister }: SectionProps) {
       badge: 'Personalizado',
       price: 'Contactar',
       period: '',
+      hasTrial: false,
       features: [
         { icon: Users, text: '+50 usuarios' },
         { icon: Cpu, text: 'IA dedicada' },
@@ -516,9 +520,13 @@ export function PricingSection({ onRegister }: SectionProps) {
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
             Planes para Organizaciones
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
             Gestiona talento, contenido, IA y proyectos en un solo sistema.
           </p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Empieza con 1 mes gratis. Control total desde el día uno.</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -532,9 +540,18 @@ export function PricingSection({ onRegister }: SectionProps) {
                 plan.featured && "border-primary/50 shadow-[0_0_40px_hsl(252_100%_68%/0.2)]"
               )}
             >
+              {/* Trial Badge */}
+              {plan.hasTrial && (
+                <div className="absolute -top-3 -right-2 z-10">
+                  <Badge className="bg-gradient-to-r from-primary via-primary to-primary/80 text-primary-foreground px-3 py-1 text-xs font-bold shadow-lg shadow-primary/30 animate-pulse">
+                    1 mes gratis
+                  </Badge>
+                </div>
+              )}
+              
               {plan.featured && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4">
+                <div className="absolute -top-3 left-4">
+                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-3">
                     {plan.badge}
                   </Badge>
                 </div>
@@ -553,15 +570,21 @@ export function PricingSection({ onRegister }: SectionProps) {
                 {plan.name}
               </h3>
               
-              <div className="flex items-baseline gap-1 mb-6">
+              <div className="flex items-baseline gap-1 mb-2">
                 <span className={cn(
                   "text-4xl font-bold",
                   plan.featured ? "text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70" : "text-foreground"
                 )}>
-                  {plan.isEnterprise ? '' : '💰 USD '}{plan.price}
+                  {plan.isEnterprise ? '' : 'USD '}{plan.price}
                 </span>
                 <span className="text-muted-foreground">{plan.period}</span>
               </div>
+              
+              {plan.hasTrial && (
+                <p className="text-xs text-primary/80 mb-4">
+                  Prueba completa. Cancela cuando quieras.
+                </p>
+              )}
               
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, j) => (
@@ -782,9 +805,15 @@ export function TokenSystemSection({ onRegister }: SectionProps) {
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
             Tokens de Contacto
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-4">
             Accede a datos de contacto de forma profesional.
           </p>
+          
+          {/* Important Note - Tokens NOT in trial */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <Ban className="h-4 w-4 text-amber-500" />
+            <span className="text-sm text-amber-400">Los tokens no hacen parte del periodo de prueba gratuita.</span>
+          </div>
         </div>
 
         {/* Explanation */}
@@ -812,9 +841,9 @@ export function TokenSystemSection({ onRegister }: SectionProps) {
           {tokenPackages.map((pkg, i) => (
             <div 
               key={i} 
-              className="rounded-xl p-6 bg-[#12121A] border border-border/30 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_0_25px_hsl(252_100%_68%/0.12)] text-center"
+              className="rounded-xl p-6 bg-[#12121A] border border-amber-500/20 hover:border-amber-500/40 transition-all duration-300 group hover:shadow-[0_0_25px_hsl(38_92%_50%/0.12)] text-center"
             >
-              <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
+              <Badge variant="outline" className="mb-4 border-amber-500/30 text-amber-500">
                 {pkg.name}
               </Badge>
               
@@ -823,13 +852,13 @@ export function TokenSystemSection({ onRegister }: SectionProps) {
               </div>
               <p className="text-sm text-muted-foreground mb-4">Tokens</p>
               
-              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70 mb-6">
-                💰 USD ${pkg.price}
+              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600 mb-6">
+                USD ${pkg.price}
               </div>
               
               <Button 
                 variant="outline"
-                className="w-full border-primary/30 text-primary hover:bg-primary/10"
+                className="w-full border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
                 onClick={onRegister}
               >
                 Comprar
@@ -841,12 +870,16 @@ export function TokenSystemSection({ onRegister }: SectionProps) {
         {/* Notes */}
         <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-primary" />
+            <CheckCircle2 className="h-4 w-4 text-amber-500" />
             Los tokens no expiran
           </div>
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-primary" />
+            <CheckCircle2 className="h-4 w-4 text-amber-500" />
             Cada uso queda registrado
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-amber-500" />
+            Siempre requieren pago
           </div>
         </div>
       </div>
