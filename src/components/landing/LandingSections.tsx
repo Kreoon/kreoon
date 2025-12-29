@@ -500,28 +500,91 @@ export function PricingSection({ onRegister }: SectionProps) {
   );
 }
 
-// Section 9: CTA Final
+// Section 9: Security & Privacy
+export function PrivacySection() {
+  const features = [
+    { icon: Database, title: 'Datos por Organización', desc: 'Cada organización tiene su propia base de datos aislada' },
+    { icon: Eye, title: 'Control de Visibilidad', desc: 'Decide qué contenido es público y cuál es privado' },
+    { icon: Globe, title: 'Red Social Configurable', desc: 'Elige si tu red social es pública o privada' },
+    { icon: Lock, title: 'Permisos Avanzados', desc: 'Control granular de acceso por rol y usuario' },
+  ];
+
+  return (
+    <section id="seguridad" className="py-24 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <Badge variant="outline" className="mb-4 border-green-500/30 text-green-500">
+            <Shield className="h-3 w-3 mr-1" />
+            Privacidad & Control
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+            Tu datos, tu control
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Seguridad de nivel empresarial para que te enfoques en crear
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {features.map((f, i) => (
+            <Card key={i} className="bg-card/50 border-border/50 hover:border-green-500/30 transition-all duration-300 group">
+              <CardContent className="p-6 flex items-start gap-4">
+                <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
+                  <f.icon className="h-6 w-6 text-green-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-1">{f.title}</h3>
+                  <p className="text-sm text-muted-foreground">{f.desc}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Section 10: Contact / CTA Final
 export function CTASection({ onRegister }: SectionProps) {
   return (
-    <section className="py-24 px-4">
+    <section id="contacto" className="py-24 px-4 bg-gradient-to-b from-muted/20 to-background">
       <div className="max-w-4xl mx-auto text-center">
+        <Badge variant="outline" className="mb-6 border-primary/30 text-primary">
+          Comienza Ahora
+        </Badge>
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-6">
           Empieza a construir tu{' '}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
             sistema creativo
           </span>
         </h2>
-        <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+        <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
           Esto no es otra app. Es un sistema serio para construir algo grande.
         </p>
-        <Button 
-          size="lg" 
-          onClick={onRegister}
-          className="text-lg px-10 py-6 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25"
-        >
-          Crear cuenta ahora
-          <ArrowRight className="ml-2 h-5 w-5" />
-        </Button>
+        
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Button 
+            size="lg" 
+            onClick={onRegister}
+            className="w-full sm:w-auto text-lg px-10 py-6 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25"
+          >
+            Crear cuenta ahora
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline"
+            className="w-full sm:w-auto text-lg px-10 py-6"
+            asChild
+          >
+            <a href="mailto:hola@kreoon.com">Contactar ventas</a>
+          </Button>
+        </div>
+        
+        <p className="text-sm text-muted-foreground mt-8">
+          ¿Tienes preguntas? Escríbenos a <a href="mailto:hola@kreoon.com" className="text-primary hover:underline">hola@kreoon.com</a>
+        </p>
       </div>
     </section>
   );

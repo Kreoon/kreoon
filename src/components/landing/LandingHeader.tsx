@@ -18,6 +18,8 @@ const NAV_ITEMS = [
   { id: 'sistema-up', label: 'Sistema UP' },
   { id: 'social', label: 'Social Creators' },
   { id: 'precios', label: 'Precios' },
+  { id: 'seguridad', label: 'Seguridad' },
+  { id: 'contacto', label: 'Contacto' },
 ];
 
 export function LandingHeader({ onLogin, onRegister, activeSection, onSectionClick }: LandingHeaderProps) {

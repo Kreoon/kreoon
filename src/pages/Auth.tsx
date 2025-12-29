@@ -23,6 +23,7 @@ import {
   SistemaUPSection,
   SocialCreatorsSection,
   PricingSection,
+  PrivacySection,
   CTASection,
   LandingFooter
 } from '@/components/landing';
@@ -305,6 +306,7 @@ export default function Auth() {
         <SistemaUPSection />
         <SocialCreatorsSection />
         <PricingSection onRegister={openRegister} />
+        <PrivacySection />
         <CTASection onRegister={openRegister} />
       </main>
 
