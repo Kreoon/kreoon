@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
       // Avoid "auto reload" on tab/window focus when a new service worker is detected.
       // We'll prompt the user instead (prevents disruptive full-page refreshes).
       registerType: 'prompt',
-      includeAssets: ['favicon.ico', 'robots.txt'],
+      includeAssets: ['favicon.ico', 'favicon.png', 'robots.txt'],
       manifest: {
         name: 'KREOON',
         short_name: 'KREOON',
