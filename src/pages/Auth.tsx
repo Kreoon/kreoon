@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, X, Chrome } from 'lucide-react';
@@ -354,12 +353,6 @@ export default function Auth() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'register')} className="w-full">
-                <div className="hidden">
-                  <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-                </div>
-
-                <TabsContent value="login">
                   {showForgotPassword ? (
                     <div className="space-y-4">
                       {resetEmailSent ? (
@@ -472,9 +465,6 @@ export default function Auth() {
                       </Button>
                     </form>
                   )}
-                </TabsContent>
-
-                {/* Register tab removed - redirects to /register wizard */}
                 
                 <div className="mt-6 text-center border-t border-border pt-6">
                   <p className="text-sm text-muted-foreground mb-3">¿No tienes cuenta?</p>
@@ -486,7 +476,6 @@ export default function Auth() {
                     Crear cuenta nueva
                   </Button>
                 </div>
-              </Tabs>
             </CardContent>
           </Card>
         </div>
