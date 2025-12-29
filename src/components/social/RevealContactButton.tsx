@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useContactReveal } from '@/hooks/useContactReveal';
-import { Unlock, Coins, Loader2, Instagram, Globe, Mail, Phone } from 'lucide-react';
+import { Unlock, Coins, Loader2, Instagram, Globe, Mail, Phone, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RevealContactButtonProps {
@@ -36,7 +36,7 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
     const success = await revealContact();
     setRevealing(false);
     if (success) {
-      setShowDialog(false);
+      // Keep dialog open to show revealed data
     }
   };
 
@@ -48,29 +48,27 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
     );
   }
 
-  if (isRevealed) {
-    return (
-      <Button 
-        variant="outline" 
-        className={cn("text-green-600 border-green-600/30", className)}
-        onClick={() => setShowDialog(true)}
-      >
-        <Unlock className="h-4 w-4 mr-2" />
-        Ver Contacto
-      </Button>
-    );
-  }
-
   return (
     <>
-      <Button 
-        variant="outline" 
-        className={cn("bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30 hover:border-amber-500/50", className)}
-        onClick={() => setShowDialog(true)}
-      >
-        <Coins className="h-4 w-4 mr-2 text-amber-500" />
-        Revelar Contacto
-      </Button>
+      {isRevealed ? (
+        <Button 
+          variant="outline" 
+          className={cn("text-green-600 border-green-600/30", className)}
+          onClick={() => setShowDialog(true)}
+        >
+          <Unlock className="h-4 w-4 mr-2" />
+          Ver Contacto
+        </Button>
+      ) : (
+        <Button 
+          variant="outline" 
+          className={cn("bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30 hover:border-amber-500/50", className)}
+          onClick={() => setShowDialog(true)}
+        >
+          <Coins className="h-4 w-4 mr-2 text-amber-500" />
+          Revelar Contacto
+        </Button>
+      )}
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="sm:max-w-md bg-social-card border-social-border">
@@ -106,6 +104,16 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
                     {isRevealed ? `@${profileData.instagram}` : `@${maskText(profileData.instagram)}`}
                   </p>
                 </div>
+                {isRevealed && (
+                  <a 
+                    href={`https://instagram.com/${profileData.instagram}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-social-muted-foreground hover:text-social-accent transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
               </div>
             )}
 
@@ -120,6 +128,16 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
                     {isRevealed ? `@${profileData.tiktok}` : `@${maskText(profileData.tiktok)}`}
                   </p>
                 </div>
+                {isRevealed && (
+                  <a 
+                    href={`https://tiktok.com/@${profileData.tiktok}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-social-muted-foreground hover:text-social-accent transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
               </div>
             )}
 
@@ -132,6 +150,16 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
                     {isRevealed ? profileData.portfolio_url : maskText(profileData.portfolio_url)}
                   </p>
                 </div>
+                {isRevealed && (
+                  <a 
+                    href={profileData.portfolio_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-social-muted-foreground hover:text-social-accent transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
               </div>
             )}
 
@@ -144,6 +172,14 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
                     {isRevealed ? profileData.email : maskText(profileData.email)}
                   </p>
                 </div>
+                {isRevealed && (
+                  <a 
+                    href={`mailto:${profileData.email}`}
+                    className="text-social-muted-foreground hover:text-social-accent transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
               </div>
             )}
 
@@ -156,6 +192,14 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
                     {isRevealed ? profileData.phone : maskText(profileData.phone)}
                   </p>
                 </div>
+                {isRevealed && (
+                  <a 
+                    href={`tel:${profileData.phone}`}
+                    className="text-social-muted-foreground hover:text-social-accent transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
               </div>
             )}
 
