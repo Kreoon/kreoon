@@ -92,9 +92,8 @@ export function ScriptSubTab({
               />
             </div>
           ) : hasScript ? (
-            <div className="max-h-[400px] overflow-y-auto prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4">
-              <RichTextViewer content={formData.script || ''} />
-            </div>
+            <RichTextViewer content={formData.script || ''} maxHeight="max-h-[400px]" />
+          
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/30 rounded-lg">
               <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
