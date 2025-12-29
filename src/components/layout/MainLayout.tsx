@@ -1,6 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
+import { TrialBanner } from "./TrialBanner";
 import { IntegratedNotificationHeader } from "@/components/notifications/IntegratedNotificationHeader";
 import { EnhancedChatDrawer } from "@/components/chat/EnhancedChatDrawer";
 import { EnhancedChatButton } from "@/components/chat/EnhancedChatButton";
@@ -325,6 +326,12 @@ export function MainLayout({
   // Default admin/other layout
   return (
     <div className="min-h-screen bg-background">
+      {/* Trial Banner - Shows when billing is enabled and trial is expiring/expired */}
+      <TrialBanner 
+        organizationId={profile?.current_organization_id || null} 
+        onUpgrade={() => navigate('/settings')}
+      />
+      
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />

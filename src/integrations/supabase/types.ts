@@ -3266,10 +3266,15 @@ export type Database = {
           organization_type: string | null
           primary_color: string | null
           registration_link: string | null
+          selected_plan: string | null
           settings: Json | null
           slug: string
+          subscription_status: string | null
           tiktok: string | null
           timezone: string | null
+          trial_active: boolean | null
+          trial_end_date: string | null
+          trial_started_at: string | null
           updated_at: string | null
           website: string | null
         }
@@ -3300,10 +3305,15 @@ export type Database = {
           organization_type?: string | null
           primary_color?: string | null
           registration_link?: string | null
+          selected_plan?: string | null
           settings?: Json | null
           slug: string
+          subscription_status?: string | null
           tiktok?: string | null
           timezone?: string | null
+          trial_active?: boolean | null
+          trial_end_date?: string | null
+          trial_started_at?: string | null
           updated_at?: string | null
           website?: string | null
         }
@@ -3334,10 +3344,15 @@ export type Database = {
           organization_type?: string | null
           primary_color?: string | null
           registration_link?: string | null
+          selected_plan?: string | null
           settings?: Json | null
           slug?: string
+          subscription_status?: string | null
           tiktok?: string | null
           timezone?: string | null
+          trial_active?: boolean | null
+          trial_end_date?: string | null
+          trial_started_at?: string | null
           updated_at?: string | null
           website?: string | null
         }
