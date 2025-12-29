@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Content, STATUS_COLORS, STATUS_LABELS } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { OrganizationStatus, getStatusColorStyle, getStatusFallbackClass } from "@/lib/statusUtils";
 
 interface BoardCalendarViewProps {
   content: Content[];
@@ -15,6 +16,7 @@ interface BoardCalendarViewProps {
   onContentClick: (content: Content) => void;
   cardSize?: 'compact' | 'normal' | 'large';
   visibleFields?: string[];
+  organizationStatuses?: OrganizationStatus[];
 }
 
 export function BoardCalendarView({
