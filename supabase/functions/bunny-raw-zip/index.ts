@@ -53,13 +53,13 @@ serve(async (req: Request) => {
     }
 
     // Get Bunny credentials for authenticated downloads
-    const envStorageZone = Deno.env.get('BUNNY_STORAGE_ZONE');
-    const storagePassword = Deno.env.get('BUNNY_STORAGE_PASSWORD');
-    const storageHostname = Deno.env.get('BUNNY_STORAGE_HOSTNAME') || 'storage.bunnycdn.com';
-    const cdnHostname = safeCdnHostname(Deno.env.get('BUNNY_CDN_HOSTNAME'));
+    const envStorageZone = (Deno.env.get('BUNNY_STORAGE_ZONE') || '').trim() || undefined;
+    const storagePassword = (Deno.env.get('BUNNY_STORAGE_PASSWORD') || '').trim() || undefined;
+    const storageHostname = (Deno.env.get('BUNNY_STORAGE_HOSTNAME') || 'storage.bunnycdn.com').trim();
+    const cdnHostname = safeCdnHostname((Deno.env.get('BUNNY_CDN_HOSTNAME') || '').trim() || undefined);
 
     console.log('Bunny config:', {
-      envStorageZone: envStorageZone ? 'SET' : 'NOT SET',
+      envStorageZone: envStorageZone ? `SET (${envStorageZone})` : 'NOT SET',
       storagePassword: storagePassword ? `SET (length: ${storagePassword.length})` : 'NOT SET',
       storageHostname,
       cdnHostname: cdnHostname || 'NOT SET'
