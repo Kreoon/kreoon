@@ -496,7 +496,7 @@ export default function Auth() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -506,22 +506,22 @@ export default function Auth() {
   if (isMobile && contentWithVideos.length > 0) {
     return (
       <VideoPlayerProvider>
-        <div className="h-screen bg-black overflow-hidden">
+        <div className="h-screen bg-background overflow-hidden">
           {/* Floating header */}
-          <div className="absolute top-0 left-0 right-0 z-50 p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+          <div className="absolute top-0 left-0 right-0 z-50 p-4 bg-gradient-to-b from-background/90 to-transparent pointer-events-none">
             <div className="flex items-center justify-between pointer-events-auto">
               <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg">
-                  <span className="text-black font-bold text-sm">C</span>
+                <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shadow-glow">
+                  <span className="text-primary-foreground font-bold text-sm">K</span>
                 </div>
-                <span className="text-white font-bold text-sm">Creartor Studio</span>
+                <span className="text-foreground font-bold text-sm font-display">KREOON</span>
               </div>
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={openLogin}
-                  className="text-white hover:bg-white/20 h-8 px-3 text-xs"
+                  className="text-foreground/70 hover:text-foreground hover:bg-muted h-8 px-3 text-xs"
                 >
                   <LogIn className="h-4 w-4 mr-1" />
                   Entrar
@@ -529,7 +529,7 @@ export default function Auth() {
                 <Button
                   size="sm"
                   onClick={openRegister}
-                  className="bg-gradient-gold text-black font-semibold text-xs px-3 h-8"
+                  className="bg-primary text-primary-foreground font-semibold text-xs px-3 h-8 hover:bg-primary/90"
                 >
                   <UserPlus className="h-4 w-4 mr-1" />
                   Registro
@@ -565,8 +565,8 @@ export default function Auth() {
                   <X className="h-4 w-4" />
                 </Button>
                 <CardHeader className="text-center">
-                  <CardTitle>Creartor Studio</CardTitle>
-                  <CardDescription>Red de creadores de contenido</CardDescription>
+                  <CardTitle className="font-display">KREOON</CardTitle>
+                  <CardDescription>Creative Operating System</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'register')}>
@@ -775,28 +775,28 @@ export default function Auth() {
 
   return (
     <VideoPlayerProvider>
-      <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black">
+      <div className="min-h-screen bg-background">
         {/* Header */}
-        <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-xl border-b border-primary/20">
+        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-gradient-gold flex items-center justify-center shadow-lg glow-gold">
-                <span className="text-black font-bold text-lg">C</span>
+              <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-glow">
+                <span className="text-primary-foreground font-bold text-lg">K</span>
               </div>
               <div>
-                <h1 className="text-white font-bold text-xl">Creartor Studio</h1>
-                <p className="text-primary text-xs">Red de Creadores</p>
+                <h1 className="text-foreground font-bold text-xl font-display">KREOON</h1>
+                <p className="text-primary text-xs">Creative Operating System</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Button 
                 variant="ghost" 
                 onClick={openLogin}
-                className="text-white/70 hover:text-white hover:bg-white/10"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 Iniciar Sesión
               </Button>
-              <Button onClick={openRegister} className="bg-gradient-gold text-black font-semibold hover:opacity-90 glow-gold">
+              <Button onClick={openRegister} className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90">
                 Registrarse
               </Button>
             </div>
@@ -806,18 +806,18 @@ export default function Auth() {
         {/* Hero Section */}
         <section className="py-12 md:py-20 px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              Contenido de <span className="text-transparent bg-clip-text bg-gradient-gold">Alta Calidad</span>
+            <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight font-display">
+              Contenido de <span className="text-transparent bg-clip-text bg-gradient-primary">Alta Calidad</span>
             </h2>
-            <p className="text-lg md:text-xl text-white/60 mb-8 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Descubre nuestro portafolio de videos creados por los mejores creadores. 
               Únete como creador, editor o cliente.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={openRegister} className="w-full sm:w-auto bg-gradient-gold text-black font-semibold hover:opacity-90 glow-gold">
+              <Button size="lg" onClick={openRegister} className="w-full sm:w-auto">
                 Comenzar Ahora
               </Button>
-              <Button size="lg" variant="outline" onClick={openLogin} className="w-full sm:w-auto border-primary/50 text-white hover:bg-primary/20 hover:border-primary">
+              <Button size="lg" variant="outline" onClick={openLogin} className="w-full sm:w-auto">
                 Ya tengo cuenta
               </Button>
             </div>
@@ -827,7 +827,7 @@ export default function Auth() {
         {/* Video Gallery */}
         <section className="px-4 pb-16">
           <div className="max-w-7xl mx-auto">
-            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+            <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2 font-display">
               <Sparkles className="w-6 h-6 text-primary" />
               Nuestro Portafolio
             </h3>
@@ -835,13 +835,13 @@ export default function Auth() {
             {contentLoading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
                 {[...Array(10)].map((_, i) => (
-                  <div key={i} className="aspect-[9/16] rounded-xl bg-white/10 animate-pulse" />
+                  <div key={i} className="aspect-[9/16] rounded-xl bg-muted animate-pulse" />
                 ))}
               </div>
             ) : contentWithVideos.length === 0 ? (
               <div className="text-center py-16">
                 <Play className="w-16 h-16 text-primary/30 mx-auto mb-4" />
-                <p className="text-white/60">Próximamente más contenido</p>
+                <p className="text-muted-foreground">Próximamente más contenido</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
@@ -875,34 +875,34 @@ export default function Auth() {
         </section>
 
         {/* Features Section */}
-        <section className="px-4 py-16 border-t border-primary/20">
+        <section className="px-4 py-16 border-t border-border">
           <div className="max-w-5xl mx-auto">
-            <h3 className="text-2xl font-bold text-white text-center mb-12">¿Cómo funciona?</h3>
+            <h3 className="text-2xl font-bold text-foreground text-center mb-12 font-display">¿Cómo funciona?</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all">
-                <div className="w-16 h-16 rounded-full bg-gradient-gold/20 flex items-center justify-center mx-auto mb-4">
+              <div className="text-center p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-200">
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
                   <Play className="w-8 h-8 text-primary" />
                 </div>
-                <h4 className="text-white font-semibold mb-2">Creadores</h4>
-                <p className="text-white/60 text-sm">
+                <h4 className="text-foreground font-semibold mb-2">Creadores</h4>
+                <p className="text-muted-foreground text-sm">
                   Graba contenido auténtico y recibe pago por cada video aprobado
                 </p>
               </div>
-              <div className="text-center p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all">
-                <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-purple-400" />
+              <div className="text-center p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-200">
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-primary" />
                 </div>
-                <h4 className="text-white font-semibold mb-2">Editores</h4>
-                <p className="text-white/60 text-sm">
+                <h4 className="text-foreground font-semibold mb-2">Editores</h4>
+                <p className="text-muted-foreground text-sm">
                   Edita y produce videos de alta calidad para marcas reconocidas
                 </p>
               </div>
-              <div className="text-center p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-blue-500/50 transition-all">
-                <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
-                  <Heart className="w-8 h-8 text-blue-400" />
+              <div className="text-center p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-200">
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+                  <Heart className="w-8 h-8 text-primary" />
                 </div>
-                <h4 className="text-white font-semibold mb-2">Marcas</h4>
-                <p className="text-white/60 text-sm">
+                <h4 className="text-foreground font-semibold mb-2">Marcas</h4>
+                <p className="text-muted-foreground text-sm">
                   Obtén contenido auténtico que conecta con tu audiencia
                 </p>
               </div>
@@ -911,30 +911,30 @@ export default function Auth() {
         </section>
 
         {/* CTA Section */}
-        <section className="px-4 py-16 bg-gradient-to-r from-primary/20 via-purple-500/10 to-primary/20">
+        <section className="px-4 py-16 bg-primary/5">
           <div className="max-w-3xl mx-auto text-center">
-            <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h3 className="text-3xl md:text-4xl font-bold text-foreground mb-4 font-display">
               ¿Listo para empezar?
             </h3>
-            <p className="text-white/60 mb-8">
+            <p className="text-muted-foreground mb-8">
               Únete a nuestra comunidad de creadores y marcas
             </p>
-            <Button size="lg" onClick={openRegister} className="bg-white text-black hover:bg-white/90 font-semibold shadow-xl">
+            <Button size="lg" onClick={openRegister}>
               Crear Cuenta Gratis
             </Button>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="px-4 py-8 border-t border-primary/20">
+        <footer className="px-4 py-8 border-t border-border">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-gradient-gold flex items-center justify-center">
-                <span className="text-black font-bold text-sm">C</span>
+              <div className="h-7 w-7 rounded-xl bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">K</span>
               </div>
-              <span className="text-white/60 text-sm">Creartor Studio</span>
+              <span className="text-muted-foreground text-sm font-display">KREOON</span>
             </div>
-            <p className="text-white/40 text-sm">© 2024 Todos los derechos reservados</p>
+            <p className="text-muted-foreground/60 text-sm">© 2024 Todos los derechos reservados</p>
           </div>
         </footer>
 
@@ -959,10 +959,10 @@ export default function Auth() {
               
               <CardHeader className="text-center pt-8">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-gold flex items-center justify-center">
-                    <span className="text-black font-bold">C</span>
+                  <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
+                    <span className="text-primary-foreground font-bold">K</span>
                   </div>
-                  <span className="font-bold text-lg">Creartor Studio</span>
+                  <span className="font-bold text-lg font-display">KREOON</span>
                 </div>
                 <CardTitle className="text-2xl">
                   {authTab === 'login' ? 'Bienvenido de vuelta' : 'Crear cuenta'}

@@ -309,7 +309,7 @@ const Content = () => {
     <VideoPlayerProvider>
       <div className="min-h-screen">
         <div className="p-4 md:p-6 space-y-6">
-          {/* Medieval Banner */}
+          {/* Banner */}
           <MedievalBanner
             icon={Film}
             title="Portafolio"
@@ -318,9 +318,9 @@ const Content = () => {
               isAdmin && (
                 <Dialog open={newVideoOpen} onOpenChange={setNewVideoOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0 font-medieval">
+                    <Button variant="default" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0">
                       <Plus className="h-4 w-4" />
-                      <span className="hidden sm:inline">Nueva Reliquia</span>
+                      <span className="hidden sm:inline">Nuevo Video</span>
                       <span className="sm:hidden">Nuevo</span>
                     </Button>
                   </DialogTrigger>
