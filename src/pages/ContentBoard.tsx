@@ -837,14 +837,33 @@ export default function ContentBoard() {
                 const canDropHere = draggingContent 
                   ? canMoveToStatusWithRules(primaryRole, draggingContent.status, column.status, draggingContent, user?.id || '', orgStatuses, rules)
                   : true;
+                
+                // Get dynamic color and title from organization settings
+                const orgStatus = orgStatuses.find(s => s.status_key === column.status);
+                const columnTitle = orgStatus?.label || column.title;
+                
+                // Convert CSS class to hex for fallback, or use orgStatus color
+                const fallbackColors: Record<string, string> = {
+                  'bg-muted-foreground': '#6b7280',
+                  'bg-info': '#3b82f6',
+                  'bg-purple-500': '#8b5cf6',
+                  'bg-orange-500': '#f97316',
+                  'bg-cyan-500': '#06b6d4',
+                  'bg-pink-500': '#ec4899',
+                  'bg-emerald-500': '#10b981',
+                  'bg-destructive': '#ef4444',
+                  'bg-blue-500': '#3b82f6',
+                  'bg-success': '#22c55e'
+                };
+                const columnColor = orgStatus?.color || fallbackColors[column.color] || '#6b7280';
 
                 return (
                   <EnhancedKanbanColumn
                     key={column.status}
                     id={column.status}
-                    title={column.title}
+                    title={columnTitle}
                     count={columnContent.length}
-                    color={column.color}
+                    color={columnColor}
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, column.status)}
                     onDragEnter={() => handleDragEnter(column.status)}
