@@ -16,7 +16,8 @@ import {
   Edit, Settings, MapPin, Briefcase, Link2, Instagram, 
   Play, Grid, Bookmark, Star, Eye, Heart, Users, Calendar,
   ExternalLink, Mail, Globe, X, Camera, Plus, Upload, Sparkles,
-  Image as ImageIcon, Video, FolderOpen, Wand2, Loader2, Coins
+  Image as ImageIcon, Video, FolderOpen, Wand2, Loader2, Coins,
+  Building2, UserCircle, Palette, Film, Target
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,6 +70,18 @@ interface ProfileData {
   featured_video_thumbnail?: string;
 }
 
+interface OrganizationInfo {
+  id: string;
+  name: string;
+  logo_url?: string;
+}
+
+interface MembershipInfo {
+  role: string;
+  organization: OrganizationInfo | null;
+  is_independent: boolean;
+}
+
 interface ProfileStats {
   posts_count: number;
   portfolio_count: number;
@@ -99,6 +112,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
   onEditBlocks,
 }: PortfolioProfileProps) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [membership, setMembership] = useState<MembershipInfo>({ role: '', organization: null, is_independent: true });
   const [stats, setStats] = useState<ProfileStats>({
     posts_count: 0,
     portfolio_count: 0,
@@ -125,7 +139,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profileRes, postsRes, portfolioRes, videosRes, followersRes, followingRes] = await Promise.all([
+        const [profileRes, postsRes, portfolioRes, videosRes, followersRes, followingRes, membershipRes] = await Promise.all([
           supabase.from('profiles').select('*').eq('id', userId).single(),
           supabase
             .from('portfolio_posts')
@@ -150,10 +164,40 @@ export const PortfolioProfile = memo(function PortfolioProfile({
             .from('followers')
             .select('id', { count: 'exact', head: true })
             .eq('follower_id', userId),
+          // Fetch organization membership info
+          supabase
+            .from('organization_members')
+            .select(`
+              role,
+              organization:organization_id (
+                id,
+                name,
+                logo_url
+              )
+            `)
+            .eq('user_id', userId)
+            .limit(1)
+            .maybeSingle(),
         ]);
 
         if (profileRes.data) {
           setProfile(profileRes.data as any);
+        }
+
+        // Set membership info
+        if (membershipRes.data) {
+          const orgData = membershipRes.data.organization as any;
+          setMembership({
+            role: membershipRes.data.role || '',
+            organization: orgData ? {
+              id: orgData.id,
+              name: orgData.name,
+              logo_url: orgData.logo_url,
+            } : null,
+            is_independent: false,
+          });
+        } else {
+          setMembership({ role: '', organization: null, is_independent: true });
         }
 
         const totalViews = postsRes.data?.reduce((sum, p) => sum + (p.views_count || 0), 0) || 0;
@@ -244,14 +288,50 @@ export const PortfolioProfile = memo(function PortfolioProfile({
             <div className="flex-1 pt-2 sm:pt-8">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                    {profile.full_name}
-                  </h1>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                      {profile.full_name}
+                    </h1>
+                    {/* Role Badge */}
+                    {membership.role && (
+                      <Badge variant="secondary" className="capitalize flex items-center gap-1">
+                        {membership.role === 'creator' && <Palette className="h-3 w-3" />}
+                        {membership.role === 'editor' && <Film className="h-3 w-3" />}
+                        {membership.role === 'strategist' && <Target className="h-3 w-3" />}
+                        {membership.role === 'admin' && <Settings className="h-3 w-3" />}
+                        {membership.role}
+                      </Badge>
+                    )}
+                  </div>
                   {profile.username && (
                     <p className="text-social-muted-foreground">@{profile.username}</p>
                   )}
+                  
+                  {/* Organization Badge */}
+                  <div className="flex items-center gap-2 mt-2">
+                    {membership.is_independent ? (
+                      <Badge variant="outline" className="flex items-center gap-1 text-social-muted-foreground">
+                        <UserCircle className="h-3 w-3" />
+                        Independiente
+                      </Badge>
+                    ) : membership.organization && (
+                      <Badge variant="outline" className="flex items-center gap-1.5">
+                        {membership.organization.logo_url ? (
+                          <img 
+                            src={membership.organization.logo_url} 
+                            alt={membership.organization.name}
+                            className="h-3 w-3 rounded-sm object-cover"
+                          />
+                        ) : (
+                          <Building2 className="h-3 w-3" />
+                        )}
+                        {membership.organization.name}
+                      </Badge>
+                    )}
+                  </div>
+
                   {profile.tagline && (
-                    <p className="text-lg text-social-foreground/80 mt-1 max-w-xl">
+                    <p className="text-lg text-social-foreground/80 mt-2 max-w-xl">
                       {profile.tagline}
                     </p>
                   )}
