@@ -41,8 +41,11 @@ const ROLE_LABELS: Record<AppRole, string> = {
   creator: 'Creador',
   editor: 'Editor',
   client: 'Cliente',
-  ambassador: 'Embajador'
+  ambassador: 'Embajador' // legacy - kept for display only
 };
+
+// Roles that can be assigned in org management (no ambassador)
+const ASSIGNABLE_ROLES: AppRole[] = ['admin', 'strategist', 'creator', 'editor', 'client'];
 
 const ROLE_COLORS: Record<AppRole, string> = {
   admin: 'bg-red-500/10 text-red-500 border-red-500/20',
