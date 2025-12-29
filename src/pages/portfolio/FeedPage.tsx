@@ -422,7 +422,7 @@ export default function FeedPage() {
           onClose={() => setShowStoryUploader(false)}
           onSuccess={() => {
             setShowStoryUploader(false);
-            window.location.reload();
+            fetchFeed(true);
           }}
         />
       )}

@@ -1,13 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Sparkles, Play } from 'lucide-react';
 import { useTour } from '@/hooks/useTour';
+import { useNavigate } from 'react-router-dom';
 
 export default function TourSection() {
   const { resetTour } = useTour();
+  const navigate = useNavigate();
 
   const handleStartTour = () => {
     resetTour();
-    window.location.href = '/dashboard';
+    navigate('/dashboard');
   };
 
   return (

@@ -1,6 +1,7 @@
 import { useTrialStatus } from '@/contexts/TrialContext';
 import { toast } from 'sonner';
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Hook that provides trial-aware action guards.
@@ -8,6 +9,7 @@ import { useCallback } from 'react';
  */
 export function useTrialGuard() {
   const { isReadOnly, isExpired, billingEnabled, daysRemaining } = useTrialStatus();
+  const navigate = useNavigate();
 
   /**
    * Guards an action - shows toast and returns false if trial is expired
@@ -18,14 +20,14 @@ export function useTrialGuard() {
         description: 'Activa tu plan para continuar creando y editando contenido.',
         action: {
           label: 'Ver planes',
-          onClick: () => window.location.href = '/settings?section=planes-org',
+          onClick: () => navigate('/settings?section=planes-org'),
         },
       });
       return false;
     }
     action();
     return true;
-  }, [isReadOnly]);
+  }, [isReadOnly, navigate]);
 
   /**
    * Guards an async action
@@ -36,13 +38,13 @@ export function useTrialGuard() {
         description: 'Activa tu plan para continuar creando y editando contenido.',
         action: {
           label: 'Ver planes',
-          onClick: () => window.location.href = '/settings?section=planes-org',
+          onClick: () => navigate('/settings?section=planes-org'),
         },
       });
       return null;
     }
     return action();
-  }, [isReadOnly]);
+  }, [isReadOnly, navigate]);
 
   /**
    * Check if action is allowed (without showing toast)
