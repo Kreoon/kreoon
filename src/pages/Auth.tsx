@@ -274,8 +274,7 @@ export default function Auth() {
   };
 
   const openRegister = () => {
-    setAuthTab('register');
-    setShowAuthModal(true);
+    navigate('/register');
   };
 
   const handleSectionClick = (sectionId: string) => {
@@ -356,10 +355,9 @@ export default function Auth() {
             </CardHeader>
             <CardContent>
               <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'register')} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+                <div className="hidden">
                   <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-                  <TabsTrigger value="register">Registrarse</TabsTrigger>
-                </TabsList>
+                </div>
 
                 <TabsContent value="login">
                   {showForgotPassword ? (
@@ -476,139 +474,18 @@ export default function Auth() {
                   )}
                 </TabsContent>
 
-                <TabsContent value="register">
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="register-name">Nombre completo</Label>
-                      <Input
-                        id="register-name"
-                        type="text"
-                        placeholder="Tu nombre"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-email">Correo electrónico</Label>
-                      <Input
-                        id="register-email"
-                        type="email"
-                        placeholder="tu@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-password">Contraseña</Label>
-                      <Input
-                        id="register-password"
-                        type="password"
-                        placeholder="Mínimo 6 caracteres"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        minLength={6}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Tipo de cuenta</Label>
-                      <Select value={accountType} onValueChange={(v) => setAccountType(v as 'individual' | 'organization')}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="individual">Persona (Creador, Editor, Marca)</SelectItem>
-                          <SelectItem value="organization">Organización (Agencia, Comunidad)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {accountType === 'organization' ? (
-                      <>
-                        <div className="space-y-2">
-                          <Label>Tipo de organización</Label>
-                          <Select value={organizationType} onValueChange={(v) => setOrganizationType(v as any)}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="agency">Agencia</SelectItem>
-                              <SelectItem value="community">Comunidad</SelectItem>
-                              <SelectItem value="academy">Academia</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="register-org-name">Nombre de la organización</Label>
-                          <Input
-                            id="register-org-name"
-                            type="text"
-                            placeholder="Nombre de tu organización"
-                            value={companyName}
-                            onChange={(e) => setCompanyName(e.target.value)}
-                            required
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="space-y-2">
-                          <Label htmlFor="register-role">¿Cómo quieres unirte?</Label>
-                          <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="creator">Creador de Contenido</SelectItem>
-                              <SelectItem value="editor">Editor de Video</SelectItem>
-                              <SelectItem value="client">Marca / Cliente</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        {role === 'client' && (
-                          <div className="space-y-2">
-                            <Label htmlFor="register-company">Nombre de tu empresa</Label>
-                            <Input
-                              id="register-company"
-                              type="text"
-                              placeholder="Tu empresa"
-                              value={companyName}
-                              onChange={(e) => setCompanyName(e.target.value)}
-                              required
-                            />
-                          </div>
-                        )}
-                      </>
-                    )}
-                    
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Crear Cuenta
-                    </Button>
-                    
-                    <div className="relative my-4">
-                      <Separator />
-                      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-                        o continúa con
-                      </span>
-                    </div>
-                    
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      className="w-full" 
-                      onClick={handleGoogleSignIn}
-                      disabled={loading}
-                    >
-                      <Chrome className="w-4 h-4 mr-2" />
-                      Google
-                    </Button>
-                  </form>
-                </TabsContent>
+                {/* Register tab removed - redirects to /register wizard */}
+                
+                <div className="mt-6 text-center border-t border-border pt-6">
+                  <p className="text-sm text-muted-foreground mb-3">¿No tienes cuenta?</p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => navigate('/register')}
+                  >
+                    Crear cuenta nueva
+                  </Button>
+                </div>
               </Tabs>
             </CardContent>
           </Card>

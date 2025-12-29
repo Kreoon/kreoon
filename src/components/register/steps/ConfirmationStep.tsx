@@ -115,6 +115,9 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
           title: '¡Organización creada!',
           description: 'Tu prueba de 30 días ha comenzado',
         });
+        
+        // Redirect org creators to dashboard
+        navigate('/dashboard');
       } else if (isJoinFlow) {
         const { data: org } = await supabase
           .from('organizations')
@@ -158,7 +161,18 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
           title: '¡Te has unido!',
           description: 'Ya eres parte de la organización',
         });
+        
+        // Redirect based on role
+        const roleToRoute: Record<string, string> = {
+          'admin': '/dashboard',
+          'creator': '/creator-dashboard',
+          'editor': '/editor-dashboard',
+          'client': '/client-dashboard',
+          'strategist': '/strategist-dashboard',
+        };
+        navigate(roleToRoute[org?.default_role || 'creator'] || '/creator-dashboard');
       } else {
+        // Individual user
         await supabase
           .from('profiles')
           .update({ 
@@ -171,9 +185,10 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
           title: '¡Cuenta creada!',
           description: 'Ya puedes acceder a tu portafolio y la red social',
         });
+        
+        // Individual users go to portfolio/explore
+        navigate('/portfolio/explore');
       }
-
-      navigate('/');
     } catch (error: any) {
       console.error('Registration error:', error);
       toast({
