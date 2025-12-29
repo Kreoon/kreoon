@@ -40,13 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Keep latest values accessible inside auth listeners (effect has [] deps).
   const userIdRef = useRef<string | null>(null);
+  const sessionTokenRef = useRef<string | null>(null);
   const rolesLoadedRef = useRef<boolean>(false);
   const bootstrappedRef = useRef<boolean>(false);
   const bootTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     userIdRef.current = user?.id ?? null;
-  }, [user]);
+    sessionTokenRef.current = session?.access_token ?? null;
+  }, [user, session]);
 
   useEffect(() => {
     rolesLoadedRef.current = rolesLoaded;
@@ -58,16 +60,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Priority: 1) profile.active_role from DB, 2) localStorage, 3) default by priority
       const dbRole = (profile as any)?.active_role as AppRole | null;
       const storedRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY) as AppRole | null;
-      
+
       if (dbRole && roles.includes(dbRole)) {
         setActiveRoleState(dbRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, dbRole);
       } else if (storedRole && roles.includes(storedRole)) {
         setActiveRoleState(storedRole);
       } else {
-        // Default to first role (priority: admin > ambassador > strategist > creator > editor > client)
-        const priority: AppRole[] = ['admin', 'ambassador', 'strategist', 'creator', 'editor', 'client'];
-        const primaryRole = priority.find(r => roles.includes(r)) || roles[0];
+        // Default to first role (priority: admin > strategist > creator > editor > client)
+        // NOTE: 'ambassador' is a legacy role; ambassadors should be handled via badge system.
+        const priority: AppRole[] = ['admin', 'strategist', 'creator', 'editor', 'client'];
+        const primaryRole = priority.find((r) => roles.includes(r)) || roles[0];
         setActiveRoleState(primaryRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, primaryRole);
       }
@@ -129,10 +132,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // If we already bootstrapped and it's the same user, never show global loading.
-      // Just keep session/user in sync and refresh profile/roles in the background.
+      // Also avoid setting user/session state if nothing meaningful changed to prevent UI flicker.
+      // Supabase client already manages refreshed tokens internally.
       if (sameUser && bootstrappedRef.current && nextSession?.user) {
-        setSession(nextSession);
-        setUser(nextSession.user);
+        const nextToken = nextSession.access_token ?? null;
+        const currentToken = sessionTokenRef.current;
+
+        // Only update state if token changed (rare). Otherwise, keep UI stable.
+        if (nextToken && nextToken !== currentToken) {
+          setSession(nextSession);
+          setUser(nextSession.user);
+        }
+
         window.setTimeout(() => {
           fetchUserData(nextSession.user.id, true);
         }, 0);

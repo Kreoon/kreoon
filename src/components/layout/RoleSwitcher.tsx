@@ -34,7 +34,8 @@ const ROLE_DASHBOARDS: Record<AppRole, string> = {
 };
 
 // Classify roles into personal vs company context
-const PERSONAL_ROLES: AppRole[] = ['admin', 'ambassador', 'strategist', 'creator', 'editor'];
+// NOTE: 'ambassador' is a legacy role (now represented by badges), so we exclude it from switching.
+const PERSONAL_ROLES: AppRole[] = ['admin', 'strategist', 'creator', 'editor'];
 const COMPANY_ROLES: AppRole[] = ['client'];
 
 // Role descriptions for better UX
@@ -55,8 +56,11 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
   const { roles, activeRole, setActiveRole } = useAuth();
   const navigate = useNavigate();
 
-  // Only show if user has multiple roles
-  if (roles.length <= 1) {
+  // Ambassador is a badge, not a role selector
+  const selectableRoles = roles.filter((r) => r !== 'ambassador');
+
+  // Only show if user has multiple selectable roles
+  if (selectableRoles.length <= 1) {
     return null;
   }
 
@@ -70,9 +74,9 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
   const ActiveIcon = activeRole ? ROLE_ICONS[activeRole] : Shield;
   const isClientActive = activeRole === 'client';
 
-  // Separate roles by context
-  const personalRoles = roles.filter(r => PERSONAL_ROLES.includes(r));
-  const companyRoles = roles.filter(r => COMPANY_ROLES.includes(r));
+  // Separate roles by context (using selectable roles)
+  const personalRoles = selectableRoles.filter((r) => PERSONAL_ROLES.includes(r));
+  const companyRoles = selectableRoles.filter((r) => COMPANY_ROLES.includes(r));
 
   if (collapsed) {
     return (
