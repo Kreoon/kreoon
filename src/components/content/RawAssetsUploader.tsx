@@ -443,8 +443,13 @@ export function RawAssetsUploader({
                 Arrastra archivos aquí o
               </p>
               <Button
+                type="button"
                 variant="outline"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
                 disabled={isUploading}
               >
                 Seleccionar archivos
@@ -454,7 +459,12 @@ export function RawAssetsUploader({
                 type="file"
                 multiple
                 className="hidden"
-                onChange={(e) => handleFileSelect(e.target.files)}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  handleFileSelect(e.target.files);
+                  // Reset input value to allow selecting the same file again
+                  e.target.value = '';
+                }}
                 accept="video/*,audio/*,.mov,.mp4,.avi,.mkv,.webm,.wav,.mp3,.aac,.flac"
               />
               <p className="text-xs text-muted-foreground mt-2">
@@ -472,7 +482,12 @@ export function RawAssetsUploader({
             <CardTitle className="text-base flex items-center justify-between">
               <span>Archivos para subir ({filesToUpload.length})</span>
               <Button 
-                onClick={handleUpload} 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleUpload();
+                }} 
                 disabled={isUploading || filesToUpload.every(f => f.status !== 'pending')}
                 size="sm"
               >
