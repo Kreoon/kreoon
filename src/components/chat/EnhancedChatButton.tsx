@@ -24,7 +24,7 @@ export function EnhancedChatButton({ onClick, isOpen, unreadCount = 0 }: Enhance
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={cn(
-              "fixed bottom-6 right-6 z-50",
+              "fixed bottom-20 right-6 z-50 md:bottom-16",
               "flex items-center justify-center",
               "w-14 h-14 rounded-full",
               "bg-gradient-to-br from-primary via-primary to-primary/80",
