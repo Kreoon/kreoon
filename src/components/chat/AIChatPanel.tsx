@@ -28,7 +28,7 @@ export function AIChatPanel({ isOpen, onClose, organizationId }: AIChatPanelProp
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [assistantName, setAssistantName] = useState('Asistente IA');
+  const [assistantName, setAssistantName] = useState('Asistente Estratégico');
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 

@@ -61,7 +61,7 @@ export default function SmartSearchBar({ className, onSearch }: SmartSearchBarPr
               className="h-7 w-7 text-primary"
               onClick={handleSearch}
               disabled={aiLoading}
-              title="Buscar con IA"
+              title="Búsqueda inteligente"
             >
               {aiLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

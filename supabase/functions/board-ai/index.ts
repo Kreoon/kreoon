@@ -866,7 +866,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: "MODULE_INACTIVE",
-          message: "IA no habilitada para este módulo. Actívala en Configuración → IA & Modelos.",
+          message: "Asistente no habilitado para este módulo. Actívalo en Configuración → IA & Modelos.",
           module_key: moduleKey
         }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }

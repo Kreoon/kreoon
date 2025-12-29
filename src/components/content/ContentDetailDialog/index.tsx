@@ -255,7 +255,7 @@ export function ContentDetailDialog({
                 {isCreateMode ? (
                   <Badge className="text-sm px-3 py-1 bg-primary/10 text-primary border-primary/20">
                     <Plus className="h-3 w-3 mr-1" />
-                    Nueva Misión
+                    Nuevo Proyecto
                   </Badge>
                 ) : effectivePermissions.can('content.status', 'edit') ? (
                   <Select 

@@ -30,11 +30,11 @@ const EVENT_TYPES = [
   { value: 'content_completed', label: 'Contenido Completado', icon: CheckCircle2 },
   { value: 'early_delivery', label: 'Entrega Anticipada', icon: TrendingUp },
   { value: 'late_delivery', label: 'Entrega Tardía', icon: Clock },
-  { value: 'correction_requested', label: 'Corrección Solicitada', icon: AlertTriangle },
+  { value: 'correction_requested', label: 'Ajuste Solicitado', icon: AlertTriangle },
   { value: 'content_approved', label: 'Contenido Aprobado', icon: CheckCircle2 },
-  { value: 'perfect_streak', label: 'Racha Perfecta', icon: Zap },
+  { value: 'perfect_streak', label: 'Racha de Excelencia', icon: Zap },
   { value: 'quality_bonus', label: 'Bonus por Calidad', icon: Target },
-  { value: 'quest_completed', label: 'Misión Completada', icon: Target }
+  { value: 'quest_completed', label: 'Objetivo Completado', icon: Target }
 ];
 
 const APPLICABLE_ROLES = [
