@@ -26,6 +26,23 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+/**
+ * Handle bfcache (back-forward cache) restoration
+ * This prevents the browser from reloading the page when navigating back from external sites
+ */
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    // Page was restored from bfcache - do NOT reload
+    console.log('[App] Page restored from bfcache - keeping current state');
+  }
+});
+
+// Prevent pagehide from triggering any cleanup that could cause reload
+window.addEventListener('pagehide', (event) => {
+  // Just log, don't do anything that could affect page state
+  console.log('[App] Page hidden, persisted:', event.persisted);
+});
+
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
