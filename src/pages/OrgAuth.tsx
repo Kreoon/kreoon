@@ -207,8 +207,8 @@ const OrgAuth = () => {
               className="h-16 w-16 mx-auto rounded-lg object-cover"
             />
           ) : (
-            <div className="h-16 w-16 mx-auto rounded-lg bg-primary/10 flex items-center justify-center">
-              <Building2 className="h-8 w-8 text-primary" />
+            <div className="h-16 w-16 mx-auto rounded-lg overflow-hidden">
+              <img src="/favicon.png" alt="KREOON" className="h-16 w-16 object-cover" />
             </div>
           )}
           <div>
