@@ -77,45 +77,40 @@ export function FeaturedVideoUploader({
     setProgress(0);
 
     try {
-      const ext = selectedFile.name.split('.').pop();
-      const fileName = `featured/${userId}/${Date.now()}.${ext}`;
-
       // Simulate progress
       const progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
+        setProgress(prev => Math.min(prev + 5, 85));
+      }, 300);
 
-      const { error: uploadError } = await supabase.storage
-        .from('portfolio')
-        .upload(fileName, selectedFile, { cacheControl: '3600', upsert: true });
+      // Upload video to Bunny via edge function
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('user_id', userId);
+      formData.append('type', 'featured');
+
+      const supabaseUrl = (supabase as any).supabaseUrl as string;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
+        method: 'POST',
+        body: formData,
+      });
 
       clearInterval(progressInterval);
 
-      if (uploadError) throw uploadError;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al subir el video');
+      }
 
-      const { data: urlData } = supabase.storage.from('portfolio').getPublicUrl(fileName);
-      const videoUrl = urlData.publicUrl;
+      const result = await response.json();
+      console.log('[FeaturedVideoUploader] Video uploaded to Bunny:', result);
 
       setProgress(95);
 
-      // Generate thumbnail
-      const thumbnailDataUrl = await generateThumbnail(videoUrl);
-      let thumbnailUrl = '';
+      const videoUrl = result.embed_url || result.mp4_url;
+      const thumbnailUrl = result.thumbnail_url || '';
 
-      if (thumbnailDataUrl) {
-        // Upload thumbnail
-        const thumbnailBlob = await (await fetch(thumbnailDataUrl)).blob();
-        const thumbFileName = `featured/${userId}/${Date.now()}_thumb.jpg`;
-        
-        await supabase.storage
-          .from('portfolio')
-          .upload(thumbFileName, thumbnailBlob, { cacheControl: '3600', upsert: true });
-        
-        const { data: thumbData } = supabase.storage.from('portfolio').getPublicUrl(thumbFileName);
-        thumbnailUrl = thumbData.publicUrl;
-      }
-
-      // Update profile
+      // Update profile with Bunny URLs
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -127,7 +122,9 @@ export function FeaturedVideoUploader({
       if (updateError) throw updateError;
 
       setProgress(100);
-      toast.success('Video destacado actualizado');
+      toast.success('Video destacado actualizado', {
+        description: 'El video se está procesando para mejor compatibilidad.'
+      });
       onUploadComplete(videoUrl, thumbnailUrl);
       handleClose();
     } catch (error) {
