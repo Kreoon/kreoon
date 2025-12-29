@@ -124,7 +124,8 @@ serve(async (req: Request) => {
         let lastTriedUrl = '';
 
         if (assetPath) {
-          const defaultCdnHost = envStorageZone ? `${envStorageZone}.b-cdn.net` : undefined;
+          const zoneFromUrl = extractStorageZoneFromStorageUrl(urlStr);
+          const defaultCdnHost = (zoneFromUrl || envStorageZone) ? `${zoneFromUrl || envStorageZone}.b-cdn.net` : undefined;
           const cdnHostToUse = cdnHostname || defaultCdnHost;
 
           if (cdnHostToUse) {
@@ -140,7 +141,17 @@ serve(async (req: Request) => {
           const zoneFromUrl = extractStorageZoneFromStorageUrl(urlStr);
           const zoneForStorage = zoneFromUrl || envStorageZone || 'raw-assets';
 
-          const storageUrl = `https://${storageHostname}/${zoneForStorage}/${assetPath}`;
+          // Prefer the exact regional hostname from the original storage URL when available
+          let hostForStorage = storageHostname;
+          try {
+            if (urlStr.includes('storage.bunnycdn.com')) {
+              hostForStorage = new URL(urlStr).hostname;
+            }
+          } catch {
+            // ignore
+          }
+
+          const storageUrl = `https://${hostForStorage}/${zoneForStorage}/${assetPath}`;
           lastTriedUrl = storageUrl;
           console.log(`Trying storage URL with auth: ${storageUrl}`);
           response = await fetch(storageUrl, { headers: { 'AccessKey': storagePassword } });
