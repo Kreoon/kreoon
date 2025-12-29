@@ -1125,32 +1125,72 @@ function UploadContentDialog({ open, onOpenChange, userId }: { open: boolean; on
 
     setUploading(true);
     try {
-      const ext = selectedFile.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}.${ext}`;
+      const isVideo = selectedFile.type.startsWith('video/');
 
-      const { error: uploadError } = await supabase.storage
-        .from('portfolio')
-        .upload(fileName, selectedFile);
+      if (isVideo) {
+        // Upload video to Bunny via edge function
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('user_id', userId);
+        formData.append('type', 'post');
+        if (caption) {
+          formData.append('caption', caption);
+        }
 
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from('portfolio').getPublicUrl(fileName);
-
-      const mediaType = selectedFile.type.startsWith('video/') ? 'video' : 'image';
-
-      const { error: insertError } = await supabase
-        .from('portfolio_posts')
-        .insert({
-          user_id: userId,
-          media_url: urlData.publicUrl,
-          media_type: mediaType,
-          post_type: postType,
-          caption: caption || null,
+        const supabaseUrl = (supabase as any).supabaseUrl as string;
+        
+        const response = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
+          method: 'POST',
+          body: formData,
         });
 
-      if (insertError) throw insertError;
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Error al subir el video');
+        }
 
-      toast.success('Contenido subido exitosamente');
+        const result = await response.json();
+        console.log('[PortfolioProfile] Video uploaded to Bunny:', result);
+
+        // Update the post with post_type (the edge function already created the post)
+        if (result.id) {
+          await supabase
+            .from('portfolio_posts')
+            .update({ post_type: postType })
+            .eq('id', result.id);
+        }
+
+        toast.success('Video subido exitosamente', {
+          description: 'El video se está procesando para mejor compatibilidad.'
+        });
+      } else {
+        // Upload image to Supabase storage (images don't need Bunny processing)
+        const ext = selectedFile.name.split('.').pop();
+        const fileName = `${userId}/${Date.now()}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('portfolio')
+          .upload(fileName, selectedFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('portfolio').getPublicUrl(fileName);
+
+        const { error: insertError } = await supabase
+          .from('portfolio_posts')
+          .insert({
+            user_id: userId,
+            media_url: urlData.publicUrl,
+            media_type: 'image',
+            post_type: postType,
+            caption: caption || null,
+          });
+
+        if (insertError) throw insertError;
+
+        toast.success('Imagen subida exitosamente');
+      }
+
       onOpenChange(false);
       setSelectedFile(null);
       setPreview(null);

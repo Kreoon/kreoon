@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     const formData = await req.formData()
     const file = formData.get('file') as File
     const userId = formData.get('user_id') as string
-    const type = formData.get('type') as string // 'post' or 'story'
+    const type = formData.get('type') as string // 'post', 'story', or 'featured'
     const caption = formData.get('caption') as string || null
 
     if (!file || !userId) {
@@ -50,7 +50,12 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log(`[bunny-portfolio-upload] Uploading ${type} for user ${userId}, file: ${file.name}, size: ${file.size}`)
+    // Featured videos don't need DB records here - they're stored in profiles table
+    if (type === 'featured') {
+      console.log(`[bunny-portfolio-upload] Uploading featured video for user ${userId}, file: ${file.name}, size: ${file.size}`)
+    } else {
+      console.log(`[bunny-portfolio-upload] Uploading ${type} for user ${userId}, file: ${file.name}, size: ${file.size}`)
+    }
 
     // Step 1: Create video in Bunny Stream
     const title = `portfolio-${type}-${userId}-${Date.now()}`
@@ -104,10 +109,23 @@ Deno.serve(async (req) => {
 
     console.log(`[bunny-portfolio-upload] Video uploaded: ${embedUrl}`)
 
-    // Step 3: Create database record
-    const timestamp = Date.now()
-    
-    if (type === 'story') {
+    // Step 3: Create database record (skip for featured videos - they're stored in profiles)
+    if (type === 'featured') {
+      console.log('[bunny-portfolio-upload] Featured video uploaded, no DB record needed')
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          type: 'featured',
+          video_id: videoData.guid,
+          embed_url: embedUrl,
+          mp4_url: mp4Url,
+          thumbnail_url: thumbnailUrl,
+          message: 'Featured video uploaded successfully. Encoding in progress.',
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    } else if (type === 'story') {
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
       
       const { data: storyData, error: dbError } = await supabase
