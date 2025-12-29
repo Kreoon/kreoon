@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Puzzle, Brain, BarChart3, Settings2 } from 'lucide-react';
-import { useOrganization } from '@/hooks/useOrganization';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { TrackingGeneralSettings } from './TrackingGeneralSettings';
 import { TrackingIntegrationsSettings } from './TrackingIntegrationsSettings';
 import { TrackingAISettings } from './TrackingAISettings';
@@ -11,7 +11,7 @@ import { TrackingAnalyticsDashboard } from './TrackingAnalyticsDashboard';
 
 export function TrackingSettingsSection() {
   const [activeTab, setActiveTab] = useState('general');
-  const { currentOrganization: organization } = useOrganization();
+  const { currentOrg: organization } = useOrganizations();
 
   if (!organization) {
     return (
