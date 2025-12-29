@@ -5,9 +5,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { UserPlus, X } from 'lucide-react';
+import { UserPlus, X, Building2, UserCircle, Palette, Film, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 
 interface SuggestedProfile {
   id: string;
@@ -15,6 +16,9 @@ interface SuggestedProfile {
   avatar_url?: string;
   bio?: string;
   reason?: string;
+  role?: string;
+  organization_name?: string;
+  is_independent?: boolean;
 }
 
 interface SuggestedProfilesProps {
@@ -83,17 +87,41 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }
           return;
         }
 
+        // Fetch final profiles with organization info
         const { data: finalProfiles } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url, bio')
           .in('id', candidateArray)
           .limit(limit);
 
+        // Fetch organization membership for these profiles
+        const { data: membershipData } = await supabase
+          .from('organization_members')
+          .select(`
+            user_id,
+            role,
+            organization:organization_id (name)
+          `)
+          .in('user_id', candidateArray);
+
+        const membershipMap = new Map(
+          (membershipData || []).map(m => [m.user_id, { 
+            role: m.role, 
+            organization_name: (m.organization as any)?.name 
+          }])
+        );
+
         setProfiles(
-          (finalProfiles || []).map(p => ({
-            ...p,
-            reason: mutualCandidates.has(p.id) ? 'Seguido por personas que sigues' : 'Popular',
-          }))
+          (finalProfiles || []).map(p => {
+            const membership = membershipMap.get(p.id);
+            return {
+              ...p,
+              reason: mutualCandidates.has(p.id) ? 'Seguido por personas que sigues' : 'Popular',
+              role: membership?.role,
+              organization_name: membership?.organization_name,
+              is_independent: !membership,
+            };
+          })
         );
       } catch (error) {
         console.error('[SuggestedProfiles] Error:', error);
@@ -155,7 +183,27 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }
                 >
                   {profile.full_name}
                 </button>
-                <p className="text-xs text-muted-foreground truncate">{profile.reason}</p>
+                <div className="flex items-center gap-1 flex-wrap">
+                  {profile.role && (
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1 capitalize">
+                      {profile.role === 'creator' && <Palette className="h-2.5 w-2.5 mr-0.5" />}
+                      {profile.role === 'editor' && <Film className="h-2.5 w-2.5 mr-0.5" />}
+                      {profile.role === 'strategist' && <Target className="h-2.5 w-2.5 mr-0.5" />}
+                      {profile.role}
+                    </Badge>
+                  )}
+                  {profile.is_independent ? (
+                    <Badge variant="outline" className="text-[10px] h-4 px-1">
+                      <UserCircle className="h-2.5 w-2.5 mr-0.5" />
+                      Indep.
+                    </Badge>
+                  ) : profile.organization_name && (
+                    <Badge variant="outline" className="text-[10px] h-4 px-1">
+                      <Building2 className="h-2.5 w-2.5 mr-0.5" />
+                      {profile.organization_name}
+                    </Badge>
+                  )}
+                </div>
               </div>
               {!followingIds.has(profile.id) && (
                 <Button 
@@ -203,7 +251,16 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }
               >
                 {profile.full_name}
               </button>
-              <p className="text-xs text-muted-foreground truncate mb-2">{profile.reason}</p>
+              <div className="flex items-center justify-center gap-1 flex-wrap mb-1">
+                {profile.role && (
+                  <Badge variant="secondary" className="text-[10px] h-4 px-1 capitalize">
+                    {profile.role}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground truncate mb-2">
+                {profile.is_independent ? 'Independiente' : profile.organization_name || ''}
+              </p>
               {!followingIds.has(profile.id) ? (
                 <Button 
                   size="sm" 
