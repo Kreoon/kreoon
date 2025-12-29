@@ -861,6 +861,7 @@ export default function ContentBoard() {
                         onDragStart={(e) => handleDragStart(e, item)}
                         isDragging={draggingContent?.id === item.id}
                         showAIIndicators={isAdmin}
+                        organizationStatuses={orgStatuses}
                         onAnalyzeWithAI={isAdmin ? (contentId, title) => {
                           setAIPanelMode('card');
                           setAIContentId(contentId);

@@ -12,6 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Content, STATUS_COLORS, STATUS_LABELS } from "@/types/database";
 import { cn } from "@/lib/utils";
 
+// Organization status interface
+interface OrganizationStatus {
+  id: string;
+  status_key: string;
+  label: string;
+  color: string;
+  sort_order: number;
+}
+
 interface EnhancedContentCardProps {
   content: Content;
   cardSize?: 'compact' | 'normal' | 'large';
@@ -21,6 +30,7 @@ interface EnhancedContentCardProps {
   isDragging?: boolean;
   onAnalyzeWithAI?: (contentId: string, title: string) => void;
   showAIIndicators?: boolean;
+  organizationStatuses?: OrganizationStatus[];
 }
 
 // Size configurations for different card sizes
@@ -62,10 +72,48 @@ export function EnhancedContentCard({
   onDragStart,
   isDragging,
   onAnalyzeWithAI,
-  showAIIndicators = false
+  showAIIndicators = false,
+  organizationStatuses = []
 }: EnhancedContentCardProps) {
   // Get size configuration
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
+  
+  // Get the current status configuration from organization
+  const currentStatusConfig = useMemo(() => {
+    return organizationStatuses.find(s => s.status_key === content.status);
+  }, [organizationStatuses, content.status]);
+  
+  // Get status label - prefer organization config, fallback to hardcoded
+  const statusLabel = currentStatusConfig?.label || STATUS_LABELS[content.status] || content.status;
+  
+  // Get status color style - prefer organization config, fallback to hardcoded
+  const statusColorStyle = useMemo(() => {
+    if (currentStatusConfig?.color) {
+      // Convert hex color to inline style
+      return {
+        backgroundColor: `${currentStatusConfig.color}20`,
+        color: currentStatusConfig.color
+      };
+    }
+    return null;
+  }, [currentStatusConfig]);
+  
+  // Calculate progress based on organization statuses or fallback
+  const getProgress = (): number => {
+    if (organizationStatuses.length > 0 && currentStatusConfig) {
+      // Calculate progress based on sort_order within the total statuses
+      const maxOrder = Math.max(...organizationStatuses.map(s => s.sort_order));
+      if (maxOrder === 0) return 0;
+      return Math.round((currentStatusConfig.sort_order / maxOrder) * 100);
+    }
+    // Fallback to hardcoded values
+    const statusProgress: Record<string, number> = {
+      'draft': 5, 'pending_script': 10, 'script_review': 20, 'script_approved': 30,
+      'assigned': 40, 'recording': 50, 'recorded': 60, 'editing': 70,
+      'delivered': 80, 'issue': 75, 'approved': 90, 'paid': 100
+    };
+    return statusProgress[content.status] || 0;
+  };
   
   const isOverdue = useMemo(() => {
     if (!content.deadline) return false;
@@ -90,15 +138,6 @@ export function EnhancedContentCard({
     return staleStatuses.includes(content.status) && daysSinceUpdate >= 3;
   }, [content.updated_at, content.status]);
 
-  // Calculate progress based on status
-  const getProgress = (): number => {
-    const statusProgress: Record<string, number> = {
-      'draft': 5, 'pending_script': 10, 'script_review': 20, 'script_approved': 30,
-      'assigned': 40, 'recording': 50, 'recorded': 60, 'editing': 70,
-      'delivered': 80, 'issue': 75, 'approved': 90, 'paid': 100
-    };
-    return statusProgress[content.status] || 0;
-  };
 
   const handleAnalyzeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -205,11 +244,12 @@ export function EnhancedContentCard({
         {showField('status') && (
           <Badge 
             variant="secondary" 
-            className={cn("shrink-0", sizeConfig.badgeSize, STATUS_COLORS[content.status])}
+            className={cn("shrink-0", sizeConfig.badgeSize, !statusColorStyle && STATUS_COLORS[content.status])}
+            style={statusColorStyle || undefined}
           >
             {cardSize === 'compact' 
-              ? STATUS_LABELS[content.status]?.substring(0, 3)
-              : STATUS_LABELS[content.status]
+              ? statusLabel?.substring(0, 3)
+              : statusLabel
             }
           </Badge>
         )}

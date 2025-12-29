@@ -17,6 +17,7 @@ import {
 import { Content, STATUS_COLORS, STATUS_LABELS } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
+import { OrganizationStatus, getStatusLabel, getStatusColorStyle, getStatusFallbackClass, getStatusProgress } from "@/lib/statusUtils";
 
 interface BoardTableViewProps {
   content: Content[];
@@ -24,6 +25,7 @@ interface BoardTableViewProps {
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
   visibleFields?: string[];
+  organizationStatuses?: OrganizationStatus[];
 }
 
 type SortField = 'title' | 'status' | 'client' | 'creator' | 'deadline' | 'created_at';

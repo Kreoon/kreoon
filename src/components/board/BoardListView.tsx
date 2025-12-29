@@ -7,12 +7,14 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Content, STATUS_COLORS, STATUS_LABELS } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { OrganizationStatus, getStatusLabel, getStatusColorStyle, getStatusFallbackClass, getStatusProgress } from "@/lib/statusUtils";
 
 interface BoardListViewProps {
   content: Content[];
   onContentClick: (content: Content) => void;
   cardSize?: 'compact' | 'normal' | 'large';
   visibleFields?: string[];
+  organizationStatuses?: OrganizationStatus[];
 }
 
 // Size configurations
@@ -44,7 +46,8 @@ export function BoardListView({
   content, 
   onContentClick,
   cardSize = 'normal',
-  visibleFields = ['title', 'thumbnail', 'status', 'client', 'creator', 'editor', 'deadline']
+  visibleFields = ['title', 'thumbnail', 'status', 'client', 'creator', 'editor', 'deadline'],
+  organizationStatuses = []
 }: BoardListViewProps) {
   const showField = (field: string) => visibleFields.includes(field);
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
@@ -56,28 +59,27 @@ export function BoardListView({
     return acc;
   }, {} as Record<string, Content[]>);
 
-  // Calculate progress for a content item
-  const getProgress = (status: string): number => {
-    const statusProgress: Record<string, number> = {
-      'draft': 5, 'pending_script': 10, 'script_review': 20, 'script_approved': 30,
-      'assigned': 40, 'recording': 50, 'recorded': 60, 'editing': 70,
-      'delivered': 80, 'issue': 75, 'approved': 90, 'paid': 100
-    };
-    return statusProgress[status] || 0;
-  };
-
   return (
     <div className="space-y-6">
-      {Object.entries(groupedByStatus).map(([status, items]) => (
-        <div key={status} className="space-y-2">
-          <div className="flex items-center gap-2 px-2">
-            <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[status as Content['status']])}>
-              {STATUS_LABELS[status as Content['status']]}
-            </Badge>
-            <span className="text-sm text-muted-foreground">
-              {items.length} {items.length === 1 ? 'proyecto' : 'proyectos'}
-            </span>
-          </div>
+      {Object.entries(groupedByStatus).map(([status, items]) => {
+        const statusStyle = getStatusColorStyle(status as Content['status'], organizationStatuses);
+        const statusClass = getStatusFallbackClass(status as Content['status'], organizationStatuses);
+        const label = getStatusLabel(status as Content['status'], organizationStatuses);
+        
+        return (
+          <div key={status} className="space-y-2">
+            <div className="flex items-center gap-2 px-2">
+              <Badge 
+                variant="secondary" 
+                className={cn("text-xs", statusClass)}
+                style={statusStyle || undefined}
+              >
+                {label}
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                {items.length} {items.length === 1 ? 'proyecto' : 'proyectos'}
+              </span>
+            </div>
 
           <div className="space-y-1">
             {items.map(c => {
@@ -127,17 +129,26 @@ export function BoardListView({
                     {/* Progress bar */}
                     {showField('progress') && (
                       <div className="mt-2">
-                        <Progress value={getProgress(c.status)} className="h-1" />
+                        <Progress value={getStatusProgress(c.status, organizationStatuses)} className="h-1" />
                       </div>
                     )}
                   </div>
 
                   {/* Status badge */}
-                  {showField('status') && (
-                    <Badge variant="secondary" className={cn("shrink-0", cardSize === 'compact' ? "text-[10px]" : "text-xs", STATUS_COLORS[c.status])}>
-                      {cardSize === 'compact' ? STATUS_LABELS[c.status]?.substring(0, 3) : STATUS_LABELS[c.status]}
-                    </Badge>
-                  )}
+                  {showField('status') && (() => {
+                    const itemStatusStyle = getStatusColorStyle(c.status, organizationStatuses);
+                    const itemStatusClass = getStatusFallbackClass(c.status, organizationStatuses);
+                    const itemLabel = getStatusLabel(c.status, organizationStatuses);
+                    return (
+                      <Badge 
+                        variant="secondary" 
+                        className={cn("shrink-0", cardSize === 'compact' ? "text-[10px]" : "text-xs", itemStatusClass)}
+                        style={itemStatusStyle || undefined}
+                      >
+                        {cardSize === 'compact' ? itemLabel?.substring(0, 3) : itemLabel}
+                      </Badge>
+                    );
+                  })()}
 
                   {/* Creator Avatar */}
                   {showField('creator') && c.creator && (
@@ -225,7 +236,8 @@ export function BoardListView({
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {content.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
