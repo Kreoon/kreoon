@@ -27,7 +27,7 @@ import {
   Swords,
   Building2
 } from 'lucide-react';
-import { MedievalBanner } from '@/components/layout/MedievalBanner';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 import { ROLE_LABELS, ROLE_COLORS, ORG_ASSIGNABLE_ROLES, getRoleLabel } from '@/lib/roles';
 
@@ -347,8 +347,8 @@ export default function Team() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Medieval Banner with org info */}
-      <MedievalBanner
+      {/* Page Header */}
+      <PageHeader
         icon={Swords}
         title={currentOrg?.name ? `Equipo de ${currentOrg.name}` : "Equipo"}
         subtitle={`Administra los miembros de tu organización (${profiles.length} miembros)`}

@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { MedievalBanner } from "@/components/layout/MedievalBanner";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
@@ -753,9 +753,9 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      {/* Medieval Banner Header */}
+      {/* Page Header */}
       <div className="p-4 md:p-6">
-        <MedievalBanner
+        <PageHeader
           icon={Crown}
           title="KREOON Board"
           subtitle="Centro de comando y métricas"

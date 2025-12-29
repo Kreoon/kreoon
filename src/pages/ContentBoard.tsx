@@ -5,7 +5,7 @@ import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanCol
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog/index";
 import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll, RotateCcw, Brain } from "lucide-react";
-import { MedievalBanner } from "@/components/layout/MedievalBanner";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -561,8 +561,8 @@ export default function ContentBoard() {
   return (
     <div className="min-h-screen">
       <div className="p-4 md:p-6 space-y-6">
-        {/* Banner */}
-        <MedievalBanner
+        {/* Page Header */}
+        <PageHeader
           icon={Scroll}
           title="KREOON Projects"
           subtitle="Gestiona todos los proyectos y contenidos"

@@ -10,7 +10,7 @@ import {
   Search, FileText, Video, BarChart3, Brain, Palette, Calendar,
   Scroll, RefreshCw 
 } from "lucide-react";
-import { MedievalBanner } from "@/components/layout/MedievalBanner";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { ScriptBlockCard } from "@/components/scripts/ScriptBlockCard";
 import { ScriptDetailPanel } from "@/components/scripts/ScriptDetailPanel";
 import { cn } from "@/lib/utils";
@@ -111,8 +111,8 @@ const Scripts = () => {
   return (
     <div className="min-h-screen">
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Header */}
-        <MedievalBanner
+        {/* Page Header */}
+        <PageHeader
           icon={Scroll}
           title="KREOON IA"
           subtitle="Gestiona guiones, instrucciones y automatizaciones IA"

@@ -6,7 +6,7 @@ import { DraggableContentCard } from "@/components/dashboard/DraggableContentCar
 import { ClientContentDetailDialog } from "@/components/content/ClientContentDetailDialog";
 import { FullscreenContentViewer } from "@/components/content/FullscreenContentViewer";
 import { Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw, FileCheck, Scroll, Maximize2 } from "lucide-react";
-import { MedievalBanner } from '@/components/layout/MedievalBanner';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Content, ContentStatus, STATUS_LABELS } from "@/types/database";
@@ -306,8 +306,8 @@ export default function ClientContentBoard() {
   return (
     <div className="min-h-screen">
       <div className="p-4 md:p-6 space-y-6">
-        {/* Medieval Banner */}
-        <MedievalBanner
+        {/* Page Header */}
+        <PageHeader
           icon={Scroll}
           title="KREOON Projects"
           subtitle={`${clientInfo.name} - Revisión y aprobación de proyectos`}

@@ -25,7 +25,7 @@ import {
   Send,
   Scroll
 } from 'lucide-react';
-import { MedievalBanner } from '@/components/layout/MedievalBanner';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 
@@ -272,8 +272,8 @@ export default function StrategistDashboard() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      {/* Banner */}
-      <MedievalBanner
+      {/* Page Header */}
+      <PageHeader
         icon={Scroll}
         title="KREOON Board"
         subtitle={`Bienvenido, ${profile?.full_name}`}
