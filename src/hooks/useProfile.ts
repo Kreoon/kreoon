@@ -285,7 +285,7 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
     setProfile(prev => prev ? { ...prev, ...updates } : null);
   }, []);
 
-  // Save profile
+  // Save profile and sync with client if applicable
   const save = useCallback(async (): Promise<boolean> => {
     if (!user?.id || !profile) return false;
 
@@ -336,6 +336,9 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
 
       if (error) throw error;
 
+      // Sync common fields to client record if user owns a client
+      await syncProfileToClient(profile);
+
       setOriginalProfile(profile);
       originalUsernameRef.current = profile.username;
       showToast('Perfil actualizado', 'Tus cambios se han guardado correctamente');
@@ -348,6 +351,48 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
       setSaving(false);
     }
   }, [user?.id, profile, usernameError, showToast]);
+
+  // Sync profile fields to associated client record (bidirectional sync)
+  const syncProfileToClient = async (profileData: ProfileData) => {
+    if (!user?.id) return;
+
+    try {
+      // Find clients where this user is an owner
+      const { data: clientUsers } = await supabase
+        .from('client_users')
+        .select('client_id')
+        .eq('user_id', user.id)
+        .eq('role', 'owner');
+
+      if (!clientUsers || clientUsers.length === 0) return;
+
+      // Update each client with synced fields
+      for (const cu of clientUsers) {
+        await supabase
+          .from('clients')
+          .update({
+            contact_email: profileData.email || undefined,
+            contact_phone: profileData.phone || undefined,
+            bio: profileData.bio || undefined,
+            city: profileData.city || undefined,
+            country: profileData.country || undefined,
+            address: profileData.address || undefined,
+            instagram: profileData.instagram || undefined,
+            tiktok: profileData.tiktok || undefined,
+            facebook: profileData.facebook || undefined,
+            linkedin: profileData.social_linkedin || undefined,
+            portfolio_url: profileData.portfolio_url || undefined,
+            document_type: profileData.document_type || undefined,
+            document_number: profileData.document_number || undefined,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', cu.client_id);
+      }
+    } catch (error) {
+      console.error('[useProfile] Error syncing to client:', error);
+      // Don't throw - this is a secondary operation
+    }
+  };
 
   // Upload avatar
   const uploadAvatar = useCallback(async (file: File): Promise<string | null> => {

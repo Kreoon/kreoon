@@ -67,6 +67,7 @@ interface UserData {
   full_name: string;
   avatar_url: string | null;
   roles: AppRole[];
+  active_role?: AppRole | null;
   created_at: string;
   last_sign_in_at: string | null;
   email_confirmed_at: string | null;
