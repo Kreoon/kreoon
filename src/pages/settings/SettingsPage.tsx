@@ -30,6 +30,7 @@ const ReferralSection = lazy(() => import('./sections/ReferralSection'));
 const BillingUnifiedSection = lazy(() => import('./sections/BillingUnifiedSection'));
 const PlatformConfigSection = lazy(() => import('./sections/PlatformConfigSection'));
 const PlatformAdminSection = lazy(() => import('./sections/PlatformAdminSection'));
+const AITokenizationSection = lazy(() => import('@/pages/admin/AITokenizationPage'));
 
 // Loading fallback
 const SectionLoader = memo(() => (
@@ -39,7 +40,7 @@ const SectionLoader = memo(() => (
 ));
 SectionLoader.displayName = 'SectionLoader';
 
-// Section components map - CONSOLIDATED (reduced from 25 to 16)
+// Section components map - CONSOLIDATED (reduced from 25 to 17)
 const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<React.ComponentType>> = {
   // User level
   profile: ProfileSection,
@@ -61,6 +62,7 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   billing: BillingUnifiedSection,
   platform_config: PlatformConfigSection,
   platform_admin: PlatformAdminSection,
+  ai_tokenization: AITokenizationSection,
 };
 
 // Wide sections that need more space

@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.interest-extractor]
 verify_jwt = false
+
+[functions.evaluate-profile-tokens]
+verify_jwt = false

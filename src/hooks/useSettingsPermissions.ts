@@ -24,7 +24,8 @@ export type SettingsSectionKey =
   | 'billing'            // Merged: subscription_management + user_plans + currency + billing_control
   | 'platform_config'    // Merged: app_settings + appearance + integrations
   | 'platform_admin'     // Merged: platform_security + root_admin
-  | 'tracking';          // Tracking & Analytics engine (platform level)
+  | 'tracking'           // Tracking & Analytics engine (platform level)
+  | 'ai_tokenization';   // AI-powered profile tokenization
 
 export interface SectionPermission {
   canAccess: boolean;
@@ -70,6 +71,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   platform_config: 'platform',
   platform_admin: 'platform',
   tracking: 'platform',
+  ai_tokenization: 'platform',
 };
 
 // Module key mapping for database lookup

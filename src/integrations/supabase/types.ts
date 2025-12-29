@@ -458,6 +458,48 @@ export type Database = {
           },
         ]
       }
+      ai_tokenization_config: {
+        Row: {
+          created_at: string
+          evaluation_prompt: string | null
+          id: string
+          is_enabled: boolean
+          max_token_cost: number
+          min_token_cost: number
+          updated_at: string
+          weight_achievements: number
+          weight_engagement: number
+          weight_experience: number
+          weight_profile_completeness: number
+        }
+        Insert: {
+          created_at?: string
+          evaluation_prompt?: string | null
+          id?: string
+          is_enabled?: boolean
+          max_token_cost?: number
+          min_token_cost?: number
+          updated_at?: string
+          weight_achievements?: number
+          weight_engagement?: number
+          weight_experience?: number
+          weight_profile_completeness?: number
+        }
+        Update: {
+          created_at?: string
+          evaluation_prompt?: string | null
+          id?: string
+          is_enabled?: boolean
+          max_token_cost?: number
+          min_token_cost?: number
+          updated_at?: string
+          weight_achievements?: number
+          weight_engagement?: number
+          weight_experience?: number
+          weight_profile_completeness?: number
+        }
+        Relationships: []
+      }
       ai_usage_logs: {
         Row: {
           action: string
@@ -4043,12 +4085,53 @@ export type Database = {
           },
         ]
       }
+      profile_token_evaluations: {
+        Row: {
+          evaluated_at: string
+          evaluated_by: string | null
+          evaluation_factors: Json
+          evaluation_reason: string
+          id: string
+          profile_id: string
+          token_cost: number
+        }
+        Insert: {
+          evaluated_at?: string
+          evaluated_by?: string | null
+          evaluation_factors?: Json
+          evaluation_reason: string
+          id?: string
+          profile_id: string
+          token_cost: number
+        }
+        Update: {
+          evaluated_at?: string
+          evaluated_by?: string | null
+          evaluation_factors?: Json
+          evaluation_reason?: string
+          id?: string
+          profile_id?: string
+          token_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_token_evaluations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_role: string | null
           address: string | null
           ai_recommended_level: string | null
           ai_risk_flag: string | null
+          ai_token_cost: number | null
+          ai_token_cost_reason: string | null
+          ai_token_cost_updated_at: string | null
           ambassador_celebration_pending: boolean | null
           availability_status: string | null
           avatar_url: string | null
@@ -4104,6 +4187,9 @@ export type Database = {
           address?: string | null
           ai_recommended_level?: string | null
           ai_risk_flag?: string | null
+          ai_token_cost?: number | null
+          ai_token_cost_reason?: string | null
+          ai_token_cost_updated_at?: string | null
           ambassador_celebration_pending?: boolean | null
           availability_status?: string | null
           avatar_url?: string | null
@@ -4159,6 +4245,9 @@ export type Database = {
           address?: string | null
           ai_recommended_level?: string | null
           ai_risk_flag?: string | null
+          ai_token_cost?: number | null
+          ai_token_cost_reason?: string | null
+          ai_token_cost_updated_at?: string | null
           ambassador_celebration_pending?: boolean | null
           availability_status?: string | null
           avatar_url?: string | null
