@@ -16,8 +16,15 @@ import { toast } from 'sonner';
 import { 
   Coins, Brain, Settings, Users, RefreshCw, 
   Loader2, Save, Sparkles, TrendingUp, History,
-  ChevronRight, AlertCircle
+  ChevronRight, AlertCircle, Cpu
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -40,7 +47,17 @@ interface TokenizationConfig {
   weight_achievements: number;
   weight_experience: number;
   weight_engagement: number;
+  ai_model: string;
 }
+
+const AI_MODELS = [
+  { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Rápido y económico (recomendado)' },
+  { value: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite', description: 'Más rápido, menos preciso' },
+  { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Mayor precisión, más costoso' },
+  { value: 'openai/gpt-5-nano', label: 'GPT-5 Nano', description: 'Rápido y económico' },
+  { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini', description: 'Balance costo/calidad' },
+  { value: 'openai/gpt-5', label: 'GPT-5', description: 'Máxima precisión, más costoso' },
+];
 
 interface ProfileWithTokens {
   id: string;
@@ -128,6 +145,7 @@ export default function AITokenizationPage() {
           weight_achievements: config.weight_achievements,
           weight_experience: config.weight_experience,
           weight_engagement: config.weight_engagement,
+          ai_model: config.ai_model,
           updated_at: new Date().toISOString(),
         })
         .eq('id', config.id);
@@ -344,6 +362,36 @@ export default function AITokenizationPage() {
                         setConfig(prev => prev ? { ...prev, is_enabled: checked } : null)
                       }
                     />
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2">
+                      <Cpu className="h-4 w-4" />
+                      Modelo de IA
+                    </Label>
+                    <Select
+                      value={config?.ai_model || 'google/gemini-2.5-flash'}
+                      onValueChange={(value) => 
+                        setConfig(prev => prev ? { ...prev, ai_model: value } : null)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un modelo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AI_MODELS.map((model) => (
+                          <SelectItem key={model.value} value={model.value}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{model.label}</span>
+                              <span className="text-xs text-muted-foreground">{model.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      El modelo seleccionado se usará para evaluar los perfiles
+                    </p>
                   </div>
 
                   <div className="space-y-3">

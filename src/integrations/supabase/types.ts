@@ -460,6 +460,7 @@ export type Database = {
       }
       ai_tokenization_config: {
         Row: {
+          ai_model: string
           created_at: string
           evaluation_prompt: string | null
           id: string
@@ -473,6 +474,7 @@ export type Database = {
           weight_profile_completeness: number
         }
         Insert: {
+          ai_model?: string
           created_at?: string
           evaluation_prompt?: string | null
           id?: string
@@ -486,6 +488,7 @@ export type Database = {
           weight_profile_completeness?: number
         }
         Update: {
+          ai_model?: string
           created_at?: string
           evaluation_prompt?: string | null
           id?: string
