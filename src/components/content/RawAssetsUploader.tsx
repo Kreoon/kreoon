@@ -358,8 +358,8 @@ export function RawAssetsUploader({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('No autenticado');
 
-      // Build the folder path: raw-assets/org_xxx/client_xxx/project_xxx
-      const folderPath = `raw-assets/org_${organizationId}/client_${clientId || 'none'}/project_${contentId}`;
+      // Build the folder path matching upload structure: org_xxx/client_xxx/project_xxx/raw
+      const folderPath = `org_${organizationId}/client_${clientId || 'none'}/project_${contentId}/raw`;
       
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const response = await fetch(`${supabaseUrl}/functions/v1/bunny-raw-zip`, {
