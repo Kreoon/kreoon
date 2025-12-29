@@ -149,11 +149,11 @@ export default function HomePage() {
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/register')}
               className="border-border text-muted-foreground hover:text-foreground hover:border-primary/50 px-8 py-6 text-lg rounded-xl transition-all hover:scale-105"
             >
               <Users className="w-5 h-5 mr-2" />
-              Unirme a una organización
+              Unirme o crear cuenta
             </Button>
           </div>
         </div>
