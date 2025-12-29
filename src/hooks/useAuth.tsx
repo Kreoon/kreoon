@@ -222,11 +222,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // First fetch profile to get current_organization_id (with 10s timeout)
       const profileResult = await withTimeout(
-        () => supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle(),
+        () =>
+          supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle(),
         10000
       );
 
@@ -235,19 +236,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const userProfile = profileResult.data as Profile | null;
-      setProfile(userProfile);
+
+      // IMPORTANT: On silent refresh (tab focus / token refresh), do not clear existing
+      // profile/roles if the fetch returns null or errors. This prevents visible UI flicker.
+      if (!silent || userProfile) {
+        setProfile(userProfile);
+      }
 
       // Now fetch roles from organization_member_roles based on current_organization_id
       let userRoles: AppRole[] = [];
-      
+
       if (userProfile?.current_organization_id) {
         // Fetch multiple roles from the new organization_member_roles table
         const memberRolesResult = await withTimeout(
-          () => supabase
-            .from('organization_member_roles')
-            .select('role')
-            .eq('user_id', userId)
-            .eq('organization_id', userProfile.current_organization_id),
+          () =>
+            supabase
+              .from('organization_member_roles')
+              .select('role')
+              .eq('user_id', userId)
+              .eq('organization_id', userProfile.current_organization_id),
           8000
         );
 
@@ -256,16 +263,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (memberRolesResult.data && memberRolesResult.data.length > 0) {
-          userRoles = memberRolesResult.data.map(r => r.role as AppRole);
+          userRoles = memberRolesResult.data.map((r) => r.role as AppRole);
         } else {
           // Fallback to organization_members single role for backward compatibility
           const memberResult = await withTimeout(
-            () => supabase
-              .from('organization_members')
-              .select('role')
-              .eq('user_id', userId)
-              .eq('organization_id', userProfile.current_organization_id)
-              .maybeSingle(),
+            () =>
+              supabase
+                .from('organization_members')
+                .select('role')
+                .eq('user_id', userId)
+                .eq('organization_id', userProfile.current_organization_id)
+                .maybeSingle(),
             8000
           );
 
@@ -279,22 +287,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // This ensures the root admin still has access even without org membership
       if (userRoles.length === 0) {
         const rolesResult = await withTimeout(
-          () => supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', userId),
+          () =>
+            supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', userId),
           8000
         );
-        
-        userRoles = (rolesResult.data || []).map(r => r.role as AppRole);
+
+        userRoles = (rolesResult.data || []).map((r) => r.role as AppRole);
       }
 
-      setRoles(userRoles);
+      if (!silent || userRoles.length > 0) {
+        setRoles(userRoles);
+      }
     } catch (error) {
       console.error('[auth] Error fetching user data:', error);
-      // On any error (including timeout), don't block the app - allow it to proceed
-      setProfile(null);
-      setRoles([]);
+
+      // On silent refresh, keep the previous profile/roles to avoid flicker.
+      if (!silent) {
+        // On any error (including timeout), don't block the app - allow it to proceed
+        setProfile(null);
+        setRoles([]);
+      }
     } finally {
       bootstrappedRef.current = true;
 
