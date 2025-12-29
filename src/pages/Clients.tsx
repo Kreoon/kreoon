@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
+import { useTrialGuard } from "@/hooks/useTrialGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -75,6 +76,7 @@ const Clients = () => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const { isPlatformRoot, currentOrgId, currentOrgName, loading: orgLoading } = useOrgOwner();
+  const { guardAction, isReadOnly } = useTrialGuard();
   const [clients, setClients] = useState<Client[]>([]);
   const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -259,6 +261,12 @@ const Clients = () => {
   };
 
   const handleCreateClient = async () => {
+    // Check trial status before creating
+    if (isReadOnly) {
+      guardAction(() => {});
+      return;
+    }
+    
     if (!newClientData.name.trim()) {
       toast({
         title: "Error",
@@ -396,7 +404,8 @@ const Clients = () => {
                   variant="glow" 
                   size="sm" 
                   className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0 font-medieval"
-                  onClick={() => setNewClientOpen(true)}
+                  onClick={() => guardAction(() => setNewClientOpen(true))}
+                  disabled={isReadOnly}
                 >
                   <Plus className="h-4 w-4" />
                   <span className="hidden sm:inline">Nuevo Mecenas</span>
@@ -459,7 +468,8 @@ const Clients = () => {
                   <Button 
                     variant="outline" 
                     className="mt-4"
-                    onClick={() => setNewClientOpen(true)}
+                    onClick={() => guardAction(() => setNewClientOpen(true))}
+                    disabled={isReadOnly}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Crear primera empresa
