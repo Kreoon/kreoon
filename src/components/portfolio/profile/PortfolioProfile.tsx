@@ -54,6 +54,12 @@ interface ProfileStats {
   likes_count: number;
 }
 
+function formatCount(count: number): string {
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
+}
+
 interface PortfolioProfileProps {
   userId: string;
   isOwner?: boolean;
@@ -473,56 +479,41 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
           </Button>
         </div>
       )}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-[200px]">
-        {posts.map((post, index) => {
-          const isLarge = index === 0;
-          const isWide = index > 0 && index % 5 === 0;
-          
-          return (
-            <motion.div
-              key={post.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.05 }}
-              onClick={() => onSelect(post)}
-              className={cn(
-                "relative group cursor-pointer overflow-hidden rounded-lg bg-muted",
-                isLarge && "col-span-2 row-span-2",
-                isWide && "col-span-2"
-              )}
-            >
-              <img
-                src={post.thumbnail_url || post.media_url}
-                alt=""
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              
-              {post.media_type === 'video' && (
-                <div className="absolute top-3 right-3">
-                  <Play className="h-5 w-5 text-white drop-shadow-lg fill-white/60" />
+      <div className="grid grid-cols-3 gap-1">
+        {posts.map((post, index) => (
+          <div
+            key={post.id}
+            onClick={() => onSelect(post)}
+            className="aspect-square relative group cursor-pointer overflow-hidden bg-muted"
+          >
+            <img
+              src={post.thumbnail_url || post.media_url}
+              alt=""
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            
+            {post.media_type === 'video' && (
+              <>
+                <div className="absolute top-2 right-2">
+                  <Play className="h-5 w-5 text-white drop-shadow-lg fill-white/30" />
                 </div>
-              )}
+                <div className="absolute bottom-2 left-2 flex items-center gap-1 text-white text-xs font-medium drop-shadow-lg">
+                  <Play className="h-3 w-3" fill="currentColor" />
+                  <span>{formatCount(post.views_count || 0)}</span>
+                </div>
+              </>
+            )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <div className="absolute bottom-3 left-3 right-3">
-                  {post.caption && (
-                    <p className="text-white text-sm font-medium line-clamp-2 mb-2">{post.caption}</p>
-                  )}
-                  <div className="flex items-center gap-4 text-white text-sm">
-                    <span className="flex items-center gap-1">
-                      <Heart className="h-4 w-4" />
-                      {post.likes_count || 0}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-4 w-4" />
-                      {post.views_count || 0}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
+              {(post.likes_count || 0) > 0 && (
+                <span className="flex items-center gap-1 text-sm font-semibold">
+                  <Heart className="h-5 w-5 fill-white" />
+                  {formatCount(post.likes_count || 0)}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -597,20 +588,28 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
             <img
               src={post.thumbnail_url || post.media_url}
               alt=""
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
             
             {post.media_type === 'video' && (
-              <div className="absolute top-2 right-2">
-                <Play className="h-4 w-4 text-white drop-shadow-lg fill-white/50" />
-              </div>
+              <>
+                <div className="absolute top-2 right-2">
+                  <Play className="h-5 w-5 text-white drop-shadow-lg fill-white/30" />
+                </div>
+                <div className="absolute bottom-2 left-2 flex items-center gap-1 text-white text-xs font-medium drop-shadow-lg">
+                  <Play className="h-3 w-3" fill="currentColor" />
+                  <span>{formatCount(post.views_count || 0)}</span>
+                </div>
+              </>
             )}
 
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
-              <span className="flex items-center gap-1 text-sm">
-                <Heart className="h-4 w-4 fill-white" />
-                {post.likes_count || 0}
-              </span>
+              {(post.likes_count || 0) > 0 && (
+                <span className="flex items-center gap-1 text-sm font-semibold">
+                  <Heart className="h-5 w-5 fill-white" />
+                  {formatCount(post.likes_count || 0)}
+                </span>
+              )}
             </div>
           </div>
         ))}
