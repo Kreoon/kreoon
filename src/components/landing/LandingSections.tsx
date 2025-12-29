@@ -25,36 +25,45 @@ export function HeroSection({ onRegister }: SectionProps) {
     <section id="inicio" className="relative min-h-screen flex items-center justify-center pt-20 pb-16 px-4 overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/3 rounded-full blur-[150px]" />
       
       {/* Grid Pattern */}
-      <div className="absolute inset-0 opacity-[0.02]" style={{
+      <div className="absolute inset-0 opacity-[0.015]" style={{
         backgroundImage: `linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)`,
-        backgroundSize: '64px 64px'
+        backgroundSize: '80px 80px'
       }} />
 
+      {/* Floating Elements */}
+      <div className="absolute top-1/3 left-[10%] w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDuration: '3s' }} />
+      <div className="absolute top-1/2 right-[15%] w-3 h-3 bg-primary/30 rounded-full animate-bounce" style={{ animationDuration: '4s', animationDelay: '0.5s' }} />
+      <div className="absolute bottom-1/3 left-[20%] w-2 h-2 bg-primary/20 rounded-full animate-bounce" style={{ animationDuration: '3.5s', animationDelay: '1s' }} />
+
       <div className="relative max-w-5xl mx-auto text-center">
-        <Badge variant="outline" className="mb-6 px-4 py-2 text-sm border-primary/30 text-primary bg-primary/5">
-          Creative Operating System
-        </Badge>
+        <div className="animate-fade-in">
+          <Badge variant="outline" className="mb-6 px-4 py-2 text-sm border-primary/30 text-primary bg-primary/5 backdrop-blur-sm">
+            <Sparkles className="h-3 w-3 mr-2" />
+            Creative Operating System
+          </Badge>
+        </div>
         
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight tracking-tight mb-6">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight tracking-tight mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           KREOON es el sistema donde se construyen{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary to-primary/60">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary to-primary/50 animate-pulse" style={{ animationDuration: '3s' }}>
             imperios creativos
           </span>
         </h1>
         
-        <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
+        <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
           Gestión, contenido, IA, talento y control. Todo en un solo sistema diseñado para escalar tu operación creativa.
         </p>
         
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <Button 
             size="lg" 
             onClick={onRegister}
-            className="w-full sm:w-auto text-lg px-8 py-6 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25"
+            className="w-full sm:w-auto text-lg px-8 py-6 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300 hover:-translate-y-0.5"
           >
             Crear cuenta
             <ArrowRight className="ml-2 h-5 w-5" />
@@ -63,26 +72,33 @@ export function HeroSection({ onRegister }: SectionProps) {
             size="lg" 
             variant="outline"
             onClick={() => scrollToSection('como-funciona')}
-            className="w-full sm:w-auto text-lg px-8 py-6 border-border/50 hover:bg-muted/50"
+            className="w-full sm:w-auto text-lg px-8 py-6 border-border/50 hover:bg-muted/50 hover:border-primary/30 transition-all duration-300"
           >
             Ver cómo funciona
           </Button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-8 mt-16 pt-16 border-t border-border/30">
-          <div className="text-center">
-            <div className="text-3xl sm:text-4xl font-bold text-foreground">100%</div>
+        <div className="grid grid-cols-3 gap-8 mt-16 pt-16 border-t border-border/30 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <div className="text-center group">
+            <div className="text-3xl sm:text-4xl font-bold text-foreground group-hover:text-primary transition-colors">100%</div>
             <div className="text-sm text-muted-foreground mt-1">Control Total</div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl sm:text-4xl font-bold text-foreground">∞</div>
+          <div className="text-center group">
+            <div className="text-3xl sm:text-4xl font-bold text-foreground group-hover:text-primary transition-colors">∞</div>
             <div className="text-sm text-muted-foreground mt-1">Escalabilidad</div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl sm:text-4xl font-bold text-foreground">24/7</div>
+          <div className="text-center group">
+            <div className="text-3xl sm:text-4xl font-bold text-foreground group-hover:text-primary transition-colors">24/7</div>
             <div className="text-sm text-muted-foreground mt-1">IA Activa</div>
           </div>
+        </div>
+      </div>
+
+      {/* Scroll Indicator */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+        <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-2">
+          <div className="w-1 h-2 bg-muted-foreground/50 rounded-full animate-pulse" />
         </div>
       </div>
     </section>
