@@ -28,6 +28,13 @@ serve(async (req: Request) => {
     const storageHostname = Deno.env.get('BUNNY_STORAGE_HOSTNAME') || 'storage.bunnycdn.com';
     const cdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME');
 
+    console.log('Bunny config:', { 
+      storageZone: storageZone ? 'SET' : 'NOT SET', 
+      storagePassword: storagePassword ? 'SET (length: ' + storagePassword.length + ')' : 'NOT SET',
+      storageHostname,
+      cdnHostname: cdnHostname || 'NOT SET'
+    });
+
     const { projectId, assets } = await req.json();
 
     if (!projectId || !assets || !Array.isArray(assets) || assets.length === 0) {
@@ -52,55 +59,80 @@ serve(async (req: Request) => {
         console.log(`Downloading: ${asset.filename} from ${asset.url}`);
         
         let downloadUrl = asset.url;
-        let headers: Record<string, string> = {};
+        let downloadHeaders: Record<string, string> = {};
 
-        // Check if URL is a storage URL (needs authentication) or CDN URL
-        if (asset.url.includes('storage.bunnycdn.com') || asset.url.includes('.storage.bunnycdn.com')) {
-          // Storage URL - needs AccessKey
-          headers['AccessKey'] = storagePassword || '';
-          console.log(`Using authenticated download for storage URL`);
-        } else if (asset.url.includes('.b-cdn.net') || (cdnHostname && asset.url.includes(cdnHostname))) {
-          // CDN URL - should be public, no auth needed
-          console.log(`Using public CDN URL`);
+        // Extract the path from the URL to construct proper URLs
+        // URLs can be:
+        // 1. Storage URL: https://ny.storage.bunnycdn.com/raw-assets/org_.../raw/file.mp4
+        // 2. CDN URL: https://hostname.b-cdn.net/org_.../raw/file.mp4
+        // 3. Path only: raw-assets/org_.../raw/file.mp4
+        
+        // Extract the path portion after the storage zone or from the URL
+        let assetPath = '';
+        
+        if (asset.url.includes('storage.bunnycdn.com')) {
+          // Extract path after storage zone name
+          // URL format: https://ny.storage.bunnycdn.com/raw-assets/org_.../file.mp4
+          // We need: org_.../file.mp4 (path after 'raw-assets/')
+          const match = asset.url.match(/storage\.bunnycdn\.com\/[^/]+\/(.+)$/);
+          if (match) {
+            assetPath = match[1];
+          }
+        } else if (asset.url.includes('.b-cdn.net')) {
+          // CDN URL - extract path after domain
+          const match = asset.url.match(/\.b-cdn\.net\/(.+)$/);
+          if (match) {
+            assetPath = match[1];
+          }
         } else if (asset.url.startsWith('raw-assets/')) {
-          // Path only - construct storage URL with auth
-          downloadUrl = `https://${storageHostname}/${storageZone}/${asset.url}`;
-          headers['AccessKey'] = storagePassword || '';
-          console.log(`Constructed storage URL: ${downloadUrl}`);
+          assetPath = asset.url;
+        } else if (cdnHostname && asset.url.includes(cdnHostname)) {
+          const match = asset.url.match(new RegExp(cdnHostname.replace('.', '\\.') + '/(.+)$'));
+          if (match) {
+            assetPath = match[1];
+          }
+        }
+
+        console.log(`Extracted asset path: ${assetPath}`);
+
+        // First try CDN URL (public, no auth needed)
+        if (cdnHostname && assetPath) {
+          downloadUrl = `https://${cdnHostname}/${assetPath}`;
+          downloadHeaders = {}; // CDN doesn't need auth
+          console.log(`Trying CDN URL: ${downloadUrl}`);
+        } else if (assetPath) {
+          // Fallback to default CDN pattern
+          downloadUrl = `https://${storageZone}.b-cdn.net/${assetPath}`;
+          downloadHeaders = {};
+          console.log(`Trying default CDN URL: ${downloadUrl}`);
         }
         
-        const response = await fetch(downloadUrl, { headers });
+        let response = await fetch(downloadUrl, { headers: downloadHeaders });
+        
+        // If CDN fails, try storage URL with authentication
+        if (!response.ok && storageZone && storagePassword && assetPath) {
+          console.log(`CDN failed (${response.status}), trying storage with auth...`);
+          downloadUrl = `https://${storageHostname}/${storageZone}/${assetPath}`;
+          downloadHeaders = { 'AccessKey': storagePassword };
+          console.log(`Trying storage URL: ${downloadUrl}`);
+          response = await fetch(downloadUrl, { headers: downloadHeaders });
+        }
+
+        // If still failing, try the original URL with auth (in case it's a storage URL)
+        if (!response.ok && storagePassword) {
+          console.log(`Storage with path failed (${response.status}), trying original URL with auth...`);
+          downloadUrl = asset.url;
+          downloadHeaders = { 'AccessKey': storagePassword };
+          response = await fetch(downloadUrl, { headers: downloadHeaders });
+        }
         
         if (!response.ok) {
-          console.error(`Failed to download ${asset.filename}: ${response.status}`);
-          
-          // Try alternate URL if first attempt failed
-          if (!asset.url.includes('storage.bunnycdn.com') && storageZone && storagePassword) {
-            // Extract path from URL and try storage directly
-            const pathMatch = asset.url.match(/raw-assets\/.+$/);
-            if (pathMatch) {
-              const storagePath = pathMatch[0];
-              const altUrl = `https://${storageHostname}/${storageZone}/${storagePath}`;
-              console.log(`Trying alternate storage URL: ${altUrl}`);
-              
-              const altResponse = await fetch(altUrl, {
-                headers: { 'AccessKey': storagePassword }
-              });
-              
-              if (altResponse.ok) {
-                const arrayBuffer = await altResponse.arrayBuffer();
-                const uint8Array = new Uint8Array(arrayBuffer);
-                await zipWriter.add(asset.filename, new Uint8ArrayReader(uint8Array));
-                successCount++;
-                continue;
-              }
-            }
-          }
-          
+          console.error(`Failed to download ${asset.filename}: ${response.status} from ${downloadUrl}`);
           errorCount++;
           continue;
         }
 
+        console.log(`Successfully downloaded ${asset.filename}`);
         const arrayBuffer = await response.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
         
