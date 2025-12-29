@@ -16,12 +16,14 @@ import {
   Edit, Settings, MapPin, Briefcase, Link2, Instagram, 
   Play, Grid, Bookmark, Star, Eye, Heart, Users, Calendar,
   ExternalLink, Mail, Globe, X, Camera, Plus, Upload, Sparkles,
-  Image as ImageIcon, Video, FolderOpen, Wand2, Loader2
+  Image as ImageIcon, Video, FolderOpen, Wand2, Loader2, Coins
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProfileTrustBadges } from './ProfileTrustBadges';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
+import { FollowersModal } from '@/components/social/FollowersModal';
+import { RevealContactButton } from '@/components/social/RevealContactButton';
 
 // FeedItem interface for modal compatibility
 interface FeedItem {
@@ -111,6 +113,10 @@ export const PortfolioProfile = memo(function PortfolioProfile({
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  
+  // Followers modal state
+  const [followersModalOpen, setFollowersModalOpen] = useState(false);
+  const [followersModalTab, setFollowersModalTab] = useState<'followers' | 'following' | 'likers'>('followers');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -295,10 +301,14 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                       <Button className="bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground">
                         Seguir
                       </Button>
-                      <Button variant="outline" className="border-social-border text-social-foreground hover:bg-social-muted">
-                        <Mail className="h-4 w-4 mr-2" />
-                        Mensaje
-                      </Button>
+                      <RevealContactButton 
+                        profileId={userId}
+                        profileData={{
+                          instagram: profile.instagram,
+                          tiktok: profile.tiktok,
+                          portfolio_url: profile.portfolio_url,
+                        }}
+                      />
                     </>
                   )}
                 </div>
@@ -319,12 +329,38 @@ export const PortfolioProfile = memo(function PortfolioProfile({
           <StatItem icon={<FolderOpen className="h-4 w-4" />} value={stats.portfolio_count} label="Portafolio" />
           <StatItem icon={<Grid className="h-4 w-4" />} value={stats.posts_count} label="Posts" />
           <StatItem icon={<Play className="h-4 w-4" />} value={stats.videos_count} label="Videos" />
-          <StatItem icon={<Users className="h-4 w-4" />} value={stats.followers_count} label="Seguidores" />
-          <StatItem icon={<Users className="h-4 w-4" />} value={stats.following_count} label="Siguiendo" className="hidden sm:block" />
+          <StatItem 
+            icon={<Users className="h-4 w-4" />} 
+            value={stats.followers_count} 
+            label="Seguidores" 
+            className="cursor-pointer hover:text-social-accent"
+            onClick={() => { setFollowersModalTab('followers'); setFollowersModalOpen(true); }}
+          />
+          <StatItem 
+            icon={<Users className="h-4 w-4" />} 
+            value={stats.following_count} 
+            label="Siguiendo" 
+            className="hidden sm:block cursor-pointer hover:text-social-accent"
+            onClick={() => { setFollowersModalTab('following'); setFollowersModalOpen(true); }}
+          />
           <StatItem icon={<Eye className="h-4 w-4" />} value={stats.views_count} label="Vistas" className="hidden sm:block" />
-          <StatItem icon={<Heart className="h-4 w-4" />} value={stats.likes_count} label="Likes" className="hidden sm:block" />
+          <StatItem 
+            icon={<Heart className="h-4 w-4" />} 
+            value={stats.likes_count} 
+            label="Likes" 
+            className="hidden sm:block cursor-pointer hover:text-social-accent"
+            onClick={() => { setFollowersModalTab('likers'); setFollowersModalOpen(true); }}
+          />
         </div>
       </section>
+
+      {/* Followers Modal */}
+      <FollowersModal
+        isOpen={followersModalOpen}
+        onClose={() => setFollowersModalOpen(false)}
+        userId={userId}
+        initialTab={followersModalTab}
+      />
 
       {/* Content Tabs */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-8">
@@ -452,7 +488,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
 // Sub Components
 // =============================================================================
 
-function StatItem({ icon, value, label, className }: { icon: React.ReactNode; value: number; label: string; className?: string }) {
+function StatItem({ icon, value, label, className, onClick }: { icon: React.ReactNode; value: number; label: string; className?: string; onClick?: () => void }) {
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
@@ -460,7 +496,7 @@ function StatItem({ icon, value, label, className }: { icon: React.ReactNode; va
   };
 
   return (
-    <div className={cn("text-center group cursor-default", className)}>
+    <div className={cn("text-center group", onClick ? "cursor-pointer" : "cursor-default", className)} onClick={onClick}>
       <div className="flex items-center justify-center gap-1 text-social-muted-foreground mb-1 group-hover:text-social-accent transition-colors duration-200">
         {icon}
       </div>
