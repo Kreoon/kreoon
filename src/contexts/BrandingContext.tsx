@@ -14,15 +14,15 @@ export interface BrandingSettings {
 }
 
 const DEFAULT_BRANDING: BrandingSettings = {
-  platform_name: "Creartor Studio",
+  platform_name: "KREOON",
   logo_url: "",
   logo_dark_url: "",
   favicon_url: "/favicon.ico",
   pwa_icon_192: "",
   pwa_icon_512: "",
   og_image_url: "",
-  primary_color: "#F5A623",
-  theme_color: "#F5A623"
+  primary_color: "#7700b8",
+  theme_color: "#7700b8"
 };
 
 interface BrandingContextValue {

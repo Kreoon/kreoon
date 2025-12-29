@@ -22,15 +22,15 @@ interface BrandingSettings {
 }
 
 const DEFAULT_SETTINGS: BrandingSettings = {
-  platform_name: "Creartor Studio",
+  platform_name: "KREOON",
   logo_url: "",
   logo_dark_url: "",
   favicon_url: "",
   pwa_icon_192: "",
   pwa_icon_512: "",
   og_image_url: "",
-  primary_color: "#F5A623",
-  theme_color: "#F5A623"
+  primary_color: "#7700b8",
+  theme_color: "#7700b8"
 };
 
 const BRANDING_ITEMS = [
@@ -297,7 +297,7 @@ export function AppearanceSettings() {
       <Input
         value={currentValue}
         onChange={(e) => setSettings(prev => ({ ...prev, [key]: e.target.value }))}
-        placeholder="#F5A623"
+        placeholder="#7700b8"
         className="max-w-40"
       />
       <div 

@@ -81,7 +81,7 @@ export function AccessTypeStep({ data, updateData, onNext }: StepProps) {
               'w-full p-6 rounded-2xl border border-border bg-card/50 backdrop-blur-sm',
               'hover:border-primary/50 hover:bg-card transition-all duration-300',
               'group cursor-pointer text-left',
-              'hover:shadow-[0_0_30px_hsl(252_100%_68%_/_0.1)]'
+              'hover:shadow-[0_0_30px_hsl(var(--primary)_/_0.1)]'
             )}
           >
             <div className="flex items-start gap-5">

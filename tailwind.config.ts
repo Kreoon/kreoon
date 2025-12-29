@@ -135,8 +135,8 @@ export default {
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "glow-pulse": {
-          "0%, 100%": { boxShadow: "0 0 10px hsl(252 100% 68% / 0.3)" },
-          "50%": { boxShadow: "0 0 25px hsl(252 100% 68% / 0.5)" },
+          "0%, 100%": { boxShadow: "0 0 10px hsl(282 100% 36% / 0.3)" },
+          "50%": { boxShadow: "0 0 25px hsl(282 100% 36% / 0.5)" },
         },
         "float": {
           "0%, 100%": { transform: "translateY(0)" },
@@ -169,7 +169,7 @@ export default {
       boxShadow: {
         'glow': 'var(--shadow-glow)',
         'violet': 'var(--shadow-violet)',
-        'glow-sm': '0 0 15px hsl(252 100% 68% / 0.2)',
+        'glow-sm': '0 0 15px hsl(282 100% 36% / 0.2)',
       },
     },
   },
