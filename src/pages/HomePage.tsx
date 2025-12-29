@@ -221,7 +221,10 @@ export default function HomePage() {
 
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           {/* Logo */}
-          <div className="mb-8">
+          <div className="mb-8 flex flex-col items-center gap-4">
+            <div className="h-24 w-24 md:h-32 md:w-32 rounded-2xl overflow-hidden shadow-2xl shadow-primary/30">
+              <img src="/favicon.png" alt="KREOON" className="h-full w-full object-cover" />
+            </div>
             <h1 className="text-6xl md:text-8xl font-bold tracking-tight text-gradient-violet">
               KREOON
             </h1>
