@@ -26,25 +26,11 @@ export function KreoonSocialBrand({
   return (
     <div className={cn('flex items-center gap-2', className)}>
       {showSymbol && (
-        <div className={cn(
-          'rounded-lg bg-gradient-to-br from-social-accent to-social-accent/60 flex items-center justify-center',
-          symbolSizes[size]
-        )}>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="w-3/4 h-3/4"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            {/* K symbol stylized */}
-            <path d="M6 4v16" className="text-social-accent-foreground" stroke="currentColor" />
-            <path d="M6 12l8-8" className="text-social-accent-foreground" stroke="currentColor" />
-            <path d="M6 12l8 8" className="text-social-accent-foreground" stroke="currentColor" />
-          </svg>
-        </div>
+        <img 
+          src="/favicon.png" 
+          alt="KREOON" 
+          className={cn('rounded-md', symbolSizes[size])}
+        />
       )}
       <span className={cn(
         'font-bold tracking-tight',
@@ -61,21 +47,11 @@ export function KreoonSocialBrand({
 export function KreoonSocialLogo({ className }: { className?: string }) {
   return (
     <div className={cn('flex items-center gap-1.5', className)}>
-      <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-social-accent to-social-accent/60 flex items-center justify-center">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className="w-4 h-4"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M6 4v16" className="text-social-accent-foreground" stroke="currentColor" />
-          <path d="M6 12l8-8" className="text-social-accent-foreground" stroke="currentColor" />
-          <path d="M6 12l8 8" className="text-social-accent-foreground" stroke="currentColor" />
-        </svg>
-      </div>
+      <img 
+        src="/favicon.png" 
+        alt="KREOON" 
+        className="h-7 w-7 rounded-md"
+      />
       <span className="font-bold text-lg tracking-tight">
         <span className="text-social-foreground">KREOON</span>
         <span className="text-social-accent">Social</span>
