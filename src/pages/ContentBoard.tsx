@@ -165,7 +165,7 @@ const canMoveToStatusLegacy = (
 };
 
 export default function ContentBoard() {
-  const { user, isAdmin, isCreator, isEditor, isClient, profile } = useAuth();
+  const { user, isAdmin, isStrategist, isCreator, isEditor, isClient, profile } = useAuth();
   const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
   const { guardAction, isReadOnly } = useTrialGuard();
@@ -279,27 +279,30 @@ export default function ContentBoard() {
   // Board settings hook
   const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings } = useBoardSettings(currentOrgId);
 
-  // Determinar el rol principal del usuario
-  const primaryRole = isAdmin ? 'admin' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'admin';
+  // Determinar el rol activo del usuario (desde el selector de roles)
+  const primaryRole = (profile as any)?.active_role || (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client');
 
   // Helper function to check if a status is visible for the current role
   const isStatusVisibleForRole = useCallback((statusKey: string): boolean => {
     // Admin always sees everything
     if (primaryRole === 'admin') return true;
-    
+
     // Find the org status for this status key
     const orgStatus = orgStatuses.find(s => s.status_key === statusKey);
     if (!orgStatus) return true; // If no org status config, show by default
-    
+
     // Find the rule for this status
     const rule = rules.find(r => r.status_id === orgStatus.id);
     if (!rule) return true; // If no rule, show by default
-    
+
     // Check if user's role can view this status
-    const canViewRoles = (rule as any).can_view_roles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
-    if (canViewRoles.length === 0) return true; // Empty = show to all
-    
-    return canViewRoles.includes(primaryRole);
+    const canViewRoles = (rule as any).can_view_roles as string[] | undefined;
+
+    // If explicitly configured empty => nobody sees this status
+    if (Array.isArray(canViewRoles) && canViewRoles.length === 0) return false;
+
+    const effectiveCanViewRoles = canViewRoles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
+    return effectiveCanViewRoles.includes(primaryRole);
   }, [primaryRole, orgStatuses, rules]);
 
   // Fetch content según rol
