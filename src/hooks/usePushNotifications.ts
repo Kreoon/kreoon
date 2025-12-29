@@ -124,7 +124,8 @@ export function usePushNotifications() {
   const showGeneralNotification = useCallback(async (
     title: string,
     message: string,
-    link?: string
+    link?: string,
+    onNavigate?: (link: string) => void
   ) => {
     // Vibrate device if supported
     if ('vibrate' in navigator) {
@@ -137,8 +138,8 @@ export function usePushNotifications() {
       data: { link },
       onClick: () => {
         window.focus();
-        if (link) {
-          window.location.href = link;
+        if (link && onNavigate) {
+          onNavigate(link);
         }
       },
     });
