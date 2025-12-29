@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog, Building2, UserCog, Landmark, Star } from "lucide-react";
+import { User, Bell, Shield, Palette, Globe, ChevronLeft, Lock, Users, Share2, Crown, CreditCard, Trash2, HelpCircle, Coins, History, Settings2, ShieldCheck, Cog, Building2, UserCog, Landmark, Star, Receipt } from "lucide-react";
 import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from "@/lib/utils";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
@@ -24,6 +24,7 @@ import { PlatformUsersManagement } from "@/components/settings/PlatformUsersMana
 import { AmbassadorDashboard } from "@/components/ambassador";
 import { ChatNotificationsSettings } from "@/components/settings/ChatNotificationsSettings";
 import { PortfolioAISettings } from "@/components/settings/PortfolioAISettings";
+import { BillingControlPanel } from "@/components/settings/BillingControlPanel";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -67,7 +68,7 @@ function TourSection({ onStartTour }: { onStartTour: () => void }) {
   );
 }
 
-type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios-plataforma' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'gestion-orgs' | 'embajadores' | 'chat-notificaciones' | 'portfolio-ai';
+type SettingsSection = 'main' | 'perfil' | 'notificaciones' | 'seguridad' | 'seguridad-plataforma' | 'apariencia' | 'integraciones' | 'permisos' | 'usuarios-plataforma' | 'referidos' | 'planes' | 'gestion-usuarios' | 'root-admin' | 'tour' | 'monedas' | 'historial' | 'app-settings' | 'mi-organizacion' | 'gestion-orgs' | 'embajadores' | 'chat-notificaciones' | 'portfolio-ai' | 'facturacion';
 
 interface SettingsSectionItem {
   id: SettingsSection;
@@ -206,6 +207,12 @@ const platformRootSections: SettingsSectionItem[] = [
     title: "Integraciones", 
     description: "Conecta con otras plataformas y servicios",
   },
+  { 
+    id: 'facturacion',
+    icon: Receipt, 
+    title: "Control de Facturación", 
+    description: "Activa/desactiva el sistema de cobros y trials",
+  },
   {
     id: 'root-admin',
     icon: Trash2,
@@ -285,6 +292,8 @@ const Settings = () => {
         return <RootAdminPanel />;
       case 'tour':
         return <TourSection onStartTour={() => { resetTour(); setActiveSection('main'); }} />;
+      case 'facturacion':
+        return <BillingControlPanel />;
       default:
         return null;
     }
