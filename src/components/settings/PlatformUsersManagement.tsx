@@ -439,7 +439,8 @@ export function PlatformUsersManagement() {
           <DropdownMenuItem onClick={() => {
             setAssignDialog(user);
             setSelectedOrgId(user.current_organization_id || "");
-            setSelectedRole(user.roles[0] || "creator");
+            // Use active_role if available, otherwise fallback to first role
+            setSelectedRole(user.active_role || user.roles[0] || "creator");
           }}>
             <ArrowRightLeft className="h-4 w-4 mr-2" />
             {user.current_organization_id ? "Cambiar organización" : "Asignar a organización"}

@@ -276,7 +276,8 @@ export function UserOrganizationAssignment() {
   const openAssignDialog = (user: UserWithOrg) => {
     setSelectedUser(user);
     setSelectedOrgId(user.current_organization_id || '');
-    setSelectedRole(user.roles[0] || 'creator');
+    // Use active_role if available, otherwise fallback to first role
+    setSelectedRole(user.active_role || user.roles[0] || 'creator');
     setShowAssignDialog(true);
   };
 
