@@ -4,14 +4,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 const REVEAL_COST = 1; // tokens per reveal
+const REVEAL_EXPIRY_DAYS = 8; // days until reveal expires
 
 export function useContactReveal(profileId: string | undefined) {
   const { user } = useAuth();
   const [isRevealed, setIsRevealed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userTokens, setUserTokens] = useState(0);
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
 
-  // Check if already revealed
+  // Check if already revealed and not expired
   useEffect(() => {
     const checkReveal = async () => {
       if (!user?.id || !profileId) {
@@ -22,7 +24,7 @@ export function useContactReveal(profileId: string | undefined) {
       const [{ data: revealData }, { data: profileData }] = await Promise.all([
         supabase
           .from('contact_reveals')
-          .select('id')
+          .select('id, revealed_at')
           .eq('revealer_id', user.id)
           .eq('revealed_profile_id', profileId)
           .maybeSingle(),
@@ -33,7 +35,29 @@ export function useContactReveal(profileId: string | undefined) {
           .single()
       ]);
 
-      setIsRevealed(!!revealData);
+      // Check if reveal exists and is not expired (8 days)
+      if (revealData) {
+        const revealedAt = new Date(revealData.revealed_at);
+        const expiryDate = new Date(revealedAt.getTime() + REVEAL_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+        const now = new Date();
+        
+        if (now < expiryDate) {
+          setIsRevealed(true);
+          setExpiresAt(expiryDate);
+        } else {
+          // Reveal has expired, delete the old record
+          await supabase
+            .from('contact_reveals')
+            .delete()
+            .eq('id', revealData.id);
+          setIsRevealed(false);
+          setExpiresAt(null);
+        }
+      } else {
+        setIsRevealed(false);
+        setExpiresAt(null);
+      }
+
       setUserTokens(profileData?.reveal_tokens || 0);
       setLoading(false);
     };
@@ -83,10 +107,12 @@ export function useContactReveal(profileId: string | undefined) {
           message: 'reveló tus datos de contacto'
         });
 
+      const expiryDate = new Date(Date.now() + REVEAL_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
       setIsRevealed(true);
+      setExpiresAt(expiryDate);
       setUserTokens(prev => prev - REVEAL_COST);
       toast.success('Contacto revelado', {
-        description: 'Ahora puedes ver los datos de contacto'
+        description: `Disponible por ${REVEAL_EXPIRY_DAYS} días`
       });
       return true;
     } catch (error) {
@@ -102,5 +128,7 @@ export function useContactReveal(profileId: string | undefined) {
     userTokens,
     revealCost: REVEAL_COST,
     revealContact,
+    expiresAt,
+    expiryDays: REVEAL_EXPIRY_DAYS,
   };
 }
