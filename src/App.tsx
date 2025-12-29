@@ -37,6 +37,8 @@ import NoOrganization from "./pages/NoOrganization";
 import PendingAccess from "./pages/PendingAccess";
 import UPDocumentation from "./pages/UPDocumentation";
 import OrgAuth from "./pages/OrgAuth";
+import HomePage from "./pages/HomePage";
+import Register from "./pages/Register";
 import { MainLayout } from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient({
@@ -83,8 +85,11 @@ function AppRoutes() {
       <Route path="/pending-access" element={<PendingAccess />} />
       <Route path="/up-documentation" element={<UPDocumentation />} />
       <Route path="/org/:slug" element={<OrgAuth />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/register/:slug" element={<Register />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'ambassador']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'ambassador']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
       <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'creator']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
       <Route path="/content" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
       <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Creators /></MainLayout></ProtectedRoute>} />

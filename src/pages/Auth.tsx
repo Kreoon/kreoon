@@ -164,7 +164,7 @@ export default function Auth() {
       // No roles assigned yet - redirect to pending access
       navigate('/pending-access');
     } else if (roles.includes('admin')) {
-      navigate('/');
+      navigate('/dashboard');
     } else if (roles.includes('creator')) {
       navigate('/creator-dashboard');
     } else if (roles.includes('editor')) {

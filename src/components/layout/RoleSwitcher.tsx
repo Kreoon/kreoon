@@ -23,8 +23,8 @@ const ROLE_ICONS: Record<AppRole, React.ComponentType<{ className?: string }>> =
 
 // Dashboard routes for each role
 const ROLE_DASHBOARDS: Record<AppRole, string> = {
-  admin: '/',
-  ambassador: '/',
+  admin: '/dashboard',
+  ambassador: '/dashboard',
   strategist: '/strategist-dashboard',
   creator: '/creator-dashboard',
   editor: '/editor-dashboard',

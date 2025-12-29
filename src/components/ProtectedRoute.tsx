@@ -39,9 +39,9 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string
   if (activeRole && roles.includes(activeRole)) {
     switch (activeRole) {
       case 'admin':
-        return '/';
+        return '/dashboard';
       case 'ambassador':
-        return '/';
+        return '/dashboard';
       case 'strategist':
         return '/strategist-dashboard';
       case 'creator':
@@ -54,8 +54,8 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string
   }
 
   // Fallback to role priority
-  if (roles.includes('admin')) return '/';
-  if (roles.includes('ambassador')) return '/';
+  if (roles.includes('admin')) return '/dashboard';
+  if (roles.includes('ambassador')) return '/dashboard';
   if (roles.includes('strategist')) return '/strategist-dashboard';
   if (roles.includes('creator')) return '/creator-dashboard';
   if (roles.includes('editor')) return '/editor-dashboard';
@@ -64,7 +64,7 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string
 }
 
 // Routes that require an organization to be selected
-const ORG_REQUIRED_ROUTES = ['/', '/board', '/content', '/creators', '/scripts', '/clients', '/team', '/ranking'];
+const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/creators', '/scripts', '/clients', '/team', '/ranking'];
 
 export function ProtectedRoute({ children, allowedRoles, requiresOrg }: ProtectedRouteProps) {
   const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded } = useAuth();

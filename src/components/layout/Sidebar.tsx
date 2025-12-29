@@ -41,38 +41,38 @@ interface NavItem {
 
 // Full admin navigation - organization level modules
 const adminNavigation: NavItem[] = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
-  { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
+  { name: "KREOON Board", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
+  { name: "KREOON Projects", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
   { name: "Contenido", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
   { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
-  { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+  { name: "KREOON IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
   { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
   { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
-  { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
-  { name: "Sistema UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
+  { name: "KREOON Network", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
+  { name: "KREOON UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
 const strategistNavigation: NavItem[] = [
-  { name: "Dashboard", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-  { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-  { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
+  { name: "KREOON Board", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "KREOON IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+  { name: "KREOON Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
 const editorNavigation: NavItem[] = [
-  { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-  { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-  { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-  { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
+  { name: "KREOON Board", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "KREOON Projects", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+  { name: "KREOON IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+  { name: "KREOON Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
 const creatorNavigation: NavItem[] = [
-  { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-  { name: "Tablero", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-  { name: "Guiones IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-  { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
+  { name: "KREOON Board", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+  { name: "KREOON Projects", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+  { name: "KREOON IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+  { name: "KREOON Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 

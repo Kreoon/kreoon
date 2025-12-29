@@ -3873,6 +3873,7 @@ export type Database = {
           is_ambassador: boolean | null
           is_public: boolean | null
           languages: string[]
+          organization_status: string
           phone: string | null
           portfolio_url: string | null
           quality_score_avg: number | null
@@ -3923,6 +3924,7 @@ export type Database = {
           is_ambassador?: boolean | null
           is_public?: boolean | null
           languages?: string[]
+          organization_status?: string
           phone?: string | null
           portfolio_url?: string | null
           quality_score_avg?: number | null
@@ -3973,6 +3975,7 @@ export type Database = {
           is_ambassador?: boolean | null
           is_public?: boolean | null
           languages?: string[]
+          organization_status?: string
           phone?: string | null
           portfolio_url?: string | null
           quality_score_avg?: number | null
