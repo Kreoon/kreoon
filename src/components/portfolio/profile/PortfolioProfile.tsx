@@ -288,34 +288,37 @@ export const PortfolioProfile = memo(function PortfolioProfile({
             <div className="flex-1 pt-2 sm:pt-8">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 flex-wrap">
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
                       {profile.full_name}
                     </h1>
-                    {/* Role Badge */}
+                  
+                  {/* Username, Role & Organization in one line */}
+                  <div className="flex items-center gap-2 flex-wrap text-sm text-social-muted-foreground">
+                    {profile.username && (
+                      <span>@{profile.username}</span>
+                    )}
+                    {profile.username && (membership.role || membership.organization || membership.is_independent) && (
+                      <span className="text-social-muted-foreground/50">•</span>
+                    )}
                     {membership.role && (
-                      <Badge variant="secondary" className="capitalize flex items-center gap-1">
+                      <span className="capitalize flex items-center gap-1">
                         {membership.role === 'creator' && <Palette className="h-3 w-3" />}
                         {membership.role === 'editor' && <Film className="h-3 w-3" />}
                         {membership.role === 'strategist' && <Target className="h-3 w-3" />}
                         {membership.role === 'admin' && <Settings className="h-3 w-3" />}
                         {membership.role}
-                      </Badge>
+                      </span>
                     )}
-                  </div>
-                  {profile.username && (
-                    <p className="text-social-muted-foreground">@{profile.username}</p>
-                  )}
-                  
-                  {/* Organization Badge */}
-                  <div className="flex items-center gap-2 mt-2">
+                    {membership.role && (membership.organization || membership.is_independent) && (
+                      <span className="text-social-muted-foreground/50">•</span>
+                    )}
                     {membership.is_independent ? (
-                      <Badge variant="outline" className="flex items-center gap-1 text-social-muted-foreground">
+                      <span className="flex items-center gap-1">
                         <UserCircle className="h-3 w-3" />
                         Independiente
-                      </Badge>
+                      </span>
                     ) : membership.organization && (
-                      <Badge variant="outline" className="flex items-center gap-1.5">
+                      <span className="flex items-center gap-1">
                         {membership.organization.logo_url ? (
                           <img 
                             src={membership.organization.logo_url} 
@@ -326,7 +329,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                           <Building2 className="h-3 w-3" />
                         )}
                         {membership.organization.name}
-                      </Badge>
+                      </span>
                     )}
                   </div>
 
