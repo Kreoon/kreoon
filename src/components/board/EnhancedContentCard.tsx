@@ -110,10 +110,11 @@ export function EnhancedContentCard({
   return (
     <Card
       className={cn(
-        "group cursor-pointer transition-all duration-200 relative",
-        "hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5",
-        "bg-card/90 backdrop-blur-sm border-border/60",
-        isDragging && "opacity-50 scale-95 rotate-1 shadow-xl",
+        "group cursor-pointer relative overflow-hidden",
+        "transition-all duration-200 ease-out",
+        "hover:shadow-lg hover:shadow-primary/10 hover:border-primary/40 hover:-translate-y-1",
+        "bg-card/95 backdrop-blur-sm border-border/50",
+        isDragging && "opacity-60 scale-[0.98] rotate-1 shadow-2xl ring-2 ring-primary/30",
         isOverdue && "border-l-4 border-l-destructive",
         isStale && !isOverdue && "border-l-4 border-l-amber-500",
         sizeConfig.padding
@@ -132,7 +133,7 @@ export function EnhancedContentCard({
                   <AlertTriangle className="h-3 w-3" />
                 </span>
               </TooltipTrigger>
-              <TooltipContent>Tarjeta vencida - Requiere atención</TooltipContent>
+              <TooltipContent>Proyecto vencido - Requiere atención</TooltipContent>
             </Tooltip>
           )}
           {isStale && !isOverdue && (
@@ -142,7 +143,7 @@ export function EnhancedContentCard({
                   <Clock4 className="h-3 w-3" />
                 </span>
               </TooltipTrigger>
-              <TooltipContent>Tarjeta estancada - Sin cambios recientes</TooltipContent>
+              <TooltipContent>Proyecto estancado - Sin cambios recientes</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -164,7 +165,7 @@ export function EnhancedContentCard({
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={handleAnalyzeClick} className="gap-2">
               <Brain className="h-4 w-4 text-primary" />
-              Analizar con IA
+              Analizar proyecto
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -234,10 +235,13 @@ export function EnhancedContentCard({
         {showField('creator') && content.creator && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-primary/30 cursor-pointer")}>
+              <Avatar className={cn(
+                sizeConfig.avatarSize, 
+                "ring-2 ring-primary/40 cursor-pointer transition-transform duration-200 hover:scale-110"
+              )}>
                 <AvatarImage src={content.creator.avatar_url || undefined} />
                 <AvatarFallback className={cn(
-                  "bg-primary/10 text-primary font-medium",
+                  "bg-primary/20 text-primary font-semibold",
                   cardSize === 'compact' ? "text-[8px]" : cardSize === 'large' ? "text-sm" : "text-xs"
                 )}>
                   {(content.creator.full_name || '?').charAt(0).toUpperCase()}
@@ -254,10 +258,13 @@ export function EnhancedContentCard({
         {showField('editor') && content.editor && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-secondary/50 cursor-pointer")}>
+              <Avatar className={cn(
+                sizeConfig.avatarSize, 
+                "ring-2 ring-secondary/50 cursor-pointer transition-transform duration-200 hover:scale-110 -ml-1"
+              )}>
                 <AvatarImage src={content.editor.avatar_url || undefined} />
                 <AvatarFallback className={cn(
-                  "bg-secondary/20 text-secondary-foreground font-medium",
+                  "bg-secondary/30 text-secondary-foreground font-semibold",
                   cardSize === 'compact' ? "text-[8px]" : cardSize === 'large' ? "text-sm" : "text-xs"
                 )}>
                   {(content.editor.full_name || '?').charAt(0).toUpperCase()}

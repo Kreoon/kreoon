@@ -426,3 +426,59 @@
   background: hsl(252 100% 68% / 0.3);
   color: white;
 }
+
+/* KREOON Microanimations - 150-250ms transitions */
+@layer utilities {
+  /* Smooth hover transitions */
+  .transition-micro {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .transition-fast {
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .transition-smooth {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-micro;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Hover glow effect */
+  .hover-glow {
+    @apply transition-smooth;
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 20px hsl(252 100% 68% / 0.3);
+  }
+
+  /* Active press effect */
+  .active-press:active {
+    transform: scale(0.98);
+  }
+
+  /* Subtle scale on hover */
+  .hover-scale-subtle {
+    @apply transition-fast;
+  }
+  .hover-scale-subtle:hover {
+    transform: scale(1.02);
+  }
+
+  /* Interactive element base */
+  .interactive {
+    @apply transition-micro cursor-pointer;
+  }
+  .interactive:hover {
+    @apply opacity-90;
+  }
+  .interactive:active {
+    transform: scale(0.98);
+  }
+}
