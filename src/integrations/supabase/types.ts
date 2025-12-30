@@ -2899,34 +2899,46 @@ export type Database = {
       }
       live_hour_assignments: {
         Row: {
+          assigned_at: string
           assigned_by: string | null
           client_id: string
           created_at: string
+          expires_at: string | null
           hours_assigned: number
+          hours_remaining: number | null
           id: string
           notes: string | null
           organization_id: string
           package_id: string | null
+          wallet_id: string | null
         }
         Insert: {
+          assigned_at?: string
           assigned_by?: string | null
           client_id: string
           created_at?: string
+          expires_at?: string | null
           hours_assigned: number
+          hours_remaining?: number | null
           id?: string
           notes?: string | null
           organization_id: string
           package_id?: string | null
+          wallet_id?: string | null
         }
         Update: {
+          assigned_at?: string
           assigned_by?: string | null
           client_id?: string
           created_at?: string
+          expires_at?: string | null
           hours_assigned?: number
+          hours_remaining?: number | null
           id?: string
           notes?: string | null
           organization_id?: string
           package_id?: string | null
+          wallet_id?: string | null
         }
         Relationships: [
           {
@@ -2934,6 +2946,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_hour_assignments_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "live_hour_wallets"
             referencedColumns: ["id"]
           },
         ]
@@ -3079,6 +3098,7 @@ export type Database = {
           organization_id: string
           price: number
           updated_at: string
+          validity_days: number
         }
         Insert: {
           created_at?: string
@@ -3092,6 +3112,7 @@ export type Database = {
           organization_id: string
           price?: number
           updated_at?: string
+          validity_days?: number
         }
         Update: {
           created_at?: string
@@ -3105,6 +3126,7 @@ export type Database = {
           organization_id?: string
           price?: number
           updated_at?: string
+          validity_days?: number
         }
         Relationships: []
       }
