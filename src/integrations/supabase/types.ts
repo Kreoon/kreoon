@@ -2727,6 +2727,7 @@ export type Database = {
       live_feature_flags: {
         Row: {
           created_at: string
+          disabled_at: string | null
           entity_id: string | null
           entity_type: string
           id: string
@@ -2735,6 +2736,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          disabled_at?: string | null
           entity_id?: string | null
           entity_type: string
           id?: string
@@ -2743,6 +2745,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          disabled_at?: string | null
           entity_id?: string | null
           entity_type?: string
           id?: string
