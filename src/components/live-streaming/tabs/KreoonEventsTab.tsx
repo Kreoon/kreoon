@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Play, Square, Clock, Users, Plus, Video, Eye, MoreHorizontal } from 'lucide-react';
+import { Calendar, Play, Square, Clock, Users, Plus, Video, Eye, MoreHorizontal, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { StreamingEvent, StreamingAccount } from '@/hooks/useLiveStreaming';
 import { AddEventDialog } from '@/components/live-streaming/dialogs/AddEventDialog';
+import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +24,8 @@ interface KreoonEventsTabProps {
   onUpdateStatus: (id: string, status: string) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
   onAssignCreator?: (eventId: string) => void;
+  onConsumeHours?: (eventId: string) => Promise<boolean>;
+  canClientStartLive?: (clientId: string) => Promise<boolean>;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -38,11 +41,15 @@ export function KreoonEventsTab({
   onSave, 
   onUpdateStatus, 
   onDelete,
-  onAssignCreator 
+  onAssignCreator,
+  onConsumeHours,
+  canClientStartLive
 }: KreoonEventsTabProps) {
+  const { toast } = useToast();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState<StreamingEvent | null>(null);
   const [filter, setFilter] = useState<'all' | 'scheduled' | 'live' | 'ended'>('all');
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   const filteredEvents = events.filter(e => {
     if (filter === 'all') return true;
@@ -60,6 +67,54 @@ export function KreoonEventsTab({
   const handleSave = async (data: Partial<StreamingEvent> & { title: string }) => {
     await onSave({ ...editingEvent, ...data } as Partial<StreamingEvent> & { title: string });
     setEditingEvent(null);
+  };
+
+  // Handle starting a live event with hour verification
+  const handleStartLive = async (event: StreamingEvent) => {
+    if (!event.client_id) {
+      toast({
+        title: 'Sin cliente asignado',
+        description: 'Este evento no tiene un cliente asignado',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoadingAction(event.id);
+    try {
+      // Verify client can start live
+      if (canClientStartLive) {
+        const canStart = await canClientStartLive(event.client_id);
+        if (!canStart) {
+          toast({
+            title: 'Sin horas disponibles',
+            description: 'El cliente no tiene horas de live disponibles o el feature no está habilitado',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
+      await onUpdateStatus(event.id, 'live');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  // Handle ending a live event with hour consumption
+  const handleEndLive = async (event: StreamingEvent) => {
+    setLoadingAction(event.id);
+    try {
+      // First update status
+      const success = await onUpdateStatus(event.id, 'ended');
+      
+      // Then consume hours
+      if (success && onConsumeHours) {
+        await onConsumeHours(event.id);
+      }
+    } finally {
+      setLoadingAction(null);
+    }
   };
 
   return (
@@ -174,19 +229,19 @@ export function KreoonEventsTab({
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" disabled={loadingAction === event.id}>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             {event.status === 'scheduled' && (
-                              <DropdownMenuItem onClick={() => onUpdateStatus(event.id, 'live')}>
+                              <DropdownMenuItem onClick={() => handleStartLive(event)}>
                                 <Play className="h-4 w-4 mr-2" />
                                 Iniciar Live
                               </DropdownMenuItem>
                             )}
                             {event.status === 'live' && (
-                              <DropdownMenuItem onClick={() => onUpdateStatus(event.id, 'ended')}>
+                              <DropdownMenuItem onClick={() => handleEndLive(event)}>
                                 <Square className="h-4 w-4 mr-2" />
                                 Finalizar Live
                               </DropdownMenuItem>

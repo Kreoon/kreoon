@@ -50,6 +50,8 @@ export default function LiveStreamingSection() {
     assignCreatorToEvent,
     updateCreatorStatus,
     removeCreatorFromEvent,
+    canClientStartLive,
+    consumeLiveHours,
     fetchData: fetchKreoonData,
   } = useKreoonLive();
 
@@ -169,7 +171,11 @@ export default function LiveStreamingSection() {
         {/* Overview Tab */}
         <TabsContent value="overview">
           <KreoonOverviewTab 
-            stats={stats}
+            stats={{
+              ...stats,
+              upcomingEvents: events.filter(e => e.status === 'scheduled').length,
+              liveNow: events.filter(e => e.status === 'live').length,
+            }}
             isPlatformEnabled={isPlatformEnabled}
             isOrgEnabled={isOrgEnabled}
             isAdmin={isAdmin || false}
@@ -215,6 +221,8 @@ export default function LiveStreamingSection() {
             onSave={saveEvent}
             onUpdateStatus={updateEventStatus}
             onDelete={deleteEvent}
+            canClientStartLive={canClientStartLive}
+            onConsumeHours={consumeLiveHours}
           />
         </TabsContent>
 
