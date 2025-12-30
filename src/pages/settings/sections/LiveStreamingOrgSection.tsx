@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Video, Package, Users, Clock, Loader2, Building2 } from 'lucide-react';
+import { Video, Package, Users, Clock, Loader2, Building2, Settings2, Activity } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Hooks
 import { useKreoonLive } from '@/hooks/useKreoonLive';
@@ -12,7 +13,7 @@ import { useKreoonLive } from '@/hooks/useKreoonLive';
 import { KreoonPackagesTab } from '@/components/live-streaming/tabs/KreoonPackagesTab';
 import { KreoonClientsTab } from '@/components/live-streaming/tabs/KreoonClientsTab';
 import { KreoonBillingTab } from '@/components/live-streaming/tabs/KreoonBillingTab';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LiveClientSettingsTab } from '@/components/live-streaming/tabs/LiveClientSettingsTab';
 
 export default function LiveStreamingOrgSection() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -167,6 +168,14 @@ export default function LiveStreamingOrgSection() {
             <Users className="h-4 w-4" />
             Clientes
           </TabsTrigger>
+          <TabsTrigger value="settings" className="gap-2">
+            <Settings2 className="h-4 w-4" />
+            Configuración
+          </TabsTrigger>
+          <TabsTrigger value="monitoring" className="gap-2">
+            <Activity className="h-4 w-4" />
+            Monitoreo
+          </TabsTrigger>
           <TabsTrigger value="billing" className="gap-2">
             <Clock className="h-4 w-4" />
             Historial
@@ -190,6 +199,30 @@ export default function LiveStreamingOrgSection() {
             onToggleClientLive={handleToggleClientLive}
             onAssignHours={assignHoursToClient}
           />
+        </TabsContent>
+
+        {/* Client Settings Tab */}
+        <TabsContent value="settings">
+          {organizationId && (
+            <LiveClientSettingsTab 
+              clients={clientsWithWallets}
+              organizationId={organizationId}
+              onRefresh={async () => {}}
+            />
+          )}
+        </TabsContent>
+
+        {/* Monitoring Tab - shows that no events are in section, which is expected in settings */}
+        <TabsContent value="monitoring">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <Activity className="h-16 w-16 text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground">Monitoreo en vivo</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Ve a la sección Live para monitorear eventos en tiempo real.
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Billing Tab */}
