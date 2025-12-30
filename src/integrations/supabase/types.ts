@@ -2728,8 +2728,10 @@ export type Database = {
         Row: {
           created_at: string
           disabled_at: string | null
-          entity_id: string | null
-          entity_type: string
+          enabled_at: string | null
+          enabled_by: string | null
+          flag_id: string
+          flag_type: string
           id: string
           is_enabled: boolean
           updated_at: string
@@ -2737,8 +2739,10 @@ export type Database = {
         Insert: {
           created_at?: string
           disabled_at?: string | null
-          entity_id?: string | null
-          entity_type: string
+          enabled_at?: string | null
+          enabled_by?: string | null
+          flag_id: string
+          flag_type: string
           id?: string
           is_enabled?: boolean
           updated_at?: string
@@ -2746,8 +2750,10 @@ export type Database = {
         Update: {
           created_at?: string
           disabled_at?: string | null
-          entity_id?: string | null
-          entity_type?: string
+          enabled_at?: string | null
+          enabled_by?: string | null
+          flag_id?: string
+          flag_type?: string
           id?: string
           is_enabled?: boolean
           updated_at?: string
