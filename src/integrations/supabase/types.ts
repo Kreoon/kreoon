@@ -2683,33 +2683,108 @@ export type Database = {
         }
         Relationships: []
       }
+      live_client_settings: {
+        Row: {
+          can_connect_own_channels: boolean | null
+          can_create_events: boolean | null
+          can_view_events: boolean | null
+          client_id: string
+          created_at: string
+          default_event_type: string | null
+          id: string
+          internal_currency: string | null
+          internal_price_per_hour: number | null
+          max_events_per_month: number | null
+          max_hours_per_event: number | null
+          organization_id: string
+          require_approval: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          can_connect_own_channels?: boolean | null
+          can_create_events?: boolean | null
+          can_view_events?: boolean | null
+          client_id: string
+          created_at?: string
+          default_event_type?: string | null
+          id?: string
+          internal_currency?: string | null
+          internal_price_per_hour?: number | null
+          max_events_per_month?: number | null
+          max_hours_per_event?: number | null
+          organization_id: string
+          require_approval?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          can_connect_own_channels?: boolean | null
+          can_create_events?: boolean | null
+          can_view_events?: boolean | null
+          client_id?: string
+          created_at?: string
+          default_event_type?: string | null
+          id?: string
+          internal_currency?: string | null
+          internal_price_per_hour?: number | null
+          max_events_per_month?: number | null
+          max_hours_per_event?: number | null
+          organization_id?: string
+          require_approval?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_client_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_client_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_event_creators: {
         Row: {
+          can_manage_products: boolean | null
+          can_see_stream_key: boolean | null
           created_at: string
           creator_id: string
           event_id: string
           id: string
           notes: string | null
+          participation_minutes: number | null
           role: string
           status: string
           updated_at: string
         }
         Insert: {
+          can_manage_products?: boolean | null
+          can_see_stream_key?: boolean | null
           created_at?: string
           creator_id: string
           event_id: string
           id?: string
           notes?: string | null
+          participation_minutes?: number | null
           role?: string
           status?: string
           updated_at?: string
         }
         Update: {
+          can_manage_products?: boolean | null
+          can_see_stream_key?: boolean | null
           created_at?: string
           creator_id?: string
           event_id?: string
           id?: string
           notes?: string | null
+          participation_minutes?: number | null
           role?: string
           status?: string
           updated_at?: string
@@ -2720,6 +2795,68 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_event_monitoring: {
+        Row: {
+          bitrate_kbps: number | null
+          created_at: string
+          current_viewers: number | null
+          destination_statuses: Json | null
+          event_id: string
+          fps: number | null
+          id: string
+          last_heartbeat_at: string | null
+          peak_viewers: number | null
+          resolution: string | null
+          stream_ended_at: string | null
+          stream_started_at: string | null
+          total_duration_seconds: number | null
+          total_unique_viewers: number | null
+          updated_at: string
+        }
+        Insert: {
+          bitrate_kbps?: number | null
+          created_at?: string
+          current_viewers?: number | null
+          destination_statuses?: Json | null
+          event_id: string
+          fps?: number | null
+          id?: string
+          last_heartbeat_at?: string | null
+          peak_viewers?: number | null
+          resolution?: string | null
+          stream_ended_at?: string | null
+          stream_started_at?: string | null
+          total_duration_seconds?: number | null
+          total_unique_viewers?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bitrate_kbps?: number | null
+          created_at?: string
+          current_viewers?: number | null
+          destination_statuses?: Json | null
+          event_id?: string
+          fps?: number | null
+          id?: string
+          last_heartbeat_at?: string | null
+          peak_viewers?: number | null
+          resolution?: string | null
+          stream_ended_at?: string | null
+          stream_started_at?: string | null
+          total_duration_seconds?: number | null
+          total_unique_viewers?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_event_monitoring_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "streaming_events"
             referencedColumns: ["id"]
           },
         ]
@@ -2867,6 +3004,65 @@ export type Database = {
         }
         Relationships: []
       }
+      live_org_oauth_tokens: {
+        Row: {
+          access_token_encrypted: string | null
+          connected_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          last_refresh_at: string | null
+          oauth_state: string | null
+          organization_id: string
+          provider: string
+          refresh_token_encrypted: string | null
+          scopes: string[] | null
+          status: string | null
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          connected_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_refresh_at?: string | null
+          oauth_state?: string | null
+          organization_id: string
+          provider?: string
+          refresh_token_encrypted?: string | null
+          scopes?: string[] | null
+          status?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          connected_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_refresh_at?: string | null
+          oauth_state?: string | null
+          organization_id?: string
+          provider?: string
+          refresh_token_encrypted?: string | null
+          scopes?: string[] | null
+          status?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_org_oauth_tokens_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_packages: {
         Row: {
           created_at: string
@@ -2908,6 +3104,204 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      live_platform_config: {
+        Row: {
+          chat_enabled: boolean | null
+          created_at: string
+          default_currency: string | null
+          default_price_per_hour: number | null
+          hour_packages: Json | null
+          id: string
+          live_shopping_enabled: boolean | null
+          max_hours_per_event: number | null
+          max_simultaneous_events_per_org: number | null
+          multi_creator_enabled: boolean | null
+          restream_client_id: string | null
+          restream_client_secret_encrypted: string | null
+          restream_scopes: string[] | null
+          srt_streaming_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          chat_enabled?: boolean | null
+          created_at?: string
+          default_currency?: string | null
+          default_price_per_hour?: number | null
+          hour_packages?: Json | null
+          id?: string
+          live_shopping_enabled?: boolean | null
+          max_hours_per_event?: number | null
+          max_simultaneous_events_per_org?: number | null
+          multi_creator_enabled?: boolean | null
+          restream_client_id?: string | null
+          restream_client_secret_encrypted?: string | null
+          restream_scopes?: string[] | null
+          srt_streaming_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          chat_enabled?: boolean | null
+          created_at?: string
+          default_currency?: string | null
+          default_price_per_hour?: number | null
+          hour_packages?: Json | null
+          id?: string
+          live_shopping_enabled?: boolean | null
+          max_hours_per_event?: number | null
+          max_simultaneous_events_per_org?: number | null
+          multi_creator_enabled?: boolean | null
+          restream_client_id?: string | null
+          restream_client_secret_encrypted?: string | null
+          restream_scopes?: string[] | null
+          srt_streaming_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      live_stream_history: {
+        Row: {
+          avg_bitrate_kbps: number | null
+          avg_fps: number | null
+          avg_viewers: number | null
+          created_at: string
+          disconnection_count: number | null
+          duration_seconds: number | null
+          end_reason: string | null
+          ended_at: string | null
+          error_details: string | null
+          event_id: string | null
+          hours_billed: number | null
+          id: string
+          organization_id: string
+          peak_viewers: number | null
+          session_id: string | null
+          started_at: string
+          total_views: number | null
+        }
+        Insert: {
+          avg_bitrate_kbps?: number | null
+          avg_fps?: number | null
+          avg_viewers?: number | null
+          created_at?: string
+          disconnection_count?: number | null
+          duration_seconds?: number | null
+          end_reason?: string | null
+          ended_at?: string | null
+          error_details?: string | null
+          event_id?: string | null
+          hours_billed?: number | null
+          id?: string
+          organization_id: string
+          peak_viewers?: number | null
+          session_id?: string | null
+          started_at: string
+          total_views?: number | null
+        }
+        Update: {
+          avg_bitrate_kbps?: number | null
+          avg_fps?: number | null
+          avg_viewers?: number | null
+          created_at?: string
+          disconnection_count?: number | null
+          duration_seconds?: number | null
+          end_reason?: string | null
+          ended_at?: string | null
+          error_details?: string | null
+          event_id?: string | null
+          hours_billed?: number | null
+          id?: string
+          organization_id?: string
+          peak_viewers?: number | null
+          session_id?: string | null
+          started_at?: string
+          total_views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stream_history_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "streaming_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_stream_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_streaming_channels: {
+        Row: {
+          channel_name: string | null
+          channel_url: string | null
+          created_at: string
+          error_message: string | null
+          external_channel_id: string | null
+          id: string
+          is_connected: boolean | null
+          is_enabled: boolean | null
+          last_sync_at: string | null
+          metadata: Json | null
+          oauth_token_id: string | null
+          organization_id: string
+          platform: string
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          channel_name?: string | null
+          channel_url?: string | null
+          created_at?: string
+          error_message?: string | null
+          external_channel_id?: string | null
+          id?: string
+          is_connected?: boolean | null
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          oauth_token_id?: string | null
+          organization_id: string
+          platform: string
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channel_name?: string | null
+          channel_url?: string | null
+          created_at?: string
+          error_message?: string | null
+          external_channel_id?: string | null
+          id?: string
+          is_connected?: boolean | null
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          oauth_token_id?: string | null
+          organization_id?: string
+          platform?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_streaming_channels_oauth_token_id_fkey"
+            columns: ["oauth_token_id"]
+            isOneToOne: false
+            referencedRelation: "live_org_oauth_tokens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_streaming_channels_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       live_usage_logs: {
         Row: {
@@ -5489,6 +5883,7 @@ export type Database = {
       }
       streaming_events: {
         Row: {
+          actual_duration_hours: number | null
           ai_analysis: Json | null
           ai_generated_description: string | null
           ai_generated_title: string | null
@@ -5500,13 +5895,21 @@ export type Database = {
           duration_minutes: number | null
           ended_at: string | null
           engagement_score: number | null
+          estimated_duration_hours: number | null
           event_type: Database["public"]["Enums"]["streaming_event_type"]
+          external_event_id: string | null
+          hours_consumed: number | null
+          hours_reserved: number | null
           id: string
           is_shopping_enabled: boolean | null
           metadata: Json | null
+          organization_id: string | null
           owner_id: string | null
           owner_type: Database["public"]["Enums"]["streaming_owner_type"]
           peak_viewers: number | null
+          playback_url: string | null
+          recording_url: string | null
+          reservation_status: string | null
           rtmp_url: string | null
           scheduled_at: string | null
           started_at: string | null
@@ -5519,6 +5922,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_duration_hours?: number | null
           ai_analysis?: Json | null
           ai_generated_description?: string | null
           ai_generated_title?: string | null
@@ -5530,13 +5934,21 @@ export type Database = {
           duration_minutes?: number | null
           ended_at?: string | null
           engagement_score?: number | null
+          estimated_duration_hours?: number | null
           event_type?: Database["public"]["Enums"]["streaming_event_type"]
+          external_event_id?: string | null
+          hours_consumed?: number | null
+          hours_reserved?: number | null
           id?: string
           is_shopping_enabled?: boolean | null
           metadata?: Json | null
+          organization_id?: string | null
           owner_id?: string | null
           owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
           peak_viewers?: number | null
+          playback_url?: string | null
+          recording_url?: string | null
+          reservation_status?: string | null
           rtmp_url?: string | null
           scheduled_at?: string | null
           started_at?: string | null
@@ -5549,6 +5961,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_duration_hours?: number | null
           ai_analysis?: Json | null
           ai_generated_description?: string | null
           ai_generated_title?: string | null
@@ -5560,13 +5973,21 @@ export type Database = {
           duration_minutes?: number | null
           ended_at?: string | null
           engagement_score?: number | null
+          estimated_duration_hours?: number | null
           event_type?: Database["public"]["Enums"]["streaming_event_type"]
+          external_event_id?: string | null
+          hours_consumed?: number | null
+          hours_reserved?: number | null
           id?: string
           is_shopping_enabled?: boolean | null
           metadata?: Json | null
+          organization_id?: string | null
           owner_id?: string | null
           owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
           peak_viewers?: number | null
+          playback_url?: string | null
+          recording_url?: string | null
+          reservation_status?: string | null
           rtmp_url?: string | null
           scheduled_at?: string | null
           started_at?: string | null
@@ -5584,6 +6005,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "streaming_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -7624,6 +8052,10 @@ export type Database = {
       cleanup_expired_stories: { Args: never; Returns: undefined }
       cleanup_old_audit_logs: { Args: never; Returns: undefined }
       cleanup_old_tracking_events: { Args: never; Returns: undefined }
+      consume_live_hours: {
+        Args: { _actual_hours: number; _event_id: string }
+        Returns: boolean
+      }
       create_chat_conversation: {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
         Returns: string
@@ -7924,6 +8356,10 @@ export type Database = {
           _org_id: string
         }
         Returns: string
+      }
+      reserve_live_hours: {
+        Args: { _event_id: string; _hours: number }
+        Returns: boolean
       }
       revoke_badge: {
         Args: {
