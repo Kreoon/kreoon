@@ -109,6 +109,10 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
       play: () => {
         setIsPaused(false);
         playerRef.current?.play();
+        // Ensure audio is unmuted when playing if audio is unlocked
+        if (audioUnlocked) {
+          playerRef.current?.setMuted(false);
+        }
       },
       pause: () => {
         setIsPaused(true);
@@ -116,20 +120,25 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
       },
     }));
 
-    // Handle active state changes
+    // Handle active state changes - play/pause video
     useEffect(() => {
-      if (isVideo) {
-        if (isActive && !isPaused) {
-          playerRef.current?.play();
-          setTimeout(() => {
-            playerRef.current?.setMuted(!audioUnlocked);
-          }, 50);
-        } else {
-          playerRef.current?.pause();
-          viewTrackedRef.current = false;
-        }
+      if (!isVideo) return;
+      
+      if (isActive && !isPaused) {
+        playerRef.current?.play();
+      } else {
+        playerRef.current?.pause();
+        viewTrackedRef.current = false;
       }
-    }, [isActive, audioUnlocked, isVideo, isPaused]);
+    }, [isActive, isVideo, isPaused]);
+
+    // Sync mute state with audioUnlocked - ensure active video always has correct audio state
+    useEffect(() => {
+      if (!isVideo || !isActive) return;
+      
+      // When audioUnlocked changes or when becoming active, set the correct mute state
+      playerRef.current?.setMuted(!audioUnlocked);
+    }, [audioUnlocked, isActive, isVideo]);
 
     // Track view after 3 seconds
     useEffect(() => {
