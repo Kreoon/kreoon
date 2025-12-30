@@ -122,7 +122,7 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
 
   return (
     <motion.div
-      className="aspect-square relative group cursor-pointer overflow-hidden bg-social-muted rounded-sm"
+      className="aspect-[4/5] relative group cursor-pointer overflow-hidden bg-social-muted rounded-sm"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
