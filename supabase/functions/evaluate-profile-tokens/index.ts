@@ -95,6 +95,26 @@ serve(async (req) => {
       );
     }
 
+    // Skip evaluation for platform founders - they keep their max token cost
+    if (profile.is_platform_founder) {
+      console.log(`Profile ${profile_id} is a platform founder, skipping AI evaluation`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          token_cost: profile.ai_token_cost || 5,
+          reason: profile.ai_token_cost_reason || 'Fundador de la plataforma - Máximo nivel',
+          factors: {
+            profile_completeness: 100,
+            achievements: 100,
+            experience: 100,
+            engagement: 100,
+          },
+          is_founder: true,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Get profile stats
     const [postsRes, portfolioRes, followersRes, followingRes, achievementsRes] = await Promise.all([
       supabase

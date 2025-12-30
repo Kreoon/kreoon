@@ -178,6 +178,14 @@ export default {
           "0%": { transform: "translateY(0) rotate(0deg)", opacity: "1" },
           "100%": { transform: "translateY(-100px) rotate(720deg)", opacity: "0" },
         },
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "pulse-slow": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.6" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -196,6 +204,8 @@ export default {
         "slide-in-bottom": "slide-in-bottom 0.3s ease-out",
         "wiggle": "wiggle 0.3s ease-in-out",
         "confetti": "confetti 0.8s ease-out forwards",
+        "spin-slow": "spin-slow 3s linear infinite",
+        "pulse-slow": "pulse-slow 2s ease-in-out infinite",
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',

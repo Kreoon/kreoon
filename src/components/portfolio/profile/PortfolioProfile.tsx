@@ -29,6 +29,7 @@ import { FollowersModal } from '@/components/social/FollowersModal';
 import { RevealContactButton } from '@/components/social/RevealContactButton';
 import { FollowButton } from '@/components/social/FollowButton';
 import { FeaturedVideoUploader } from '@/components/social/FeaturedVideoUploader';
+import { FounderBadge, FounderAvatarRing } from '@/components/social/FounderBadge';
 
 // FeedItem interface for modal compatibility
 interface FeedItem {
@@ -72,6 +73,10 @@ interface ProfileData {
   is_public: boolean;
   featured_video_url?: string;
   featured_video_thumbnail?: string;
+  // Founder status
+  is_platform_founder?: boolean;
+  founder_badge_type?: string;
+  ai_token_cost?: number;
 }
 
 interface OrganizationInfo {
@@ -278,23 +283,45 @@ export const PortfolioProfile = memo(function PortfolioProfile({
               animate={{ scale: 1, opacity: 1 }}
               className="relative z-10 flex-shrink-0"
             >
-              <Avatar className="h-28 w-28 sm:h-36 sm:w-36 ring-4 ring-social-background shadow-2xl">
-                <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback className="text-4xl bg-gradient-to-br from-social-accent to-social-accent/60 text-social-accent-foreground">
-                  {profile.full_name?.[0]?.toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              {/* Online indicator */}
-              <div className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-green-500 ring-4 ring-social-background" />
+              {profile.is_platform_founder ? (
+                <FounderAvatarRing badgeType={profile.founder_badge_type}>
+                  <Avatar className="h-28 w-28 sm:h-36 sm:w-36 ring-4 ring-social-background shadow-2xl">
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback className="text-4xl bg-gradient-to-br from-amber-400 to-orange-500 text-white">
+                      {profile.full_name?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </FounderAvatarRing>
+              ) : (
+                <>
+                  <Avatar className="h-28 w-28 sm:h-36 sm:w-36 ring-4 ring-social-background shadow-2xl">
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback className="text-4xl bg-gradient-to-br from-social-accent to-social-accent/60 text-social-accent-foreground">
+                      {profile.full_name?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Online indicator */}
+                  <div className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-green-500 ring-4 ring-social-background" />
+                </>
+              )}
             </motion.div>
 
             {/* Name & Info */}
             <div className="flex-1 pt-2 sm:pt-8">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
+                  <div className="flex items-center gap-3">
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
                       {profile.full_name}
                     </h1>
+                    {profile.is_platform_founder && (
+                      <FounderBadge 
+                        badgeType={profile.founder_badge_type} 
+                        size="md" 
+                        showLabel 
+                      />
+                    )}
+                  </div>
                   
                   {/* Username, Role & Organization in one line */}
                   <div className="flex items-center gap-2 flex-wrap text-sm text-social-muted-foreground">
