@@ -7926,7 +7926,7 @@ export type Database = {
         | "ended"
         | "cancelled"
       streaming_event_type: "informative" | "shopping" | "webinar" | "interview"
-      streaming_owner_type: "platform" | "organization"
+      streaming_owner_type: "platform" | "organization" | "client"
       streaming_platform:
         | "youtube"
         | "facebook"
@@ -8143,7 +8143,7 @@ export const Constants = {
         "cancelled",
       ],
       streaming_event_type: ["informative", "shopping", "webinar", "interview"],
-      streaming_owner_type: ["platform", "organization"],
+      streaming_owner_type: ["platform", "organization", "client"],
       streaming_platform: [
         "youtube",
         "facebook",
