@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings2, Palette, Globe } from 'lucide-react';
+import { Settings2, Palette, Globe, Coins } from 'lucide-react';
 import { AppSettingsManagement } from '@/components/settings/AppSettingsManagement';
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
+import { TokenGiftingPanel } from '@/components/settings/TokenGiftingPanel';
 
 export default function PlatformConfigSection() {
   return (
@@ -15,10 +16,14 @@ export default function PlatformConfigSection() {
       </div>
 
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="settings" className="gap-2">
             <Settings2 className="h-4 w-4" />
             Ajustes
+          </TabsTrigger>
+          <TabsTrigger value="tokens" className="gap-2">
+            <Coins className="h-4 w-4" />
+            Tokens
           </TabsTrigger>
           <TabsTrigger value="appearance" className="gap-2">
             <Palette className="h-4 w-4" />
@@ -32,6 +37,10 @@ export default function PlatformConfigSection() {
 
         <TabsContent value="settings">
           <AppSettingsManagement />
+        </TabsContent>
+
+        <TabsContent value="tokens">
+          <TokenGiftingPanel />
         </TabsContent>
 
         <TabsContent value="appearance">
