@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.evaluate-profile-tokens]
 verify_jwt = false
+
+[functions.suggest-role]
+verify_jwt = false

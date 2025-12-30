@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Building2, Lock, ArrowLeft, Eye, EyeOff, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Building2, Lock, ArrowLeft, Eye, EyeOff, AlertTriangle, CheckCircle2, Loader2, Sparkles, User, Briefcase, Video } from 'lucide-react';
 import { z } from 'zod';
 
 interface RegistrationPageConfig {
@@ -59,7 +60,39 @@ export default function OrgRegister() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [bio, setBio] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  
+  // AI Role suggestion
+  const [suggestedRole, setSuggestedRole] = useState<{ role: string; confidence: number; reasoning: string } | null>(null);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
+
+  const fetchRoleSuggestion = async () => {
+    if (!fullName.trim() || !email.trim()) return;
+    
+    setLoadingSuggestion(true);
+    try {
+      const response = await supabase.functions.invoke('suggest-role', {
+        body: { 
+          fullName: fullName.trim(),
+          email: email.trim(),
+          bio: bio.trim()
+        }
+      });
+      
+      if (response.data && response.data.suggested_role) {
+        setSuggestedRole({
+          role: response.data.suggested_role,
+          confidence: response.data.confidence || 50,
+          reasoning: response.data.reasoning || ''
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching role suggestion:', err);
+    } finally {
+      setLoadingSuggestion(false);
+    }
+  };
 
   useEffect(() => {
     if (slug) {
@@ -402,6 +435,57 @@ export default function OrgRegister() {
                   <p className="text-xs text-destructive">{formErrors.email}</p>
                 )}
               </div>
+
+              {/* Bio field for AI suggestion */}
+              <div className="space-y-2">
+                <Label htmlFor="bio">Cuéntanos sobre ti (opcional)</Label>
+                <Textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  onBlur={fetchRoleSuggestion}
+                  placeholder="¿Qué haces? ¿Cuál es tu experiencia? ¿Qué buscas en la plataforma?"
+                  rows={3}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Esto nos ayuda a personalizar tu experiencia
+                </p>
+              </div>
+
+              {/* AI Role Suggestion */}
+              {(loadingSuggestion || suggestedRole) && (
+                <div className="p-3 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Sugerencia de IA</span>
+                  </div>
+                  {loadingSuggestion ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Analizando tu perfil...
+                    </div>
+                  ) : suggestedRole && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        {suggestedRole.role === 'creator' && <Video className="h-4 w-4 text-primary" />}
+                        {suggestedRole.role === 'editor' && <Briefcase className="h-4 w-4 text-primary" />}
+                        {suggestedRole.role === 'client' && <User className="h-4 w-4 text-primary" />}
+                        <span className="font-medium capitalize">
+                          {suggestedRole.role === 'creator' ? 'Creador' : 
+                           suggestedRole.role === 'editor' ? 'Editor' : 'Cliente'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          ({suggestedRole.confidence}% confianza)
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {suggestedRole.reasoning}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
