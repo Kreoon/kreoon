@@ -295,36 +295,62 @@ export default function FeedPage() {
   }, [activeTab, useAIRecommendations, followingIds]);
 
   // When AI recommendations arrive, reorder items based on recommendation order
-  // Use a ref to track if we've already applied this set of recommendations
+  // IMPORTANT: make the order "definitive" by also shuffling any non-recommended leftovers,
+  // and avoid depending on `items` to prevent re-application loops.
   const appliedRecsRef = useRef<string>('');
-  
+
   useEffect(() => {
-    if (activeTab !== 'for-you' || recommendations.length === 0 || items.length === 0) return;
-    
-    // Create a unique key for this set of recommendations
-    const recsKey = recommendations.map(r => r.id).slice(0, 5).join('-');
-    
-    // Skip if we already applied this exact set
+    if (activeTab !== 'for-you' || recommendations.length === 0) return;
+
+    // Create a stable key for this set of recommendations
+    const recsKey = recommendations.map((r) => r.id).join('|');
     if (appliedRecsRef.current === recsKey) return;
-    
-    // Build a map of recommendation ID -> index for ordering
-    const recOrder = new Map<string, number>();
-    recommendations.forEach((rec, idx) => recOrder.set(rec.id, idx));
 
-    // Sort items by recommendation order; items not in recommendations go to the end
-    const reorderedItems = [...items].sort((a, b) => {
-      const aOrder = recOrder.has(a.id) ? recOrder.get(a.id)! : 999999;
-      const bOrder = recOrder.has(b.id) ? recOrder.get(b.id)! : 999999;
-      return aOrder - bOrder;
+    // Deterministic shuffle based on the recommendation set (so it stays stable until refresh)
+    const shuffleSeeded = <T,>(arr: T[], seedStr: string) => {
+      let seed = 0;
+      for (let i = 0; i < seedStr.length; i++) {
+        seed = ((seed << 5) - seed) + seedStr.charCodeAt(i);
+        seed |= 0;
+      }
+      const rand = () => {
+        seed ^= seed << 13;
+        seed ^= seed >> 17;
+        seed ^= seed << 5;
+        return ((seed >>> 0) % 1_000_000) / 1_000_000;
+      };
+      const out = [...arr];
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [out[i], out[j]] = [out[j], out[i]];
+      }
+      return out;
+    };
+
+    appliedRecsRef.current = recsKey;
+
+    setItems((prev) => {
+      if (prev.length === 0) return prev;
+
+      const prevById = new Map(prev.map((it) => [it.id, it] as const));
+
+      // 1) Put recommended items first, in EXACT order returned by backend
+      const recommendedOrdered = recommendations
+        .map((r) => prevById.get(r.id))
+        .filter(Boolean) as FeedItem[];
+
+      // 2) Anything not recommended goes after, but SHUFFLED to avoid reverting to chronological
+      const recommendedIdSet = new Set(recommendedOrdered.map((it) => it.id));
+      const leftovers = prev.filter((it) => !recommendedIdSet.has(it.id));
+      const shuffledLeftovers = shuffleSeeded(leftovers, `leftovers:${recsKey}`);
+
+      const next = [...recommendedOrdered, ...shuffledLeftovers];
+
+      // Avoid unnecessary state writes
+      const changed = next.some((it, idx) => it.id !== prev[idx]?.id);
+      return changed ? next : prev;
     });
-
-    // Check if order actually changed
-    const orderChanged = reorderedItems.some((item, idx) => item.id !== items[idx]?.id);
-    if (orderChanged) {
-      appliedRecsRef.current = recsKey;
-      setItems(reorderedItems);
-    }
-  }, [recommendations, activeTab, items]);
+  }, [recommendations, activeTab]);
 
   useEffect(() => {
     fetchFeed();
