@@ -3387,6 +3387,71 @@ export type Database = {
           },
         ]
       }
+      organization_streaming_config: {
+        Row: {
+          allowed_providers:
+            | Database["public"]["Enums"]["streaming_provider"][]
+            | null
+          billing_day: number | null
+          can_live_shopping: boolean | null
+          can_resell: boolean | null
+          can_transmit: boolean | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          max_channels: number | null
+          max_concurrent_streams: number | null
+          monthly_minutes_limit: number | null
+          organization_id: string
+          updated_at: string
+          used_minutes_this_month: number | null
+        }
+        Insert: {
+          allowed_providers?:
+            | Database["public"]["Enums"]["streaming_provider"][]
+            | null
+          billing_day?: number | null
+          can_live_shopping?: boolean | null
+          can_resell?: boolean | null
+          can_transmit?: boolean | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          max_channels?: number | null
+          max_concurrent_streams?: number | null
+          monthly_minutes_limit?: number | null
+          organization_id: string
+          updated_at?: string
+          used_minutes_this_month?: number | null
+        }
+        Update: {
+          allowed_providers?:
+            | Database["public"]["Enums"]["streaming_provider"][]
+            | null
+          billing_day?: number | null
+          can_live_shopping?: boolean | null
+          can_resell?: boolean | null
+          can_transmit?: boolean | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          max_channels?: number | null
+          max_concurrent_streams?: number | null
+          monthly_minutes_limit?: number | null
+          organization_id?: string
+          updated_at?: string
+          used_minutes_this_month?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_streaming_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_tracking_config: {
         Row: {
           allowed_event_categories: string[] | null
@@ -4957,6 +5022,452 @@ export type Database = {
             columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      streaming_accounts: {
+        Row: {
+          access_token_encrypted: string | null
+          account_external_id: string | null
+          account_name: string
+          account_url: string | null
+          connected_by: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          last_sync_at: string | null
+          metadata: Json | null
+          owner_id: string | null
+          owner_type: Database["public"]["Enums"]["streaming_owner_type"]
+          platform_type: Database["public"]["Enums"]["streaming_platform"]
+          provider: Database["public"]["Enums"]["streaming_provider"]
+          refresh_token_encrypted: string | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          account_external_id?: string | null
+          account_name: string
+          account_url?: string | null
+          connected_by?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          metadata?: Json | null
+          owner_id?: string | null
+          owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
+          platform_type: Database["public"]["Enums"]["streaming_platform"]
+          provider: Database["public"]["Enums"]["streaming_provider"]
+          refresh_token_encrypted?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          account_external_id?: string | null
+          account_name?: string
+          account_url?: string | null
+          connected_by?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          metadata?: Json | null
+          owner_id?: string | null
+          owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
+          platform_type?: Database["public"]["Enums"]["streaming_platform"]
+          provider?: Database["public"]["Enums"]["streaming_provider"]
+          refresh_token_encrypted?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      streaming_event_products: {
+        Row: {
+          ai_suggested_cta: string | null
+          clicks_count: number | null
+          conversions_count: number | null
+          created_at: string
+          cta_text: string | null
+          cta_url: string | null
+          currency: string | null
+          display_order: number | null
+          event_id: string
+          id: string
+          is_featured: boolean | null
+          price: number | null
+          product_description: string | null
+          product_id: string | null
+          product_image_url: string | null
+          product_name: string
+          revenue_generated: number | null
+          updated_at: string
+        }
+        Insert: {
+          ai_suggested_cta?: string | null
+          clicks_count?: number | null
+          conversions_count?: number | null
+          created_at?: string
+          cta_text?: string | null
+          cta_url?: string | null
+          currency?: string | null
+          display_order?: number | null
+          event_id: string
+          id?: string
+          is_featured?: boolean | null
+          price?: number | null
+          product_description?: string | null
+          product_id?: string | null
+          product_image_url?: string | null
+          product_name: string
+          revenue_generated?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ai_suggested_cta?: string | null
+          clicks_count?: number | null
+          conversions_count?: number | null
+          created_at?: string
+          cta_text?: string | null
+          cta_url?: string | null
+          currency?: string | null
+          display_order?: number | null
+          event_id?: string
+          id?: string
+          is_featured?: boolean | null
+          price?: number | null
+          product_description?: string | null
+          product_id?: string | null
+          product_image_url?: string | null
+          product_name?: string
+          revenue_generated?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streaming_event_products_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "streaming_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "streaming_event_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      streaming_events: {
+        Row: {
+          ai_analysis: Json | null
+          ai_generated_description: string | null
+          ai_generated_title: string | null
+          ai_suggested_time: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_minutes: number | null
+          ended_at: string | null
+          engagement_score: number | null
+          event_type: Database["public"]["Enums"]["streaming_event_type"]
+          id: string
+          is_shopping_enabled: boolean | null
+          metadata: Json | null
+          owner_id: string | null
+          owner_type: Database["public"]["Enums"]["streaming_owner_type"]
+          peak_viewers: number | null
+          rtmp_url: string | null
+          scheduled_at: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["streaming_event_status"]
+          stream_key: string | null
+          target_channels: string[] | null
+          thumbnail_url: string | null
+          title: string
+          total_views: number | null
+          updated_at: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          ai_generated_description?: string | null
+          ai_generated_title?: string | null
+          ai_suggested_time?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          ended_at?: string | null
+          engagement_score?: number | null
+          event_type?: Database["public"]["Enums"]["streaming_event_type"]
+          id?: string
+          is_shopping_enabled?: boolean | null
+          metadata?: Json | null
+          owner_id?: string | null
+          owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
+          peak_viewers?: number | null
+          rtmp_url?: string | null
+          scheduled_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["streaming_event_status"]
+          stream_key?: string | null
+          target_channels?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          total_views?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          ai_generated_description?: string | null
+          ai_generated_title?: string | null
+          ai_suggested_time?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          ended_at?: string | null
+          engagement_score?: number | null
+          event_type?: Database["public"]["Enums"]["streaming_event_type"]
+          id?: string
+          is_shopping_enabled?: boolean | null
+          metadata?: Json | null
+          owner_id?: string | null
+          owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
+          peak_viewers?: number | null
+          rtmp_url?: string | null
+          scheduled_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["streaming_event_status"]
+          stream_key?: string | null
+          target_channels?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          total_views?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streaming_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      streaming_logs: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          details: Json | null
+          event_id: string | null
+          id: string
+          log_type: string
+          message: string
+          owner_id: string | null
+          owner_type: Database["public"]["Enums"]["streaming_owner_type"]
+          platform_type:
+            | Database["public"]["Enums"]["streaming_platform"]
+            | null
+          provider: Database["public"]["Enums"]["streaming_provider"] | null
+          severity: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_id?: string | null
+          id?: string
+          log_type: string
+          message: string
+          owner_id?: string | null
+          owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
+          platform_type?:
+            | Database["public"]["Enums"]["streaming_platform"]
+            | null
+          provider?: Database["public"]["Enums"]["streaming_provider"] | null
+          severity?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_id?: string | null
+          id?: string
+          log_type?: string
+          message?: string
+          owner_id?: string | null
+          owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
+          platform_type?:
+            | Database["public"]["Enums"]["streaming_platform"]
+            | null
+          provider?: Database["public"]["Enums"]["streaming_provider"] | null
+          severity?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streaming_logs_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "streaming_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "streaming_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "streaming_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      streaming_providers_config: {
+        Row: {
+          api_key_encrypted: string | null
+          client_id: string | null
+          client_secret_encrypted: string | null
+          created_at: string
+          created_by: string | null
+          extra_config: Json | null
+          id: string
+          is_enabled: boolean
+          mode: string
+          owner_id: string | null
+          owner_type: Database["public"]["Enums"]["streaming_owner_type"]
+          provider: Database["public"]["Enums"]["streaming_provider"]
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          client_id?: string | null
+          client_secret_encrypted?: string | null
+          created_at?: string
+          created_by?: string | null
+          extra_config?: Json | null
+          id?: string
+          is_enabled?: boolean
+          mode?: string
+          owner_id?: string | null
+          owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
+          provider: Database["public"]["Enums"]["streaming_provider"]
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          client_id?: string | null
+          client_secret_encrypted?: string | null
+          created_at?: string
+          created_by?: string | null
+          extra_config?: Json | null
+          id?: string
+          is_enabled?: boolean
+          mode?: string
+          owner_id?: string | null
+          owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
+          provider?: Database["public"]["Enums"]["streaming_provider"]
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      streaming_sales: {
+        Row: {
+          amount: number
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          description: string | null
+          event_id: string | null
+          executed_at: string | null
+          id: string
+          invoice_url: string | null
+          metadata: Json | null
+          notes: string | null
+          owner_id: string | null
+          owner_type: Database["public"]["Enums"]["streaming_owner_type"]
+          paid_at: string | null
+          payment_reference: string | null
+          quoted_at: string | null
+          sale_type: string
+          sold_at: string | null
+          status: Database["public"]["Enums"]["streaming_sale_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          event_id?: string | null
+          executed_at?: string | null
+          id?: string
+          invoice_url?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          owner_id?: string | null
+          owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
+          paid_at?: string | null
+          payment_reference?: string | null
+          quoted_at?: string | null
+          sale_type?: string
+          sold_at?: string | null
+          status?: Database["public"]["Enums"]["streaming_sale_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          event_id?: string | null
+          executed_at?: string | null
+          id?: string
+          invoice_url?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          owner_id?: string | null
+          owner_type?: Database["public"]["Enums"]["streaming_owner_type"]
+          paid_at?: string | null
+          payment_reference?: string | null
+          quoted_at?: string | null
+          sale_type?: string
+          sold_at?: string | null
+          status?: Database["public"]["Enums"]["streaming_sale_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streaming_sales_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "streaming_sales_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "streaming_events"
             referencedColumns: ["id"]
           },
         ]
@@ -7004,6 +7515,7 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_platform_root: { Args: { _user_id: string }; Returns: boolean }
       is_user_assigned_to_content: {
         Args: { p_content_id: string; p_user_id: string }
@@ -7148,6 +7660,29 @@ export type Database = {
         | "five_star_rating"
         | "viral_hook"
         | "manual_adjustment"
+      streaming_event_status:
+        | "draft"
+        | "scheduled"
+        | "live"
+        | "ended"
+        | "cancelled"
+      streaming_event_type: "informative" | "shopping" | "webinar" | "interview"
+      streaming_owner_type: "platform" | "organization"
+      streaming_platform:
+        | "youtube"
+        | "facebook"
+        | "tiktok"
+        | "twitch"
+        | "instagram"
+        | "linkedin"
+        | "custom_rtmp"
+      streaming_provider: "restream" | "watchity" | "custom_rtmp"
+      streaming_sale_status:
+        | "quoted"
+        | "sold"
+        | "executed"
+        | "paid"
+        | "cancelled"
       subscription_plan: "free" | "basic" | "pro"
       subscription_status: "active" | "cancelled" | "expired" | "pending"
       up_event_type:
@@ -7340,6 +7875,32 @@ export const Constants = {
         "five_star_rating",
         "viral_hook",
         "manual_adjustment",
+      ],
+      streaming_event_status: [
+        "draft",
+        "scheduled",
+        "live",
+        "ended",
+        "cancelled",
+      ],
+      streaming_event_type: ["informative", "shopping", "webinar", "interview"],
+      streaming_owner_type: ["platform", "organization"],
+      streaming_platform: [
+        "youtube",
+        "facebook",
+        "tiktok",
+        "twitch",
+        "instagram",
+        "linkedin",
+        "custom_rtmp",
+      ],
+      streaming_provider: ["restream", "watchity", "custom_rtmp"],
+      streaming_sale_status: [
+        "quoted",
+        "sold",
+        "executed",
+        "paid",
+        "cancelled",
       ],
       subscription_plan: ["free", "basic", "pro"],
       subscription_status: ["active", "cancelled", "expired", "pending"],

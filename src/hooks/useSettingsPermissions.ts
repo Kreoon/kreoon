@@ -26,7 +26,8 @@ export type SettingsSectionKey =
   | 'platform_config'    // Merged: app_settings + appearance + integrations
   | 'platform_admin'     // Merged: platform_security + root_admin
   | 'tracking'           // Tracking & Analytics engine (platform level)
-  | 'ai_tokenization';   // AI-powered profile tokenization
+  | 'ai_tokenization'    // AI-powered profile tokenization
+  | 'live_streaming';    // Live Streaming Multiplataforma
 
 export interface SectionPermission {
   canAccess: boolean;
@@ -74,6 +75,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   platform_admin: 'platform',
   tracking: 'platform',
   ai_tokenization: 'platform',
+  live_streaming: 'platform',
 };
 
 // Module key mapping for database lookup
