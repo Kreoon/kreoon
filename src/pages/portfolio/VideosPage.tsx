@@ -351,10 +351,33 @@ export default function VideosPage() {
         });
       }
 
-      // Combine and sort
-      const allVideos = [...contentVideos, ...postVideos].sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      // Combine videos
+      const combined = [...contentVideos, ...postVideos];
+
+      // Deterministic shuffle for variety (seeded by current timestamp rounded to minutes)
+      const shuffleSeeded = <T,>(arr: T[], seedStr: string): T[] => {
+        let seed = 0;
+        for (let i = 0; i < seedStr.length; i++) {
+          seed = ((seed << 5) - seed) + seedStr.charCodeAt(i);
+          seed |= 0;
+        }
+        const rand = () => {
+          seed ^= seed << 13;
+          seed ^= seed >> 17;
+          seed ^= seed << 5;
+          return ((seed >>> 0) % 1_000_000) / 1_000_000;
+        };
+        const out = [...arr];
+        for (let i = out.length - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [out[i], out[j]] = [out[j], out[i]];
+        }
+        return out;
+      };
+
+      // Seed changes every minute so refresh gives new order
+      const seed = `videos-${filter}-${Math.floor(Date.now() / 60000)}`;
+      const allVideos = shuffleSeeded(combined, seed);
 
       setVideos(allVideos);
       setActiveIndex(0);

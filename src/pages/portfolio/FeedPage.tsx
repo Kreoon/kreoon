@@ -263,19 +263,42 @@ export default function FeedPage() {
         };
       });
 
-      // Merge (keep chronological for Following tab; For You will be overwritten by AI)
-      const merged = [...workItems, ...postItems].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      // Merge items first (unsorted)
+      const merged = [...workItems, ...postItems];
 
-      // Apply data immediately for Following tab (chronological)
+      // Deterministic shuffle for variety (seeded by current timestamp rounded to minutes)
+      const shuffleSeeded = <T,>(arr: T[], seedStr: string): T[] => {
+        let seed = 0;
+        for (let i = 0; i < seedStr.length; i++) {
+          seed = ((seed << 5) - seed) + seedStr.charCodeAt(i);
+          seed |= 0;
+        }
+        const rand = () => {
+          seed ^= seed << 13;
+          seed ^= seed >> 17;
+          seed ^= seed << 5;
+          return ((seed >>> 0) % 1_000_000) / 1_000_000;
+        };
+        const out = [...arr];
+        for (let i = out.length - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [out[i], out[j]] = [out[j], out[i]];
+        }
+        return out;
+      };
+
+      // Seed changes every minute so refresh button gives new order
+      const seed = `feed-${activeTab}-${Math.floor(Date.now() / 60000)}`;
+      const shuffled = shuffleSeeded(merged, seed);
+
+      // Apply shuffled data for Following tab or as fallback for For You
       if (activeTab === 'following' || !useAIRecommendations) {
-        setItems(merged);
+        setItems(shuffled);
       } else {
         // For "For You" with AI enabled: only set fallback if we don't have items yet.
         // This prevents fetchFeed() from overwriting the AI-sorted order.
         if (items.length === 0) {
-          setItems(merged);
+          setItems(shuffled);
         }
       }
     } catch (error) {
