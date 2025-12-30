@@ -7,3 +7,8 @@ export { NotificationsBell } from './NotificationsBell';
 export { FollowButton } from './FollowButton';
 export { FeaturedVideoUploader } from './FeaturedVideoUploader';
 export { KreoonSocialBrand, KreoonSocialLogo } from './KreoonSocialBrand';
+export { UserProfileCard } from './UserProfileCard';
+export type { UserProfileCardData } from './UserProfileCard';
+export { SuggestedUsers } from './SuggestedUsers';
+export { UserSearchFilters } from './UserSearchFilters';
+export type { SearchFilters } from './UserSearchFilters';
