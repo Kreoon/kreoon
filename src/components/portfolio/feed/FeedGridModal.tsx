@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Heart, MessageCircle, Bookmark, Share2, Volume2, VolumeX } from 'lucide-react';
+import { X, Heart, MessageCircle, Bookmark, Volume2, VolumeX } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { HLSVideoPlayer, getBunnyVideoUrls } from '@/components/video';
 import { PortfolioCommentsSection } from '@/components/content/PortfolioCommentsSection';
+import { ShareButton } from '@/components/social/ShareButton';
+import { FloatingHearts } from '@/components/social/ReactionButton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface FeedItem {
   id: string;
@@ -112,12 +115,8 @@ const VideoSlide = memo(function VideoSlide({
         </div>
       )}
 
-      {/* Floating heart animation */}
-      {showHeart && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-          <Heart className="h-24 w-24 text-red-500 fill-red-500 animate-ping" />
-        </div>
-      )}
+      {/* Floating hearts animation */}
+      <FloatingHearts show={showHeart} />
 
       {/* Overlay info - bottom gradient */}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pb-8 pointer-events-none">
@@ -194,9 +193,14 @@ const VideoSlide = memo(function VideoSlide({
         >
           <Bookmark className={cn("h-7 w-7", isSaved && "fill-yellow-500 text-yellow-500")} />
         </Button>
-        <Button variant="ghost" size="icon" className="h-12 w-12 text-white hover:bg-white/20 rounded-full">
-          <Share2 className="h-7 w-7" />
-        </Button>
+        <div className="h-12 w-12 flex items-center justify-center text-white hover:bg-white/20 rounded-full">
+          <ShareButton 
+            url={typeof window !== 'undefined' ? `${window.location.origin}/social/u/${item.user_id}?post=${item.id}` : ''}
+            title={item.title || item.caption || 'Mira este contenido'}
+            size="lg"
+            className="text-white"
+          />
+        </div>
         {item.media_type === 'video' && (
           <Button 
             variant="ghost" 

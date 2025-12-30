@@ -17,7 +17,8 @@ import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
-import { RefreshCw, Sparkles, Plus, ImageIcon, Film, Compass, Users } from 'lucide-react';
+import { TrendingSection } from '@/components/social/TrendingSection';
+import { RefreshCw, Sparkles, Plus, ImageIcon, Film, Compass, Users, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -321,10 +322,10 @@ export default function FeedPage() {
   };
 
   return (
-    <div ref={containerRef} className="h-full overflow-y-auto md:pl-20 lg:pl-64">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 py-3">
+    <div ref={containerRef} className="h-full overflow-y-auto md:pl-20 lg:pl-64 bg-social-background">
+      {/* Header with glassmorphism */}
+      <header className="sticky top-0 z-30 glass-social-strong border-b border-white/5">
+        <div className="max-w-6xl mx-auto px-4 py-3">
           {/* Search + actions (desktop) */}
           <div className="flex items-center gap-2 mb-3">
             <EnhancedSmartSearch className="mb-0 flex-1" />
@@ -332,7 +333,7 @@ export default function FeedPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-foreground hover:bg-muted"
+                className="h-9 w-9 text-social-foreground hover:bg-white/10 rounded-xl"
                 onClick={() => navigate('/explore')}
                 aria-label="Explorar"
               >
@@ -342,17 +343,23 @@ export default function FeedPage() {
             </div>
           </div>
           
-          {/* Tab switcher */}
+          {/* Tab switcher with glassmorphism */}
           <div className="flex items-center justify-between">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FeedTab)}>
-              <TabsList className="bg-muted/50">
-                <TabsTrigger value="for-you" className="text-sm flex items-center gap-1">
+              <TabsList className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl">
+                <TabsTrigger 
+                  value="for-you" 
+                  className="text-sm flex items-center gap-1.5 data-[state=active]:bg-social-accent data-[state=active]:text-white rounded-lg transition-all"
+                >
                   Para Ti
                   {hasPersonalization && activeTab === 'for-you' && (
-                    <Sparkles className="h-3 w-3 text-primary" />
+                    <Sparkles className="h-3 w-3" />
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="following" className="text-sm">
+                <TabsTrigger 
+                  value="following" 
+                  className="text-sm data-[state=active]:bg-social-accent data-[state=active]:text-white rounded-lg transition-all"
+                >
                   Siguiendo
                 </TabsTrigger>
               </TabsList>
@@ -406,31 +413,49 @@ export default function FeedPage() {
         onAddStory={() => setShowStoryUploader(true)}
       />
 
-      {/* Feed content - 3 column grid */}
-      <div className="max-w-4xl mx-auto px-1 py-2 pb-20">
-        {loading ? (
-          <div className="grid grid-cols-3 gap-1">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-square" />
-            ))}
+      {/* Feed content - responsive layout with sidebar for desktop */}
+      <div className="max-w-6xl mx-auto px-1 py-2 pb-20">
+        <div className="flex gap-6">
+          {/* Main feed - 3 column grid */}
+          <div className="flex-1 max-w-4xl">
+            {loading ? (
+              <div className="grid grid-cols-3 gap-1">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-square rounded-sm" />
+                ))}
+              </div>
+            ) : items.length === 0 ? (
+              <div className="text-center py-12 text-social-muted-foreground">
+                {activeTab === 'following' 
+                  ? 'Sigue a creadores para ver su contenido aquí'
+                  : 'No hay contenido disponible'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-1">
+                {items.map((item, index) => (
+                  <FeedGridCard
+                    key={`${item.type}-${item.id}`}
+                    item={item}
+                    onClick={() => handleCardClick(index)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        ) : items.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            {activeTab === 'following' 
-              ? 'Sigue a creadores para ver su contenido aquí'
-              : 'No hay contenido disponible'}
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-1">
-            {items.map((item, index) => (
-              <FeedGridCard
-                key={`${item.type}-${item.id}`}
-                item={item}
-                onClick={() => handleCardClick(index)}
-              />
-            ))}
-          </div>
-        )}
+
+          {/* Sidebar - Trending section (desktop only) */}
+          <aside className="hidden lg:block w-80 shrink-0">
+            <div className="sticky top-20 space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-social-accent to-pink-500">
+                  <TrendingUp className="h-4 w-4 text-white" />
+                </div>
+                <h3 className="font-semibold text-social-foreground">Tendencias</h3>
+              </div>
+              <TrendingSection variant="sidebar" />
+            </div>
+          </aside>
+        </div>
       </div>
 
       {/* Fullscreen modal */}

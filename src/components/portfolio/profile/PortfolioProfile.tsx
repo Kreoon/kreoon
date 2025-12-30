@@ -414,9 +414,9 @@ export const PortfolioProfile = memo(function PortfolioProfile({
         <ProfileTrustBadges userId={userId} compact />
       </section>
 
-      {/* Stats Bar */}
+      {/* Stats Bar - Glassmorphism */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-6">
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-4 p-4 bg-social-card rounded-xl border border-social-border shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-4 p-4 glass-card">
           <StatItem icon={<FolderOpen className="h-4 w-4" />} value={stats.portfolio_count} label="Portafolio" />
           <StatItem icon={<Grid className="h-4 w-4" />} value={stats.posts_count} label="Posts" />
           <StatItem icon={<Play className="h-4 w-4" />} value={stats.videos_count} label="Videos" />
@@ -453,41 +453,41 @@ export const PortfolioProfile = memo(function PortfolioProfile({
         initialTab={followersModalTab}
       />
 
-      {/* Content Tabs */}
+      {/* Content Tabs - Glassmorphism */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-8">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="w-full justify-start bg-transparent border-b border-social-border rounded-none h-12 p-0 gap-2 sm:gap-4 overflow-x-auto">
+          <TabsList className="w-full justify-start glass-social rounded-xl p-1 h-auto gap-1 overflow-x-auto border border-white/10">
             <TabsTrigger 
               value="portfolio" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-2 whitespace-nowrap transition-all duration-200 hover:text-social-foreground"
+              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
             >
               <FolderOpen className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Portafolio</span>
             </TabsTrigger>
             <TabsTrigger 
               value="posts" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-2 whitespace-nowrap transition-all duration-200 hover:text-social-foreground"
+              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
             >
               <Grid className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Posts</span>
             </TabsTrigger>
             <TabsTrigger 
               value="videos"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-2 whitespace-nowrap transition-all duration-200 hover:text-social-foreground"
+              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
             >
               <Play className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Videos</span>
             </TabsTrigger>
             <TabsTrigger 
               value="badges"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-2 whitespace-nowrap transition-all duration-200 hover:text-social-foreground"
+              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
             >
               <Star className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Logros</span>
             </TabsTrigger>
             <TabsTrigger 
               value="about"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent data-[state=active]:bg-transparent text-social-muted-foreground h-12 px-2 whitespace-nowrap transition-all duration-200 hover:text-social-foreground"
+              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
             >
               <Briefcase className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Sobre mí</span>
