@@ -3,7 +3,7 @@ import { useAuth } from './useAuth';
 import { useOrgOwner } from './useOrgOwner';
 import { supabase } from '@/integrations/supabase/client';
 
-// Section keys for settings module (CONSOLIDATED - reduced from 25 to 16)
+// Section keys for settings module (CONSOLIDATED - reduced from 25 to 17)
 export type SettingsSectionKey = 
   // User level
   | 'profile'
@@ -12,6 +12,7 @@ export type SettingsSectionKey =
   | 'tour'
   // Organization level
   | 'organization'
+  | 'org_registration_settings' // Registration & invite settings
   | 'organization_plans'
   | 'ai_settings'        // Merged: portfolio_ai + organization_ai + assistant
   | 'ambassadors'
@@ -58,6 +59,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   tour: 'user',
   // Organization level - org admin/owner only
   organization: 'organization',
+  org_registration_settings: 'organization',
   organization_plans: 'organization',
   ai_settings: 'organization',
   ambassadors: 'organization',

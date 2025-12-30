@@ -43,6 +43,7 @@ import UPDocumentation from "./pages/UPDocumentation";
 import OrgAuth from "./pages/OrgAuth";
 import HomePage from "./pages/HomePage";
 import Register from "./pages/Register";
+import OrgRegister from "./pages/auth/OrgRegister";
 import { MainLayout } from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient({
@@ -89,6 +90,7 @@ function AppRoutes() {
       <Route path="/pending-access" element={<PendingAccess />} />
       <Route path="/up-documentation" element={<UPDocumentation />} />
       <Route path="/org/:slug" element={<OrgAuth />} />
+      <Route path="/auth/org/:slug" element={<OrgRegister />} />
       <Route path="/register" element={<Register />} />
       <Route path="/register/:slug" element={<Register />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
