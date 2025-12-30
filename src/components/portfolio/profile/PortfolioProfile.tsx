@@ -983,6 +983,11 @@ function PresentationVideoSection({
   const videoUrl = featuredVideoUrl;
   const thumbnailUrl = featuredVideoThumbnail;
 
+  // If no video and not owner, hide the section completely
+  if (!videoUrl && !isOwner) {
+    return null;
+  }
+
   if (!videoUrl) {
     return (
       <Card className="aspect-video flex items-center justify-center bg-gradient-to-br from-social-muted to-social-muted/50 border-dashed border-social-border">
@@ -992,7 +997,7 @@ function PresentationVideoSection({
           <p className="text-sm text-social-muted-foreground mb-4">
             Sube un video horizontal (16:9) que destaque tu perfil
           </p>
-          {isOwner && onVideoUpdate && (
+          {onVideoUpdate && (
             <FeaturedVideoUploader
               userId={userId}
               onUploadComplete={onVideoUpdate}
