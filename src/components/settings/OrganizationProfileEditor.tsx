@@ -27,7 +27,9 @@ import {
   Palette,
   Clock,
   Users,
-  Link2
+  Link2,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 
 interface OrganizationProfile {
@@ -88,6 +90,7 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [profile, setProfile] = useState<OrganizationProfile | null>(null);
   const [blockReason, setBlockReason] = useState('');
 
@@ -209,6 +212,47 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
     setProfile({ ...profile, [field]: value });
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !organizationId) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      toast.error('Solo se permiten imágenes');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen debe ser menor a 5MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${organizationId}/logo.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('organizations')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('organizations')
+        .getPublicUrl(fileName);
+
+      // Add cache buster to force refresh
+      const urlWithCacheBuster = `${publicUrl}?t=${Date.now()}`;
+      updateField('logo_url', urlWithCacheBuster);
+      toast.success('Logo subido correctamente');
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast.error('Error al subir el logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -302,13 +346,48 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="logo_url">URL del Logo</Label>
-            <Input
-              id="logo_url"
-              value={profile.logo_url || ''}
-              onChange={(e) => updateField('logo_url', e.target.value)}
-              placeholder="https://..."
-            />
+            <Label>Logo de la Organización</Label>
+            <div className="flex items-center gap-4">
+              {profile.logo_url ? (
+                <div className="relative h-20 w-20 rounded-lg border overflow-hidden bg-muted">
+                  <img 
+                    src={profile.logo_url} 
+                    alt="Logo" 
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="h-20 w-20 rounded-lg border border-dashed flex items-center justify-center bg-muted">
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingLogo}
+                  onClick={() => document.getElementById('logo-upload')?.click()}
+                >
+                  {uploadingLogo ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Upload className="h-4 w-4 mr-2" />
+                  )}
+                  {uploadingLogo ? 'Subiendo...' : 'Subir Logo'}
+                </Button>
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleLogoUpload}
+                />
+                <p className="text-xs text-muted-foreground">
+                  PNG, JPG hasta 5MB
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
