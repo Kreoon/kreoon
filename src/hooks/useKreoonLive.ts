@@ -306,8 +306,8 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
       },
       activeClients,
       totalClients: clientsWithWallets.length,
-      upcomingEvents: 0,
-      liveNow: 0,
+      upcomingEvents: 0, // Will be updated via streamingEvents
+      liveNow: 0, // Will be updated via streamingEvents
       totalRevenue,
     };
   }, [wallets, clientsWithWallets, purchases, organizationId]);
