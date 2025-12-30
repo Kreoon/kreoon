@@ -295,24 +295,34 @@ export default function FeedPage() {
   }, [activeTab, useAIRecommendations, followingIds]);
 
   // When AI recommendations arrive, reorder items based on recommendation order
+  // Use a ref to track if we've already applied this set of recommendations
+  const appliedRecsRef = useRef<string>('');
+  
   useEffect(() => {
-    if (activeTab === 'for-you' && recommendations.length > 0 && items.length > 0) {
-      // Build a map of recommendation ID -> index for ordering
-      const recOrder = new Map<string, number>();
-      recommendations.forEach((rec, idx) => recOrder.set(rec.id, idx));
+    if (activeTab !== 'for-you' || recommendations.length === 0 || items.length === 0) return;
+    
+    // Create a unique key for this set of recommendations
+    const recsKey = recommendations.map(r => r.id).slice(0, 5).join('-');
+    
+    // Skip if we already applied this exact set
+    if (appliedRecsRef.current === recsKey) return;
+    
+    // Build a map of recommendation ID -> index for ordering
+    const recOrder = new Map<string, number>();
+    recommendations.forEach((rec, idx) => recOrder.set(rec.id, idx));
 
-      // Sort items by recommendation order; items not in recommendations go to the end
-      const reorderedItems = [...items].sort((a, b) => {
-        const aOrder = recOrder.has(a.id) ? recOrder.get(a.id)! : 999999;
-        const bOrder = recOrder.has(b.id) ? recOrder.get(b.id)! : 999999;
-        return aOrder - bOrder;
-      });
+    // Sort items by recommendation order; items not in recommendations go to the end
+    const reorderedItems = [...items].sort((a, b) => {
+      const aOrder = recOrder.has(a.id) ? recOrder.get(a.id)! : 999999;
+      const bOrder = recOrder.has(b.id) ? recOrder.get(b.id)! : 999999;
+      return aOrder - bOrder;
+    });
 
-      // Only update if order actually changed
-      const orderChanged = reorderedItems.some((item, idx) => item.id !== items[idx]?.id);
-      if (orderChanged) {
-        setItems(reorderedItems);
-      }
+    // Check if order actually changed
+    const orderChanged = reorderedItems.some((item, idx) => item.id !== items[idx]?.id);
+    if (orderChanged) {
+      appliedRecsRef.current = recsKey;
+      setItems(reorderedItems);
     }
   }, [recommendations, activeTab, items]);
 
