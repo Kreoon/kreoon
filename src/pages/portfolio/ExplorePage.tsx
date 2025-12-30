@@ -117,7 +117,7 @@ export default function ExplorePage() {
         <div
           key={post.id}
           className={cn(
-            "aspect-square relative cursor-pointer group overflow-hidden rounded-xl",
+            "aspect-[4/5] relative cursor-pointer group overflow-hidden rounded-xl",
             "glass-card border border-white/10",
             "transform transition-all duration-300 hover:scale-[1.02] hover:z-10",
             "animate-fade-in"

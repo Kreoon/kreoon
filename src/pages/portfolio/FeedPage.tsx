@@ -421,7 +421,7 @@ export default function FeedPage() {
             {loading ? (
               <div className="grid grid-cols-3 gap-1">
                 {Array.from({ length: 12 }).map((_, i) => (
-                  <Skeleton key={i} className="aspect-square rounded-sm" />
+                  <Skeleton key={i} className="aspect-[4/5] rounded-sm" />
                 ))}
               </div>
             ) : items.length === 0 ? (
