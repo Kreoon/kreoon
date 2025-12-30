@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Video, Eye, Package, Users, Calendar, UserCheck, CreditCard, Loader2, Settings2 } from 'lucide-react';
+import { Video, Eye, Package, Users, Calendar, UserCheck, CreditCard, Loader2, Settings2, Activity } from 'lucide-react';
 
 // Hooks
 import { useKreoonLive } from '@/hooks/useKreoonLive';
@@ -17,6 +17,7 @@ import { KreoonEventsTab } from '@/components/live-streaming/tabs/KreoonEventsTa
 import { KreoonCreatorsTab } from '@/components/live-streaming/tabs/KreoonCreatorsTab';
 import { KreoonBillingTab } from '@/components/live-streaming/tabs/KreoonBillingTab';
 import { KreoonProvidersTab } from '@/components/live-streaming/tabs/KreoonProvidersTab';
+import { LiveMonitoringTab } from '@/components/live-streaming/tabs/LiveMonitoringTab';
 
 interface Creator {
   id: string;
@@ -139,7 +140,7 @@ export default function LiveStreamingSection() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="flex flex-wrap">
           <TabsTrigger value="overview" className="gap-2 text-xs">
             <Eye className="h-3 w-3" />
             Overview
@@ -163,6 +164,10 @@ export default function LiveStreamingSection() {
           <TabsTrigger value="creators" className="gap-2 text-xs">
             <UserCheck className="h-3 w-3" />
             Creadores
+          </TabsTrigger>
+          <TabsTrigger value="monitoring" className="gap-2 text-xs">
+            <Activity className="h-3 w-3" />
+            Monitoreo
           </TabsTrigger>
           <TabsTrigger value="billing" className="gap-2 text-xs">
             <CreditCard className="h-3 w-3" />
@@ -236,6 +241,14 @@ export default function LiveStreamingSection() {
             onAssign={assignCreatorToEvent}
             onConfirm={updateCreatorStatus}
             onRemove={removeCreatorFromEvent}
+          />
+        </TabsContent>
+
+        {/* Monitoring Tab */}
+        <TabsContent value="monitoring">
+          <LiveMonitoringTab 
+            events={events} 
+            onRefresh={fetchStreamingData}
           />
         </TabsContent>
 

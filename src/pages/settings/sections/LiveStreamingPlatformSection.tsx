@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Video, Settings2, Wallet, Loader2, Shield } from 'lucide-react';
+import { Video, Settings2, Wallet, Loader2, Shield, Activity, CreditCard } from 'lucide-react';
 import { useKreoonLive } from '@/hooks/useKreoonLive';
 import { AdminPlatformHoursPanel } from '@/components/live-streaming/tabs/AdminPlatformHoursPanel';
+import { LivePlatformConfigTab } from '@/components/live-streaming/tabs/LivePlatformConfigTab';
+import { KreoonBillingTab } from '@/components/live-streaming/tabs/KreoonBillingTab';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Organization {
@@ -16,10 +19,14 @@ interface Organization {
 export default function LiveStreamingPlatformSection() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   
+  const [activeTab, setActiveTab] = useState('overview');
+
   const {
     loading,
     stats,
     purchases,
+    assignments,
+    usageLogs,
     isPlatformEnabled,
     toggleFeatureFlag,
     addPlatformHoursToOrg,
@@ -132,94 +139,64 @@ export default function LiveStreamingPlatformSection() {
         </Card>
       </div>
 
-      {/* Admin Panel for Selling Hours */}
-      <AdminPlatformHoursPanel 
-        onAddHours={addPlatformHoursToOrg}
-        purchases={purchases}
-      />
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview" className="gap-2">
+            <Wallet className="h-4 w-4" />
+            Venta de Horas
+          </TabsTrigger>
+          <TabsTrigger value="config" className="gap-2">
+            <Settings2 className="h-4 w-4" />
+            Configuración API
+          </TabsTrigger>
+          <TabsTrigger value="monitoring" className="gap-2">
+            <Activity className="h-4 w-4" />
+            Monitoreo
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="gap-2">
+            <CreditCard className="h-4 w-4" />
+            Facturación
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Restream Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Video className="h-5 w-5 text-blue-500" />
-            Configuración de Restream
-          </CardTitle>
-          <CardDescription>
-            Configura la API de Restream para el MVP
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">API Key</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="password"
-                  placeholder="Ingresa tu Restream API Key"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled
-                />
-                <Badge variant="secondary">Pendiente</Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Obtén tu API Key en{' '}
-                <a 
-                  href="https://developers.restream.io/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  developers.restream.io
-                </a>
+        {/* Overview - Admin Panel for Selling Hours */}
+        <TabsContent value="overview">
+          <AdminPlatformHoursPanel 
+            onAddHours={addPlatformHoursToOrg}
+            purchases={purchases}
+          />
+        </TabsContent>
+
+        {/* Config Tab - Restream API Configuration */}
+        <TabsContent value="config">
+          <LivePlatformConfigTab />
+        </TabsContent>
+
+        {/* Monitoring Tab - placeholder in settings, actual monitoring is in Live page */}
+        <TabsContent value="monitoring">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <Activity className="h-16 w-16 text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground">Monitoreo Global</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Ve a la sección Live para monitorear eventos en tiempo real.
               </p>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Estado de Conexión</label>
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-                <div className="h-3 w-3 rounded-full bg-yellow-500" />
-                <span className="text-sm">No configurado</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="pt-4 border-t">
-            <h4 className="text-sm font-medium mb-2">Funcionalidades disponibles con Restream:</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• Multi-streaming a múltiples plataformas</li>
-              <li>• Gestión de canales desde la plataforma</li>
-              <li>• Monitoreo de streams en tiempo real</li>
-              <li>• Programación de eventos</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Security Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Seguridad y Límites
-          </CardTitle>
-          <CardDescription>
-            Configura límites y políticas de uso
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground">Máx. horas por evento</p>
-              <p className="text-xl font-bold">4h</p>
-            </div>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground">Eventos simultáneos por org</p>
-              <p className="text-xl font-bold">3</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Billing Tab */}
+        <TabsContent value="billing">
+          <KreoonBillingTab
+            stats={stats}
+            purchases={purchases}
+            assignments={assignments}
+            usageLogs={usageLogs}
+            isAdmin={true}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
