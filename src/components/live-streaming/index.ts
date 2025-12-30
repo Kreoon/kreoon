@@ -1,3 +1,12 @@
+// KREOON Live Tabs
+export { KreoonOverviewTab } from './tabs/KreoonOverviewTab';
+export { KreoonPackagesTab } from './tabs/KreoonPackagesTab';
+export { KreoonClientsTab } from './tabs/KreoonClientsTab';
+export { KreoonChannelsTab } from './tabs/KreoonChannelsTab';
+export { KreoonEventsTab } from './tabs/KreoonEventsTab';
+export { KreoonCreatorsTab } from './tabs/KreoonCreatorsTab';
+export { KreoonBillingTab } from './tabs/KreoonBillingTab';
+
 // Dialogs
 export { AddProviderDialog } from './dialogs/AddProviderDialog';
 export { AddChannelDialog } from './dialogs/AddChannelDialog';

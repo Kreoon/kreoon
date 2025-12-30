@@ -13,8 +13,8 @@ import { AddChannelDialog } from '@/components/live-streaming/dialogs/AddChannel
 interface KreoonChannelsTabProps {
   accounts: StreamingAccount[];
   onRefresh: () => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-  onSave: (account: Partial<StreamingAccount>) => Promise<void>;
+  onDelete: (id: string) => Promise<boolean>;
+  onSave: (account: Partial<StreamingAccount> & { platform_type: string; account_name: string }) => Promise<boolean>;
 }
 
 const PLATFORM_CONFIG = {
@@ -180,7 +180,7 @@ export function KreoonChannelsTab({ accounts, onRefresh, onDelete, onSave }: Kre
       <AddChannelDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
-        onSave={async (data) => { await onSave(data); return true; }}
+        onSave={onSave}
       />
     </div>
   );
