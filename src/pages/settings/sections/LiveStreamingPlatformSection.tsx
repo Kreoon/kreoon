@@ -138,21 +138,60 @@ export default function LiveStreamingPlatformSection() {
         purchases={purchases}
       />
 
-      {/* API Configuration Placeholder */}
+      {/* Restream Configuration */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings2 className="h-5 w-5" />
-            Configuración de Proveedores
+            <Video className="h-5 w-5 text-blue-500" />
+            Configuración de Restream
           </CardTitle>
           <CardDescription>
-            Configura las APIs de streaming (Restream, Watchity, etc.)
+            Configura la API de Restream para el MVP
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <Settings2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Configuración de proveedores próximamente</p>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">API Key</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  placeholder="Ingresa tu Restream API Key"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled
+                />
+                <Badge variant="secondary">Pendiente</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Obtén tu API Key en{' '}
+                <a 
+                  href="https://developers.restream.io/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  developers.restream.io
+                </a>
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Estado de Conexión</label>
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
+                <div className="h-3 w-3 rounded-full bg-yellow-500" />
+                <span className="text-sm">No configurado</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="pt-4 border-t">
+            <h4 className="text-sm font-medium mb-2">Funcionalidades disponibles con Restream:</h4>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• Multi-streaming a múltiples plataformas</li>
+              <li>• Gestión de canales desde la plataforma</li>
+              <li>• Monitoreo de streams en tiempo real</li>
+              <li>• Programación de eventos</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
