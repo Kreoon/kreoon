@@ -18,6 +18,7 @@ export type SettingsSectionKey =
   | 'ambassadors'
   | 'permissions'        // Merged: organization_permissions + global_permissions
   | 'audit_log'
+  | 'org_social'         // Social network integration settings
   | 'live_streaming_org' // KREOON Live - Organization level config
   // Platform level (Root only)
   | 'organization_registrations'
@@ -67,6 +68,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   ambassadors: 'organization',
   permissions: 'organization',
   audit_log: 'organization',
+  org_social: 'organization', // Social network settings
   live_streaming_org: 'organization', // KREOON Live org config
   // Platform level - root only
   organization_registrations: 'platform',
