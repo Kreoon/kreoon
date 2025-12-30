@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Video, Calendar, Users, Link2, Activity, Loader2 } from 'lucide-react';
+import { Video, Calendar, Users, Activity, Loader2 } from 'lucide-react';
 
 // Hooks
 import { useKreoonLive } from '@/hooks/useKreoonLive';
@@ -12,7 +12,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { KreoonOverviewTab } from '@/components/live-streaming/tabs/KreoonOverviewTab';
 import { KreoonEventsTab } from '@/components/live-streaming/tabs/KreoonEventsTab';
 import { KreoonCreatorsTab } from '@/components/live-streaming/tabs/KreoonCreatorsTab';
-import { KreoonChannelsTab } from '@/components/live-streaming/tabs/KreoonChannelsTab';
 
 interface Creator {
   id: string;
@@ -133,10 +132,6 @@ export default function Live() {
             <Users className="h-4 w-4" />
             Creadores
           </TabsTrigger>
-          <TabsTrigger value="channels" className="gap-2">
-            <Link2 className="h-4 w-4" />
-            Canales
-          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -175,16 +170,6 @@ export default function Live() {
             onAssign={assignCreatorToEvent}
             onConfirm={updateCreatorStatus}
             onRemove={removeCreatorFromEvent}
-          />
-        </TabsContent>
-
-        {/* Channels Tab */}
-        <TabsContent value="channels">
-          <KreoonChannelsTab
-            accounts={accounts}
-            onRefresh={fetchStreamingData}
-            onDelete={deleteAccount}
-            onSave={saveAccount}
           />
         </TabsContent>
       </Tabs>
