@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.streaming-webhook]
 verify_jwt = false
+
+[functions.restream-api]
+verify_jwt = true
