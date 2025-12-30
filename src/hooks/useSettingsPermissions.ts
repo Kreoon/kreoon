@@ -18,6 +18,7 @@ export type SettingsSectionKey =
   | 'ambassadors'
   | 'permissions'        // Merged: organization_permissions + global_permissions
   | 'audit_log'
+  | 'live_streaming_org' // KREOON Live - Organization level config
   // Platform level (Root only)
   | 'organization_registrations'
   | 'platform_users'
@@ -27,7 +28,7 @@ export type SettingsSectionKey =
   | 'platform_admin'     // Merged: platform_security + root_admin
   | 'tracking'           // Tracking & Analytics engine (platform level)
   | 'ai_tokenization'    // AI-powered profile tokenization
-  | 'live_streaming';    // Live Streaming Multiplataforma
+  | 'live_streaming';    // KREOON Live - Platform level config
 
 export interface SectionPermission {
   canAccess: boolean;
@@ -66,6 +67,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   ambassadors: 'organization',
   permissions: 'organization',
   audit_log: 'organization',
+  live_streaming_org: 'organization', // KREOON Live org config
   // Platform level - root only
   organization_registrations: 'platform',
   platform_users: 'platform',
@@ -75,7 +77,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   platform_admin: 'platform',
   tracking: 'platform',
   ai_tokenization: 'platform',
-  live_streaming: 'platform',
+  live_streaming: 'platform', // KREOON Live platform config
 };
 
 // Module key mapping for database lookup

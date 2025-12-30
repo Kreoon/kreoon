@@ -14,7 +14,8 @@ import {
   RefreshCw,
   Trophy,
   Eye,
-  Globe
+  Globe,
+  Video
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,7 @@ const adminSections: NavSection[] = [
       { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
       { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
       { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
+      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
   },
   {
