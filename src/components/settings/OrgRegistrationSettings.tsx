@@ -181,6 +181,8 @@ export function OrgRegistrationSettings() {
     }
   };
 
+  const BASE_URL = 'https://kreoon.com';
+
   const copyCode = () => {
     if (config?.registration_code) {
       navigator.clipboard.writeText(config.registration_code);
@@ -190,7 +192,7 @@ export function OrgRegistrationSettings() {
 
   const copyLink = () => {
     if (config?.slug) {
-      const link = `${window.location.origin}/auth/org/${config.slug}`;
+      const link = `${BASE_URL}/auth/org/${config.slug}`;
       navigator.clipboard.writeText(link);
       toast.success('Link copiado');
     }
@@ -234,7 +236,7 @@ export function OrgRegistrationSettings() {
     );
   }
 
-  const registrationUrl = `${window.location.origin}/auth/org/${config.slug}`;
+  const registrationUrl = `${BASE_URL}/auth/org/${config.slug}`;
 
   return (
     <div className="space-y-6">
