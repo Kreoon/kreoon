@@ -12,7 +12,7 @@ import type { Database } from '@/integrations/supabase/types';
 
 type StreamingPlatform = Database['public']['Enums']['streaming_platform'];
 type StreamingProvider = Database['public']['Enums']['streaming_provider'];
-import { Plus, Trash2, Youtube, Twitch, Radio, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Youtube, Twitch, Radio, Loader2, Facebook, Instagram, Twitter } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,13 +39,23 @@ interface ClientStreamingChannelsProps {
 
 const PLATFORM_CONFIG: Record<string, { icon: typeof Youtube; color: string; label: string }> = {
   youtube: { icon: Youtube, color: 'text-red-500', label: 'YouTube' },
+  facebook: { icon: Facebook, color: 'text-blue-600', label: 'Facebook' },
+  instagram: { icon: Instagram, color: 'text-pink-500', label: 'Instagram' },
+  tiktok: { icon: Radio, color: 'text-foreground', label: 'TikTok' },
   twitch: { icon: Twitch, color: 'text-purple-500', label: 'Twitch' },
-  custom_rtmp: { icon: Radio, color: 'text-blue-500', label: 'RTMP' },
+  linkedin: { icon: Radio, color: 'text-blue-700', label: 'LinkedIn' },
+  twitter: { icon: Twitter, color: 'text-sky-500', label: 'X (Twitter)' },
+  custom_rtmp: { icon: Radio, color: 'text-orange-500', label: 'RTMP' },
 };
 
 const PLATFORM_OPTIONS = [
   { value: 'youtube', label: 'YouTube' },
+  { value: 'facebook', label: 'Facebook Live' },
+  { value: 'instagram', label: 'Instagram Live' },
+  { value: 'tiktok', label: 'TikTok Live' },
   { value: 'twitch', label: 'Twitch' },
+  { value: 'linkedin', label: 'LinkedIn Live' },
+  { value: 'twitter', label: 'X (Twitter)' },
   { value: 'custom_rtmp', label: 'RTMP Personalizado' },
 ];
 
