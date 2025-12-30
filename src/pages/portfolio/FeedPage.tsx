@@ -268,13 +268,15 @@ export default function FeedPage() {
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      // Only set items directly if we're on Following tab
-      // For You tab will use AI recommendations instead
-      if (activeTab === 'following') {
+      // Apply data immediately for Following tab (chronological)
+      if (activeTab === 'following' || !useAIRecommendations) {
         setItems(merged);
       } else {
-        // Store merged as fallback; AI recommendations will overwrite if available
-        setItems(merged);
+        // For "For You" with AI enabled: only set fallback if we don't have items yet.
+        // This prevents fetchFeed() from overwriting the AI-sorted order.
+        if (items.length === 0) {
+          setItems(merged);
+        }
       }
     } catch (error) {
       console.error('[FeedPage] Error fetching feed:', error);
@@ -282,7 +284,7 @@ export default function FeedPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeTab, followingIds, isSaved]);
+  }, [activeTab, followingIds, isSaved, useAIRecommendations, items.length]);
 
   // Fetch AI recommendations for "For You" tab and apply them
   useEffect(() => {
@@ -312,7 +314,7 @@ export default function FeedPage() {
         setItems(reorderedItems);
       }
     }
-  }, [recommendations, activeTab]);
+  }, [recommendations, activeTab, items]);
 
   useEffect(() => {
     fetchFeed();
@@ -406,7 +408,14 @@ export default function FeedPage() {
               <Button 
                 variant="ghost" 
                 size="icon"
-                onClick={() => fetchFeed(true)}
+                onClick={() => {
+                  if (activeTab === 'for-you' && useAIRecommendations) {
+                    const viewedIds = items.filter(i => i.type === 'work').map(i => i.id);
+                    fetchRecommendations([], viewedIds);
+                    return;
+                  }
+                  fetchFeed(true);
+                }}
                 disabled={refreshing}
               >
                 <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
