@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Video, Eye, Package, Users, Link2, Calendar, UserCheck, CreditCard, Loader2, Settings2 } from 'lucide-react';
+import { Video, Eye, Package, Users, Calendar, UserCheck, CreditCard, Loader2, Settings2 } from 'lucide-react';
 
 // Hooks
 import { useKreoonLive } from '@/hooks/useKreoonLive';
@@ -13,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { KreoonOverviewTab } from '@/components/live-streaming/tabs/KreoonOverviewTab';
 import { KreoonPackagesTab } from '@/components/live-streaming/tabs/KreoonPackagesTab';
 import { KreoonClientsTab } from '@/components/live-streaming/tabs/KreoonClientsTab';
-import { KreoonChannelsTab } from '@/components/live-streaming/tabs/KreoonChannelsTab';
 import { KreoonEventsTab } from '@/components/live-streaming/tabs/KreoonEventsTab';
 import { KreoonCreatorsTab } from '@/components/live-streaming/tabs/KreoonCreatorsTab';
 import { KreoonBillingTab } from '@/components/live-streaming/tabs/KreoonBillingTab';
@@ -140,7 +139,7 @@ export default function LiveStreamingSection() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview" className="gap-2 text-xs">
             <Eye className="h-3 w-3" />
             Overview
@@ -156,10 +155,6 @@ export default function LiveStreamingSection() {
           <TabsTrigger value="clients" className="gap-2 text-xs">
             <Users className="h-3 w-3" />
             Clientes
-          </TabsTrigger>
-          <TabsTrigger value="channels" className="gap-2 text-xs">
-            <Link2 className="h-3 w-3" />
-            Canales
           </TabsTrigger>
           <TabsTrigger value="events" className="gap-2 text-xs">
             <Calendar className="h-3 w-3" />
@@ -216,16 +211,6 @@ export default function LiveStreamingSection() {
             packages={packages}
             onToggleClientLive={handleToggleClientLive}
             onAssignHours={assignHoursToClient}
-          />
-        </TabsContent>
-
-        {/* Channels Tab */}
-        <TabsContent value="channels">
-          <KreoonChannelsTab
-            accounts={accounts}
-            onRefresh={fetchStreamingData}
-            onDelete={deleteAccount}
-            onSave={saveAccount}
           />
         </TabsContent>
 
