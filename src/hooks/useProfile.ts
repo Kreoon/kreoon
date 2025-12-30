@@ -285,6 +285,34 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
     setProfile(prev => prev ? { ...prev, ...updates } : null);
   }, []);
 
+  // Trigger AI token evaluation after profile changes
+  const triggerTokenEvaluation = useCallback(async (profileId: string) => {
+    try {
+      console.log('[useProfile] Triggering AI token evaluation for profile:', profileId);
+      const { data, error } = await supabase.functions.invoke('evaluate-profile-tokens', {
+        body: { profile_id: profileId, force_recalculate: true }
+      });
+
+      if (error) {
+        console.error('[useProfile] Token evaluation error:', error);
+        return;
+      }
+
+      if (data?.success) {
+        console.log('[useProfile] Token evaluation complete:', data.token_cost, 'tokens');
+        // Update local profile with new token cost
+        setProfile(prev => prev ? {
+          ...prev,
+          ai_token_cost: data.token_cost,
+          ai_token_cost_updated_at: new Date().toISOString(),
+          ai_token_cost_reason: data.reason
+        } : null);
+      }
+    } catch (error) {
+      console.error('[useProfile] Failed to trigger token evaluation:', error);
+    }
+  }, []);
+
   // Save profile and sync with client if applicable
   const save = useCallback(async (): Promise<boolean> => {
     if (!user?.id || !profile) return false;
@@ -342,6 +370,10 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
       setOriginalProfile(profile);
       originalUsernameRef.current = profile.username;
       showToast('Perfil actualizado', 'Tus cambios se han guardado correctamente');
+
+      // Trigger AI token evaluation in the background (don't await to not block UI)
+      triggerTokenEvaluation(user.id);
+
       return true;
     } catch (error) {
       console.error('[useProfile] Error saving:', error);
@@ -350,7 +382,7 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
     } finally {
       setSaving(false);
     }
-  }, [user?.id, profile, usernameError, showToast]);
+  }, [user?.id, profile, usernameError, showToast, triggerTokenEvaluation]);
 
   // Sync profile fields to associated client record (bidirectional sync)
   const syncProfileToClient = async (profileData: ProfileData) => {
