@@ -20,7 +20,9 @@ import {
   Trophy,
   Radio,
   Settings2,
-  ChevronRight
+  ChevronRight,
+  Users,
+  Building2
 } from 'lucide-react';
 import { useAIModules } from '@/hooks/useAIModules';
 import { AI_MODULE_CATEGORIES, getModuleDefinition } from '@/lib/aiModuleKeys';
@@ -38,7 +40,9 @@ const CATEGORY_ICONS = {
   content: FileVideo,
   up: Trophy,
   live: Radio,
+  talent: Users,
   general: Bot,
+  organization: Building2,
 };
 
 export function AIModulesManager({ organizationId, enabledProviders }: AIModulesManagerProps) {
