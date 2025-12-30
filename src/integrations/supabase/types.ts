@@ -3512,7 +3512,11 @@ export type Database = {
           name: string
           organization_type: string | null
           primary_color: string | null
+          registration_code: string | null
+          registration_code_updated_at: string | null
           registration_link: string | null
+          registration_page_config: Json | null
+          registration_require_invite: boolean | null
           selected_plan: string | null
           settings: Json | null
           slug: string
@@ -3552,7 +3556,11 @@ export type Database = {
           name: string
           organization_type?: string | null
           primary_color?: string | null
+          registration_code?: string | null
+          registration_code_updated_at?: string | null
           registration_link?: string | null
+          registration_page_config?: Json | null
+          registration_require_invite?: boolean | null
           selected_plan?: string | null
           settings?: Json | null
           slug: string
@@ -3592,7 +3600,11 @@ export type Database = {
           name?: string
           organization_type?: string | null
           primary_color?: string | null
+          registration_code?: string | null
+          registration_code_updated_at?: string | null
           registration_link?: string | null
+          registration_page_config?: Json | null
+          registration_require_invite?: boolean | null
           selected_plan?: string | null
           settings?: Json | null
           slug?: string
@@ -4510,6 +4522,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      registration_attempts: {
+        Row: {
+          attempted_code: string | null
+          created_at: string | null
+          id: string
+          ip_address: string
+          organization_id: string | null
+          success: boolean | null
+        }
+        Insert: {
+          attempted_code?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address: string
+          organization_id?: string | null
+          success?: boolean | null
+        }
+        Update: {
+          attempted_code?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string
+          organization_id?: string | null
+          success?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_attempts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_permissions: {
         Row: {
@@ -6735,6 +6782,10 @@ export type Database = {
         }
         Returns: Json
       }
+      check_registration_rate_limit: {
+        Args: { ip: string; org_id: string }
+        Returns: boolean
+      }
       check_status_requirements: {
         Args: { _content_id: string; _target_status_id: string }
         Returns: Json
@@ -6793,6 +6844,7 @@ export type Database = {
       }
       generate_org_slug: { Args: { org_name: string }; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
+      generate_registration_code: { Args: never; Returns: string }
       generate_registration_link: { Args: { _org_id: string }; Returns: string }
       generate_username_from_name: {
         Args: { full_name: string }
@@ -7006,6 +7058,10 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: undefined
       }
+      regenerate_org_registration_code: {
+        Args: { org_id: string }
+        Returns: string
+      }
       register_ai_module: {
         Args: {
           _description?: string
@@ -7052,6 +7108,10 @@ export type Database = {
       update_talent_performance_scores: {
         Args: { p_organization_id: string; p_user_id: string }
         Returns: undefined
+      }
+      validate_registration_code: {
+        Args: { code: string; ip: string; org_slug: string }
+        Returns: Json
       }
     }
     Enums: {

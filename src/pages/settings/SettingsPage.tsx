@@ -16,6 +16,7 @@ const TourSection = lazy(() => import('./sections/TourSection'));
 
 // Organization level - CONSOLIDATED
 const OrganizationSection = lazy(() => import('./sections/OrganizationSection'));
+const OrgRegistrationSettingsSection = lazy(() => import('./sections/OrgRegistrationSettingsSection'));
 const OrganizationPlansSection = lazy(() => import('./sections/OrganizationPlansSection'));
 const AISettingsSection = lazy(() => import('./sections/AISettingsSection'));
 const AmbassadorsSection = lazy(() => import('./sections/AmbassadorsSection'));
@@ -49,6 +50,7 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   tour: TourSection,
   // Organization level
   organization: OrganizationSection,
+  org_registration_settings: OrgRegistrationSettingsSection,
   organization_plans: OrganizationPlansSection,
   ai_settings: AISettingsSection,
   ambassadors: AmbassadorsSection,

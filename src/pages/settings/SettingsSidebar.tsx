@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { 
   User, Bell, Shield, HelpCircle, Building2, Crown, Star, History,
   Landmark, Users, Share2, CreditCard, Settings2, ShieldCheck,
-  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain
+  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, UserPlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SettingsPermissions, SettingsSectionKey } from '@/hooks/useSettingsPermissions';
@@ -48,6 +48,7 @@ const ALL_SECTIONS: SectionGroup[] = [
     icon: Building2,
     sections: [
       { key: 'organization', icon: Building2, title: 'Datos', description: 'Info de organización' },
+      { key: 'org_registration_settings', icon: UserPlus, title: 'Registro', description: 'Accesos e invitaciones' },
       { key: 'organization_plans', icon: Crown, title: 'Plan', description: 'Suscripción activa' },
       { key: 'ai_settings', icon: Bot, title: 'IA & Modelos', description: 'Proveedores y asistente' },
       { key: 'ambassadors', icon: Star, title: 'Embajadores', description: 'Red de referidos' },
