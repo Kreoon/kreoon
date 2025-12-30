@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Play } from 'lucide-react';
+import { Play, Heart, MessageCircle, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+import { motion } from 'framer-motion';
 
 interface FeedItem {
   id: string;
@@ -35,6 +36,7 @@ function formatCount(count: number): string {
 export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   
   // Prefer Bunny CDN thumbnail (always fresh) over stored thumbnail_url
   const bunnyUrls = item.media_type === 'video' ? getBunnyVideoUrls(item.media_url) : null;
@@ -56,8 +58,8 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
                 src={effectiveThumbnail}
                 alt={item.title || item.caption || 'Video'}
                 className={cn(
-                  "w-full h-full object-cover transition-transform duration-300",
-                  "group-hover:scale-105",
+                  "w-full h-full object-cover transition-all duration-500",
+                  isHovered && "scale-110 brightness-75",
                   !imageLoaded && "scale-[1.02] blur-sm"
                 )}
                 onLoad={() => setImageLoaded(true)}
@@ -65,26 +67,26 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
               />
 
               {!imageLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                  <Play className="h-8 w-8 text-muted-foreground" />
+                <div className="absolute inset-0 flex items-center justify-center bg-social-muted">
+                  <Play className="h-8 w-8 text-social-muted-foreground" />
                 </div>
               )}
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted">
-              <Play className="h-8 w-8 text-muted-foreground" />
+            <div className="w-full h-full flex items-center justify-center bg-social-muted">
+              <Play className="h-8 w-8 text-social-muted-foreground" />
             </div>
           )}
           
-          {/* Video indicator */}
-          <div className="absolute top-2 right-2">
-            <Play className="h-5 w-5 text-white drop-shadow-lg fill-white/30" />
+          {/* Video indicator - glassmorphism */}
+          <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
+            <Play className="h-3.5 w-3.5 text-white fill-white" />
           </div>
           
-          {/* Views count */}
-          <div className="absolute bottom-2 left-2 flex items-center gap-1 text-white text-xs font-medium drop-shadow-lg">
-            <Play className="h-3 w-3" fill="currentColor" />
-            <span>{formatCount(item.views_count)}</span>
+          {/* Views count - glassmorphism */}
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
+            <Eye className="h-3 w-3 text-white/80" />
+            <span className="text-white text-xs font-medium">{formatCount(item.views_count)}</span>
           </div>
         </>
       );
@@ -97,47 +99,82 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
             src={item.media_url}
             alt={item.title || item.caption || 'Post'}
             className={cn(
-              "w-full h-full object-cover transition-all duration-300",
-              "group-hover:scale-105",
+              "w-full h-full object-cover transition-all duration-500",
+              isHovered && "scale-110 brightness-75",
               imageLoaded ? "opacity-100" : "opacity-0"
             )}
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted">
-            <span className="text-sm text-muted-foreground">No se pudo cargar</span>
+          <div className="w-full h-full flex items-center justify-center bg-social-muted">
+            <span className="text-sm text-social-muted-foreground">No se pudo cargar</span>
           </div>
         )}
 
         {/* Loading skeleton */}
         {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 bg-muted animate-pulse" />
+          <div className="absolute inset-0 bg-social-muted animate-pulse" />
         )}
       </>
     );
   };
 
   return (
-    <div
-      className="aspect-square relative group cursor-pointer overflow-hidden bg-muted"
+    <motion.div
+      className="aspect-square relative group cursor-pointer overflow-hidden bg-social-muted rounded-sm"
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      whileTap={{ scale: 0.98 }}
     >
       {renderMedia()}
 
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
-        {item.likes_count > 0 && (
-          <span className="flex items-center gap-1 text-sm font-semibold">
-            ❤️ {formatCount(item.likes_count)}
-          </span>
+      {/* Hover overlay with glassmorphism */}
+      <motion.div 
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isHovered ? 1 : 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        
+        {/* Stats with glassmorphism */}
+        <div className="relative flex items-center gap-4 px-4 py-2 rounded-full backdrop-blur-xl bg-white/10 border border-white/20 shadow-lg">
+          {item.likes_count >= 0 && (
+            <motion.div 
+              className="flex items-center gap-1.5"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: isHovered ? 0 : 10, opacity: isHovered ? 1 : 0 }}
+              transition={{ delay: 0.05 }}
+            >
+              <Heart className="h-4 w-4 text-red-400 fill-red-400" />
+              <span className="text-white text-sm font-semibold">{formatCount(item.likes_count)}</span>
+            </motion.div>
+          )}
+          {item.comments_count >= 0 && (
+            <motion.div 
+              className="flex items-center gap-1.5"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: isHovered ? 0 : 10, opacity: isHovered ? 1 : 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <MessageCircle className="h-4 w-4 text-blue-400" />
+              <span className="text-white text-sm font-semibold">{formatCount(item.comments_count)}</span>
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Subtle border glow on hover */}
+      <div 
+        className={cn(
+          "absolute inset-0 rounded-sm pointer-events-none transition-opacity duration-300",
+          "ring-1 ring-inset",
+          isHovered ? "ring-social-accent/30" : "ring-transparent"
         )}
-        {item.comments_count > 0 && (
-          <span className="flex items-center gap-1 text-sm font-semibold">
-            💬 {formatCount(item.comments_count)}
-          </span>
-        )}
-      </div>
-    </div>
+      />
+    </motion.div>
   );
 }
