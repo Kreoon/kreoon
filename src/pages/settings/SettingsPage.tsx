@@ -23,6 +23,7 @@ const AmbassadorsSection = lazy(() => import('./sections/AmbassadorsSection'));
 const PermissionsUnifiedSection = lazy(() => import('./sections/PermissionsUnifiedSection'));
 const AuditLogSection = lazy(() => import('./sections/AuditLogSection'));
 const TrackingSection = lazy(() => import('./sections/TrackingSection'));
+const OrgSocialSection = lazy(() => import('./sections/OrgSocialSection'));
 
 // Platform level - CONSOLIDATED
 const OrganizationRegistrationsSection = lazy(() => import('./sections/OrganizationRegistrationsSection'));
@@ -59,6 +60,7 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   permissions: PermissionsUnifiedSection,
   audit_log: AuditLogSection,
   tracking: TrackingSection,
+  org_social: OrgSocialSection,
   live_streaming_org: LiveStreamingOrgSection,
   // Platform level
   organization_registrations: OrganizationRegistrationsSection,

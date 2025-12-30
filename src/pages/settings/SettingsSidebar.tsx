@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { 
   User, Bell, Shield, HelpCircle, Building2, Crown, Star, History,
   Landmark, Users, Share2, CreditCard, Settings2, ShieldCheck,
-  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, UserPlus, Video
+  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, UserPlus, Video, Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SettingsPermissions, SettingsSectionKey } from '@/hooks/useSettingsPermissions';
@@ -54,6 +54,7 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'ambassadors', icon: Star, title: 'Embajadores', description: 'Red de referidos' },
       { key: 'permissions', icon: UserCog, title: 'Permisos', description: 'Por rol' },
       { key: 'audit_log', icon: History, title: 'Historial', description: 'Actividad' },
+      { key: 'org_social', icon: Globe, title: 'Red Social', description: 'Integración pública' },
       { key: 'live_streaming_org', icon: Video, title: 'KREOON Live', description: 'Paquetes y clientes' },
     ],
   },

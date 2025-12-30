@@ -3605,6 +3605,56 @@ export type Database = {
           },
         ]
       }
+      organization_social_settings: {
+        Row: {
+          allow_external_discovery: boolean
+          allow_external_follow: boolean
+          created_at: string
+          explore_public: boolean
+          feed_public: boolean
+          id: string
+          organization_id: string
+          profiles_public: boolean
+          public_network_enabled: boolean
+          updated_at: string
+          videos_public: boolean
+        }
+        Insert: {
+          allow_external_discovery?: boolean
+          allow_external_follow?: boolean
+          created_at?: string
+          explore_public?: boolean
+          feed_public?: boolean
+          id?: string
+          organization_id: string
+          profiles_public?: boolean
+          public_network_enabled?: boolean
+          updated_at?: string
+          videos_public?: boolean
+        }
+        Update: {
+          allow_external_discovery?: boolean
+          allow_external_follow?: boolean
+          created_at?: string
+          explore_public?: boolean
+          feed_public?: boolean
+          id?: string
+          organization_id?: string
+          profiles_public?: boolean
+          public_network_enabled?: boolean
+          updated_at?: string
+          videos_public?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_social_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_statuses: {
         Row: {
           color: string
@@ -7724,6 +7774,28 @@ export type Database = {
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      get_user_social_settings: {
+        Args: { _user_id: string }
+        Returns: {
+          allow_external_discovery: boolean
+          allow_external_follow: boolean
+          created_at: string
+          explore_public: boolean
+          feed_public: boolean
+          id: string
+          organization_id: string
+          profiles_public: boolean
+          public_network_enabled: boolean
+          updated_at: string
+          videos_public: boolean
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organization_social_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       grant_badge: {
         Args: {
