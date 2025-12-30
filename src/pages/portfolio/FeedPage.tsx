@@ -127,6 +127,8 @@ export default function FeedPage() {
     else setLoading(true);
 
     try {
+      // For "Following" tab: chronological order
+      // For "For You" tab: we'll rely on AI recommendations hook separately
       const isFollowing = activeTab === 'following';
       
       // Fetch work content (published videos) - from ALL organizations
@@ -261,12 +263,19 @@ export default function FeedPage() {
         };
       });
 
-      // Merge and sort by date
+      // Merge (keep chronological for Following tab; For You will be overwritten by AI)
       const merged = [...workItems, ...postItems].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      setItems(merged);
+      // Only set items directly if we're on Following tab
+      // For You tab will use AI recommendations instead
+      if (activeTab === 'following') {
+        setItems(merged);
+      } else {
+        // Store merged as fallback; AI recommendations will overwrite if available
+        setItems(merged);
+      }
     } catch (error) {
       console.error('[FeedPage] Error fetching feed:', error);
     } finally {
@@ -275,13 +284,35 @@ export default function FeedPage() {
     }
   }, [activeTab, followingIds, isSaved]);
 
-  // Fetch AI recommendations for "For You" tab
+  // Fetch AI recommendations for "For You" tab and apply them
   useEffect(() => {
     if (activeTab === 'for-you' && useAIRecommendations) {
       const viewedIds = items.filter(i => i.type === 'work').map(i => i.id);
       fetchRecommendations([], viewedIds);
     }
   }, [activeTab, useAIRecommendations, followingIds]);
+
+  // When AI recommendations arrive, reorder items based on recommendation order
+  useEffect(() => {
+    if (activeTab === 'for-you' && recommendations.length > 0 && items.length > 0) {
+      // Build a map of recommendation ID -> index for ordering
+      const recOrder = new Map<string, number>();
+      recommendations.forEach((rec, idx) => recOrder.set(rec.id, idx));
+
+      // Sort items by recommendation order; items not in recommendations go to the end
+      const reorderedItems = [...items].sort((a, b) => {
+        const aOrder = recOrder.has(a.id) ? recOrder.get(a.id)! : 999999;
+        const bOrder = recOrder.has(b.id) ? recOrder.get(b.id)! : 999999;
+        return aOrder - bOrder;
+      });
+
+      // Only update if order actually changed
+      const orderChanged = reorderedItems.some((item, idx) => item.id !== items[idx]?.id);
+      if (orderChanged) {
+        setItems(reorderedItems);
+      }
+    }
+  }, [recommendations, activeTab]);
 
   useEffect(() => {
     fetchFeed();
