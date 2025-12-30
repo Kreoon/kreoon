@@ -21,6 +21,10 @@ import { AddProviderDialog } from '@/components/live-streaming/dialogs/AddProvid
 import { AddChannelDialog } from '@/components/live-streaming/dialogs/AddChannelDialog';
 import { AddEventDialog } from '@/components/live-streaming/dialogs/AddEventDialog';
 import { AddSaleDialog } from '@/components/live-streaming/dialogs/AddSaleDialog';
+import { EventProductsDialog } from '@/components/live-streaming/dialogs/EventProductsDialog';
+import { SaleStatusDialog } from '@/components/live-streaming/dialogs/SaleStatusDialog';
+import { EventStatusDialog } from '@/components/live-streaming/dialogs/EventStatusDialog';
+import { OrganizationStreamingConfigDialog } from '@/components/live-streaming/dialogs/OrganizationStreamingConfigDialog';
 
 export default function LiveStreamingSection() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -30,12 +34,17 @@ export default function LiveStreamingSection() {
   const [showAddChannel, setShowAddChannel] = useState(false);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [showAddSale, setShowAddSale] = useState(false);
+  const [showEventProducts, setShowEventProducts] = useState(false);
+  const [showSaleStatus, setShowSaleStatus] = useState(false);
+  const [showEventStatus, setShowEventStatus] = useState(false);
+  const [showOrgConfig, setShowOrgConfig] = useState(false);
   
   // Editing states
   const [editingProvider, setEditingProvider] = useState<StreamingProvider | null>(null);
   const [editingAccount, setEditingAccount] = useState<StreamingAccount | null>(null);
   const [editingEvent, setEditingEvent] = useState<StreamingEvent | null>(null);
   const [editingSale, setEditingSale] = useState<StreamingSale | null>(null);
+  const [selectedEventForProducts, setSelectedEventForProducts] = useState<{ id: string; title: string } | null>(null);
 
   // Use the hook
   const {
