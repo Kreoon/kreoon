@@ -26,6 +26,7 @@ import { EventProductsDialog } from '@/components/live-streaming/dialogs/EventPr
 import { SaleStatusDialog } from '@/components/live-streaming/dialogs/SaleStatusDialog';
 import { EventStatusDialog } from '@/components/live-streaming/dialogs/EventStatusDialog';
 import { OrganizationStreamingConfigDialog } from '@/components/live-streaming/dialogs/OrganizationStreamingConfigDialog';
+import { LiveMetricsCard } from '@/components/live-streaming/components/LiveMetricsCard';
 
 export default function LiveStreamingSection() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -176,6 +177,9 @@ export default function LiveStreamingSection() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Live Metrics */}
+          <LiveMetricsCard />
 
           {/* Recent Activity */}
           <Card>

@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { EVENT_TYPE_OPTIONS, PLATFORM_ICONS } from '../LiveStreamingConstants';
 import type { StreamingEvent, StreamingAccount } from '@/hooks/useLiveStreaming';
 import { supabase } from '@/integrations/supabase/client';
+import { useStreamingAI } from '../hooks/useStreamingAI';
 
 interface AddEventDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ interface Client {
 export function AddEventDialog({ open, onOpenChange, onSave, editingEvent, accounts }: AddEventDialogProps) {
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
+  const { loading: aiLoading, generateEventContent, improveTitle, improveDescription } = useStreamingAI();
   
   const [formData, setFormData] = useState<{
     title: string;
@@ -105,6 +107,33 @@ export function AddEventDialog({ open, onOpenChange, onSave, editingEvent, accou
     }));
   };
 
+  const handleGenerateWithAI = async () => {
+    const selectedClient = clients.find(c => c.id === formData.client_id);
+    const result = await generateEventContent({
+      eventType: formData.event_type,
+      clientName: selectedClient?.name,
+    });
+    if (result.title) {
+      setFormData(prev => ({
+        ...prev,
+        title: result.title || prev.title,
+        description: result.description || prev.description,
+      }));
+    }
+  };
+
+  const handleImproveTitle = async () => {
+    if (!formData.title) return;
+    const improved = await improveTitle(formData.title, formData.event_type);
+    setFormData(prev => ({ ...prev, title: improved }));
+  };
+
+  const handleImproveDescription = async () => {
+    if (!formData.description) return;
+    const improved = await improveDescription(formData.description, formData.event_type);
+    setFormData(prev => ({ ...prev, description: improved }));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -119,10 +148,32 @@ export function AddEventDialog({ open, onOpenChange, onSave, editingEvent, accou
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Título del Evento</Label>
-              <Button type="button" variant="ghost" size="sm" className="h-7 text-xs gap-1" disabled>
-                <Sparkles className="h-3 w-3" />
-                Generar con IA
-              </Button>
+              <div className="flex gap-1">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 text-xs gap-1" 
+                  disabled={aiLoading}
+                  onClick={handleGenerateWithAI}
+                >
+                  {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  Generar
+                </Button>
+                {formData.title && (
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 text-xs gap-1" 
+                    disabled={aiLoading}
+                    onClick={handleImproveTitle}
+                  >
+                    <Wand2 className="h-3 w-3" />
+                    Mejorar
+                  </Button>
+                )}
+              </div>
             </div>
             <Input
               value={formData.title}
@@ -133,7 +184,22 @@ export function AddEventDialog({ open, onOpenChange, onSave, editingEvent, accou
           </div>
 
           <div className="space-y-2">
-            <Label>Descripción</Label>
+            <div className="flex items-center justify-between">
+              <Label>Descripción</Label>
+              {formData.description && (
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 text-xs gap-1" 
+                  disabled={aiLoading}
+                  onClick={handleImproveDescription}
+                >
+                  <Wand2 className="h-3 w-3" />
+                  Mejorar
+                </Button>
+              )}
+            </div>
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
