@@ -30,6 +30,7 @@ import { RevealContactButton } from '@/components/social/RevealContactButton';
 import { FollowButton } from '@/components/social/FollowButton';
 import { FeaturedVideoUploader } from '@/components/social/FeaturedVideoUploader';
 import { FounderBadge, FounderAvatarRing } from '@/components/social/FounderBadge';
+import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 
 // FeedItem interface for modal compatibility
 interface FeedItem {
@@ -662,9 +663,9 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="aspect-square rounded-lg" />
+      <div className="grid grid-cols-3 gap-1">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <Skeleton key={i} className="aspect-[4/5] rounded-sm" />
         ))}
       </div>
     );
@@ -714,61 +715,85 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
         </div>
       )}
       <div className="grid grid-cols-3 gap-1">
-        {posts.map((post, index) => (
-          <div
-            key={post.id}
-            onClick={() => onSelect(feedItems, index)}
-            className="aspect-square relative group cursor-pointer overflow-hidden bg-muted"
-          >
-            <img
-              src={post.thumbnail_url || post.media_url}
-              alt=""
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            
-            {/* Pinned badge */}
-            {post.is_pinned && (
-              <div className="absolute top-2 left-2 z-10">
-                <div className="bg-amber-500 text-white p-1 rounded-full">
-                  <Pin className="h-3 w-3" />
-                </div>
-              </div>
-            )}
-            
-            {post.media_type === 'video' && (
-              <>
-                <div className="absolute top-2 right-2">
-                  <Play className="h-5 w-5 text-white drop-shadow-lg fill-white/30" />
-                </div>
-                <div className="absolute bottom-2 left-2 flex items-center gap-1 text-white text-xs font-medium drop-shadow-lg">
-                  <Play className="h-3 w-3" fill="currentColor" />
-                  <span>{formatCount(post.views_count || 0)}</span>
-                </div>
-              </>
-            )}
-
-            {/* Actions menu for owner */}
-            {isOwner && (
-              <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                <PostActionsMenu
-                  postId={post.id}
-                  isPinned={post.is_pinned || false}
-                  caption={post.caption}
-                  onUpdate={handleRefresh}
+        {posts.map((post, index) => {
+          // Get Bunny CDN thumbnail for videos (same as main feed)
+          const bunnyUrls = post.media_type === 'video' ? getBunnyVideoUrls(post.media_url) : null;
+          const effectiveThumbnail = bunnyUrls?.thumbnail || post.thumbnail_url;
+          
+          return (
+            <div
+              key={post.id}
+              onClick={() => onSelect(feedItems, index)}
+              className="aspect-[4/5] relative group cursor-pointer overflow-hidden bg-muted rounded-sm"
+            >
+              {post.media_type === 'video' ? (
+                <>
+                  {effectiveThumbnail ? (
+                    <img
+                      src={effectiveThumbnail}
+                      alt=""
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                      <Play className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  )}
+                  {/* Video indicator - glassmorphism style */}
+                  <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
+                    <Play className="h-3.5 w-3.5 text-white fill-white" />
+                  </div>
+                  {/* Views count */}
+                  {(post.views_count ?? 0) > 0 && (
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
+                      <Eye className="h-3 w-3 text-white/80" />
+                      <span className="text-white text-xs font-medium">{formatCount(post.views_count || 0)}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <img
+                  src={post.media_url}
+                  alt=""
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-              </div>
-            )}
-
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white pointer-events-none">
-              {(post.likes_count || 0) > 0 && (
-                <span className="flex items-center gap-1 text-sm font-semibold">
-                  <Heart className="h-5 w-5 fill-white" />
-                  {formatCount(post.likes_count || 0)}
-                </span>
               )}
+              
+              {/* Pinned badge */}
+              {post.is_pinned && (
+                <div className="absolute top-2 left-2 z-10">
+                  <div className="bg-amber-500 text-white p-1 rounded-full backdrop-blur-md">
+                    <Pin className="h-3 w-3" />
+                  </div>
+                </div>
+              )}
+
+              {/* Actions menu for owner */}
+              {isOwner && (
+                <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                  <PostActionsMenu
+                    postId={post.id}
+                    isPinned={post.is_pinned || false}
+                    caption={post.caption}
+                    onUpdate={handleRefresh}
+                  />
+                </div>
+              )}
+
+              {/* Hover overlay with stats - glassmorphism style */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                <div className="flex items-center gap-4 px-4 py-2 rounded-full backdrop-blur-xl bg-white/10 border border-white/20">
+                  {(post.likes_count || 0) >= 0 && (
+                    <span className="flex items-center gap-1.5 text-white text-sm font-semibold">
+                      <Heart className="h-4 w-4 text-red-400 fill-red-400" />
+                      {formatCount(post.likes_count || 0)}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -805,7 +830,7 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
     return (
       <div className="grid grid-cols-3 gap-1">
         {Array.from({ length: 9 }).map((_, i) => (
-          <Skeleton key={i} className="aspect-square" />
+          <Skeleton key={i} className="aspect-[4/5] rounded-sm" />
         ))}
       </div>
     );
@@ -855,61 +880,85 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
         </div>
       )}
       <div className="grid grid-cols-3 gap-1">
-        {posts.map((post, index) => (
-          <div
-            key={post.id}
-            onClick={() => onSelect(feedItems, index)}
-            className="aspect-square relative group cursor-pointer overflow-hidden bg-muted"
-          >
-            <img
-              src={post.thumbnail_url || post.media_url}
-              alt=""
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            
-            {/* Pinned badge */}
-            {post.is_pinned && (
-              <div className="absolute top-2 left-2 z-10">
-                <div className="bg-amber-500 text-white p-1 rounded-full">
-                  <Pin className="h-3 w-3" />
-                </div>
-              </div>
-            )}
-            
-            {post.media_type === 'video' && (
-              <>
-                <div className={cn("absolute top-2 right-2", isOwner && "right-10")}>
-                  <Play className="h-5 w-5 text-white drop-shadow-lg fill-white/30" />
-                </div>
-                <div className="absolute bottom-2 left-2 flex items-center gap-1 text-white text-xs font-medium drop-shadow-lg">
-                  <Play className="h-3 w-3" fill="currentColor" />
-                  <span>{formatCount(post.views_count || 0)}</span>
-                </div>
-              </>
-            )}
-
-            {/* Actions menu for owner */}
-            {isOwner && (
-              <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                <PostActionsMenu
-                  postId={post.id}
-                  isPinned={post.is_pinned || false}
-                  caption={post.caption}
-                  onUpdate={handleRefresh}
+        {posts.map((post, index) => {
+          // Get Bunny CDN thumbnail for videos (same as main feed)
+          const bunnyUrls = post.media_type === 'video' ? getBunnyVideoUrls(post.media_url) : null;
+          const effectiveThumbnail = bunnyUrls?.thumbnail || post.thumbnail_url;
+          
+          return (
+            <div
+              key={post.id}
+              onClick={() => onSelect(feedItems, index)}
+              className="aspect-[4/5] relative group cursor-pointer overflow-hidden bg-muted rounded-sm"
+            >
+              {post.media_type === 'video' ? (
+                <>
+                  {effectiveThumbnail ? (
+                    <img
+                      src={effectiveThumbnail}
+                      alt=""
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                      <Play className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  )}
+                  {/* Video indicator - glassmorphism style */}
+                  <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
+                    <Play className="h-3.5 w-3.5 text-white fill-white" />
+                  </div>
+                  {/* Views count */}
+                  {(post.views_count ?? 0) > 0 && (
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
+                      <Eye className="h-3 w-3 text-white/80" />
+                      <span className="text-white text-xs font-medium">{formatCount(post.views_count || 0)}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <img
+                  src={post.media_url}
+                  alt=""
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-              </div>
-            )}
-
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white pointer-events-none">
-              {(post.likes_count || 0) > 0 && (
-                <span className="flex items-center gap-1 text-sm font-semibold">
-                  <Heart className="h-5 w-5 fill-white" />
-                  {formatCount(post.likes_count || 0)}
-                </span>
               )}
+              
+              {/* Pinned badge */}
+              {post.is_pinned && (
+                <div className="absolute top-2 left-2 z-10">
+                  <div className="bg-amber-500 text-white p-1 rounded-full backdrop-blur-md">
+                    <Pin className="h-3 w-3" />
+                  </div>
+                </div>
+              )}
+
+              {/* Actions menu for owner */}
+              {isOwner && (
+                <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                  <PostActionsMenu
+                    postId={post.id}
+                    isPinned={post.is_pinned || false}
+                    caption={post.caption}
+                    onUpdate={handleRefresh}
+                  />
+                </div>
+              )}
+
+              {/* Hover overlay with stats - glassmorphism style */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                <div className="flex items-center gap-4 px-4 py-2 rounded-full backdrop-blur-xl bg-white/10 border border-white/20">
+                  {(post.likes_count || 0) >= 0 && (
+                    <span className="flex items-center gap-1.5 text-white text-sm font-semibold">
+                      <Heart className="h-4 w-4 text-red-400 fill-red-400" />
+                      {formatCount(post.likes_count || 0)}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
