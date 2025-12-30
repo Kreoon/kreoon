@@ -4171,6 +4171,7 @@ export type Database = {
           facebook: string | null
           featured_video_thumbnail: string | null
           featured_video_url: string | null
+          founder_badge_type: string | null
           full_name: string
           has_seen_tour: boolean | null
           id: string
@@ -4179,6 +4180,7 @@ export type Database = {
           interests: string[]
           is_active: boolean | null
           is_ambassador: boolean | null
+          is_platform_founder: boolean | null
           is_public: boolean | null
           languages: string[]
           organization_status: string
@@ -4229,6 +4231,7 @@ export type Database = {
           facebook?: string | null
           featured_video_thumbnail?: string | null
           featured_video_url?: string | null
+          founder_badge_type?: string | null
           full_name: string
           has_seen_tour?: boolean | null
           id: string
@@ -4237,6 +4240,7 @@ export type Database = {
           interests?: string[]
           is_active?: boolean | null
           is_ambassador?: boolean | null
+          is_platform_founder?: boolean | null
           is_public?: boolean | null
           languages?: string[]
           organization_status?: string
@@ -4287,6 +4291,7 @@ export type Database = {
           facebook?: string | null
           featured_video_thumbnail?: string | null
           featured_video_url?: string | null
+          founder_badge_type?: string | null
           full_name?: string
           has_seen_tour?: boolean | null
           id?: string
@@ -4295,6 +4300,7 @@ export type Database = {
           interests?: string[]
           is_active?: boolean | null
           is_ambassador?: boolean | null
+          is_platform_founder?: boolean | null
           is_public?: boolean | null
           languages?: string[]
           organization_status?: string
