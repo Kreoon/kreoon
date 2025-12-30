@@ -2973,6 +2973,7 @@ export type Database = {
       }
       live_hour_wallets: {
         Row: {
+          available_hours: number | null
           created_at: string
           id: string
           owner_id: string
@@ -2983,6 +2984,7 @@ export type Database = {
           used_hours: number
         }
         Insert: {
+          available_hours?: number | null
           created_at?: string
           id?: string
           owner_id: string
@@ -2993,6 +2995,7 @@ export type Database = {
           used_hours?: number
         }
         Update: {
+          available_hours?: number | null
           created_at?: string
           id?: string
           owner_id?: string
