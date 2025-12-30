@@ -3,11 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Play, Square, Clock, Users, Plus, Video, Eye, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { StreamingEvent } from '@/hooks/useLiveStreaming';
+import { StreamingEvent, StreamingAccount } from '@/hooks/useLiveStreaming';
 import { AddEventDialog } from '@/components/live-streaming/dialogs/AddEventDialog';
 import {
   DropdownMenu,
@@ -18,9 +18,10 @@ import {
 
 interface KreoonEventsTabProps {
   events: StreamingEvent[];
-  onSave: (event: Partial<StreamingEvent>) => Promise<void>;
-  onUpdateStatus: (id: string, status: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  accounts: StreamingAccount[];
+  onSave: (event: Partial<StreamingEvent> & { title: string }) => Promise<boolean>;
+  onUpdateStatus: (id: string, status: string) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
   onAssignCreator?: (eventId: string) => void;
 }
 
@@ -33,6 +34,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secon
 
 export function KreoonEventsTab({ 
   events, 
+  accounts,
   onSave, 
   onUpdateStatus, 
   onDelete,
@@ -55,8 +57,8 @@ export function KreoonEventsTab({
     setShowAddDialog(true);
   };
 
-  const handleSave = async (data: Partial<StreamingEvent>) => {
-    await onSave({ ...editingEvent, ...data });
+  const handleSave = async (data: Partial<StreamingEvent> & { title: string }) => {
+    await onSave({ ...editingEvent, ...data } as Partial<StreamingEvent> & { title: string });
     setEditingEvent(null);
   };
 
@@ -223,7 +225,9 @@ export function KreoonEventsTab({
           setShowAddDialog(open);
           if (!open) setEditingEvent(null);
         }}
-        onSave={async (data) => { await handleSave(data); return true; }}
+        onSave={onSave}
+        accounts={accounts}
+        editingEvent={editingEvent}
       />
     </div>
   );
