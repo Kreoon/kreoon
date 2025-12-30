@@ -6,6 +6,7 @@ export { KreoonChannelsTab } from './tabs/KreoonChannelsTab';
 export { KreoonEventsTab } from './tabs/KreoonEventsTab';
 export { KreoonCreatorsTab } from './tabs/KreoonCreatorsTab';
 export { KreoonBillingTab } from './tabs/KreoonBillingTab';
+export { KreoonProvidersTab } from './tabs/KreoonProvidersTab';
 
 // Dialogs
 export { AddProviderDialog } from './dialogs/AddProviderDialog';

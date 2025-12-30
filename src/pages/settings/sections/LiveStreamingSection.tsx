@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Video, Eye, Package, Users, Link2, Calendar, UserCheck, CreditCard, Loader2 } from 'lucide-react';
+import { Video, Eye, Package, Users, Link2, Calendar, UserCheck, CreditCard, Loader2, Settings2 } from 'lucide-react';
 
 // Hooks
 import { useKreoonLive } from '@/hooks/useKreoonLive';
@@ -17,6 +17,7 @@ import { KreoonChannelsTab } from '@/components/live-streaming/tabs/KreoonChanne
 import { KreoonEventsTab } from '@/components/live-streaming/tabs/KreoonEventsTab';
 import { KreoonCreatorsTab } from '@/components/live-streaming/tabs/KreoonCreatorsTab';
 import { KreoonBillingTab } from '@/components/live-streaming/tabs/KreoonBillingTab';
+import { KreoonProvidersTab } from '@/components/live-streaming/tabs/KreoonProvidersTab';
 
 interface Creator {
   id: string;
@@ -55,12 +56,14 @@ export default function LiveStreamingSection() {
     fetchData: fetchKreoonData,
   } = useKreoonLive();
 
-  // Legacy streaming hook (for events, accounts, etc.)
+  // Legacy streaming hook (for events, accounts, providers, etc.)
   const {
     loading: streamingLoading,
+    providers,
     accounts,
     events,
     fetchData: fetchStreamingData,
+    saveProvider,
     saveAccount,
     deleteAccount,
     saveEvent,
@@ -137,10 +140,14 @@ export default function LiveStreamingSection() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview" className="gap-2 text-xs">
             <Eye className="h-3 w-3" />
             Overview
+          </TabsTrigger>
+          <TabsTrigger value="providers" className="gap-2 text-xs">
+            <Settings2 className="h-3 w-3" />
+            Proveedores
           </TabsTrigger>
           <TabsTrigger value="packages" className="gap-2 text-xs">
             <Package className="h-3 w-3" />
@@ -181,6 +188,15 @@ export default function LiveStreamingSection() {
             isAdmin={isAdmin || false}
             purchases={purchases}
             onAddPlatformHours={addPlatformHoursToOrg}
+          />
+        </TabsContent>
+
+        {/* Providers Tab */}
+        <TabsContent value="providers">
+          <KreoonProvidersTab
+            providers={providers}
+            onRefresh={fetchStreamingData}
+            onSave={saveProvider}
           />
         </TabsContent>
 
