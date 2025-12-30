@@ -147,7 +147,7 @@ export function AddEventDialog({ open, onOpenChange, onSave, editingEvent, accou
               <Label>Tipo de Evento</Label>
               <Select
                 value={formData.event_type}
-                onValueChange={(value) => setFormData({ ...formData, event_type: value })}
+                onValueChange={(value) => setFormData({ ...formData, event_type: value as typeof formData.event_type })}
               >
                 <SelectTrigger>
                   <SelectValue />

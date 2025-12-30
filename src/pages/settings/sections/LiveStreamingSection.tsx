@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,257 +6,58 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { 
   Video, Settings2, Link2, Calendar, DollarSign, FileText, 
-  Youtube, Facebook, Instagram, Twitch, Plus, Loader2, 
-  CheckCircle2, XCircle, AlertTriangle, Play, Square, Trash2,
-  RefreshCw, ExternalLink, Eye, Edit, MoreHorizontal
+  Plus, Loader2, Play, Square, Trash2, RefreshCw, Edit, MoreHorizontal, Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-// Types
-interface StreamingProvider {
-  id: string;
-  provider: string;
-  is_enabled: boolean;
-  mode: string;
-  api_key_encrypted?: string;
-  client_id?: string;
-  webhook_url?: string;
-}
-
-interface StreamingAccount {
-  id: string;
-  platform_type: string;
-  account_name: string;
-  status: string;
-  created_at: string;
-  last_sync_at?: string;
-  error_message?: string;
-}
-
-interface StreamingEvent {
-  id: string;
-  title: string;
-  description?: string;
-  event_type: string;
-  status: string;
-  scheduled_at?: string;
-  started_at?: string;
-  ended_at?: string;
-  peak_viewers: number;
-  total_views: number;
-  is_shopping_enabled: boolean;
-  client?: { name: string };
-}
-
-interface StreamingSale {
-  id: string;
-  sale_type: string;
-  status: string;
-  amount: number;
-  currency: string;
-  description?: string;
-  quoted_at: string;
-  client?: { name: string };
-  event?: { title: string };
-}
-
-interface StreamingLog {
-  id: string;
-  log_type: string;
-  message: string;
-  severity: string;
-  created_at: string;
-  provider?: string;
-  platform_type?: string;
-}
-
-// Platform icons
-const PLATFORM_ICONS: Record<string, React.ReactNode> = {
-  youtube: <Youtube className="h-4 w-4 text-red-500" />,
-  facebook: <Facebook className="h-4 w-4 text-blue-600" />,
-  instagram: <Instagram className="h-4 w-4 text-pink-500" />,
-  twitch: <Twitch className="h-4 w-4 text-purple-500" />,
-  tiktok: <Video className="h-4 w-4" />,
-  linkedin: <Link2 className="h-4 w-4 text-blue-700" />,
-  custom_rtmp: <Video className="h-4 w-4 text-gray-500" />,
-};
-
-// Status badges
-const STATUS_COLORS: Record<string, string> = {
-  connected: 'bg-green-500/10 text-green-600 border-green-500/20',
-  expired: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
-  error: 'bg-red-500/10 text-red-600 border-red-500/20',
-  disconnected: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
-  draft: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
-  scheduled: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-  live: 'bg-red-500/10 text-red-600 border-red-500/20 animate-pulse',
-  ended: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
-  cancelled: 'bg-red-500/10 text-red-600 border-red-500/20',
-  quoted: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
-  sold: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-  executed: 'bg-green-500/10 text-green-600 border-green-500/20',
-  paid: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-};
-
-const SEVERITY_COLORS: Record<string, string> = {
-  info: 'bg-blue-500/10 text-blue-600',
-  warning: 'bg-yellow-500/10 text-yellow-600',
-  error: 'bg-red-500/10 text-red-600',
-  critical: 'bg-red-600/20 text-red-700',
-};
+// Hook and components
+import { useLiveStreaming, type StreamingProvider, type StreamingAccount, type StreamingEvent, type StreamingSale } from '@/hooks/useLiveStreaming';
+import { PLATFORM_ICONS, STATUS_COLORS, SEVERITY_COLORS } from '@/components/live-streaming/LiveStreamingConstants';
+import { AddProviderDialog } from '@/components/live-streaming/dialogs/AddProviderDialog';
+import { AddChannelDialog } from '@/components/live-streaming/dialogs/AddChannelDialog';
+import { AddEventDialog } from '@/components/live-streaming/dialogs/AddEventDialog';
+import { AddSaleDialog } from '@/components/live-streaming/dialogs/AddSaleDialog';
 
 export default function LiveStreamingSection() {
-  const { toast } = useToast();
-  const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
-  const [featureEnabled, setFeatureEnabled] = useState(false);
   
-  // Data states
-  const [providers, setProviders] = useState<StreamingProvider[]>([]);
-  const [accounts, setAccounts] = useState<StreamingAccount[]>([]);
-  const [events, setEvents] = useState<StreamingEvent[]>([]);
-  const [sales, setSales] = useState<StreamingSale[]>([]);
-  const [logs, setLogs] = useState<StreamingLog[]>([]);
-
   // Dialog states
   const [showAddProvider, setShowAddProvider] = useState(false);
+  const [showAddChannel, setShowAddChannel] = useState(false);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [showAddSale, setShowAddSale] = useState(false);
+  
+  // Editing states
+  const [editingProvider, setEditingProvider] = useState<StreamingProvider | null>(null);
+  const [editingAccount, setEditingAccount] = useState<StreamingAccount | null>(null);
+  const [editingEvent, setEditingEvent] = useState<StreamingEvent | null>(null);
+  const [editingSale, setEditingSale] = useState<StreamingSale | null>(null);
 
-  // Fetch feature flag
-  useEffect(() => {
-    const fetchFeatureFlag = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('value')
-          .eq('key', 'live_streaming_enabled')
-          .single();
-        
-        if (data) {
-          setFeatureEnabled(data.value === 'true');
-        }
-      } catch (error) {
-        console.error('Error fetching feature flag:', error);
-      }
-    };
-
-    fetchFeatureFlag();
-  }, []);
-
-  // Fetch all data
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Fetch providers
-        const { data: providersData } = await supabase
-          .from('streaming_providers_config')
-          .select('*')
-          .eq('owner_type', 'platform')
-          .order('provider');
-        setProviders((providersData as StreamingProvider[]) || []);
-
-        // Fetch accounts
-        const { data: accountsData } = await supabase
-          .from('streaming_accounts')
-          .select('*')
-          .eq('owner_type', 'platform')
-          .order('created_at', { ascending: false });
-        setAccounts((accountsData as StreamingAccount[]) || []);
-
-        // Fetch events
-        const { data: eventsData } = await supabase
-          .from('streaming_events')
-          .select('*, client:clients(name)')
-          .eq('owner_type', 'platform')
-          .order('scheduled_at', { ascending: false })
-          .limit(50);
-        setEvents((eventsData as StreamingEvent[]) || []);
-
-        // Fetch sales
-        const { data: salesData } = await supabase
-          .from('streaming_sales')
-          .select('*, client:clients(name), event:streaming_events(title)')
-          .eq('owner_type', 'platform')
-          .order('created_at', { ascending: false })
-          .limit(50);
-        setSales((salesData as StreamingSale[]) || []);
-
-        // Fetch logs
-        const { data: logsData } = await supabase
-          .from('streaming_logs')
-          .select('*')
-          .eq('owner_type', 'platform')
-          .order('created_at', { ascending: false })
-          .limit(100);
-        setLogs((logsData as StreamingLog[]) || []);
-
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        toast({
-          title: 'Error',
-          description: 'No se pudieron cargar los datos',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [toast]);
-
-  // Toggle feature flag
-  const toggleFeatureFlag = async () => {
-    try {
-      const newValue = !featureEnabled;
-      const { error } = await supabase
-        .from('app_settings')
-        .update({ value: newValue.toString(), updated_at: new Date().toISOString() })
-        .eq('key', 'live_streaming_enabled');
-
-      if (error) throw error;
-
-      setFeatureEnabled(newValue);
-      toast({
-        title: 'Actualizado',
-        description: newValue 
-          ? 'Live Streaming habilitado para organizaciones'
-          : 'Live Streaming deshabilitado para organizaciones',
-      });
-    } catch (error) {
-      console.error('Error toggling feature:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo actualizar la configuración',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // Stats for overview
-  const stats = useMemo(() => ({
-    totalAccounts: accounts.length,
-    connectedAccounts: accounts.filter(a => a.status === 'connected').length,
-    totalEvents: events.length,
-    liveEvents: events.filter(e => e.status === 'live').length,
-    scheduledEvents: events.filter(e => e.status === 'scheduled').length,
-    totalSales: sales.length,
-    totalRevenue: sales.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.amount, 0),
-    pendingRevenue: sales.filter(s => ['quoted', 'sold', 'executed'].includes(s.status)).reduce((sum, s) => sum + s.amount, 0),
-  }), [accounts, events, sales]);
+  // Use the hook
+  const {
+    loading,
+    featureEnabled,
+    providers,
+    accounts,
+    events,
+    sales,
+    logs,
+    stats,
+    fetchData,
+    toggleFeatureFlag,
+    saveProvider,
+    saveAccount,
+    deleteAccount,
+    saveEvent,
+    updateEventStatus,
+    deleteEvent,
+    saveSale,
+    updateSaleStatus,
+  } = useLiveStreaming();
 
   if (loading) {
     return (
@@ -268,6 +69,7 @@ export default function LiveStreamingSection() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -289,6 +91,7 @@ export default function LiveStreamingSection() {
         </div>
       </div>
 
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview" className="gap-2 text-xs">
@@ -407,7 +210,7 @@ export default function LiveStreamingSection() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
-                {['restream', 'watchity', 'custom_rtmp'].map((providerKey) => {
+                {(['restream', 'watchity', 'custom_rtmp'] as const).map((providerKey) => {
                   const provider = providers.find(p => p.provider === providerKey);
                   return (
                     <div key={providerKey} className="flex items-center justify-between p-4 rounded-lg border">
@@ -432,7 +235,18 @@ export default function LiveStreamingSection() {
                           checked={provider?.is_enabled || false} 
                           disabled={!provider}
                         />
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            if (provider) {
+                              setEditingProvider(provider);
+                            } else {
+                              setEditingProvider({ provider: providerKey } as StreamingProvider);
+                            }
+                            setShowAddProvider(true);
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                       </div>
@@ -453,7 +267,7 @@ export default function LiveStreamingSection() {
                   <CardTitle>Canales Conectados</CardTitle>
                   <CardDescription>Administra tus cuentas de streaming</CardDescription>
                 </div>
-                <Button className="gap-2">
+                <Button onClick={() => setShowAddChannel(true)} className="gap-2">
                   <Plus className="h-4 w-4" />
                   Conectar Canal
                 </Button>
@@ -467,7 +281,7 @@ export default function LiveStreamingSection() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Conecta tu primer canal para empezar a transmitir
                   </p>
-                  <Button>Conectar Canal</Button>
+                  <Button onClick={() => setShowAddChannel(true)}>Conectar Canal</Button>
                 </div>
               ) : (
                 <Table>
@@ -491,7 +305,7 @@ export default function LiveStreamingSection() {
                         </TableCell>
                         <TableCell className="font-medium">{account.account_name}</TableCell>
                         <TableCell>
-                          <Badge className={STATUS_COLORS[account.status]}>
+                          <Badge className={STATUS_COLORS[account.status] || STATUS_COLORS.disconnected}>
                             {account.status}
                           </Badge>
                         </TableCell>
@@ -502,10 +316,14 @@ export default function LiveStreamingSection() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" onClick={() => fetchData()}>
                               <RefreshCw className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => deleteAccount(account.id)}
+                            >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
@@ -569,7 +387,7 @@ export default function LiveStreamingSection() {
                         </TableCell>
                         <TableCell className="capitalize">{event.event_type}</TableCell>
                         <TableCell>
-                          <Badge className={STATUS_COLORS[event.status]}>
+                          <Badge className={STATUS_COLORS[event.status] || STATUS_COLORS.draft}>
                             {event.status === 'live' && <span className="mr-1">●</span>}
                             {event.status}
                           </Badge>
@@ -588,18 +406,35 @@ export default function LiveStreamingSection() {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             {event.status === 'scheduled' && (
-                              <Button variant="default" size="sm" className="gap-1">
+                              <Button 
+                                variant="default" 
+                                size="sm" 
+                                className="gap-1"
+                                onClick={() => updateEventStatus(event.id, 'live')}
+                              >
                                 <Play className="h-3 w-3" />
                                 Iniciar
                               </Button>
                             )}
                             {event.status === 'live' && (
-                              <Button variant="destructive" size="sm" className="gap-1">
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="gap-1"
+                                onClick={() => updateEventStatus(event.id, 'ended')}
+                              >
                                 <Square className="h-3 w-3" />
                                 Detener
                               </Button>
                             )}
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => {
+                                setEditingEvent(event);
+                                setShowAddEvent(true);
+                              }}
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </div>
@@ -665,7 +500,7 @@ export default function LiveStreamingSection() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={STATUS_COLORS[sale.status]}>
+                          <Badge className={STATUS_COLORS[sale.status] || STATUS_COLORS.quoted}>
                             {sale.status}
                           </Badge>
                         </TableCell>
@@ -673,7 +508,14 @@ export default function LiveStreamingSection() {
                           {format(new Date(sale.quoted_at), 'dd/MM/yyyy', { locale: es })}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => {
+                              setEditingSale(sale);
+                              setShowAddSale(true);
+                            }}
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </TableCell>
@@ -738,7 +580,7 @@ export default function LiveStreamingSection() {
                   <CardTitle>Logs del Sistema</CardTitle>
                   <CardDescription>Historial de eventos y errores</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => fetchData()}>
                   <RefreshCw className="h-4 w-4" />
                   Actualizar
                 </Button>
@@ -792,6 +634,49 @@ export default function LiveStreamingSection() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialogs */}
+      <AddProviderDialog 
+        open={showAddProvider} 
+        onOpenChange={(open) => {
+          setShowAddProvider(open);
+          if (!open) setEditingProvider(null);
+        }}
+        onSave={saveProvider}
+        editingProvider={editingProvider}
+      />
+
+      <AddChannelDialog 
+        open={showAddChannel} 
+        onOpenChange={(open) => {
+          setShowAddChannel(open);
+          if (!open) setEditingAccount(null);
+        }}
+        onSave={saveAccount}
+        editingAccount={editingAccount}
+      />
+
+      <AddEventDialog 
+        open={showAddEvent} 
+        onOpenChange={(open) => {
+          setShowAddEvent(open);
+          if (!open) setEditingEvent(null);
+        }}
+        onSave={saveEvent}
+        editingEvent={editingEvent}
+        accounts={accounts}
+      />
+
+      <AddSaleDialog 
+        open={showAddSale} 
+        onOpenChange={(open) => {
+          setShowAddSale(open);
+          if (!open) setEditingSale(null);
+        }}
+        onSave={saveSale}
+        editingSale={editingSale}
+        events={events}
+      />
     </div>
   );
 }
