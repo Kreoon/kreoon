@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { 
   User, Bell, Shield, HelpCircle, Building2, Crown, Star, History,
   Landmark, Users, Share2, CreditCard, Settings2, ShieldCheck,
-  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, UserPlus
+  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, UserPlus, Video
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SettingsPermissions, SettingsSectionKey } from '@/hooks/useSettingsPermissions';
@@ -70,6 +70,7 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'platform_admin', icon: ShieldCheck, title: 'Administración', description: 'Seguridad y datos' },
       { key: 'tracking', icon: BarChart3, title: 'Tracking', description: 'Analytics y píxeles' },
       { key: 'ai_tokenization', icon: Brain, title: 'IA Tokenización', description: 'Costos por perfil' },
+      { key: 'live_streaming', icon: Video, title: 'Live Streaming', description: 'Multiplatforma' },
     ],
   },
 ];

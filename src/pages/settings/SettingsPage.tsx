@@ -32,6 +32,7 @@ const BillingUnifiedSection = lazy(() => import('./sections/BillingUnifiedSectio
 const PlatformConfigSection = lazy(() => import('./sections/PlatformConfigSection'));
 const PlatformAdminSection = lazy(() => import('./sections/PlatformAdminSection'));
 const AITokenizationSection = lazy(() => import('@/pages/admin/AITokenizationPage'));
+const LiveStreamingSection = lazy(() => import('./sections/LiveStreamingSection'));
 
 // Loading fallback
 const SectionLoader = memo(() => (
@@ -65,6 +66,7 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   platform_config: PlatformConfigSection,
   platform_admin: PlatformAdminSection,
   ai_tokenization: AITokenizationSection,
+  live_streaming: LiveStreamingSection,
 };
 
 // Wide sections that need more space
