@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   Video, Settings2, Link2, Calendar, DollarSign, FileText, 
-  Plus, Loader2, Play, Square, Trash2, RefreshCw, Edit, MoreHorizontal, Eye
+  Plus, Loader2, Play, Square, Trash2, RefreshCw, Edit, MoreHorizontal, Eye,
+  ShoppingBag, ArrowRight, Settings
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -414,6 +415,34 @@ export default function LiveStreamingSection() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
+                            {event.event_type === 'shopping' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-1"
+                                onClick={() => {
+                                  setSelectedEventForProducts({ id: event.id, title: event.title });
+                                  setShowEventProducts(true);
+                                }}
+                              >
+                                <ShoppingBag className="h-3 w-3" />
+                                Productos
+                              </Button>
+                            )}
+                            {event.status === 'draft' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-1"
+                                onClick={() => {
+                                  setEditingEvent(event);
+                                  setShowEventStatus(true);
+                                }}
+                              >
+                                <ArrowRight className="h-3 w-3" />
+                                Programar
+                              </Button>
+                            )}
                             {event.status === 'scheduled' && (
                               <Button 
                                 variant="default" 
@@ -444,7 +473,14 @@ export default function LiveStreamingSection() {
                                 setShowAddEvent(true);
                               }}
                             >
-                              <MoreHorizontal className="h-4 w-4" />
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => deleteEvent(event.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
                         </TableCell>
@@ -517,16 +553,32 @@ export default function LiveStreamingSection() {
                           {format(new Date(sale.quoted_at), 'dd/MM/yyyy', { locale: es })}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => {
-                              setEditingSale(sale);
-                              setShowAddSale(true);
-                            }}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            {sale.status !== 'paid' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-1"
+                                onClick={() => {
+                                  setEditingSale(sale);
+                                  setShowSaleStatus(true);
+                                }}
+                              >
+                                <ArrowRight className="h-3 w-3" />
+                                Avanzar
+                              </Button>
+                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => {
+                                setEditingSale(sale);
+                                setShowAddSale(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -574,6 +626,21 @@ export default function LiveStreamingSection() {
                     <Label>Día de Facturación</Label>
                     <Input type="number" defaultValue={1} min={1} max={28} />
                   </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Configuración por Organización</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Configura permisos específicos para cada organización
+                    </p>
+                  </div>
+                  <Button variant="outline" onClick={() => setShowOrgConfig(true)} className="gap-2">
+                    <Settings className="h-4 w-4" />
+                    Configurar Orgs
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -685,6 +752,42 @@ export default function LiveStreamingSection() {
         onSave={saveSale}
         editingSale={editingSale}
         events={events}
+      />
+
+      <EventProductsDialog
+        open={showEventProducts}
+        onOpenChange={(open) => {
+          setShowEventProducts(open);
+          if (!open) setSelectedEventForProducts(null);
+        }}
+        eventId={selectedEventForProducts?.id || ''}
+        eventTitle={selectedEventForProducts?.title || ''}
+      />
+
+      <SaleStatusDialog
+        open={showSaleStatus}
+        onOpenChange={(open) => {
+          setShowSaleStatus(open);
+          if (!open) setEditingSale(null);
+        }}
+        sale={editingSale}
+        onUpdateStatus={updateSaleStatus}
+      />
+
+      <EventStatusDialog
+        open={showEventStatus}
+        onOpenChange={(open) => {
+          setShowEventStatus(open);
+          if (!open) setEditingEvent(null);
+        }}
+        event={editingEvent}
+        onUpdateStatus={updateEventStatus}
+        connectedChannelsCount={accounts.filter(a => a.status === 'connected').length}
+      />
+
+      <OrganizationStreamingConfigDialog
+        open={showOrgConfig}
+        onOpenChange={setShowOrgConfig}
       />
     </div>
   );
