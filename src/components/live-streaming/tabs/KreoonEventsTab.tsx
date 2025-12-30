@@ -4,18 +4,36 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Play, Square, Clock, Users, Plus, Video, Eye, MoreHorizontal, AlertTriangle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Calendar, Play, Square, Clock, Users, Plus, Video, Eye, MoreHorizontal, AlertTriangle, Lock, Unlock, Timer } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { StreamingEvent, StreamingAccount } from '@/hooks/useLiveStreaming';
 import { AddEventDialog } from '@/components/live-streaming/dialogs/AddEventDialog';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+
+interface EnhancedStreamingEvent extends StreamingEvent {
+  estimated_duration_hours?: number;
+  actual_duration_hours?: number;
+  hours_reserved?: number;
+  hours_consumed?: number;
+  reservation_status?: 'pending' | 'reserved' | 'consumed' | 'released';
+}
 
 interface KreoonEventsTabProps {
   events: StreamingEvent[];
@@ -28,11 +46,19 @@ interface KreoonEventsTabProps {
   canClientStartLive?: (clientId: string) => Promise<boolean>;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  scheduled: { label: 'Programado', variant: 'secondary' },
-  live: { label: 'EN VIVO', variant: 'destructive' },
-  ended: { label: 'Finalizado', variant: 'outline' },
-  cancelled: { label: 'Cancelado', variant: 'outline' },
+const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; color: string }> = {
+  draft: { label: 'Borrador', variant: 'outline', color: 'text-muted-foreground' },
+  scheduled: { label: 'Programado', variant: 'secondary', color: 'text-blue-500' },
+  live: { label: 'EN VIVO', variant: 'destructive', color: 'text-red-500' },
+  ended: { label: 'Finalizado', variant: 'outline', color: 'text-green-500' },
+  cancelled: { label: 'Cancelado', variant: 'outline', color: 'text-muted-foreground' },
+};
+
+const RESERVATION_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  pending: { label: 'Sin reservar', icon: <Unlock className="h-3 w-3" />, color: 'text-yellow-500' },
+  reserved: { label: 'Reservado', icon: <Lock className="h-3 w-3" />, color: 'text-blue-500' },
+  consumed: { label: 'Consumido', icon: <Timer className="h-3 w-3" />, color: 'text-green-500' },
+  released: { label: 'Liberado', icon: <Unlock className="h-3 w-3" />, color: 'text-muted-foreground' },
 };
 
 export function KreoonEventsTab({ 
@@ -69,12 +95,57 @@ export function KreoonEventsTab({
     setEditingEvent(null);
   };
 
+  // Reserve hours for an event
+  const handleReserveHours = async (event: EnhancedStreamingEvent) => {
+    if (!event.client_id) {
+      toast({
+        title: 'Sin cliente asignado',
+        description: 'Asigna un cliente al evento primero',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoadingAction(event.id);
+    try {
+      const hours = event.estimated_duration_hours || 1;
+      const { error } = await (supabase as any).rpc('reserve_live_hours', {
+        _event_id: event.id,
+        _hours: hours
+      });
+
+      if (error) throw error;
+
+      toast({ title: 'Horas reservadas', description: `${hours} horas reservadas para este evento` });
+      // Trigger refresh in parent
+    } catch (error: any) {
+      console.error('Error reserving hours:', error);
+      toast({
+        title: 'Error al reservar horas',
+        description: error.message || 'No se pudieron reservar las horas',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
   // Handle starting a live event with hour verification
-  const handleStartLive = async (event: StreamingEvent) => {
+  const handleStartLive = async (event: EnhancedStreamingEvent) => {
     if (!event.client_id) {
       toast({
         title: 'Sin cliente asignado',
         description: 'Este evento no tiene un cliente asignado',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check if hours are reserved
+    if (event.reservation_status !== 'reserved') {
+      toast({
+        title: 'Horas no reservadas',
+        description: 'Debes reservar las horas antes de iniciar el live',
         variant: 'destructive',
       });
       return;
@@ -102,15 +173,31 @@ export function KreoonEventsTab({
   };
 
   // Handle ending a live event with hour consumption
-  const handleEndLive = async (event: StreamingEvent) => {
+  const handleEndLive = async (event: EnhancedStreamingEvent) => {
     setLoadingAction(event.id);
     try {
       // First update status
       const success = await onUpdateStatus(event.id, 'ended');
       
-      // Then consume hours
-      if (success && onConsumeHours) {
-        await onConsumeHours(event.id);
+      // Then consume hours - calculate actual duration
+      if (success) {
+        const startedAt = event.started_at ? new Date(event.started_at) : new Date();
+        const endedAt = new Date();
+        const actualHours = Math.ceil((endedAt.getTime() - startedAt.getTime()) / (1000 * 60 * 60) * 100) / 100;
+
+        const { error } = await (supabase as any).rpc('consume_live_hours', {
+          _event_id: event.id,
+          _actual_hours: actualHours
+        });
+
+        if (error) {
+          console.error('Error consuming hours:', error);
+        } else {
+          toast({
+            title: 'Transmisión finalizada',
+            description: `Se consumieron ${actualHours.toFixed(2)} horas`
+          });
+        }
       }
     } finally {
       setLoadingAction(null);
@@ -234,18 +321,43 @@ export function KreoonEventsTab({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            {event.status === 'scheduled' && (
-                              <DropdownMenuItem onClick={() => handleStartLive(event)}>
+                            {/* Reserve hours option */}
+                            {(event as EnhancedStreamingEvent).reservation_status !== 'reserved' && 
+                             (event as EnhancedStreamingEvent).reservation_status !== 'consumed' &&
+                             event.status !== 'live' && event.status !== 'ended' && (
+                              <DropdownMenuItem onClick={() => handleReserveHours(event as EnhancedStreamingEvent)}>
+                                <Lock className="h-4 w-4 mr-2" />
+                                Reservar Horas
+                              </DropdownMenuItem>
+                            )}
+                            {event.status === 'scheduled' && (event as EnhancedStreamingEvent).reservation_status === 'reserved' && (
+                              <DropdownMenuItem onClick={() => handleStartLive(event as EnhancedStreamingEvent)}>
                                 <Play className="h-4 w-4 mr-2" />
                                 Iniciar Live
                               </DropdownMenuItem>
                             )}
+                            {event.status === 'scheduled' && (event as EnhancedStreamingEvent).reservation_status !== 'reserved' && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center px-2 py-1.5 text-sm text-muted-foreground cursor-not-allowed">
+                                      <AlertTriangle className="h-4 w-4 mr-2" />
+                                      Iniciar Live
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Reserva las horas primero</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
                             {event.status === 'live' && (
-                              <DropdownMenuItem onClick={() => handleEndLive(event)}>
+                              <DropdownMenuItem onClick={() => handleEndLive(event as EnhancedStreamingEvent)}>
                                 <Square className="h-4 w-4 mr-2" />
                                 Finalizar Live
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuSeparator />
                             {onAssignCreator && (
                               <DropdownMenuItem onClick={() => onAssignCreator(event.id)}>
                                 <Users className="h-4 w-4 mr-2" />

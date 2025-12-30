@@ -7,6 +7,9 @@ export { KreoonEventsTab } from './tabs/KreoonEventsTab';
 export { KreoonCreatorsTab } from './tabs/KreoonCreatorsTab';
 export { KreoonBillingTab } from './tabs/KreoonBillingTab';
 export { KreoonProvidersTab } from './tabs/KreoonProvidersTab';
+export { LivePlatformConfigTab } from './tabs/LivePlatformConfigTab';
+export { LiveMonitoringTab } from './tabs/LiveMonitoringTab';
+export { LiveClientSettingsTab } from './tabs/LiveClientSettingsTab';
 
 // Dialogs
 export { AddProviderDialog } from './dialogs/AddProviderDialog';
