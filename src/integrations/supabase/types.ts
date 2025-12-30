@@ -2683,6 +2683,256 @@ export type Database = {
         }
         Relationships: []
       }
+      live_event_creators: {
+        Row: {
+          created_at: string
+          creator_id: string
+          event_id: string
+          id: string
+          notes: string | null
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          event_id: string
+          id?: string
+          notes?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          event_id?: string
+          id?: string
+          notes?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_event_creators_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_feature_flags: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      live_hour_assignments: {
+        Row: {
+          assigned_by: string | null
+          client_id: string
+          created_at: string
+          hours_assigned: number
+          id: string
+          notes: string | null
+          organization_id: string
+          package_id: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          client_id: string
+          created_at?: string
+          hours_assigned: number
+          id?: string
+          notes?: string | null
+          organization_id: string
+          package_id?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          client_id?: string
+          created_at?: string
+          hours_assigned?: number
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          package_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_hour_assignments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_hour_purchases: {
+        Row: {
+          created_at: string
+          currency: string
+          hours_purchased: number
+          id: string
+          notes: string | null
+          organization_id: string
+          price_paid: number
+          purchased_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          hours_purchased: number
+          id?: string
+          notes?: string | null
+          organization_id: string
+          price_paid?: number
+          purchased_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          hours_purchased?: number
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          price_paid?: number
+          purchased_by?: string | null
+        }
+        Relationships: []
+      }
+      live_hour_wallets: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          owner_type: string
+          reserved_hours: number
+          total_hours: number
+          updated_at: string
+          used_hours: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          owner_type: string
+          reserved_hours?: number
+          total_hours?: number
+          updated_at?: string
+          used_hours?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          owner_type?: string
+          reserved_hours?: number
+          total_hours?: number
+          updated_at?: string
+          used_hours?: number
+        }
+        Relationships: []
+      }
+      live_packages: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          features: Json | null
+          hours_included: number
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json | null
+          hours_included?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json | null
+          hours_included?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      live_usage_logs: {
+        Row: {
+          action: string
+          client_id: string | null
+          created_at: string
+          details: Json | null
+          event_id: string | null
+          hours_consumed: number | null
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          action: string
+          client_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_id?: string | null
+          hours_consumed?: number | null
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          action?: string
+          client_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_id?: string | null
+          hours_consumed?: number | null
+          id?: string
+          organization_id?: string
+        }
+        Relationships: []
+      }
       login_history: {
         Row: {
           device_type: string | null
