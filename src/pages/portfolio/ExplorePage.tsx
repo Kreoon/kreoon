@@ -1,23 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Hash, TrendingUp, Users, Grid3X3, Loader2, Sparkles, Play } from 'lucide-react';
+import { 
+  Search, Hash, TrendingUp, Users, Grid3X3, Loader2, Sparkles, Play, 
+  ArrowLeft, MapPin, RefreshCw 
+} from 'lucide-react';
 import { useHashtags } from '@/hooks/useHashtags';
 import { cn } from '@/lib/utils';
-
-interface TrendingCreator {
-  id: string;
-  full_name: string;
-  avatar_url: string | null;
-  username: string | null;
-  bio: string | null;
-}
+import { UserProfileCard, UserProfileCardData } from '@/components/social/UserProfileCard';
+import { SuggestedUsers } from '@/components/social/SuggestedUsers';
+import { UserSearchFilters, SearchFilters } from '@/components/social/UserSearchFilters';
+import { KreoonSocialLogo } from '@/components/social/KreoonSocialBrand';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TrendingPost {
   id: string;
@@ -28,18 +27,31 @@ interface TrendingPost {
   user_id: string;
 }
 
+const DEFAULT_FILTERS: SearchFilters = {
+  query: '',
+  category: '',
+  city: '',
+  country: '',
+  hasContent: false,
+  isVerified: false,
+  sortBy: 'followers',
+};
+
 export default function ExplorePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'trending';
+  const activeTab = searchParams.get('tab') || 'discover';
   const hashtagFilter = searchParams.get('tag');
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [trendingCreators, setTrendingCreators] = useState<TrendingCreator[]>([]);
+  const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
+  const [searchResults, setSearchResults] = useState<UserProfileCardData[]>([]);
+  const [trendingCreators, setTrendingCreators] = useState<UserProfileCardData[]>([]);
   const [trendingPosts, setTrendingPosts] = useState<TrendingPost[]>([]);
   const [hashtagPosts, setHashtagPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchFocused, setSearchFocused] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const { trending: trendingHashtags, fetchTrending, getPostsByHashtag } = useHashtags();
 
@@ -57,16 +69,53 @@ export default function ExplorePage() {
   const fetchTrendingData = async () => {
     setLoading(true);
     try {
-      const { data: creators } = await (supabase as any)
+      // Fetch trending creators with stats
+      const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, username, bio')
+        .select('id, full_name, avatar_url, username, bio, tagline, city, country, is_platform_founder, founder_badge_type')
         .eq('is_public', true)
         .limit(12);
 
+      // Get follower counts
+      const profileIds = profiles?.map(p => p.id) || [];
+      const { data: followerCounts } = await supabase
+        .from('followers')
+        .select('following_id')
+        .in('following_id', profileIds);
+
+      // Get content counts
+      const { data: contentCounts } = await supabase
+        .from('content')
+        .select('creator_id')
+        .in('creator_id', profileIds)
+        .eq('is_portfolio_public', true);
+
+      const creatorsWithStats: UserProfileCardData[] = (profiles || []).map(profile => {
+        const followersCount = followerCounts?.filter(f => f.following_id === profile.id).length || 0;
+        const contentCount = contentCounts?.filter(c => c.creator_id === profile.id).length || 0;
+
+        return {
+          ...profile,
+          followers_count: followersCount,
+          content_count: contentCount,
+          is_verified: followersCount > 10 || contentCount > 5,
+        };
+      });
+
+      // Sort by engagement
+      const sortedCreators = creatorsWithStats.sort((a, b) => {
+        const scoreA = (a.followers_count || 0) + (a.content_count || 0);
+        const scoreB = (b.followers_count || 0) + (b.content_count || 0);
+        return scoreB - scoreA;
+      });
+
+      setTrendingCreators(sortedCreators);
+
+      // Fetch trending posts
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
 
-      const { data: posts } = await (supabase as any)
+      const { data: posts } = await supabase
         .from('portfolio_posts')
         .select('id, media_url, media_type, likes_count, views_count, user_id')
         .eq('visibility', 'public')
@@ -74,7 +123,6 @@ export default function ExplorePage() {
         .order('likes_count', { ascending: false })
         .limit(24);
 
-      setTrendingCreators((creators || []) as TrendingCreator[]);
       setTrendingPosts((posts || []) as TrendingPost[]);
     } catch (error) {
       console.error('Error fetching trending data:', error);
@@ -83,20 +131,98 @@ export default function ExplorePage() {
     }
   };
 
+  const searchUsers = useCallback(async () => {
+    setSearchLoading(true);
+    setHasSearched(true);
+    try {
+      // Build query with type assertion to avoid deep instantiation
+      const baseQuery = (supabase as any)
+        .from('profiles')
+        .select('id, full_name, avatar_url, username, bio, tagline, city, country, is_platform_founder, founder_badge_type')
+        .eq('is_public', true);
+
+      let query = baseQuery;
+
+      // Apply filters
+      if (filters.query) {
+        query = query.or(`full_name.ilike.%${filters.query}%,username.ilike.%${filters.query}%`);
+      }
+      if (filters.country) {
+        query = query.eq('country', filters.country);
+      }
+      if (filters.city) {
+        query = query.eq('city', filters.city);
+      }
+
+      // Apply sorting
+      switch (filters.sortBy) {
+        case 'recent':
+          query = query.order('created_at', { ascending: false });
+          break;
+        case 'name':
+          query = query.order('full_name', { ascending: true });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
+      }
+
+      const { data: profiles, error } = await query.limit(50);
+      if (error) throw error;
+
+      // Get stats for filtered users
+      const profileIds = profiles?.map(p => p.id) || [];
+      
+      const { data: followerCounts } = await supabase
+        .from('followers')
+        .select('following_id')
+        .in('following_id', profileIds);
+
+      const { data: contentCounts } = await supabase
+        .from('content')
+        .select('creator_id')
+        .in('creator_id', profileIds)
+        .eq('is_portfolio_public', true);
+
+      let results: UserProfileCardData[] = (profiles || []).map(profile => {
+        const followersCount = followerCounts?.filter(f => f.following_id === profile.id).length || 0;
+        const contentCount = contentCounts?.filter(c => c.creator_id === profile.id).length || 0;
+
+        return {
+          ...profile,
+          followers_count: followersCount,
+          content_count: contentCount,
+          is_verified: followersCount > 10 || contentCount > 5,
+        };
+      });
+
+      // Apply additional filters
+      if (filters.hasContent) {
+        results = results.filter(r => (r.content_count || 0) > 0);
+      }
+      if (filters.isVerified) {
+        results = results.filter(r => r.is_verified);
+      }
+
+      // Sort by followers or content if selected
+      if (filters.sortBy === 'followers') {
+        results.sort((a, b) => (b.followers_count || 0) - (a.followers_count || 0));
+      } else if (filters.sortBy === 'content') {
+        results.sort((a, b) => (b.content_count || 0) - (a.content_count || 0));
+      }
+
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Error searching users:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, [filters]);
+
   const loadHashtagPosts = async (tag: string) => {
     setLoading(true);
     const posts = await getPostsByHashtag(tag);
     setHashtagPosts(posts);
     setLoading(false);
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.startsWith('#')) {
-      setSearchParams({ tab: 'hashtags', tag: searchQuery.slice(1) });
-    } else {
-      navigate(`/social?search=${encodeURIComponent(searchQuery)}`);
-    }
   };
 
   const handleHashtagClick = (tag: string) => {
@@ -107,10 +233,6 @@ export default function ExplorePage() {
     navigate(`/social#post-${postId}`);
   };
 
-  const handleCreatorClick = (creatorId: string) => {
-    navigate(`/profile/${creatorId}`);
-  };
-
   const renderPostGrid = (posts: any[]) => (
     <div className="grid grid-cols-3 gap-1.5 md:gap-3">
       {posts.map((post, index) => (
@@ -118,7 +240,7 @@ export default function ExplorePage() {
           key={post.id}
           className={cn(
             "aspect-[4/5] relative cursor-pointer group overflow-hidden rounded-xl",
-            "glass-card border border-white/10",
+            "bg-social-card border border-social-border/50",
             "transform transition-all duration-300 hover:scale-[1.02] hover:z-10",
             "animate-fade-in"
           )}
@@ -132,8 +254,8 @@ export default function ExplorePage() {
                 className="w-full h-full object-cover"
                 muted
               />
-              <div className="absolute top-2 right-2 glass-card p-1.5 rounded-full">
-                <Play className="h-3 w-3 text-white fill-white" />
+              <div className="absolute top-2 right-2 bg-social-card/80 backdrop-blur-sm p-1.5 rounded-full">
+                <Play className="h-3 w-3 text-social-foreground fill-current" />
               </div>
             </>
           ) : (
@@ -150,12 +272,12 @@ export default function ExplorePage() {
           
           {/* Stats on hover */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-            <div className="glass-card px-4 py-2 rounded-full flex items-center gap-3">
-              <span className="text-white text-sm font-medium flex items-center gap-1">
+            <div className="bg-social-card/80 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-3">
+              <span className="text-social-foreground text-sm font-medium flex items-center gap-1">
                 ❤️ {post.likes_count}
               </span>
               {post.views_count > 0 && (
-                <span className="text-white/80 text-sm flex items-center gap-1">
+                <span className="text-social-muted-foreground text-sm flex items-center gap-1">
                   👁️ {post.views_count}
                 </span>
               )}
@@ -167,125 +289,198 @@ export default function ExplorePage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Animated background */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-accent/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 py-6 pb-24 md:ml-20 lg:ml-64">
-        {/* Header */}
-        <div className="mb-6 animate-fade-in">
-          <h1 className="text-2xl font-bold flex items-center gap-2 mb-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+    <div className="min-h-screen bg-social-background">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-social-background/95 backdrop-blur-lg border-b border-social-border">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3 md:ml-20 lg:ml-64">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate('/social')}
+            className="text-social-foreground hover:bg-social-muted md:hidden"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <KreoonSocialLogo className="md:hidden" />
+          <h1 className="hidden md:flex items-center gap-2 text-xl font-semibold text-social-foreground">
+            <Sparkles className="h-5 w-5 text-social-accent" />
             Explorar
           </h1>
-          <p className="text-muted-foreground text-sm">Descubre tendencias, hashtags y creadores</p>
         </div>
+      </header>
 
-        {/* Search Bar with glassmorphism */}
-        <form onSubmit={handleSearch} className="mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
-          <div className={cn(
-            "relative transition-all duration-300",
-            searchFocused && "scale-[1.02]"
-          )}>
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Buscar perfiles, #hashtags..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              className={cn(
-                "pl-12 h-12 rounded-xl text-base",
-                "glass-card border-white/20",
-                "focus:border-primary/50 focus:ring-2 focus:ring-primary/20",
-                "transition-all duration-300"
-              )}
-            />
-          </div>
-        </form>
-
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-24 md:ml-20 lg:ml-64">
         <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
-          <TabsList className="w-full grid grid-cols-3 mb-6 glass-card p-1 h-auto rounded-xl animate-fade-in" style={{ animationDelay: '150ms' }}>
+          <TabsList className="w-full grid grid-cols-4 mb-6 bg-social-card p-1 h-auto rounded-xl border border-social-border/50">
             <TabsTrigger 
-              value="trending" 
-              className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+              value="discover" 
+              className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-social-accent data-[state=active]:text-social-accent-foreground transition-all"
             >
-              <TrendingUp className="h-4 w-4" />
-              <span className="hidden sm:inline">Tendencias</span>
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">Descubrir</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="search" 
+              className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-social-accent data-[state=active]:text-social-accent-foreground transition-all"
+            >
+              <Search className="h-4 w-4" />
+              <span className="hidden sm:inline">Buscar</span>
             </TabsTrigger>
             <TabsTrigger 
               value="hashtags" 
-              className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+              className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-social-accent data-[state=active]:text-social-accent-foreground transition-all"
             >
               <Hash className="h-4 w-4" />
               <span className="hidden sm:inline">Hashtags</span>
             </TabsTrigger>
             <TabsTrigger 
-              value="creators" 
-              className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+              value="trending" 
+              className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-social-accent data-[state=active]:text-social-accent-foreground transition-all"
             >
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Creadores</span>
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">Tendencias</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="trending" className="space-y-6">
-            {/* Trending Hashtags Row */}
-            <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Hash className="h-4 w-4 text-primary" />
+          {/* Discover Tab - Main discovery page */}
+          <TabsContent value="discover" className="space-y-8">
+            {/* Suggested Users Section */}
+            <SuggestedUsers 
+              title="Sugeridos para ti"
+              subtitle="Basado en tus intereses"
+              limit={6}
+              variant="grid"
+              cardVariant="default"
+            />
+
+            {/* Top Creators */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-social-foreground flex items-center gap-2">
+                  <Users className="h-4 w-4 text-social-accent" />
+                  Creadores destacados
+                </h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={fetchTrendingData}
+                  className="text-social-muted-foreground hover:text-social-foreground"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {loading ? (
+                <div className="space-y-3">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-20 rounded-xl bg-social-muted" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {trendingCreators.slice(0, 4).map((creator, index) => (
+                    <div 
+                      key={creator.id}
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <UserProfileCard 
+                        user={creator} 
+                        variant="horizontal"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Trending Hashtags */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-social-foreground flex items-center gap-2">
+                <Hash className="h-4 w-4 text-social-accent" />
                 Hashtags populares
               </h3>
               <div className="flex flex-wrap gap-2">
-                {trendingHashtags.slice(0, 10).map((hashtag, index) => (
+                {trendingHashtags.slice(0, 12).map((hashtag, index) => (
                   <Badge
                     key={hashtag.id}
                     variant="secondary"
                     className={cn(
-                      "cursor-pointer glass-card border border-white/10 px-3 py-1.5",
-                      "hover:bg-primary hover:text-primary-foreground hover:scale-105",
+                      "cursor-pointer bg-social-muted/50 border border-social-border/50 px-3 py-1.5",
+                      "hover:bg-social-accent hover:text-social-accent-foreground hover:border-social-accent",
                       "transition-all duration-200 animate-fade-in"
                     )}
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    style={{ animationDelay: `${index * 30}ms` }}
                     onClick={() => handleHashtagClick(hashtag.tag)}
                   >
                     #{hashtag.tag}
-                    <span className="ml-1.5 text-xs opacity-70 bg-white/10 px-1.5 rounded-full">
+                    <span className="ml-1.5 text-xs opacity-70">
                       {hashtag.use_count}
                     </span>
                   </Badge>
                 ))}
               </div>
             </div>
-
-            {/* Trending Posts Grid */}
-            <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Grid3X3 className="h-4 w-4 text-primary" />
-                Posts populares
-              </h3>
-              {loading ? (
-                <div className="grid grid-cols-3 gap-1.5 md:gap-3">
-                  {[...Array(9)].map((_, i) => (
-                    <Skeleton key={i} className="aspect-square rounded-xl" />
-                  ))}
-                </div>
-              ) : (
-                renderPostGrid(trendingPosts)
-              )}
-            </div>
           </TabsContent>
 
+          {/* Search Tab - Advanced user search */}
+          <TabsContent value="search" className="space-y-6">
+            <UserSearchFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              onSearch={searchUsers}
+            />
+
+            {searchLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-social-accent" />
+              </div>
+            ) : hasSearched ? (
+              searchResults.length > 0 ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-social-muted-foreground">
+                    {searchResults.length} creadores encontrados
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {searchResults.map((user, index) => (
+                      <div 
+                        key={user.id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${index * 30}ms` }}
+                      >
+                        <UserProfileCard user={user} variant="default" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-social-card/50 rounded-2xl border border-social-border/50">
+                  <Users className="h-12 w-12 mx-auto mb-3 text-social-muted-foreground/50" />
+                  <p className="text-social-muted-foreground">No se encontraron creadores</p>
+                  <p className="text-sm text-social-muted-foreground/70 mt-1">
+                    Intenta con otros filtros o términos de búsqueda
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="text-center py-12 bg-social-card/50 rounded-2xl border border-social-border/50">
+                <Search className="h-12 w-12 mx-auto mb-3 text-social-muted-foreground/50" />
+                <p className="text-social-muted-foreground">Busca creadores</p>
+                <p className="text-sm text-social-muted-foreground/70 mt-1">
+                  Usa los filtros para encontrar el creador perfecto
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Hashtags Tab */}
           <TabsContent value="hashtags" className="space-y-6">
             {hashtagFilter ? (
               <div className="animate-fade-in">
                 <div className="flex items-center gap-3 mb-4">
                   <Badge 
                     variant="outline" 
-                    className="text-lg py-2 px-4 glass-card border-primary/30 bg-primary/10"
+                    className="text-lg py-2 px-4 bg-social-card border-social-accent/30"
                   >
                     #{hashtagFilter}
                   </Badge>
@@ -293,19 +488,19 @@ export default function ExplorePage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setSearchParams({ tab: 'hashtags' })}
-                    className="glass-card"
+                    className="bg-social-card"
                   >
                     ✕ Limpiar
                   </Button>
                 </div>
                 {loading ? (
                   <div className="flex justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <Loader2 className="h-6 w-6 animate-spin text-social-accent" />
                   </div>
                 ) : hashtagPosts.length === 0 ? (
-                  <div className="text-center py-12 glass-card rounded-2xl">
-                    <Hash className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-                    <p className="text-muted-foreground">No hay posts con este hashtag</p>
+                  <div className="text-center py-12 bg-social-card/50 rounded-2xl border border-social-border/50">
+                    <Hash className="h-12 w-12 mx-auto mb-3 text-social-muted-foreground/50" />
+                    <p className="text-social-muted-foreground">No hay posts con este hashtag</p>
                   </div>
                 ) : (
                   renderPostGrid(hashtagPosts)
@@ -313,21 +508,21 @@ export default function ExplorePage() {
               </div>
             ) : (
               <div className="animate-fade-in">
-                <h3 className="font-semibold mb-4">Todos los hashtags</h3>
+                <h3 className="font-semibold mb-4 text-social-foreground">Todos los hashtags</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {trendingHashtags.map((hashtag, index) => (
                     <div
                       key={hashtag.id}
                       className={cn(
-                        "p-4 rounded-xl glass-card border border-white/10 cursor-pointer",
-                        "hover:border-primary/30 hover:bg-primary/5 hover:scale-[1.02]",
+                        "p-4 rounded-xl bg-social-card border border-social-border/50 cursor-pointer",
+                        "hover:border-social-accent/30 hover:bg-social-accent/5 hover:scale-[1.02]",
                         "transition-all duration-200 animate-fade-in"
                       )}
                       style={{ animationDelay: `${index * 30}ms` }}
                       onClick={() => handleHashtagClick(hashtag.tag)}
                     >
-                      <p className="font-medium text-primary">#{hashtag.tag}</p>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="font-medium text-social-accent">#{hashtag.tag}</p>
+                      <p className="text-sm text-social-muted-foreground mt-1">
                         {hashtag.use_count} publicaciones
                       </p>
                     </div>
@@ -337,56 +532,24 @@ export default function ExplorePage() {
             )}
           </TabsContent>
 
-          <TabsContent value="creators" className="space-y-4">
-            <h3 className="font-semibold mb-4 flex items-center gap-2 animate-fade-in">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Creadores destacados
-            </h3>
-            {loading ? (
-              <div className="space-y-3">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-20 rounded-xl" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {trendingCreators.map((creator, index) => (
-                  <div
-                    key={creator.id}
-                    className={cn(
-                      "flex items-center gap-4 p-4 rounded-xl glass-card border border-white/10 cursor-pointer",
-                      "hover:border-primary/30 hover:bg-primary/5 hover:scale-[1.01]",
-                      "transition-all duration-200 animate-fade-in"
-                    )}
-                    style={{ animationDelay: `${index * 50}ms` }}
-                    onClick={() => handleCreatorClick(creator.id)}
-                  >
-                    <Avatar className="h-14 w-14 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
-                      <AvatarImage src={creator.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                        {creator.full_name?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold truncate">{creator.full_name}</p>
-                      {creator.username && (
-                        <p className="text-sm text-primary/80">@{creator.username}</p>
-                      )}
-                      {creator.bio && (
-                        <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">{creator.bio}</p>
-                      )}
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="glass-card border-primary/30 hover:bg-primary hover:text-primary-foreground shrink-0"
-                    >
-                      Ver perfil
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Trending Tab */}
+          <TabsContent value="trending" className="space-y-6">
+            {/* Trending Posts Grid */}
+            <div className="animate-fade-in">
+              <h3 className="font-semibold mb-4 flex items-center gap-2 text-social-foreground">
+                <Grid3X3 className="h-4 w-4 text-social-accent" />
+                Posts populares
+              </h3>
+              {loading ? (
+                <div className="grid grid-cols-3 gap-1.5 md:gap-3">
+                  {[...Array(9)].map((_, i) => (
+                    <Skeleton key={i} className="aspect-square rounded-xl bg-social-muted" />
+                  ))}
+                </div>
+              ) : (
+                renderPostGrid(trendingPosts)
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
