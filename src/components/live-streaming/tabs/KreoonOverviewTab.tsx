@@ -2,16 +2,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Users, Calendar, TrendingUp, Activity, Wallet } from 'lucide-react';
-import { KreoonLiveStats } from '@/hooks/useKreoonLive';
+import { KreoonLiveStats, LiveHourPurchase } from '@/hooks/useKreoonLive';
+import { AdminPlatformHoursPanel } from './AdminPlatformHoursPanel';
 
 interface KreoonOverviewTabProps {
   stats: KreoonLiveStats;
   isPlatformEnabled: boolean;
   isOrgEnabled: boolean;
   isAdmin: boolean;
+  purchases?: LiveHourPurchase[];
+  onAddPlatformHours?: (orgId: string, hours: number, price: number, currency: string, notes?: string) => Promise<void>;
 }
 
-export function KreoonOverviewTab({ stats, isPlatformEnabled, isOrgEnabled, isAdmin }: KreoonOverviewTabProps) {
+export function KreoonOverviewTab({ 
+  stats, 
+  isPlatformEnabled, 
+  isOrgEnabled, 
+  isAdmin,
+  purchases = [],
+  onAddPlatformHours
+}: KreoonOverviewTabProps) {
   const orgHoursPercent = stats.organizationHours.total > 0 
     ? ((stats.organizationHours.available / stats.organizationHours.total) * 100) 
     : 0;
@@ -110,6 +120,14 @@ export function KreoonOverviewTab({ stats, isPlatformEnabled, isOrgEnabled, isAd
           </CardContent>
         </Card>
       </div>
+
+      {/* Admin Platform Hours Panel */}
+      {isAdmin && onAddPlatformHours && (
+        <AdminPlatformHoursPanel 
+          onAddHours={onAddPlatformHours}
+          purchases={purchases}
+        />
+      )}
 
       {/* Platform Stats (Admin Only) */}
       {isAdmin && (
