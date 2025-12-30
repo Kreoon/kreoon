@@ -8052,10 +8052,12 @@ export type Database = {
       cleanup_expired_stories: { Args: never; Returns: undefined }
       cleanup_old_audit_logs: { Args: never; Returns: undefined }
       cleanup_old_tracking_events: { Args: never; Returns: undefined }
-      consume_live_hours: {
-        Args: { _actual_hours: number; _event_id: string }
-        Returns: boolean
-      }
+      consume_live_hours:
+        | {
+            Args: { _actual_hours: number; _event_id: string }
+            Returns: boolean
+          }
+        | { Args: { p_event_id: string }; Returns: Json }
       create_chat_conversation: {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
         Returns: string
