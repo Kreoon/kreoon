@@ -24,6 +24,7 @@ interface RecommendationRequest {
   liked_content_ids?: string[];
   viewed_content_ids?: string[];
   limit?: number;
+  refresh_seed?: string; // Unique seed for each refresh to randomize order
 }
 
 interface UserInterestProfile {
@@ -42,7 +43,10 @@ serve(async (req) => {
   }
 
   try {
-    const { user_id, following_ids = [], liked_content_ids = [], viewed_content_ids = [], limit = 50 } = await req.json() as RecommendationRequest;
+    const { user_id, following_ids = [], liked_content_ids = [], viewed_content_ids = [], limit = 50, refresh_seed } = await req.json() as RecommendationRequest;
+    
+    // Generate a unique session seed for randomization
+    const sessionSeed = refresh_seed || `${Date.now()}-${Math.random().toString(36).substring(7)}`;
     
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -205,15 +209,22 @@ serve(async (req) => {
         score += 5;
       }
 
-      // 9. Random factor for variety (changes hourly)
-      const seed = new Date().toISOString().slice(0, 13) + item.id;
+      // 9. Enhanced random factor for variety (changes every refresh)
+      // Uses session seed + item id for consistent but varied randomization
+      const seed = sessionSeed + item.id;
       let hash = 0;
       for (let i = 0; i < seed.length; i++) {
         hash = ((hash << 5) - hash) + seed.charCodeAt(i);
         hash |= 0;
       }
-      const randomFactor = (Math.abs(hash) % 20) - 10; // -10 to +10
+      // Increased random factor range for more variety: -25 to +25
+      const randomFactor = (Math.abs(hash) % 50) - 25;
       score += randomFactor;
+
+      // 10. Additional shuffle factor based on content position
+      // This ensures even similarly scored content appears in different order
+      const positionShuffle = (Math.abs(hash >> 8) % 15) - 7;
+      score += positionShuffle;
 
       return { ...item, score };
     });

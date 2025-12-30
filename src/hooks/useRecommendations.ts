@@ -31,6 +31,9 @@ export function useRecommendations(options: UseRecommendationsOptions = {}) {
   ) => {
     setLoading(true);
     
+    // Generate unique seed for each refresh to randomize order
+    const refreshSeed = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    
     try {
       const response = await supabase.functions.invoke('feed-recommendations', {
         body: {
@@ -39,6 +42,7 @@ export function useRecommendations(options: UseRecommendationsOptions = {}) {
           liked_content_ids: likedContentIds,
           viewed_content_ids: viewedContentIds,
           limit: options.limit || 50,
+          refresh_seed: refreshSeed,
         }
       });
 
