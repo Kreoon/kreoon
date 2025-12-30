@@ -357,6 +357,11 @@ export function useHLSPlayer(
     }
   }, [currentMuted]);
 
+  // Sync currentMuted with external muted prop changes
+  useEffect(() => {
+    setCurrentMuted(muted);
+  }, [muted]);
+
   // Track play/pause state
   useEffect(() => {
     const video = videoRef.current;
