@@ -1077,32 +1077,60 @@ function VideoGallery({ userId, onSelect }: { userId: string; onSelect: (items: 
   }));
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-      {videos.map((video, index) => (
-        <motion.div
-          key={video.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-          onClick={() => onSelect(feedItems, index)}
-          className="aspect-[9/16] relative group cursor-pointer overflow-hidden rounded-lg bg-muted"
-        >
-          <img
-            src={video.thumbnail_url || '/placeholder.svg'}
-            alt=""
-            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-          />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Play className="h-12 w-12 text-white" />
-          </div>
-          <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2 text-white text-xs">
-            <span className="flex items-center gap-1">
-              <Play className="h-3 w-3" />
-              {video.views_count || 0}
-            </span>
-          </div>
-        </motion.div>
-      ))}
+    <div className="grid grid-cols-3 gap-1">
+      {videos.map((video, index) => {
+        // Get Bunny CDN thumbnail for videos (same as main feed)
+        const bunnyUrls = getBunnyVideoUrls(video.media_url);
+        const effectiveThumbnail = bunnyUrls?.thumbnail || video.thumbnail_url;
+        
+        return (
+          <motion.div
+            key={video.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+            onClick={() => onSelect(feedItems, index)}
+            className="aspect-[4/5] relative group cursor-pointer overflow-hidden rounded-sm bg-muted"
+          >
+            {effectiveThumbnail ? (
+              <img
+                src={effectiveThumbnail}
+                alt=""
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-muted">
+                <Play className="h-8 w-8 text-muted-foreground" />
+              </div>
+            )}
+            
+            {/* Video indicator - glassmorphism style */}
+            <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
+              <Play className="h-3.5 w-3.5 text-white fill-white" />
+            </div>
+            
+            {/* Views count */}
+            {(video.views_count ?? 0) > 0 && (
+              <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
+                <Eye className="h-3 w-3 text-white/80" />
+                <span className="text-white text-xs font-medium">{formatCount(video.views_count || 0)}</span>
+              </div>
+            )}
+
+            {/* Hover overlay with stats - glassmorphism style */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+              <div className="flex items-center gap-4 px-4 py-2 rounded-full backdrop-blur-xl bg-white/10 border border-white/20">
+                {(video.likes_count || 0) >= 0 && (
+                  <span className="flex items-center gap-1.5 text-white text-sm font-semibold">
+                    <Heart className="h-4 w-4 text-red-400 fill-red-400" />
+                    {formatCount(video.likes_count || 0)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
     </div>
   );
 }
