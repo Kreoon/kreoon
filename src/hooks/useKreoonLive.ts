@@ -251,6 +251,12 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
         }
       }
 
+      // Fetch event creators with profile info
+      const { data: creatorsData } = await supabaseAny
+        .from('live_event_creators')
+        .select('*, creator:profiles(full_name, avatar_url)');
+      setEventCreators((creatorsData as LiveEventCreator[]) || []);
+
       // Fetch usage logs
       const { data: logsData } = await supabaseAny
         .from('live_usage_logs')

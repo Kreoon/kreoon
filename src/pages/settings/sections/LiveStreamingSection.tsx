@@ -46,6 +46,7 @@ export default function LiveStreamingSection() {
     savePackage,
     deletePackage,
     assignHoursToClient,
+    addPlatformHoursToOrg,
     assignCreatorToEvent,
     updateCreatorStatus,
     removeCreatorFromEvent,
@@ -172,6 +173,8 @@ export default function LiveStreamingSection() {
             isPlatformEnabled={isPlatformEnabled}
             isOrgEnabled={isOrgEnabled}
             isAdmin={isAdmin || false}
+            purchases={purchases}
+            onAddPlatformHours={addPlatformHoursToOrg}
           />
         </TabsContent>
 
