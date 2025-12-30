@@ -176,7 +176,7 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
       // Fetch packages (organization's packages)
       if (organizationId) {
         const { data: packagesData } = await supabaseAny
-          .from('organization_live_packages')
+          .from('live_packages')
           .select('*')
           .eq('organization_id', organizationId)
           .order('created_at', { ascending: false });
@@ -370,13 +370,13 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
     try {
       if (pkg.id) {
         const { error } = await supabaseAny
-          .from('organization_live_packages')
+          .from('live_packages')
           .update({ ...pkg, updated_at: new Date().toISOString() })
           .eq('id', pkg.id);
         if (error) throw error;
       } else {
         const { error } = await supabaseAny
-          .from('organization_live_packages')
+          .from('live_packages')
           .insert({ ...pkg, organization_id: organizationId });
         if (error) throw error;
       }
@@ -392,7 +392,7 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
   const deletePackage = useCallback(async (packageId: string) => {
     try {
       const { error } = await supabaseAny
-        .from('organization_live_packages')
+        .from('live_packages')
         .delete()
         .eq('id', packageId);
       if (error) throw error;
