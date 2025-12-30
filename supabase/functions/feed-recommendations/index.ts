@@ -229,10 +229,45 @@ serve(async (req) => {
       return { ...item, score };
     });
 
-    // Sort by score and return
-    const recommended = scoredContent
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
+    // Sort by score
+    const sorted = scoredContent.sort((a, b) => b.score - a.score);
+
+    // Diversify creators so one person doesn't dominate consecutively
+    const diversifyByCreator = (
+      items: Array<ContentItem & { score: number }>,
+      maxConsecutive = 2
+    ) => {
+      const remaining = [...items];
+      const result: Array<ContentItem & { score: number }> = [];
+
+      let lastCreator: string | null = null;
+      let streak = 0;
+
+      while (remaining.length > 0 && result.length < limit) {
+        // Prefer an item from a different creator if current streak is too high
+        let pickIndex = 0;
+
+        if (lastCreator && streak >= maxConsecutive) {
+          const idx = remaining.findIndex((it) => (it.creator_id || it.id) !== lastCreator);
+          pickIndex = idx === -1 ? 0 : idx;
+        }
+
+        const picked = remaining.splice(pickIndex, 1)[0];
+        result.push(picked);
+
+        const pickedCreator = picked.creator_id || picked.id;
+        if (pickedCreator === lastCreator) {
+          streak += 1;
+        } else {
+          lastCreator = pickedCreator;
+          streak = 1;
+        }
+      }
+
+      return result;
+    };
+
+    const recommended = diversifyByCreator(sorted, 2)
       .map(({ score, ...item }) => item);
 
     return new Response(
