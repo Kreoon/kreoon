@@ -18,8 +18,9 @@ import { es } from "date-fns/locale";
 import { 
   Building2, Video, Save, Mail, Phone, Calendar, DollarSign, 
   Package, Plus, Trash2, Edit2, ExternalLink, ShoppingBag, CheckCircle,
-  Star, Eye, Settings
+  Star, Eye, Settings, Radio
 } from "lucide-react";
+import { ClientStreamingChannels } from "@/components/clients/ClientStreamingChannels";
 import { VipBadge } from "@/components/ui/vip-badge";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
@@ -340,11 +341,15 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         </DialogHeader>
 
         <Tabs defaultValue="info" className="mt-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="info">Info</TabsTrigger>
             <TabsTrigger value="packages">Paquetes ({packages.length})</TabsTrigger>
             <TabsTrigger value="products">Productos ({products.length})</TabsTrigger>
             <TabsTrigger value="content">Videos ({assignedContent.length})</TabsTrigger>
+            <TabsTrigger value="channels" className="gap-1">
+              <Radio className="h-3 w-3" />
+              Canales
+            </TabsTrigger>
             <TabsTrigger value="stats">Stats</TabsTrigger>
           </TabsList>
 
@@ -940,6 +945,11 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          {/* Streaming Channels Tab */}
+          <TabsContent value="channels" className="mt-4">
+            <ClientStreamingChannels clientId={client.id} clientName={client.name} />
           </TabsContent>
         </Tabs>
       </DialogContent>
