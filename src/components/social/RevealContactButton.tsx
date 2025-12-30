@@ -109,7 +109,7 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
             </DialogTitle>
             {!isRevealed && (
               <DialogDescription>
-                Usa {revealCost} token para ver los datos de contacto de este perfil
+                Usa {revealCost} token{revealCost > 1 ? 's' : ''} para ver los datos de contacto de este perfil
               </DialogDescription>
             )}
             {isRevealed && expiresAt && (
@@ -252,7 +252,7 @@ export function RevealContactButton({ profileId, profileData, className }: Revea
                   )}
                   {userTokens < revealCost 
                     ? 'Tokens insuficientes' 
-                    : `Revelar por ${revealCost} token`}
+                    : `Revelar por ${revealCost} token${revealCost > 1 ? 's' : ''}`}
                 </Button>
               </div>
             )}
