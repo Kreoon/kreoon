@@ -17,8 +17,8 @@ interface FounderBadgeProps {
 const badgeConfig = {
   ceo: {
     icon: Crown,
-    label: 'CEO & Fundador',
-    description: 'Creador y CEO de la plataforma',
+    label: 'CEO de Kreoon',
+    description: 'Creador y CEO de Kreoon',
     gradient: 'from-amber-400 via-yellow-500 to-orange-500',
     glow: 'shadow-[0_0_20px_rgba(251,191,36,0.5)]',
     ring: 'ring-amber-400/50',
