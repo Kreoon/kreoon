@@ -54,6 +54,7 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'ambassadors', icon: Star, title: 'Embajadores', description: 'Red de referidos' },
       { key: 'permissions', icon: UserCog, title: 'Permisos', description: 'Por rol' },
       { key: 'audit_log', icon: History, title: 'Historial', description: 'Actividad' },
+      { key: 'live_streaming_org', icon: Video, title: 'KREOON Live', description: 'Paquetes y clientes' },
     ],
   },
   {
@@ -70,7 +71,7 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'platform_admin', icon: ShieldCheck, title: 'Administración', description: 'Seguridad y datos' },
       { key: 'tracking', icon: BarChart3, title: 'Tracking', description: 'Analytics y píxeles' },
       { key: 'ai_tokenization', icon: Brain, title: 'IA Tokenización', description: 'Costos por perfil' },
-      { key: 'live_streaming', icon: Video, title: 'KREOON Live', description: 'Streaming prepagado' },
+      { key: 'live_streaming', icon: Video, title: 'KREOON Live', description: 'Config plataforma' },
     ],
   },
 ];

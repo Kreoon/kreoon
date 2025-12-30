@@ -32,7 +32,8 @@ const BillingUnifiedSection = lazy(() => import('./sections/BillingUnifiedSectio
 const PlatformConfigSection = lazy(() => import('./sections/PlatformConfigSection'));
 const PlatformAdminSection = lazy(() => import('./sections/PlatformAdminSection'));
 const AITokenizationSection = lazy(() => import('@/pages/admin/AITokenizationPage'));
-const LiveStreamingSection = lazy(() => import('./sections/LiveStreamingSection'));
+const LiveStreamingSection = lazy(() => import('./sections/LiveStreamingPlatformSection'));
+const LiveStreamingOrgSection = lazy(() => import('./sections/LiveStreamingOrgSection'));
 
 // Loading fallback
 const SectionLoader = memo(() => (
@@ -42,7 +43,7 @@ const SectionLoader = memo(() => (
 ));
 SectionLoader.displayName = 'SectionLoader';
 
-// Section components map - CONSOLIDATED (reduced from 25 to 17)
+// Section components map - CONSOLIDATED (reduced from 25 to 18)
 const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<React.ComponentType>> = {
   // User level
   profile: ProfileSection,
@@ -58,6 +59,7 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   permissions: PermissionsUnifiedSection,
   audit_log: AuditLogSection,
   tracking: TrackingSection,
+  live_streaming_org: LiveStreamingOrgSection,
   // Platform level
   organization_registrations: OrganizationRegistrationsSection,
   platform_users: PlatformUsersSection,

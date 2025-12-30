@@ -57,6 +57,7 @@ const adminSections: NavSection[] = [
       { name: "Creadores", href: "/creators", icon: Users },
       { name: "Clientes", href: "/clients", icon: Building2 },
       { name: "Equipo", href: "/team", icon: UsersRound },
+      { name: "Live", href: "/live", icon: Video },
     ]
   },
   {
