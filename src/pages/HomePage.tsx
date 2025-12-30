@@ -1,27 +1,37 @@
-import { useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { 
-  Brain, 
-  Video, 
-  Globe, 
-  Bot, 
-  Trophy, 
-  Users, 
-  Palette, 
-  Building2, 
-  Megaphone, 
-  GraduationCap,
-  ArrowRight,
-  Sparkles,
-  LayoutDashboard,
-  FolderKanban,
-  Network,
-  Zap
+  Loader2, 
+  X, 
+  Chrome, 
+  ArrowRight
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  LandingHeader,
+  HeroSection,
+  SecuritySection,
+  WhatIsSection,
+  ForWhomSection,
+  HowItWorksSection,
+  SistemaUPSection,
+  SocialCreatorsSection,
+  PricingSection,
+  IndividualPlansSection,
+  TalentAccessSection,
+  TokenSystemSection,
+  WhyThisModelSection,
+  PrivacySection,
+  CTASection,
+  LandingFooter
+} from '@/components/landing';
 
 function getDashboardPath(roles: string[], activeRole?: string | null): string {
   if (roles.length === 0) return '/pending-access';
@@ -51,10 +61,20 @@ function getDashboardPath(roles: string[], activeRole?: string | null): string {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { user, loading, rolesLoaded, roles, activeRole } = useAuth();
+  const { user, loading: authLoading, rolesLoaded, signIn, roles, activeRole } = useAuth();
+  const { toast } = useToast();
+
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [activeSection, setActiveSection] = useState('inicio');
+
+  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
-    // SEO (simple per-route metadata without extra deps)
     const title = 'KREOON | Creative Operating System';
     const description = 'KREOON: sistema operativo creativo para gestionar creadores, contenido, proyectos y resultados en un solo lugar.';
     document.title = title;
@@ -63,98 +83,131 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    // If logged in, send the user to the right dashboard (avoid showing landing page)
-    if (user && !loading && rolesLoaded) {
+    if (user && !authLoading && rolesLoaded && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
       navigate(getDashboardPath(roles, activeRole), { replace: true });
     }
-  }, [user, loading, rolesLoaded, roles, activeRole, navigate]);
+  }, [user, authLoading, rolesLoaded, roles, activeRole, navigate]);
 
-  const modules = [
-    {
-      icon: LayoutDashboard,
-      name: 'Board',
-      description: 'Tablero Kanban inteligente para flujos de trabajo creativos',
-    },
-    {
-      icon: FolderKanban,
-      name: 'Projects',
-      description: 'Gestión completa de contenido y proyectos',
-    },
-    {
-      icon: Network,
-      name: 'Network',
-      description: 'Red social profesional y portafolios públicos',
-    },
-    {
-      icon: Bot,
-      name: 'IA',
-      description: 'Asistentes y automatización con inteligencia artificial',
-    },
-    {
-      icon: Trophy,
-      name: 'UP',
-      description: 'Gamificación, puntos y ranking de rendimiento',
+  useEffect(() => {
+    if (!user) {
+      hasRedirectedRef.current = false;
     }
-  ];
+  }, [user]);
 
-  const audiences = [
-    {
-      icon: Video,
-      title: 'Creadores',
-      description: 'Gestiona tu contenido, clientes y portafolio profesional',
-    },
-    {
-      icon: Palette,
-      title: 'Editores',
-      description: 'Organiza proyectos, deadlines y colaboraciones',
-    },
-    {
-      icon: Building2,
-      title: 'Agencias',
-      description: 'Opera equipos, clientes y producción a escala',
-    },
-    {
-      icon: Megaphone,
-      title: 'Marcas',
-      description: 'Conecta con creadores y gestiona campañas',
-    },
-    {
-      icon: GraduationCap,
-      title: 'Comunidades',
-      description: 'Administra miembros, contenido y crecimiento',
-    }
-  ];
+  // Intersection Observer for active section tracking
+  useEffect(() => {
+    const sections = document.querySelectorAll('section[id]');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
 
-  const features = [
-    {
-      icon: Brain,
-      title: 'Sistema operativo creativo',
-      description: 'Todo tu flujo de trabajo en un solo lugar'
-    },
-    {
-      icon: Video,
-      title: 'Gestión de contenido',
-      description: 'Del brief al video publicado, todo trazable'
-    },
-    {
-      icon: Globe,
-      title: 'Red social profesional',
-      description: 'Portafolio público y networking'
-    },
-    {
-      icon: Bot,
-      title: 'IA integrada',
-      description: 'Automatiza guiones, asignaciones y más'
-    },
-    {
-      icon: Trophy,
-      title: 'Gamificación',
-      description: 'Puntos, logros y rankings que motivan'
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        toast({
+          title: 'Error al iniciar sesión',
+          description: error.message === 'Invalid login credentials' ? 'Credenciales inválidas' : error.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Ocurrió un error inesperado. Por favor intenta de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/` }
+      });
+      
+      if (error) {
+        toast({ title: 'Error con Google', description: error.message, variant: 'destructive' });
+        setLoading(false);
+      }
+    } catch (err) {
+      toast({ title: 'Error', description: 'No se pudo conectar con Google', variant: 'destructive' });
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email.trim()) {
+      toast({ title: 'Error', description: 'Por favor ingresa tu correo electrónico', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/?type=recovery`,
+      });
+
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        setResetEmailSent(true);
+        toast({ title: 'Correo enviado', description: 'Revisa tu bandeja de entrada para restablecer tu contraseña' });
+      }
+    } catch (err) {
+      toast({ title: 'Error', description: 'Ocurrió un error al enviar el correo', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openLogin = () => {
+    setShowAuthModal(true);
+  };
+
+  const openRegister = () => {
+    navigate('/register');
+  };
+
+  const handleSectionClick = (sectionId: string) => {
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const dashboardPath = getDashboardPath(roles, activeRole);
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If logged in, show a simple redirect screen
   if (user) {
     return (
       <div className="min-h-screen bg-background text-foreground">
@@ -184,21 +237,17 @@ export default function HomePage() {
                   Continuar en tu panel
                 </h1>
                 <p className="text-muted-foreground max-w-2xl">
-                  Ya estás logueado. Te llevamos automáticamente a tu dashboard, o puedes entrar manualmente.
+                  Ya estás logueado. Te llevamos automáticamente a tu dashboard.
                 </p>
 
                 <div className="mt-8 flex flex-col sm:flex-row gap-3">
                   <Button size="lg" onClick={() => navigate(dashboardPath, { replace: true })}>
                     Ir al dashboard
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                   <Button size="lg" variant="outline" onClick={() => navigate('/social')}>
                     Abrir red social
                   </Button>
-                </div>
-
-                <div className="mt-6 text-sm text-muted-foreground">
-                  Si te quedas aquí, en segundos te redirigimos automáticamente…
                 </div>
               </div>
             </div>
@@ -209,202 +258,195 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      {/* Hero Section */}
+    <div className="min-h-screen bg-background">
+      {/* Landing Header */}
+      <LandingHeader
+        onLogin={openLogin}
+        onRegister={openRegister}
+        activeSection={activeSection}
+        onSectionClick={handleSectionClick}
+      />
+
+      {/* Landing Sections */}
       <main>
-        <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-20">
-        {/* Background effects */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px]" />
-        </div>
-
-        <div className="relative z-10 text-center max-w-4xl mx-auto">
-          {/* Logo */}
-          <div className="mb-8 flex flex-col items-center gap-4">
-            <div className="h-24 w-24 md:h-32 md:w-32 rounded-2xl overflow-hidden shadow-2xl shadow-primary/30">
-              <img src="/favicon.png" alt="KREOON" className="h-full w-full object-cover" />
-            </div>
-            <h1 className="text-6xl md:text-8xl font-bold tracking-tight text-gradient-violet">
-              KREOON
-            </h1>
-          </div>
-
-          {/* Tagline */}
-          <p className="text-2xl md:text-4xl font-light text-primary/80 mb-6">
-            Creative Operating System
-          </p>
-
-          {/* Subtitle */}
-          <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto">
-            Gestiona creadores, contenido, proyectos y resultados desde un solo sistema.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              onClick={() => navigate('/register')}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg rounded-xl glow-violet transition-all hover:scale-105"
-            >
-              <Sparkles className="w-5 h-5 mr-2" />
-              Crear organización
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              onClick={() => navigate('/auth')}
-              className="border-border text-muted-foreground hover:text-foreground hover:border-primary/50 px-8 py-6 text-lg rounded-xl transition-all hover:scale-105"
-            >
-              <Users className="w-5 h-5 mr-2" />
-              Unirme o crear cuenta
-            </Button>
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 rounded-full border-2 border-border flex items-start justify-center p-2">
-            <div className="w-1.5 h-3 bg-primary rounded-full animate-pulse" />
-          </div>
-        </div>
-        </section>
+        <HeroSection onRegister={openRegister} />
+        <SecuritySection />
+        <WhatIsSection />
+        <ForWhomSection />
+        <HowItWorksSection />
+        <SistemaUPSection />
+        <SocialCreatorsSection />
+        <PricingSection onRegister={openRegister} />
+        <IndividualPlansSection onRegister={openRegister} />
+        <TalentAccessSection />
+        <TokenSystemSection onRegister={openRegister} />
+        <WhyThisModelSection />
+        <PrivacySection />
+        <CTASection onRegister={openRegister} />
       </main>
 
-      {/* What is KREOON Section */}
-      <section className="py-24 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6 text-foreground">
-              ¿Qué es KREOON?
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Un ecosistema completo para operar tu creación como un negocio profesional
-            </p>
-          </div>
+      <LandingFooter />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {features.map((feature, index) => (
-              <Card 
-                key={index}
-                className="bg-card border-border hover:border-primary/30 transition-all duration-200 group card-hover"
-              >
-                <CardContent className="p-6 text-center">
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-all">
-                    <feature.icon className="w-7 h-7 text-primary" />
-                  </div>
-                  <h3 className="text-foreground font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Modules Section */}
-      <section className="py-24 px-4 bg-card/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6 text-foreground">
-              Módulos
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Un ecosistema integrado donde cada módulo potencia tu operación
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {modules.map((module, index) => (
-              <Card 
-                key={index}
-                className="bg-card border-border hover:border-primary/30 transition-all duration-200 group card-hover overflow-hidden"
-              >
-                <CardContent className="p-8">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 transition-transform group-hover:scale-110 group-hover:bg-primary/20">
-                    <module.icon className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground mb-3">{module.name}</h3>
-                  <p className="text-muted-foreground">{module.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* For Who Section */}
-      <section className="py-24 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6 text-foreground">
-              ¿Para quién es KREOON?
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Diseñado para todos los roles del ecosistema creativo
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {audiences.map((audience, index) => (
-              <Card 
-                key={index}
-                className="bg-card border-border hover:border-primary/30 transition-all duration-200 group cursor-pointer card-hover"
-              >
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-all">
-                    <audience.icon className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="text-foreground font-bold mb-2">{audience.title}</h3>
-                  <p className="text-muted-foreground text-sm">{audience.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="py-24 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="relative">
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-primary/10 blur-[100px] rounded-full pointer-events-none" />
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowAuthModal(false)}
+        >
+          <Card 
+            className="w-full max-w-md relative bg-card border-border max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2 z-10"
+              onClick={() => setShowAuthModal(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
             
-            <div className="relative bg-card border border-border rounded-3xl p-12 md:p-16">
-              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-8">
-                <Zap className="w-10 h-10 text-primary" />
+            <CardHeader className="text-center pt-8">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="h-10 w-10 rounded-xl overflow-hidden shadow-lg shadow-primary/25">
+                  <img src="/favicon.png" alt="KREOON" className="h-10 w-10 object-cover" />
+                </div>
               </div>
-              <h2 className="text-3xl md:text-5xl font-bold mb-6 text-foreground">
-                Empieza a operar tu creación como un sistema
-              </h2>
-              <p className="text-muted-foreground text-lg mb-10 max-w-2xl mx-auto">
-                Únete a KREOON y transforma tu proceso creativo en una operación profesional y escalable.
-              </p>
-              <Button 
-                size="lg" 
-                onClick={() => navigate('/register')}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-7 text-xl rounded-xl glow-violet transition-all hover:scale-105"
-              >
-                Crear mi organización
-                <ArrowRight className="w-6 h-6 ml-2" />
-              </Button>
-            </div>
-          </div>
+              <CardTitle className="text-2xl">
+                Bienvenido de vuelta
+              </CardTitle>
+              <CardDescription>
+                Ingresa a tu sistema creativo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {showForgotPassword ? (
+                <div className="space-y-4">
+                  {resetEmailSent ? (
+                    <div className="text-center py-4">
+                      <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <h4 className="font-semibold mb-2">Correo enviado</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Revisa tu bandeja de entrada en <span className="font-medium">{email}</span>
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => { setShowForgotPassword(false); setResetEmailSent(false); }}
+                        className="w-full"
+                      >
+                        Volver al inicio de sesión
+                      </Button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleForgotPassword} className="space-y-4">
+                      <div className="text-center mb-4">
+                        <h4 className="font-semibold mb-1">¿Olvidaste tu contraseña?</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Ingresa tu correo y te enviaremos un enlace para restablecerla.
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-email">Correo electrónico</Label>
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          placeholder="tu@email.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={loading}>
+                        {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Enviar enlace de recuperación
+                      </Button>
+                      <Button 
+                        type="button"
+                        variant="ghost" 
+                        onClick={() => setShowForgotPassword(false)}
+                        className="w-full"
+                      >
+                        Volver
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              ) : (
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Correo electrónico</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="login-password">Contraseña</Label>
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(true)}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Iniciar Sesión
+                  </Button>
+                  
+                  <div className="relative my-4">
+                    <Separator />
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+                      o continúa con
+                    </span>
+                  </div>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                  >
+                    <Chrome className="w-4 h-4 mr-2" />
+                    Google
+                  </Button>
+                </form>
+              )}
+            
+              <div className="mt-6 text-center border-t border-border pt-6">
+                <p className="text-sm text-muted-foreground mb-3">¿No tienes cuenta?</p>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => { setShowAuthModal(false); navigate('/register'); }}
+                >
+                  Crear cuenta nueva
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-12 px-4 border-t border-border">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="text-2xl font-bold text-gradient-violet mb-2">
-            KREOON
-          </p>
-          <p className="text-muted-foreground text-sm">
-            Creative Operating System © {new Date().getFullYear()}
-          </p>
-        </div>
-      </footer>
+      )}
     </div>
   );
 }
