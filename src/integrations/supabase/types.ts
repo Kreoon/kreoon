@@ -8061,6 +8061,14 @@ export type Database = {
             Returns: boolean
           }
         | { Args: { p_event_id: string }; Returns: Json }
+        | {
+            Args: {
+              p_client_id: string
+              p_event_id: string
+              p_hours_used: number
+            }
+            Returns: boolean
+          }
       create_chat_conversation: {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
         Returns: string

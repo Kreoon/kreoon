@@ -534,18 +534,15 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
         walletId = walletData.id;
       }
 
-      // Create purchase record
+      // Create purchase record using correct column names
       const { error: purchaseError } = await supabaseAny
         .from('live_hour_purchases')
         .insert({
-          buyer_type: 'organization',
-          buyer_id: targetOrgId,
-          seller_type: 'platform',
-          seller_id: 'platform',
+          organization_id: targetOrgId,
           hours_purchased: hours,
           price_paid: pricePaid,
           currency,
-          wallet_id: walletId,
+          purchased_by: profile.id,
           notes,
         });
 
