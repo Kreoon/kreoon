@@ -395,69 +395,6 @@ export function OrganizationManagement() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Link2 className="h-4 w-4" />
-                  URL de Acceso a la Organización
-                </CardTitle>
-                <CardDescription>
-                  Comparte este link para que usuarios puedan iniciar sesión o registrarse en tu organización
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Registro abierto</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Permitir que nuevos usuarios se registren
-                    </p>
-                  </div>
-                  <Switch
-                    checked={currentOrg.is_registration_open}
-                    onCheckedChange={(checked) => toggleRegistration(currentOrg.id, checked)}
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <Input
-                    value={`${window.location.origin}/org/${currentOrg.slug}`}
-                    readOnly
-                    className="font-mono text-sm"
-                  />
-                  <Button variant="outline" size="icon" onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/org/${currentOrg.slug}`);
-                    toast.success('Link copiado al portapapeles');
-                  }}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={() => {
-                    window.open(`/org/${currentOrg.slug}`, '_blank');
-                  }}>
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Rol por defecto para nuevos registros</Label>
-                  <Select 
-                    value={currentOrg.default_role} 
-                    onValueChange={(v) => updateOrganization(currentOrg.id, { default_role: v as AppRole })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(ROLE_LABELS).map(([role, label]) => (
-                        <SelectItem key={role} value={role}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Editor Randomizer Settings */}
             <EditorRandomizerSettings />
