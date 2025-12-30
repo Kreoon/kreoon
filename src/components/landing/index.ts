@@ -1,12 +1,15 @@
 export { LandingHeader } from './LandingHeader';
 export { 
-  HeroSection, 
+  HeroSection,
+  ModulesSection,
   SecuritySection, 
   WhatIsSection, 
   ForWhomSection, 
   HowItWorksSection,
   SistemaUPSection,
   SocialCreatorsSection,
+  KreoonLiveSection,
+  RoadmapSection,
   PricingSection,
   IndividualPlansSection,
   TalentAccessSection,
