@@ -57,13 +57,22 @@ export const LIVE_AI_MODULES = {
 } as const;
 
 // ============================================
+// GENERAL / ORGANIZACIÓN
+// ============================================
+export const GENERAL_AI_MODULES = {
+  REGISTRATION: 'registration',           // IA para sugerencia de rol en registro
+  ASSISTANT: 'assistant.ai',              // Asistente general de la organización
+  ANALYTICS: 'analytics.ai',              // Análisis general con IA
+} as const;
+
+// ============================================
 // DEFINICIÓN COMPLETA DE MÓDULOS
 // ============================================
 export interface AIModuleDefinition {
   key: string;
   name: string;
   description: string;
-  category: 'board' | 'content' | 'up' | 'live' | 'talent' | 'general';
+  category: 'board' | 'content' | 'up' | 'live' | 'talent' | 'general' | 'organization';
   icon?: string;
 }
 
@@ -203,6 +212,26 @@ export const AI_MODULE_DEFINITIONS: AIModuleDefinition[] = [
     description: 'Métricas y análisis de rendimiento de lives',
     category: 'live',
   },
+  
+  // ORGANIZACIÓN / GENERAL
+  {
+    key: GENERAL_AI_MODULES.REGISTRATION,
+    name: 'Registro – Sugerencia de Rol',
+    description: 'IA para detectar automáticamente el perfil del usuario y sugerir el rol más adecuado durante el registro',
+    category: 'organization',
+  },
+  {
+    key: GENERAL_AI_MODULES.ASSISTANT,
+    name: 'Asistente General',
+    description: 'Asistente de IA para consultas generales de la organización',
+    category: 'organization',
+  },
+  {
+    key: GENERAL_AI_MODULES.ANALYTICS,
+    name: 'Analytics IA',
+    description: 'Análisis de datos y métricas con inteligencia artificial',
+    category: 'organization',
+  },
 ];
 
 // Helper para obtener definición de módulo por key
@@ -223,6 +252,7 @@ export const AI_MODULE_CATEGORIES = {
   talent: { label: 'Talento', icon: 'Users' },
   live: { label: 'Live Commerce', icon: 'Radio' },
   general: { label: 'General', icon: 'Bot' },
+  organization: { label: 'Organización', icon: 'Building2' },
 } as const;
 
 // LEGACY MAPPINGS - Para compatibilidad con código existente
@@ -242,7 +272,8 @@ export type AIModuleKey =
   | typeof CONTENT_AI_MODULES[keyof typeof CONTENT_AI_MODULES]
   | typeof UP_AI_MODULES[keyof typeof UP_AI_MODULES]
   | typeof TALENT_AI_MODULES[keyof typeof TALENT_AI_MODULES]
-  | typeof LIVE_AI_MODULES[keyof typeof LIVE_AI_MODULES];
+  | typeof LIVE_AI_MODULES[keyof typeof LIVE_AI_MODULES]
+  | typeof GENERAL_AI_MODULES[keyof typeof GENERAL_AI_MODULES];
 
 // All module keys as array
 export const ALL_AI_MODULE_KEYS: AIModuleKey[] = [
@@ -251,4 +282,5 @@ export const ALL_AI_MODULE_KEYS: AIModuleKey[] = [
   ...Object.values(UP_AI_MODULES),
   ...Object.values(TALENT_AI_MODULES),
   ...Object.values(LIVE_AI_MODULES),
+  ...Object.values(GENERAL_AI_MODULES),
 ];
