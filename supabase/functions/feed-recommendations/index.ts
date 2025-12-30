@@ -217,13 +217,12 @@ serve(async (req) => {
         hash = ((hash << 5) - hash) + seed.charCodeAt(i);
         hash |= 0;
       }
-      // Increased random factor range for more variety: -25 to +25
-      const randomFactor = (Math.abs(hash) % 50) - 25;
+      // Increased random factor range for more variety: -60 to +60
+      const randomFactor = (Math.abs(hash) % 120) - 60;
       score += randomFactor;
 
-      // 10. Additional shuffle factor based on content position
-      // This ensures even similarly scored content appears in different order
-      const positionShuffle = (Math.abs(hash >> 8) % 15) - 7;
+      // 10. Additional shuffle factor (bigger range) to break ties aggressively
+      const positionShuffle = (Math.abs(hash >> 8) % 60) - 30;
       score += positionShuffle;
 
       return { ...item, score };
@@ -232,10 +231,34 @@ serve(async (req) => {
     // Sort by score
     const sorted = scoredContent.sort((a, b) => b.score - a.score);
 
+    // Fisher–Yates shuffle (seeded by sessionSeed)
+    const shuffleSeeded = <T,>(arr: T[], seedStr: string) => {
+      // Simple deterministic PRNG from seed string
+      let seed = 0;
+      for (let i = 0; i < seedStr.length; i++) {
+        seed = ((seed << 5) - seed) + seedStr.charCodeAt(i);
+        seed |= 0;
+      }
+      const rand = () => {
+        // xorshift32
+        seed ^= seed << 13;
+        seed ^= seed >> 17;
+        seed ^= seed << 5;
+        // convert to [0,1)
+        return ((seed >>> 0) % 1_000_000) / 1_000_000;
+      };
+
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    };
+
     // Diversify creators so one person doesn't dominate consecutively
     const diversifyByCreator = (
       items: Array<ContentItem & { score: number }>,
-      maxConsecutive = 2
+      maxConsecutive = 1
     ) => {
       const remaining = [...items];
       const result: Array<ContentItem & { score: number }> = [];
@@ -244,7 +267,6 @@ serve(async (req) => {
       let streak = 0;
 
       while (remaining.length > 0 && result.length < limit) {
-        // Prefer an item from a different creator if current streak is too high
         let pickIndex = 0;
 
         if (lastCreator && streak >= maxConsecutive) {
@@ -267,7 +289,19 @@ serve(async (req) => {
       return result;
     };
 
-    const recommended = diversifyByCreator(sorted, 2)
+    // 1) Diversify creators more aggressively
+    const diversified = diversifyByCreator(sorted, 1);
+
+    // 2) Stronger randomness: shuffle inside small windows so relevance remains but order changes a lot
+    const windowSize = 8;
+    const windowShuffled: Array<ContentItem & { score: number }> = [];
+    for (let i = 0; i < diversified.length; i += windowSize) {
+      const window = diversified.slice(i, i + windowSize);
+      windowShuffled.push(...shuffleSeeded(window, `${sessionSeed}-w-${i}`));
+    }
+
+    const recommended = windowShuffled
+      .slice(0, limit)
       .map(({ score, ...item }) => item);
 
     return new Response(
