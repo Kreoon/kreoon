@@ -1,15 +1,24 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AIGenerationResult {
   title?: string;
   description?: string;
 }
 
-export function useStreamingAI() {
+interface UseStreamingAIOptions {
+  organizationId?: string;
+}
+
+export function useStreamingAI(options?: UseStreamingAIOptions) {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  // Use passed organizationId or get from profile
+  const organizationId = options?.organizationId || profile?.current_organization_id;
 
   const generateEventContent = async (params: {
     eventType: string;
@@ -26,6 +35,7 @@ export function useStreamingAI() {
           clientName: params.clientName,
           product: params.product,
           keywords: params.keywords,
+          organizationId, // Pass organization ID for AI config lookup
         },
       });
 
@@ -56,6 +66,7 @@ export function useStreamingAI() {
           action: 'improve_title',
           currentTitle,
           eventType,
+          organizationId,
         },
       });
 
@@ -77,6 +88,7 @@ export function useStreamingAI() {
           action: 'improve_description',
           currentDescription,
           eventType,
+          organizationId,
         },
       });
 

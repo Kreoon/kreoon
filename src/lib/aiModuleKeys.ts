@@ -48,12 +48,14 @@ export const TALENT_AI_MODULES = {
 } as const;
 
 // ============================================
-// LIVE COMMERCE (Futuro)
+// LIVE COMMERCE / STREAMING
 // ============================================
 export const LIVE_AI_MODULES = {
   CONTROL: 'live.control.ai',
   PRODUCTS: 'live.products.ai',
   ANALYTICS: 'live.analytics.ai',
+  STREAMING: 'streaming_ai',              // IA para generación de contenido streaming
+  STREAMING_TITLES: 'streaming.titles.ai', // IA para títulos y descripciones de eventos
 } as const;
 
 // ============================================
@@ -193,7 +195,7 @@ export const AI_MODULE_DEFINITIONS: AIModuleDefinition[] = [
     category: 'talent',
   },
   
-  // LIVE COMMERCE (Futuro)
+  // LIVE COMMERCE / STREAMING
   {
     key: LIVE_AI_MODULES.CONTROL,
     name: 'Live – Control',
@@ -210,6 +212,18 @@ export const AI_MODULE_DEFINITIONS: AIModuleDefinition[] = [
     key: LIVE_AI_MODULES.ANALYTICS,
     name: 'Live – Analytics',
     description: 'Métricas y análisis de rendimiento de lives',
+    category: 'live',
+  },
+  {
+    key: LIVE_AI_MODULES.STREAMING,
+    name: 'Streaming – Generación de Contenido',
+    description: 'IA para generar títulos, descripciones y contenido para eventos de streaming',
+    category: 'live',
+  },
+  {
+    key: LIVE_AI_MODULES.STREAMING_TITLES,
+    name: 'Streaming – Títulos y Descripciones',
+    description: 'IA especializada en mejorar títulos y descripciones de eventos en vivo',
     category: 'live',
   },
   
