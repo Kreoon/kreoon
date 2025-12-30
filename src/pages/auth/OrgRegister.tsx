@@ -68,7 +68,7 @@ export default function OrgRegister() {
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
 
   const fetchRoleSuggestion = async () => {
-    if (!fullName.trim() || !email.trim()) return;
+    if (!fullName.trim() || !email.trim() || !organization?.id) return;
     
     setLoadingSuggestion(true);
     try {
@@ -76,14 +76,15 @@ export default function OrgRegister() {
         body: { 
           fullName: fullName.trim(),
           email: email.trim(),
-          bio: bio.trim()
+          bio: bio.trim(),
+          organizationId: organization.id
         }
       });
       
-      if (response.data && response.data.suggested_role) {
+      if (response.data && response.data.suggestedRole) {
         setSuggestedRole({
-          role: response.data.suggested_role,
-          confidence: response.data.confidence || 50,
+          role: response.data.suggestedRole,
+          confidence: response.data.confidence || 0.5,
           reasoning: response.data.reasoning || ''
         });
       }
