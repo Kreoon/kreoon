@@ -9,41 +9,51 @@ import { PortfolioProfile } from '@/components/portfolio/profile/PortfolioProfil
 import { KreoonSocialLogo } from '@/components/social/KreoonSocialBrand';
 
 export default function PublicProfilePage() {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId: userIdParam } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [profileExists, setProfileExists] = useState(false);
-  
-  const isOwner = user?.id === userId;
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
+
+  const isUuid = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
   useEffect(() => {
-    if (userId) {
-      // If viewing own profile, redirect to profile page
-      if (user?.id === userId) {
-        navigate('/social#profile', { replace: true });
-        return;
-      }
-      checkProfile();
-    }
-  }, [userId, user?.id]);
+    if (!userIdParam) return;
+    resolveProfile(userIdParam);
+  }, [userIdParam]);
 
-  const checkProfile = async () => {
+  const resolveProfile = async (identifier: string) => {
     setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .single();
+    setNotFound(false);
+    setProfileExists(false);
 
-      if (error || !data) {
+    try {
+      // Allow /profile/:id (uuid) and /profile/:username
+      const query = supabase
+        .from('profiles')
+        .select('id, username')
+        .limit(1);
+
+      const { data, error } = isUuid(identifier)
+        ? await query.eq('id', identifier).single()
+        : await query.eq('username', identifier).single();
+
+      if (error || !data?.id) {
         setNotFound(true);
         return;
       }
 
+      // If viewing own profile (by id or username), redirect to internal profile
+      if (user?.id && data.id === user.id) {
+        navigate('/social#profile', { replace: true });
+        return;
+      }
+
+      setResolvedUserId(data.id);
       setProfileExists(true);
     } catch (error) {
       console.error('Error checking profile:', error);
@@ -70,7 +80,7 @@ export default function PublicProfilePage() {
     );
   }
 
-  if (notFound || !profileExists || !userId) {
+  if (notFound || !profileExists || !resolvedUserId) {
     return (
       <div className="min-h-screen bg-social-background flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -110,7 +120,7 @@ export default function PublicProfilePage() {
 
       {/* Profile content - Using the same template */}
       <PortfolioProfile
-        userId={userId}
+        userId={resolvedUserId}
         isOwner={false}
       />
     </div>
