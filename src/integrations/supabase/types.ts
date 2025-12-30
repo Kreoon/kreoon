@@ -5291,6 +5291,7 @@ export type Database = {
           account_external_id: string | null
           account_name: string
           account_url: string | null
+          client_id: string | null
           connected_by: string | null
           created_at: string
           error_message: string | null
@@ -5311,6 +5312,7 @@ export type Database = {
           account_external_id?: string | null
           account_name: string
           account_url?: string | null
+          client_id?: string | null
           connected_by?: string | null
           created_at?: string
           error_message?: string | null
@@ -5331,6 +5333,7 @@ export type Database = {
           account_external_id?: string | null
           account_name?: string
           account_url?: string | null
+          client_id?: string | null
           connected_by?: string | null
           created_at?: string
           error_message?: string | null
@@ -5346,7 +5349,15 @@ export type Database = {
           token_expires_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "streaming_accounts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       streaming_event_products: {
         Row: {
