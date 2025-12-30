@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
+// Cast para tablas nuevas no generadas aún
+const supabaseAny = supabase as any;
+
 // =============================================
 // TYPES
 // =============================================
@@ -14,9 +17,10 @@ export interface LiveHourWallet {
   total_hours: number;
   used_hours: number;
   available_hours: number;
+  reserved_hours: number;
   expires_at: string | null;
   created_at: string;
-  notes: string | null;
+  updated_at: string;
 }
 
 export interface LivePackage {
@@ -41,14 +45,10 @@ export interface LiveHourPurchase {
   seller_id: string | null;
   package_id: string | null;
   hours_purchased: number;
-  amount_paid: number;
+  price_paid: number;
   currency: string;
-  payment_status: 'pending' | 'paid' | 'refunded' | 'cancelled';
-  payment_method: string | null;
-  payment_reference: string | null;
-  invoice_number: string | null;
-  expires_at: string | null;
-  created_at: string;
+  wallet_id: string;
+  purchased_at: string;
   notes: string | null;
 }
 
@@ -57,7 +57,9 @@ export interface LiveHourAssignment {
   organization_id: string;
   client_id: string;
   hours_assigned: number;
+  hours_remaining: number;
   package_id: string | null;
+  wallet_id: string;
   expires_at: string | null;
   assigned_by: string | null;
   assigned_at: string;
@@ -67,19 +69,21 @@ export interface LiveHourAssignment {
 
 export interface LiveFeatureFlag {
   id: string;
-  scope: 'platform' | 'organization' | 'client';
-  scope_id: string | null;
-  feature_key: string;
+  flag_type: 'platform' | 'organization' | 'client';
+  flag_id: string;
   is_enabled: boolean;
-  config: Record<string, unknown>;
+  enabled_by: string | null;
+  enabled_at: string | null;
+  disabled_at: string | null;
+  created_at: string;
 }
 
 export interface LiveEventCreator {
   id: string;
   event_id: string;
   creator_id: string;
-  role: 'host' | 'cohost' | 'support' | 'guest';
-  status: 'pending' | 'confirmed' | 'declined' | 'completed';
+  role: 'host' | 'co_host' | 'support' | 'guest';
+  assigned_by: string;
   assigned_at: string;
   confirmed_at: string | null;
   notes: string | null;
@@ -88,14 +92,14 @@ export interface LiveEventCreator {
 
 export interface LiveUsageLog {
   id: string;
+  event_id: string;
   wallet_id: string;
-  event_id: string | null;
-  action: 'credit' | 'debit' | 'adjustment' | 'refund' | 'expire';
-  hours_amount: number;
-  balance_before: number;
-  balance_after: number;
-  reason: string | null;
-  created_at: string;
+  hours_consumed: number;
+  started_at: string;
+  ended_at: string;
+  duration_minutes: number;
+  logged_at: string;
+  logged_by: string | null;
 }
 
 export interface ClientWithWallet {
@@ -136,7 +140,6 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
   const { profile } = useAuth();
   
   const organizationId = options.ownerId || profile?.current_organization_id;
-  // Use any for now since profile type may vary
   const userRole = (profile as any)?.role;
   const isAdmin = userRole === 'admin';
   const isOrgOwner = (profile as any)?.is_org_owner;
@@ -164,17 +167,15 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
 
     setLoading(true);
     try {
-      // Use any casts for new tables not yet in generated types
-      const supabaseAny = supabase as any;
-      
       // Fetch wallets
-      const walletsQuery = supabaseAny.from('live_hour_wallets').select('*');
-      const { data: walletsData } = await walletsQuery;
+      const { data: walletsData } = await supabaseAny
+        .from('live_hour_wallets')
+        .select('*');
       setWallets((walletsData as LiveHourWallet[]) || []);
 
       // Fetch packages (organization's packages)
       if (organizationId) {
-        const { data: packagesData } = await supabase
+        const { data: packagesData } = await supabaseAny
           .from('organization_live_packages')
           .select('*')
           .eq('organization_id', organizationId)
@@ -183,25 +184,25 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
       }
 
       // Fetch purchases
-      const purchasesQuery = supabase.from('live_hour_purchases').select('*');
+      let purchasesQuery = supabaseAny.from('live_hour_purchases').select('*');
       if (!isAdmin && organizationId) {
-        purchasesQuery.eq('buyer_id', organizationId);
+        purchasesQuery = purchasesQuery.eq('buyer_id', organizationId);
       }
-      const { data: purchasesData } = await purchasesQuery.order('created_at', { ascending: false });
+      const { data: purchasesData } = await purchasesQuery.order('purchased_at', { ascending: false });
       setPurchases((purchasesData as LiveHourPurchase[]) || []);
 
       // Fetch assignments (org's assignments to clients)
       if (organizationId) {
-        const { data: assignmentsData } = await supabase
+        const { data: assignmentsData } = await supabaseAny
           .from('live_hour_assignments')
-          .select('*, client:clients(name)')
+          .select('*')
           .eq('organization_id', organizationId)
           .order('assigned_at', { ascending: false });
         setAssignments((assignmentsData as LiveHourAssignment[]) || []);
       }
 
       // Fetch feature flags
-      const { data: flagsData } = await supabase
+      const { data: flagsData } = await supabaseAny
         .from('live_feature_flags')
         .select('*');
       setFeatureFlags((flagsData as LiveFeatureFlag[]) || []);
@@ -217,7 +218,7 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
           const clientsWithInfo = await Promise.all(
             clientsData.map(async (client) => {
               // Get wallet
-              const { data: walletData } = await supabase
+              const { data: walletData } = await supabaseAny
                 .from('live_hour_wallets')
                 .select('*')
                 .eq('owner_type', 'client')
@@ -225,12 +226,11 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
                 .maybeSingle();
 
               // Get feature flag
-              const { data: flagData } = await supabase
+              const { data: flagData } = await supabaseAny
                 .from('live_feature_flags')
                 .select('is_enabled')
-                .eq('scope', 'client')
-                .eq('scope_id', client.id)
-                .eq('feature_key', 'live_streaming_enabled')
+                .eq('flag_type', 'client')
+                .eq('flag_id', client.id)
                 .maybeSingle();
 
               // Get event count
@@ -252,10 +252,10 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
       }
 
       // Fetch usage logs
-      const { data: logsData } = await supabase
+      const { data: logsData } = await supabaseAny
         .from('live_usage_logs')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('logged_at', { ascending: false })
         .limit(100);
       setUsageLogs((logsData as LiveUsageLog[]) || []);
 
@@ -285,9 +285,7 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
     
     const activeClients = clientsWithWallets.filter(c => c.live_enabled && (c.wallet?.available_hours || 0) > 0).length;
     
-    const totalRevenue = purchases
-      .filter(p => p.payment_status === 'paid')
-      .reduce((sum, p) => sum + p.amount_paid, 0);
+    const totalRevenue = purchases.reduce((sum, p) => sum + (p.price_paid || 0), 0);
 
     return {
       platformHours: {
@@ -302,19 +300,19 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
       },
       activeClients,
       totalClients: clientsWithWallets.length,
-      upcomingEvents: 0, // TODO: Calculate from streaming_events
-      liveNow: 0, // TODO: Calculate from streaming_events with status='live'
+      upcomingEvents: 0,
+      liveNow: 0,
       totalRevenue,
     };
   }, [wallets, clientsWithWallets, purchases, organizationId]);
 
   const isPlatformEnabled = useMemo(() => {
-    return featureFlags.find(f => f.scope === 'platform' && f.feature_key === 'live_streaming_enabled')?.is_enabled || false;
+    return featureFlags.find(f => f.flag_type === 'platform')?.is_enabled || false;
   }, [featureFlags]);
 
   const isOrgEnabled = useMemo(() => {
     return featureFlags.find(
-      f => f.scope === 'organization' && f.scope_id === organizationId && f.feature_key === 'live_streaming_enabled'
+      f => f.flag_type === 'organization' && f.flag_id === organizationId
     )?.is_enabled || false;
   }, [featureFlags, organizationId]);
 
@@ -323,21 +321,21 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
   // =============================================
 
   const toggleFeatureFlag = useCallback(async (
-    scope: 'platform' | 'organization' | 'client',
-    scopeId: string | null,
+    flagType: 'platform' | 'organization' | 'client',
+    flagId: string,
     enabled: boolean
   ) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAny
         .from('live_feature_flags')
         .upsert({
-          scope,
-          scope_id: scopeId,
-          feature_key: 'live_streaming_enabled',
+          flag_type: flagType,
+          flag_id: flagId,
           is_enabled: enabled,
-          updated_at: new Date().toISOString(),
-          updated_by: profile?.id,
-        }, { onConflict: 'scope,scope_id,feature_key' });
+          enabled_by: enabled ? profile?.id : null,
+          enabled_at: enabled ? new Date().toISOString() : null,
+          disabled_at: !enabled ? new Date().toISOString() : null,
+        }, { onConflict: 'flag_type,flag_id' });
 
       if (error) throw error;
 
@@ -365,13 +363,13 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
 
     try {
       if (pkg.id) {
-        const { error } = await supabase
+        const { error } = await supabaseAny
           .from('organization_live_packages')
           .update({ ...pkg, updated_at: new Date().toISOString() })
           .eq('id', pkg.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await supabaseAny
           .from('organization_live_packages')
           .insert({ ...pkg, organization_id: organizationId });
         if (error) throw error;
@@ -387,7 +385,7 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
 
   const deletePackage = useCallback(async (packageId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAny
         .from('organization_live_packages')
         .delete()
         .eq('id', packageId);
@@ -415,49 +413,55 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
 
     try {
       // Check if client has a wallet, create if not
-      let { data: walletData } = await supabase
+      let { data: walletData } = await supabaseAny
         .from('live_hour_wallets')
-        .select('id, total_hours')
+        .select('*')
         .eq('owner_type', 'client')
         .eq('owner_id', clientId)
         .maybeSingle();
 
+      let walletId: string;
+
       if (!walletData) {
-        const { data: newWallet, error: createError } = await supabase
+        const { data: newWallet, error: createError } = await supabaseAny
           .from('live_hour_wallets')
           .insert({
             owner_type: 'client',
             owner_id: clientId,
             total_hours: hours,
+            available_hours: hours,
             used_hours: 0,
-            created_by: profile.id,
+            reserved_hours: 0,
           })
           .select()
           .single();
 
         if (createError) throw createError;
-        walletData = newWallet;
+        walletId = newWallet.id;
       } else {
         // Update existing wallet
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAny
           .from('live_hour_wallets')
           .update({
             total_hours: walletData.total_hours + hours,
-            updated_at: new Date().toISOString(),
+            available_hours: walletData.available_hours + hours,
           })
           .eq('id', walletData.id);
 
         if (updateError) throw updateError;
+        walletId = walletData.id;
       }
 
       // Create assignment record
-      const { error: assignError } = await supabase
+      const { error: assignError } = await supabaseAny
         .from('live_hour_assignments')
         .insert({
           organization_id: organizationId,
           client_id: clientId,
           hours_assigned: hours,
+          hours_remaining: hours,
           package_id: packageId || null,
+          wallet_id: walletId,
           expires_at: expiresAt || null,
           assigned_by: profile.id,
         });
@@ -478,62 +482,65 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
   const addPlatformHoursToOrg = useCallback(async (
     targetOrgId: string,
     hours: number,
-    amountPaid: number,
+    pricePaid: number,
     currency: string = 'COP',
-    paymentRef?: string
+    notes?: string
   ) => {
     if (!profile?.id) return;
 
     try {
       // Check if org has a wallet, create if not
-      let { data: walletData } = await supabase
+      let { data: walletData } = await supabaseAny
         .from('live_hour_wallets')
-        .select('id, total_hours')
+        .select('*')
         .eq('owner_type', 'organization')
         .eq('owner_id', targetOrgId)
         .maybeSingle();
 
+      let walletId: string;
+
       if (!walletData) {
-        const { data: newWallet, error: createError } = await supabase
+        const { data: newWallet, error: createError } = await supabaseAny
           .from('live_hour_wallets')
           .insert({
             owner_type: 'organization',
             owner_id: targetOrgId,
             total_hours: hours,
+            available_hours: hours,
             used_hours: 0,
-            created_by: profile.id,
+            reserved_hours: 0,
           })
           .select()
           .single();
 
         if (createError) throw createError;
-        walletData = newWallet;
+        walletId = newWallet.id;
       } else {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAny
           .from('live_hour_wallets')
           .update({
             total_hours: walletData.total_hours + hours,
-            updated_at: new Date().toISOString(),
+            available_hours: walletData.available_hours + hours,
           })
           .eq('id', walletData.id);
 
         if (updateError) throw updateError;
+        walletId = walletData.id;
       }
 
       // Create purchase record
-      const { error: purchaseError } = await supabase
+      const { error: purchaseError } = await supabaseAny
         .from('live_hour_purchases')
         .insert({
           buyer_type: 'organization',
           buyer_id: targetOrgId,
           seller_type: 'platform',
-          seller_id: null,
+          seller_id: 'platform',
           hours_purchased: hours,
-          amount_paid: amountPaid,
+          price_paid: pricePaid,
           currency,
-          payment_status: 'paid',
-          payment_reference: paymentRef,
-          processed_by: profile.id,
+          wallet_id: walletId,
+          notes,
         });
 
       if (purchaseError) throw purchaseError;
@@ -556,12 +563,12 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
   const assignCreatorToEvent = useCallback(async (
     eventId: string,
     creatorId: string,
-    role: 'host' | 'cohost' | 'support' | 'guest' = 'host'
+    role: 'host' | 'co_host' | 'support' | 'guest' = 'host'
   ) => {
     if (!profile?.id) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAny
         .from('live_event_creators')
         .insert({
           event_id: eventId,
@@ -581,17 +588,14 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
 
   const updateCreatorStatus = useCallback(async (
     assignmentId: string,
-    status: 'pending' | 'confirmed' | 'declined' | 'completed'
+    confirmed: boolean
   ) => {
     try {
-      const updateData: Record<string, unknown> = { status };
-      if (status === 'confirmed') {
-        updateData.confirmed_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
+      const { error } = await supabaseAny
         .from('live_event_creators')
-        .update(updateData)
+        .update({
+          confirmed_at: confirmed ? new Date().toISOString() : null,
+        })
         .eq('id', assignmentId);
 
       if (error) throw error;
@@ -605,7 +609,7 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
 
   const removeCreatorFromEvent = useCallback(async (assignmentId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAny
         .from('live_event_creators')
         .delete()
         .eq('id', assignmentId);
@@ -616,6 +620,47 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
     } catch (error) {
       console.error('Error removing creator:', error);
       toast({ title: 'Error', description: 'No se pudo remover el creador', variant: 'destructive' });
+    }
+  }, [fetchData, toast]);
+
+  // =============================================
+  // CAN CLIENT START LIVE CHECK
+  // =============================================
+
+  const canClientStartLive = useCallback(async (clientId: string): Promise<boolean> => {
+    if (!organizationId) return false;
+
+    try {
+      const { data, error } = await supabaseAny.rpc('can_client_start_live', {
+        p_client_id: clientId,
+        p_organization_id: organizationId
+      });
+
+      if (error) throw error;
+      return data === true;
+    } catch (error) {
+      console.error('Error checking if client can start live:', error);
+      return false;
+    }
+  }, [organizationId]);
+
+  // =============================================
+  // CONSUME LIVE HOURS
+  // =============================================
+
+  const consumeLiveHours = useCallback(async (eventId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabaseAny.rpc('consume_live_hours', {
+        p_event_id: eventId
+      });
+
+      if (error) throw error;
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error consuming live hours:', error);
+      toast({ title: 'Error', description: 'Error al consumir horas de live', variant: 'destructive' });
+      return false;
     }
   }, [fetchData, toast]);
 
@@ -653,5 +698,7 @@ export function useKreoonLive(options: UseKreoonLiveOptions = {}) {
     assignCreatorToEvent,
     updateCreatorStatus,
     removeCreatorFromEvent,
+    canClientStartLive,
+    consumeLiveHours,
   };
 }
