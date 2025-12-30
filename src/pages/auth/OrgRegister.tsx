@@ -11,6 +11,14 @@ import { toast } from 'sonner';
 import { Building2, Lock, ArrowLeft, Eye, EyeOff, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 
+interface RegistrationPageConfig {
+  welcome_title?: string;
+  welcome_message?: string;
+  banner_url?: string;
+  primary_color?: string;
+  show_description?: boolean;
+}
+
 interface Organization {
   id: string;
   name: string;
@@ -20,6 +28,7 @@ interface Organization {
   is_registration_open: boolean;
   registration_require_invite: boolean;
   default_role: string;
+  registration_page_config: RegistrationPageConfig | null;
 }
 
 const registerSchema = z.object({
@@ -62,7 +71,7 @@ export default function OrgRegister() {
     try {
       const { data, error } = await supabase
         .from('organizations')
-        .select('id, name, slug, logo_url, description, is_registration_open, registration_require_invite, default_role')
+        .select('id, name, slug, logo_url, description, is_registration_open, registration_require_invite, default_role, registration_page_config')
         .eq('slug', slug)
         .single();
 
@@ -277,9 +286,24 @@ export default function OrgRegister() {
     );
   }
 
+  const pageConfig = organization?.registration_page_config || {};
+  const welcomeTitle = pageConfig.welcome_title || organization?.name;
+  const welcomeMessage = pageConfig.welcome_message || organization?.description || 'Únete a nuestra organización';
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md overflow-hidden">
+        {/* Banner */}
+        {pageConfig.banner_url && (
+          <div className="h-32 w-full">
+            <img 
+              src={pageConfig.banner_url} 
+              alt="Banner" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+        
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <Avatar className="h-20 w-20 border-2 border-primary/20">
@@ -290,10 +314,15 @@ export default function OrgRegister() {
             </Avatar>
           </div>
           <div>
-            <CardTitle className="text-2xl">{organization?.name}</CardTitle>
+            <CardTitle className="text-2xl">{welcomeTitle}</CardTitle>
             <CardDescription className="mt-2">
-              {organization?.description || 'Únete a nuestra organización'}
+              {welcomeMessage}
             </CardDescription>
+            {pageConfig.show_description && organization?.description && pageConfig.welcome_message !== organization.description && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                {organization.description}
+              </p>
+            )}
           </div>
         </CardHeader>
 

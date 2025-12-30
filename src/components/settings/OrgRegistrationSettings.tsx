@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { 
   Copy, 
@@ -22,19 +24,34 @@ import {
   Calendar,
   AlertTriangle,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  Palette,
+  ImageIcon,
+  Upload,
+  Building2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+interface RegistrationPageConfig {
+  welcome_title?: string;
+  welcome_message?: string;
+  banner_url?: string;
+  primary_color?: string;
+  show_description?: boolean;
+}
 
 interface OrgRegistrationConfig {
   is_registration_open: boolean;
   registration_code: string | null;
   registration_code_updated_at: string | null;
   registration_require_invite: boolean;
+  registration_page_config: RegistrationPageConfig | null;
   default_role: string | null;
   slug: string;
   name: string;
+  logo_url: string | null;
+  description: string | null;
 }
 
 const ROLE_OPTIONS = [
@@ -51,6 +68,9 @@ export function OrgRegistrationSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [pageConfig, setPageConfig] = useState<RegistrationPageConfig>({});
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const canManage = isOrgOwner || isPlatformRoot;
 
@@ -66,12 +86,15 @@ export function OrgRegistrationSettings() {
     try {
       const { data, error } = await supabase
         .from('organizations')
-        .select('is_registration_open, registration_code, registration_code_updated_at, registration_require_invite, default_role, slug, name')
+        .select('is_registration_open, registration_code, registration_code_updated_at, registration_require_invite, registration_page_config, default_role, slug, name, logo_url, description')
         .eq('id', currentOrgId)
         .single();
 
       if (error) throw error;
       setConfig(data as OrgRegistrationConfig);
+      if (data.registration_page_config) {
+        setPageConfig(data.registration_page_config as RegistrationPageConfig);
+      }
     } catch (error) {
       console.error('Error fetching config:', error);
       toast.error('Error al cargar configuración');
@@ -178,6 +201,67 @@ export function OrgRegistrationSettings() {
       toast.error('Error al regenerar código');
     } finally {
       setRegenerating(false);
+    }
+  };
+
+  const handleUpdatePageConfig = async (updates: Partial<RegistrationPageConfig>) => {
+    if (!currentOrgId) return;
+    
+    const newConfig = { ...pageConfig, ...updates };
+    setPageConfig(newConfig);
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update({ registration_page_config: newConfig })
+        .eq('id', currentOrgId);
+
+      if (error) throw error;
+      toast.success('Configuración guardada');
+    } catch (error) {
+      console.error('Error updating page config:', error);
+      toast.error('Error al guardar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentOrgId) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      toast.error('Solo se permiten imágenes');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen debe ser menor a 5MB');
+      return;
+    }
+
+    setUploadingBanner(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentOrgId}/registration-banner.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('organizations')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('organizations')
+        .getPublicUrl(fileName);
+
+      await handleUpdatePageConfig({ banner_url: publicUrl });
+    } catch (error) {
+      console.error('Error uploading banner:', error);
+      toast.error('Error al subir imagen');
+    } finally {
+      setUploadingBanner(false);
     }
   };
 
@@ -403,6 +487,151 @@ export function OrgRegistrationSettings() {
                 ))}
               </SelectContent>
             </Select>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Personalización visual */}
+      {config.is_registration_open && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-primary/10">
+                <Palette className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Personalización Visual</CardTitle>
+                <CardDescription>
+                  Personaliza la apariencia de tu página de registro
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Preview */}
+            <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+              <Label className="text-sm font-medium">Vista previa</Label>
+              <div className="rounded-lg border bg-card p-4 space-y-3">
+                {pageConfig.banner_url && (
+                  <div className="h-24 rounded-md overflow-hidden">
+                    <img 
+                      src={pageConfig.banner_url} 
+                      alt="Banner" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={config.logo_url || ''} />
+                    <AvatarFallback>
+                      <Building2 className="h-5 w-5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold">{pageConfig.welcome_title || config.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {pageConfig.welcome_message || config.description || 'Únete a nuestra organización'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Banner */}
+            <div className="space-y-2">
+              <Label>Banner de cabecera</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  ref={bannerInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBannerUpload}
+                  className="hidden"
+                />
+                {pageConfig.banner_url ? (
+                  <div className="relative h-20 w-40 rounded-md overflow-hidden border">
+                    <img 
+                      src={pageConfig.banner_url} 
+                      alt="Banner" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-20 w-40 rounded-md border-2 border-dashed flex items-center justify-center">
+                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => bannerInputRef.current?.click()}
+                    disabled={uploadingBanner}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {uploadingBanner ? 'Subiendo...' : 'Subir imagen'}
+                  </Button>
+                  {pageConfig.banner_url && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleUpdatePageConfig({ banner_url: undefined })}
+                      className="text-destructive"
+                    >
+                      Eliminar
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Recomendado: 1200x300px, máx 5MB
+              </p>
+            </div>
+
+            {/* Welcome title */}
+            <div className="space-y-2">
+              <Label>Título de bienvenida</Label>
+              <Input
+                value={pageConfig.welcome_title || ''}
+                onChange={(e) => setPageConfig(prev => ({ ...prev, welcome_title: e.target.value }))}
+                onBlur={() => handleUpdatePageConfig({ welcome_title: pageConfig.welcome_title })}
+                placeholder={config.name}
+              />
+              <p className="text-xs text-muted-foreground">
+                Déjalo vacío para usar el nombre de la organización
+              </p>
+            </div>
+
+            {/* Welcome message */}
+            <div className="space-y-2">
+              <Label>Mensaje de bienvenida</Label>
+              <Textarea
+                value={pageConfig.welcome_message || ''}
+                onChange={(e) => setPageConfig(prev => ({ ...prev, welcome_message: e.target.value }))}
+                onBlur={() => handleUpdatePageConfig({ welcome_message: pageConfig.welcome_message })}
+                placeholder={config.description || 'Únete a nuestra organización'}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                Texto que verán los usuarios en la página de registro
+              </p>
+            </div>
+
+            {/* Show description toggle */}
+            <div className="flex items-center justify-between py-2">
+              <div className="space-y-0.5">
+                <Label>Mostrar descripción</Label>
+                <p className="text-sm text-muted-foreground">
+                  Mostrar la descripción completa de la organización
+                </p>
+              </div>
+              <Switch
+                checked={pageConfig.show_description || false}
+                onCheckedChange={(checked) => handleUpdatePageConfig({ show_description: checked })}
+                disabled={saving}
+              />
+            </div>
           </CardContent>
         </Card>
       )}
