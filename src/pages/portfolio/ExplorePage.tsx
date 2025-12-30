@@ -70,7 +70,7 @@ export default function ExplorePage() {
     setLoading(true);
     try {
       // Fetch trending creators with stats
-      const { data: profiles } = await supabase
+      const { data: profiles } = await (supabase as any)
         .from('profiles')
         .select('id, full_name, avatar_url, username, bio, tagline, city, country, is_platform_founder, founder_badge_type')
         .eq('is_public', true)
@@ -78,13 +78,13 @@ export default function ExplorePage() {
 
       // Get follower counts
       const profileIds = profiles?.map(p => p.id) || [];
-      const { data: followerCounts } = await supabase
+      const { data: followerCounts } = await (supabase as any)
         .from('followers')
         .select('following_id')
         .in('following_id', profileIds);
 
       // Get content counts
-      const { data: contentCounts } = await supabase
+      const { data: contentCounts } = await (supabase as any)
         .from('content')
         .select('creator_id')
         .in('creator_id', profileIds)
@@ -115,7 +115,7 @@ export default function ExplorePage() {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
 
-      const { data: posts } = await supabase
+      const { data: posts } = await (supabase as any)
         .from('portfolio_posts')
         .select('id, media_url, media_type, likes_count, views_count, user_id')
         .eq('visibility', 'public')
@@ -172,12 +172,12 @@ export default function ExplorePage() {
       // Get stats for filtered users
       const profileIds = profiles?.map(p => p.id) || [];
       
-      const { data: followerCounts } = await supabase
+      const { data: followerCounts } = await (supabase as any)
         .from('followers')
         .select('following_id')
         .in('following_id', profileIds);
 
-      const { data: contentCounts } = await supabase
+      const { data: contentCounts } = await (supabase as any)
         .from('content')
         .select('creator_id')
         .in('creator_id', profileIds)

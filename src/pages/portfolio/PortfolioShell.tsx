@@ -14,18 +14,20 @@ const FeedPage = lazy(() => import('./FeedPage'));
 const VideosPage = lazy(() => import('./VideosPage'));
 const ProfilePage = lazy(() => import('./ProfilePage'));
 const SavedPage = lazy(() => import('./SavedPage'));
+const ExplorePage = lazy(() => import('./ExplorePage'));
 
-type TabKey = 'feed' | 'videos' | 'profile' | 'saved';
+type TabKey = 'feed' | 'explore' | 'videos' | 'profile' | 'saved';
 
 interface TabConfig {
   key: TabKey;
   label: string;
   icon: typeof Home;
-  permission: 'portfolio.feed.view' | 'portfolio.videos.view' | 'portfolio.profile.view' | 'portfolio.saved.view';
+  permission: 'portfolio.feed.view' | 'portfolio.videos.view' | 'portfolio.profile.view' | 'portfolio.saved.view' | 'portfolio.explore.view';
 }
 
 const TABS: TabConfig[] = [
   { key: 'feed', label: 'Feed', icon: Home, permission: 'portfolio.feed.view' },
+  { key: 'explore', label: 'Explorar', icon: Compass, permission: 'portfolio.explore.view' },
   { key: 'videos', label: 'Videos', icon: Play, permission: 'portfolio.videos.view' },
   { key: 'profile', label: 'Mi Perfil', icon: User, permission: 'portfolio.profile.view' },
   { key: 'saved', label: 'Guardados', icon: Bookmark, permission: 'portfolio.saved.view' },
@@ -64,6 +66,7 @@ export default function PortfolioShell() {
   const [activeTab, setActiveTab] = useState<TabKey>(getInitialTab);
   const [tabStates, setTabStates] = useState<Record<TabKey, boolean>>({
     feed: false,
+    explore: false,
     videos: false,
     profile: false,
     saved: false,
@@ -100,6 +103,9 @@ export default function PortfolioShell() {
         <div className={cn(activeTab === 'feed' ? 'block' : 'hidden', 'h-full')}>
           {tabStates.feed && <FeedPage />}
         </div>
+        <div className={cn(activeTab === 'explore' ? 'block' : 'hidden', 'h-full')}>
+          {tabStates.explore && <ExplorePage />}
+        </div>
         <div className={cn(activeTab === 'videos' ? 'block' : 'hidden', 'h-full')}>
           {tabStates.videos && <VideosPage />}
         </div>
@@ -119,14 +125,6 @@ export default function PortfolioShell() {
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-social-background/95 backdrop-blur-lg border-b border-social-border z-50 flex items-center px-4">
         <KreoonSocialLogo className="flex-1" />
         <div className="flex items-center gap-1 ml-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 text-social-foreground hover:bg-social-muted"
-            onClick={() => navigate('/explore')}
-          >
-            <Compass className="h-5 w-5" />
-          </Button>
           <SocialNotificationsDropdown />
         </div>
       </header>
