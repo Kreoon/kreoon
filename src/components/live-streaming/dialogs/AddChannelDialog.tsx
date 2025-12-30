@@ -73,7 +73,7 @@ export function AddChannelDialog({ open, onOpenChange, onSave, editingAccount }:
             <Label>Plataforma</Label>
             <Select
               value={formData.platform_type}
-              onValueChange={(value) => setFormData({ ...formData, platform_type: value })}
+              onValueChange={(value) => setFormData({ ...formData, platform_type: value as typeof formData.platform_type })}
               disabled={!!editingAccount}
             >
               <SelectTrigger>

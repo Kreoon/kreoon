@@ -96,7 +96,7 @@ export function AddProviderDialog({ open, onOpenChange, onSave, editingProvider 
             <Label>Proveedor</Label>
             <Select
               value={formData.provider}
-              onValueChange={(value) => setFormData({ ...formData, provider: value })}
+              onValueChange={(value) => setFormData({ ...formData, provider: value as typeof formData.provider })}
               disabled={!!editingProvider}
             >
               <SelectTrigger>

@@ -287,19 +287,20 @@ export function useLiveStreaming(options: UseLiveStreamingOptions = {}) {
         account_external_id: account.account_external_id,
         owner_type: ownerType,
         owner_id: ownerId || null,
+        status: 'connected',
         updated_at: new Date().toISOString(),
       };
 
       if (account.id) {
         const { error } = await supabase
           .from('streaming_accounts')
-          .update(payload)
+          .update(payload as never)
           .eq('id', account.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('streaming_accounts')
-          .insert({ ...payload, status: 'connected' as const });
+          .insert(payload as never);
         if (error) throw error;
       }
 
