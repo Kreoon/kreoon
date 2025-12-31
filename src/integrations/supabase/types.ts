@@ -8392,6 +8392,10 @@ export type Database = {
         }
         Returns: string
       }
+      register_user_to_organization: {
+        Args: { p_organization_id: string; p_role?: string; p_user_id: string }
+        Returns: boolean
+      }
       reserve_live_hours: {
         Args: { _event_id: string; _hours: number }
         Returns: boolean
