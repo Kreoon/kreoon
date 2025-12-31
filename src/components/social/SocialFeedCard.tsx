@@ -261,7 +261,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
               loop
               showControls={false}
               aspectRatio="auto"
-              objectFit={isMobile ? 'cover' : 'contain'}
+              objectFit="contain"
               className="w-full h-full"
               onLoadComplete={handleVideoLoadComplete}
             />
