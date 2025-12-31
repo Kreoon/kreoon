@@ -440,7 +440,10 @@ export default function OrgRegister() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="fullName">Nombre Completo</Label>
+                <Label htmlFor="fullName" className="flex items-center gap-1">
+                  Nombre Completo
+                  <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="fullName"
                   value={fullName}
@@ -454,7 +457,10 @@ export default function OrgRegister() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="flex items-center gap-1">
+                  Email
+                  <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -563,7 +569,10 @@ export default function OrgRegister() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password" className="flex items-center gap-1">
+                  Contraseña
+                  <span className="text-destructive">*</span>
+                </Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -589,7 +598,10 @@ export default function OrgRegister() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                <Label htmlFor="confirmPassword" className="flex items-center gap-1">
+                  Confirmar Contraseña
+                  <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="confirmPassword"
                   type="password"
