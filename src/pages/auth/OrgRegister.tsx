@@ -9,7 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Building2, Lock, ArrowLeft, Eye, EyeOff, AlertTriangle, CheckCircle2, Loader2, Sparkles, User, Briefcase, Video } from 'lucide-react';
+import { Building2, Lock, ArrowLeft, Eye, EyeOff, AlertTriangle, CheckCircle2, Loader2, Sparkles, User, Briefcase, Video, Scissors } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { z } from 'zod';
 
 interface RegistrationPageConfig {
@@ -61,6 +62,7 @@ export default function OrgRegister() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [bio, setBio] = useState('');
+  const [selectedRole, setSelectedRole] = useState<string>('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   
   // AI Role suggestion
@@ -234,8 +236,8 @@ export default function OrgRegister() {
         return;
       }
 
-      // Get default role with proper type
-      const defaultRole = (organization.default_role || 'creator') as 'creator' | 'editor' | 'client' | 'admin' | 'strategist' | 'ambassador';
+      // Use selected role or default role
+      const roleToAssign = (selectedRole || organization.default_role || 'creator') as 'creator' | 'editor' | 'client' | 'admin' | 'strategist' | 'ambassador';
 
       // Wait a moment for the profile trigger to complete
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -251,7 +253,7 @@ export default function OrgRegister() {
           .rpc('register_user_to_organization', {
             p_organization_id: organization.id,
             p_user_id: authData.user.id,
-            p_role: defaultRole
+            p_role: roleToAssign
           });
         
         if (error) {
@@ -270,7 +272,7 @@ export default function OrgRegister() {
             body: {
               user_id: authData.user.id,
               organization_id: organization.id,
-              role: defaultRole,
+              role: roleToAssign,
               user_name: fullName,
               user_email: email
             }
@@ -509,6 +511,39 @@ export default function OrgRegister() {
                   )}
                 </div>
               )}
+
+              {/* Role selector */}
+              <div className="space-y-2">
+                <Label htmlFor="role">¿Cómo te unirás a la plataforma?</Label>
+                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                  <SelectTrigger id="role">
+                    <SelectValue placeholder="Selecciona tu rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="creator">
+                      <div className="flex items-center gap-2">
+                        <Video className="h-4 w-4" />
+                        <span>Creador de Contenido</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="editor">
+                      <div className="flex items-center gap-2">
+                        <Scissors className="h-4 w-4" />
+                        <span>Editor de Video</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="client">
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4" />
+                        <span>Cliente / Marca</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Esto determinará tu experiencia inicial en la plataforma
+                </p>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
