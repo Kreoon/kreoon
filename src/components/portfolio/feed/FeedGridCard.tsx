@@ -38,9 +38,10 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   
-  // Prefer Bunny CDN thumbnail (always fresh) over stored thumbnail_url
+  // Prefer stored thumbnail_url (Supabase Storage) since it's reliable
+  // Fall back to Bunny CDN thumbnail only if no stored thumbnail exists
   const bunnyUrls = item.media_type === 'video' ? getBunnyVideoUrls(item.media_url) : null;
-  const effectiveThumbnail = bunnyUrls?.thumbnail || item.thumbnail_url;
+  const effectiveThumbnail = item.thumbnail_url || bunnyUrls?.thumbnail;
   
   // Reset error state when item changes
   useEffect(() => {

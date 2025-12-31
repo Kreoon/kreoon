@@ -37,7 +37,7 @@ export function VideoThumbnail({
   const [isHovering, setIsHovering] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Get Bunny thumbnail if not provided
+  // Prefer stored thumbnail_url, fallback to Bunny CDN thumbnail
   const bunnyUrls = videoUrl ? getBunnyVideoUrls(videoUrl) : null;
   const effectiveThumbnailUrl = thumbnailUrl || bunnyUrls?.thumbnail;
   const previewVideoUrl = bunnyUrls?.mp4;
