@@ -71,23 +71,21 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Get all admins and owners in the organization
-    const { data: admins, error: adminsError } = await supabase
+    // Get all members in the organization (excluding new user)
+    const { data: members, error: membersError } = await supabase
       .from("organization_members")
-      .select(`
-        user_id,
-        is_owner,
-        profiles!inner(email, full_name)
-      `)
+      .select("user_id, is_owner")
       .eq("organization_id", organization_id)
       .neq("user_id", user_id);
 
-    if (adminsError) {
-      console.error("Error fetching admins:", adminsError);
-      throw new Error("Failed to fetch admins");
+    if (membersError) {
+      console.error("Error fetching members:", membersError);
+      throw new Error("Failed to fetch members");
     }
 
-    // Get admin roles
+    console.log(`Found ${members?.length || 0} members in organization`);
+
+    // Get admin roles for the organization
     const { data: adminRoles, error: rolesError } = await supabase
       .from("organization_member_roles")
       .select("user_id, role")
@@ -101,23 +99,44 @@ const handler = async (req: Request): Promise<Response> => {
     const adminUserIds = new Set(adminRoles?.map(r => r.user_id) || []);
 
     // Filter to only admins and owners
-    const adminRecipients = admins?.filter(admin => 
-      admin.is_owner || adminUserIds.has(admin.user_id)
+    const adminMembers = members?.filter(member => 
+      member.is_owner || adminUserIds.has(member.user_id)
     ) || [];
 
-    console.log(`Found ${adminRecipients.length} admin/owner recipients`);
+    console.log(`Found ${adminMembers.length} admin/owner members`);
+
+    if (adminMembers.length === 0) {
+      console.log("No admins/owners found to notify");
+      return new Response(
+        JSON.stringify({ success: true, emailsSent: 0, emailsFailed: 0, message: "No admins found" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Get profile info for all admin members
+    const adminUserIdsArray = adminMembers.map(m => m.user_id);
+    const { data: adminProfiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, email, full_name")
+      .in("id", adminUserIdsArray);
+
+    if (profilesError) {
+      console.error("Error fetching admin profiles:", profilesError);
+      throw new Error("Failed to fetch admin profiles");
+    }
+
+    console.log(`Found ${adminProfiles?.length || 0} admin profiles`);
 
     const roleLabel = ROLE_LABELS[role] || role;
     const displayName = newUserName || newUserEmail || "Nuevo usuario";
 
     // Send email to each admin
-    const emailPromises = adminRecipients.map(async (admin) => {
-      const adminProfile = admin.profiles as any;
-      const adminEmail = adminProfile?.email;
-      const adminName = adminProfile?.full_name || "Administrador";
+    const emailPromises = (adminProfiles || []).map(async (adminProfile) => {
+      const adminEmail = adminProfile.email;
+      const adminName = adminProfile.full_name || "Administrador";
 
       if (!adminEmail) {
-        console.log("Skipping admin without email:", admin.user_id);
+        console.log("Skipping admin without email:", adminProfile.id);
         return null;
       }
 
