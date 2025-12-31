@@ -15,12 +15,6 @@ interface BunnyVideoResponse {
 
 async function generateFallbackThumbnail(): Promise<Uint8Array> {
   // Simple 640x360 white/gray placeholder image (JPEG) created on-the-fly
-  // We'll create a minimal JPEG (solid color); good enough as placeholder
-  const width = 640;
-  const height = 360;
-
-  // Create a minimal valid JPEG for placeholder (1x1 gray)
-  // For simplicity, use a pre-encoded tiny valid JPEG
   const tinyJpeg = new Uint8Array([
     255,216,255,224,0,16,74,70,73,70,0,1,1,0,0,1,0,1,0,0,
     255,219,0,67,0,8,6,6,7,6,5,8,7,7,7,9,9,8,10,12,20,13,
@@ -177,6 +171,9 @@ Deno.serve(async (req) => {
         )
       }
 
+      const fileSize = file.size;
+      console.log(`[bunny-upload] Received file: ${file.name}, size: ${fileSize} bytes (${(fileSize / 1024 / 1024).toFixed(2)} MB)`);
+
       // Update status to processing
       await supabase
         .from('content')
@@ -208,8 +205,8 @@ Deno.serve(async (req) => {
       const videoData: BunnyVideoResponse = await createResponse.json()
       console.log('Created Bunny video:', videoData.guid)
 
-      // Step 2: Upload the video file
-      const fileBuffer = await file.arrayBuffer()
+      // Step 2: Upload the video file using STREAMING to avoid memory issues
+      // Use file.stream() to stream directly without loading entire file in memory
       const uploadResponse = await fetch(
         `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`,
         {
@@ -218,7 +215,10 @@ Deno.serve(async (req) => {
             'AccessKey': bunnyApiKey,
             'Content-Type': 'application/octet-stream',
           },
-          body: fileBuffer,
+          // @ts-ignore - Deno supports ReadableStream as body
+          body: file.stream(),
+          // @ts-ignore - duplex required for streaming body in Deno
+          duplex: 'half',
         }
       )
 
@@ -227,6 +227,8 @@ Deno.serve(async (req) => {
         console.error('Bunny upload error:', errorText)
         throw new Error(`Failed to upload to Bunny: ${errorText}`)
       }
+
+      console.log(`[bunny-upload] Video streamed successfully to Bunny`);
 
       // Generate embed URL
       const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
