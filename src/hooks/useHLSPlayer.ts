@@ -52,7 +52,7 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
  * Generate Bunny.net HLS, MP4 and thumbnail URLs from any Bunny URL format
  * Supports:
  * - iframe.mediadelivery.net/embed/{libraryId}/{videoId}
- * - vz-{hash}.b-cdn.net/{videoId}
+ * - vz-*.b-cdn.net/{videoId}
  * - Direct playlist/mp4/thumbnail URLs
  */
 export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
@@ -99,6 +99,36 @@ export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
 }
 
 /**
+ * Return multiple candidate CDN URLs for the same Bunny video.
+ * Some accounts/libraries can serve from different pull zones; trying alternates
+ * fixes cases where a specific user's videos stay stuck on the thumbnail.
+ */
+export function getBunnyVideoUrlCandidates(url: string): BunnyVideoUrls[] {
+  if (!url) return [];
+
+  // If it's already a direct CDN URL, just use that host.
+  const direct = getBunnyVideoUrls(url);
+  const ids = extractBunnyIds(url);
+
+  if (!ids) return direct ? [direct] : [];
+
+  const { libraryId, videoId } = ids;
+
+  // Candidate hosts: project default + library-based host fallback
+  const candidateHosts = [
+    'vz-78fcd769-050.b-cdn.net',
+    `vz-${libraryId}.b-cdn.net`,
+  ];
+
+  const uniqueHosts = Array.from(new Set(candidateHosts));
+  return uniqueHosts.map((host) => ({
+    hls: `https://${host}/${videoId}/playlist.m3u8`,
+    mp4: `https://${host}/${videoId}/play_720p.mp4`,
+    thumbnail: `https://${host}/${videoId}/thumbnail.jpg`,
+  }));
+}
+
+/**
  * Custom hook for HLS video playback with Bunny.net
  * Supports native HLS on Safari/iOS and hls.js for other browsers
  * With MP4 fallback for maximum compatibility
@@ -121,15 +151,23 @@ export function useHLSPlayer(
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentMuted, setCurrentMuted] = useState(muted);
+  const [sourceIndex, setSourceIndex] = useState(0);
 
-  // Get HLS URL from any Bunny URL format
-  const bunnyUrls = videoUrl ? getBunnyVideoUrls(videoUrl) : null;
-  const hlsUrl = bunnyUrls?.hls || null;
-  const mp4Url = bunnyUrls?.mp4 || null;
-  const thumbnailUrl = poster || bunnyUrls?.thumbnail || null;
-  
+  // Reset source attempts when URL changes
+  useEffect(() => {
+    setSourceIndex(0);
+  }, [videoUrl]);
+
+  // Get candidate HLS URLs from any Bunny URL format
+  const candidates = videoUrl ? getBunnyVideoUrlCandidates(videoUrl) : [];
+  const selected = candidates[sourceIndex] || (videoUrl ? getBunnyVideoUrls(videoUrl) : null);
+
+  const hlsUrl = selected?.hls || null;
+  const mp4Url = selected?.mp4 || null;
+  const thumbnailUrl = poster || selected?.thumbnail || null;
+
   // Check if it's a direct MP4 URL (not from Bunny)
-  const isDirectMp4 = videoUrl && !bunnyUrls && (videoUrl.endsWith('.mp4') || videoUrl.includes('.mp4?'));
+  const isDirectMp4 = videoUrl && !getBunnyVideoUrls(videoUrl) && (videoUrl.endsWith('.mp4') || videoUrl.includes('.mp4?'));
 
   // Initialize HLS player - setup only, no autoplay
   useEffect(() => {
@@ -242,6 +280,12 @@ export function useHLSPlayer(
           details: data.details,
           reason: data.reason,
         });
+
+        // Try alternate CDN host (fixes cases where some videos exist in a different pull zone)
+        if (candidates.length > 0 && sourceIndex < candidates.length - 1) {
+          setSourceIndex((prev) => prev + 1);
+          return;
+        }
 
         fatalErrorCountRef.current += 1;
 
