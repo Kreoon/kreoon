@@ -39,6 +39,7 @@ import NotFound from "./pages/NotFound";
 import NoCompany from "./pages/NoCompany";
 import NoOrganization from "./pages/NoOrganization";
 import PendingAccess from "./pages/PendingAccess";
+import WelcomeNewMember from "./pages/WelcomeNewMember";
 import UPDocumentation from "./pages/UPDocumentation";
 import OrgAuth from "./pages/OrgAuth";
 import HomePage from "./pages/HomePage";
@@ -89,6 +90,7 @@ function AppRoutes() {
       <Route path="/no-company" element={<NoCompany />} />
       <Route path="/no-organization" element={<NoOrganization />} />
       <Route path="/pending-access" element={<PendingAccess />} />
+      <Route path="/welcome" element={<WelcomeNewMember />} />
       <Route path="/up-documentation" element={<UPDocumentation />} />
       <Route path="/org/:slug" element={<OrgAuth />} />
       <Route path="/auth/org/:slug" element={<OrgRegister />} />

@@ -303,18 +303,10 @@ export default function OrgRegister() {
         console.error('Error invoking notify-new-member:', err);
       });
 
-      toast.success('¡Cuenta creada exitosamente! Ya tienes acceso completo.');
+      toast.success('¡Cuenta creada exitosamente!');
       
-      // Redirect to appropriate dashboard based on role
-      const dashboardRoutes: Record<string, string> = {
-        creator: '/creator-dashboard',
-        editor: '/editor-dashboard',
-        client: '/dashboard',
-        admin: '/admin-dashboard',
-        strategist: '/admin-dashboard',
-        ambassador: '/creator-dashboard'
-      };
-      navigate(dashboardRoutes[roleToAssign] || '/dashboard');
+      // Redirect to welcome page with role info
+      navigate(`/welcome?role=${roleToAssign}`);
     } catch (err) {
       console.error('Registration error:', err);
       toast.error('Error durante el registro');
