@@ -206,6 +206,13 @@ export default function OrgRegister() {
       return;
     }
 
+    // Validate role selection
+    if (!selectedRole) {
+      setFormErrors(prev => ({ ...prev, role: 'Debes seleccionar un rol' }));
+      toast.error('Por favor selecciona cómo te unirás a la plataforma');
+      return;
+    }
+
     if (!organization) return;
 
     setSubmitting(true);
@@ -512,11 +519,17 @@ export default function OrgRegister() {
                 </div>
               )}
 
-              {/* Role selector */}
+              {/* Role selector - Required */}
               <div className="space-y-2">
-                <Label htmlFor="role">¿Cómo te unirás a la plataforma?</Label>
-                <Select value={selectedRole} onValueChange={setSelectedRole}>
-                  <SelectTrigger id="role">
+                <Label htmlFor="role" className="flex items-center gap-1">
+                  ¿Cómo te unirás a la plataforma?
+                  <span className="text-destructive">*</span>
+                </Label>
+                <Select value={selectedRole} onValueChange={(value) => {
+                  setSelectedRole(value);
+                  setFormErrors(prev => ({ ...prev, role: '' }));
+                }}>
+                  <SelectTrigger id="role" className={formErrors.role ? 'border-destructive' : ''}>
                     <SelectValue placeholder="Selecciona tu rol" />
                   </SelectTrigger>
                   <SelectContent>
@@ -540,9 +553,13 @@ export default function OrgRegister() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  Esto determinará tu experiencia inicial en la plataforma
-                </p>
+                {formErrors.role ? (
+                  <p className="text-xs text-destructive">{formErrors.role}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Esto determinará tu experiencia inicial en la plataforma
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
