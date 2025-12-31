@@ -294,6 +294,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // Check if user is in client_users table - they should have client role
+      if (userRoles.length === 0 || !userRoles.includes('client')) {
+        const clientUserResult = await withTimeout(
+          () =>
+            supabase
+              .from('client_users')
+              .select('id')
+              .eq('user_id', userId)
+              .limit(1),
+          8000
+        );
+
+        if (clientUserResult.data && clientUserResult.data.length > 0) {
+          // User is a client user, add client role if not already present
+          if (!userRoles.includes('client')) {
+            userRoles = [...userRoles, 'client'];
+          }
+        }
+      }
+
       // Fallback: check user_roles for platform-level admin (root admin)
       // This ensures the root admin still has access even without org membership
       if (userRoles.length === 0) {
