@@ -69,16 +69,14 @@ const VideoSlide = memo(function VideoSlide({
   const [isLiked, setIsLiked] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
   
-  // Get HLS URL from Bunny media_url - prefer stored thumbnail_url
+  // Get HLS URL from Bunny media_url
   const getVideoSource = useCallback(() => {
     const bunnyUrls = getBunnyVideoUrls(item.media_url);
-    // Prefer stored thumbnail_url (Supabase Storage) over Bunny CDN thumbnail
-    const thumbnail = item.thumbnail_url || bunnyUrls?.thumbnail || '';
     if (bunnyUrls) {
-      return { hls: bunnyUrls.hls, thumbnail };
+      return { hls: bunnyUrls.hls, thumbnail: bunnyUrls.thumbnail };
     }
     // Fallback to direct URL
-    return { hls: item.media_url, thumbnail };
+    return { hls: item.media_url, thumbnail: item.thumbnail_url || '' };
   }, [item.media_url, item.thumbnail_url]);
 
   const videoSource = item.media_type === 'video' ? getVideoSource() : null;
