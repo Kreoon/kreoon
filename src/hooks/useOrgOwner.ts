@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
+const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
 
 export interface OrgOwnerStatus {
   isOrgOwner: boolean;
@@ -47,7 +47,7 @@ export function useOrgOwner(): OrgOwnerStatus {
   const [currentOrgName, setCurrentOrgName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isPlatformRoot = profile?.email === ROOT_EMAIL;
+  const isPlatformRoot = profile?.email ? ROOT_EMAILS.includes(profile.email) : false;
 
   useEffect(() => {
     let cancelled = false;

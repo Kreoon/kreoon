@@ -6,12 +6,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { Loader2 } from 'lucide-react';
 
-const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
+const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
 
 export default function PermissionsUnifiedSection() {
   const { profile } = useAuth();
   const { isPlatformRoot: isPlatformRootFromHook } = useOrgOwner();
-  const isPlatformRoot = profile?.email === ROOT_EMAIL || isPlatformRootFromHook;
+  const isPlatformRoot = (profile?.email && ROOT_EMAILS.includes(profile.email)) || isPlatformRootFromHook;
   
   if (!profile?.current_organization_id) {
     return (

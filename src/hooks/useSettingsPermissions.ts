@@ -94,7 +94,7 @@ const SECTION_TO_MODULE: Partial<Record<SettingsSectionKey, string>> = {
   tracking: 'settings_tracking',
 };
 
-const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
+const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
 
 export function useSettingsPermissions(): SettingsPermissions {
   const { profile, isAdmin, roles, activeRole } = useAuth();
@@ -105,7 +105,7 @@ export function useSettingsPermissions(): SettingsPermissions {
 
   // Determine if user is platform root
   const isPlatformRoot = useMemo(() => {
-    return profile?.email === ROOT_EMAIL || isPlatformRootFromHook;
+    return (profile?.email && ROOT_EMAILS.includes(profile.email)) || isPlatformRootFromHook;
   }, [profile?.email, isPlatformRootFromHook]);
 
   // Determine if user is org admin (uses activeRole for current context)
