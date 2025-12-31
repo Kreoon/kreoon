@@ -237,21 +237,42 @@ export default function OrgRegister() {
       // Get default role with proper type
       const defaultRole = (organization.default_role || 'creator') as 'creator' | 'editor' | 'client' | 'admin' | 'strategist' | 'ambassador';
 
+      // Wait a moment for the profile trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       // Use the security definer function to register user to organization
       // This bypasses RLS since the user is not yet authenticated
-      const { data: registrationSuccess, error: registrationError } = await supabase
-        .rpc('register_user_to_organization', {
-          p_organization_id: organization.id,
-          p_user_id: authData.user.id,
-          p_role: defaultRole
-        });
+      // Retry up to 3 times to handle race condition with profile creation
+      let registrationSuccess = false;
+      let lastError = null;
+      
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { data, error } = await supabase
+          .rpc('register_user_to_organization', {
+            p_organization_id: organization.id,
+            p_user_id: authData.user.id,
+            p_role: defaultRole
+          });
+        
+        if (error) {
+          console.error(`Attempt ${attempt + 1} - Error registering user:`, error);
+          lastError = error;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+        
+        if (data === true) {
+          registrationSuccess = true;
+          console.log('User successfully registered to organization');
+          break;
+        }
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
-      if (registrationError) {
-        console.error('Error registering user to organization:', registrationError);
-      } else if (!registrationSuccess) {
-        console.error('Failed to register user to organization');
-      } else {
-        console.log('User successfully registered to organization');
+      if (!registrationSuccess) {
+        console.error('Failed to register user to organization after retries:', lastError);
       }
 
       toast.success('¡Cuenta creada exitosamente! Revisa tu email para confirmar.');
