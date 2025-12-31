@@ -264,6 +264,26 @@ export default function OrgRegister() {
         if (data === true) {
           registrationSuccess = true;
           console.log('User successfully registered to organization');
+          
+          // Send email notification to admins (fire and forget)
+          supabase.functions.invoke('notify-new-member', {
+            body: {
+              user_id: authData.user.id,
+              organization_id: organization.id,
+              role: defaultRole,
+              user_name: fullName,
+              user_email: email
+            }
+          }).then(result => {
+            if (result.error) {
+              console.error('Failed to send admin notification:', result.error);
+            } else {
+              console.log('Admin notification sent successfully');
+            }
+          }).catch(err => {
+            console.error('Error invoking notify-new-member:', err);
+          });
+          
           break;
         }
         
