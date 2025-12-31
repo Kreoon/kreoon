@@ -216,6 +216,10 @@ export default function OrgRegister() {
     if (!organization) return;
 
     setSubmitting(true);
+    
+    // Use selected role - already validated above
+    const roleToAssign = selectedRole as 'creator' | 'editor' | 'client' | 'admin' | 'strategist' | 'ambassador';
+    
     try {
       // Create user
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -243,66 +247,61 @@ export default function OrgRegister() {
         return;
       }
 
-      // Use selected role or default role
-      const roleToAssign = (selectedRole || organization.default_role || 'creator') as 'creator' | 'editor' | 'client' | 'admin' | 'strategist' | 'ambassador';
+      const userId = authData.user.id;
 
-      // Wait a moment for the profile trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Use the security definer function to register user to organization
-      // This bypasses RLS since the user is not yet authenticated
-      // Retry up to 3 times to handle race condition with profile creation
-      let registrationSuccess = false;
-      let lastError = null;
-      
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const { data, error } = await supabase
-          .rpc('register_user_to_organization', {
-            p_organization_id: organization.id,
-            p_user_id: authData.user.id,
-            p_role: roleToAssign
-          });
+      // Wait for the profile trigger to complete (it fires on auth.users insert)
+      // We need to poll until the profile exists
+      let profileExists = false;
+      for (let i = 0; i < 10; i++) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', userId)
+          .single();
         
-        if (error) {
-          console.error(`Attempt ${attempt + 1} - Error registering user:`, error);
-          lastError = error;
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          continue;
-        }
-        
-        if (data === true) {
-          registrationSuccess = true;
-          console.log('User successfully registered to organization');
-          
-          // Send email notification to admins (fire and forget)
-          supabase.functions.invoke('notify-new-member', {
-            body: {
-              user_id: authData.user.id,
-              organization_id: organization.id,
-              role: roleToAssign,
-              user_name: fullName,
-              user_email: email
-            }
-          }).then(result => {
-            if (result.error) {
-              console.error('Failed to send admin notification:', result.error);
-            } else {
-              console.log('Admin notification sent successfully');
-            }
-          }).catch(err => {
-            console.error('Error invoking notify-new-member:', err);
-          });
-          
+        if (profile) {
+          profileExists = true;
           break;
         }
-        
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      if (!registrationSuccess) {
-        console.error('Failed to register user to organization after retries:', lastError);
+      if (!profileExists) {
+        console.error('Profile was not created after 5 seconds');
+        toast.error('Error: El perfil no se creó correctamente. Por favor contacta soporte.');
+        // Don't continue - user account exists but profile doesn't
+        return;
       }
+
+      // Now register to organization with the selected role
+      // This function now raises exceptions on failure instead of returning FALSE
+      const { data, error: regError } = await supabase
+        .rpc('register_user_to_organization', {
+          p_organization_id: organization.id,
+          p_user_id: userId,
+          p_role: roleToAssign
+        });
+      
+      if (regError) {
+        console.error('Error registering user to organization:', regError);
+        toast.error('Error al asignar tu rol en la organización. Por favor contacta soporte.');
+        return;
+      }
+
+      console.log('User successfully registered to organization with role:', roleToAssign);
+      
+      // Send email notification to admins (fire and forget)
+      supabase.functions.invoke('notify-new-member', {
+        body: {
+          user_id: userId,
+          organization_id: organization.id,
+          role: roleToAssign,
+          user_name: fullName,
+          user_email: email
+        }
+      }).catch(err => {
+        console.error('Error invoking notify-new-member:', err);
+      });
 
       toast.success('¡Cuenta creada exitosamente! Revisa tu email para confirmar.');
       navigate('/pending-access');
