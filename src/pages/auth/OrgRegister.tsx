@@ -237,41 +237,22 @@ export default function OrgRegister() {
       // Get default role with proper type
       const defaultRole = (organization.default_role || 'creator') as 'creator' | 'editor' | 'client' | 'admin' | 'strategist' | 'ambassador';
 
-      // Add user to organization
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .insert([{
-          organization_id: organization.id,
-          user_id: authData.user.id,
-          role: defaultRole,
-          is_owner: false
-        }]);
+      // Use the security definer function to register user to organization
+      // This bypasses RLS since the user is not yet authenticated
+      const { data: registrationSuccess, error: registrationError } = await supabase
+        .rpc('register_user_to_organization', {
+          p_organization_id: organization.id,
+          p_user_id: authData.user.id,
+          p_role: defaultRole
+        });
 
-      if (memberError) {
-        console.error('Error adding member:', memberError);
+      if (registrationError) {
+        console.error('Error registering user to organization:', registrationError);
+      } else if (!registrationSuccess) {
+        console.error('Failed to register user to organization');
+      } else {
+        console.log('User successfully registered to organization');
       }
-
-      // Add role
-      const { error: roleError } = await supabase
-        .from('organization_member_roles')
-        .insert([{
-          organization_id: organization.id,
-          user_id: authData.user.id,
-          role: defaultRole
-        }]);
-
-      if (roleError) {
-        console.error('Error adding role:', roleError);
-      }
-
-      // Update profile with current org
-      await supabase
-        .from('profiles')
-        .update({ 
-          current_organization_id: organization.id,
-          organization_status: 'pending'
-        })
-        .eq('id', authData.user.id);
 
       toast.success('¡Cuenta creada exitosamente! Revisa tu email para confirmar.');
       navigate('/pending-access');
