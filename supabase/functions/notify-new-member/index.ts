@@ -130,14 +130,20 @@ const handler = async (req: Request): Promise<Response> => {
     const roleLabel = ROLE_LABELS[role] || role;
     const displayName = newUserName || newUserEmail || "Nuevo usuario";
 
-    // Send email to each admin
-    const emailPromises = (adminProfiles || []).map(async (adminProfile) => {
+    // Helper function to wait between emails (Resend rate limit: 2 req/sec)
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Send emails sequentially to avoid rate limiting
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const adminProfile of (adminProfiles || [])) {
       const adminEmail = adminProfile.email;
       const adminName = adminProfile.full_name || "Administrador";
 
       if (!adminEmail) {
         console.log("Skipping admin without email:", adminProfile.id);
-        return null;
+        continue;
       }
 
       console.log(`Sending email to admin: ${adminEmail}`);
@@ -213,7 +219,7 @@ const handler = async (req: Request): Promise<Response> => {
                           </table>
                           
                           <p style="margin: 0 0 30px; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                            El nuevo miembro ya puede acceder a la plataforma. Puedes revisar y gestionar los miembros desde el panel de administración.
+                            El nuevo miembro ya tiene acceso completo a la plataforma. Puedes revisar y gestionar los miembros desde el panel de administración.
                           </p>
                           
                           <!-- CTA Button -->
@@ -250,20 +256,19 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (error) {
           console.error(`Error sending email to ${adminEmail}:`, error);
-          return { success: false, email: adminEmail, error };
+          failCount++;
+        } else {
+          console.log(`Email sent successfully to ${adminEmail}:`, data);
+          successCount++;
         }
-
-        console.log(`Email sent successfully to ${adminEmail}:`, data);
-        return { success: true, email: adminEmail, data };
       } catch (err) {
         console.error(`Exception sending email to ${adminEmail}:`, err);
-        return { success: false, email: adminEmail, error: err };
+        failCount++;
       }
-    });
 
-    const results = await Promise.all(emailPromises);
-    const successCount = results.filter(r => r?.success).length;
-    const failCount = results.filter(r => r && !r.success).length;
+      // Wait 600ms between emails to stay under 2 req/sec rate limit
+      await delay(600);
+    }
 
     console.log(`Email notifications complete. Success: ${successCount}, Failed: ${failCount}`);
 
