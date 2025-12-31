@@ -80,8 +80,7 @@ Deno.serve(async (req) => {
     const videoData: BunnyVideoResponse = await createResponse.json()
     console.log('[bunny-portfolio-upload] Created Bunny video:', videoData.guid)
 
-    // Step 2: Upload the video file to Bunny
-    const fileBuffer = await file.arrayBuffer()
+    // Step 2: Upload the video file to Bunny using STREAMING to avoid memory issues
     const uploadResponse = await fetch(
       `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`,
       {
@@ -90,7 +89,10 @@ Deno.serve(async (req) => {
           'AccessKey': bunnyApiKey,
           'Content-Type': 'application/octet-stream',
         },
-        body: fileBuffer,
+        // @ts-ignore - Deno supports ReadableStream as body
+        body: file.stream(),
+        // @ts-ignore - duplex required for streaming body in Deno
+        duplex: 'half',
       }
     )
 
