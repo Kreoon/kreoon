@@ -180,8 +180,11 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     return <Navigate to="/pending-access" replace />;
   }
 
-  // Client users without an associated company cannot access the app
+  // Client users without an associated company can only access social routes
   if (isClient && !clientHasCompany) {
+    if (isSocialRoute) {
+      return <>{children}</>;
+    }
     return <Navigate to="/no-company" replace />;
   }
 
