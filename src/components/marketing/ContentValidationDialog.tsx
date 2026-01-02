@@ -1,0 +1,471 @@
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  CheckCircle,
+  XCircle,
+  FileVideo,
+  Target,
+  MessageSquare,
+  Lightbulb,
+  AlertTriangle,
+  Play,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
+
+interface ContentItem {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  strategy_status: string;
+  funnel_stage: string;
+  target_platform: string | null;
+  content_objective: string | null;
+  hook: string | null;
+  cta: string | null;
+  thumbnail_url: string | null;
+  video_url: string | null;
+  script: string | null;
+  creator?: { id: string; display_name: string; avatar_url: string | null } | null;
+}
+
+interface ContentValidationDialogProps {
+  content: ContentItem | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  organizationId: string | null | undefined;
+  clientId: string | null | undefined;
+}
+
+const FUNNEL_LABELS: Record<string, string> = {
+  tofu: 'Top of Funnel (Awareness)',
+  mofu: 'Middle of Funnel (Consideration)',
+  bofu: 'Bottom of Funnel (Decision)',
+};
+
+export function ContentValidationDialog({
+  content,
+  open,
+  onOpenChange,
+  onSuccess,
+  organizationId,
+  clientId,
+}: ContentValidationDialogProps) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("preview");
+  const [feedback, setFeedback] = useState("");
+  const [strategicComment, setStrategicComment] = useState("");
+  
+  // Checklist states
+  const [checklist, setChecklist] = useState({
+    meets_client_objective: false,
+    aligned_with_strategy: false,
+    coherent_with_funnel: false,
+    follows_branding: false,
+    usable_for_ads: false,
+    usable_for_organic: false,
+  });
+
+  const allChecklistPassed = Object.values(checklist).every(v => v);
+
+  const handleApprove = async () => {
+    if (!content || !user || !organizationId) return;
+    
+    setLoading(true);
+    try {
+      // Update content status
+      const { error: contentError } = await supabase
+        .from('content')
+        .update({
+          strategy_status: 'aprobado_estrategia',
+          marketing_approved_at: new Date().toISOString(),
+          marketing_approved_by: user.id,
+        })
+        .eq('id', content.id);
+
+      if (contentError) throw contentError;
+
+      // Create review record
+      const { error: reviewError } = await supabase
+        .from('content_strategy_reviews')
+        .insert({
+          content_id: content.id,
+          organization_id: organizationId,
+          client_id: clientId,
+          reviewer_id: user.id,
+          review_status: 'approved',
+          ...checklist,
+          strategic_comment: strategicComment || null,
+          feedback: null,
+          overall_score: Object.values(checklist).filter(v => v).length,
+        });
+
+      if (reviewError) throw reviewError;
+
+      toast.success('Contenido aprobado para marketing');
+      onSuccess();
+    } catch (error) {
+      console.error('Error approving content:', error);
+      toast.error('Error al aprobar contenido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!content || !user || !organizationId || !feedback.trim()) {
+      toast.error('El feedback es obligatorio para rechazar');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Update content status
+      const { error: contentError } = await supabase
+        .from('content')
+        .update({
+          strategy_status: 'rechazado_estrategia',
+          marketing_rejected_at: new Date().toISOString(),
+          marketing_rejected_by: user.id,
+          marketing_rejection_reason: feedback,
+        })
+        .eq('id', content.id);
+
+      if (contentError) throw contentError;
+
+      // Create review record
+      const { error: reviewError } = await supabase
+        .from('content_strategy_reviews')
+        .insert({
+          content_id: content.id,
+          organization_id: organizationId,
+          client_id: clientId,
+          reviewer_id: user.id,
+          review_status: 'rejected',
+          ...checklist,
+          strategic_comment: strategicComment || null,
+          feedback: feedback,
+          overall_score: Object.values(checklist).filter(v => v).length,
+        });
+
+      if (reviewError) throw reviewError;
+
+      toast.success('Contenido rechazado con feedback');
+      setFeedback("");
+      setStrategicComment("");
+      setChecklist({
+        meets_client_objective: false,
+        aligned_with_strategy: false,
+        coherent_with_funnel: false,
+        follows_branding: false,
+        usable_for_ads: false,
+        usable_for_organic: false,
+      });
+      onSuccess();
+    } catch (error) {
+      console.error('Error rejecting content:', error);
+      toast.error('Error al rechazar contenido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!content) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileVideo className="h-5 w-5" />
+            Validación Estratégica
+          </DialogTitle>
+          <DialogDescription>
+            Revisa y valida el contenido antes de usarlo en campañas de marketing
+          </DialogDescription>
+        </DialogHeader>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="preview" className="gap-2">
+              <Play className="h-4 w-4" />
+              Preview
+            </TabsTrigger>
+            <TabsTrigger value="details" className="gap-2">
+              <Target className="h-4 w-4" />
+              Detalles
+            </TabsTrigger>
+            <TabsTrigger value="validation" className="gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Validación
+            </TabsTrigger>
+          </TabsList>
+
+          <ScrollArea className="h-[60vh] mt-4">
+            {/* Preview Tab */}
+            <TabsContent value="preview" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Video/Image Preview */}
+                <div className="space-y-4">
+                  <Card>
+                    <CardContent className="p-0 overflow-hidden rounded-lg">
+                      <div className="aspect-video bg-muted relative">
+                        {content.video_url ? (
+                          <video 
+                            src={content.video_url} 
+                            controls 
+                            className="w-full h-full object-contain"
+                          />
+                        ) : content.thumbnail_url ? (
+                          <img 
+                            src={content.thumbnail_url} 
+                            alt={content.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <FileVideo className="h-16 w-16 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Hook */}
+                  {content.hook && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Lightbulb className="h-4 w-4 text-amber-500" />
+                          Hook
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm">{content.hook}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* CTA */}
+                  {content.cta && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Target className="h-4 w-4 text-primary" />
+                          CTA
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm font-medium">{content.cta}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Script */}
+                <Card className="h-fit">
+                  <CardHeader>
+                    <CardTitle className="text-sm">Guión / Copy</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {content.script ? (
+                      <div 
+                        className="prose prose-sm dark:prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{ __html: content.script }}
+                      />
+                    ) : (
+                      <p className="text-muted-foreground text-sm">Sin guión disponible</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Details Tab */}
+            <TabsContent value="details" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Información General</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Título</Label>
+                      <p className="font-medium">{content.title}</p>
+                    </div>
+                    {content.description && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Descripción</Label>
+                        <p className="text-sm">{content.description}</p>
+                      </div>
+                    )}
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Etapa del Funnel</Label>
+                      <Badge className="mt-1">
+                        {FUNNEL_LABELS[content.funnel_stage] || content.funnel_stage}
+                      </Badge>
+                    </div>
+                    {content.target_platform && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Plataforma Destino</Label>
+                        <Badge variant="outline" className="mt-1">
+                          {content.target_platform}
+                        </Badge>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Objetivo del Contenido</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {content.content_objective ? (
+                      <p className="text-sm">{content.content_objective}</p>
+                    ) : (
+                      <div className="flex items-center gap-2 text-amber-600">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="text-sm">No se ha definido objetivo</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Validation Tab */}
+            <TabsContent value="validation" className="space-y-4">
+              {/* Checklist */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    Checklist de Validación
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {[
+                      { key: 'meets_client_objective', label: '¿Cumple objetivo del cliente?' },
+                      { key: 'aligned_with_strategy', label: '¿Está alineado a la estrategia?' },
+                      { key: 'coherent_with_funnel', label: '¿Es coherente con el funnel?' },
+                      { key: 'follows_branding', label: '¿Cumple con branding?' },
+                      { key: 'usable_for_ads', label: '¿Es usable para Ads?' },
+                      { key: 'usable_for_organic', label: '¿Es usable para Orgánico?' },
+                    ].map((item) => (
+                      <div key={item.key} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={item.key}
+                          checked={checklist[item.key as keyof typeof checklist]}
+                          onCheckedChange={(checked) => 
+                            setChecklist(prev => ({ ...prev, [item.key]: checked === true }))
+                          }
+                        />
+                        <Label htmlFor={item.key} className="text-sm cursor-pointer">
+                          {item.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <span className="text-sm text-muted-foreground">Puntuación:</span>
+                    <Badge variant={allChecklistPassed ? "default" : "secondary"}>
+                      {Object.values(checklist).filter(v => v).length}/6
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Strategic Comment */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Comentario Estratégico (Opcional)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Agrega notas o sugerencias estratégicas..."
+                    value={strategicComment}
+                    onChange={(e) => setStrategicComment(e.target.value)}
+                    rows={3}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Rejection Feedback */}
+              <Card className="border-red-200 dark:border-red-900">
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2 text-red-600">
+                    <XCircle className="h-4 w-4" />
+                    Feedback de Rechazo (Obligatorio para rechazar)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Explica por qué rechazas este contenido y qué debe mejorarse..."
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    rows={4}
+                    className="border-red-200 dark:border-red-800 focus:border-red-500"
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </ScrollArea>
+        </Tabs>
+
+        <Separator />
+
+        {/* Actions */}
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="destructive"
+              onClick={handleReject}
+              disabled={loading || !feedback.trim()}
+              className="gap-2"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+              Rechazar
+            </Button>
+            <Button
+              onClick={handleApprove}
+              disabled={loading}
+              className="gap-2"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+              Aprobar para Marketing
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

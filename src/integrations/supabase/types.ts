@@ -1432,6 +1432,88 @@ export type Database = {
           },
         ]
       }
+      client_marketing_ai_insights: {
+        Row: {
+          action_taken: string | null
+          action_taken_at: string | null
+          action_taken_by: string | null
+          category: string | null
+          client_id: string
+          created_at: string | null
+          data_context: Json | null
+          description: string
+          id: string
+          insight_type: string
+          is_actionable: boolean | null
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          organization_id: string
+          severity: string | null
+          suggested_action: string | null
+          title: string
+        }
+        Insert: {
+          action_taken?: string | null
+          action_taken_at?: string | null
+          action_taken_by?: string | null
+          category?: string | null
+          client_id: string
+          created_at?: string | null
+          data_context?: Json | null
+          description: string
+          id?: string
+          insight_type: string
+          is_actionable?: boolean | null
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          organization_id: string
+          severity?: string | null
+          suggested_action?: string | null
+          title: string
+        }
+        Update: {
+          action_taken?: string | null
+          action_taken_at?: string | null
+          action_taken_by?: string | null
+          category?: string | null
+          client_id?: string
+          created_at?: string | null
+          data_context?: Json | null
+          description?: string
+          id?: string
+          insight_type?: string
+          is_actionable?: boolean | null
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          organization_id?: string
+          severity?: string | null
+          suggested_action?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_marketing_ai_insights_action_taken_by_fkey"
+            columns: ["action_taken_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_marketing_ai_insights_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_marketing_ai_insights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_packages: {
         Row: {
           client_id: string
@@ -1813,6 +1895,7 @@ export type Database = {
           change_request_status: string | null
           change_requests: Json | null
           client_id: string | null
+          content_objective: string | null
           content_type: string | null
           created_at: string | null
           creator_assigned_at: string | null
@@ -1820,6 +1903,7 @@ export type Database = {
           creator_paid: boolean | null
           creator_payment: number | null
           creator_payment_currency: Database["public"]["Enums"]["currency_type"]
+          cta: string | null
           custom_status_id: string | null
           deadline: string | null
           delivered_at: string | null
@@ -1834,6 +1918,8 @@ export type Database = {
           editor_paid: boolean | null
           editor_payment: number | null
           editor_payment_currency: Database["public"]["Enums"]["currency_type"]
+          funnel_stage: string | null
+          hook: string | null
           hooks_count: number | null
           id: string
           invoiced: boolean | null
@@ -1843,6 +1929,12 @@ export type Database = {
           is_published: boolean | null
           issue_at: string | null
           likes_count: number | null
+          marketing_approved_at: string | null
+          marketing_approved_by: string | null
+          marketing_campaign_id: string | null
+          marketing_rejected_at: string | null
+          marketing_rejected_by: string | null
+          marketing_rejection_reason: string | null
           notes: string | null
           organization_id: string | null
           paid_at: string | null
@@ -1868,6 +1960,8 @@ export type Database = {
           status: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines: string | null
           strategist_id: string | null
+          strategy_status: string | null
+          target_platform: string | null
           thumbnail_url: string | null
           title: string
           trafficker_guidelines: string | null
@@ -1893,6 +1987,7 @@ export type Database = {
           change_request_status?: string | null
           change_requests?: Json | null
           client_id?: string | null
+          content_objective?: string | null
           content_type?: string | null
           created_at?: string | null
           creator_assigned_at?: string | null
@@ -1900,6 +1995,7 @@ export type Database = {
           creator_paid?: boolean | null
           creator_payment?: number | null
           creator_payment_currency?: Database["public"]["Enums"]["currency_type"]
+          cta?: string | null
           custom_status_id?: string | null
           deadline?: string | null
           delivered_at?: string | null
@@ -1914,6 +2010,8 @@ export type Database = {
           editor_paid?: boolean | null
           editor_payment?: number | null
           editor_payment_currency?: Database["public"]["Enums"]["currency_type"]
+          funnel_stage?: string | null
+          hook?: string | null
           hooks_count?: number | null
           id?: string
           invoiced?: boolean | null
@@ -1923,6 +2021,12 @@ export type Database = {
           is_published?: boolean | null
           issue_at?: string | null
           likes_count?: number | null
+          marketing_approved_at?: string | null
+          marketing_approved_by?: string | null
+          marketing_campaign_id?: string | null
+          marketing_rejected_at?: string | null
+          marketing_rejected_by?: string | null
+          marketing_rejection_reason?: string | null
           notes?: string | null
           organization_id?: string | null
           paid_at?: string | null
@@ -1948,6 +2052,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines?: string | null
           strategist_id?: string | null
+          strategy_status?: string | null
+          target_platform?: string | null
           thumbnail_url?: string | null
           title: string
           trafficker_guidelines?: string | null
@@ -1973,6 +2079,7 @@ export type Database = {
           change_request_status?: string | null
           change_requests?: Json | null
           client_id?: string | null
+          content_objective?: string | null
           content_type?: string | null
           created_at?: string | null
           creator_assigned_at?: string | null
@@ -1980,6 +2087,7 @@ export type Database = {
           creator_paid?: boolean | null
           creator_payment?: number | null
           creator_payment_currency?: Database["public"]["Enums"]["currency_type"]
+          cta?: string | null
           custom_status_id?: string | null
           deadline?: string | null
           delivered_at?: string | null
@@ -1994,6 +2102,8 @@ export type Database = {
           editor_paid?: boolean | null
           editor_payment?: number | null
           editor_payment_currency?: Database["public"]["Enums"]["currency_type"]
+          funnel_stage?: string | null
+          hook?: string | null
           hooks_count?: number | null
           id?: string
           invoiced?: boolean | null
@@ -2003,6 +2113,12 @@ export type Database = {
           is_published?: boolean | null
           issue_at?: string | null
           likes_count?: number | null
+          marketing_approved_at?: string | null
+          marketing_approved_by?: string | null
+          marketing_campaign_id?: string | null
+          marketing_rejected_at?: string | null
+          marketing_rejected_by?: string | null
+          marketing_rejection_reason?: string | null
           notes?: string | null
           organization_id?: string | null
           paid_at?: string | null
@@ -2028,6 +2144,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines?: string | null
           strategist_id?: string | null
+          strategy_status?: string | null
+          target_platform?: string | null
           thumbnail_url?: string | null
           title?: string
           trafficker_guidelines?: string | null
@@ -2051,6 +2169,27 @@ export type Database = {
             columns: ["custom_status_id"]
             isOneToOne: false
             referencedRelation: "organization_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_marketing_approved_by_fkey"
+            columns: ["marketing_approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_marketing_campaign_id_fkey"
+            columns: ["marketing_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_marketing_rejected_by_fkey"
+            columns: ["marketing_rejected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2556,6 +2695,105 @@ export type Database = {
             columns: ["to_custom_status_id"]
             isOneToOne: false
             referencedRelation: "organization_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_strategy_reviews: {
+        Row: {
+          aligned_with_strategy: boolean | null
+          client_id: string | null
+          coherent_with_funnel: boolean | null
+          content_id: string
+          created_at: string | null
+          feedback: string | null
+          follows_branding: boolean | null
+          id: string
+          meets_client_objective: boolean | null
+          organization_id: string
+          overall_score: number | null
+          review_status: string
+          reviewed_at: string | null
+          reviewer_id: string
+          strategic_comment: string | null
+          updated_at: string | null
+          usable_for_ads: boolean | null
+          usable_for_organic: boolean | null
+        }
+        Insert: {
+          aligned_with_strategy?: boolean | null
+          client_id?: string | null
+          coherent_with_funnel?: boolean | null
+          content_id: string
+          created_at?: string | null
+          feedback?: string | null
+          follows_branding?: boolean | null
+          id?: string
+          meets_client_objective?: boolean | null
+          organization_id: string
+          overall_score?: number | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewer_id: string
+          strategic_comment?: string | null
+          updated_at?: string | null
+          usable_for_ads?: boolean | null
+          usable_for_organic?: boolean | null
+        }
+        Update: {
+          aligned_with_strategy?: boolean | null
+          client_id?: string | null
+          coherent_with_funnel?: boolean | null
+          content_id?: string
+          created_at?: string | null
+          feedback?: string | null
+          follows_branding?: boolean | null
+          id?: string
+          meets_client_objective?: boolean | null
+          organization_id?: string
+          overall_score?: number | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewer_id?: string
+          strategic_comment?: string | null
+          updated_at?: string | null
+          usable_for_ads?: boolean | null
+          usable_for_organic?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_strategy_reviews_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_strategy_reviews_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_strategy_reviews_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_strategy_reviews_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_strategy_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3530,6 +3768,7 @@ export type Database = {
         Row: {
           action_taken: string | null
           category: string | null
+          client_id: string | null
           created_at: string | null
           data_context: Json | null
           description: string
@@ -3547,6 +3786,7 @@ export type Database = {
         Insert: {
           action_taken?: string | null
           category?: string | null
+          client_id?: string | null
           created_at?: string | null
           data_context?: Json | null
           description: string
@@ -3564,6 +3804,7 @@ export type Database = {
         Update: {
           action_taken?: string | null
           category?: string | null
+          client_id?: string | null
           created_at?: string | null
           data_context?: Json | null
           description?: string
@@ -3579,6 +3820,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "marketing_ai_insights_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketing_ai_insights_organization_id_fkey"
             columns: ["organization_id"]
@@ -3608,6 +3856,7 @@ export type Database = {
           budget: number | null
           campaign_type: string
           channel_id: string | null
+          client_id: string | null
           content_ids: string[] | null
           created_at: string
           created_by: string | null
@@ -3635,6 +3884,7 @@ export type Database = {
           budget?: number | null
           campaign_type?: string
           channel_id?: string | null
+          client_id?: string | null
           content_ids?: string[] | null
           created_at?: string
           created_by?: string | null
@@ -3662,6 +3912,7 @@ export type Database = {
           budget?: number | null
           campaign_type?: string
           channel_id?: string | null
+          client_id?: string | null
           content_ids?: string[] | null
           created_at?: string
           created_by?: string | null
@@ -3690,6 +3941,13 @@ export type Database = {
             columns: ["channel_id"]
             isOneToOne: false
             referencedRelation: "traffic_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
@@ -3977,6 +4235,7 @@ export type Database = {
         Row: {
           campaign_ids: string[] | null
           charts_data: Json | null
+          client_id: string | null
           created_at: string
           created_by: string | null
           highlights: Json | null
@@ -4001,6 +4260,7 @@ export type Database = {
         Insert: {
           campaign_ids?: string[] | null
           charts_data?: Json | null
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
           highlights?: Json | null
@@ -4025,6 +4285,7 @@ export type Database = {
         Update: {
           campaign_ids?: string[] | null
           charts_data?: Json | null
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
           highlights?: Json | null
@@ -4047,6 +4308,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "marketing_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketing_reports_created_by_fkey"
             columns: ["created_by"]
@@ -4076,6 +4344,7 @@ export type Database = {
           business_objective: string | null
           business_objective_type: string | null
           buyer_persona: Json | null
+          client_id: string | null
           created_at: string | null
           created_by: string | null
           funnel_bofu: Json | null
@@ -4097,6 +4366,7 @@ export type Database = {
           business_objective?: string | null
           business_objective_type?: string | null
           buyer_persona?: Json | null
+          client_id?: string | null
           created_at?: string | null
           created_by?: string | null
           funnel_bofu?: Json | null
@@ -4118,6 +4388,7 @@ export type Database = {
           business_objective?: string | null
           business_objective_type?: string | null
           buyer_persona?: Json | null
+          client_id?: string | null
           created_at?: string | null
           created_by?: string | null
           funnel_bofu?: Json | null
@@ -4135,6 +4406,13 @@ export type Database = {
           version?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "marketing_strategies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketing_strategies_created_by_fkey"
             columns: ["created_by"]
@@ -7678,6 +7956,7 @@ export type Database = {
           api_connected: boolean | null
           channel_name: string
           channel_type: string
+          client_id: string | null
           created_at: string | null
           currency: string | null
           id: string
@@ -7697,6 +7976,7 @@ export type Database = {
           api_connected?: boolean | null
           channel_name: string
           channel_type: string
+          client_id?: string | null
           created_at?: string | null
           currency?: string | null
           id?: string
@@ -7716,6 +7996,7 @@ export type Database = {
           api_connected?: boolean | null
           channel_name?: string
           channel_type?: string
+          client_id?: string | null
           created_at?: string | null
           currency?: string | null
           id?: string
@@ -7730,6 +8011,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "traffic_channels_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "traffic_channels_organization_id_fkey"
             columns: ["organization_id"]
