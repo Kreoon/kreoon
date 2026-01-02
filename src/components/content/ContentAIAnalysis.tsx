@@ -11,8 +11,9 @@ import { toast } from 'sonner';
 interface AdCopy {
   framework?: string;
   text: string;
-  urgencyBooster?: string;
-  cta?: string; // legacy support
+  clickBooster?: string;
+  urgencyBooster?: string; // legacy
+  cta?: string; // legacy
   trustBadge: string;
   psychologicalTriggers: string[];
 }
@@ -357,9 +358,9 @@ export function ContentAIAnalysis({
                     <p className="text-sm leading-relaxed mb-3">{copy.text}</p>
 
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {(copy.urgencyBooster || copy.cta) && (
-                        <Badge className="bg-orange-500 text-white">
-                          {copy.urgencyBooster || copy.cta}
+                      {(copy.clickBooster || copy.urgencyBooster || copy.cta) && (
+                        <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium">
+                          {copy.clickBooster || copy.urgencyBooster || copy.cta}
                         </Badge>
                       )}
                       <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">

@@ -208,19 +208,24 @@ REGLAS ADICIONALES POR FASE:
 Cada copy debe incluir:
 - framework: nombre del framework usado (AIDA, PAS, PASTOR, BAB, 4Ps)
 - text: Copy principal del anuncio siguiendo la estructura del framework
-- urgencyBooster: Frase corta con EMOJI que refuerza la decisión de hacer clic (NO es el texto del botón, es un refuerzo visual). Ejemplos:
-  - "⚡ Solo hoy disponible"
-  - "🔥 +2,400 ya lo tienen"
-  - "✅ Envío en 24h"
-  - "🎁 Regalo incluido hoy"
-  - "⏰ Últimas unidades"
-  - "🛡️ Garantía total"
-  - "💯 Sin riesgo"
-- trustBadge: Frase de confianza/seguridad de 3-4 palabras con emoji. Ejemplos:
+- clickBooster: Frase ULTRA persuasiva (5-10 palabras) que acompaña el botón e incita a hacer clic. NO es el texto del botón, es un microcopy al lado que genera urgencia/deseo/curiosidad. Usa emoji. Ejemplos:
+  - "👇 Miles ya cambiaron su vida"
+  - "⚡ Tu transformación empieza aquí"
+  - "🔥 Lo que buscabas, al fin"
+  - "✨ Un clic te separa del cambio"
+  - "🚀 No te quedes atrás"
+  - "💎 Acceso exclusivo por tiempo limitado"
+  - "🎯 Esto es para ti"
+  - "⏳ Mañana puede ser tarde"
+  - "👀 ¿Vas a dejar pasar esto?"
+  - "💥 Tu momento es ahora"
+- trustBadge: Frase de confianza/seguridad de 3-5 palabras con emoji que reduce fricción. Ejemplos:
   - "🔒 Pago 100% seguro"
-  - "✨ Resultados garantizados"
+  - "✅ Garantía de satisfacción"
+  - "📦 Envío gratis hoy"
   - "🏆 +10,000 clientes felices"
-  - "📦 Devolución gratis"
+  - "💳 Paga en cuotas sin interés"
+  - "🔄 Devolución sin preguntas"
 - psychologicalTriggers: Lista de gatillos mentales/sesgos usados
 
 3) ANÁLISIS DEL CONTENIDO:
@@ -237,8 +242,8 @@ RESPONDE EN FORMATO JSON EXACTO:
     {
       "framework": "AIDA|PAS|PASTOR|BAB|4Ps",
       "text": "copy del anuncio",
-      "urgencyBooster": "⚡ Frase corta con emoji",
-      "trustBadge": "🔒 3-4 palabras con emoji",
+      "clickBooster": "👇 Frase persuasiva que incita al clic",
+      "trustBadge": "🔒 Frase de confianza con emoji",
       "psychologicalTriggers": ["gatillo1", "gatillo2"]
     }
   ],
