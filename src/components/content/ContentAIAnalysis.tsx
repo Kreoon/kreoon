@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -97,10 +97,42 @@ export function ContentAIAnalysis({
   guidelines,
 }: ContentAIAnalysisProps) {
   const [loading, setLoading] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(true);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+
+  // Load existing analysis on mount
+  useEffect(() => {
+    const loadExistingAnalysis = async () => {
+      if (!contentId) {
+        setLoadingExisting(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('content')
+          .select('ai_analysis_data')
+          .eq('id', contentId)
+          .single();
+
+        if (error) throw error;
+
+        if (data?.ai_analysis_data) {
+          setResult(data.ai_analysis_data as unknown as AnalysisResult);
+          setIsSaved(true);
+        }
+      } catch (error) {
+        console.error('Error loading existing analysis:', error);
+      } finally {
+        setLoadingExisting(false);
+      }
+    };
+
+    loadExistingAnalysis();
+  }, [contentId]);
 
   const saveResult = async (analysisResult: AnalysisResult) => {
     if (!analysisResult || !contentId) return;
@@ -112,7 +144,7 @@ export function ContentAIAnalysis({
         .update({
           ai_quality_score: analysisResult.contentAnalysis.overall_score,
           sphere_phase: analysisResult.recommendedPhase.phase as any,
-          notes: `[Análisis IA - ${new Date().toLocaleDateString()}]\n\nFase recomendada: ${PHASE_CONFIG[analysisResult.recommendedPhase.phase]?.label || analysisResult.recommendedPhase.phase} (${analysisResult.recommendedPhase.confidence}%)\n${analysisResult.recommendedPhase.reasoning}\n\nPuntuación: ${analysisResult.contentAnalysis.overall_score}%\n- Hook: ${analysisResult.contentAnalysis.hook_effectiveness}%\n- Impacto: ${analysisResult.contentAnalysis.emotional_impact}%\n- Claridad: ${analysisResult.contentAnalysis.clarity}%\n- CTA: ${analysisResult.contentAnalysis.cta_strength}%\n\nFortalezas:\n${analysisResult.contentAnalysis.strengths.map(s => `• ${s}`).join('\n')}\n\nMejoras:\n${analysisResult.contentAnalysis.improvements.map(s => `• ${s}`).join('\n')}\n\n--- COPYS GENERADOS ---\n${analysisResult.adCopies.map((c, i) => `\n[Copy ${i + 1}]\n${c.text}\nCTA: ${c.cta}\n✓ ${c.trustBadge}\nGatillos: ${c.psychologicalTriggers.join(', ')}`).join('\n')}`,
+          ai_analysis_data: analysisResult as any,
         })
         .eq('id', contentId);
 
@@ -180,46 +212,71 @@ export function ContentAIAnalysis({
     ? PHASE_CONFIG[result.recommendedPhase.phase]
     : null;
 
-  return (
-    <div className="space-y-6">
-      {/* Trigger Button */}
+  if (loadingExisting) {
+    return (
       <Card className="border-dashed border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
         <CardContent className="py-6">
           <div className="flex flex-col items-center text-center gap-4">
-            <div className="p-3 rounded-full bg-primary/10">
+            <div className="p-3 rounded-full bg-primary/10 animate-pulse">
               <Brain className="h-8 w-8 text-primary" />
             </div>
-            <div>
-              <h3 className="font-semibold text-lg">Análisis Inteligente con IA</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Gemini analizará el contenido considerando producto, estrategia, guiones y más para generar recomendaciones y copys optimizados.
-              </p>
-            </div>
-            <Button
-              onClick={handleAnalyze}
-              disabled={loading}
-              size="lg"
-              className="gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              {loading ? 'Analizando...' : 'Analizar con Gemini'}
-            </Button>
+            <p className="text-sm text-muted-foreground">Cargando análisis existente...</p>
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Trigger Button - show only if no result exists */}
+      {!result && (
+        <Card className="border-dashed border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardContent className="py-6">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="p-3 rounded-full bg-primary/10">
+                <Brain className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Análisis Inteligente con IA</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Gemini analizará el contenido considerando producto, estrategia, guiones y más para generar recomendaciones y copys optimizados.
+                </p>
+              </div>
+              <Button
+                onClick={handleAnalyze}
+                disabled={loading}
+                size="lg"
+                className="gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                {loading ? 'Analizando...' : 'Analizar con Gemini'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Results */}
       {result && (
         <>
-          {/* Auto-saved indicator */}
-          {isSaved && (
-            <div className="flex justify-end">
-              <Badge variant="outline" className="gap-1 text-green-600 border-green-200 bg-green-50">
-                <Check className="h-3 w-3" />
-                Guardado automáticamente
-              </Badge>
-            </div>
-          )}
+          {/* Header with regenerate button */}
+          <div className="flex items-center justify-between">
+            <Badge variant="outline" className="gap-1 text-green-600 border-green-200 bg-green-50">
+              <Check className="h-3 w-3" />
+              Guardado automáticamente
+            </Badge>
+            <Button
+              onClick={handleAnalyze}
+              disabled={loading}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              {loading ? 'Regenerando...' : 'Regenerar análisis'}
+            </Button>
+          </div>
 
           <ScrollArea className="h-[600px] pr-4">
           <div className="space-y-6">

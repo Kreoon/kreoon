@@ -1882,6 +1882,7 @@ export type Database = {
       content: {
         Row: {
           admin_guidelines: string | null
+          ai_analysis_data: Json | null
           ai_assignment_reason: string | null
           ai_delay_risk: string | null
           ai_quality_score: number | null
@@ -1975,6 +1976,7 @@ export type Database = {
         }
         Insert: {
           admin_guidelines?: string | null
+          ai_analysis_data?: Json | null
           ai_assignment_reason?: string | null
           ai_delay_risk?: string | null
           ai_quality_score?: number | null
@@ -2068,6 +2070,7 @@ export type Database = {
         }
         Update: {
           admin_guidelines?: string | null
+          ai_analysis_data?: Json | null
           ai_assignment_reason?: string | null
           ai_delay_risk?: string | null
           ai_quality_score?: number | null
