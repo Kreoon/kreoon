@@ -683,27 +683,61 @@ ${documentContent.research ? `INVESTIGACIÓN:\n${documentContent.research.substr
 `;
 
       const promptGenerationRequest = `
-Basándote en la siguiente información del producto y cliente, genera 6 prompts optimizados y específicos para generar contenido de alta calidad.
+Eres un experto en prompt engineering para generación de contenido con IA.
+
+Basándote en la información del producto, genera 6 prompts PROFESIONALES y COMPLETOS.
 
 ${contextInfo}
 
-Genera prompts específicos para:
-1. GUIÓN: Un prompt detallado para generar guiones de video que conecten con el avatar ideal y usen los ángulos de venta del producto
-2. PAUTAS EDITOR: Un prompt para generar pautas de edición que reflejen la identidad visual del cliente
-3. PAUTAS ESTRATEGA: Un prompt para estrategia de publicación optimizada para el público objetivo
-4. PAUTAS TRAFFICKER: Un prompt para campañas de publicidad pagada que maximicen conversiones
-5. PAUTAS DISEÑADOR: Un prompt para generar pautas de diseño visual, colores, tipografía y assets gráficos
-6. PAUTAS ADMIN/PM: Un prompt para generar cronograma de producción y checklist de ejecución
+REQUISITOS OBLIGATORIOS PARA CADA PROMPT:
+1. Debe comenzar con un ROL específico (ej: "🎬 ROL: Eres un GUIONISTA EXPERTO en...")
+2. Debe incluir sección de VARIABLES DE PLANTILLA que se reemplazarán automáticamente
+3. Debe incluir INSTRUCCIONES DETALLADAS de qué generar
+4. Debe incluir FORMATO DE ENTREGA en HTML estructurado
 
-Responde SOLO en formato JSON con esta estructura exacta:
+VARIABLES DISPONIBLES (DEBEN INCLUIRSE EN LOS PROMPTS):
+- {producto_nombre} - Nombre del producto
+- {producto_descripcion} - Descripción del producto  
+- {producto_estrategia} - Estrategia de marketing
+- {producto_investigacion} - Investigación de mercado
+- {producto_avatar} - Avatar/cliente ideal
+- {producto_angulos} - Ángulos de venta disponibles
+- {cta} - Llamado a la acción
+- {angulo_venta} - Ángulo de venta seleccionado
+- {estructura_narrativa} - Estructura narrativa
+- {pais_objetivo} - País objetivo
+- {cantidad_hooks} - Cantidad de hooks
+- {hooks_sugeridos} - Hooks sugeridos por usuario
+- {documento_brief} - Contenido del brief
+- {documento_onboarding} - Contenido del onboarding
+- {documento_research} - Contenido del research
+- {instrucciones_adicionales} - Instrucciones adicionales
+- {estrategias_video} - Estrategias de video
+
+GENERA 6 PROMPTS PARA:
+1. GUIÓN (script_prompt): ROL de Guionista experto en contenido viral. Incluir variables de producto, CTA, ángulo, estructura narrativa. Formato HTML con hooks, desarrollo, cierre.
+
+2. EDITOR (editor_prompt): ROL de Editor de video profesional. Incluir variables de producto y documentos. Formato HTML con storyboard, audio, checklist.
+
+3. ESTRATEGA (strategist_prompt): ROL de Estratega de contenido y growth hacker. Incluir variables de producto, país, avatar. Formato HTML con timing, hashtags, captions, métricas.
+
+4. TRAFFICKER (trafficker_prompt): ROL de Media buyer experto. Incluir variables de producto, CTA, país, ángulos. Formato HTML con segmentación, variaciones, KPIs.
+
+5. DISEÑADOR (designer_prompt): ROL de Diseñador gráfico y motion designer. Incluir variables de producto y documentos. Formato HTML con paleta, tipografía, assets, checklist.
+
+6. ADMIN/PM (admin_prompt): ROL de Project Manager. Incluir variables de producto, estructura. Formato HTML con cronograma, equipo, checklists por fase, riesgos.
+
+Responde SOLO en formato JSON:
 {
-  "script_prompt": "...",
-  "editor_prompt": "...",
-  "strategist_prompt": "...",
-  "trafficker_prompt": "...",
-  "designer_prompt": "...",
-  "admin_prompt": "..."
+  "script_prompt": "🎬 ROL: Eres un GUIONISTA EXPERTO...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n...",
+  "editor_prompt": "🎬 ROL: Eres un EDITOR DE VIDEO PROFESIONAL...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n...",
+  "strategist_prompt": "🧠 ROL: Eres un ESTRATEGA DE CONTENIDO...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n...",
+  "trafficker_prompt": "💰 ROL: Eres un MEDIA BUYER EXPERTO...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n...",
+  "designer_prompt": "🎨 ROL: Eres un DISEÑADOR GRÁFICO...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n...",
+  "admin_prompt": "📋 ROL: Eres un PROJECT MANAGER...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n..."
 }
+
+IMPORTANTE: Cada prompt debe ser EXTENSO (mínimo 500 palabras), con todas las variables relevantes y formato HTML detallado.
 `;
 
       const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
