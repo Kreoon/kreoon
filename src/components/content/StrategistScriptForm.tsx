@@ -1015,7 +1015,6 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const organizationId = propOrgId || profile?.current_organization_id;
   const [loading, setLoading] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
-  const [loadingPrompts, setLoadingPrompts] = useState(false);
   const [newHook, setNewHook] = useState("");
   const [promptsOpen, setPromptsOpen] = useState(false);
   
@@ -1185,133 +1184,6 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     }
   };
 
-  // Generate optimized prompts with AI
-  const generateOptimizedPrompts = async () => {
-    if (!product) return;
-
-    setLoadingPrompts(true);
-    try {
-      const contextInfo = `
-INFORMACIÓN DEL PRODUCTO:
-- Nombre: ${product.name}
-- Descripción: ${product.description || "No disponible"}
-- Estrategia: ${product.strategy || "No disponible"}
-- Investigación de mercado: ${product.market_research || "No disponible"}
-- Avatar ideal: ${product.ideal_avatar || "No disponible"}
-- Ángulos de venta: ${product.sales_angles?.join(", ") || "No definidos"}
-
-${documentContent.brief ? `BRIEF DEL CLIENTE:\n${documentContent.brief.substring(0, 2000)}` : ""}
-
-${documentContent.onboarding ? `ONBOARDING:\n${documentContent.onboarding.substring(0, 2000)}` : ""}
-
-${documentContent.research ? `INVESTIGACIÓN:\n${documentContent.research.substring(0, 2000)}` : ""}
-`;
-
-      const promptGenerationRequest = `
-Eres un experto en prompt engineering para generación de contenido con IA.
-
-Basándote en la información del producto, genera 6 prompts PROFESIONALES y COMPLETOS.
-
-${contextInfo}
-
-REQUISITOS OBLIGATORIOS PARA CADA PROMPT:
-1. Debe comenzar con un ROL específico (ej: "🎬 ROL: Eres un GUIONISTA EXPERTO en...")
-2. Debe incluir sección de VARIABLES DE PLANTILLA que se reemplazarán automáticamente
-3. Debe incluir INSTRUCCIONES DETALLADAS de qué generar
-4. Debe incluir FORMATO DE ENTREGA en HTML estructurado
-
-VARIABLES DISPONIBLES (DEBEN INCLUIRSE EN LOS PROMPTS):
-- {producto_nombre} - Nombre del producto
-- {producto_descripcion} - Descripción del producto  
-- {producto_estrategia} - Estrategia de marketing
-- {producto_investigacion} - Investigación de mercado
-- {producto_avatar} - Avatar/cliente ideal
-- {producto_angulos} - Ángulos de venta disponibles
-- {cta} - Llamado a la acción
-- {angulo_venta} - Ángulo de venta seleccionado
-- {estructura_narrativa} - Estructura narrativa
-- {pais_objetivo} - País objetivo
-- {cantidad_hooks} - Cantidad de hooks
-- {hooks_sugeridos} - Hooks sugeridos por usuario
-- {documento_brief} - Contenido del brief
-- {documento_onboarding} - Contenido del onboarding
-- {documento_research} - Contenido del research
-- {instrucciones_adicionales} - Instrucciones adicionales
-- {estrategias_video} - Estrategias de video
-
-GENERA 6 PROMPTS PARA:
-1. GUIÓN (script_prompt): ROL de Guionista experto en contenido viral. Incluir variables de producto, CTA, ángulo, estructura narrativa. Formato HTML con hooks, desarrollo, cierre.
-
-2. EDITOR (editor_prompt): ROL de Editor de video profesional. Incluir variables de producto y documentos. Formato HTML con storyboard, audio, checklist.
-
-3. ESTRATEGA (strategist_prompt): ROL de Estratega de contenido y growth hacker. Incluir variables de producto, país, avatar. Formato HTML con timing, hashtags, captions, métricas.
-
-4. TRAFFICKER (trafficker_prompt): ROL de Media buyer experto. Incluir variables de producto, CTA, país, ángulos. Formato HTML con segmentación, variaciones, KPIs.
-
-5. DISEÑADOR (designer_prompt): ROL de Diseñador gráfico y motion designer. Incluir variables de producto y documentos. Formato HTML con paleta, tipografía, assets, checklist.
-
-6. ADMIN/PM (admin_prompt): ROL de Project Manager. Incluir variables de producto, estructura. Formato HTML con cronograma, equipo, checklists por fase, riesgos.
-
-Responde SOLO en formato JSON:
-{
-  "script_prompt": "🎬 ROL: Eres un GUIONISTA EXPERTO...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n...",
-  "editor_prompt": "🎬 ROL: Eres un EDITOR DE VIDEO PROFESIONAL...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n...",
-  "strategist_prompt": "🧠 ROL: Eres un ESTRATEGA DE CONTENIDO...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n...",
-  "trafficker_prompt": "💰 ROL: Eres un MEDIA BUYER EXPERTO...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n...",
-  "designer_prompt": "🎨 ROL: Eres un DISEÑADOR GRÁFICO...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n...",
-  "admin_prompt": "📋 ROL: Eres un PROJECT MANAGER...\\n\\n📦 CONTEXTO:\\n- Producto: {producto_nombre}\\n..."
-}
-
-IMPORTANTE: Cada prompt debe ser EXTENSO (mínimo 500 palabras), con todas las variables relevantes y formato HTML detallado.
-`;
-
-      const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
-        body: {
-          action: "generate_script",
-          organizationId,
-          prompt: promptGenerationRequest,
-          product: { id: product.id, name: product.name },
-          ai_provider: formData.ai_provider,
-          ai_model: formData.ai_model,
-        },
-      });
-
-      if (error) throw new Error(error.message);
-
-      const responseText = data?.script || data?.result || "";
-      
-      // Parse JSON from response
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsedPrompts = JSON.parse(jsonMatch[0]);
-        setFormData(prev => ({
-          ...prev,
-          script_prompt: parsedPrompts.script_prompt || prev.script_prompt,
-          editor_prompt: parsedPrompts.editor_prompt || prev.editor_prompt,
-          strategist_prompt: parsedPrompts.strategist_prompt || prev.strategist_prompt,
-          trafficker_prompt: parsedPrompts.trafficker_prompt || prev.trafficker_prompt,
-          designer_prompt: parsedPrompts.designer_prompt || prev.designer_prompt,
-          admin_prompt: parsedPrompts.admin_prompt || prev.admin_prompt,
-        }));
-        setPromptsOpen(true);
-        toast({
-          title: "Prompts generados",
-          description: "Se han creado prompts optimizados basados en la información del producto",
-        });
-      } else {
-        throw new Error("No se pudo parsear la respuesta de la IA");
-      }
-    } catch (error) {
-      console.error("Error generating prompts:", error);
-      toast({
-        title: "Error al generar prompts",
-        description: error instanceof Error ? error.message : "No se pudieron generar los prompts",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingPrompts(false);
-    }
-  };
 
   const addHook = () => {
     if (newHook.trim() && formData.hooks.length < parseInt(formData.hooks_count)) {
@@ -1837,30 +1709,15 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
       {/* Custom Prompts Section */}
       <Collapsible open={promptsOpen} onOpenChange={setPromptsOpen}>
-        <div className="flex gap-2">
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" className="flex-1 justify-between">
-              <span className="flex items-center gap-2">
-                <Settings2 className="h-4 w-4" />
-                Personalizar Prompts de IA
-              </span>
-              <ChevronDown className={`h-4 w-4 transition-transform ${promptsOpen ? 'rotate-180' : ''}`} />
-            </Button>
-          </CollapsibleTrigger>
-          <Button
-            variant="secondary"
-            onClick={generateOptimizedPrompts}
-            disabled={loadingPrompts}
-            title="Generar prompts optimizados con IA"
-          >
-            {loadingPrompts ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Wand2 className="h-4 w-4" />
-            )}
-            <span className="ml-2 hidden sm:inline">Generar Prompts con IA</span>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between">
+            <span className="flex items-center gap-2">
+              <Settings2 className="h-4 w-4" />
+              Personalizar Prompts de IA
+            </span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${promptsOpen ? 'rotate-180' : ''}`} />
           </Button>
-        </div>
+        </CollapsibleTrigger>
         <CollapsibleContent className="space-y-4 pt-4">
           <div className="space-y-2">
             <Label className="text-sm font-medium">Prompt para Guión</Label>
