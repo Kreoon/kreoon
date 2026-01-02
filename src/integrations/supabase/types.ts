@@ -3400,6 +3400,377 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_campaigns: {
+        Row: {
+          budget: number | null
+          campaign_type: string
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          marketing_client_id: string
+          metrics: Json | null
+          name: string
+          objectives: Json | null
+          organization_id: string
+          platforms: Json | null
+          spent: number | null
+          start_date: string | null
+          status: string
+          strategist_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          budget?: number | null
+          campaign_type?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          marketing_client_id: string
+          metrics?: Json | null
+          name: string
+          objectives?: Json | null
+          organization_id: string
+          platforms?: Json | null
+          spent?: number | null
+          start_date?: string | null
+          status?: string
+          strategist_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          budget?: number | null
+          campaign_type?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          marketing_client_id?: string
+          metrics?: Json | null
+          name?: string
+          objectives?: Json | null
+          organization_id?: string
+          platforms?: Json | null
+          spent?: number | null
+          start_date?: string | null
+          status?: string
+          strategist_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_campaigns_marketing_client_id_fkey"
+            columns: ["marketing_client_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_campaigns_strategist_id_fkey"
+            columns: ["strategist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_clients: {
+        Row: {
+          budget_currency: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          ended_at: string | null
+          id: string
+          is_active: boolean
+          monthly_budget: number | null
+          notes: string | null
+          objectives: Json | null
+          organization_id: string
+          platforms: Json | null
+          service_type: string
+          started_at: string | null
+          strategist_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          budget_currency?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_budget?: number | null
+          notes?: string | null
+          objectives?: Json | null
+          organization_id: string
+          platforms?: Json | null
+          service_type?: string
+          started_at?: string | null
+          strategist_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          budget_currency?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_budget?: number | null
+          notes?: string | null
+          objectives?: Json | null
+          organization_id?: string
+          platforms?: Json | null
+          service_type?: string
+          started_at?: string | null
+          strategist_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_clients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_clients_strategist_id_fkey"
+            columns: ["strategist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_content_calendar: {
+        Row: {
+          campaign_id: string | null
+          content_id: string | null
+          content_type: string
+          copy_text: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          hashtags: string[] | null
+          id: string
+          marketing_client_id: string
+          media_urls: Json | null
+          organization_id: string
+          performance: Json | null
+          platform: string
+          published_at: string | null
+          published_url: string | null
+          scheduled_date: string
+          scheduled_time: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          content_id?: string | null
+          content_type?: string
+          copy_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          hashtags?: string[] | null
+          id?: string
+          marketing_client_id: string
+          media_urls?: Json | null
+          organization_id: string
+          performance?: Json | null
+          platform: string
+          published_at?: string | null
+          published_url?: string | null
+          scheduled_date: string
+          scheduled_time?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          content_id?: string | null
+          content_type?: string
+          copy_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          hashtags?: string[] | null
+          id?: string
+          marketing_client_id?: string
+          media_urls?: Json | null
+          organization_id?: string
+          performance?: Json | null
+          platform?: string
+          published_at?: string | null
+          published_url?: string | null
+          scheduled_date?: string
+          scheduled_time?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_content_calendar_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_marketing_client_id_fkey"
+            columns: ["marketing_client_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_reports: {
+        Row: {
+          campaign_ids: string[] | null
+          created_at: string
+          created_by: string | null
+          id: string
+          marketing_client_id: string
+          metrics: Json | null
+          notes: string | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          platforms_data: Json | null
+          published_at: string | null
+          recommendations: string | null
+          report_type: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_ids?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          marketing_client_id: string
+          metrics?: Json | null
+          notes?: string | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          platforms_data?: Json | null
+          published_at?: string | null
+          recommendations?: string | null
+          report_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_ids?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          marketing_client_id?: string
+          metrics?: Json | null
+          notes?: string | null
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          platforms_data?: Json | null
+          published_at?: string | null
+          recommendations?: string | null
+          report_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_reports_marketing_client_id_fkey"
+            columns: ["marketing_client_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reactions: {
         Row: {
           created_at: string
