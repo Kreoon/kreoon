@@ -19,7 +19,6 @@ const ROLE_ICONS: Record<AppRole, React.ComponentType<{ className?: string }>> =
   creator: Users,
   editor: Edit3,
   client: Building2,
-  ambassador: Star,
   strategist: Lightbulb,
   trafficker: Radio,
   team_leader: UserCog,
@@ -28,7 +27,6 @@ const ROLE_ICONS: Record<AppRole, React.ComponentType<{ className?: string }>> =
 // Dashboard routes for each role
 const ROLE_DASHBOARDS: Record<AppRole, string> = {
   admin: '/dashboard',
-  ambassador: '/dashboard',
   strategist: '/strategist-dashboard',
   creator: '/creator-dashboard',
   editor: '/editor-dashboard',
@@ -38,14 +36,12 @@ const ROLE_DASHBOARDS: Record<AppRole, string> = {
 };
 
 // Classify roles into personal vs company context
-// NOTE: 'ambassador' is a legacy role (now represented by badges), so we exclude it from switching.
 const PERSONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor'];
 const COMPANY_ROLES: AppRole[] = ['client'];
 
 // Role descriptions for better UX
 const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   admin: 'Gestión completa de la plataforma',
-  ambassador: 'Red de referidos y comisiones',
   strategist: 'Estrategia y planificación de contenido',
   creator: 'Creación de contenido y grabación',
   editor: 'Edición y postproducción',
@@ -62,8 +58,7 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
   const { roles, activeRole, setActiveRole } = useAuth();
   const navigate = useNavigate();
 
-  // Ambassador is a badge, not a role selector
-  const selectableRoles = roles.filter((r) => r !== 'ambassador');
+  const selectableRoles = roles;
 
   // Only show if user has multiple selectable roles
   if (selectableRoles.length <= 1) {

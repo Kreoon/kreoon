@@ -95,7 +95,7 @@ const StatsCard = ({
 
 export default function CreatorDashboard() {
   const navigate = useNavigate();
-  const { user, profile, isAmbassador } = useAuth();
+  const { user, profile } = useAuth();
   const { content, loading, refetch } = useContent(user?.id, 'creator');
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [kpiDialog, setKpiDialog] = useState<{
@@ -108,7 +108,7 @@ export default function CreatorDashboard() {
     setKpiDialog({ open: true, title, content: contentList });
   };
 
-  const showAmbassadorBadge = isAmbassador || !!profile?.is_ambassador;
+  const showAmbassadorBadge = !!profile?.is_ambassador;
   const inProgressContent = content.filter(c => ['assigned', 'recording'].includes(c.status));
   const approvedContent = content.filter(c => c.status === 'approved');
   const ambassadorContent = content.filter(c => c.is_ambassador_content);

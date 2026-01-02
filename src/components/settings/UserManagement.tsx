@@ -50,13 +50,12 @@ const ROLE_LABELS: Record<AppRole, string> = {
   creator: "Creador de Contenido",
   editor: "Productor Audio-Visual",
   client: "Cliente",
-  ambassador: "Embajador", // legacy - kept for display only
   strategist: "Estratega",
   trafficker: "Trafficker",
   team_leader: "Líder de Equipo"
 };
 
-// Roles that can be assigned in user management (no ambassador)
+// Roles that can be assigned in user management
 const ASSIGNABLE_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
 
 const ROLE_COLORS: Record<AppRole, string> = {
@@ -64,7 +63,6 @@ const ROLE_COLORS: Record<AppRole, string> = {
   creator: "bg-purple-500/10 text-purple-500 border-purple-500/20",
   editor: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   client: "bg-green-500/10 text-green-500 border-green-500/20",
-  ambassador: "bg-amber-500/10 text-amber-500 border-amber-500/20",
   strategist: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
   trafficker: "bg-teal-500/10 text-teal-500 border-teal-500/20",
   team_leader: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
