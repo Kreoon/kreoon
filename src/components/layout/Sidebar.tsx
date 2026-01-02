@@ -371,8 +371,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           )}
 
-          {/* Role Switcher - only show if user has multiple roles */}
-          {realRoles.length > 1 && !isImpersonating && (
+          {/* Role Switcher */}
+          {!isImpersonating && (
             <RoleSwitcher collapsed={collapsed} />
           )}
 
