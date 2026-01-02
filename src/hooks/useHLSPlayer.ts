@@ -21,22 +21,16 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
   if (!url) return null;
 
   // Format: iframe.mediadelivery.net/embed/{libraryId}/{videoId}
-  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
+  const embedMatch = url.match(/iframe\.mediadelivery\.net\/(?:embed|play)\/(\d+)\/([a-f0-9-]+)/i);
   if (embedMatch) {
     return { libraryId: embedMatch[1], videoId: embedMatch[2] };
   }
 
-  // Format: vz-{hash}.b-cdn.net/{videoId} (e.g., vz-78fcd769-050.b-cdn.net)
-  const cdnHashMatch = url.match(/vz-([a-f0-9-]+)\.b-cdn\.net\/([a-f0-9-]+)/i);
-  if (cdnHashMatch) {
-    // Extract video ID, library ID will be derived from other patterns or use a default
-    return { libraryId: cdnHashMatch[1], videoId: cdnHashMatch[2] };
-  }
-
-  // Format: vz-{libraryId}.b-cdn.net/{videoId} (numeric library ID)
-  const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
+  // Format: https://vz-{hash}.b-cdn.net/{videoId}/... (playlist.m3u8, mp4, thumbnail, etc.)
+  const cdnMatch = url.match(/https?:\/\/(vz-[a-f0-9-]+\.b-cdn\.net)\/([a-f0-9-]+)(?:\/|$)/i);
   if (cdnMatch) {
-    return { libraryId: cdnMatch[1], videoId: cdnMatch[2] };
+    // "libraryId" here is not always numeric; keep it as the host suffix for candidate generation.
+    return { libraryId: cdnMatch[1].replace(/^vz-/, '').replace(/\.b-cdn\.net$/, ''), videoId: cdnMatch[2] };
   }
 
   // Format: {libraryId}.mediadelivery.net/{videoId}
@@ -51,9 +45,9 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
 /**
  * Generate Bunny.net HLS, MP4 and thumbnail URLs from any Bunny URL format
  * Supports:
- * - iframe.mediadelivery.net/embed/{libraryId}/{videoId}
- * - vz-*.b-cdn.net/{videoId}
- * - Direct playlist/mp4/thumbnail URLs
+ * - iframe.mediadelivery.net/(embed|play)/{libraryId}/{videoId}
+ * - vz-*.b-cdn.net/{videoId} and vz-*.b-cdn.net/{videoId}/(playlist.m3u8|play_720p.mp4|thumbnail.jpg)
+ * - {libraryId}.mediadelivery.net/{videoId}
  */
 export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
   if (!url) return null;
@@ -61,8 +55,8 @@ export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
   // Known Bunny CDN host for this project (from network logs)
   const BUNNY_CDN_HOST = 'vz-78fcd769-050.b-cdn.net';
 
-  // 1. Already a CDN URL (vz-*.b-cdn.net)
-  const cdnMatch = url.match(/https:\/\/(vz-[a-f0-9-]+\.b-cdn\.net)\/([a-f0-9-]+)/i);
+  // 1) CDN URL (supports with or without extra path)
+  const cdnMatch = url.match(/https?:\/\/(vz-[a-f0-9-]+\.b-cdn\.net)\/([a-f0-9-]+)(?:\/|$)/i);
   if (cdnMatch) {
     const host = cdnMatch[1];
     const videoId = cdnMatch[2];
@@ -73,8 +67,8 @@ export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
     };
   }
 
-  // 2. Iframe embed URL (iframe.mediadelivery.net/embed/{libraryId}/{videoId})
-  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
+  // 2) Iframe embed/play URL
+  const embedMatch = url.match(/iframe\.mediadelivery\.net\/(?:embed|play)\/(\d+)\/([a-f0-9-]+)/i);
   if (embedMatch) {
     const videoId = embedMatch[2];
     return {
@@ -84,7 +78,7 @@ export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
     };
   }
 
-  // 3. Direct mediadelivery.net URL ({libraryId}.mediadelivery.net/{videoId})
+  // 3) Direct mediadelivery.net URL ({libraryId}.mediadelivery.net/{videoId})
   const directMatch = url.match(/(\d+)\.mediadelivery\.net\/([a-f0-9-]+)/i);
   if (directMatch) {
     const videoId = directMatch[2];
