@@ -312,6 +312,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (anyOrgRolesResult.data && anyOrgRolesResult.data.length > 0) {
           userRoles = anyOrgRolesResult.data.map((r) => r.role as AppRole);
+        } else {
+          // Backward-compatible fallback: some installations still store a single role
+          // on organization_members. If user has no current org selected, still load
+          // any roles they may have there so the RoleSwitcher can appear.
+          const anyMemberRolesResult = await withTimeout(
+            () =>
+              supabase
+                .from('organization_members')
+                .select('role')
+                .eq('user_id', userId)
+                .limit(50),
+            8000
+          );
+
+          if (anyMemberRolesResult.error) {
+            console.warn('[auth] organization_members (any org) fetch error', anyMemberRolesResult.error);
+          }
+
+          if (anyMemberRolesResult.data && anyMemberRolesResult.data.length > 0) {
+            userRoles = anyMemberRolesResult.data
+              .map((r) => (r as any).role as AppRole)
+              .filter(Boolean);
+          }
         }
       }
 
