@@ -84,6 +84,7 @@ export function IASubTab({
             contentId={content.id}
             onScriptGenerated={handleScriptGenerated}
             organizationId={organizationId}
+            spherePhase={formData.sphere_phase}
           />
         </SectionCard>
       )}

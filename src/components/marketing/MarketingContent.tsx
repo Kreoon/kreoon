@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,9 @@ import {
   MoreHorizontal,
   Send,
   Calendar,
-  Users
+  Users,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,6 +41,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { HLSVideoPlayer, HLSVideoPlayerRef } from "@/components/video/HLSVideoPlayer";
 
 interface MarketingContentProps {
   organizationId: string | null | undefined;
@@ -369,9 +372,21 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                     key={item.id} 
                     className="group hover:shadow-lg transition-all overflow-hidden"
                   >
-                    {/* Thumbnail */}
-                    <div className="relative aspect-video bg-muted">
-                      {item.thumbnail_url ? (
+                    {/* Video/Thumbnail */}
+                    <div className="relative aspect-video bg-muted overflow-hidden">
+                      {(item.video_url || item.bunny_embed_url) ? (
+                        <HLSVideoPlayer
+                          src={item.video_url || item.bunny_embed_url || ''}
+                          poster={item.thumbnail_url || undefined}
+                          autoPlay={false}
+                          muted={true}
+                          loop={true}
+                          aspectRatio="16:9"
+                          objectFit="cover"
+                          showControls={false}
+                          className="w-full h-full"
+                        />
+                      ) : item.thumbnail_url ? (
                         <img 
                           src={item.thumbnail_url} 
                           alt={item.title}

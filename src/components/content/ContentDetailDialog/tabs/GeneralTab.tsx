@@ -1,9 +1,19 @@
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FieldRow } from '../components/SectionCard';
 import { EditableField } from '../components/PermissionsGate';
 import { TabProps } from '../types';
-import { Target, FileText, Link as LinkIcon, ExternalLink } from 'lucide-react';
+import { Target, FileText, Link as LinkIcon, ExternalLink, Zap, Lightbulb, RefreshCw, Heart } from 'lucide-react';
 import { QualityScoreWidget } from '@/components/points/QualityScoreWidget';
+import { Badge } from '@/components/ui/badge';
+
+// Sphere phases configuration
+const SPHERE_PHASES = [
+  { value: 'engage', label: 'Enganchar', icon: Zap, color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  { value: 'solution', label: 'Solución', icon: Lightbulb, color: 'text-blue-600', bgColor: 'bg-blue-100' },
+  { value: 'remarketing', label: 'Remarketing', icon: RefreshCw, color: 'text-purple-600', bgColor: 'bg-purple-100' },
+  { value: 'fidelize', label: 'Fidelizar', icon: Heart, color: 'text-rose-600', bgColor: 'bg-rose-100' },
+];
 
 interface GeneralTabProps extends TabProps {
   selectedProduct: any;
@@ -104,6 +114,56 @@ export function GeneralTab({
                 <a href={formData.reference_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
                   Ver referencia <ExternalLink className="h-3 w-3" />
                 </a>
+              ) : (
+                <p className="font-medium">—</p>
+              )
+            }
+          />
+        </FieldRow>
+
+        {/* Fase Esfera (Método Esfera) */}
+        <FieldRow label="Fase Esfera (Objetivo)">
+          <EditableField
+            permissions={permissions}
+            resource="content.general"
+            editMode={effectiveEditMode}
+            readOnly={readOnly}
+            editComponent={
+              <Select
+                value={formData.sphere_phase || ''}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, sphere_phase: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar fase..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {SPHERE_PHASES.map((phase) => {
+                    const Icon = phase.icon;
+                    return (
+                      <SelectItem key={phase.value} value={phase.value}>
+                        <div className="flex items-center gap-2">
+                          <Icon className={`h-4 w-4 ${phase.color}`} />
+                          <span>{phase.label}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            }
+            viewComponent={
+              formData.sphere_phase ? (
+                (() => {
+                  const phase = SPHERE_PHASES.find(p => p.value === formData.sphere_phase);
+                  if (!phase) return <p className="font-medium">—</p>;
+                  const Icon = phase.icon;
+                  return (
+                    <Badge className={`${phase.bgColor} ${phase.color} gap-1`}>
+                      <Icon className="h-3 w-3" />
+                      {phase.label}
+                    </Badge>
+                  );
+                })()
               ) : (
                 <p className="font-medium">—</p>
               )
