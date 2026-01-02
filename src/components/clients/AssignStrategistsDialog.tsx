@@ -54,8 +54,9 @@ export function AssignStrategistsDialog({
 
   const fetchStrategists = async () => {
     setLoading(true);
+    // Query organization_member_roles to get users with 'strategist' role
     const { data, error } = await supabase
-      .from('organization_members')
+      .from('organization_member_roles')
       .select('user_id, profiles:user_id(id, full_name, avatar_url)')
       .eq('organization_id', organizationId)
       .eq('role', 'strategist');
