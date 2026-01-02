@@ -211,68 +211,66 @@ export function ClientCard({
         </div>
       </div>
 
-      {/* Strategists Section */}
-      {isAdmin && (
-        <div 
-          className="mb-3 p-2.5 rounded-lg border border-dashed border-border hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenStrategists(client);
-          }}
-        >
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-1.5">
-              <UserCog className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">Estrategas</span>
-            </div>
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-              {strategists.length}
-            </Badge>
+      {/* Strategists Section - visible to all */}
+      <div 
+        className="mb-3 p-2.5 rounded-lg border border-dashed border-border hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenStrategists(client);
+        }}
+      >
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-1.5">
+            <UserCog className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">Estrategas</span>
           </div>
-          
-          {strategists.length > 0 ? (
-            <div className="flex items-center gap-1">
-              <TooltipProvider>
-                <div className="flex -space-x-2">
-                  {strategists.slice(0, 4).map((strategist) => (
-                    <Tooltip key={strategist.id}>
-                      <TooltipTrigger asChild>
-                        <div className="relative">
-                          <Avatar className={cn(
-                            "h-7 w-7 border-2 border-card",
-                            strategist.is_primary && "ring-2 ring-primary ring-offset-1 ring-offset-card"
-                          )}>
-                            <AvatarImage src={strategist.avatar_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-primary/10">
-                              {strategist.full_name?.charAt(0) || "S"}
-                            </AvatarFallback>
-                          </Avatar>
-                          {strategist.is_primary && (
-                            <Star className="h-2.5 w-2.5 text-primary fill-primary absolute -top-0.5 -right-0.5" />
-                          )}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">
-                          {strategist.full_name}
-                          {strategist.is_primary && " (Principal)"}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </div>
-              </TooltipProvider>
-              {strategists.length > 4 && (
-                <span className="text-[10px] text-muted-foreground ml-1">+{strategists.length - 4}</span>
-              )}
-              <span className="flex-1" />
-              <span className="text-[10px] text-primary">Editar</span>
-            </div>
-          ) : (
-            <p className="text-[10px] text-muted-foreground">Click para asignar estrategas</p>
-          )}
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+            {strategists.length}
+          </Badge>
         </div>
-      )}
+        
+        {strategists.length > 0 ? (
+          <div className="flex items-center gap-1">
+            <TooltipProvider>
+              <div className="flex -space-x-2">
+                {strategists.slice(0, 4).map((strategist) => (
+                  <Tooltip key={strategist.id}>
+                    <TooltipTrigger asChild>
+                      <div className="relative">
+                        <Avatar className={cn(
+                          "h-7 w-7 border-2 border-card",
+                          strategist.is_primary && "ring-2 ring-primary ring-offset-1 ring-offset-card"
+                        )}>
+                          <AvatarImage src={strategist.avatar_url || undefined} />
+                          <AvatarFallback className="text-[10px] bg-primary/10">
+                            {strategist.full_name?.charAt(0) || "S"}
+                          </AvatarFallback>
+                        </Avatar>
+                        {strategist.is_primary && (
+                          <Star className="h-2.5 w-2.5 text-primary fill-primary absolute -top-0.5 -right-0.5" />
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">
+                        {strategist.full_name}
+                        {strategist.is_primary && " (Principal)"}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            </TooltipProvider>
+            {strategists.length > 4 && (
+              <span className="text-[10px] text-muted-foreground ml-1">+{strategists.length - 4}</span>
+            )}
+            <span className="flex-1" />
+            <span className="text-[10px] text-primary">Editar</span>
+          </div>
+        ) : (
+          <p className="text-[10px] text-muted-foreground">Click para asignar estrategas</p>
+        )}
+      </div>
 
       {/* Action Badges */}
       <div className="flex items-center gap-1.5 flex-wrap mt-auto">
@@ -287,19 +285,17 @@ export function ClientCard({
           <Users className="h-3 w-3 mr-1" />
           Usuarios
         </Badge>
-        {isAdmin && (
-          <Badge 
-            variant="outline" 
-            className="text-[10px] cursor-pointer hover:bg-primary/10 border-primary/30 px-2 py-0.5"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenServices(client);
-            }}
-          >
-            <Lightbulb className="h-3 w-3 mr-1" />
-            Servicios
-          </Badge>
-        )}
+        <Badge 
+          variant="outline" 
+          className="text-[10px] cursor-pointer hover:bg-primary/10 border-primary/30 px-2 py-0.5"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenServices(client);
+          }}
+        >
+          <Lightbulb className="h-3 w-3 mr-1" />
+          Servicios
+        </Badge>
       </div>
 
       {/* Footer: Date */}
