@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Zap, Lightbulb, RefreshCw, Heart } from "lucide-react";
 import { toast } from "sonner";
-import { CAMPAIGN_TYPES, PLATFORMS, MarketingClient } from "./types";
+import { CAMPAIGN_TYPES, PLATFORMS, MarketingClient, SPHERE_PHASES, SpherePhase } from "./types";
 import { useAuth } from "@/hooks/useAuth";
 import { ContentSelector } from "./ContentSelector";
 
@@ -16,6 +16,13 @@ interface AddCampaignDialogProps {
   organizationId: string | null | undefined;
   onSuccess: () => void;
 }
+
+const SPHERE_ICONS: Record<SpherePhase, React.ReactNode> = {
+  engage: <Zap className="h-4 w-4" />,
+  solution: <Lightbulb className="h-4 w-4" />,
+  remarketing: <RefreshCw className="h-4 w-4" />,
+  fidelize: <Heart className="h-4 w-4" />,
+};
 
 export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDialogProps) {
   const { user } = useAuth();
@@ -28,6 +35,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
     name: "",
     description: "",
     campaign_type: "awareness",
+    sphere_phase: "engage" as SpherePhase,
     budget: "",
     currency: "COP",
     start_date: "",
@@ -87,6 +95,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
           name: formData.name,
           description: formData.description || null,
           campaign_type: formData.campaign_type,
+          sphere_phase: formData.sphere_phase,
           status: 'planning',
           budget: parseFloat(formData.budget) || 0,
           spent: 0,
@@ -109,6 +118,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
         name: "",
         description: "",
         campaign_type: "awareness",
+        sphere_phase: "engage",
         budget: "",
         currency: "COP",
         start_date: "",
@@ -203,6 +213,30 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="sphere">Fase Esfera *</Label>
+              <Select
+                value={formData.sphere_phase}
+                onValueChange={(value) => setFormData({ ...formData, sphere_phase: value as SpherePhase })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SPHERE_PHASES.map((phase) => (
+                    <SelectItem key={phase.value} value={phase.value}>
+                      <span className="flex items-center gap-2">
+                        {SPHERE_ICONS[phase.value]}
+                        {phase.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="budget">Presupuesto</Label>
               <div className="flex gap-2">
                 <Input
@@ -227,9 +261,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
                 </Select>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start">Fecha inicio</Label>
               <Input
@@ -239,15 +271,16 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="end">Fecha fin</Label>
-              <Input
-                id="end"
-                type="date"
-                value={formData.end_date}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-              />
-            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="end">Fecha fin</Label>
+            <Input
+              id="end"
+              type="date"
+              value={formData.end_date}
+              onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+            />
           </div>
 
           <div className="space-y-2">

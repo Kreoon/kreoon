@@ -4,32 +4,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Target, 
   Users, 
   Lightbulb, 
-  Gift, 
   Layers,
-  BarChart3,
   Save,
   Plus,
-  Trash2,
-  Pencil,
-  Check,
-  Package
+  Package,
+  Zap,
+  RefreshCw,
+  Heart
 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { StrategyProductsSection } from "./StrategyProductsSection";
+import { SPHERE_PHASES, SpherePhase, getSpherePhaseConfig } from "./types";
 
 interface MarketingStrategyProps {
   organizationId: string | null | undefined;
   selectedClientId?: string | null;
 }
+
+const SPHERE_ICONS: Record<SpherePhase, React.ReactNode> = {
+  engage: <Zap className="h-4 w-4" />,
+  solution: <Lightbulb className="h-4 w-4" />,
+  remarketing: <RefreshCw className="h-4 w-4" />,
+  fidelize: <Heart className="h-4 w-4" />,
+};
 
 export function MarketingStrategy({ organizationId, selectedClientId }: MarketingStrategyProps) {
   const { user } = useAuth();
@@ -60,7 +65,6 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
 
       if (error) throw error;
       setStrategy(data);
-      // Load associated product IDs if they exist
       const strategyData = data as any;
       if (strategyData?.associated_products) {
         setSelectedProductIds(strategyData.associated_products);
@@ -89,9 +93,10 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
             buyer_persona: strategy.buyer_persona,
             value_proposition: strategy.value_proposition,
             main_offer: strategy.main_offer,
-            funnel_tofu: strategy.funnel_tofu,
-            funnel_mofu: strategy.funnel_mofu,
-            funnel_bofu: strategy.funnel_bofu,
+            esfera_engage: strategy.esfera_engage,
+            esfera_solution: strategy.esfera_solution,
+            esfera_remarketing: strategy.esfera_remarketing,
+            esfera_fidelize: strategy.esfera_fidelize,
             strategic_kpis: strategy.strategic_kpis,
             associated_products: selectedProductIds,
           })
@@ -109,9 +114,10 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
             buyer_persona: strategy.buyer_persona || [],
             value_proposition: strategy.value_proposition,
             main_offer: strategy.main_offer,
-            funnel_tofu: strategy.funnel_tofu || {},
-            funnel_mofu: strategy.funnel_mofu || {},
-            funnel_bofu: strategy.funnel_bofu || {},
+            esfera_engage: strategy.esfera_engage || getDefaultEsferaData('engage'),
+            esfera_solution: strategy.esfera_solution || getDefaultEsferaData('solution'),
+            esfera_remarketing: strategy.esfera_remarketing || getDefaultEsferaData('remarketing'),
+            esfera_fidelize: strategy.esfera_fidelize || getDefaultEsferaData('fidelize'),
             strategic_kpis: strategy.strategic_kpis || [],
             associated_products: selectedProductIds,
           })
@@ -131,6 +137,18 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
     }
   };
 
+  const getDefaultEsferaData = (phase: SpherePhase) => {
+    const config = getSpherePhaseConfig(phase);
+    return {
+      description: '',
+      objective: config.objective,
+      content_types: config.contentTypes,
+      metrics: config.metrics,
+      tactics: [],
+      angles: [],
+    };
+  };
+
   const createNewStrategy = () => {
     setStrategy({
       business_objective: '',
@@ -138,9 +156,10 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
       buyer_persona: [],
       value_proposition: '',
       main_offer: '',
-      funnel_tofu: { description: '', tactics: [], channels: [] },
-      funnel_mofu: { description: '', tactics: [], channels: [] },
-      funnel_bofu: { description: '', tactics: [], channels: [] },
+      esfera_engage: getDefaultEsferaData('engage'),
+      esfera_solution: getDefaultEsferaData('solution'),
+      esfera_remarketing: getDefaultEsferaData('remarketing'),
+      esfera_fidelize: getDefaultEsferaData('fidelize'),
       strategic_kpis: [],
       associated_products: [],
     });
@@ -149,6 +168,20 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
 
   const updateField = (field: string, value: any) => {
     setStrategy((prev: any) => prev ? { ...prev, [field]: value } : null);
+  };
+
+  const updateEsferaPhase = (phase: SpherePhase, field: string, value: any) => {
+    const key = `esfera_${phase}`;
+    setStrategy((prev: any) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [key]: {
+          ...(prev[key] || {}),
+          [field]: value,
+        },
+      };
+    });
   };
 
   if (loading) {
@@ -171,13 +204,13 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
     return (
       <Card className="p-8 text-center">
         <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="font-semibold text-lg mb-2">Define tu Estrategia de Marketing</h3>
+        <h3 className="font-semibold text-lg mb-2">Define tu Estrategia con el Método Esfera</h3>
         <p className="text-muted-foreground mb-4">
-          Crea una estrategia con objetivos, buyer personas y funnel de conversión.
+          Crea una estrategia con las 4 fases: Enganchar, Solución, Remarketing y Fidelizar.
         </p>
         <Button onClick={createNewStrategy} className="gap-2">
           <Plus className="h-4 w-4" />
-          Crear Estrategia
+          Crear Estrategia Esfera
         </Button>
       </Card>
     );
@@ -186,7 +219,12 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Badge variant="secondary">Centro Estratégico</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="gap-1">
+            <Layers className="h-3 w-3" />
+            Método Esfera
+          </Badge>
+        </div>
         <Button onClick={handleSave} disabled={saving} className="gap-2">
           <Save className="h-4 w-4" />
           {saving ? 'Guardando...' : 'Guardar'}
@@ -194,11 +232,14 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
       </div>
 
       <Tabs value={activeSection} onValueChange={setActiveSection}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="objective"><Target className="h-4 w-4 mr-2" />Objetivo</TabsTrigger>
           <TabsTrigger value="persona"><Users className="h-4 w-4 mr-2" />Persona</TabsTrigger>
           <TabsTrigger value="value"><Lightbulb className="h-4 w-4 mr-2" />Propuesta</TabsTrigger>
-          <TabsTrigger value="funnel"><Layers className="h-4 w-4 mr-2" />Funnel</TabsTrigger>
+          <TabsTrigger value="esfera" className="gap-1">
+            <Layers className="h-4 w-4" />
+            Esfera
+          </TabsTrigger>
           <TabsTrigger value="products"><Package className="h-4 w-4 mr-2" />Productos</TabsTrigger>
         </TabsList>
 
@@ -276,26 +317,60 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
           </Card>
         </TabsContent>
 
-        <TabsContent value="funnel">
-          <div className="grid gap-4 md:grid-cols-3">
-            {['tofu', 'mofu', 'bofu'].map((stage) => (
-              <Card key={stage}>
-                <CardHeader className="pb-2">
-                  <Badge variant="outline">{stage.toUpperCase()}</Badge>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    value={(strategy[`funnel_${stage}`] as any)?.description || ''}
-                    onChange={(e) => updateField(`funnel_${stage}`, { 
-                      ...(strategy[`funnel_${stage}`] || {}), 
-                      description: e.target.value 
-                    })}
-                    placeholder="Descripción de la etapa..."
-                    className="min-h-[100px]"
-                  />
-                </CardContent>
-              </Card>
-            ))}
+        <TabsContent value="esfera">
+          <div className="grid gap-4 md:grid-cols-2">
+            {SPHERE_PHASES.map((phase) => {
+              const phaseData = strategy[`esfera_${phase.value}`] || {};
+              return (
+                <Card key={phase.value} className={`border-l-4 ${phase.bgColor.replace('bg-', 'border-l-')}`}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <Badge className={`${phase.bgColor} ${phase.color} gap-1`}>
+                        {SPHERE_ICONS[phase.value]}
+                        {phase.label}
+                      </Badge>
+                    </div>
+                    <CardDescription className="mt-2">
+                      <strong>Objetivo:</strong> {phase.objective}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Descripción de la estrategia</Label>
+                      <Textarea
+                        value={phaseData.description || ''}
+                        onChange={(e) => updateEsferaPhase(phase.value, 'description', e.target.value)}
+                        placeholder={`Define tu estrategia para ${phase.labelEs}...`}
+                        className="min-h-[80px] mt-1"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Tipos de contenido</Label>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {phase.contentTypes.map(type => (
+                            <Badge key={type} variant="outline" className="text-xs">
+                              {type}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Métricas clave</Label>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {phase.metrics.map(metric => (
+                            <Badge key={metric} variant="secondary" className="text-xs">
+                              {metric}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
 

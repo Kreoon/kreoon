@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Zap, Lightbulb, RefreshCw, Heart } from "lucide-react";
 import { toast } from "sonner";
-import { PLATFORMS, CONTENT_TYPES, MarketingClient, MarketingCampaign } from "./types";
+import { PLATFORMS, CONTENT_TYPES, MarketingClient, MarketingCampaign, SPHERE_PHASES, SpherePhase } from "./types";
 import { useAuth } from "@/hooks/useAuth";
 
 interface AddCalendarItemDialogProps {
@@ -16,6 +16,13 @@ interface AddCalendarItemDialogProps {
   onSuccess: () => void;
   defaultDate?: string;
 }
+
+const SPHERE_ICONS: Record<SpherePhase, React.ReactNode> = {
+  engage: <Zap className="h-4 w-4" />,
+  solution: <Lightbulb className="h-4 w-4" />,
+  remarketing: <RefreshCw className="h-4 w-4" />,
+  fidelize: <Heart className="h-4 w-4" />,
+};
 
 export function AddCalendarItemDialog({ organizationId, onSuccess, defaultDate }: AddCalendarItemDialogProps) {
   const { user } = useAuth();
@@ -31,6 +38,7 @@ export function AddCalendarItemDialog({ organizationId, onSuccess, defaultDate }
     description: "",
     content_type: "post",
     platform: "instagram",
+    sphere_phase: "engage" as SpherePhase,
     scheduled_date: defaultDate || "",
     scheduled_time: "",
     copy_text: "",
@@ -102,6 +110,7 @@ export function AddCalendarItemDialog({ organizationId, onSuccess, defaultDate }
           description: formData.description || null,
           content_type: formData.content_type,
           platform: formData.platform,
+          sphere_phase: formData.sphere_phase,
           scheduled_date: formData.scheduled_date,
           scheduled_time: formData.scheduled_time || null,
           status: 'planned',
@@ -123,6 +132,7 @@ export function AddCalendarItemDialog({ organizationId, onSuccess, defaultDate }
         description: "",
         content_type: "post",
         platform: "instagram",
+        sphere_phase: "engage",
         scheduled_date: defaultDate || "",
         scheduled_time: "",
         copy_text: "",
@@ -206,9 +216,9 @@ export function AddCalendarItemDialog({ organizationId, onSuccess, defaultDate }
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="content_type">Tipo de contenido</Label>
+              <Label htmlFor="content_type">Tipo</Label>
               <Select
                 value={formData.content_type}
                 onValueChange={(value) => setFormData({ ...formData, content_type: value })}
@@ -239,6 +249,28 @@ export function AddCalendarItemDialog({ organizationId, onSuccess, defaultDate }
                   {PLATFORMS.map((platform) => (
                     <SelectItem key={platform.value} value={platform.value}>
                       {platform.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sphere">Fase Esfera *</Label>
+              <Select
+                value={formData.sphere_phase}
+                onValueChange={(value) => setFormData({ ...formData, sphere_phase: value as SpherePhase })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SPHERE_PHASES.map((phase) => (
+                    <SelectItem key={phase.value} value={phase.value}>
+                      <span className="flex items-center gap-2">
+                        {SPHERE_ICONS[phase.value]}
+                        {phase.label}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

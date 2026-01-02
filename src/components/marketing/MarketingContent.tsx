@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   FileVideo, 
   CheckCircle, 
   XCircle, 
   Clock, 
-  Eye,
   Filter,
   Play,
-  MessageSquare
+  Zap,
+  Lightbulb,
+  RefreshCw,
+  Heart
 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { SPHERE_PHASES, SpherePhase, getSpherePhaseConfig } from "./types";
 
 interface MarketingContentProps {
   organizationId: string | null | undefined;
@@ -33,7 +35,7 @@ interface ContentItem {
   description: string | null;
   status: string;
   strategy_status: string;
-  funnel_stage: string;
+  sphere_phase: SpherePhase;
   target_platform: string | null;
   content_objective: string | null;
   hook: string | null;
@@ -55,10 +57,11 @@ const STRATEGY_STATUS_CONFIG: Record<string, { label: string; color: string; ico
   archivado: { label: 'Archivado', color: 'bg-gray-400', icon: <Clock className="h-4 w-4" /> },
 };
 
-const FUNNEL_STAGE_CONFIG: Record<string, { label: string; color: string }> = {
-  tofu: { label: 'TOFU', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' },
-  mofu: { label: 'MOFU', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300' },
-  bofu: { label: 'BOFU', color: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' },
+const SPHERE_ICONS: Record<SpherePhase, React.ReactNode> = {
+  engage: <Zap className="h-3 w-3" />,
+  solution: <Lightbulb className="h-3 w-3" />,
+  remarketing: <RefreshCw className="h-3 w-3" />,
+  fidelize: <Heart className="h-3 w-3" />,
 };
 
 export function MarketingContent({ organizationId, selectedClientId }: MarketingContentProps) {
@@ -67,7 +70,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [showValidation, setShowValidation] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterFunnel, setFilterFunnel] = useState<string>("all");
+  const [filterSphere, setFilterSphere] = useState<string>("all");
 
   useEffect(() => {
     if (organizationId && selectedClientId) {
@@ -76,7 +79,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
       setContent([]);
       setLoading(false);
     }
-  }, [organizationId, selectedClientId, filterStatus, filterFunnel]);
+  }, [organizationId, selectedClientId, filterStatus, filterSphere]);
 
   const fetchContent = async () => {
     if (!organizationId || !selectedClientId) return;
@@ -86,7 +89,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
       let query = supabase
         .from('content')
         .select(`
-          id, title, description, status, strategy_status, funnel_stage,
+          id, title, description, status, strategy_status, sphere_phase,
           target_platform, content_objective, hook, cta, thumbnail_url,
           video_url, script, created_at,
           creator:profiles!content_creator_id_fkey(id, display_name, avatar_url),
@@ -100,8 +103,8 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
         query = query.eq('strategy_status', filterStatus);
       }
 
-      if (filterFunnel !== "all") {
-        query = query.eq('funnel_stage', filterFunnel);
+      if (filterSphere !== "all") {
+        query = query.eq('sphere_phase', filterSphere as SpherePhase);
       }
 
       const { data, error } = await query;
@@ -120,8 +123,8 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
     return STRATEGY_STATUS_CONFIG[status] || STRATEGY_STATUS_CONFIG.draft;
   };
 
-  const getFunnelConfig = (stage: string) => {
-    return FUNNEL_STAGE_CONFIG[stage] || FUNNEL_STAGE_CONFIG.tofu;
+  const getSphereConfig = (phase: SpherePhase | string) => {
+    return getSpherePhaseConfig(phase as SpherePhase);
   };
 
   const getStatusCounts = () => {
@@ -233,14 +236,14 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
             ))}
           </SelectContent>
         </Select>
-        <Select value={filterFunnel} onValueChange={setFilterFunnel}>
+        <Select value={filterSphere} onValueChange={setFilterSphere}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Funnel" />
+            <SelectValue placeholder="Fase Esfera" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas las etapas</SelectItem>
-            {Object.entries(FUNNEL_STAGE_CONFIG).map(([key, config]) => (
-              <SelectItem key={key} value={key}>{config.label}</SelectItem>
+            <SelectItem value="all">Todas las fases</SelectItem>
+            {SPHERE_PHASES.map((phase) => (
+              <SelectItem key={phase.value} value={phase.value}>{phase.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -259,7 +262,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {content.map((item) => {
             const statusConfig = getStatusConfig(item.strategy_status);
-            const funnelConfig = getFunnelConfig(item.funnel_stage);
+            const sphereConfig = getSphereConfig(item.sphere_phase);
 
             return (
               <Card 
@@ -290,10 +293,11 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                       {statusConfig.label}
                     </Badge>
                   </div>
-                  {/* Funnel Stage Overlay */}
+                  {/* Sphere Phase Overlay */}
                   <div className="absolute top-2 left-2">
-                    <Badge className={funnelConfig.color}>
-                      {funnelConfig.label}
+                    <Badge className={`${sphereConfig.bgColor} ${sphereConfig.color} gap-1`}>
+                      {SPHERE_ICONS[item.sphere_phase]}
+                      {sphereConfig.label}
                     </Badge>
                   </div>
                   {/* Play Button Overlay */}

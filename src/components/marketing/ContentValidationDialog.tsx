@@ -27,8 +27,13 @@ import {
   AlertTriangle,
   Play,
   Loader2,
+  Zap,
+  RefreshCw,
+  Heart,
+  Layers,
 } from "lucide-react";
 import { toast } from "sonner";
+import { SPHERE_PHASES, SpherePhase, getSpherePhaseConfig } from "./types";
 
 interface ContentItem {
   id: string;
@@ -36,7 +41,7 @@ interface ContentItem {
   description: string | null;
   status: string;
   strategy_status: string;
-  funnel_stage: string;
+  sphere_phase: SpherePhase;
   target_platform: string | null;
   content_objective: string | null;
   hook: string | null;
@@ -56,10 +61,11 @@ interface ContentValidationDialogProps {
   clientId: string | null | undefined;
 }
 
-const FUNNEL_LABELS: Record<string, string> = {
-  tofu: 'Top of Funnel (Awareness)',
-  mofu: 'Middle of Funnel (Consideration)',
-  bofu: 'Bottom of Funnel (Decision)',
+const SPHERE_ICONS: Record<SpherePhase, React.ReactNode> = {
+  engage: <Zap className="h-4 w-4" />,
+  solution: <Lightbulb className="h-4 w-4" />,
+  remarketing: <RefreshCw className="h-4 w-4" />,
+  fidelize: <Heart className="h-4 w-4" />,
 };
 
 export function ContentValidationDialog({
@@ -76,11 +82,11 @@ export function ContentValidationDialog({
   const [feedback, setFeedback] = useState("");
   const [strategicComment, setStrategicComment] = useState("");
   
-  // Checklist states
+  // Checklist states - Updated for Método Esfera
   const [checklist, setChecklist] = useState({
     meets_client_objective: false,
     aligned_with_strategy: false,
-    coherent_with_funnel: false,
+    coherent_with_esfera: false,
     follows_branding: false,
     usable_for_ads: false,
     usable_for_organic: false,
@@ -91,9 +97,14 @@ export function ContentValidationDialog({
   const handleApprove = async () => {
     if (!content || !user || !organizationId) return;
     
+    // Validate sphere_phase is assigned
+    if (!content.sphere_phase) {
+      toast.error('El contenido debe tener una Fase Esfera asignada');
+      return;
+    }
+    
     setLoading(true);
     try {
-      // Update content status
       const { error: contentError } = await supabase
         .from('content')
         .update({
@@ -105,7 +116,6 @@ export function ContentValidationDialog({
 
       if (contentError) throw contentError;
 
-      // Create review record
       const { error: reviewError } = await supabase
         .from('content_strategy_reviews')
         .insert({
@@ -115,6 +125,8 @@ export function ContentValidationDialog({
           reviewer_id: user.id,
           review_status: 'approved',
           ...checklist,
+          coherent_with_esfera: checklist.coherent_with_esfera,
+          sphere_phase_assigned: content.sphere_phase,
           strategic_comment: strategicComment || null,
           feedback: null,
           overall_score: Object.values(checklist).filter(v => v).length,
@@ -140,7 +152,6 @@ export function ContentValidationDialog({
     
     setLoading(true);
     try {
-      // Update content status
       const { error: contentError } = await supabase
         .from('content')
         .update({
@@ -153,7 +164,6 @@ export function ContentValidationDialog({
 
       if (contentError) throw contentError;
 
-      // Create review record
       const { error: reviewError } = await supabase
         .from('content_strategy_reviews')
         .insert({
@@ -163,6 +173,8 @@ export function ContentValidationDialog({
           reviewer_id: user.id,
           review_status: 'rejected',
           ...checklist,
+          coherent_with_esfera: checklist.coherent_with_esfera,
+          sphere_phase_assigned: content.sphere_phase,
           strategic_comment: strategicComment || null,
           feedback: feedback,
           overall_score: Object.values(checklist).filter(v => v).length,
@@ -176,7 +188,7 @@ export function ContentValidationDialog({
       setChecklist({
         meets_client_objective: false,
         aligned_with_strategy: false,
-        coherent_with_funnel: false,
+        coherent_with_esfera: false,
         follows_branding: false,
         usable_for_ads: false,
         usable_for_organic: false,
@@ -192,16 +204,18 @@ export function ContentValidationDialog({
 
   if (!content) return null;
 
+  const sphereConfig = getSpherePhaseConfig(content.sphere_phase);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileVideo className="h-5 w-5" />
-            Validación Estratégica
+            Validación Estratégica - Método Esfera
           </DialogTitle>
           <DialogDescription>
-            Revisa y valida el contenido antes de usarlo en campañas de marketing
+            Revisa y valida el contenido según el Método Esfera
           </DialogDescription>
         </DialogHeader>
 
@@ -256,7 +270,7 @@ export function ContentValidationDialog({
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
-                          <Lightbulb className="h-4 w-4 text-amber-500" />
+                          <Zap className="h-4 w-4 text-cyan-500" />
                           Hook
                         </CardTitle>
                       </CardHeader>
@@ -320,10 +334,16 @@ export function ContentValidationDialog({
                       </div>
                     )}
                     <div>
-                      <Label className="text-xs text-muted-foreground">Etapa del Funnel</Label>
-                      <Badge className="mt-1">
-                        {FUNNEL_LABELS[content.funnel_stage] || content.funnel_stage}
-                      </Badge>
+                      <Label className="text-xs text-muted-foreground">Fase Esfera</Label>
+                      <div className="mt-1">
+                        <Badge className={`${sphereConfig.bgColor} ${sphereConfig.color} gap-1`}>
+                          {SPHERE_ICONS[content.sphere_phase]}
+                          {sphereConfig.label}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {sphereConfig.objective}
+                        </p>
+                      </div>
                     </div>
                     {content.target_platform && (
                       <div>
@@ -338,11 +358,50 @@ export function ContentValidationDialog({
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">Objetivo del Contenido</CardTitle>
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Layers className="h-4 w-4" />
+                      Contexto Método Esfera
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-3">
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        {SPHERE_ICONS[content.sphere_phase]}
+                        <span className="font-medium">{sphereConfig.label}</span>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Objetivo:</span>
+                          <p>{sphereConfig.objective}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Tipos de contenido sugeridos:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {sphereConfig.contentTypes.map(type => (
+                              <Badge key={type} variant="secondary" className="text-xs">
+                                {type}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Métricas clave:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {sphereConfig.metrics.map(metric => (
+                              <Badge key={metric} variant="outline" className="text-xs">
+                                {metric}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
                     {content.content_objective ? (
-                      <p className="text-sm">{content.content_objective}</p>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Objetivo del Contenido</Label>
+                        <p className="text-sm">{content.content_objective}</p>
+                      </div>
                     ) : (
                       <div className="flex items-center gap-2 text-amber-600">
                         <AlertTriangle className="h-4 w-4" />
@@ -356,12 +415,12 @@ export function ContentValidationDialog({
 
             {/* Validation Tab */}
             <TabsContent value="validation" className="space-y-4">
-              {/* Checklist */}
+              {/* Checklist - Updated for Método Esfera */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">
                     <CheckCircle className="h-4 w-4" />
-                    Checklist de Validación
+                    Checklist de Validación Esfera
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -369,7 +428,7 @@ export function ContentValidationDialog({
                     {[
                       { key: 'meets_client_objective', label: '¿Cumple objetivo del cliente?' },
                       { key: 'aligned_with_strategy', label: '¿Está alineado a la estrategia?' },
-                      { key: 'coherent_with_funnel', label: '¿Es coherente con el funnel?' },
+                      { key: 'coherent_with_esfera', label: '¿Es coherente con la Fase Esfera?' },
                       { key: 'follows_branding', label: '¿Cumple con branding?' },
                       { key: 'usable_for_ads', label: '¿Es usable para Ads?' },
                       { key: 'usable_for_organic', label: '¿Es usable para Orgánico?' },
@@ -408,7 +467,7 @@ export function ContentValidationDialog({
                 </CardHeader>
                 <CardContent>
                   <Textarea
-                    placeholder="Agrega notas o sugerencias estratégicas..."
+                    placeholder="Agrega notas o sugerencias estratégicas basadas en el Método Esfera..."
                     value={strategicComment}
                     onChange={(e) => setStrategicComment(e.target.value)}
                     rows={3}
@@ -426,7 +485,7 @@ export function ContentValidationDialog({
                 </CardHeader>
                 <CardContent>
                   <Textarea
-                    placeholder="Explica por qué rechazas este contenido y qué debe mejorarse..."
+                    placeholder="Explica por qué rechazas este contenido y qué debe mejorarse según el Método Esfera..."
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     rows={4}

@@ -1956,6 +1956,7 @@ export type Database = {
           script_pending_at: string | null
           script_version: number | null
           sequence_number: string | null
+          sphere_phase: Database["public"]["Enums"]["sphere_phase"] | null
           start_date: string | null
           status: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines: string | null
@@ -2048,6 +2049,7 @@ export type Database = {
           script_pending_at?: string | null
           script_version?: number | null
           sequence_number?: string | null
+          sphere_phase?: Database["public"]["Enums"]["sphere_phase"] | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines?: string | null
@@ -2140,6 +2142,7 @@ export type Database = {
           script_pending_at?: string | null
           script_version?: number | null
           sequence_number?: string | null
+          sphere_phase?: Database["public"]["Enums"]["sphere_phase"] | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines?: string | null
@@ -2703,6 +2706,7 @@ export type Database = {
         Row: {
           aligned_with_strategy: boolean | null
           client_id: string | null
+          coherent_with_esfera: boolean | null
           coherent_with_funnel: boolean | null
           content_id: string
           created_at: string | null
@@ -2715,6 +2719,9 @@ export type Database = {
           review_status: string
           reviewed_at: string | null
           reviewer_id: string
+          sphere_phase_assigned:
+            | Database["public"]["Enums"]["sphere_phase"]
+            | null
           strategic_comment: string | null
           updated_at: string | null
           usable_for_ads: boolean | null
@@ -2723,6 +2730,7 @@ export type Database = {
         Insert: {
           aligned_with_strategy?: boolean | null
           client_id?: string | null
+          coherent_with_esfera?: boolean | null
           coherent_with_funnel?: boolean | null
           content_id: string
           created_at?: string | null
@@ -2735,6 +2743,9 @@ export type Database = {
           review_status?: string
           reviewed_at?: string | null
           reviewer_id: string
+          sphere_phase_assigned?:
+            | Database["public"]["Enums"]["sphere_phase"]
+            | null
           strategic_comment?: string | null
           updated_at?: string | null
           usable_for_ads?: boolean | null
@@ -2743,6 +2754,7 @@ export type Database = {
         Update: {
           aligned_with_strategy?: boolean | null
           client_id?: string | null
+          coherent_with_esfera?: boolean | null
           coherent_with_funnel?: boolean | null
           content_id?: string
           created_at?: string | null
@@ -2755,6 +2767,9 @@ export type Database = {
           review_status?: string
           reviewed_at?: string | null
           reviewer_id?: string
+          sphere_phase_assigned?:
+            | Database["public"]["Enums"]["sphere_phase"]
+            | null
           strategic_comment?: string | null
           updated_at?: string | null
           usable_for_ads?: boolean | null
@@ -3873,6 +3888,7 @@ export type Database = {
           organization_id: string
           platforms: Json | null
           spent: number | null
+          sphere_phase: Database["public"]["Enums"]["sphere_phase"] | null
           start_date: string | null
           status: string
           strategist_id: string | null
@@ -3901,6 +3917,7 @@ export type Database = {
           organization_id: string
           platforms?: Json | null
           spent?: number | null
+          sphere_phase?: Database["public"]["Enums"]["sphere_phase"] | null
           start_date?: string | null
           status?: string
           strategist_id?: string | null
@@ -3929,6 +3946,7 @@ export type Database = {
           organization_id?: string
           platforms?: Json | null
           spent?: number | null
+          sphere_phase?: Database["public"]["Enums"]["sphere_phase"] | null
           start_date?: string | null
           status?: string
           strategist_id?: string | null
@@ -4086,6 +4104,7 @@ export type Database = {
           published_url: string | null
           scheduled_date: string
           scheduled_time: string | null
+          sphere_phase: Database["public"]["Enums"]["sphere_phase"] | null
           status: string
           title: string
           updated_at: string
@@ -4109,6 +4128,7 @@ export type Database = {
           published_url?: string | null
           scheduled_date: string
           scheduled_time?: string | null
+          sphere_phase?: Database["public"]["Enums"]["sphere_phase"] | null
           status?: string
           title: string
           updated_at?: string
@@ -4132,6 +4152,7 @@ export type Database = {
           published_url?: string | null
           scheduled_date?: string
           scheduled_time?: string | null
+          sphere_phase?: Database["public"]["Enums"]["sphere_phase"] | null
           status?: string
           title?: string
           updated_at?: string
@@ -4347,6 +4368,10 @@ export type Database = {
           client_id: string | null
           created_at: string | null
           created_by: string | null
+          esfera_engage: Json | null
+          esfera_fidelize: Json | null
+          esfera_remarketing: Json | null
+          esfera_solution: Json | null
           funnel_bofu: Json | null
           funnel_mofu: Json | null
           funnel_tofu: Json | null
@@ -4369,6 +4394,10 @@ export type Database = {
           client_id?: string | null
           created_at?: string | null
           created_by?: string | null
+          esfera_engage?: Json | null
+          esfera_fidelize?: Json | null
+          esfera_remarketing?: Json | null
+          esfera_solution?: Json | null
           funnel_bofu?: Json | null
           funnel_mofu?: Json | null
           funnel_tofu?: Json | null
@@ -4391,6 +4420,10 @@ export type Database = {
           client_id?: string | null
           created_at?: string | null
           created_by?: string | null
+          esfera_engage?: Json | null
+          esfera_fidelize?: Json | null
+          esfera_remarketing?: Json | null
+          esfera_solution?: Json | null
           funnel_bofu?: Json | null
           funnel_mofu?: Json | null
           funnel_tofu?: Json | null
@@ -9756,6 +9789,7 @@ export type Database = {
         | "five_star_rating"
         | "viral_hook"
         | "manual_adjustment"
+      sphere_phase: "engage" | "solution" | "remarketing" | "fidelize"
       streaming_event_status:
         | "draft"
         | "scheduled"
@@ -9974,6 +10008,7 @@ export const Constants = {
         "viral_hook",
         "manual_adjustment",
       ],
+      sphere_phase: ["engage", "solution", "remarketing", "fidelize"],
       streaming_event_status: [
         "draft",
         "scheduled",
