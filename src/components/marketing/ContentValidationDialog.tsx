@@ -41,15 +41,16 @@ interface ContentItem {
   description: string | null;
   status: string;
   strategy_status: string;
-  sphere_phase: SpherePhase;
+  sphere_phase: SpherePhase | null;
   target_platform: string | null;
   content_objective: string | null;
   hook: string | null;
   cta: string | null;
   thumbnail_url: string | null;
   video_url: string | null;
+  bunny_embed_url?: string | null;
   script: string | null;
-  creator?: { id: string; display_name: string; avatar_url: string | null } | null;
+  creator?: { id: string; full_name?: string; display_name?: string; avatar_url: string | null } | null;
 }
 
 interface ContentValidationDialogProps {
