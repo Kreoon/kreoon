@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useScriptPrompts } from "@/hooks/useScriptPrompts";
+import { useScriptPrompts, DEFAULT_SCRIPT_PROMPTS } from "@/hooks/useScriptPrompts";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
@@ -270,9 +270,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
   ): Promise<string> => {
     const baseContext = buildBaseContext();
     
-    // Use the prompts from the hook (which already has defaults)
+    // Use the prompts from the hook (which already has defaults), or fall back to DEFAULT_SCRIPT_PROMPTS
     const promptKey = type === "script" ? "script" : type;
-    const customPrompt = customPrompts?.[promptKey] || "";
+    const customPrompt = customPrompts?.[promptKey] || DEFAULT_SCRIPT_PROMPTS[promptKey as keyof typeof DEFAULT_SCRIPT_PROMPTS] || "";
     
     let fullPrompt = `${customPrompt}\n\n---\nCONTEXTO:\n${baseContext}`;
     
