@@ -12,11 +12,14 @@ import {
   CheckCircle2,
   X,
   RefreshCw,
-  Loader2
+  Loader2,
+  Zap,
+  Heart
 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SPHERE_PHASES, SpherePhase } from "./types";
 
 interface MarketingInsightsProps {
   organizationId: string | null | undefined;
@@ -280,10 +283,10 @@ export function MarketingInsights({ organizationId, selectedClientId }: Marketin
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Insights con IA
+            Insights Método Esfera
           </h3>
           <p className="text-sm text-muted-foreground">
-            Análisis inteligente de tus datos de marketing
+            Análisis inteligente basado en las 4 fases: Enganchar, Solución, Remarketing, Fidelizar
           </p>
         </div>
         <Button onClick={generateInsights} disabled={generating} className="gap-2">

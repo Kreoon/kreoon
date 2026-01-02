@@ -15,10 +15,14 @@ import {
   TrendingUp,
   Users,
   MousePointerClick,
-  DollarSign
+  DollarSign,
+  Zap,
+  Lightbulb,
+  RefreshCw,
+  Heart
 } from "lucide-react";
 import { toast } from "sonner";
-import { MarketingReport } from "./types";
+import { MarketingReport, SPHERE_PHASES, SpherePhase } from "./types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
