@@ -67,7 +67,7 @@ interface ContentItem {
   marketing_campaign_id: string | null;
   trafficker_guidelines: string | null;
   strategist_guidelines: string | null;
-  creator?: { id: string; full_name: string; display_name?: string; avatar_url: string | null } | null;
+  creator_id: string | null;
   client?: { id: string; name: string; logo_url: string | null } | null;
 }
 
@@ -142,9 +142,8 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
           id, title, description, status, strategy_status, sphere_phase,
           target_platform, content_objective, hook, cta, thumbnail_url,
           video_url, bunny_embed_url, script, created_at, approved_at, paid_at,
-          marketing_approved_at, marketing_campaign_id,
+          marketing_approved_at, marketing_campaign_id, creator_id,
           trafficker_guidelines, strategist_guidelines,
-          creator:profiles!content_creator_id_fkey(id, full_name, display_name, avatar_url),
           client:clients!content_client_id_fkey(id, name, logo_url)
         `)
         .eq('organization_id', organizationId);
@@ -528,37 +527,27 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                         </span>
                       </div>
 
-                      {/* Creator */}
-                      {item.creator && (
+                      {/* Actions */}
+                      {!item.marketing_campaign_id && (
                         <div className="flex items-center gap-2 pt-2 border-t">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={item.creator.avatar_url || undefined} />
-                            <AvatarFallback className="text-xs">
-                              {item.creator.full_name?.charAt(0) || 'C'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm text-muted-foreground truncate flex-1">
-                            {item.creator.full_name}
-                          </span>
-                          {!item.marketing_campaign_id && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                setSelectedContent(item);
-                                setAssignData({
-                                  campaign_id: "",
-                                  sphere_phase: item.sphere_phase || "",
-                                  trafficker_guidelines: item.trafficker_guidelines || "",
-                                  strategist_guidelines: item.strategist_guidelines || "",
-                                });
-                                setShowAssignDialog(true);
-                              }}
-                            >
-                              <Send className="h-3 w-3 mr-1" />
-                              Usar
-                            </Button>
-                          )}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              setSelectedContent(item);
+                              setAssignData({
+                                campaign_id: "",
+                                sphere_phase: item.sphere_phase || "",
+                                trafficker_guidelines: item.trafficker_guidelines || "",
+                                strategist_guidelines: item.strategist_guidelines || "",
+                              });
+                              setShowAssignDialog(true);
+                            }}
+                          >
+                            <Send className="h-3 w-3 mr-1" />
+                            Usar en Campaña
+                          </Button>
                         </div>
                       )}
                     </CardContent>
