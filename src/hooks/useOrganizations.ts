@@ -67,16 +67,22 @@ export function useOrganizations() {
         .order('name');
 
       if (error) throw error;
-      setOrganizations(data || []);
+      // Cast to handle potential legacy 'ambassador' values from DB
+      setOrganizations((data || []).map(org => ({
+        ...org,
+        default_role: org.default_role === 'ambassador' ? null : org.default_role
+      })) as Organization[]);
 
       // Set current org from localStorage or first org
       const savedOrgId = localStorage.getItem('currentOrganizationId');
       const savedOrg = data?.find(o => o.id === savedOrgId);
       
       if (savedOrg) {
-        setCurrentOrg(savedOrg);
+        const cleanOrg = { ...savedOrg, default_role: savedOrg.default_role === 'ambassador' ? null : savedOrg.default_role } as Organization;
+        setCurrentOrg(cleanOrg);
       } else if (data && data.length > 0) {
-        setCurrentOrg(data[0]);
+        const cleanOrg = { ...data[0], default_role: data[0].default_role === 'ambassador' ? null : data[0].default_role } as Organization;
+        setCurrentOrg(cleanOrg);
         localStorage.setItem('currentOrganizationId', data[0].id);
       }
     } catch (error) {
@@ -106,11 +112,14 @@ export function useOrganizations() {
           .select('id, full_name, email, avatar_url')
           .in('id', userIds);
 
-        // Combine members with their profiles
-        const membersWithProfiles: OrganizationMember[] = membersData.map(member => ({
-          ...member,
-          profile: profilesData?.find(p => p.id === member.user_id) || null
-        }));
+        // Combine members with their profiles, filtering out legacy 'ambassador' role
+        const membersWithProfiles: OrganizationMember[] = membersData
+          .filter(member => member.role !== 'ambassador')
+          .map(member => ({
+            ...member,
+            role: member.role as AppRole,
+            profile: profilesData?.find(p => p.id === member.user_id) || null
+          }));
 
         setMembers(membersWithProfiles);
       } else {
@@ -132,7 +141,11 @@ export function useOrganizations() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setInvitations(data || []);
+      // Filter out legacy ambassador invitations
+      const cleanInvitations = (data || [])
+        .filter(inv => inv.role !== 'ambassador')
+        .map(inv => ({ ...inv, role: inv.role as AppRole }));
+      setInvitations(cleanInvitations as OrganizationInvitation[]);
     } catch (error) {
       console.error('Error fetching invitations:', error);
     }

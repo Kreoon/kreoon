@@ -99,7 +99,7 @@ const StatsCard = ({
 
 export default function EditorDashboard() {
   const navigate = useNavigate();
-  const { user, profile, isAmbassador } = useAuth();
+  const { user, profile } = useAuth();
   const { content, loading, refetch } = useContent(user?.id, 'editor');
   const { toast } = useToast();
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
@@ -150,7 +150,7 @@ export default function EditorDashboard() {
         subtitle={`Bienvenido, ${profile?.full_name}`}
         action={
           <div className="flex flex-wrap items-center gap-3">
-            {(isAmbassador || profile?.is_ambassador) && (
+            {profile?.is_ambassador && (
               <AmbassadorBadge size="md" variant="glow" />
             )}
             <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">

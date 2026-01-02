@@ -245,7 +245,7 @@ const LargeKpiCard = ({
 };
 
 export default function Dashboard() {
-  const { user, isAdmin, profile, isAmbassador } = useAuth();
+  const { user, isAdmin, profile } = useAuth();
   const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
   
@@ -761,7 +761,7 @@ export default function Dashboard() {
           subtitle="Centro de comando y métricas"
           action={
             <div className="flex items-center gap-2">
-              {(isAmbassador || profile?.is_ambassador) && (
+              {profile?.is_ambassador && (
                 <AmbassadorBadge size="sm" variant="glow" />
               )}
               {isAdmin && (

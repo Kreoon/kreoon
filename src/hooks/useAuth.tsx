@@ -20,8 +20,9 @@ interface AuthContextType {
   isCreator: boolean;
   isEditor: boolean;
   isClient: boolean;
-  isAmbassador: boolean;
   isStrategist: boolean;
+  isTrafficker: boolean;
+  isTeamLeader: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -422,8 +423,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCreator = activeRole === 'creator';
   const isEditor = activeRole === 'editor';
   const isClient = activeRole === 'client';
-  const isAmbassador = activeRole === 'ambassador';
   const isStrategist = activeRole === 'strategist';
+  const isTrafficker = activeRole === 'trafficker';
+  const isTeamLeader = activeRole === 'team_leader';
 
   return (
     <AuthContext.Provider value={{
@@ -443,8 +445,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isCreator,
       isEditor,
       isClient,
-      isAmbassador,
-      isStrategist
+      isStrategist,
+      isTrafficker,
+      isTeamLeader
     }}>
       {children}
     </AuthContext.Provider>

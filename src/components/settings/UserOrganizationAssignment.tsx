@@ -107,10 +107,12 @@ export function UserOrganizationAssignment() {
     const userOrgMap = new Map<string, { orgId: string; orgName: string | null }>();
     
     membersData?.forEach(m => {
-      if (m.role) {
+      // Skip legacy ambassador role
+      if (m.role && m.role !== 'ambassador') {
         const existing = rolesMap.get(m.user_id) || [];
-        if (!existing.includes(m.role)) {
-          rolesMap.set(m.user_id, [...existing, m.role]);
+        const role = m.role as AppRole;
+        if (!existing.includes(role)) {
+          rolesMap.set(m.user_id, [...existing, role]);
         }
       }
       // Store the first organization membership found (user can belong to multiple, show primary)

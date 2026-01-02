@@ -281,8 +281,9 @@ export default function Team() {
   const strategists = profiles.filter(p => p.roles.includes('strategist'));
   const creators = profiles.filter(p => p.roles.includes('creator'));
   const editors = profiles.filter(p => p.roles.includes('editor'));
-  const ambassadors = profiles.filter(p => p.roles.includes('ambassador'));
   const clientUsers = profiles.filter(p => p.roles.includes('client'));
+  const traffickers = profiles.filter(p => p.roles.includes('trafficker'));
+  const teamLeaders = profiles.filter(p => p.roles.includes('team_leader'));
 
   // Reusable user card component
   const UserCard = ({ profile, showAddRole = true }: { profile: Profile & { roles: AppRole[] }, showAddRole?: boolean }) => (
@@ -295,7 +296,7 @@ export default function Team() {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium">{profile.full_name}</p>
-            {(profile.is_ambassador || profile.roles.includes('ambassador')) && (
+            {profile.is_ambassador && (
               <AmbassadorBadge size="sm" variant="default" />
             )}
           </div>
@@ -459,9 +460,13 @@ export default function Team() {
             <User className="w-4 h-4" />
             Editores ({editors.length})
           </TabsTrigger>
-          <TabsTrigger value="ambassadors" className="gap-2">
+          <TabsTrigger value="traffickers" className="gap-2">
             <Star className="w-4 h-4" />
-            Embajadores ({ambassadors.length})
+            Traffickers ({traffickers.length})
+          </TabsTrigger>
+          <TabsTrigger value="team_leaders" className="gap-2">
+            <Star className="w-4 h-4" />
+            Líderes ({teamLeaders.length})
           </TabsTrigger>
           <TabsTrigger value="clients" className="gap-2">
             <User className="w-4 h-4" />
@@ -594,23 +599,48 @@ export default function Team() {
           </Card>
         </TabsContent>
 
-        {/* Ambassadors Tab */}
-        <TabsContent value="ambassadors" className="mt-6">
+        {/* Traffickers Tab */}
+        <TabsContent value="traffickers" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-success" />
-                Embajadores ({ambassadors.length})
+                <Star className="w-5 h-5 text-cyan-500" />
+                Traffickers ({traffickers.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {ambassadors.length === 0 ? (
+              {traffickers.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
-                  No hay embajadores registrados
+                  No hay traffickers registrados
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {ambassadors.map(profile => (
+                  {traffickers.map(profile => (
+                    <UserCard key={profile.id} profile={profile} />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Team Leaders Tab */}
+        <TabsContent value="team_leaders" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-indigo-500" />
+                Líderes de Equipo ({teamLeaders.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {teamLeaders.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  No hay líderes de equipo registrados
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {teamLeaders.map(profile => (
                     <UserCard key={profile.id} profile={profile} />
                   ))}
                 </div>

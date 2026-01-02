@@ -10,11 +10,12 @@ import { useNavigate } from 'react-router-dom';
 
 const ROLE_OPTIONS: { value: AppRole; label: string; defaultRoute: string }[] = [
   { value: 'admin', label: 'Admin', defaultRoute: '/' },
+  { value: 'team_leader', label: 'Líder de Equipo', defaultRoute: '/dashboard' },
   { value: 'strategist', label: 'Estratega', defaultRoute: '/strategist-dashboard' },
+  { value: 'trafficker', label: 'Trafficker', defaultRoute: '/marketing' },
   { value: 'creator', label: 'Creador', defaultRoute: '/creator-dashboard' },
   { value: 'editor', label: 'Productor AV', defaultRoute: '/editor-dashboard' },
   { value: 'client', label: 'Cliente', defaultRoute: '/client-dashboard' },
-  { value: 'ambassador', label: 'Embajador', defaultRoute: '/creator-dashboard' },
 ];
 
 export function ImpersonationBanner() {
