@@ -367,12 +367,18 @@ Mantén la esencia del mensaje original mientras optimizas:
 Devuelve el guion mejorado en formato HTML estructurado.`,
 };
 
+// Helper function to sleep for a given number of milliseconds
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function callAI(
   config: AIConfig,
   apiKey: string,
   model: string,
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  maxRetries: number = 3
 ): Promise<string> {
   console.log(`[callAI] Starting request to: ${config.url}`);
   console.log(`[callAI] Model: ${model}`);
@@ -382,59 +388,86 @@ async function callAI(
   const requestBody = config.getBody(model, systemPrompt, userPrompt);
   console.log(`[callAI] Request body keys:`, Object.keys(requestBody));
 
-  try {
-    // Add timeout with AbortController (90 seconds)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.error(`[callAI] Request timeout after 90 seconds`);
-      controller.abort();
-    }, 90000);
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[callAI] Attempt ${attempt}/${maxRetries}`);
+      
+      // Add timeout with AbortController (90 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.error(`[callAI] Request timeout after 90 seconds`);
+        controller.abort();
+      }, 90000);
 
-    const response = await fetch(config.url, {
-      method: "POST",
-      headers: config.getHeaders(apiKey),
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
-    });
+      const response = await fetch(config.url, {
+        method: "POST",
+        headers: config.getHeaders(apiKey),
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
 
-    clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-    console.log(`[callAI] Response status: ${response.status}`);
+      console.log(`[callAI] Response status: ${response.status}`);
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        console.error(`[callAI] Rate limit exceeded`);
-        throw new Error("Rate limit exceeded - intenta de nuevo en unos segundos");
+      if (!response.ok) {
+        if (response.status === 429) {
+          console.error(`[callAI] Rate limit exceeded (attempt ${attempt}/${maxRetries})`);
+          
+          // If we have retries left, wait and try again with exponential backoff
+          if (attempt < maxRetries) {
+            const waitTime = Math.pow(2, attempt) * 1000 + Math.random() * 1000; // 2s, 4s, 8s + jitter
+            console.log(`[callAI] Waiting ${Math.round(waitTime)}ms before retry...`);
+            await sleep(waitTime);
+            continue;
+          }
+          
+          throw new Error("Rate limit exceeded - intenta de nuevo en unos segundos");
+        }
+        if (response.status === 402) {
+          console.error(`[callAI] Payment required`);
+          throw new Error("Créditos de IA agotados - contacta al administrador");
+        }
+        const errorText = await response.text();
+        console.error(`[callAI] AI Error response:`, errorText);
+        throw new Error(`Error de IA: ${response.status} - ${errorText.slice(0, 200)}`);
       }
-      if (response.status === 402) {
-        console.error(`[callAI] Payment required`);
-        throw new Error("Créditos de IA agotados - contacta al administrador");
-      }
-      const errorText = await response.text();
-      console.error(`[callAI] AI Error response:`, errorText);
-      throw new Error(`Error de IA: ${response.status} - ${errorText.slice(0, 200)}`);
-    }
 
-    const data = await response.json();
-    console.log(`[callAI] Response received, extracting content...`);
-    
-    const content = config.extractContent(data);
-    
-    if (!content) {
-      console.error(`[callAI] Empty content in response:`, JSON.stringify(data).slice(0, 500));
-      throw new Error("La IA no generó contenido. Intenta de nuevo.");
+      const data = await response.json();
+      console.log(`[callAI] Response received, extracting content...`);
+      
+      const content = config.extractContent(data);
+      
+      if (!content) {
+        console.error(`[callAI] Empty content in response:`, JSON.stringify(data).slice(0, 500));
+        throw new Error("La IA no generó contenido. Intenta de nuevo.");
+      }
+      
+      console.log(`[callAI] Content extracted successfully, length: ${content.length}`);
+      return content;
+    } catch (error: any) {
+      lastError = error;
+      
+      if (error.name === 'AbortError') {
+        console.error(`[callAI] Request was aborted due to timeout`);
+        throw new Error("La solicitud tardó demasiado. Intenta con un prompt más corto.");
+      }
+      
+      // Don't retry for non-retryable errors
+      if (!error.message?.includes('Rate limit') && !error.message?.includes('429')) {
+        console.error(`[callAI] Non-retryable error:`, error.message);
+        throw error;
+      }
+      
+      console.error(`[callAI] Error during AI call (attempt ${attempt}):`, error.message);
     }
-    
-    console.log(`[callAI] Content extracted successfully, length: ${content.length}`);
-    return content;
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
-      console.error(`[callAI] Request was aborted due to timeout`);
-      throw new Error("La solicitud tardó demasiado. Intenta con un prompt más corto.");
-    }
-    console.error(`[callAI] Error during AI call:`, error.message);
-    throw error;
   }
+  
+  // All retries exhausted
+  console.error(`[callAI] All ${maxRetries} attempts failed`);
+  throw lastError || new Error("Error al conectar con la IA después de varios intentos");
 }
 
 // Genera el bloque HTML para cada rol (simplified version)
