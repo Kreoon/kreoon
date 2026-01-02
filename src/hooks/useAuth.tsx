@@ -295,23 +295,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Check if user is in client_users table - they should have client role
-      if (userRoles.length === 0 || !userRoles.includes('client')) {
-        const clientUserResult = await withTimeout(
-          () =>
-            supabase
-              .from('client_users')
-              .select('id')
-              .eq('user_id', userId)
-              .limit(1),
-          8000
-        );
+      // ALWAYS check if user is in client_users table - they should have client role
+      // This runs regardless of other roles to ensure multi-role users get client access
+      if (!userRoles.includes('client')) {
+        try {
+          const clientUserResult = await withTimeout(
+            () =>
+              supabase
+                .from('client_users')
+                .select('id')
+                .eq('user_id', userId)
+                .limit(1),
+            8000
+          );
 
-        if (clientUserResult.data && clientUserResult.data.length > 0) {
-          // User is a client user, add client role if not already present
-          if (!userRoles.includes('client')) {
-            userRoles = [...userRoles, 'client'];
+          if (clientUserResult.error) {
+            console.warn('[auth] client_users fetch error:', clientUserResult.error);
           }
+
+          if (clientUserResult.data && clientUserResult.data.length > 0) {
+            // User is a client user, add client role
+            userRoles = [...userRoles, 'client'];
+            console.log('[auth] Added client role for user in client_users table');
+          }
+        } catch (err) {
+          console.warn('[auth] Error checking client_users:', err);
         }
       }
 
