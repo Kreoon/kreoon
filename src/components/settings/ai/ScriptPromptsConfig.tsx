@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Save, RotateCcw, Sparkles, FileText, Users, Target, Palette, BarChart3, Settings2, ChevronDown, Info } from 'lucide-react';
+import { Loader2, Save, RotateCcw, Sparkles, FileText, Users, Target, Palette, BarChart3, Settings2, ChevronDown, Info, Copy, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -29,11 +29,45 @@ interface PromptConfig {
   critical_rules: string;
 }
 
+// All available template variables
+const TEMPLATE_VARIABLES = {
+  producto: [
+    { code: '{producto_nombre}', description: 'Nombre del producto' },
+    { code: '{producto_descripcion}', description: 'Descripción detallada del producto' },
+    { code: '{producto_estrategia}', description: 'Estrategia de marketing del producto' },
+    { code: '{producto_investigacion}', description: 'Investigación de mercado' },
+    { code: '{producto_avatar}', description: 'Avatar / Cliente ideal del producto' },
+    { code: '{producto_angulos}', description: 'Lista de ángulos de venta' },
+  ],
+  formulario: [
+    { code: '{cta}', description: 'Llamado a la acción (CTA)' },
+    { code: '{angulo_venta}', description: 'Ángulo de venta seleccionado' },
+    { code: '{cantidad_hooks}', description: 'Cantidad de hooks solicitados' },
+    { code: '{pais_objetivo}', description: 'País objetivo del contenido' },
+    { code: '{estructura_narrativa}', description: 'Estructura narrativa seleccionada' },
+    { code: '{avatar_ideal}', description: 'Avatar ideal del formulario' },
+    { code: '{estrategias_video}', description: 'Estrategias/estructuras de video' },
+    { code: '{transcripcion_referencia}', description: 'Transcripción de video de referencia' },
+    { code: '{hooks_sugeridos}', description: 'Lista de hooks sugeridos por el usuario' },
+    { code: '{instrucciones_adicionales}', description: 'Instrucciones adicionales del usuario' },
+  ],
+  documentos: [
+    { code: '{documento_brief}', description: 'Contenido del brief del producto' },
+    { code: '{documento_onboarding}', description: 'Contenido del onboarding' },
+    { code: '{documento_research}', description: 'Contenido del research/investigación' },
+  ],
+};
+
 const DEFAULT_MASTER_PROMPT = `🎯 ROL DEL SISTEMA
 
 Actúa como un Prompt Engineer senior y estratega digital experto en UGC, performance ads y storytelling, encargado de construir prompts de alta precisión antes de generar cualquier guion.
 
-Tu función principal es convertir la información del formulario en prompts claros, completos y alineados al objetivo del negocio.`;
+Tu función principal es convertir la información del formulario en prompts claros, completos y alineados al objetivo del negocio.
+
+📦 PRODUCTO: {producto_nombre}
+📝 DESCRIPCIÓN: {producto_descripcion}
+🎯 ESTRATEGIA: {producto_estrategia}
+👤 AVATAR: {producto_avatar}`;
 
 const DEFAULT_ROLE_PROMPTS = {
   creator: '📦 GENERANDO: BLOQUE CREADOR 🎥 - Guion estructurado por escenas, listo para grabar.',
@@ -60,21 +94,21 @@ const DEFAULT_FORMAT_RULES = `🎨 FORMATO VISUAL DEL RESULTADO (OBLIGATORIO):
 - Texto genérico o repetitivo
 - Lenguaje publicitario forzado`;
 
-const DEFAULT_CRITICAL_RULES = `📥 INPUT OBLIGATORIO (DESDE EL FORMULARIO)
+const DEFAULT_CRITICAL_RULES = `📥 INPUT DEL FORMULARIO
 
-Antes de generar cualquier prompt o guion, DEBES analizar y usar explícitamente los siguientes campos del formulario:
+🎯 CTA: {cta}
+💡 Ángulo de venta: {angulo_venta}
+🔢 Cantidad de hooks: {cantidad_hooks}
+🌍 País objetivo: {pais_objetivo}
+📖 Estructura narrativa: {estructura_narrativa}
+👤 Avatar ideal: {avatar_ideal}
+🎬 Estrategias de video: {estrategias_video}
 
-- CTA (Llamado a la acción)
-- Ángulo de venta seleccionado
-- Cantidad de hooks
-- País objetivo
-- Estructura narrativa
-- Avatar / Cliente ideal
-- Estrategias / estructuras de video
-- Transcripción de video de referencia (si existe)
-- Hooks sugeridos por el usuario (si existen)
-- Instrucciones adicionales del usuario
-- Documentos del producto (Brief, Onboarding, Research)
+📝 Hooks sugeridos:
+{hooks_sugeridos}
+
+💬 Instrucciones adicionales:
+{instrucciones_adicionales}
 
 ⚠️ REGLAS CRÍTICAS:
 - NINGÚN CAMPO debe ser ignorado si tiene información
@@ -100,6 +134,35 @@ const ROLE_LABELS = {
   designer: 'Diseñador',
   admin: 'Admin/PM',
 };
+
+// Component to display a copyable variable
+function VariableItem({ code, description }: { code: string; description: string }) {
+  const [copied, setCopied] = useState(false);
+  
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    toast.success(`Copiado: ${code}`);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  
+  return (
+    <div 
+      className="flex items-center justify-between p-2 rounded-lg bg-muted/50 border hover:bg-muted/80 cursor-pointer transition-colors group"
+      onClick={handleCopy}
+    >
+      <div className="flex-1 min-w-0">
+        <code className="text-xs font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+          {code}
+        </code>
+        <p className="text-xs text-muted-foreground mt-0.5 truncate">{description}</p>
+      </div>
+      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+        {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+      </Button>
+    </div>
+  );
+}
 
 export function ScriptPromptsConfig({ organizationId }: ScriptPromptsConfigProps) {
   const [loading, setLoading] = useState(true);
@@ -254,53 +317,67 @@ export function ScriptPromptsConfig({ organizationId }: ScriptPromptsConfigProps
         </CardHeader>
       </Card>
 
-      {/* Product Variables Reference */}
-      <Collapsible>
+      {/* Template Variables Reference */}
+      <Collapsible defaultOpen>
         <Card>
           <CardHeader className="pb-2">
             <CollapsibleTrigger className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <Info className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Variables del producto disponibles</span>
+                <Info className="h-4 w-4 text-primary" />
+                <span className="font-medium">Variables de plantilla disponibles</span>
+                <Badge variant="secondary" className="ml-2">
+                  {Object.values(TEMPLATE_VARIABLES).flat().length} variables
+                </Badge>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </CollapsibleTrigger>
           </CardHeader>
           <CollapsibleContent>
-            <CardContent className="pt-0">
-              <p className="text-sm text-muted-foreground mb-3">
-                La IA recibe automáticamente esta información del producto asociado al proyecto:
+            <CardContent className="pt-0 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Usa estas variables en tus prompts y serán reemplazadas automáticamente con la información real del producto y formulario:
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-muted/50 border">
-                  <div className="font-medium text-sm mb-1">🏷️ Nombre del producto</div>
-                  <p className="text-xs text-muted-foreground">El nombre comercial del producto</p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/50 border">
-                  <div className="font-medium text-sm mb-1">📝 Descripción</div>
-                  <p className="text-xs text-muted-foreground">Descripción detallada del producto</p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/50 border">
-                  <div className="font-medium text-sm mb-1">🎯 Estrategia de producto</div>
-                  <p className="text-xs text-muted-foreground">La estrategia de marketing y posicionamiento</p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/50 border">
-                  <div className="font-medium text-sm mb-1">📊 Investigación de mercado</div>
-                  <p className="text-xs text-muted-foreground">Datos de mercado y competencia</p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/50 border">
-                  <div className="font-medium text-sm mb-1">👤 Avatar / Cliente ideal</div>
-                  <p className="text-xs text-muted-foreground">Perfil del cliente objetivo</p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/50 border">
-                  <div className="font-medium text-sm mb-1">💡 Ángulos de venta</div>
-                  <p className="text-xs text-muted-foreground">Lista de enfoques para vender el producto</p>
+              
+              {/* Product Variables */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  📦 Variables del Producto
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {TEMPLATE_VARIABLES.producto.map(v => (
+                    <VariableItem key={v.code} code={v.code} description={v.description} />
+                  ))}
                 </div>
               </div>
-              <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+
+              {/* Form Variables */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  📝 Variables del Formulario
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {TEMPLATE_VARIABLES.formulario.map(v => (
+                    <VariableItem key={v.code} code={v.code} description={v.description} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Document Variables */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  📄 Variables de Documentos
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {TEMPLATE_VARIABLES.documentos.map(v => (
+                    <VariableItem key={v.code} code={v.code} description={v.description} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
                 <p className="text-sm">
-                  <strong>💡 Tip:</strong> Toda esta información se inyecta automáticamente en el contexto del prompt. 
-                  Asegúrate de que los productos tengan todos estos campos completos para obtener mejores resultados.
+                  <strong>💡 Tip:</strong> Copia y pega las variables en cualquier parte del prompt. 
+                  Si la variable no tiene valor, se dejará vacía automáticamente.
                 </p>
               </div>
             </CardContent>
