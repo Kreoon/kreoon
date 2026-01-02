@@ -4060,6 +4060,7 @@ export type Database = {
       }
       marketing_strategies: {
         Row: {
+          associated_products: string[] | null
           business_objective: string | null
           business_objective_type: string | null
           buyer_persona: Json | null
@@ -4080,6 +4081,7 @@ export type Database = {
           version: number | null
         }
         Insert: {
+          associated_products?: string[] | null
           business_objective?: string | null
           business_objective_type?: string | null
           buyer_persona?: Json | null
@@ -4100,6 +4102,7 @@ export type Database = {
           version?: number | null
         }
         Update: {
+          associated_products?: string[] | null
           business_objective?: string | null
           business_objective_type?: string | null
           buyer_persona?: Json | null
