@@ -41,7 +41,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { SocialStyleVideoPlayer } from "@/components/video/SocialStyleVideoPlayer";
+import { HLSVideoPlayer } from "@/components/video/HLSVideoPlayer";
 
 interface MarketingContentProps {
   organizationId: string | null | undefined;
@@ -375,11 +375,16 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                     {/* Video/Thumbnail */}
                     <div className="relative mx-auto w-full max-w-[260px] aspect-[9/16] bg-black overflow-hidden flex items-center justify-center">
                       {(item.video_url || item.bunny_embed_url) ? (
-                        <SocialStyleVideoPlayer
+                        <HLSVideoPlayer
                           src={item.video_url || item.bunny_embed_url || ''}
-                          poster={item.thumbnail_url}
+                          poster={item.thumbnail_url || undefined}
                           showControls={true}
                           autoPlay={false}
+                          muted={false}
+                          loop={false}
+                          aspectRatio="9:16"
+                          objectFit="contain"
+                          className="w-full h-full"
                         />
                       ) : item.thumbnail_url ? (
                         <img 
