@@ -54,6 +54,7 @@ const adminSections: NavSection[] = [
       { name: "Board", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
       { name: "Projects", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+      { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
       { name: "UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
       { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
       { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
