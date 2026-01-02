@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { SPHERE_PHASES, SpherePhase, getSpherePhaseConfig } from "./types";
-import { HLSVideoPlayer, getBunnyThumbnail } from "@/components/video/HLSVideoPlayer";
+import { SocialStyleVideoPlayer } from "@/components/video/SocialStyleVideoPlayer";
 import { ContentAIAnalysis } from "@/components/content/ContentAIAnalysis";
 
 interface ContentItem {
@@ -253,20 +253,11 @@ export function ContentValidationDialog({
                     <CardContent className="p-0 overflow-hidden rounded-lg">
                       <div className="mx-auto w-full max-w-[360px] aspect-[9/16] bg-black relative flex items-center justify-center">
                         {(content.video_url || content.bunny_embed_url) ? (
-                          <HLSVideoPlayer
+                          <SocialStyleVideoPlayer
                             src={content.video_url || content.bunny_embed_url || ''}
-                            poster={
-                              content.thumbnail_url ||
-                              getBunnyThumbnail(content.video_url || content.bunny_embed_url || '') ||
-                              undefined
-                            }
-                            autoPlay={false}
-                            muted={true}
-                            loop={true}
-                            aspectRatio="auto"
-                            objectFit="contain"
+                            poster={content.thumbnail_url}
                             showControls={true}
-                            className="w-full h-full"
+                            autoPlay={false}
                           />
                         ) : content.thumbnail_url ? (
                           <img 
