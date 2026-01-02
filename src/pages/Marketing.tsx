@@ -101,27 +101,45 @@ export default function Marketing() {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-4">
-            <MarketingDashboard organizationId={effectiveOrgId} />
+            <MarketingDashboard 
+              organizationId={effectiveOrgId} 
+              selectedClientId={selectedClient?.id}
+            />
           </TabsContent>
 
           <TabsContent value="strategy" className="space-y-4">
-            <MarketingStrategy organizationId={effectiveOrgId} />
+            <MarketingStrategy 
+              organizationId={effectiveOrgId}
+              selectedClientId={selectedClient?.id}
+            />
           </TabsContent>
 
           <TabsContent value="traffic" className="space-y-4">
-            <MarketingTraffic organizationId={effectiveOrgId} />
+            <MarketingTraffic 
+              organizationId={effectiveOrgId}
+              selectedClientId={selectedClient?.id}
+            />
           </TabsContent>
 
           <TabsContent value="campaigns" className="space-y-4">
-            <MarketingCampaigns organizationId={effectiveOrgId} />
+            <MarketingCampaigns 
+              organizationId={effectiveOrgId} 
+              selectedClientId={selectedClient?.id}
+            />
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-4">
-            <MarketingReports organizationId={effectiveOrgId} />
+            <MarketingReports 
+              organizationId={effectiveOrgId}
+              selectedClientId={selectedClient?.id}
+            />
           </TabsContent>
 
           <TabsContent value="insights" className="space-y-4">
-            <MarketingInsights organizationId={effectiveOrgId} />
+            <MarketingInsights 
+              organizationId={effectiveOrgId}
+              selectedClientId={selectedClient?.id}
+            />
           </TabsContent>
         </Tabs>
       </div>

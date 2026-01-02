@@ -15,9 +15,10 @@ import { es } from "date-fns/locale";
 
 interface MarketingCampaignsProps {
   organizationId: string | null | undefined;
+  selectedClientId?: string | null;
 }
 
-export function MarketingCampaigns({ organizationId }: MarketingCampaignsProps) {
+export function MarketingCampaigns({ organizationId, selectedClientId }: MarketingCampaignsProps) {
   const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,13 +26,13 @@ export function MarketingCampaigns({ organizationId }: MarketingCampaignsProps) 
     if (organizationId) {
       fetchCampaigns();
     }
-  }, [organizationId]);
+  }, [organizationId, selectedClientId]);
 
   const fetchCampaigns = async () => {
     if (!organizationId) return;
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('marketing_campaigns')
         .select(`
           *,
@@ -40,8 +41,14 @@ export function MarketingCampaigns({ organizationId }: MarketingCampaignsProps) 
             client:clients(id, name, logo_url)
           )
         `)
-        .eq('organization_id', organizationId)
-        .order('created_at', { ascending: false });
+        .eq('organization_id', organizationId);
+      
+      // Filter by selected client if strategist has one selected
+      if (selectedClientId) {
+        query = query.eq('marketing_client.client_id', selectedClientId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       

@@ -20,6 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MarketingInsightsProps {
   organizationId: string | null | undefined;
+  selectedClientId?: string | null;
 }
 
 interface Insight {
@@ -52,7 +53,7 @@ const SEVERITY_CONFIG: Record<string, { color: string; bg: string }> = {
   success: { color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950' },
 };
 
-export function MarketingInsights({ organizationId }: MarketingInsightsProps) {
+export function MarketingInsights({ organizationId, selectedClientId }: MarketingInsightsProps) {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [insights, setInsights] = useState<Insight[]>([]);
@@ -61,7 +62,7 @@ export function MarketingInsights({ organizationId }: MarketingInsightsProps) {
     if (organizationId) {
       fetchInsights();
     }
-  }, [organizationId]);
+  }, [organizationId, selectedClientId]);
 
   const fetchInsights = async () => {
     if (!organizationId) return;

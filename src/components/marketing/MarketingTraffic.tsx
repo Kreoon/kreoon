@@ -33,6 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface MarketingTrafficProps {
   organizationId: string | null | undefined;
+  selectedClientId?: string | null;
 }
 
 interface TrafficChannel {
@@ -83,7 +84,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secon
   inactive: { label: 'Inactivo', variant: 'outline' },
 };
 
-export function MarketingTraffic({ organizationId }: MarketingTrafficProps) {
+export function MarketingTraffic({ organizationId, selectedClientId }: MarketingTrafficProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [channels, setChannels] = useState<TrafficChannel[]>([]);
@@ -119,7 +120,7 @@ export function MarketingTraffic({ organizationId }: MarketingTrafficProps) {
     if (organizationId) {
       fetchChannels();
     }
-  }, [organizationId]);
+  }, [organizationId, selectedClientId]);
 
   const fetchChannels = async () => {
     if (!organizationId) return;

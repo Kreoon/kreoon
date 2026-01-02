@@ -23,6 +23,7 @@ const formatCurrency = (value: number, currency: string) => {
 
 interface MarketingDashboardProps {
   organizationId: string | null | undefined;
+  selectedClientId?: string | null;
 }
 
 interface DashboardData {
@@ -62,7 +63,7 @@ const OBJECTIVE_LABELS: Record<string, string> = {
   awareness: "Alcance",
 };
 
-export function MarketingDashboard({ organizationId }: MarketingDashboardProps) {
+export function MarketingDashboard({ organizationId, selectedClientId }: MarketingDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
 
@@ -70,7 +71,7 @@ export function MarketingDashboard({ organizationId }: MarketingDashboardProps) 
     if (organizationId) {
       fetchDashboardData();
     }
-  }, [organizationId]);
+  }, [organizationId, selectedClientId]);
 
   const fetchDashboardData = async () => {
     if (!organizationId) return;

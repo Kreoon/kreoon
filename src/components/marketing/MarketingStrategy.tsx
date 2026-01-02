@@ -26,9 +26,10 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface MarketingStrategyProps {
   organizationId: string | null | undefined;
+  selectedClientId?: string | null;
 }
 
-export function MarketingStrategy({ organizationId }: MarketingStrategyProps) {
+export function MarketingStrategy({ organizationId, selectedClientId }: MarketingStrategyProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,7 +40,7 @@ export function MarketingStrategy({ organizationId }: MarketingStrategyProps) {
     if (organizationId) {
       fetchStrategy();
     }
-  }, [organizationId]);
+  }, [organizationId, selectedClientId]);
 
   const fetchStrategy = async () => {
     if (!organizationId) return;
