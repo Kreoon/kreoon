@@ -77,11 +77,16 @@ interface DashboardData {
   performanceByChannel: { channel: string; leads: number; sales: number; investment: number }[];
 }
 
+// Método Esfera - Objetivos por Fase
 const OBJECTIVE_LABELS: Record<string, string> = {
+  engage: "Enganchar (CTR)",
+  solution: "Solución (Leads)",
+  remarketing: "Remarketing (Conversión)",
+  fidelize: "Fidelizar (LTV)",
+  // Legacy fallbacks
   sales: "Ventas",
   leads: "Leads",
   traffic: "Tráfico",
-  awareness: "Alcance",
 };
 
 const CHANNEL_COLORS: Record<string, string> = {

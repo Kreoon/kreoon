@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Megaphone, Calendar, DollarSign, TrendingUp, MoreHorizontal, Play, Pause, CheckCircle, Eye } from "lucide-react";
+import { Megaphone, Calendar, DollarSign, TrendingUp, MoreHorizontal, Play, Pause, CheckCircle, Eye, Zap, Lightbulb, RefreshCw, Heart } from "lucide-react";
 import { toast } from "sonner";
-import { MarketingCampaign, CAMPAIGN_TYPES, CAMPAIGN_STATUSES, PLATFORMS } from "./types";
+import { MarketingCampaign, CAMPAIGN_STATUSES, PLATFORMS, SPHERE_PHASES, getSpherePhaseConfig, SpherePhase } from "./types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AddCampaignDialog } from "./AddCampaignDialog";
 import { CampaignDetailDialog } from "./CampaignDetailDialog";
@@ -85,8 +85,22 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
     }
   };
 
+  const getSphereIcon = (phase: SpherePhase) => {
+    switch (phase) {
+      case 'engage': return <Zap className="h-3 w-3" />;
+      case 'solution': return <Lightbulb className="h-3 w-3" />;
+      case 'remarketing': return <RefreshCw className="h-3 w-3" />;
+      case 'fidelize': return <Heart className="h-3 w-3" />;
+      default: return null;
+    }
+  };
+
   const getCampaignTypeInfo = (type: string) => {
-    return CAMPAIGN_TYPES.find(t => t.value === type) || { label: type, color: 'bg-gray-500' };
+    const phase = SPHERE_PHASES.find(p => p.value === type);
+    if (phase) {
+      return { label: phase.label, color: phase.bgColor.replace('bg-', 'bg-').replace('-100', '-500').replace('-900', '-500') };
+    }
+    return { label: type, color: 'bg-gray-500' };
   };
 
   const getStatusInfo = (status: string) => {
@@ -251,7 +265,8 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
                     </DropdownMenu>
                   </div>
                   <div className="flex gap-2 mt-2">
-                    <Badge className={`${typeInfo.color} text-white`}>
+                    <Badge className={`${typeInfo.color} text-white gap-1`}>
+                      {getSphereIcon(campaign.sphere_phase || campaign.campaign_type as SpherePhase)}
                       {typeInfo.label}
                     </Badge>
                     <Badge variant="outline" className="gap-1">

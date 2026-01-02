@@ -14,11 +14,15 @@ import {
   MousePointerClick,
   Eye,
   Users,
-  BarChart3
+  BarChart3,
+  Zap,
+  Lightbulb,
+  RefreshCw,
+  Heart
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { MarketingCampaign, CAMPAIGN_TYPES, CAMPAIGN_STATUSES, PLATFORMS } from "./types";
+import { MarketingCampaign, CAMPAIGN_STATUSES, PLATFORMS, SPHERE_PHASES, SpherePhase } from "./types";
 
 interface CampaignDetailDialogProps {
   campaign: MarketingCampaign | null;
@@ -29,8 +33,18 @@ interface CampaignDetailDialogProps {
 export function CampaignDetailDialog({ campaign, open, onOpenChange }: CampaignDetailDialogProps) {
   if (!campaign) return null;
 
-  const typeInfo = CAMPAIGN_TYPES.find(t => t.value === campaign.campaign_type);
+  const spherePhase = SPHERE_PHASES.find(p => p.value === (campaign.sphere_phase || campaign.campaign_type));
   const statusInfo = CAMPAIGN_STATUSES.find(s => s.value === campaign.status);
+  
+  const getSphereIcon = (phase: SpherePhase) => {
+    switch (phase) {
+      case 'engage': return <Zap className="h-4 w-4" />;
+      case 'solution': return <Lightbulb className="h-4 w-4" />;
+      case 'remarketing': return <RefreshCw className="h-4 w-4" />;
+      case 'fidelize': return <Heart className="h-4 w-4" />;
+      default: return null;
+    }
+  };
   
   const budgetProgress = campaign.budget > 0 
     ? (campaign.spent / campaign.budget) * 100 
@@ -56,9 +70,10 @@ export function CampaignDetailDialog({ campaign, open, onOpenChange }: CampaignD
               </p>
             </div>
             <div className="flex gap-2">
-              {typeInfo && (
-                <Badge className={`${typeInfo.color} text-white`}>
-                  {typeInfo.label}
+              {spherePhase && (
+                <Badge className={`${spherePhase.bgColor} ${spherePhase.color} gap-1`}>
+                  {getSphereIcon(spherePhase.value)}
+                  {spherePhase.label}
                 </Badge>
               )}
               {statusInfo && (

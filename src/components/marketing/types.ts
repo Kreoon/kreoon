@@ -41,7 +41,8 @@ export interface MarketingCampaign {
   marketing_client_id: string;
   name: string;
   description: string | null;
-  campaign_type: 'awareness' | 'engagement' | 'conversion' | 'retention' | 'traffic';
+  campaign_type: 'engage' | 'solution' | 'remarketing' | 'fidelize';
+  sphere_phase: 'engage' | 'solution' | 'remarketing' | 'fidelize';
   status: 'planning' | 'active' | 'paused' | 'completed' | 'cancelled';
   budget: number;
   spent: number;
@@ -150,12 +151,12 @@ export const SERVICE_TYPES = [
   { value: 'social_media', label: 'Social Media', description: 'Gestión de redes sociales' },
 ];
 
+// MÉTODO ESFERA - Tipos de Campaña (reemplaza TOFU/MOFU/BOFU)
 export const CAMPAIGN_TYPES = [
-  { value: 'awareness', label: 'Reconocimiento', color: 'bg-purple-500' },
-  { value: 'engagement', label: 'Interacción', color: 'bg-blue-500' },
-  { value: 'conversion', label: 'Conversión', color: 'bg-green-500' },
-  { value: 'retention', label: 'Retención', color: 'bg-orange-500' },
-  { value: 'traffic', label: 'Tráfico', color: 'bg-cyan-500' },
+  { value: 'engage', label: 'Enganchar', color: 'bg-cyan-500', description: 'Captar atención y clic' },
+  { value: 'solution', label: 'Solución', color: 'bg-emerald-500', description: 'Demostrar que el producto elimina el dolor' },
+  { value: 'remarketing', label: 'Remarketing', color: 'bg-amber-500', description: 'Reimpactar usuarios tibios' },
+  { value: 'fidelize', label: 'Fidelizar', color: 'bg-purple-500', description: 'Aumentar LTV y comunidad' },
 ];
 
 export const CAMPAIGN_STATUSES = [

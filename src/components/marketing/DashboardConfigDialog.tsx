@@ -156,10 +156,10 @@ export function DashboardConfigDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sales">Ventas</SelectItem>
-                      <SelectItem value="leads">Leads</SelectItem>
-                      <SelectItem value="traffic">Tráfico</SelectItem>
-                      <SelectItem value="awareness">Alcance</SelectItem>
+                      <SelectItem value="engage">Enganchar (CTR/Atención)</SelectItem>
+                      <SelectItem value="solution">Solución (Leads)</SelectItem>
+                      <SelectItem value="remarketing">Remarketing (Conversión)</SelectItem>
+                      <SelectItem value="fidelize">Fidelizar (LTV)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
