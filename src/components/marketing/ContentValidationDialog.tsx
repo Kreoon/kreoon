@@ -251,7 +251,7 @@ export function ContentValidationDialog({
                 <div className="space-y-4">
                   <Card>
                     <CardContent className="p-0 overflow-hidden rounded-lg">
-                      <div className="aspect-[9/16] max-h-[450px] bg-black relative flex items-center justify-center">
+                      <div className="mx-auto w-full max-w-[360px] aspect-[9/16] bg-black relative flex items-center justify-center">
                         {(content.video_url || content.bunny_embed_url) ? (
                           <HLSVideoPlayer
                             src={content.video_url || content.bunny_embed_url || ''}
