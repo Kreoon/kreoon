@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,11 +13,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useScriptPrompts, DEFAULT_SCRIPT_PROMPTS } from "@/hooks/useScriptPrompts";
+import { useOrganizationAI, AI_PROVIDERS_CONFIG } from "@/hooks/useOrganizationAI";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
   Video, ChevronDown, CheckCircle2, Bot, RefreshCw, Building2,
-  Package, Lightbulb, Copy, Download, FileJson
+  Package, Lightbulb, Copy, Download, FileJson, AlertCircle
 } from "lucide-react";
 
 interface GeneratedContent {
@@ -137,6 +138,17 @@ export function StandaloneScriptGenerator() {
   // Load custom prompts from organization settings
   const { prompts: customPrompts, loading: loadingPrompts } = useScriptPrompts(organizationId);
   
+  // Load enabled AI providers from organization settings
+  const { getEnabledProviders, hasValidApiKey, loading: loadingAI } = useOrganizationAI(organizationId);
+  
+  // Filter AI_PROVIDERS to only show enabled ones (excluding lovable)
+  const enabledProviders = useMemo(() => {
+    const enabled = getEnabledProviders();
+    return AI_PROVIDERS.filter(p => 
+      enabled.some(e => e.key === p.value && p.value !== 'lovable')
+    );
+  }, [getEnabledProviders]);
+  
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
 
   const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([
@@ -172,19 +184,36 @@ export function StandaloneScriptGenerator() {
     ai_model: "gpt-4o",
   });
 
-  const currentProvider = AI_PROVIDERS.find(p => p.value === formData.ai_provider);
+  const currentProvider = enabledProviders.find(p => p.value === formData.ai_provider) || 
+                         AI_PROVIDERS.find(p => p.value === formData.ai_provider);
   const availableModels = currentProvider?.models || [];
+
+  // Update provider and model when enabled providers change
+  useEffect(() => {
+    if (!loadingAI && enabledProviders.length > 0) {
+      const isCurrentProviderEnabled = enabledProviders.some(p => p.value === formData.ai_provider);
+      if (!isCurrentProviderEnabled) {
+        const firstEnabled = enabledProviders[0];
+        setFormData(prev => ({
+          ...prev,
+          ai_provider: firstEnabled.value as "openai" | "gemini" | "anthropic",
+          ai_model: firstEnabled.models[0]?.value || ""
+        }));
+      }
+    }
+  }, [loadingAI, enabledProviders, formData.ai_provider]);
 
   // Update model when provider changes
   useEffect(() => {
-    const provider = AI_PROVIDERS.find(p => p.value === formData.ai_provider);
+    const provider = enabledProviders.find(p => p.value === formData.ai_provider) ||
+                    AI_PROVIDERS.find(p => p.value === formData.ai_provider);
     if (provider && provider.models.length > 0) {
       setFormData(prev => ({
         ...prev,
         ai_model: provider.models[0].value
       }));
     }
-  }, [formData.ai_provider]);
+  }, [formData.ai_provider, enabledProviders]);
 
   const addHook = () => {
     if (newHook.trim() && formData.hooks.length < parseInt(formData.hooks_count)) {
@@ -745,49 +774,71 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Proveedor</Label>
-                <Select
-                  value={formData.ai_provider}
-                  onValueChange={(value: "openai" | "gemini" | "anthropic") => 
-                    setFormData({ ...formData, ai_provider: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {AI_PROVIDERS.map(provider => (
-                      <SelectItem key={provider.value} value={provider.value}>
-                        <div className="flex flex-col">
-                          <span>{provider.label}</span>
-                          <span className="text-xs text-muted-foreground">{provider.description}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {enabledProviders.length === 0 && !loadingAI ? (
+              <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>
+                  No hay proveedores de IA activos. Configura al menos un proveedor en la configuración de IA de la organización.
+                </span>
               </div>
-              <div className="space-y-2">
-                <Label>Modelo</Label>
-                <Select
-                  value={formData.ai_model}
-                  onValueChange={(value) => setFormData({ ...formData, ai_model: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableModels.map(model => (
-                      <SelectItem key={model.value} value={model.value}>
-                        {model.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Proveedor</Label>
+                  <Select
+                    value={formData.ai_provider}
+                    onValueChange={(value: "openai" | "gemini" | "anthropic") => 
+                      setFormData({ ...formData, ai_provider: value })
+                    }
+                    disabled={enabledProviders.length === 0}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar proveedor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {enabledProviders.map(provider => (
+                        <SelectItem key={provider.value} value={provider.value}>
+                          <div className="flex items-center gap-2">
+                            <span>{provider.label}</span>
+                            {!hasValidApiKey(provider.value) && (
+                              <AlertCircle className="h-3 w-3 text-amber-500" />
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Modelo</Label>
+                  <Select
+                    value={formData.ai_model}
+                    onValueChange={(value) => setFormData({ ...formData, ai_model: value })}
+                    disabled={enabledProviders.length === 0}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar modelo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableModels.map(model => (
+                        <SelectItem key={model.value} value={model.value}>
+                          {model.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
+            )}
+            
+            {formData.ai_provider && !hasValidApiKey(formData.ai_provider) && enabledProviders.length > 0 && (
+              <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded">
+                <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                <span>
+                  Configura la API Key de {currentProvider?.label} en la configuración de IA
+                </span>
+              </div>
+            )}
 
             {/* Generation Steps Progress */}
             {loading && (
