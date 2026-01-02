@@ -14,6 +14,7 @@ import { AICopilotProvider } from "@/contexts/AICopilotContext";
 import { TrialProvider } from "@/contexts/TrialContext";
 import { TrackingProvider } from "@/contexts/TrackingContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
+import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import Dashboard from "./pages/Dashboard";
 import ContentBoard from "./pages/ContentBoard";
@@ -130,15 +131,17 @@ function AppContent() {
               <TrialProvider>
                 <UnsavedChangesProvider>
                   <AchievementNotificationProvider>
-                    <AICopilotProvider>
-                      <TooltipProvider delayDuration={0}>
-                        <ImpersonationBanner />
-                        <Toaster />
-                        <Sonner />
-                        <UpdatePrompt />
-                        <AppRoutes />
-                      </TooltipProvider>
-                    </AICopilotProvider>
+                    <StrategistClientProvider>
+                      <AICopilotProvider>
+                        <TooltipProvider delayDuration={0}>
+                          <ImpersonationBanner />
+                          <Toaster />
+                          <Sonner />
+                          <UpdatePrompt />
+                          <AppRoutes />
+                        </TooltipProvider>
+                      </AICopilotProvider>
+                    </StrategistClientProvider>
                   </AchievementNotificationProvider>
                 </UnsavedChangesProvider>
               </TrialProvider>

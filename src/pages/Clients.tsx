@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye, Castle, Medal } from "lucide-react";
+import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye, Castle, Medal, UserCog } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { VipBadge } from "@/components/ui/vip-badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { ClientUsersDialog } from "@/components/clients/ClientUsersDialog";
+import { AssignStrategistsDialog } from "@/components/clients/AssignStrategistsDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -94,6 +95,8 @@ const Clients = () => {
   const [submitting, setSubmitting] = useState(false);
   const [clientUsersDialogOpen, setClientUsersDialogOpen] = useState(false);
   const [selectedClientForUsers, setSelectedClientForUsers] = useState<Client | null>(null);
+  const [strategistsDialogOpen, setStrategistsDialogOpen] = useState(false);
+  const [selectedClientForStrategists, setSelectedClientForStrategists] = useState<Client | null>(null);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -522,18 +525,34 @@ const Clients = () => {
                         {client.contact_email && (
                           <p className="text-xs text-muted-foreground truncate">{client.contact_email}</p>
                         )}
-                        <Badge 
-                          variant="outline" 
-                          className="mt-1 text-xs cursor-pointer hover:bg-primary/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedClientForUsers(client);
-                            setClientUsersDialogOpen(true);
-                          }}
-                        >
-                          <Users className="h-3 w-3 mr-1" />
-                          {client.users_count} usuario{client.users_count !== 1 ? 's' : ''}
-                        </Badge>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs cursor-pointer hover:bg-primary/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedClientForUsers(client);
+                              setClientUsersDialogOpen(true);
+                            }}
+                          >
+                            <Users className="h-3 w-3 mr-1" />
+                            {client.users_count} usuario{client.users_count !== 1 ? 's' : ''}
+                          </Badge>
+                          {isAdmin && (
+                            <Badge 
+                              variant="secondary" 
+                              className="text-xs cursor-pointer hover:bg-secondary/80"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedClientForStrategists(client);
+                                setStrategistsDialogOpen(true);
+                              }}
+                            >
+                              <UserCog className="h-3 w-3 mr-1" />
+                              Estrategas
+                            </Badge>
+                          )}
+                        </div>
                       </div>
 
                       {isAdmin && (
@@ -871,6 +890,21 @@ const Clients = () => {
             if (!open) setSelectedClientForUsers(null);
           }}
           onUpdate={fetchClients}
+        />
+      )}
+
+      {/* Assign Strategists Dialog */}
+      {selectedClientForStrategists && currentOrgId && (
+        <AssignStrategistsDialog
+          open={strategistsDialogOpen}
+          onOpenChange={(open) => {
+            setStrategistsDialogOpen(open);
+            if (!open) setSelectedClientForStrategists(null);
+          }}
+          clientId={selectedClientForStrategists.id}
+          clientName={selectedClientForStrategists.name}
+          organizationId={currentOrgId}
+          onSuccess={fetchClients}
         />
       )}
     </>
