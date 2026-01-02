@@ -96,8 +96,15 @@ const SECTION_TO_MODULE: Partial<Record<SettingsSectionKey, string>> = {
 
 const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
 
+// Sections that strategists can access (limited org access)
+const STRATEGIST_ACCESSIBLE_SECTIONS: SettingsSectionKey[] = [
+  'organization', // View org info
+  'org_registration_settings', // Manage registrations
+  'ai_settings', // AI configuration
+];
+
 export function useSettingsPermissions(): SettingsPermissions {
-  const { profile, isAdmin, roles, activeRole } = useAuth();
+  const { profile, isAdmin, roles, activeRole, isStrategist } = useAuth();
   const { isOrgOwner, isPlatformRoot: isPlatformRootFromHook, currentOrgId, loading: orgLoading } = useOrgOwner();
   
   const [orgPermissions, setOrgPermissions] = useState<Record<string, { can_view: boolean; can_create: boolean; can_modify: boolean }>>({});
@@ -112,6 +119,11 @@ export function useSettingsPermissions(): SettingsPermissions {
   const isOrgAdmin = useMemo(() => {
     return activeRole === 'admin' || isAdmin;
   }, [isAdmin, activeRole]);
+
+  // Determine if user is strategist with limited org access
+  const isOrgStrategist = useMemo(() => {
+    return activeRole === 'strategist' || isStrategist;
+  }, [isStrategist, activeRole]);
 
   // Fetch organization-level permission overrides
   const fetchOrgPermissions = useCallback(async () => {
@@ -180,6 +192,23 @@ export function useSettingsPermissions(): SettingsPermissions {
 
     // Organization level sections - org owner/admin can access
     if (level === 'organization') {
+      // Strategists have limited access to some org sections
+      if (isOrgStrategist && STRATEGIST_ACCESSIBLE_SECTIONS.includes(sectionKey)) {
+        // Check for org-level overrides first
+        const moduleKey = SECTION_TO_MODULE[sectionKey];
+        if (moduleKey && orgPermissions[moduleKey]) {
+          const perm = orgPermissions[moduleKey];
+          return {
+            canAccess: perm.can_view,
+            canView: perm.can_view,
+            canCreate: perm.can_create,
+            canModify: perm.can_modify,
+          };
+        }
+        // Strategists get full access to their allowed sections
+        return { canAccess: true, canView: true, canCreate: true, canModify: true };
+      }
+
       if (!isOrgOwner && !isOrgAdmin) {
         return { 
           canAccess: false, 
@@ -208,7 +237,7 @@ export function useSettingsPermissions(): SettingsPermissions {
 
     // User level sections - everyone can access their own
     return { canAccess: true, canView: true, canCreate: true, canModify: true };
-  }, [isPlatformRoot, isOrgOwner, isOrgAdmin, orgPermissions]);
+  }, [isPlatformRoot, isOrgOwner, isOrgAdmin, isOrgStrategist, orgPermissions]);
 
   // Convenience methods
   const canAccess = useCallback((sectionKey: SettingsSectionKey) => {

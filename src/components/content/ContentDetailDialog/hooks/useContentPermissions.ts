@@ -70,7 +70,7 @@ const PERMISSION_MATRIX: Record<string, Partial<Record<ContentResource, ContentA
   },
   strategist: {
     'content.title': ['view', 'edit'],
-    'content.status': ['view', 'edit'],
+    'content.status': ['view', 'edit', 'approve'], // Strategist can approve content
     'content.scripts': ['view', 'edit'],
     'content.scripts.creator': ['view', 'edit'],
     'content.scripts.editor': ['view', 'edit'],
@@ -86,8 +86,8 @@ const PERMISSION_MATRIX: Record<string, Partial<Record<ContentResource, ContentA
     'content.material.raw_videos': ['view', 'edit'],
     'content.material.drive': ['view', 'edit'],
     'content.general': ['view', 'edit'],
-    'content.team': ['view'],
-    'content.dates': ['view'],
+    'content.team': ['view', 'edit'], // Strategist can assign team members
+    'content.dates': ['view', 'edit'], // Strategist can edit dates and deadlines
     'content.comments': ['view', 'edit'],
   },
   client: {
@@ -113,7 +113,7 @@ const TAB_VISIBILITY: Record<string, TabKey[]> = {
   admin: ['scripts', 'video', 'material', 'general', 'team', 'dates', 'payments'],
   creator: ['scripts', 'video', 'material', 'general'],
   editor: ['scripts', 'video', 'material', 'general'],
-  strategist: ['scripts', 'video', 'material', 'general'],
+  strategist: ['scripts', 'video', 'material', 'general', 'team', 'dates'], // Strategist can see team and dates tabs
   client: ['scripts', 'video'],
 };
 
