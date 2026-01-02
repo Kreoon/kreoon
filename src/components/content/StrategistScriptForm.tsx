@@ -44,6 +44,7 @@ interface StrategistScriptFormProps {
   contentId: string;
   onScriptGenerated: (content: GeneratedContent) => void;
   organizationId?: string;
+  spherePhase?: string | null;
 }
 
 interface DocumentContent {
@@ -127,6 +128,38 @@ const NARRATIVE_STRUCTURES = [
 const COUNTRIES = [
   "México", "Colombia", "Argentina", "España", "Chile", "Perú", "Estados Unidos (Latino)", "Otro",
 ];
+
+// Sphere phase info for AI context
+const SPHERE_PHASE_INFO: Record<string, { label: string; objective: string; audience: string; tone: string }> = {
+  engage: {
+    label: 'Enganchar (Engage)',
+    objective: 'Captar atención, generar curiosidad, crear awareness. El usuario NO conoce la marca.',
+    audience: 'Audiencia fría - personas que nunca han interactuado con la marca',
+    tone: 'Disruptivo, llamativo, sorprendente. Hooks potentes. Scroll-stoppers.',
+  },
+  solution: {
+    label: 'Solución',
+    objective: 'Presentar el producto/servicio como la solución. El usuario conoce su problema.',
+    audience: 'Audiencia tibia - personas que reconocen tener un problema o necesidad',
+    tone: 'Educativo, empático, mostrando beneficios concretos y diferenciadores.',
+  },
+  remarketing: {
+    label: 'Remarketing',
+    objective: 'Reconectar con usuarios que ya interactuaron. Superar objeciones, crear urgencia.',
+    audience: 'Audiencia caliente - personas que ya visitaron, agregaron al carrito o mostraron interés',
+    tone: 'Urgente, resolutivo, enfocado en beneficios y testimonios. Superar objeciones.',
+  },
+  fidelize: {
+    label: 'Fidelizar',
+    objective: 'Retener clientes, generar recompra, crear comunidad y referidos.',
+    audience: 'Clientes existentes - personas que ya compraron',
+    tone: 'Cercano, exclusivo, valorando al cliente. Contenido de valor y ofertas especiales.',
+  },
+};
+
+function getSpherePhaseInfo(phase: string) {
+  return SPHERE_PHASE_INFO[phase] || null;
+}
 
 const CONTENT_AI_FUNCTION = "content-ai";
 
@@ -1010,7 +1043,7 @@ FORMATO DE ENTREGA (HTML estructurado):
 </table>`,
 };
 
-export function StrategistScriptForm({ product, contentId, onScriptGenerated, organizationId: propOrgId }: StrategistScriptFormProps) {
+export function StrategistScriptForm({ product, contentId, onScriptGenerated, organizationId: propOrgId, spherePhase }: StrategistScriptFormProps) {
   const { toast } = useToast();
   const { profile } = useAuth();
   const organizationId = propOrgId || profile?.current_organization_id;
@@ -1269,6 +1302,9 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const buildBaseContext = () => {
     const narrativeLabel = NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure;
     
+    // Determine sphere phase info
+    const sphereInfo = spherePhase ? getSpherePhaseInfo(spherePhase) : null;
+    
     let context = `PRODUCTO: ${product?.name}
 DESCRIPCIÓN: ${product?.description || 'No disponible'}
 CTA: ${formData.cta}
@@ -1277,7 +1313,12 @@ ESTRUCTURA NARRATIVA: ${narrativeLabel}
 PAÍS OBJETIVO: ${formData.target_country}
 AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
 
-ESTRATEGIA DEL PRODUCTO:
+${sphereInfo ? `FASE DEL MÉTODO ESFERA: ${sphereInfo.label}
+OBJETIVO DE FASE: ${sphereInfo.objective}
+TIPO DE AUDIENCIA: ${sphereInfo.audience}
+TONO RECOMENDADO: ${sphereInfo.tone}
+
+` : ''}ESTRATEGIA DEL PRODUCTO:
 ${product?.strategy || 'No disponible'}
 
 INVESTIGACIÓN DE MERCADO:

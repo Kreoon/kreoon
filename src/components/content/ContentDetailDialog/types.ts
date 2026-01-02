@@ -38,6 +38,8 @@ export interface ContentFormData {
   content_type?: 'commercial' | 'ambassador_internal';
   is_paid?: boolean;
   reward_type?: 'money' | 'UP';
+  // Método Esfera
+  sphere_phase?: string;
 }
 
 // ============= PERMISSIONS =============

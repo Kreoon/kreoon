@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp, Medal, Info, Sparkles } from "lucide-react";
+import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp, Medal, Info, Sparkles, Zap, Lightbulb, RefreshCw, Heart } from "lucide-react";
 import { ScriptGenerator } from "./ScriptGenerator";
 import { useInternalBrandClient } from "@/hooks/useInternalBrandClient";
 import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
@@ -69,6 +69,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   const [editorPayment, setEditorPayment] = useState("");
   const [hooksCount, setHooksCount] = useState(1);
   const [packageId, setPackageId] = useState("");
+  const [spherePhase, setSpherePhase] = useState("");
   
   // Guidelines
   const [editorGuidelines, setEditorGuidelines] = useState("");
@@ -278,6 +279,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
     setEditorPayment("");
     setHooksCount(1);
     setPackageId("");
+    setSpherePhase("");
     setClientPackages([]);
     setClientProducts([]);
     setSelectedProduct(null);
@@ -352,6 +354,8 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
         status: 'draft',
         creator_assigned_at: creatorId ? new Date().toISOString() : null,
         editor_assigned_at: editorId ? new Date().toISOString() : null,
+        // Método Esfera
+        sphere_phase: (spherePhase as any) || null,
         // Ambassador content fields
         is_ambassador_content: isAmbassadorContent,
         content_type: isAmbassadorContent ? 'ambassador_internal' : 'commercial',
@@ -471,6 +475,42 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
                     {clientProducts.map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Sphere Phase selector */}
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="spherePhase">Fase Esfera (Objetivo del Contenido)</Label>
+                <Select value={spherePhase} onValueChange={setSpherePhase}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar fase..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="engage">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-amber-600" />
+                        <span>Enganchar - Audiencia fría</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="solution">
+                      <div className="flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4 text-blue-600" />
+                        <span>Solución - Audiencia tibia</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="remarketing">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="h-4 w-4 text-purple-600" />
+                        <span>Remarketing - Audiencia caliente</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="fidelize">
+                      <div className="flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-rose-600" />
+                        <span>Fidelizar - Clientes existentes</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -713,7 +753,8 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
             
             {/* AI Script Generator */}
             <ScriptGenerator 
-              product={selectedProduct} 
+              product={selectedProduct}
+              spherePhase={spherePhase || null}
               onScriptGenerated={(generatedContent) => {
                 console.log("[CreateContentDialog] onScriptGenerated", {
                   script: generatedContent.script?.length,
