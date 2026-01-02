@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Megaphone, Calendar, DollarSign, TrendingUp, MoreHorizontal, Play, Pause, CheckCircle } from "lucide-react";
+import { Megaphone, Calendar, DollarSign, TrendingUp, MoreHorizontal, Play, Pause, CheckCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { MarketingCampaign, CAMPAIGN_TYPES, CAMPAIGN_STATUSES, PLATFORMS } from "./types";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AddCampaignDialog } from "./AddCampaignDialog";
+import { CampaignDetailDialog } from "./CampaignDetailDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -21,6 +22,8 @@ interface MarketingCampaignsProps {
 export function MarketingCampaigns({ organizationId, selectedClientId }: MarketingCampaignsProps) {
   const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCampaign, setSelectedCampaign] = useState<MarketingCampaign | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
     if (organizationId) {
@@ -43,7 +46,6 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
         `)
         .eq('organization_id', organizationId);
       
-      // Filter by selected client if strategist has one selected
       if (selectedClientId) {
         query = query.eq('marketing_client.client_id', selectedClientId);
       }
@@ -106,18 +108,24 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-5 w-40" />
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-24 w-full" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-4">
+        <div className="flex justify-between">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-24 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
@@ -129,11 +137,27 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
         <div>
           <h2 className="text-xl font-semibold">Campañas</h2>
           <p className="text-sm text-muted-foreground">
-            {campaigns.filter(c => c.status === 'active').length} campañas activas
+            {campaigns.filter(c => c.status === 'active').length} campañas activas de {campaigns.length} totales
           </p>
         </div>
         <AddCampaignDialog organizationId={organizationId} onSuccess={fetchCampaigns} />
       </div>
+
+      {/* Status Summary */}
+      {campaigns.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {CAMPAIGN_STATUSES.map(status => {
+            const count = campaigns.filter(c => c.status === status.value).length;
+            if (count === 0) return null;
+            return (
+              <Badge key={status.value} variant="outline" className="gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${status.color}`} />
+                {status.label}: {count}
+              </Badge>
+            );
+          })}
+        </div>
+      )}
 
       {/* Campaigns Grid */}
       {campaigns.length === 0 ? (
@@ -155,7 +179,14 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
             const budgetProgress = getBudgetProgress(campaign.spent, campaign.budget);
 
             return (
-              <Card key={campaign.id} className="relative">
+              <Card 
+                key={campaign.id} 
+                className="relative hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => {
+                  setSelectedCampaign(campaign);
+                  setShowDetail(true);
+                }}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
@@ -165,32 +196,53 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
                       </CardDescription>
                     </div>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedCampaign(campaign);
+                          setShowDetail(true);
+                        }}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          Ver Detalles
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         {campaign.status === 'planning' && (
-                          <DropdownMenuItem onClick={() => updateStatus(campaign.id, 'active')}>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            updateStatus(campaign.id, 'active');
+                          }}>
                             <Play className="h-4 w-4 mr-2" />
                             Activar
                           </DropdownMenuItem>
                         )}
                         {campaign.status === 'active' && (
-                          <DropdownMenuItem onClick={() => updateStatus(campaign.id, 'paused')}>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            updateStatus(campaign.id, 'paused');
+                          }}>
                             <Pause className="h-4 w-4 mr-2" />
                             Pausar
                           </DropdownMenuItem>
                         )}
                         {campaign.status === 'paused' && (
-                          <DropdownMenuItem onClick={() => updateStatus(campaign.id, 'active')}>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            updateStatus(campaign.id, 'active');
+                          }}>
                             <Play className="h-4 w-4 mr-2" />
                             Reanudar
                           </DropdownMenuItem>
                         )}
                         {['active', 'paused'].includes(campaign.status) && (
-                          <DropdownMenuItem onClick={() => updateStatus(campaign.id, 'completed')}>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            updateStatus(campaign.id, 'completed');
+                          }}>
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Completar
                           </DropdownMenuItem>
@@ -238,7 +290,7 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
                   {/* Platforms */}
                   {campaign.platforms && campaign.platforms.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {campaign.platforms.map((platform) => {
+                      {campaign.platforms.slice(0, 3).map((platform) => {
                         const p = PLATFORMS.find(pl => pl.value === platform);
                         return (
                           <Badge key={platform} variant="secondary" className="text-xs">
@@ -246,21 +298,31 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
                           </Badge>
                         );
                       })}
+                      {campaign.platforms.length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{campaign.platforms.length - 3}
+                        </Badge>
+                      )}
                     </div>
                   )}
 
                   {/* Quick Metrics */}
                   {campaign.metrics && Object.keys(campaign.metrics).length > 0 && (
-                    <div className="flex items-center gap-4 text-sm">
-                      {campaign.metrics.impressions && (
+                    <div className="flex items-center gap-4 text-sm border-t pt-3">
+                      {campaign.metrics.impressions !== undefined && (
                         <div className="flex items-center gap-1">
                           <TrendingUp className="h-4 w-4 text-muted-foreground" />
                           <span>{campaign.metrics.impressions.toLocaleString()} imp.</span>
                         </div>
                       )}
-                      {campaign.metrics.clicks && (
+                      {campaign.metrics.clicks !== undefined && (
                         <div>
                           <span>{campaign.metrics.clicks.toLocaleString()} clicks</span>
+                        </div>
+                      )}
+                      {campaign.metrics.conversions !== undefined && (
+                        <div className="text-green-600">
+                          <span>{campaign.metrics.conversions} conv.</span>
                         </div>
                       )}
                     </div>
@@ -271,6 +333,13 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
           })}
         </div>
       )}
+
+      {/* Campaign Detail Dialog */}
+      <CampaignDetailDialog 
+        campaign={selectedCampaign}
+        open={showDetail}
+        onOpenChange={setShowDetail}
+      />
     </div>
   );
 }
