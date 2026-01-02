@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface AdCopy {
+  framework?: string;
   text: string;
   cta: string;
   trustBadge: string;
@@ -325,9 +326,16 @@ export function ContentAIAnalysis({
                     className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <Badge variant="outline" className="text-xs">
-                        Copy {index + 1}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          Copy {index + 1}
+                        </Badge>
+                        {copy.framework && (
+                          <Badge className="text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+                            {copy.framework}
+                          </Badge>
+                        )}
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"

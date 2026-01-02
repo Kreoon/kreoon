@@ -169,21 +169,48 @@ Tu tarea es analizar el contenido (video/guión + contexto) y devolver:
    - REMARKETING: audiencia caliente. Objetivo: superar objeciones + prueba social + urgencia.
    - FIDELIZE: clientes existentes. Objetivo: recompra + comunidad + referidos.
 
-2) GENERAR 5 COPYS PARA ADS OPTIMIZADOS A LA FASE OBJETIVO:
-   - Si en el input viene "FASE ESFERA ACTUAL", esa es la fase objetivo para los copys.
-   - Si NO viene fase actual, optimiza los copys para la fase recomendada.
+2) GENERAR 5 COPYS PARA ADS, CADA UNO CON UNA ESTRUCTURA/FRAMEWORK DIFERENTE:
 
-REGLAS DE COPY POR FASE:
-- ENGAGE: 1 idea, 1 tensión, 1 curiosidad. No expliques de más. CTA suave ("Ver más", "Descúbrelo").
-- SOLUTION (FASE 2): SIEMPRE es campaña de ventas. Habla en 2ª persona, muestra problema→solución→resultado. Incluye: beneficio principal + diferenciador + micro-prueba (dato/testimonio breve) + reducción de riesgo (garantía/"sin complicaciones") + CTA DIRECTA ("Compra ahora", "Quiero mi...", "Pedir ahora").
-- REMARKETING: asume interacción previa. Ataca 1-2 objeciones, prueba social, urgencia/escasez realista. CTA de cierre.
-- FIDELIZE: foco en experiencia post-compra, valor extra, comunidad, upgrades, referidos. CTA de relación.
+   COPY 1 - AIDA (Attention, Interest, Desire, Action):
+   - Atención: gancho impactante
+   - Interés: desarrollar beneficio principal
+   - Deseo: pintar el resultado/transformación
+   - Acción: CTA clara
+
+   COPY 2 - PAS (Problem, Agitate, Solution):
+   - Problema: identificar el dolor del avatar
+   - Agitar: amplificar las consecuencias de no resolver
+   - Solución: presentar el producto como la respuesta
+
+   COPY 3 - PASTOR (Problem, Amplify, Story, Transformation, Offer, Response):
+   - Problema + Amplificación emocional
+   - Historia breve o caso
+   - Transformación tangible
+   - Oferta + Llamada a responder
+
+   COPY 4 - BAB (Before, After, Bridge):
+   - Antes: situación actual con el problema
+   - Después: visión del resultado deseado
+   - Puente: el producto como camino entre ambos
+
+   COPY 5 - 4Ps (Picture, Promise, Prove, Push):
+   - Pintar escenario emocional
+   - Prometer resultado específico
+   - Probar con dato/testimonio/garantía
+   - Empujar con CTA + urgencia
+
+REGLAS ADICIONALES POR FASE:
+- ENGAGE: 1 idea, 1 tensión, 1 curiosidad. CTA suave.
+- SOLUTION (FASE 2): SIEMPRE es campaña de ventas. Habla en 2ª persona, problema→solución→resultado. Incluir: beneficio + diferenciador + reducción de riesgo + CTA DIRECTA.
+- REMARKETING: atacar objeciones, prueba social, urgencia/escasez. CTA de cierre.
+- FIDELIZE: valor post-compra, comunidad, upgrades, referidos.
 
 Cada copy debe incluir:
-- text: Copy principal del anuncio (persuasivo, emocional y específico)
+- framework: nombre del framework usado (AIDA, PAS, PASTOR, BAB, 4Ps)
+- text: Copy principal del anuncio siguiendo la estructura del framework
 - cta: Llamada a la acción de MÁXIMO 3 palabras
 - trustBadge: Frase de confianza/seguridad de 3-4 palabras
-- psychologicalTriggers: Lista de gatillos mentales/sesgos usados (con nombres concretos)
+- psychologicalTriggers: Lista de gatillos mentales/sesgos usados
 
 3) ANÁLISIS DEL CONTENIDO:
 Evalúa hook_effectiveness, emotional_impact, clarity, cta_strength, overall_score + fortalezas y mejoras.
@@ -197,6 +224,7 @@ RESPONDE EN FORMATO JSON EXACTO:
   },
   "adCopies": [
     {
+      "framework": "AIDA|PAS|PASTOR|BAB|4Ps",
       "text": "copy del anuncio",
       "cta": "máximo 3 palabras",
       "trustBadge": "3-4 palabras de confianza",
