@@ -63,6 +63,8 @@ interface ScriptFormData {
   editor_prompt: string;
   strategist_prompt: string;
   trafficker_prompt: string;
+  designer_prompt: string;
+  admin_prompt: string;
   reference_transcription: string;
   video_strategies: string;
   ai_provider: "lovable" | "openai" | "anthropic";
@@ -220,6 +222,98 @@ Usa etiquetas HTML semánticas y emojis.`,
 </ul>
 
 Usa etiquetas HTML semánticas y emojis estratégicos.`,
+
+  designer: `Basándote en el guión, crea pautas de diseño visual en formato HTML:
+
+<h2>🎨 Pautas de Diseño Visual</h2>
+
+<h3>🎨 Paleta de Colores</h3>
+<ul>
+  <li><strong>Primario:</strong> Color principal</li>
+  <li><strong>Secundario:</strong> Color de acento</li>
+  <li><strong>Fondo:</strong> Color de fondo sugerido</li>
+</ul>
+
+<h3>📐 Elementos Gráficos</h3>
+<ul>
+  <li><strong>Tipografía:</strong> Estilo de fuente sugerido</li>
+  <li><strong>Iconografía:</strong> Tipo de íconos</li>
+  <li><strong>Texturas:</strong> Elementos visuales</li>
+</ul>
+
+<h3>📱 Assets Necesarios</h3>
+<ul>
+  <li>Thumbnails</li>
+  <li>Overlays de texto</li>
+  <li>Lower thirds</li>
+  <li>CTAs animados</li>
+</ul>
+
+<h3>🎬 Motion Graphics</h3>
+<p>Sugerencias de animaciones y transiciones...</p>
+
+<h3>📋 Checklist del Diseñador</h3>
+<ul>
+  <li>[ ] Crear thumbnail principal</li>
+  <li>[ ] Diseñar textos en pantalla</li>
+  <li>[ ] Preparar elementos de branding</li>
+</ul>
+
+Usa etiquetas HTML semánticas y emojis.`,
+
+  admin: `Basándote en el guión y todas las pautas generadas, crea un cronograma y checklist de ejecución en formato HTML:
+
+<h2>📋 Plan de Ejecución - Admin/PM</h2>
+
+<h3>📅 Cronograma de Producción</h3>
+<table>
+  <tr><th>Fase</th><th>Responsable</th><th>Duración</th><th>Deadline</th></tr>
+  <tr><td>Pre-producción</td><td>Estratega</td><td>X días</td><td>Fecha</td></tr>
+  <tr><td>Grabación</td><td>Creador</td><td>X días</td><td>Fecha</td></tr>
+  <tr><td>Edición</td><td>Editor</td><td>X días</td><td>Fecha</td></tr>
+  <tr><td>Diseño</td><td>Diseñador</td><td>X días</td><td>Fecha</td></tr>
+  <tr><td>Revisión</td><td>Cliente/Admin</td><td>X días</td><td>Fecha</td></tr>
+  <tr><td>Publicación</td><td>Trafficker</td><td>X días</td><td>Fecha</td></tr>
+</table>
+
+<h3>✅ Checklist General</h3>
+<h4>Pre-producción</h4>
+<ul>
+  <li>[ ] Guión aprobado por cliente</li>
+  <li>[ ] Producto/muestra lista para grabación</li>
+  <li>[ ] Creador asignado y briefeado</li>
+</ul>
+
+<h4>Producción</h4>
+<ul>
+  <li>[ ] Video raw entregado</li>
+  <li>[ ] Assets de audio listos</li>
+</ul>
+
+<h4>Post-producción</h4>
+<ul>
+  <li>[ ] Edición completada</li>
+  <li>[ ] Diseños aprobados</li>
+  <li>[ ] Revisión QA realizada</li>
+</ul>
+
+<h4>Publicación</h4>
+<ul>
+  <li>[ ] Copy y hashtags listos</li>
+  <li>[ ] Campaña configurada</li>
+  <li>[ ] Publicado en todas las plataformas</li>
+</ul>
+
+<h3>⚠️ Puntos Críticos</h3>
+<ul>
+  <li><strong>Riesgo 1:</strong> Descripción y mitigación</li>
+  <li><strong>Riesgo 2:</strong> Descripción y mitigación</li>
+</ul>
+
+<h3>📞 Contactos Clave</h3>
+<p>Lista de responsables y sus roles...</p>
+
+Usa etiquetas HTML semánticas y emojis.`,
 };
 
 export function StrategistScriptForm({ product, contentId, onScriptGenerated, organizationId: propOrgId }: StrategistScriptFormProps) {
@@ -262,6 +356,8 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     editor_prompt: DEFAULT_PROMPTS.editor,
     strategist_prompt: DEFAULT_PROMPTS.strategist,
     trafficker_prompt: DEFAULT_PROMPTS.trafficker,
+    designer_prompt: DEFAULT_PROMPTS.designer,
+    admin_prompt: DEFAULT_PROMPTS.admin,
     reference_transcription: "",
     video_strategies: "",
     ai_provider: "lovable",
@@ -419,7 +515,7 @@ ${documentContent.research ? `INVESTIGACIÓN:\n${documentContent.research.substr
 `;
 
       const promptGenerationRequest = `
-Basándote en la siguiente información del producto y cliente, genera 4 prompts optimizados y específicos para generar contenido de alta calidad.
+Basándote en la siguiente información del producto y cliente, genera 6 prompts optimizados y específicos para generar contenido de alta calidad.
 
 ${contextInfo}
 
@@ -428,13 +524,17 @@ Genera prompts específicos para:
 2. PAUTAS EDITOR: Un prompt para generar pautas de edición que reflejen la identidad visual del cliente
 3. PAUTAS ESTRATEGA: Un prompt para estrategia de publicación optimizada para el público objetivo
 4. PAUTAS TRAFFICKER: Un prompt para campañas de publicidad pagada que maximicen conversiones
+5. PAUTAS DISEÑADOR: Un prompt para generar pautas de diseño visual, colores, tipografía y assets gráficos
+6. PAUTAS ADMIN/PM: Un prompt para generar cronograma de producción y checklist de ejecución
 
 Responde SOLO en formato JSON con esta estructura exacta:
 {
   "script_prompt": "...",
   "editor_prompt": "...",
   "strategist_prompt": "...",
-  "trafficker_prompt": "..."
+  "trafficker_prompt": "...",
+  "designer_prompt": "...",
+  "admin_prompt": "..."
 }
 `;
 
@@ -463,6 +563,8 @@ Responde SOLO en formato JSON con esta estructura exacta:
           editor_prompt: parsedPrompts.editor_prompt || prev.editor_prompt,
           strategist_prompt: parsedPrompts.strategist_prompt || prev.strategist_prompt,
           trafficker_prompt: parsedPrompts.trafficker_prompt || prev.trafficker_prompt,
+          designer_prompt: parsedPrompts.designer_prompt || prev.designer_prompt,
+          admin_prompt: parsedPrompts.admin_prompt || prev.admin_prompt,
         }));
         setPromptsOpen(true);
         toast({
@@ -675,13 +777,13 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
       // Step 5: Generate Designer Guidelines
       updateStepStatus("designer", "generating");
-      generatedContent.designer_guidelines = await generateContent("designer", "Genera pautas de diseño visual basadas en el guión", generatedContent.script);
+      generatedContent.designer_guidelines = await generateContent("designer", formData.designer_prompt, generatedContent.script);
       updateStepStatus("designer", "done");
       emitProgress({ designer_guidelines: generatedContent.designer_guidelines });
 
       // Step 6: Generate Admin/PM Guidelines
       updateStepStatus("admin", "generating");
-      generatedContent.admin_guidelines = await generateContent("admin", "Genera el cronograma y checklist de ejecución basado en el guión", generatedContent.script);
+      generatedContent.admin_guidelines = await generateContent("admin", formData.admin_prompt, generatedContent.script);
       updateStepStatus("admin", "done");
       emitProgress({ admin_guidelines: generatedContent.admin_guidelines });
 
@@ -1073,6 +1175,26 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             />
           </div>
 
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">🎨 Prompt para Pautas del Diseñador</Label>
+            <Textarea
+              value={formData.designer_prompt}
+              onChange={(e) => setFormData({ ...formData, designer_prompt: e.target.value })}
+              rows={3}
+              className="text-sm"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">📋 Prompt para Pautas del Admin/PM</Label>
+            <Textarea
+              value={formData.admin_prompt}
+              onChange={(e) => setFormData({ ...formData, admin_prompt: e.target.value })}
+              rows={3}
+              className="text-sm"
+            />
+          </div>
+
           <Button 
             variant="ghost" 
             size="sm"
@@ -1082,6 +1204,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
               editor_prompt: DEFAULT_PROMPTS.editor,
               strategist_prompt: DEFAULT_PROMPTS.strategist,
               trafficker_prompt: DEFAULT_PROMPTS.trafficker,
+              designer_prompt: DEFAULT_PROMPTS.designer,
+              admin_prompt: DEFAULT_PROMPTS.admin,
             }))}
           >
             Restaurar prompts por defecto
