@@ -1503,6 +1503,71 @@ export type Database = {
           },
         ]
       }
+      client_strategists: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          client_id: string
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          organization_id: string
+          strategist_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          client_id: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          organization_id: string
+          strategist_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          organization_id?: string
+          strategist_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_strategists_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_strategists_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_strategists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_strategists_strategist_id_fkey"
+            columns: ["strategist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_users: {
         Row: {
           client_id: string
