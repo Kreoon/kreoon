@@ -13,9 +13,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   RefreshCw,
-  Settings2,
-  Users,
-  MousePointerClick
+  Settings2
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -27,13 +25,13 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  BarChart,
+  BarChart as RechartsBarChart,
   Bar,
   PieChart,
   Pie,
-  Cell,
-  Legend
+  Cell
 } from "recharts";
+import { DashboardConfigDialog } from "./DashboardConfigDialog";
 
 const formatCurrency = (value: number, currency: string) => {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 }).format(value);
@@ -110,6 +108,7 @@ const CHANNEL_LABELS: Record<string, string> = {
 export function MarketingDashboard({ organizationId, selectedClientId }: MarketingDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [showConfig, setShowConfig] = useState(false);
 
   useEffect(() => {
     if (organizationId) {
@@ -295,14 +294,22 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
 
   if (!data) {
     return (
-      <Card className="p-8 text-center">
-        <Settings2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="font-semibold text-lg mb-2">Configura tu Dashboard</h3>
-        <p className="text-muted-foreground mb-4">
-          Define tus objetivos de marketing y configura los canales de tráfico
-        </p>
-        <Button>Comenzar Configuración</Button>
-      </Card>
+      <>
+        <Card className="p-8 text-center">
+          <Settings2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="font-semibold text-lg mb-2">Configura tu Dashboard</h3>
+          <p className="text-muted-foreground mb-4">
+            Define tus objetivos de marketing y configura los canales de tráfico
+          </p>
+          <Button onClick={() => setShowConfig(true)}>Comenzar Configuración</Button>
+        </Card>
+        <DashboardConfigDialog
+          organizationId={organizationId}
+          open={showConfig}
+          onOpenChange={setShowConfig}
+          onSuccess={fetchDashboardData}
+        />
+      </>
     );
   }
 
@@ -538,7 +545,7 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
         <CardContent>
           {data.performanceByChannel.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data.performanceByChannel} layout="vertical">
+              <RechartsBarChart data={data.performanceByChannel} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
                 <YAxis dataKey="channel" type="category" tick={{ fontSize: 12 }} width={120} />
@@ -549,10 +556,9 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
                     borderRadius: '8px'
                   }}
                 />
-                <Legend />
                 <Bar dataKey="leads" fill="hsl(var(--primary))" name="Leads" radius={[0, 4, 4, 0]} />
                 <Bar dataKey="sales" fill="#22C55E" name="Ventas" radius={[0, 4, 4, 0]} />
-              </BarChart>
+              </RechartsBarChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-64 flex items-center justify-center text-muted-foreground">
@@ -603,6 +609,14 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
           </CardContent>
         </Card>
       </div>
+
+      {/* Config Dialog */}
+      <DashboardConfigDialog
+        organizationId={organizationId}
+        open={showConfig}
+        onOpenChange={setShowConfig}
+        onSuccess={fetchDashboardData}
+      />
     </div>
   );
 }
