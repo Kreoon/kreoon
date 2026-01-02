@@ -373,7 +373,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                     className="group hover:shadow-lg transition-all overflow-hidden"
                   >
                     {/* Video/Thumbnail */}
-                    <div className="relative aspect-video bg-muted overflow-hidden">
+                    <div className="relative aspect-[9/16] max-h-[350px] bg-black overflow-hidden flex items-center justify-center">
                       {(item.video_url || item.bunny_embed_url) ? (
                         <HLSVideoPlayer
                           src={item.video_url || item.bunny_embed_url || ''}
@@ -381,8 +381,8 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                           autoPlay={false}
                           muted={true}
                           loop={true}
-                          aspectRatio="16:9"
-                          objectFit="cover"
+                          aspectRatio="auto"
+                          objectFit="contain"
                           showControls={false}
                           className="w-full h-full"
                         />
@@ -390,7 +390,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                         <img 
                           src={item.thumbnail_url} 
                           alt={item.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
