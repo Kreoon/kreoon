@@ -373,7 +373,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                     className="group hover:shadow-lg transition-all overflow-hidden"
                   >
                     {/* Video/Thumbnail */}
-                    <div className="relative aspect-[9/16] max-h-[350px] bg-black overflow-hidden flex items-center justify-center">
+                    <div className="relative mx-auto w-full max-w-[260px] aspect-[9/16] bg-black overflow-hidden flex items-center justify-center">
                       {(item.video_url || item.bunny_embed_url) ? (
                         <HLSVideoPlayer
                           src={item.video_url || item.bunny_embed_url || ''}
