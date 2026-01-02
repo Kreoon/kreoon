@@ -27,7 +27,7 @@ import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
 import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
-import { StrategistClientSelector } from "@/components/layout/StrategistClientSelector";
+
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
 import { Badge } from "@/components/ui/badge";
@@ -314,12 +314,6 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           </div>
         )}
 
-        {/* Strategist Client Selector */}
-        {activeIsStrategist && !collapsed && (
-          <div className="border-b border-sidebar-border">
-            <StrategistClientSelector />
-          </div>
-        )}
 
         {/* Navigation with Sections */}
         <nav className="flex-1 overflow-y-auto p-3">
