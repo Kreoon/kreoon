@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Sparkles, MessageSquare, Cpu, Blocks, Zap, Brain, BarChart3 } from 'lucide-react';
+import { Bot, Sparkles, MessageSquare, Cpu, Blocks, Zap, Brain, BarChart3, FileText } from 'lucide-react';
 import { OrganizationAISettings } from '@/components/settings/OrganizationAISettings';
 import { PortfolioAISettings } from '@/components/settings/PortfolioAISettings';
 import { AIAssistantSettings } from '@/components/settings/AIAssistantSettings';
 import { AIUsageDashboard } from '@/components/settings/ai/AIUsageDashboard';
+import { ScriptPromptsConfig } from '@/components/settings/ai/ScriptPromptsConfig';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -59,39 +60,50 @@ export default function AISettingsSection() {
 
       {/* Tabs principales */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-5 h-auto p-1">
           <TabsTrigger 
             value="providers" 
             className="flex flex-col sm:flex-row items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <Bot className="h-4 w-4" />
-            <span>Proveedores</span>
+            <span className="hidden sm:inline">Proveedores</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="scripts" 
+            className="flex flex-col sm:flex-row items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Guiones</span>
           </TabsTrigger>
           <TabsTrigger 
             value="usage" 
             className="flex flex-col sm:flex-row items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <BarChart3 className="h-4 w-4" />
-            <span>Uso</span>
+            <span className="hidden sm:inline">Uso</span>
           </TabsTrigger>
           <TabsTrigger 
             value="portfolio" 
             className="flex flex-col sm:flex-row items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <Sparkles className="h-4 w-4" />
-            <span>Portfolio</span>
+            <span className="hidden sm:inline">Portfolio</span>
           </TabsTrigger>
           <TabsTrigger 
             value="assistant" 
             className="flex flex-col sm:flex-row items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <MessageSquare className="h-4 w-4" />
-            <span>Asistente</span>
+            <span className="hidden sm:inline">Asistente</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="providers" className="mt-0">
           <OrganizationAISettings organizationId={profile.current_organization_id} />
+        </TabsContent>
+
+        <TabsContent value="scripts" className="mt-0">
+          <ScriptPromptsConfig organizationId={profile.current_organization_id} />
         </TabsContent>
 
         <TabsContent value="usage" className="mt-0">

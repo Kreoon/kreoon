@@ -324,7 +324,24 @@ async function callAI(
 }
 
 // Genera el bloque HTML para cada rol (simplified version)
-function getGenerationTypePrompt(generation_type?: string): string {
+function getGenerationTypePrompt(generation_type?: string, customRolePrompts?: any): string {
+  if (customRolePrompts) {
+    switch (generation_type) {
+      case "editor":
+        return customRolePrompts.editor || `📦 GENERANDO: BLOQUE EDITOR ✂️ - Pensado para edición fluida y rápida.`;
+      case "strategist":
+        return customRolePrompts.strategist || `📦 GENERANDO: BLOQUE ESTRATEGA ♟️ - Pensamiento de fondo y estrategia.`;
+      case "trafficker":
+        return customRolePrompts.trafficker || `📦 GENERANDO: BLOQUE TRAFFICKER 📊 - Pensado para escalar en pauta.`;
+      case "designer":
+        return customRolePrompts.designer || `📦 GENERANDO: BLOQUE DISEÑADOR 🎨 - Guía visual clara.`;
+      case "admin":
+        return customRolePrompts.admin || `📦 GENERANDO: BLOQUE ADMIN / PROJECT MANAGER 📅 - Control y ejecución.`;
+      default:
+        return customRolePrompts.creator || `📦 GENERANDO: BLOQUE CREADOR 🎥 - Guion estructurado por escenas, listo para grabar.`;
+    }
+  }
+  
   switch (generation_type) {
     case "editor":
       return `📦 GENERANDO: BLOQUE EDITOR ✂️ - Pensado para edición fluida y rápida.`;
@@ -339,6 +356,26 @@ function getGenerationTypePrompt(generation_type?: string): string {
     default:
       return `📦 GENERANDO: BLOQUE CREADOR 🎥 - Guion estructurado por escenas, listo para grabar.`;
   }
+}
+
+// Get custom prompts from organization
+async function getOrganizationPrompts(supabase: any, organizationId: string) {
+  try {
+    const { data } = await supabase
+      .from("organization_ai_prompts")
+      .select("prompt_config, is_active")
+      .eq("organization_id", organizationId)
+      .eq("module_key", "scripts")
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (data?.prompt_config && data.is_active) {
+      return data.prompt_config;
+    }
+  } catch (e) {
+    console.error("Error fetching organization prompts:", e);
+  }
+  return null;
 }
 
 serve(async (req) => {
@@ -398,11 +435,40 @@ serve(async (req) => {
     switch (action) {
       case "generate_script": {
         if (prompt && product) {
-          const roleSpecificPrompt = getGenerationTypePrompt(generation_type);
+          // Get custom prompts from organization if available
+          const customPrompts = await getOrganizationPrompts(supabase, organizationId);
           
-          const fullSystemPrompt = `${MASTER_SYSTEM_PROMPT}
+          let masterPrompt = MASTER_SYSTEM_PROMPT;
+          let formatRules = "";
+          let criticalRules = "";
+          let rolePrompt = "";
+          
+          if (customPrompts) {
+            masterPrompt = customPrompts.master_prompt || MASTER_SYSTEM_PROMPT;
+            formatRules = customPrompts.format_rules || "";
+            criticalRules = customPrompts.critical_rules || "";
+            rolePrompt = getGenerationTypePrompt(generation_type, customPrompts.role_prompts);
+          } else {
+            rolePrompt = getGenerationTypePrompt(generation_type);
+          }
+          
+          const fullSystemPrompt = customPrompts 
+            ? `${masterPrompt}
 
-${roleSpecificPrompt}
+${criticalRules}
+
+${formatRules}
+
+${rolePrompt}
+
+IMPORTANTE:
+- Analiza toda la información del producto proporcionada
+- La cantidad de hooks debe ser EXACTAMENTE la que se indica en el prompt del usuario
+- Usa expresiones y modismos del país objetivo cuando sea apropiado
+- El resultado debe ser HTML limpio, sin markdown, listo para renderizar`
+            : `${MASTER_SYSTEM_PROMPT}
+
+${rolePrompt}
 
 IMPORTANTE:
 - Analiza toda la información del producto proporcionada
