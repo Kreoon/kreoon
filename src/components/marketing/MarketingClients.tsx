@@ -8,6 +8,7 @@ import { Plus, Building2, DollarSign, Target, Users, MoreHorizontal, Pencil, Tra
 import { toast } from "sonner";
 import { MarketingClient, SERVICE_TYPES, PLATFORMS } from "./types";
 import { AddMarketingClientDialog } from "./AddMarketingClientDialog";
+import { EditMarketingClientDialog } from "./EditMarketingClientDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -19,6 +20,7 @@ export function MarketingClients({ organizationId }: MarketingClientsProps) {
   const [clients, setClients] = useState<MarketingClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingClient, setEditingClient] = useState<MarketingClient | null>(null);
 
   useEffect(() => {
     if (organizationId) {
@@ -163,7 +165,7 @@ export function MarketingClients({ organizationId }: MarketingClientsProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setEditingClient(client)}>
                         <Pencil className="h-4 w-4 mr-2" />
                         Editar
                       </DropdownMenuItem>
@@ -230,6 +232,15 @@ export function MarketingClients({ organizationId }: MarketingClientsProps) {
       <AddMarketingClientDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
+        organizationId={organizationId}
+        onSuccess={fetchClients}
+      />
+
+      {/* Edit Dialog */}
+      <EditMarketingClientDialog
+        open={!!editingClient}
+        onOpenChange={(open) => !open && setEditingClient(null)}
+        client={editingClient}
         organizationId={organizationId}
         onSuccess={fetchClients}
       />
