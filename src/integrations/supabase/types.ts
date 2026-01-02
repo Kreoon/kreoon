@@ -1233,6 +1233,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "chat_conversations_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "chat_conversations_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -2211,6 +2218,13 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "content_collaborators_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
         ]
       }
       content_comments: {
@@ -2252,6 +2266,13 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "content_comments_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
         ]
       }
       content_custom_field_values: {
@@ -2285,6 +2306,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_custom_field_values_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
             referencedColumns: ["id"]
           },
           {
@@ -2332,6 +2360,13 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "content_history_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
         ]
       }
       content_likes: {
@@ -2359,6 +2394,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_likes_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
             referencedColumns: ["id"]
           },
         ]
@@ -2409,6 +2451,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_status_logs_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
             referencedColumns: ["id"]
           },
           {
@@ -3667,6 +3716,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "marketing_content_calendar_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "marketing_content_calendar_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -4828,6 +4884,13 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "payments_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
         ]
       }
       point_transactions: {
@@ -4867,6 +4930,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "point_transactions_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
             referencedColumns: ["id"]
           },
         ]
@@ -5563,6 +5633,13 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "project_raw_assets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
         ]
       }
       rate_limits: {
@@ -5816,6 +5893,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_content_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
             referencedColumns: ["id"]
           },
           {
@@ -7465,6 +7549,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "up_events_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "up_events_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -7641,6 +7732,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: true
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_quality_scores_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: true
+            referencedRelation: "marketing_available_content"
             referencedColumns: ["id"]
           },
           {
@@ -8363,7 +8461,40 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      marketing_available_content: {
+        Row: {
+          approved_at: string | null
+          client_id: string | null
+          client_logo: string | null
+          client_name: string | null
+          content_type: string | null
+          created_at: string | null
+          creator_id: string | null
+          description: string | null
+          id: string | null
+          organization_id: string | null
+          status: Database["public"]["Enums"]["content_status"] | null
+          thumbnail_url: string | null
+          title: string | null
+          video_url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       add_user_points: {
