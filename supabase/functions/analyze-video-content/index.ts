@@ -208,8 +208,19 @@ REGLAS ADICIONALES POR FASE:
 Cada copy debe incluir:
 - framework: nombre del framework usado (AIDA, PAS, PASTOR, BAB, 4Ps)
 - text: Copy principal del anuncio siguiendo la estructura del framework
-- cta: Llamada a la acción de MÁXIMO 3 palabras
-- trustBadge: Frase de confianza/seguridad de 3-4 palabras
+- urgencyBooster: Frase corta con EMOJI que refuerza la decisión de hacer clic (NO es el texto del botón, es un refuerzo visual). Ejemplos:
+  - "⚡ Solo hoy disponible"
+  - "🔥 +2,400 ya lo tienen"
+  - "✅ Envío en 24h"
+  - "🎁 Regalo incluido hoy"
+  - "⏰ Últimas unidades"
+  - "🛡️ Garantía total"
+  - "💯 Sin riesgo"
+- trustBadge: Frase de confianza/seguridad de 3-4 palabras con emoji. Ejemplos:
+  - "🔒 Pago 100% seguro"
+  - "✨ Resultados garantizados"
+  - "🏆 +10,000 clientes felices"
+  - "📦 Devolución gratis"
 - psychologicalTriggers: Lista de gatillos mentales/sesgos usados
 
 3) ANÁLISIS DEL CONTENIDO:
@@ -226,8 +237,8 @@ RESPONDE EN FORMATO JSON EXACTO:
     {
       "framework": "AIDA|PAS|PASTOR|BAB|4Ps",
       "text": "copy del anuncio",
-      "cta": "máximo 3 palabras",
-      "trustBadge": "3-4 palabras de confianza",
+      "urgencyBooster": "⚡ Frase corta con emoji",
+      "trustBadge": "🔒 3-4 palabras con emoji",
       "psychologicalTriggers": ["gatillo1", "gatillo2"]
     }
   ],
