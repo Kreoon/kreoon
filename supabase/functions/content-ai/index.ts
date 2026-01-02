@@ -37,7 +37,78 @@ interface ContentAIRequest {
   generation_type?: string;
 }
 
-// Build product context for AI prompts
+// Template variable definitions - all available placeholders
+const TEMPLATE_VARIABLES: Record<string, { description: string; category: string }> = {
+  // Product variables
+  '{producto_nombre}': { description: 'Nombre del producto', category: 'Producto' },
+  '{producto_descripcion}': { description: 'Descripción detallada del producto', category: 'Producto' },
+  '{producto_estrategia}': { description: 'Estrategia de marketing del producto', category: 'Producto' },
+  '{producto_investigacion}': { description: 'Investigación de mercado', category: 'Producto' },
+  '{producto_avatar}': { description: 'Avatar / Cliente ideal', category: 'Producto' },
+  '{producto_angulos}': { description: 'Lista de ángulos de venta', category: 'Producto' },
+  
+  // Form/Script params variables
+  '{cta}': { description: 'Llamado a la acción (CTA)', category: 'Formulario' },
+  '{angulo_venta}': { description: 'Ángulo de venta seleccionado', category: 'Formulario' },
+  '{cantidad_hooks}': { description: 'Cantidad de hooks solicitados', category: 'Formulario' },
+  '{pais_objetivo}': { description: 'País objetivo del contenido', category: 'Formulario' },
+  '{estructura_narrativa}': { description: 'Estructura narrativa seleccionada', category: 'Formulario' },
+  '{avatar_ideal}': { description: 'Avatar ideal del formulario', category: 'Formulario' },
+  '{estrategias_video}': { description: 'Estrategias/estructuras de video', category: 'Formulario' },
+  '{transcripcion_referencia}': { description: 'Transcripción de video de referencia', category: 'Formulario' },
+  '{hooks_sugeridos}': { description: 'Lista de hooks sugeridos por el usuario', category: 'Formulario' },
+  '{instrucciones_adicionales}': { description: 'Instrucciones adicionales del usuario', category: 'Formulario' },
+  
+  // Document variables
+  '{documento_brief}': { description: 'Contenido del brief del producto', category: 'Documentos' },
+  '{documento_onboarding}': { description: 'Contenido del onboarding', category: 'Documentos' },
+  '{documento_research}': { description: 'Contenido del research/investigación', category: 'Documentos' },
+};
+
+// Replace template variables in prompts
+function replaceTemplateVariables(
+  text: string, 
+  product?: ContentAIRequest['product'],
+  scriptParams?: any,
+  documents?: { brief?: string; onboarding?: string; research?: string }
+): string {
+  if (!text) return text;
+  
+  let result = text;
+  
+  // Product variables
+  result = result.replace(/\{producto_nombre\}/gi, product?.name || '');
+  result = result.replace(/\{producto_descripcion\}/gi, product?.description || '');
+  result = result.replace(/\{producto_estrategia\}/gi, product?.strategy || '');
+  result = result.replace(/\{producto_investigacion\}/gi, product?.market_research || '');
+  result = result.replace(/\{producto_avatar\}/gi, product?.ideal_avatar || '');
+  result = result.replace(/\{producto_angulos\}/gi, 
+    product?.sales_angles?.map((a, i) => `${i + 1}. ${a}`).join('\n') || ''
+  );
+  
+  // Form/Script params variables
+  result = result.replace(/\{cta\}/gi, scriptParams?.cta || '');
+  result = result.replace(/\{angulo_venta\}/gi, scriptParams?.sales_angle || '');
+  result = result.replace(/\{cantidad_hooks\}/gi, scriptParams?.hooks_count || '');
+  result = result.replace(/\{pais_objetivo\}/gi, scriptParams?.target_country || '');
+  result = result.replace(/\{estructura_narrativa\}/gi, scriptParams?.narrative_structure || '');
+  result = result.replace(/\{avatar_ideal\}/gi, scriptParams?.ideal_avatar || product?.ideal_avatar || '');
+  result = result.replace(/\{estrategias_video\}/gi, scriptParams?.video_strategies || '');
+  result = result.replace(/\{transcripcion_referencia\}/gi, scriptParams?.reference_transcription || '');
+  result = result.replace(/\{hooks_sugeridos\}/gi, 
+    Array.isArray(scriptParams?.hooks) ? scriptParams.hooks.join('\n') : ''
+  );
+  result = result.replace(/\{instrucciones_adicionales\}/gi, scriptParams?.additional_instructions || '');
+  
+  // Document variables
+  result = result.replace(/\{documento_brief\}/gi, documents?.brief || '');
+  result = result.replace(/\{documento_onboarding\}/gi, documents?.onboarding || '');
+  result = result.replace(/\{documento_research\}/gi, documents?.research || '');
+  
+  return result;
+}
+
+// Build product context for AI prompts (legacy support)
 function buildProductContext(product?: ContentAIRequest['product']): string {
   if (!product) return "";
   
@@ -481,7 +552,14 @@ serve(async (req) => {
           // Get custom prompts from organization if available
           const customPrompts = await getOrganizationPrompts(supabase, organizationId);
           
-          // Build product context to inject into prompts
+          // Extract document content from script_params if available
+          const documents = {
+            brief: body.script_params?.document_brief || '',
+            onboarding: body.script_params?.document_onboarding || '',
+            research: body.script_params?.document_research || '',
+          };
+          
+          // Build product context to inject into prompts (legacy support)
           const productContext = buildProductContext(product);
           
           let masterPrompt = MASTER_SYSTEM_PROMPT;
@@ -490,10 +568,23 @@ serve(async (req) => {
           let rolePrompt = "";
           
           if (customPrompts) {
-            masterPrompt = customPrompts.master_prompt || MASTER_SYSTEM_PROMPT;
-            formatRules = customPrompts.format_rules || "";
-            criticalRules = customPrompts.critical_rules || "";
-            rolePrompt = getGenerationTypePrompt(generation_type, customPrompts.role_prompts);
+            // Apply template variable replacements to custom prompts
+            masterPrompt = replaceTemplateVariables(
+              customPrompts.master_prompt || MASTER_SYSTEM_PROMPT,
+              product, body.script_params, documents
+            );
+            formatRules = replaceTemplateVariables(
+              customPrompts.format_rules || "",
+              product, body.script_params, documents
+            );
+            criticalRules = replaceTemplateVariables(
+              customPrompts.critical_rules || "",
+              product, body.script_params, documents
+            );
+            rolePrompt = replaceTemplateVariables(
+              getGenerationTypePrompt(generation_type, customPrompts.role_prompts),
+              product, body.script_params, documents
+            );
           } else {
             rolePrompt = getGenerationTypePrompt(generation_type);
           }
@@ -528,6 +619,7 @@ IMPORTANTE:
 
           console.log("[content-ai] Product context length:", productContext.length);
           console.log("[content-ai] Full system prompt length:", fullSystemPrompt.length);
+          console.log("[content-ai] Template variables replaced in custom prompts");
 
           result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt);
 

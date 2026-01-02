@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProductSelector } from '@/components/products/ProductSelector';
-import { StrategistScriptForm } from '@/components/content/StrategistScriptForm';
 import { SectionCard, FieldRow } from '../../components/SectionCard';
 import { Sparkles, Package, History, Bot } from 'lucide-react';
 import { SubTabProps } from './types';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganizationAI } from '@/hooks/useOrganizationAI';
 
@@ -56,7 +54,6 @@ export function IASubTab({
   scriptPermissions,
   readOnly = false,
 }: SubTabProps) {
-  const { toast } = useToast();
   const { profile } = useAuth();
   const organizationId = profile?.current_organization_id;
   
@@ -92,29 +89,7 @@ export function IASubTab({
 
   // Combine scriptPermissions with readOnly prop for effective edit capability
   const canEdit = scriptPermissions.canEdit('ia') && !readOnly;
-  const canGenerate = scriptPermissions.canGenerate() && !readOnly;
   const isReadOnly = scriptPermissions.isReadOnly('ia') || readOnly;
-
-  const handleScriptGenerated = (generated: {
-    script: string;
-    editor_guidelines: string;
-    trafficker_guidelines: string;
-    strategist_guidelines: string;
-    designer_guidelines: string;
-    admin_guidelines: string;
-  }) => {
-    setFormData(prev => ({
-      ...prev,
-      script: generated.script,
-      editor_guidelines: generated.editor_guidelines,
-      trafficker_guidelines: generated.trafficker_guidelines,
-      strategist_guidelines: generated.strategist_guidelines,
-      designer_guidelines: generated.designer_guidelines,
-      admin_guidelines: generated.admin_guidelines,
-    }));
-    if (!editMode) setEditMode(true);
-    toast({ title: 'Guión generado', description: 'Revisa y edita en la pestaña Guión' });
-  };
 
   return (
     <div className="space-y-6">
@@ -181,19 +156,17 @@ export function IASubTab({
             </span>
           )}
         </FieldRow>
-      </SectionCard>
 
-      {/* Script Generator */}
-      {canGenerate && selectedProduct && content?.id && (
-        <SectionCard title="Generar Guión" iconEmoji="✨" variant="highlight">
-          <StrategistScriptForm
-            product={selectedProduct}
-            contentId={content.id}
-            onScriptGenerated={handleScriptGenerated}
-            organizationId={organizationId}
-          />
-        </SectionCard>
-      )}
+        <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+          <p className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            <span>
+              Los prompts del generador de guiones se configuran en{' '}
+              <strong>Configuración → IA & Modelos → Guiones</strong>
+            </span>
+          </p>
+        </div>
+      </SectionCard>
 
       {/* Generation History (placeholder) */}
       <SectionCard title="Historial de Generaciones" iconEmoji="📜">
