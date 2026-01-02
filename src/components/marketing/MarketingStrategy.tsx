@@ -18,11 +18,13 @@ import {
   Plus,
   Trash2,
   Pencil,
-  Check
+  Check,
+  Package
 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
+import { StrategyProductsSection } from "./StrategyProductsSection";
 
 interface MarketingStrategyProps {
   organizationId: string | null | undefined;
@@ -35,6 +37,7 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
   const [saving, setSaving] = useState(false);
   const [strategy, setStrategy] = useState<any>(null);
   const [activeSection, setActiveSection] = useState("objective");
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (organizationId) {
@@ -57,6 +60,12 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
 
       if (error) throw error;
       setStrategy(data);
+      // Load associated product IDs if they exist
+      if (data?.associated_products) {
+        setSelectedProductIds(data.associated_products);
+      } else {
+        setSelectedProductIds([]);
+      }
     } catch (error) {
       console.error('Error fetching strategy:', error);
       toast.error('Error al cargar estrategia');
@@ -83,6 +92,7 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
             funnel_mofu: strategy.funnel_mofu,
             funnel_bofu: strategy.funnel_bofu,
             strategic_kpis: strategy.strategic_kpis,
+            associated_products: selectedProductIds,
           })
           .eq('id', strategy.id);
 
@@ -102,6 +112,7 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
             funnel_mofu: strategy.funnel_mofu || {},
             funnel_bofu: strategy.funnel_bofu || {},
             strategic_kpis: strategy.strategic_kpis || [],
+            associated_products: selectedProductIds,
           })
           .select()
           .single();
@@ -130,7 +141,9 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
       funnel_mofu: { description: '', tactics: [], channels: [] },
       funnel_bofu: { description: '', tactics: [], channels: [] },
       strategic_kpis: [],
+      associated_products: [],
     });
+    setSelectedProductIds([]);
   };
 
   const updateField = (field: string, value: any) => {
@@ -180,11 +193,12 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
       </div>
 
       <Tabs value={activeSection} onValueChange={setActiveSection}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="objective"><Target className="h-4 w-4 mr-2" />Objetivo</TabsTrigger>
           <TabsTrigger value="persona"><Users className="h-4 w-4 mr-2" />Persona</TabsTrigger>
           <TabsTrigger value="value"><Lightbulb className="h-4 w-4 mr-2" />Propuesta</TabsTrigger>
           <TabsTrigger value="funnel"><Layers className="h-4 w-4 mr-2" />Funnel</TabsTrigger>
+          <TabsTrigger value="products"><Package className="h-4 w-4 mr-2" />Productos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="objective">
@@ -282,6 +296,25 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        <TabsContent value="products">
+          <Card>
+            <CardHeader>
+              <CardTitle>Productos del Cliente</CardTitle>
+              <CardDescription>
+                Selecciona los productos que forman parte de esta estrategia de marketing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <StrategyProductsSection
+                organizationId={organizationId}
+                selectedClientId={selectedClientId}
+                selectedProductIds={selectedProductIds}
+                onSelectionChange={setSelectedProductIds}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
