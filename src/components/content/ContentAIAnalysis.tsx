@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Brain, Copy, Check, Target, Zap, TrendingUp, Lightbulb, AlertCircle, Save, Loader2 } from 'lucide-react';
+import { Sparkles, Brain, Copy, Check, Target, Zap, TrendingUp, Lightbulb, AlertCircle, Save, Loader2, Users, Globe, UserCheck, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -18,6 +18,20 @@ interface AdCopy {
   psychologicalTriggers: string[];
 }
 
+interface AudienceSegment {
+  name: string;
+  description: string;
+  interests: string[];
+  demographics?: string;
+}
+
+interface TargetAudiences {
+  directAudiences: AudienceSegment[];
+  indirectAudiences: AudienceSegment[];
+  country: string;
+  notes?: string;
+}
+
 interface AnalysisResult {
   recommendedPhase: {
     phase: string;
@@ -25,6 +39,7 @@ interface AnalysisResult {
     reasoning: string;
   };
   adCopies: AdCopy[];
+  targetAudiences?: TargetAudiences;
   contentAnalysis: {
     hook_effectiveness: number;
     emotional_impact: number;
@@ -312,6 +327,93 @@ export function ContentAIAnalysis({
                 </div>
               </CardContent>
             </Card>
+
+            {/* Target Audiences */}
+            {result.targetAudiences && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Users className="h-5 w-5" />
+                    Públicos de Segmentación
+                    {result.targetAudiences.country && (
+                      <Badge variant="outline" className="ml-2 gap-1">
+                        <Globe className="h-3 w-3" />
+                        {result.targetAudiences.country}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Direct Audiences */}
+                  <div>
+                    <h4 className="font-medium text-sm mb-3 flex items-center gap-2 text-green-600">
+                      <UserCheck className="h-4 w-4" />
+                      Públicos Directos
+                      <span className="text-muted-foreground font-normal">(buscan activamente la solución)</span>
+                    </h4>
+                    <div className="grid gap-3">
+                      {result.targetAudiences.directAudiences?.map((audience, i) => (
+                        <div key={i} className="p-3 rounded-lg border bg-green-50/50 dark:bg-green-950/20">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="font-medium text-sm">{audience.name}</span>
+                            {audience.demographics && (
+                              <Badge variant="secondary" className="text-xs">
+                                {audience.demographics}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{audience.description}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {audience.interests?.map((interest, j) => (
+                              <Badge key={j} variant="outline" className="text-xs">
+                                {interest}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Indirect Audiences */}
+                  <div>
+                    <h4 className="font-medium text-sm mb-3 flex items-center gap-2 text-blue-600">
+                      <UserPlus className="h-4 w-4" />
+                      Públicos Indirectos
+                      <span className="text-muted-foreground font-normal">(relacionados pero no buscan aún)</span>
+                    </h4>
+                    <div className="grid gap-3">
+                      {result.targetAudiences.indirectAudiences?.map((audience, i) => (
+                        <div key={i} className="p-3 rounded-lg border bg-blue-50/50 dark:bg-blue-950/20">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="font-medium text-sm">{audience.name}</span>
+                            {audience.demographics && (
+                              <Badge variant="secondary" className="text-xs">
+                                {audience.demographics}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{audience.description}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {audience.interests?.map((interest, j) => (
+                              <Badge key={j} variant="outline" className="text-xs">
+                                {interest}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {result.targetAudiences.notes && (
+                    <p className="text-sm text-muted-foreground italic border-l-2 pl-3">
+                      💡 {result.targetAudiences.notes}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Ad Copies */}
             <Card>
