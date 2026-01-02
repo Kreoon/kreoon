@@ -43,6 +43,34 @@ export function AdminSubTab({
 
   return (
     <div className="space-y-6">
+      {/* Bloque 6 - Contenido Generado por IA */}
+      <SectionCard title="Bloque 6 – Administrador / PM" iconEmoji="📋" variant="highlight">
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Cronograma, responsables, entregables y checklist de revisión generados por IA.
+          </p>
+
+          {editMode && canEdit ? (
+            <RichTextEditor
+              content={formData.admin_guidelines || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, admin_guidelines: value }))}
+              placeholder="Genera el contenido desde la pestaña IA o escribe aquí el bloque de administración..."
+              features={editorFeatures}
+            />
+          ) : hasContent ? (
+            <RichTextViewer content={formData.admin_guidelines || ''} maxHeight="" />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-lg">
+              <Shield className="h-8 w-8 text-muted-foreground/50 mb-3" />
+              <p className="text-muted-foreground text-sm font-medium">Sin contenido generado</p>
+              <p className="text-muted-foreground/70 text-xs mt-1">
+                Ve a la pestaña IA para generar el Bloque 6 automáticamente
+              </p>
+            </div>
+          )}
+        </div>
+      </SectionCard>
+
       {/* Status Overview */}
       <SectionCard title="Estado del Contenido" iconEmoji="📊">
         <div className="space-y-4">
@@ -89,32 +117,6 @@ export function AdminSubTab({
               <span className="text-sm">Contenido aprobado</span>
             </div>
           </div>
-        </div>
-      </SectionCard>
-
-      {/* Admin Notes */}
-      <SectionCard title="Notas Internas" iconEmoji="📋">
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Notas visibles solo para administradores y PMs.
-          </p>
-
-          {editMode && canEdit ? (
-            <RichTextEditor
-              content={formData.admin_guidelines || ''}
-              onChange={(value) => setFormData(prev => ({ ...prev, admin_guidelines: value }))}
-              placeholder="Notas internas, decisiones, historial de cambios..."
-              features={editorFeatures}
-            />
-          ) : hasContent ? (
-            <RichTextViewer content={formData.admin_guidelines || ''} maxHeight="" />
-          
-          ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-center bg-muted/30 rounded-lg">
-              <Shield className="h-6 w-6 text-muted-foreground/50 mb-2" />
-              <p className="text-muted-foreground text-sm">Sin notas internas</p>
-            </div>
-          )}
         </div>
       </SectionCard>
 
