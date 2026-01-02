@@ -114,21 +114,21 @@ export default function Marketing() {
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </TabsTrigger>
-            <TabsTrigger value="content" className="gap-2 py-2.5">
-              <FileVideo className="h-4 w-4" />
-              <span className="hidden sm:inline">Contenido</span>
-            </TabsTrigger>
             <TabsTrigger value="strategy" className="gap-2 py-2.5">
               <Target className="h-4 w-4" />
               <span className="hidden sm:inline">Estrategia</span>
             </TabsTrigger>
-            <TabsTrigger value="traffic" className="gap-2 py-2.5">
-              <Radio className="h-4 w-4" />
-              <span className="hidden sm:inline">Tráfico</span>
+            <TabsTrigger value="content" className="gap-2 py-2.5">
+              <FileVideo className="h-4 w-4" />
+              <span className="hidden sm:inline">Contenido</span>
             </TabsTrigger>
             <TabsTrigger value="campaigns" className="gap-2 py-2.5">
               <Megaphone className="h-4 w-4" />
               <span className="hidden sm:inline">Campañas</span>
+            </TabsTrigger>
+            <TabsTrigger value="traffic" className="gap-2 py-2.5">
+              <Radio className="h-4 w-4" />
+              <span className="hidden sm:inline">Tráfico</span>
             </TabsTrigger>
             <TabsTrigger value="reports" className="gap-2 py-2.5">
               <BarChart3 className="h-4 w-4" />
