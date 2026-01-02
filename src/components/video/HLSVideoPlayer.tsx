@@ -108,6 +108,10 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
     const posterUrl = poster || thumbnailUrl;
     const objectFitClass = objectFit === 'contain' ? 'object-contain' : 'object-cover';
 
+    // When showing native controls (manual playback), rely on the <video poster> attribute.
+    // The custom poster overlay blocks user interaction with controls on top of the video.
+    const shouldShowPosterOverlay = Boolean(showPoster && posterUrl && !showControls);
+
     return (
       <div className={cn('relative overflow-hidden bg-black', aspectClass, className)}>
         {/* Video Element */}
@@ -119,19 +123,21 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
           className={cn(
             'w-full h-full',
             objectFitClass,
-            showPoster && posterUrl && 'opacity-0'
+            // Only hide the video when we render a custom overlay poster (no controls)
+            shouldShowPosterOverlay && 'opacity-0'
           )}
           controls={showControls}
         />
 
-        {/* Poster Image Overlay */}
-        {showPoster && posterUrl && (
-          <div className="absolute inset-0">
+        {/* Poster Image Overlay (only for no-controls mode) */}
+        {shouldShowPosterOverlay && (
+          <div className="absolute inset-0 pointer-events-none">
             <img
-              src={posterUrl}
+              src={posterUrl as string}
               alt="Video thumbnail"
               className={cn('w-full h-full', objectFitClass)}
               onError={() => setShowPoster(false)}
+              loading="lazy"
             />
           </div>
         )}
