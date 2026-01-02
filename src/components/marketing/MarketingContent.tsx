@@ -41,7 +41,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { HLSVideoPlayer, HLSVideoPlayerRef } from "@/components/video/HLSVideoPlayer";
+import { HLSVideoPlayer, HLSVideoPlayerRef, getBunnyThumbnail } from "@/components/video/HLSVideoPlayer";
 
 interface MarketingContentProps {
   organizationId: string | null | undefined;
@@ -377,7 +377,11 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                       {(item.video_url || item.bunny_embed_url) ? (
                         <HLSVideoPlayer
                           src={item.video_url || item.bunny_embed_url || ''}
-                          poster={item.thumbnail_url || undefined}
+                          poster={
+                            item.thumbnail_url ||
+                            getBunnyThumbnail(item.video_url || item.bunny_embed_url || '') ||
+                            undefined
+                          }
                           autoPlay={false}
                           muted={true}
                           loop={true}
