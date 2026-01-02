@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Brain, Copy, Check, Target, Zap, TrendingUp, Lightbulb, AlertCircle } from 'lucide-react';
+import { Sparkles, Brain, Copy, Check, Target, Zap, TrendingUp, Lightbulb, AlertCircle, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -79,8 +79,10 @@ export function ContentAIAnalysis({
   guidelines,
 }: ContentAIAnalysisProps) {
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   const handleAnalyze = async () => {
     if (!organizationId || !contentId) {
@@ -89,6 +91,7 @@ export function ContentAIAnalysis({
     }
 
     setLoading(true);
+    setIsSaved(false);
     try {
       const { data, error } = await supabase.functions.invoke('analyze-video-content', {
         body: {
@@ -113,6 +116,34 @@ export function ContentAIAnalysis({
       toast.error(error.message || 'Error al analizar el contenido');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveResult = async () => {
+    if (!result || !contentId) return;
+
+    setSaving(true);
+    try {
+      // Update content with AI analysis data
+      const { error } = await supabase
+        .from('content')
+        .update({
+          ai_quality_score: result.contentAnalysis.overall_score,
+          sphere_phase: result.recommendedPhase.phase as any,
+          // Store full analysis in notes or a dedicated field
+          notes: `[Análisis IA - ${new Date().toLocaleDateString()}]\n\nFase recomendada: ${PHASE_CONFIG[result.recommendedPhase.phase]?.label || result.recommendedPhase.phase} (${result.recommendedPhase.confidence}%)\n${result.recommendedPhase.reasoning}\n\nPuntuación: ${result.contentAnalysis.overall_score}%\n- Hook: ${result.contentAnalysis.hook_effectiveness}%\n- Impacto: ${result.contentAnalysis.emotional_impact}%\n- Claridad: ${result.contentAnalysis.clarity}%\n- CTA: ${result.contentAnalysis.cta_strength}%\n\nFortalezas:\n${result.contentAnalysis.strengths.map(s => `• ${s}`).join('\n')}\n\nMejoras:\n${result.contentAnalysis.improvements.map(s => `• ${s}`).join('\n')}\n\n--- COPYS GENERADOS ---\n${result.adCopies.map((c, i) => `\n[Copy ${i + 1}]\n${c.text}\nCTA: ${c.cta}\n✓ ${c.trustBadge}\nGatillos: ${c.psychologicalTriggers.join(', ')}`).join('\n')}`,
+        })
+        .eq('id', contentId);
+
+      if (error) throw error;
+
+      setIsSaved(true);
+      toast.success('Análisis guardado en el contenido');
+    } catch (error: any) {
+      console.error('Save error:', error);
+      toast.error('Error al guardar el análisis');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -161,7 +192,27 @@ export function ContentAIAnalysis({
 
       {/* Results */}
       {result && (
-        <ScrollArea className="h-[600px] pr-4">
+        <>
+          {/* Save Button */}
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSaveResult}
+              disabled={saving || isSaved}
+              variant={isSaved ? "outline" : "default"}
+              className="gap-2"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isSaved ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {saving ? 'Guardando...' : isSaved ? 'Guardado' : 'Guardar Análisis'}
+            </Button>
+          </div>
+
+          <ScrollArea className="h-[600px] pr-4">
           <div className="space-y-6">
             {/* Phase Recommendation */}
             <Card>
@@ -322,6 +373,7 @@ export function ContentAIAnalysis({
             </Card>
           </div>
         </ScrollArea>
+        </>
       )}
     </div>
   );
