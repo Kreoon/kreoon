@@ -255,18 +255,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(userProfile);
       }
 
-      // Now fetch roles from organization_member_roles based on current_organization_id
+      // Fetch roles from organization_member_roles.
+      // Prefer the current organization context, but if current_organization_id is null
+      // (common when user is currently acting as a client), fall back to ANY org roles
+      // so multi-role users can still switch roles.
       let userRoles: AppRole[] = [];
 
+      const fetchOrgRoles = async (organizationId?: string) => {
+        const q = supabase
+          .from('organization_member_roles')
+          .select('role')
+          .eq('user_id', userId);
+
+        return organizationId ? q.eq('organization_id', organizationId) : q;
+      };
+
       if (userProfile?.current_organization_id) {
-        // Fetch multiple roles from the new organization_member_roles table
         const memberRolesResult = await withTimeout(
-          () =>
-            supabase
-              .from('organization_member_roles')
-              .select('role')
-              .eq('user_id', userId)
-              .eq('organization_id', userProfile.current_organization_id),
+          () => fetchOrgRoles(userProfile.current_organization_id),
           8000
         );
 
@@ -293,7 +299,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             userRoles = [memberResult.data.role as AppRole];
           }
         }
+      } else {
+        // No org selected in profile — still include org-based roles to allow role switching.
+        const anyOrgRolesResult = await withTimeout(
+          () => fetchOrgRoles(),
+          8000
+        );
+
+        if (anyOrgRolesResult.error) {
+          console.warn('[auth] org member roles (any org) fetch error', anyOrgRolesResult.error);
+        }
+
+        if (anyOrgRolesResult.data && anyOrgRolesResult.data.length > 0) {
+          userRoles = anyOrgRolesResult.data.map((r) => r.role as AppRole);
+        }
       }
+
+      // Dedupe roles defensively
+      userRoles = Array.from(new Set(userRoles));
 
       // ALWAYS check if user is in client_users table - they should have client role
       // This runs regardless of other roles to ensure multi-role users get client access
