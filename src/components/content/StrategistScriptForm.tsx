@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useScriptPrompts } from "@/hooks/useScriptPrompts";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
@@ -1018,6 +1019,9 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const [newHook, setNewHook] = useState("");
   const [promptsOpen, setPromptsOpen] = useState(false);
   
+  // Load custom prompts from organization settings
+  const { prompts: customPrompts, loading: loadingPrompts } = useScriptPrompts(organizationId);
+  
   // Document content from Drive
   const [documentContent, setDocumentContent] = useState<DocumentContent>({
     brief: "",
@@ -1055,6 +1059,21 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     ai_provider: "lovable",
     ai_model: "google/gemini-2.5-flash",
   });
+
+  // Update prompts when custom prompts are loaded
+  useEffect(() => {
+    if (!loadingPrompts && customPrompts) {
+      setFormData(prev => ({
+        ...prev,
+        script_prompt: customPrompts.script,
+        editor_prompt: customPrompts.editor,
+        strategist_prompt: customPrompts.strategist,
+        trafficker_prompt: customPrompts.trafficker,
+        designer_prompt: customPrompts.designer,
+        admin_prompt: customPrompts.admin,
+      }));
+    }
+  }, [customPrompts, loadingPrompts]);
 
   const currentProvider = AI_PROVIDERS.find(p => p.value === formData.ai_provider);
   const availableModels = currentProvider?.models || [];
