@@ -7,9 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Save, RotateCcw, Sparkles, FileText, Users, Target, Palette, BarChart3, Settings2, ChevronDown, Info, Copy, Check } from 'lucide-react';
+import { Loader2, Save, RotateCcw, Sparkles, FileText, Users, Target, Palette, BarChart3, Settings2, ChevronDown, Info, Copy, Check, Blocks } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { DEFAULT_SCRIPT_PROMPTS } from '@/hooks/useScriptPrompts';
 
 interface ScriptPromptsConfigProps {
   organizationId: string;
@@ -27,6 +28,14 @@ interface PromptConfig {
   };
   format_rules: string;
   critical_rules: string;
+  full_prompts?: {
+    script: string;
+    editor: string;
+    strategist: string;
+    trafficker: string;
+    designer: string;
+    admin: string;
+  };
 }
 
 // All available template variables
@@ -173,6 +182,7 @@ export function ScriptPromptsConfig({ organizationId }: ScriptPromptsConfigProps
     role_prompts: DEFAULT_ROLE_PROMPTS,
     format_rules: DEFAULT_FORMAT_RULES,
     critical_rules: DEFAULT_CRITICAL_RULES,
+    full_prompts: DEFAULT_SCRIPT_PROMPTS,
   });
 
   useEffect(() => {
@@ -198,6 +208,7 @@ export function ScriptPromptsConfig({ organizationId }: ScriptPromptsConfigProps
           role_prompts: promptConfig.role_prompts || DEFAULT_ROLE_PROMPTS,
           format_rules: promptConfig.format_rules || DEFAULT_FORMAT_RULES,
           critical_rules: promptConfig.critical_rules || DEFAULT_CRITICAL_RULES,
+          full_prompts: promptConfig.full_prompts || DEFAULT_SCRIPT_PROMPTS,
         });
       }
     } catch (error) {
