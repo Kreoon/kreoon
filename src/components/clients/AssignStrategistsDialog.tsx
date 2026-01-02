@@ -54,22 +54,44 @@ export function AssignStrategistsDialog({
 
   const fetchStrategists = async () => {
     setLoading(true);
+    console.log('[AssignStrategistsDialog] Fetching strategists for org:', organizationId);
+    
     // Query organization_member_roles to get users with 'strategist' role
     const { data, error } = await supabase
       .from('organization_member_roles')
-      .select('user_id, profiles:user_id(id, full_name, avatar_url)')
+      .select('user_id')
       .eq('organization_id', organizationId)
       .eq('role', 'strategist');
 
-    if (!error && data) {
-      const list = data
-        .map(d => ({
-          id: (d.profiles as any)?.id,
-          full_name: (d.profiles as any)?.full_name || 'Sin nombre',
-          avatar_url: (d.profiles as any)?.avatar_url,
-        }))
-        .filter(s => s.id);
-      setStrategists(list);
+    console.log('[AssignStrategistsDialog] Role query result:', { data, error });
+
+    if (error) {
+      console.error('[AssignStrategistsDialog] Error fetching roles:', error);
+      setLoading(false);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const userIds = data.map(d => d.user_id);
+      console.log('[AssignStrategistsDialog] Found user IDs:', userIds);
+      
+      // Fetch profiles separately
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', userIds);
+
+      console.log('[AssignStrategistsDialog] Profiles result:', { profiles, profilesError });
+
+      if (!profilesError && profiles) {
+        setStrategists(profiles.map(p => ({
+          id: p.id,
+          full_name: p.full_name || 'Sin nombre',
+          avatar_url: p.avatar_url,
+        })));
+      }
+    } else {
+      setStrategists([]);
     }
     setLoading(false);
   };
