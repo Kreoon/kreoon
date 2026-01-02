@@ -79,9 +79,20 @@ const strategistSections: NavSection[] = [
   {
     label: "PRINCIPAL",
     items: [
-      { name: "Board", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-      { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
+      { name: "Board", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
+      { name: "Projects", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
+      { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+      { name: "UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
+      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
+      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
+    ]
+  },
+  {
+    label: "GESTIÓN",
+    items: [
+      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
+      { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
+      { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
     ]
   },
   {
