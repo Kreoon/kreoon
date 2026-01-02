@@ -175,3 +175,81 @@ export const CONTENT_TYPES = [
   { value: 'carousel', label: 'Carrusel' },
   { value: 'live', label: 'En Vivo' },
 ];
+
+// =====================================================
+// MÉTODO ESFERA - Fases y Configuración
+// =====================================================
+
+export type SpherePhase = 'engage' | 'solution' | 'remarketing' | 'fidelize';
+
+export interface SpherePhaseConfig {
+  value: SpherePhase;
+  label: string;
+  labelEs: string;
+  objective: string;
+  contentTypes: string[];
+  metrics: string[];
+  color: string;
+  bgColor: string;
+  icon: string;
+}
+
+export const SPHERE_PHASES: SpherePhaseConfig[] = [
+  {
+    value: 'engage',
+    label: 'ENGANCHAR',
+    labelEs: 'Enganchar',
+    objective: 'Captar atención y generar clic',
+    contentTypes: ['Hooks disruptivos', 'Problemas visibles', 'Patrones rotos'],
+    metrics: ['CTR', 'Scroll', 'Retención inicial'],
+    color: 'text-cyan-600 dark:text-cyan-400',
+    bgColor: 'bg-cyan-100 dark:bg-cyan-900',
+    icon: 'Zap',
+  },
+  {
+    value: 'solution',
+    label: 'SOLUCIÓN',
+    labelEs: 'Solución',
+    objective: 'Demostrar que el producto elimina el dolor',
+    contentTypes: ['Casos de uso', 'Demostraciones', 'Storytelling de transformación'],
+    metrics: ['Leads', 'Watch time', 'Intención'],
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-100 dark:bg-emerald-900',
+    icon: 'Lightbulb',
+  },
+  {
+    value: 'remarketing',
+    label: 'REMARKETING',
+    labelEs: 'Remarketing',
+    objective: 'Reimpactar usuarios tibios',
+    contentTypes: ['Prueba social', 'Objeciones', 'Comparativas'],
+    metrics: ['Conversión', 'CPA', 'ROAS'],
+    color: 'text-amber-600 dark:text-amber-400',
+    bgColor: 'bg-amber-100 dark:bg-amber-900',
+    icon: 'RefreshCw',
+  },
+  {
+    value: 'fidelize',
+    label: 'FIDELIZAR',
+    labelEs: 'Fidelizar',
+    objective: 'Aumentar LTV y comunidad',
+    contentTypes: ['Educación', 'Comunidad', 'Upsells', 'Referidos'],
+    metrics: ['Recompra', 'Engagement recurrente', 'Retención'],
+    color: 'text-purple-600 dark:text-purple-400',
+    bgColor: 'bg-purple-100 dark:bg-purple-900',
+    icon: 'Heart',
+  },
+];
+
+export const getSpherePhaseConfig = (phase: SpherePhase): SpherePhaseConfig => {
+  return SPHERE_PHASES.find(p => p.value === phase) || SPHERE_PHASES[0];
+};
+
+export interface EsferaPhaseData {
+  description: string;
+  objective: string;
+  content_types: string[];
+  metrics: string[];
+  tactics: string[];
+  angles: string[];
+}

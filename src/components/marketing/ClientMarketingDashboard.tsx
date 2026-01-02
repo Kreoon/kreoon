@@ -11,9 +11,14 @@ import {
   XCircle,
   DollarSign,
   Megaphone,
-  BarChart3
+  Layers,
+  Zap,
+  Lightbulb,
+  RefreshCw,
+  Heart
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SPHERE_PHASES, SpherePhase, getSpherePhaseConfig } from "./types";
 
 interface ClientMarketingDashboardProps {
   organizationId: string | null | undefined;
@@ -29,12 +34,20 @@ interface DashboardStats {
   inCampaignContent: number;
   activeCampaigns: number;
   totalInvestment: number;
-  funnelCoverage: {
-    tofu: number;
-    mofu: number;
-    bofu: number;
+  sphereCoverage: {
+    engage: number;
+    solution: number;
+    remarketing: number;
+    fidelize: number;
   };
 }
+
+const SPHERE_ICONS: Record<SpherePhase, React.ReactNode> = {
+  engage: <Zap className="h-4 w-4" />,
+  solution: <Lightbulb className="h-4 w-4" />,
+  remarketing: <RefreshCw className="h-4 w-4" />,
+  fidelize: <Heart className="h-4 w-4" />,
+};
 
 export function ClientMarketingDashboard({ organizationId, clientId }: ClientMarketingDashboardProps) {
   const [loading, setLoading] = useState(true);
@@ -67,7 +80,7 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
       // Fetch content stats
       const { data: contentData } = await supabase
         .from('content')
-        .select('id, strategy_status, funnel_stage')
+        .select('id, strategy_status, sphere_phase')
         .eq('organization_id', organizationId)
         .eq('client_id', clientId);
 
@@ -79,10 +92,11 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
       const pending = content.filter(c => c.strategy_status === 'pendiente_validacion').length;
       const inCampaign = content.filter(c => c.strategy_status === 'en_campaña').length;
 
-      // Count by funnel
-      const tofu = content.filter(c => c.funnel_stage === 'tofu').length;
-      const mofu = content.filter(c => c.funnel_stage === 'mofu').length;
-      const bofu = content.filter(c => c.funnel_stage === 'bofu').length;
+      // Count by sphere phase
+      const engage = content.filter(c => c.sphere_phase === 'engage').length;
+      const solution = content.filter(c => c.sphere_phase === 'solution').length;
+      const remarketing = content.filter(c => c.sphere_phase === 'remarketing').length;
+      const fidelize = content.filter(c => c.sphere_phase === 'fidelize').length;
 
       // Fetch campaigns
       const { data: campaigns } = await supabase
@@ -103,7 +117,7 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
         inCampaignContent: inCampaign,
         activeCampaigns,
         totalInvestment,
-        funnelCoverage: { tofu, mofu, bofu },
+        sphereCoverage: { engage, solution, remarketing, fidelize },
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -140,10 +154,10 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
 
   if (!stats) return null;
 
-  const totalFunnel = stats.funnelCoverage.tofu + stats.funnelCoverage.mofu + stats.funnelCoverage.bofu;
-  const tofuPercent = totalFunnel > 0 ? (stats.funnelCoverage.tofu / totalFunnel) * 100 : 0;
-  const mofuPercent = totalFunnel > 0 ? (stats.funnelCoverage.mofu / totalFunnel) * 100 : 0;
-  const bofuPercent = totalFunnel > 0 ? (stats.funnelCoverage.bofu / totalFunnel) * 100 : 0;
+  const totalSphere = stats.sphereCoverage.engage + stats.sphereCoverage.solution + 
+                      stats.sphereCoverage.remarketing + stats.sphereCoverage.fidelize;
+  
+  const getPhasePercent = (count: number) => totalSphere > 0 ? (count / totalSphere) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -235,70 +249,66 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
         </Card>
       </div>
 
-      {/* Funnel Coverage */}
+      {/* Sphere Coverage - Método Esfera */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Cobertura del Funnel
+            <Layers className="h-5 w-5" />
+            Cobertura Método Esfera
           </CardTitle>
           <CardDescription>
-            Distribución del contenido por etapa del embudo de ventas
+            Distribución del contenido por fase del Método Esfera
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <Badge className="bg-blue-500">TOFU</Badge>
-                  <span className="text-muted-foreground">Awareness</span>
-                </span>
-                <span className="font-medium">{stats.funnelCoverage.tofu} piezas ({tofuPercent.toFixed(0)}%)</span>
-              </div>
-              <Progress value={tofuPercent} className="h-2" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <Badge className="bg-amber-500">MOFU</Badge>
-                  <span className="text-muted-foreground">Consideration</span>
-                </span>
-                <span className="font-medium">{stats.funnelCoverage.mofu} piezas ({mofuPercent.toFixed(0)}%)</span>
-              </div>
-              <Progress value={mofuPercent} className="h-2" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <Badge className="bg-green-500">BOFU</Badge>
-                  <span className="text-muted-foreground">Decision</span>
-                </span>
-                <span className="font-medium">{stats.funnelCoverage.bofu} piezas ({bofuPercent.toFixed(0)}%)</span>
-              </div>
-              <Progress value={bofuPercent} className="h-2" />
-            </div>
+            {SPHERE_PHASES.map((phase) => {
+              const count = stats.sphereCoverage[phase.value];
+              const percent = getPhasePercent(count);
+              
+              return (
+                <div key={phase.value} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2">
+                      <Badge className={`${phase.bgColor} ${phase.color} gap-1`}>
+                        {SPHERE_ICONS[phase.value]}
+                        {phase.label}
+                      </Badge>
+                      <span className="text-muted-foreground">{phase.objective}</span>
+                    </span>
+                    <span className="font-medium">{count} piezas ({percent.toFixed(0)}%)</span>
+                  </div>
+                  <Progress value={percent} className="h-2" />
+                </div>
+              );
+            })}
           </div>
 
-          {/* Funnel Warnings */}
-          {totalFunnel > 0 && (
+          {/* Sphere Warnings */}
+          {totalSphere > 0 && (
             <div className="pt-4 border-t space-y-2">
-              {mofuPercent < 10 && (
-                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950 p-2 rounded">
+              {getPhasePercent(stats.sphereCoverage.solution) < 10 && (
+                <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950 p-2 rounded">
                   <TrendingUp className="h-4 w-4" />
-                  <span>Falta contenido MOFU. Considera crear piezas de consideración.</span>
+                  <span>Falta contenido SOLUCIÓN. Crea más demostraciones y casos de uso.</span>
                 </div>
               )}
-              {bofuPercent < 10 && (
+              {getPhasePercent(stats.sphereCoverage.remarketing) < 10 && (
                 <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950 p-2 rounded">
                   <TrendingUp className="h-4 w-4" />
-                  <span>Falta contenido BOFU. Necesitas más piezas de conversión.</span>
+                  <span>Falta contenido REMARKETING. Necesitas más prueba social y manejo de objeciones.</span>
                 </div>
               )}
-              {tofuPercent > 70 && (
-                <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 dark:bg-blue-950 p-2 rounded">
+              {getPhasePercent(stats.sphereCoverage.fidelize) < 5 && (
+                <div className="flex items-center gap-2 text-sm text-purple-600 bg-purple-50 dark:bg-purple-950 p-2 rounded">
                   <TrendingUp className="h-4 w-4" />
-                  <span>Exceso de TOFU. Balancea con contenido de consideración y decisión.</span>
+                  <span>Sin contenido FIDELIZAR. Considera crear contenido educativo y de comunidad.</span>
+                </div>
+              )}
+              {getPhasePercent(stats.sphereCoverage.engage) > 60 && (
+                <div className="flex items-center gap-2 text-sm text-cyan-600 bg-cyan-50 dark:bg-cyan-950 p-2 rounded">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Exceso de ENGANCHAR. Balancea con contenido de Solución y Remarketing.</span>
                 </div>
               )}
             </div>
