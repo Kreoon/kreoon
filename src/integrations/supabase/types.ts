@@ -3514,19 +3514,100 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_ai_insights: {
+        Row: {
+          action_taken: string | null
+          category: string | null
+          created_at: string | null
+          data_context: Json | null
+          description: string
+          id: string
+          insight_type: string
+          is_actionable: boolean | null
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          organization_id: string
+          related_campaign_id: string | null
+          related_channel_id: string | null
+          severity: string | null
+          title: string
+        }
+        Insert: {
+          action_taken?: string | null
+          category?: string | null
+          created_at?: string | null
+          data_context?: Json | null
+          description: string
+          id?: string
+          insight_type: string
+          is_actionable?: boolean | null
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          organization_id: string
+          related_campaign_id?: string | null
+          related_channel_id?: string | null
+          severity?: string | null
+          title: string
+        }
+        Update: {
+          action_taken?: string | null
+          category?: string | null
+          created_at?: string | null
+          data_context?: Json | null
+          description?: string
+          id?: string
+          insight_type?: string
+          is_actionable?: boolean | null
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          organization_id?: string
+          related_campaign_id?: string | null
+          related_channel_id?: string | null
+          severity?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_ai_insights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_ai_insights_related_campaign_id_fkey"
+            columns: ["related_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_ai_insights_related_channel_id_fkey"
+            columns: ["related_channel_id"]
+            isOneToOne: false
+            referencedRelation: "traffic_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
+          actual_result: Json | null
           budget: number | null
           campaign_type: string
+          channel_id: string | null
+          content_ids: string[] | null
           created_at: string
           created_by: string | null
           currency: string | null
           description: string | null
           end_date: string | null
+          expected_result: Json | null
           id: string
           marketing_client_id: string
           metrics: Json | null
           name: string
+          objective_details: string | null
           objectives: Json | null
           organization_id: string
           platforms: Json | null
@@ -3534,20 +3615,26 @@ export type Database = {
           start_date: string | null
           status: string
           strategist_id: string | null
+          tags: string[] | null
           updated_at: string
         }
         Insert: {
+          actual_result?: Json | null
           budget?: number | null
           campaign_type?: string
+          channel_id?: string | null
+          content_ids?: string[] | null
           created_at?: string
           created_by?: string | null
           currency?: string | null
           description?: string | null
           end_date?: string | null
+          expected_result?: Json | null
           id?: string
           marketing_client_id: string
           metrics?: Json | null
           name: string
+          objective_details?: string | null
           objectives?: Json | null
           organization_id: string
           platforms?: Json | null
@@ -3555,20 +3642,26 @@ export type Database = {
           start_date?: string | null
           status?: string
           strategist_id?: string | null
+          tags?: string[] | null
           updated_at?: string
         }
         Update: {
+          actual_result?: Json | null
           budget?: number | null
           campaign_type?: string
+          channel_id?: string | null
+          content_ids?: string[] | null
           created_at?: string
           created_by?: string | null
           currency?: string | null
           description?: string | null
           end_date?: string | null
+          expected_result?: Json | null
           id?: string
           marketing_client_id?: string
           metrics?: Json | null
           name?: string
+          objective_details?: string | null
           objectives?: Json | null
           organization_id?: string
           platforms?: Json | null
@@ -3576,9 +3669,17 @@ export type Database = {
           start_date?: string | null
           status?: string
           strategist_id?: string | null
+          tags?: string[] | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "traffic_channels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketing_campaigns_created_by_fkey"
             columns: ["created_by"]
@@ -3810,12 +3911,65 @@ export type Database = {
           },
         ]
       }
+      marketing_dashboard_config: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          estimated_roi: number | null
+          id: string
+          main_objective_period: string | null
+          main_objective_type: string | null
+          main_objective_value: number | null
+          monthly_investment: number | null
+          organization_id: string
+          updated_at: string | null
+          visible_widgets: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          estimated_roi?: number | null
+          id?: string
+          main_objective_period?: string | null
+          main_objective_type?: string | null
+          main_objective_value?: number | null
+          monthly_investment?: number | null
+          organization_id: string
+          updated_at?: string | null
+          visible_widgets?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          estimated_roi?: number | null
+          id?: string
+          main_objective_period?: string | null
+          main_objective_type?: string | null
+          main_objective_value?: number | null
+          monthly_investment?: number | null
+          organization_id?: string
+          updated_at?: string | null
+          visible_widgets?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_dashboard_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_reports: {
         Row: {
           campaign_ids: string[] | null
+          charts_data: Json | null
           created_at: string
           created_by: string | null
+          highlights: Json | null
           id: string
+          is_public: boolean | null
           marketing_client_id: string
           metrics: Json | null
           notes: string | null
@@ -3823,18 +3977,23 @@ export type Database = {
           period_end: string
           period_start: string
           platforms_data: Json | null
+          public_token: string | null
           published_at: string | null
           recommendations: string | null
           report_type: string
+          shared_with: string[] | null
           status: string
           title: string
           updated_at: string
         }
         Insert: {
           campaign_ids?: string[] | null
+          charts_data?: Json | null
           created_at?: string
           created_by?: string | null
+          highlights?: Json | null
           id?: string
+          is_public?: boolean | null
           marketing_client_id: string
           metrics?: Json | null
           notes?: string | null
@@ -3842,18 +4001,23 @@ export type Database = {
           period_end: string
           period_start: string
           platforms_data?: Json | null
+          public_token?: string | null
           published_at?: string | null
           recommendations?: string | null
           report_type?: string
+          shared_with?: string[] | null
           status?: string
           title: string
           updated_at?: string
         }
         Update: {
           campaign_ids?: string[] | null
+          charts_data?: Json | null
           created_at?: string
           created_by?: string | null
+          highlights?: Json | null
           id?: string
+          is_public?: boolean | null
           marketing_client_id?: string
           metrics?: Json | null
           notes?: string | null
@@ -3861,9 +4025,11 @@ export type Database = {
           period_end?: string
           period_start?: string
           platforms_data?: Json | null
+          public_token?: string | null
           published_at?: string | null
           recommendations?: string | null
           report_type?: string
+          shared_with?: string[] | null
           status?: string
           title?: string
           updated_at?: string
@@ -3885,6 +4051,84 @@ export type Database = {
           },
           {
             foreignKeyName: "marketing_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_strategies: {
+        Row: {
+          business_objective: string | null
+          business_objective_type: string | null
+          buyer_persona: Json | null
+          created_at: string | null
+          created_by: string | null
+          funnel_bofu: Json | null
+          funnel_mofu: Json | null
+          funnel_tofu: Json | null
+          id: string
+          main_offer: string | null
+          main_offer_details: Json | null
+          organization_id: string
+          status: string | null
+          strategic_kpis: Json | null
+          strategy_blocks: Json | null
+          updated_at: string | null
+          value_proposition: string | null
+          version: number | null
+        }
+        Insert: {
+          business_objective?: string | null
+          business_objective_type?: string | null
+          buyer_persona?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          funnel_bofu?: Json | null
+          funnel_mofu?: Json | null
+          funnel_tofu?: Json | null
+          id?: string
+          main_offer?: string | null
+          main_offer_details?: Json | null
+          organization_id: string
+          status?: string | null
+          strategic_kpis?: Json | null
+          strategy_blocks?: Json | null
+          updated_at?: string | null
+          value_proposition?: string | null
+          version?: number | null
+        }
+        Update: {
+          business_objective?: string | null
+          business_objective_type?: string | null
+          buyer_persona?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          funnel_bofu?: Json | null
+          funnel_mofu?: Json | null
+          funnel_tofu?: Json | null
+          id?: string
+          main_offer?: string | null
+          main_offer_details?: Json | null
+          organization_id?: string
+          status?: string | null
+          strategic_kpis?: Json | null
+          strategy_blocks?: Json | null
+          updated_at?: string | null
+          value_proposition?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_strategies_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_strategies_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -7411,6 +7655,169 @@ export type Database = {
           viewer_id?: string | null
         }
         Relationships: []
+      }
+      traffic_channels: {
+        Row: {
+          agency_name: string | null
+          api_config: Json | null
+          api_connected: boolean | null
+          channel_name: string
+          channel_type: string
+          created_at: string | null
+          currency: string | null
+          id: string
+          last_sync_at: string | null
+          monthly_budget: number | null
+          objective: string | null
+          organization_id: string
+          responsible_id: string | null
+          responsible_type: string | null
+          status: string | null
+          sync_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agency_name?: string | null
+          api_config?: Json | null
+          api_connected?: boolean | null
+          channel_name: string
+          channel_type: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          last_sync_at?: string | null
+          monthly_budget?: number | null
+          objective?: string | null
+          organization_id: string
+          responsible_id?: string | null
+          responsible_type?: string | null
+          status?: string | null
+          sync_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agency_name?: string | null
+          api_config?: Json | null
+          api_connected?: boolean | null
+          channel_name?: string
+          channel_type?: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          last_sync_at?: string | null
+          monthly_budget?: number | null
+          objective?: string | null
+          organization_id?: string
+          responsible_id?: string | null
+          responsible_type?: string | null
+          status?: string | null
+          sync_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "traffic_channels_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "traffic_channels_responsible_id_fkey"
+            columns: ["responsible_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      traffic_sync_logs: {
+        Row: {
+          channel_id: string | null
+          clicks: number | null
+          cpa: number | null
+          cpc: number | null
+          created_at: string | null
+          ctr: number | null
+          id: string
+          impressions: number | null
+          investment: number | null
+          leads: number | null
+          notes: string | null
+          organization_id: string
+          raw_data: Json | null
+          roas: number | null
+          sales: number | null
+          source_file: string | null
+          sync_date: string
+          sync_type: string
+          synced_by: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          clicks?: number | null
+          cpa?: number | null
+          cpc?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          investment?: number | null
+          leads?: number | null
+          notes?: string | null
+          organization_id: string
+          raw_data?: Json | null
+          roas?: number | null
+          sales?: number | null
+          source_file?: string | null
+          sync_date: string
+          sync_type: string
+          synced_by?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          clicks?: number | null
+          cpa?: number | null
+          cpc?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          investment?: number | null
+          leads?: number | null
+          notes?: string | null
+          organization_id?: string
+          raw_data?: Json | null
+          roas?: number | null
+          sales?: number | null
+          source_file?: string | null
+          sync_date?: string
+          sync_type?: string
+          synced_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "traffic_sync_logs_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "traffic_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "traffic_sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "traffic_sync_logs_synced_by_fkey"
+            columns: ["synced_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       up_ai_config: {
         Row: {
