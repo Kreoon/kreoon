@@ -13,9 +13,10 @@ import { es } from "date-fns/locale";
 
 interface MarketingReportsProps {
   organizationId: string | null | undefined;
+  selectedClientId?: string | null;
 }
 
-export function MarketingReports({ organizationId }: MarketingReportsProps) {
+export function MarketingReports({ organizationId, selectedClientId }: MarketingReportsProps) {
   const [reports, setReports] = useState<MarketingReport[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,13 +24,13 @@ export function MarketingReports({ organizationId }: MarketingReportsProps) {
     if (organizationId) {
       fetchReports();
     }
-  }, [organizationId]);
+  }, [organizationId, selectedClientId]);
 
   const fetchReports = async () => {
     if (!organizationId) return;
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('marketing_reports')
         .select(`
           *,
@@ -38,8 +39,14 @@ export function MarketingReports({ organizationId }: MarketingReportsProps) {
             client:clients(id, name, logo_url)
           )
         `)
-        .eq('organization_id', organizationId)
-        .order('created_at', { ascending: false });
+        .eq('organization_id', organizationId);
+      
+      // Filter by selected client if strategist has one selected
+      if (selectedClientId) {
+        query = query.eq('marketing_client.client_id', selectedClientId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       
