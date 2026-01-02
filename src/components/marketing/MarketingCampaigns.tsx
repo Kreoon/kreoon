@@ -8,6 +8,7 @@ import { Plus, Megaphone, Calendar, DollarSign, TrendingUp, MoreHorizontal, Play
 import { toast } from "sonner";
 import { MarketingCampaign, CAMPAIGN_TYPES, CAMPAIGN_STATUSES, PLATFORMS } from "./types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AddCampaignDialog } from "./AddCampaignDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -124,10 +125,7 @@ export function MarketingCampaigns({ organizationId }: MarketingCampaignsProps) 
             {campaigns.filter(c => c.status === 'active').length} campañas activas
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nueva Campaña
-        </Button>
+        <AddCampaignDialog organizationId={organizationId} onSuccess={fetchCampaigns} />
       </div>
 
       {/* Campaigns Grid */}
@@ -139,10 +137,7 @@ export function MarketingCampaigns({ organizationId }: MarketingCampaignsProps) 
             <p className="text-sm text-muted-foreground mb-4">
               Crea campañas para gestionar la publicidad de tus clientes
             </p>
-            <Button variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Crear primera campaña
-            </Button>
+            <AddCampaignDialog organizationId={organizationId} onSuccess={fetchCampaigns} />
           </CardContent>
         </Card>
       ) : (

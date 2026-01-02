@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Image, Video, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { MarketingCalendarItem, PLATFORMS, CONTENT_TYPES } from "./types";
+import { AddCalendarItemDialog } from "./AddCalendarItemDialog";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isToday } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -130,10 +131,7 @@ export function MarketingCalendar({ organizationId }: MarketingCalendarProps) {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Agregar Contenido
-        </Button>
+        <AddCalendarItemDialog organizationId={organizationId} onSuccess={fetchCalendarItems} />
       </div>
 
       {/* Calendar Grid */}

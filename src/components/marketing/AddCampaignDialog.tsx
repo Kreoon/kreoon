@@ -1,0 +1,279 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { CAMPAIGN_TYPES, PLATFORMS, MarketingClient } from "./types";
+import { useAuth } from "@/hooks/useAuth";
+
+interface AddCampaignDialogProps {
+  organizationId: string | null | undefined;
+  onSuccess: () => void;
+}
+
+export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDialogProps) {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [clients, setClients] = useState<MarketingClient[]>([]);
+  
+  const [formData, setFormData] = useState({
+    marketing_client_id: "",
+    name: "",
+    description: "",
+    campaign_type: "awareness",
+    budget: "",
+    currency: "COP",
+    start_date: "",
+    end_date: "",
+    platforms: [] as string[],
+  });
+
+  useEffect(() => {
+    if (open && organizationId) {
+      fetchClients();
+    }
+  }, [open, organizationId]);
+
+  const fetchClients = async () => {
+    if (!organizationId) return;
+
+    const { data, error } = await supabase
+      .from('marketing_clients')
+      .select(`
+        *,
+        client:clients(id, name, logo_url)
+      `)
+      .eq('organization_id', organizationId)
+      .eq('is_active', true);
+
+    if (!error && data) {
+      setClients(data as unknown as MarketingClient[]);
+    }
+  };
+
+  const togglePlatform = (platform: string) => {
+    setFormData(prev => ({
+      ...prev,
+      platforms: prev.platforms.includes(platform)
+        ? prev.platforms.filter(p => p !== platform)
+        : [...prev.platforms, platform]
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!organizationId || !user) return;
+
+    if (!formData.marketing_client_id || !formData.name) {
+      toast.error('Completa los campos requeridos');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('marketing_campaigns')
+        .insert({
+          organization_id: organizationId,
+          marketing_client_id: formData.marketing_client_id,
+          name: formData.name,
+          description: formData.description || null,
+          campaign_type: formData.campaign_type,
+          status: 'planning',
+          budget: parseFloat(formData.budget) || 0,
+          spent: 0,
+          currency: formData.currency,
+          start_date: formData.start_date || null,
+          end_date: formData.end_date || null,
+          platforms: formData.platforms,
+          objectives: [],
+          metrics: {},
+          created_by: user.id,
+        });
+
+      if (error) throw error;
+
+      toast.success('Campaña creada');
+      setOpen(false);
+      setFormData({
+        marketing_client_id: "",
+        name: "",
+        description: "",
+        campaign_type: "awareness",
+        budget: "",
+        currency: "COP",
+        start_date: "",
+        end_date: "",
+        platforms: [],
+      });
+      onSuccess();
+    } catch (error) {
+      console.error('Error creating campaign:', error);
+      toast.error('Error al crear campaña');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          Nueva Campaña
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Nueva Campaña</DialogTitle>
+          <DialogDescription>
+            Crea una campaña para gestionar publicidad
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="client">Cliente *</Label>
+            <Select
+              value={formData.marketing_client_id}
+              onValueChange={(value) => setFormData({ ...formData, marketing_client_id: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                {clients.map((mc) => (
+                  <SelectItem key={mc.id} value={mc.id}>
+                    {mc.client?.name || 'Cliente'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">Nombre de campaña *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Ej: Black Friday 2026"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Descripción</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Objetivos y detalles de la campaña"
+              rows={2}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="type">Tipo de campaña</Label>
+              <Select
+                value={formData.campaign_type}
+                onValueChange={(value) => setFormData({ ...formData, campaign_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CAMPAIGN_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="budget">Presupuesto</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="budget"
+                  type="number"
+                  value={formData.budget}
+                  onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                  placeholder="0"
+                  className="flex-1"
+                />
+                <Select
+                  value={formData.currency}
+                  onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                >
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="COP">COP</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="start">Fecha inicio</Label>
+              <Input
+                id="start"
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="end">Fecha fin</Label>
+              <Input
+                id="end"
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Plataformas</Label>
+            <div className="flex flex-wrap gap-2">
+              {PLATFORMS.map((platform) => (
+                <Button
+                  key={platform.value}
+                  type="button"
+                  variant={formData.platforms.includes(platform.value) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => togglePlatform(platform.value)}
+                >
+                  {platform.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Crear Campaña
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
