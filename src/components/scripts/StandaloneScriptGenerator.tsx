@@ -53,7 +53,7 @@ interface StandaloneFormData {
   reference_transcription: string;
   video_strategies: string;
   // Configuración IA
-  ai_provider: "lovable" | "openai" | "anthropic";
+  ai_provider: "openai" | "gemini" | "anthropic";
   ai_model: string;
 }
 
@@ -65,24 +65,24 @@ interface GenerationStep {
 
 const AI_PROVIDERS = [
   { 
-    value: "lovable", 
-    label: "Lovable AI", 
-    description: "Google Gemini & OpenAI GPT-5",
-    models: [
-      { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash (Recomendado)" },
-      { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-      { value: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite (Rápido)" },
-      { value: "openai/gpt-5", label: "GPT-5" },
-      { value: "openai/gpt-5-mini", label: "GPT-5 Mini" },
-    ]
-  },
-  { 
     value: "openai", 
     label: "OpenAI GPT", 
     description: "Requiere API Key",
     models: [
       { value: "gpt-4o", label: "GPT-4o (Recomendado)" },
       { value: "gpt-4o-mini", label: "GPT-4o Mini (Rápido)" },
+      { value: "gpt-5", label: "GPT-5" },
+      { value: "gpt-5-mini", label: "GPT-5 Mini" },
+    ]
+  },
+  { 
+    value: "gemini", 
+    label: "Google Gemini", 
+    description: "Requiere API Key",
+    models: [
+      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Recomendado)" },
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
     ]
   },
   { 
@@ -90,8 +90,9 @@ const AI_PROVIDERS = [
     label: "Anthropic Claude", 
     description: "Requiere API Key",
     models: [
-      { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4 (Recomendado)" },
-      { value: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku (Rápido)" },
+      { value: "claude-sonnet-4-5", label: "Claude Sonnet 4.5 (Recomendado)" },
+      { value: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet" },
+      { value: "claude-3-5-haiku", label: "Claude 3.5 Haiku (Rápido)" },
     ]
   },
 ];
@@ -167,8 +168,8 @@ export function StandaloneScriptGenerator() {
     research_content: "",
     reference_transcription: "",
     video_strategies: "",
-    ai_provider: "lovable",
-    ai_model: "google/gemini-2.5-flash",
+    ai_provider: "openai",
+    ai_model: "gpt-4o",
   });
 
   const currentProvider = AI_PROVIDERS.find(p => p.value === formData.ai_provider);
@@ -749,7 +750,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                 <Label>Proveedor</Label>
                 <Select
                   value={formData.ai_provider}
-                  onValueChange={(value: "lovable" | "openai" | "anthropic") => 
+                  onValueChange={(value: "openai" | "gemini" | "anthropic") => 
                     setFormData({ ...formData, ai_provider: value })
                   }
                 >
