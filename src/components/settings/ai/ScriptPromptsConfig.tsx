@@ -78,6 +78,7 @@ Tu función principal es convertir la información del formulario en prompts cla
 🎯 ESTRATEGIA: {producto_estrategia}
 👤 AVATAR: {producto_avatar}`;
 
+// Short role descriptions (legacy, kept for backwards compatibility)
 const DEFAULT_ROLE_PROMPTS = {
   creator: '📦 GENERANDO: BLOQUE CREADOR 🎥 - Guion estructurado por escenas, listo para grabar.',
   editor: '📦 GENERANDO: BLOQUE EDITOR ✂️ - Pensado para edición fluida y rápida.',
@@ -85,6 +86,16 @@ const DEFAULT_ROLE_PROMPTS = {
   trafficker: '📦 GENERANDO: BLOQUE TRAFFICKER 📊 - Pensado para escalar en pauta.',
   designer: '📦 GENERANDO: BLOQUE DISEÑADOR 🎨 - Guía visual clara.',
   admin: '📦 GENERANDO: BLOQUE ADMIN / PROJECT MANAGER 📅 - Control y ejecución.',
+};
+
+// Map between role keys used in config vs full prompts
+const ROLE_TO_PROMPT_KEY: Record<string, keyof typeof DEFAULT_SCRIPT_PROMPTS> = {
+  creator: 'script',
+  editor: 'editor',
+  strategist: 'strategist',
+  trafficker: 'trafficker',
+  designer: 'designer',
+  admin: 'admin',
 };
 
 const DEFAULT_FORMAT_RULES = `🎨 FORMATO VISUAL DEL RESULTADO (OBLIGATORIO):
@@ -271,6 +282,7 @@ export function ScriptPromptsConfig({ organizationId }: ScriptPromptsConfigProps
       role_prompts: DEFAULT_ROLE_PROMPTS,
       format_rules: DEFAULT_FORMAT_RULES,
       critical_rules: DEFAULT_CRITICAL_RULES,
+      full_prompts: DEFAULT_SCRIPT_PROMPTS,
     });
     toast.info('Prompts restaurados a los valores por defecto');
   };
@@ -437,26 +449,54 @@ export function ScriptPromptsConfig({ organizationId }: ScriptPromptsConfigProps
 
             <TabsContent value="roles" className="space-y-4">
               <div>
-                <Label className="text-base font-medium">Prompts por Rol</Label>
+                <Label className="text-base font-medium">Prompts Completos por Rol</Label>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Personaliza el prompt adicional que se usa para cada tipo de rol al generar guiones.
+                  Estos son los prompts completos que se envían a la IA para generar cada bloque del guión.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-6">
                   {Object.entries(ROLE_LABELS).map(([role, label]) => {
                     const Icon = ROLE_ICONS[role as keyof typeof ROLE_ICONS];
+                    const promptKey = ROLE_TO_PROMPT_KEY[role];
+                    const fullPromptValue = config.full_prompts?.[promptKey] || DEFAULT_SCRIPT_PROMPTS[promptKey] || '';
+                    
                     return (
-                      <div key={role} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-muted-foreground" />
-                          <Label className="font-medium">{label}</Label>
-                        </div>
-                        <Textarea
-                          value={config.role_prompts[role as keyof typeof DEFAULT_ROLE_PROMPTS]}
-                          onChange={(e) => updateRolePrompt(role as keyof typeof DEFAULT_ROLE_PROMPTS, e.target.value)}
-                          className="min-h-[100px] font-mono text-sm"
-                          disabled={!useCustomPrompts}
-                        />
-                      </div>
+                      <Collapsible key={role} className="border rounded-lg">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-primary/10">
+                              <Icon className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="text-left">
+                              <span className="font-medium">{label}</span>
+                              <p className="text-xs text-muted-foreground">
+                                {config.role_prompts[role as keyof typeof DEFAULT_ROLE_PROMPTS]}
+                              </p>
+                            </div>
+                          </div>
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="p-4 pt-0">
+                          <Textarea
+                            value={fullPromptValue}
+                            onChange={(e) => {
+                              setConfig(prev => ({
+                                ...prev,
+                                full_prompts: {
+                                  ...DEFAULT_SCRIPT_PROMPTS,
+                                  ...prev.full_prompts,
+                                  [promptKey]: e.target.value,
+                                },
+                              }));
+                            }}
+                            className="min-h-[400px] font-mono text-xs"
+                            placeholder={`Prompt completo para ${label}...`}
+                            disabled={!useCustomPrompts}
+                          />
+                          <p className="text-xs text-muted-foreground mt-2">
+                            💡 Este es el prompt real que se envía a la IA. Usa las variables de plantilla para personalizar.
+                          </p>
+                        </CollapsibleContent>
+                      </Collapsible>
                     );
                   })}
                 </div>
