@@ -4,12 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Building2, DollarSign, Target, Users, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Plus, Building2, DollarSign, Target, Users, MoreHorizontal, Pencil, Trash2, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { MarketingClient, SERVICE_TYPES, PLATFORMS } from "./types";
 import { AddMarketingClientDialog } from "./AddMarketingClientDialog";
 import { EditMarketingClientDialog } from "./EditMarketingClientDialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AssignStrategistDialog } from "./AssignStrategistDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface MarketingClientsProps {
@@ -21,6 +22,7 @@ export function MarketingClients({ organizationId }: MarketingClientsProps) {
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingClient, setEditingClient] = useState<MarketingClient | null>(null);
+  const [assigningClient, setAssigningClient] = useState<MarketingClient | null>(null);
 
   useEffect(() => {
     if (organizationId) {
@@ -165,10 +167,15 @@ export function MarketingClients({ organizationId }: MarketingClientsProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setAssigningClient(client)}>
+                        <UserCog className="h-4 w-4 mr-2" />
+                        Asignar Equipo
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setEditingClient(client)}>
                         <Pencil className="h-4 w-4 mr-2" />
                         Editar
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         className="text-destructive"
                         onClick={() => handleDelete(client.id)}
@@ -241,6 +248,16 @@ export function MarketingClients({ organizationId }: MarketingClientsProps) {
         open={!!editingClient}
         onOpenChange={(open) => !open && setEditingClient(null)}
         client={editingClient}
+        organizationId={organizationId}
+        onSuccess={fetchClients}
+      />
+
+      {/* Assign Team Dialog */}
+      <AssignStrategistDialog
+        open={!!assigningClient}
+        onOpenChange={(open) => !open && setAssigningClient(null)}
+        clientId={assigningClient?.client_id || ''}
+        clientName={assigningClient?.client?.name || 'Cliente'}
         organizationId={organizationId}
         onSuccess={fetchClients}
       />
