@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { SPHERE_PHASES, SpherePhase, getSpherePhaseConfig } from "./types";
-import { HLSVideoPlayer } from "@/components/video/HLSVideoPlayer";
+import { HLSVideoPlayer, getBunnyThumbnail } from "@/components/video/HLSVideoPlayer";
 import { ContentAIAnalysis } from "@/components/content/ContentAIAnalysis";
 
 interface ContentItem {
@@ -255,7 +255,11 @@ export function ContentValidationDialog({
                         {(content.video_url || content.bunny_embed_url) ? (
                           <HLSVideoPlayer
                             src={content.video_url || content.bunny_embed_url || ''}
-                            poster={content.thumbnail_url || undefined}
+                            poster={
+                              content.thumbnail_url ||
+                              getBunnyThumbnail(content.video_url || content.bunny_embed_url || '') ||
+                              undefined
+                            }
                             autoPlay={false}
                             muted={true}
                             loop={true}
