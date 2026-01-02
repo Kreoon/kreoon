@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye, Castle, Medal, UserCog } from "lucide-react";
+import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye, Castle, Medal, UserCog, Lightbulb } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { VipBadge } from "@/components/ui/vip-badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ import { es } from "date-fns/locale";
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { ClientUsersDialog } from "@/components/clients/ClientUsersDialog";
 import { AssignStrategistsDialog } from "@/components/clients/AssignStrategistsDialog";
+import { ClientServicesDialog } from "@/components/clients/ClientServicesDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +98,8 @@ const Clients = () => {
   const [selectedClientForUsers, setSelectedClientForUsers] = useState<Client | null>(null);
   const [strategistsDialogOpen, setStrategistsDialogOpen] = useState(false);
   const [selectedClientForStrategists, setSelectedClientForStrategists] = useState<Client | null>(null);
+  const [servicesDialogOpen, setServicesDialogOpen] = useState(false);
+  const [selectedClientForServices, setSelectedClientForServices] = useState<Client | null>(null);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -539,18 +542,32 @@ const Clients = () => {
                             {client.users_count} usuario{client.users_count !== 1 ? 's' : ''}
                           </Badge>
                           {isAdmin && (
-                            <Badge 
-                              variant="secondary" 
-                              className="text-xs cursor-pointer hover:bg-secondary/80"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedClientForStrategists(client);
-                                setStrategistsDialogOpen(true);
-                              }}
-                            >
-                              <UserCog className="h-3 w-3 mr-1" />
-                              Estrategas
-                            </Badge>
+                            <>
+                              <Badge 
+                                variant="secondary" 
+                                className="text-xs cursor-pointer hover:bg-secondary/80"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedClientForStrategists(client);
+                                  setStrategistsDialogOpen(true);
+                                }}
+                              >
+                                <UserCog className="h-3 w-3 mr-1" />
+                                Estrategas
+                              </Badge>
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs cursor-pointer hover:bg-primary/10 border-primary/30"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedClientForServices(client);
+                                  setServicesDialogOpen(true);
+                                }}
+                              >
+                                <Lightbulb className="h-3 w-3 mr-1" />
+                                Servicios
+                              </Badge>
+                            </>
                           )}
                         </div>
                       </div>
@@ -904,6 +921,20 @@ const Clients = () => {
           clientId={selectedClientForStrategists.id}
           clientName={selectedClientForStrategists.name}
           organizationId={currentOrgId}
+          onSuccess={fetchClients}
+        />
+      )}
+
+      {/* Client Services Dialog */}
+      {selectedClientForServices && (
+        <ClientServicesDialog
+          open={servicesDialogOpen}
+          onOpenChange={(open) => {
+            setServicesDialogOpen(open);
+            if (!open) setSelectedClientForServices(null);
+          }}
+          clientId={selectedClientForServices.id}
+          clientName={selectedClientForServices.name}
           onSuccess={fetchClients}
         />
       )}

@@ -1637,7 +1637,11 @@ export type Database = {
           organization_id: string | null
           portfolio_url: string | null
           profile_completed: boolean | null
+          strategy_service_enabled: boolean | null
+          strategy_service_started_at: string | null
           tiktok: string | null
+          traffic_service_enabled: boolean | null
+          traffic_service_started_at: string | null
           updated_at: string | null
           user_id: string | null
           username: string | null
@@ -1669,7 +1673,11 @@ export type Database = {
           organization_id?: string | null
           portfolio_url?: string | null
           profile_completed?: boolean | null
+          strategy_service_enabled?: boolean | null
+          strategy_service_started_at?: string | null
           tiktok?: string | null
+          traffic_service_enabled?: boolean | null
+          traffic_service_started_at?: string | null
           updated_at?: string | null
           user_id?: string | null
           username?: string | null
@@ -1701,7 +1709,11 @@ export type Database = {
           organization_id?: string | null
           portfolio_url?: string | null
           profile_completed?: boolean | null
+          strategy_service_enabled?: boolean | null
+          strategy_service_started_at?: string | null
           tiktok?: string | null
+          traffic_service_enabled?: boolean | null
+          traffic_service_started_at?: string | null
           updated_at?: string | null
           user_id?: string | null
           username?: string | null
