@@ -10,6 +10,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CAMPAIGN_TYPES, PLATFORMS, MarketingClient } from "./types";
 import { useAuth } from "@/hooks/useAuth";
+import { ContentSelector } from "./ContentSelector";
 
 interface AddCampaignDialogProps {
   organizationId: string | null | undefined;
@@ -32,6 +33,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
     start_date: "",
     end_date: "",
     platforms: [] as string[],
+    content_ids: [] as string[],
   });
 
   useEffect(() => {
@@ -92,6 +94,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
           start_date: formData.start_date || null,
           end_date: formData.end_date || null,
           platforms: formData.platforms,
+          content_ids: formData.content_ids,
           objectives: [],
           metrics: {},
           created_by: user.id,
@@ -111,6 +114,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
         start_date: "",
         end_date: "",
         platforms: [],
+        content_ids: [],
       });
       onSuccess();
     } catch (error) {
@@ -261,6 +265,20 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
                 </Button>
               ))}
             </div>
+          </div>
+
+          {/* Content Selector */}
+          <div className="space-y-2">
+            <Label>Contenido Aprobado (opcional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Vincula contenido ya aprobado para usar en esta campaña
+            </p>
+            <ContentSelector
+              organizationId={organizationId}
+              clientId={clients.find(c => c.id === formData.marketing_client_id)?.client_id}
+              selectedContentIds={formData.content_ids}
+              onSelectionChange={(ids) => setFormData({ ...formData, content_ids: ids })}
+            />
           </div>
 
           <DialogFooter>
