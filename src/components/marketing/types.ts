@@ -69,6 +69,7 @@ export interface CampaignMetrics {
   conversion_rate?: number;
   cost_per_conversion?: number;
   spend?: number;
+  leads?: number;
 }
 
 export interface MarketingCalendarItem {
@@ -114,12 +115,13 @@ export interface MarketingReport {
   organization_id: string;
   marketing_client_id: string;
   title: string;
-  report_type: 'weekly' | 'monthly' | 'campaign' | 'custom';
+  report_type: 'weekly' | 'monthly' | 'quarterly' | 'campaign' | 'custom';
   period_start: string;
   period_end: string;
   metrics: CampaignMetrics;
   platforms_data: Record<string, CampaignMetrics>;
   campaign_ids: string[];
+  highlights: string[];
   status: 'draft' | 'published';
   published_at: string | null;
   notes: string | null;
