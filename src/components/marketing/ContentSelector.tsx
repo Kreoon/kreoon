@@ -50,9 +50,21 @@ export function ContentSelector({
     setLoading(true);
     
     let query = supabase
-      .from('marketing_available_content')
-      .select('*')
+      .from('content')
+      .select(`
+        id,
+        title,
+        description,
+        video_url,
+        thumbnail_url,
+        status,
+        content_type,
+        approved_at,
+        client_id,
+        clients(id, name, logo_url)
+      `)
       .eq('organization_id', organizationId)
+      .in('status', ['approved', 'paid', 'delivered'])
       .order('approved_at', { ascending: false });
 
     if (clientId) {
@@ -62,7 +74,20 @@ export function ContentSelector({
     const { data, error } = await query.limit(50);
 
     if (!error && data) {
-      setContent(data as AvailableContent[]);
+      const mappedContent: AvailableContent[] = data.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        video_url: item.video_url,
+        thumbnail_url: item.thumbnail_url,
+        status: item.status || 'approved',
+        content_type: item.content_type,
+        approved_at: item.approved_at,
+        client_id: item.client_id,
+        client_name: (item.clients as any)?.name || null,
+        client_logo: (item.clients as any)?.logo_url || null,
+      }));
+      setContent(mappedContent);
     }
     setLoading(false);
   };
