@@ -31,9 +31,12 @@ import {
   RefreshCw,
   Heart,
   Layers,
+  Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SPHERE_PHASES, SpherePhase, getSpherePhaseConfig } from "./types";
+import { HLSVideoPlayer } from "@/components/video/HLSVideoPlayer";
+import { ContentAIAnalysis } from "@/components/content/ContentAIAnalysis";
 
 interface ContentItem {
   id: string;
@@ -221,7 +224,7 @@ export function ContentValidationDialog({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="preview" className="gap-2">
               <Play className="h-4 w-4" />
               Preview
@@ -229,6 +232,10 @@ export function ContentValidationDialog({
             <TabsTrigger value="details" className="gap-2">
               <Target className="h-4 w-4" />
               Detalles
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="gap-2">
+              <Brain className="h-4 w-4" />
+              Análisis IA
             </TabsTrigger>
             <TabsTrigger value="validation" className="gap-2">
               <CheckCircle className="h-4 w-4" />
@@ -244,12 +251,18 @@ export function ContentValidationDialog({
                 <div className="space-y-4">
                   <Card>
                     <CardContent className="p-0 overflow-hidden rounded-lg">
-                      <div className="aspect-video bg-muted relative">
-                        {content.video_url ? (
-                          <video 
-                            src={content.video_url} 
-                            controls 
-                            className="w-full h-full object-contain"
+                      <div className="aspect-[9/16] max-h-[400px] bg-black relative">
+                        {(content.video_url || content.bunny_embed_url) ? (
+                          <HLSVideoPlayer
+                            src={content.video_url || content.bunny_embed_url || ''}
+                            poster={content.thumbnail_url || undefined}
+                            autoPlay={false}
+                            muted={true}
+                            loop={true}
+                            aspectRatio="9:16"
+                            objectFit="contain"
+                            showControls={true}
+                            className="w-full h-full"
                           />
                         ) : content.thumbnail_url ? (
                           <img 
@@ -412,6 +425,19 @@ export function ContentValidationDialog({
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            {/* AI Analysis Tab */}
+            <TabsContent value="ai" className="space-y-4">
+              {organizationId && content.id && (
+                <ContentAIAnalysis
+                  contentId={content.id}
+                  organizationId={organizationId}
+                  videoUrl={content.video_url || content.bunny_embed_url || undefined}
+                  script={content.script || undefined}
+                  spherePhase={content.sphere_phase || undefined}
+                />
+              )}
             </TabsContent>
 
             {/* Validation Tab */}
