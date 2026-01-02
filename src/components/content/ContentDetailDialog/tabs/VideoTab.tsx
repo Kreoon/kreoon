@@ -10,6 +10,7 @@ import { AutoPauseVideo } from '@/components/content/AutoPauseVideo';
 import { ThumbnailSelector } from '@/components/content/ThumbnailSelector';
 import { AIThumbnailGenerator } from '@/components/content/AIThumbnailGenerator';
 import { CommentsSection } from '@/components/content/CommentsSection';
+import { ContentAIAnalysis } from '@/components/content/ContentAIAnalysis';
 import { PermissionsGate, EditableField } from '../components/PermissionsGate';
 import { SectionCard } from '../components/SectionCard';
 import { TabProps } from '../types';
@@ -233,6 +234,37 @@ export function VideoTab({
           <CommentsSection contentId={content?.id || ''} />
         </div>
       </div>
+
+      {/* AI Content Analysis */}
+      {content?.id && currentOrgId && (
+        <SectionCard title="Análisis IA de Contenido" iconEmoji="🧠">
+          <ContentAIAnalysis
+            contentId={content.id}
+            organizationId={currentOrgId}
+            videoUrl={formData.video_urls?.[0]}
+            product={selectedProduct ? {
+              name: selectedProduct.name,
+              description: selectedProduct.description,
+              strategy: selectedProduct.strategy,
+              market_research: selectedProduct.market_research,
+              ideal_avatar: selectedProduct.ideal_avatar,
+              sales_angles: selectedProduct.sales_angles,
+            } : undefined}
+            client={content.client ? {
+              name: content.client.name,
+            } : undefined}
+            script={formData.script}
+            spherePhase={formData.sphere_phase}
+            guidelines={{
+              editor: formData.editor_guidelines,
+              strategist: formData.strategist_guidelines,
+              trafficker: formData.trafficker_guidelines,
+              designer: formData.designer_guidelines,
+              admin: formData.admin_guidelines,
+            }}
+          />
+        </SectionCard>
+      )}
 
       {/* Notes */}
       <SectionCard title="Notas Adicionales">
