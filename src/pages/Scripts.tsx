@@ -8,15 +8,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Search, FileText, Video, BarChart3, Brain, Palette, Calendar,
-  Scroll, RefreshCw 
+  Scroll, RefreshCw, Sparkles, FolderOpen
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ScriptBlockCard } from "@/components/scripts/ScriptBlockCard";
 import { ScriptDetailPanel } from "@/components/scripts/ScriptDetailPanel";
+import { StandaloneScriptGenerator } from "@/components/scripts/StandaloneScriptGenerator";
 import { cn } from "@/lib/utils";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 
 type BlockType = 'creator' | 'editor' | 'trafficker' | 'strategist' | 'designer' | 'admin';
+type MainTab = 'generator' | 'library';
 
 const tabConfig: { id: BlockType; label: string; icon: typeof FileText; shortLabel: string }[] = [
   { id: 'creator', label: 'Creador', shortLabel: 'Creador', icon: FileText },
@@ -29,6 +31,7 @@ const tabConfig: { id: BlockType; label: string; icon: typeof FileText; shortLab
 
 const Scripts = () => {
   const { currentOrgId, loading: orgLoading } = useOrgOwner();
+  const [mainTab, setMainTab] = useState<MainTab>('generator');
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<BlockType>('creator');
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
@@ -115,133 +118,157 @@ const Scripts = () => {
         <PageHeader
           icon={Scroll}
           title="KREOON IA"
-          subtitle="Gestiona guiones, instrucciones y automatizaciones IA"
+          subtitle="Genera guiones profesionales para cualquier producto o servicio"
           action={
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => refetch()}
-              className="gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline">Actualizar</span>
-            </Button>
+            mainTab === 'library' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => refetch()}
+                className="gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span className="hidden sm:inline">Actualizar</span>
+              </Button>
+            )
           }
         />
 
-        {/* Search */}
-        <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input 
-            type="text"
-            placeholder="Buscar por título, cliente o producto..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as BlockType)} className="w-full">
-          <TabsList className="w-full flex-wrap h-auto gap-1 p-1 bg-muted/50">
-            {tabConfig.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <TabsTrigger 
-                  key={tab.id} 
-                  value={tab.id}
-                  className="flex-1 min-w-[80px] gap-1.5 data-[state=active]:shadow-sm py-2"
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  <span className="sm:hidden text-xs">{tab.shortLabel}</span>
-                </TabsTrigger>
-              );
-            })}
+        {/* Main Tabs: Generator vs Library */}
+        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as MainTab)} className="w-full">
+          <TabsList className="w-full max-w-md">
+            <TabsTrigger value="generator" className="flex-1 gap-2">
+              <Sparkles className="h-4 w-4" />
+              Generador
+            </TabsTrigger>
+            <TabsTrigger value="library" className="flex-1 gap-2">
+              <FolderOpen className="h-4 w-4" />
+              Biblioteca
+            </TabsTrigger>
           </TabsList>
 
-          {/* Content area - List + Detail panel */}
-          <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ minHeight: '600px' }}>
-            {/* Left: Content list */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  {contentsWithBlock.length + contentsWithoutBlock.length} contenidos
-                </h3>
-              </div>
+          {/* Generator Tab */}
+          <TabsContent value="generator" className="mt-6">
+            <StandaloneScriptGenerator />
+          </TabsContent>
 
-              <ScrollArea className="h-[550px] pr-2">
-                {isLoading ? (
-                  <div className="space-y-3">
-                    {[...Array(5)].map((_, i) => (
-                      <Skeleton key={i} className="h-[120px] w-full rounded-lg" />
-                    ))}
-                  </div>
-                ) : filteredContents.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Search className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                    <p>No se encontraron contenidos</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {/* Contents with block generated */}
-                    {contentsWithBlock.length > 0 && (
-                      <>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                          Con bloque generado ({contentsWithBlock.length})
-                        </p>
-                        {contentsWithBlock.map((content) => (
-                          <ScriptBlockCard
-                            key={content.id}
-                            content={content as any}
-                            blockType={activeTab}
-                            onClick={() => setSelectedContentId(content.id)}
-                            isSelected={selectedContentId === content.id}
-                          />
-                        ))}
-                      </>
-                    )}
-
-                    {/* Separator */}
-                    {contentsWithBlock.length > 0 && contentsWithoutBlock.length > 0 && (
-                      <div className="py-2" />
-                    )}
-
-                    {/* Contents without block */}
-                    {contentsWithoutBlock.length > 0 && (
-                      <>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                          Sin bloque ({contentsWithoutBlock.length})
-                        </p>
-                        {contentsWithoutBlock.map((content) => (
-                          <ScriptBlockCard
-                            key={content.id}
-                            content={content as any}
-                            blockType={activeTab}
-                            onClick={() => setSelectedContentId(content.id)}
-                            isSelected={selectedContentId === content.id}
-                          />
-                        ))}
-                      </>
-                    )}
-                  </div>
-                )}
-              </ScrollArea>
-            </div>
-
-            {/* Right: Detail panel */}
-            <div className="hidden lg:block h-[600px]">
-              <ScriptDetailPanel
-                content={selectedContent as any}
-                blockType={activeTab}
-                onClose={() => setSelectedContentId(null)}
+          {/* Library Tab */}
+          <TabsContent value="library" className="mt-6 space-y-4">
+            {/* Search */}
+            <div className="relative w-full md:max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                type="text"
+                placeholder="Buscar por título, cliente o producto..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
               />
             </div>
-          </div>
+
+            {/* Block Type Tabs */}
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as BlockType)} className="w-full">
+              <TabsList className="w-full flex-wrap h-auto gap-1 p-1 bg-muted/50">
+                {tabConfig.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <TabsTrigger 
+                      key={tab.id} 
+                      value={tab.id}
+                      className="flex-1 min-w-[80px] gap-1.5 data-[state=active]:shadow-sm py-2"
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="hidden sm:inline">{tab.label}</span>
+                      <span className="sm:hidden text-xs">{tab.shortLabel}</span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+
+              {/* Content area - List + Detail panel */}
+              <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ minHeight: '600px' }}>
+                {/* Left: Content list */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {contentsWithBlock.length + contentsWithoutBlock.length} contenidos
+                    </h3>
+                  </div>
+
+                  <ScrollArea className="h-[550px] pr-2">
+                    {isLoading ? (
+                      <div className="space-y-3">
+                        {[...Array(5)].map((_, i) => (
+                          <Skeleton key={i} className="h-[120px] w-full rounded-lg" />
+                        ))}
+                      </div>
+                    ) : filteredContents.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Search className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                        <p>No se encontraron contenidos</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {/* Contents with block generated */}
+                        {contentsWithBlock.length > 0 && (
+                          <>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                              Con bloque generado ({contentsWithBlock.length})
+                            </p>
+                            {contentsWithBlock.map((content) => (
+                              <ScriptBlockCard
+                                key={content.id}
+                                content={content as any}
+                                blockType={activeTab}
+                                onClick={() => setSelectedContentId(content.id)}
+                                isSelected={selectedContentId === content.id}
+                              />
+                            ))}
+                          </>
+                        )}
+
+                        {/* Separator */}
+                        {contentsWithBlock.length > 0 && contentsWithoutBlock.length > 0 && (
+                          <div className="py-2" />
+                        )}
+
+                        {/* Contents without block */}
+                        {contentsWithoutBlock.length > 0 && (
+                          <>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                              Sin bloque ({contentsWithoutBlock.length})
+                            </p>
+                            {contentsWithoutBlock.map((content) => (
+                              <ScriptBlockCard
+                                key={content.id}
+                                content={content as any}
+                                blockType={activeTab}
+                                onClick={() => setSelectedContentId(content.id)}
+                                isSelected={selectedContentId === content.id}
+                              />
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
+
+                {/* Right: Detail panel */}
+                <div className="hidden lg:block h-[600px]">
+                  <ScriptDetailPanel
+                    content={selectedContent as any}
+                    blockType={activeTab}
+                    onClose={() => setSelectedContentId(null)}
+                  />
+                </div>
+              </div>
+            </Tabs>
+          </TabsContent>
         </Tabs>
 
         {/* Mobile detail panel (full screen modal) */}
-        {selectedContentId && (
+        {mainTab === 'library' && selectedContentId && (
           <div className="lg:hidden fixed inset-0 z-50 bg-background p-4">
             <div className="h-full">
               <ScriptDetailPanel
