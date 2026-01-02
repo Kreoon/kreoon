@@ -14,6 +14,7 @@ import { es } from "date-fns/locale";
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { ClientUsersDialog } from "@/components/clients/ClientUsersDialog";
 import { AssignStrategistsDialog } from "@/components/clients/AssignStrategistsDialog";
+import { ClientCard } from "@/components/clients/ClientCard";
 import { ClientServicesDialog } from "@/components/clients/ClientServicesDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -483,151 +484,27 @@ const Clients = () => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredClients.map((client) => (
-                  <div 
+                  <ClientCard
                     key={client.id}
-                    onClick={() => setSelectedClient(client)}
-                    className={`group rounded-xl border p-5 transition-all duration-200 hover:shadow-lg cursor-pointer ${
-                      client.is_internal_brand 
-                        ? 'border-amber-500/50 bg-gradient-to-br from-amber-500/10 to-amber-600/5 hover:border-amber-500' 
-                        : 'border-border bg-card hover:border-primary/20'
-                    }`}
-                  >
-                    {client.is_internal_brand && (
-                      <div className="flex items-center gap-1.5 mb-3">
-                        <Medal className="h-4 w-4 text-amber-500" />
-                        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">Marca Interna</span>
-                      </div>
-                    )}
-                    <div className="flex items-start gap-4 mb-4">
-                      {client.logo_url ? (
-                        <img 
-                          src={client.logo_url} 
-                          alt={client.name}
-                          className={`h-14 w-14 rounded-lg object-cover ring-1 ${client.is_internal_brand ? 'ring-amber-500/50' : 'ring-border'}`}
-                        />
-                      ) : (
-                        <div className={`h-14 w-14 rounded-lg flex items-center justify-center ring-1 ${
-                          client.is_internal_brand 
-                            ? 'bg-amber-500/20 ring-amber-500/50' 
-                            : 'bg-primary/10 ring-border'
-                        }`}>
-                          {client.is_internal_brand ? (
-                            <Medal className="h-6 w-6 text-amber-500" />
-                          ) : (
-                            <Building2 className="h-6 w-6 text-primary" />
-                          )}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-card-foreground truncate">{client.name}</h3>
-                          {client.is_vip && <VipBadge size="xs" variant="minimal" />}
-                        </div>
-                        {client.contact_email && (
-                          <p className="text-xs text-muted-foreground truncate">{client.contact_email}</p>
-                        )}
-                        <div className="flex items-center gap-1 mt-1">
-                          <Badge 
-                            variant="outline" 
-                            className="text-xs cursor-pointer hover:bg-primary/10"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedClientForUsers(client);
-                              setClientUsersDialogOpen(true);
-                            }}
-                          >
-                            <Users className="h-3 w-3 mr-1" />
-                            {client.users_count} usuario{client.users_count !== 1 ? 's' : ''}
-                          </Badge>
-                          {isAdmin && (
-                            <>
-                              <Badge 
-                                variant="secondary" 
-                                className="text-xs cursor-pointer hover:bg-secondary/80"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedClientForStrategists(client);
-                                  setStrategistsDialogOpen(true);
-                                }}
-                              >
-                                <UserCog className="h-3 w-3 mr-1" />
-                                Estrategas
-                              </Badge>
-                              <Badge 
-                                variant="outline" 
-                                className="text-xs cursor-pointer hover:bg-primary/10 border-primary/30"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedClientForServices(client);
-                                  setServicesDialogOpen(true);
-                                }}
-                              >
-                                <Lightbulb className="h-3 w-3 mr-1" />
-                                Servicios
-                              </Badge>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {isAdmin && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>¿Eliminar a {client.name}?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta acción eliminará permanentemente este cliente. 
-                                Asegúrate de que no tenga proyectos activos asociados.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(client.id, client.name)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Eliminar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-lg font-semibold text-card-foreground">{client.active_projects}</p>
-                          <p className="text-xs text-muted-foreground">Proyectos activos</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Video className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-lg font-semibold text-card-foreground">{client.content_count}</p>
-                          <p className="text-xs text-muted-foreground">Videos totales</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-4 border-t border-border text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      <span>Desde: {formatDate(client.created_at)}</span>
-                    </div>
-                  </div>
+                    client={client}
+                    isAdmin={isAdmin || false}
+                    onSelect={setSelectedClient}
+                    onDelete={handleDelete}
+                    onOpenUsers={(c) => {
+                      setSelectedClientForUsers(c);
+                      setClientUsersDialogOpen(true);
+                    }}
+                    onOpenStrategists={(c) => {
+                      setSelectedClientForStrategists(c);
+                      setStrategistsDialogOpen(true);
+                    }}
+                    onOpenServices={(c) => {
+                      setSelectedClientForServices(c);
+                      setServicesDialogOpen(true);
+                    }}
+                  />
                 ))}
               </div>
             )
