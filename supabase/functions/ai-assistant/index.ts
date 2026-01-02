@@ -9,7 +9,7 @@ const corsHeaders = {
 // Role-based access levels for information
 const ROLE_ACCESS_LEVELS: Record<string, string[]> = {
   admin: ['all', 'financials', 'team_management', 'client_details', 'payments', 'analytics', 'settings'],
-  strategist: ['content_strategy', 'clients', 'creators', 'scripts', 'products', 'analytics'],
+  strategist: ['content_strategy', 'clients', 'creators', 'scripts', 'products', 'analytics', 'team_management', 'settings'], // Enhanced strategist access
   editor: ['content_editing', 'assigned_content', 'scripts', 'video_guidelines'],
   creator: ['own_content', 'own_assignments', 'own_scripts', 'own_payments'],
   client: ['own_brand_content', 'own_packages', 'own_products'],
@@ -33,7 +33,7 @@ Es un sistema integral de gestión de contenido UGC (User Generated Content) que
 
 ### Roles disponibles en la plataforma:
 - **Admin**: Control total de la organización, finanzas, equipo y configuraciones
-- **Strategist (Estratega)**: Planifica contenido, gestiona clientes y productos
+- **Strategist (Estratega)**: Planifica contenido, gestiona clientes y productos, asigna equipo, aprueba contenido
 - **Creator (Creador)**: Genera contenido, graba videos, escribe guiones
 - **Editor**: Post-producción de videos, edición según lineamientos
 - **Client (Cliente)**: Revisa y aprueba contenido de su marca
