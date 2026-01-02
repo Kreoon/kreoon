@@ -41,6 +41,20 @@ interface AdCopy {
   psychologicalTriggers: string[];
 }
 
+interface AudienceSegment {
+  name: string;
+  description: string;
+  interests: string[];
+  demographics?: string;
+}
+
+interface TargetAudiences {
+  directAudiences: AudienceSegment[];
+  indirectAudiences: AudienceSegment[];
+  country: string;
+  notes?: string;
+}
+
 interface AnalysisResult {
   recommendedPhase: {
     phase: string;
@@ -48,6 +62,7 @@ interface AnalysisResult {
     reasoning: string;
   };
   adCopies: AdCopy[];
+  targetAudiences: TargetAudiences;
   contentAnalysis: {
     hook_effectiveness: number;
     emotional_impact: number;
@@ -244,7 +259,26 @@ Cada copy debe incluir:
   - "🔄 Devolución sin preguntas"
 - psychologicalTriggers: Lista de gatillos mentales/sesgos usados
 
-3) ANÁLISIS DEL CONTENIDO:
+3) PÚBLICOS DE SEGMENTACIÓN PARA ADS:
+Genera públicos objetivo para la pauta publicitaria, enfocados en el país de la estrategia del producto:
+
+PÚBLICOS DIRECTOS (3-5):
+- Personas que buscan ACTIVAMENTE la solución que ofrece el producto
+- Usuarios con intención de compra clara
+- Audiencias que reconocen el problema y buscan resolverlo
+
+PÚBLICOS INDIRECTOS (3-5):
+- Personas relacionadas con el problema pero que aún no buscan la solución
+- Audiencias con intereses complementarios
+- Grupos que podrían beneficiarse pero no conocen el producto
+
+Cada público debe incluir:
+- name: Nombre descriptivo del segmento (ej: "Emprendedoras digitales 25-40")
+- description: Descripción clara del perfil
+- interests: Lista de intereses para segmentación en plataformas de ads
+- demographics: Rango de edad, género si aplica, ubicación
+
+4) ANÁLISIS DEL CONTENIDO:
 Evalúa hook_effectiveness, emotional_impact, clarity, cta_strength, overall_score + fortalezas y mejoras.
 
 RESPONDE EN FORMATO JSON EXACTO:
@@ -263,6 +297,26 @@ RESPONDE EN FORMATO JSON EXACTO:
       "psychologicalTriggers": ["gatillo1", "gatillo2"]
     }
   ],
+  "targetAudiences": {
+    "country": "país de la estrategia (ej: Colombia, México, España)",
+    "directAudiences": [
+      {
+        "name": "Nombre del segmento",
+        "description": "Descripción del perfil",
+        "interests": ["interés1", "interés2", "interés3"],
+        "demographics": "25-45 años, mujeres, urbanas"
+      }
+    ],
+    "indirectAudiences": [
+      {
+        "name": "Nombre del segmento",
+        "description": "Descripción del perfil",
+        "interests": ["interés1", "interés2", "interés3"],
+        "demographics": "30-50 años, ambos géneros"
+      }
+    ],
+    "notes": "Notas adicionales sobre la segmentación"
+  },
   "contentAnalysis": {
     "hook_effectiveness": 0-100,
     "emotional_impact": 0-100,

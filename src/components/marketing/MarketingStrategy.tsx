@@ -8,20 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Target, 
-  Users, 
   Lightbulb, 
   Layers,
   Save,
   Plus,
-  Package,
   Zap,
   RefreshCw,
-  Heart
+  Heart,
+  TrendingUp
 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
-import { StrategyProductsSection } from "./StrategyProductsSection";
 import { SPHERE_PHASES, SpherePhase, getSpherePhaseConfig } from "./types";
 
 interface MarketingStrategyProps {
@@ -232,15 +230,14 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
       </div>
 
       <Tabs value={activeSection} onValueChange={setActiveSection}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="objective"><Target className="h-4 w-4 mr-2" />Objetivo</TabsTrigger>
-          <TabsTrigger value="persona"><Users className="h-4 w-4 mr-2" />Persona</TabsTrigger>
           <TabsTrigger value="value"><Lightbulb className="h-4 w-4 mr-2" />Propuesta</TabsTrigger>
           <TabsTrigger value="esfera" className="gap-1">
             <Layers className="h-4 w-4" />
             Esfera
           </TabsTrigger>
-          <TabsTrigger value="products"><Package className="h-4 w-4 mr-2" />Productos</TabsTrigger>
+          <TabsTrigger value="kpis"><TrendingUp className="h-4 w-4 mr-2" />KPIs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="objective">
@@ -269,26 +266,6 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
                 onChange={(e) => updateField('business_objective', e.target.value)}
                 placeholder="Describe tu objetivo principal..."
                 className="min-h-[120px]"
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="persona">
-          <Card>
-            <CardHeader>
-              <CardTitle>Buyer Persona</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={JSON.stringify(strategy.buyer_persona || [], null, 2)}
-                onChange={(e) => {
-                  try {
-                    updateField('buyer_persona', JSON.parse(e.target.value));
-                  } catch {}
-                }}
-                placeholder='[{"name": "Cliente Ideal", "age_range": "25-35", "pain_points": [...]}]'
-                className="min-h-[200px] font-mono text-sm"
               />
             </CardContent>
           </Card>
@@ -374,20 +351,27 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
           </div>
         </TabsContent>
 
-        <TabsContent value="products">
+        <TabsContent value="kpis">
           <Card>
             <CardHeader>
-              <CardTitle>Productos del Cliente</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                KPIs Estratégicos
+              </CardTitle>
               <CardDescription>
-                Selecciona los productos que forman parte de esta estrategia de marketing
+                Define los indicadores clave de rendimiento para medir el éxito de la estrategia
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <StrategyProductsSection
-                organizationId={organizationId}
-                selectedClientId={selectedClientId}
-                selectedProductIds={selectedProductIds}
-                onSelectionChange={setSelectedProductIds}
+              <Textarea
+                value={strategy.strategic_kpis ? JSON.stringify(strategy.strategic_kpis, null, 2) : ''}
+                onChange={(e) => {
+                  try {
+                    updateField('strategic_kpis', JSON.parse(e.target.value));
+                  } catch {}
+                }}
+                placeholder='["ROAS objetivo: 3x", "CPA máximo: $15", "CTR mínimo: 2%", "Conversiones mensuales: 100"]'
+                className="min-h-[200px] font-mono text-sm"
               />
             </CardContent>
           </Card>
