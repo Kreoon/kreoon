@@ -46,6 +46,7 @@ import HomePage from "./pages/HomePage";
 import Register from "./pages/Register";
 import OrgRegister from "./pages/auth/OrgRegister";
 import Live from "./pages/Live";
+import Marketing from "./pages/Marketing";
 import { MainLayout } from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient({
@@ -105,7 +106,8 @@ function AppRoutes() {
       <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
       <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
       <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
-      <Route path="/live" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Live /></MainLayout></ProtectedRoute>} />
+      <Route path="/live" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Live /></MainLayout></ProtectedRoute>} />
+      <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
       <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
       <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
