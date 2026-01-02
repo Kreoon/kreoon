@@ -61,8 +61,9 @@ export function MarketingStrategy({ organizationId, selectedClientId }: Marketin
       if (error) throw error;
       setStrategy(data);
       // Load associated product IDs if they exist
-      if (data?.associated_products) {
-        setSelectedProductIds(data.associated_products);
+      const strategyData = data as any;
+      if (strategyData?.associated_products) {
+        setSelectedProductIds(strategyData.associated_products);
       } else {
         setSelectedProductIds([]);
       }

@@ -32,6 +32,7 @@ import {
   Cell
 } from "recharts";
 import { DashboardConfigDialog } from "./DashboardConfigDialog";
+import { BudgetAlerts } from "./BudgetAlerts";
 
 const formatCurrency = (value: number, currency: string) => {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 }).format(value);
@@ -323,6 +324,9 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
 
   return (
     <div className="space-y-6">
+      {/* Budget Alerts */}
+      <BudgetAlerts organizationId={organizationId} />
+
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Objetivo Principal */}

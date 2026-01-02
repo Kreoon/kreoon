@@ -27,6 +27,7 @@ import { AddReportDialog } from "./AddReportDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { generateReportPdf } from "./reportPdfGenerator";
 
 interface MarketingReportsProps {
   organizationId: string | null | undefined;
@@ -216,7 +217,12 @@ export function MarketingReports({ organizationId, selectedClientId }: Marketing
                         <Eye className="h-4 w-4 mr-2" />
                         Ver Reporte
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        generateReportPdf({
+                          report,
+                          clientName: (report.marketing_client as any)?.client?.name || 'Cliente'
+                        });
+                      }}>
                         <Download className="h-4 w-4 mr-2" />
                         Descargar PDF
                       </DropdownMenuItem>
@@ -406,7 +412,15 @@ export function MarketingReports({ organizationId, selectedClientId }: Marketing
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-4">
-                  <Button className="flex-1">
+                  <Button 
+                    className="flex-1"
+                    onClick={() => {
+                      generateReportPdf({
+                        report: selectedReport,
+                        clientName: (selectedReport.marketing_client as any)?.client?.name || 'Cliente'
+                      });
+                    }}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Descargar PDF
                   </Button>
