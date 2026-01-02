@@ -67,14 +67,15 @@ export interface ScriptSubTabConfig {
   description: string;
 }
 
+// Orden según bloques: IA, 1-Creador, 2-Editor, 3-Trafficker, 4-Estratega, 5-Diseñador, 6-Admin
 export const SCRIPT_SUB_TABS: ScriptSubTabConfig[] = [
   { key: 'ia', label: 'IA', icon: '🤖', description: 'Generación de guiones con IA' },
-  { key: 'script', label: 'Guión', icon: '📝', description: 'Guión completo del contenido' },
-  { key: 'editor', label: 'Productor AV', icon: '🎬', description: 'Indicaciones de producción audio-visual' },
-  { key: 'strategist', label: 'Estratega', icon: '🧠', description: 'Estrategia y objetivos' },
-  { key: 'designer', label: 'Diseñador', icon: '🎨', description: 'Indicaciones visuales' },
-  { key: 'trafficker', label: 'Trafficker', icon: '📈', description: 'Pauta y campañas' },
-  { key: 'admin', label: 'Admin', icon: '🛠️', description: 'Control y aprobaciones' },
+  { key: 'script', label: '1. Creador', icon: '🧍‍♂️', description: 'Bloque 1 - Guión del Creador' },
+  { key: 'editor', label: '2. Editor', icon: '🎬', description: 'Bloque 2 - Pautas de Edición' },
+  { key: 'trafficker', label: '3. Trafficker', icon: '💰', description: 'Bloque 3 - Pautas de Pauta' },
+  { key: 'strategist', label: '4. Estratega', icon: '🧠', description: 'Bloque 4 - Estrategia' },
+  { key: 'designer', label: '5. Diseñador', icon: '🎨', description: 'Bloque 5 - Pautas de Diseño' },
+  { key: 'admin', label: '6. Admin', icon: '📋', description: 'Bloque 6 - Project Manager' },
 ];
 
 // Default permissions by role (fallback if DB doesn't have them)
