@@ -13,12 +13,30 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   RefreshCw,
-  Settings2
+  Settings2,
+  Users,
+  MousePointerClick
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from "recharts";
+
 const formatCurrency = (value: number, currency: string) => {
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency }).format(value);
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 }).format(value);
 };
 
 interface MarketingDashboardProps {
@@ -54,6 +72,10 @@ interface DashboardData {
     lastSync: string | null;
     pendingChannels: number;
   };
+  // Chart data
+  dailyMetrics: { date: string; investment: number; leads: number; sales: number }[];
+  channelDistribution: { name: string; value: number; color: string }[];
+  performanceByChannel: { channel: string; leads: number; sales: number; investment: number }[];
 }
 
 const OBJECTIVE_LABELS: Record<string, string> = {
@@ -61,6 +83,28 @@ const OBJECTIVE_LABELS: Record<string, string> = {
   leads: "Leads",
   traffic: "Tráfico",
   awareness: "Alcance",
+};
+
+const CHANNEL_COLORS: Record<string, string> = {
+  meta_ads: "#1877F2",
+  google_ads: "#4285F4",
+  tiktok_ads: "#000000",
+  youtube_ads: "#FF0000",
+  linkedin_ads: "#0A66C2",
+  organic: "#22C55E",
+  email: "#F59E0B",
+  other: "#8B5CF6",
+};
+
+const CHANNEL_LABELS: Record<string, string> = {
+  meta_ads: "Meta Ads",
+  google_ads: "Google Ads",
+  tiktok_ads: "TikTok Ads",
+  youtube_ads: "YouTube Ads",
+  linkedin_ads: "LinkedIn Ads",
+  organic: "Orgánico",
+  email: "Email",
+  other: "Otros",
 };
 
 export function MarketingDashboard({ organizationId, selectedClientId }: MarketingDashboardProps) {
@@ -88,7 +132,7 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
       // Fetch channels
       const { data: channels } = await supabase
         .from('traffic_channels')
-        .select('id, status, last_sync_at')
+        .select('id, channel_type, channel_name, status, last_sync_at, monthly_budget')
         .eq('organization_id', organizationId);
 
       // Fetch campaigns
@@ -97,16 +141,24 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
         .select('id, status')
         .eq('organization_id', organizationId);
 
-      // Fetch recent sync logs for investment calculation
+      // Fetch sync logs for the last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
       const { data: syncLogs } = await supabase
         .from('traffic_sync_logs')
-        .select('investment, sales, leads')
+        .select('sync_date, investment, sales, leads, clicks, impressions, channel_id')
         .eq('organization_id', organizationId)
-        .gte('sync_date', new Date(new Date().setDate(1)).toISOString().split('T')[0]);
+        .gte('sync_date', thirtyDaysAgo.toISOString().split('T')[0])
+        .order('sync_date', { ascending: true });
 
-      const totalInvestment = syncLogs?.reduce((sum, log) => sum + (Number(log.investment) || 0), 0) || 0;
-      const totalSales = syncLogs?.reduce((sum, log) => sum + (Number(log.sales) || 0), 0) || 0;
-      const totalLeads = syncLogs?.reduce((sum, log) => sum + (Number(log.leads) || 0), 0) || 0;
+      // Calculate totals for current month
+      const firstOfMonth = new Date(new Date().setDate(1)).toISOString().split('T')[0];
+      const currentMonthLogs = syncLogs?.filter(l => l.sync_date >= firstOfMonth) || [];
+      
+      const totalInvestment = currentMonthLogs.reduce((sum, log) => sum + (Number(log.investment) || 0), 0);
+      const totalSales = currentMonthLogs.reduce((sum, log) => sum + (Number(log.sales) || 0), 0);
+      const totalLeads = currentMonthLogs.reduce((sum, log) => sum + (Number(log.leads) || 0), 0);
 
       const activeChannels = channels?.filter(c => c.status === 'active').length || 0;
       const pendingSyncChannels = channels?.filter(c => !c.last_sync_at || c.last_sync_at < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()).length || 0;
@@ -115,6 +167,61 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
       let currentValue = 0;
       if (config?.main_objective_type === 'sales') currentValue = totalSales;
       else if (config?.main_objective_type === 'leads') currentValue = totalLeads;
+
+      // Prepare daily metrics for chart
+      const dailyMetricsMap: Record<string, { investment: number; leads: number; sales: number }> = {};
+      syncLogs?.forEach(log => {
+        if (!dailyMetricsMap[log.sync_date]) {
+          dailyMetricsMap[log.sync_date] = { investment: 0, leads: 0, sales: 0 };
+        }
+        dailyMetricsMap[log.sync_date].investment += Number(log.investment) || 0;
+        dailyMetricsMap[log.sync_date].leads += Number(log.leads) || 0;
+        dailyMetricsMap[log.sync_date].sales += Number(log.sales) || 0;
+      });
+
+      const dailyMetrics = Object.entries(dailyMetricsMap)
+        .map(([date, metrics]) => ({
+          date: new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+          ...metrics
+        }))
+        .slice(-14); // Last 14 days
+
+      // Prepare channel distribution for pie chart
+      const channelInvestmentMap: Record<string, number> = {};
+      currentMonthLogs.forEach(log => {
+        const channel = channels?.find(c => c.id === log.channel_id);
+        if (channel) {
+          const type = channel.channel_type;
+          channelInvestmentMap[type] = (channelInvestmentMap[type] || 0) + (Number(log.investment) || 0);
+        }
+      });
+
+      const channelDistribution = Object.entries(channelInvestmentMap)
+        .map(([type, value]) => ({
+          name: CHANNEL_LABELS[type] || type,
+          value,
+          color: CHANNEL_COLORS[type] || "#8B5CF6"
+        }))
+        .filter(item => item.value > 0);
+
+      // Prepare performance by channel for bar chart
+      const performanceMap: Record<string, { leads: number; sales: number; investment: number }> = {};
+      currentMonthLogs.forEach(log => {
+        const channel = channels?.find(c => c.id === log.channel_id);
+        if (channel) {
+          const name = channel.channel_name;
+          if (!performanceMap[name]) {
+            performanceMap[name] = { leads: 0, sales: 0, investment: 0 };
+          }
+          performanceMap[name].leads += Number(log.leads) || 0;
+          performanceMap[name].sales += Number(log.sales) || 0;
+          performanceMap[name].investment += Number(log.investment) || 0;
+        }
+      });
+
+      const performanceByChannel = Object.entries(performanceMap)
+        .map(([channel, metrics]) => ({ channel, ...metrics }))
+        .slice(0, 5);
 
       setData({
         mainObjective: {
@@ -144,6 +251,9 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
           lastSync: channels?.[0]?.last_sync_at || null,
           pendingChannels: pendingSyncChannels,
         },
+        dailyMetrics,
+        channelDistribution,
+        performanceByChannel,
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -168,6 +278,16 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
               </CardContent>
             </Card>
           ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+            <CardContent><Skeleton className="h-64 w-full" /></CardContent>
+          </Card>
+          <Card>
+            <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+            <CardContent><Skeleton className="h-64 w-full" /></CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -270,23 +390,27 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
           </CardContent>
         </Card>
 
-        {/* Canales Activos */}
+        {/* Canales y Campañas */}
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <Radio className="h-4 w-4" />
-              Canales de Tráfico
+              Canales & Campañas
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {data.channels.active} <span className="text-lg text-muted-foreground">/ {data.channels.total}</span>
+            <div className="flex gap-4">
+              <div>
+                <div className="text-2xl font-bold">{data.channels.active}</div>
+                <p className="text-xs text-muted-foreground">Canales</p>
+              </div>
+              <div className="border-l pl-4">
+                <div className="text-2xl font-bold">{data.campaigns.active}</div>
+                <p className="text-xs text-muted-foreground">Campañas</p>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground mb-2">
-              Canales activos
-            </p>
             {data.syncStatus.pendingChannels > 0 && (
-              <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
+              <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 mt-2">
                 {data.syncStatus.pendingChannels} pendientes de sync
               </Badge>
             )}
@@ -294,60 +418,187 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
         </Card>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Campañas */}
+      {/* Charts Row */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Investment & Results Trend */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              Campañas Activas
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Tendencia de Inversión y Resultados
             </CardTitle>
+            <CardDescription>Últimos 14 días</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-3xl font-bold">{data.campaigns.active}</div>
-                <p className="text-muted-foreground">de {data.campaigns.total} campañas totales</p>
+            {data.dailyMetrics.length > 0 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={data.dailyMetrics}>
+                  <defs>
+                    <linearGradient id="colorInvestment" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                  <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="investment" 
+                    stroke="hsl(var(--primary))" 
+                    fillOpacity={1} 
+                    fill="url(#colorInvestment)" 
+                    name="Inversión"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="leads" 
+                    stroke="#22C55E" 
+                    fillOpacity={1} 
+                    fill="url(#colorLeads)" 
+                    name="Leads"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-muted-foreground">
+                <p>Sin datos suficientes para mostrar gráfico</p>
               </div>
-              <Button variant="outline" asChild>
-                <a href="#campaigns">Ver todas</a>
-              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Channel Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-primary" />
+              Distribución de Inversión por Canal
+            </CardTitle>
+            <CardDescription>Este mes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {data.channelDistribution.length > 0 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={data.channelDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {data.channelDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => formatCurrency(value, data.investment.currency)}
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-muted-foreground">
+                <p>Sin datos de inversión por canal</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Performance by Channel */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            Rendimiento por Canal
+          </CardTitle>
+          <CardDescription>Leads y ventas del mes actual</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {data.performanceByChannel.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={data.performanceByChannel} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis type="number" tick={{ fontSize: 12 }} />
+                <YAxis dataKey="channel" type="category" tick={{ fontSize: 12 }} width={120} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="leads" fill="hsl(var(--primary))" name="Leads" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="sales" fill="#22C55E" name="Ventas" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Sincroniza datos de tus canales para ver el rendimiento</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="cursor-pointer hover:border-primary/50 transition-colors">
+          <CardContent className="pt-6 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-primary/10">
+              <Radio className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h4 className="font-semibold">Agregar Canal</h4>
+              <p className="text-sm text-muted-foreground">Configura nuevas fuentes de tráfico</p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Estado de Sincronización */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <RefreshCw className="h-5 w-5 text-primary" />
-              Sincronización de Data
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                {data.syncStatus.lastSync ? (
-                  <>
-                    <div className="text-sm font-medium">Última sincronización</div>
-                    <p className="text-muted-foreground">
-                      {new Date(data.syncStatus.lastSync).toLocaleDateString('es-ES', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-muted-foreground">Sin sincronizaciones aún</p>
-                )}
-              </div>
-              <Button>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Sincronizar
-              </Button>
+        <Card className="cursor-pointer hover:border-primary/50 transition-colors">
+          <CardContent className="pt-6 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-green-500/10">
+              <RefreshCw className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold">Sincronizar Data</h4>
+              <p className="text-sm text-muted-foreground">Actualiza métricas de campañas</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="cursor-pointer hover:border-primary/50 transition-colors">
+          <CardContent className="pt-6 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-blue-500/10">
+              <BarChart3 className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold">Generar Reporte</h4>
+              <p className="text-sm text-muted-foreground">Crea un informe de rendimiento</p>
             </div>
           </CardContent>
         </Card>
