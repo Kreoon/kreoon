@@ -24,9 +24,52 @@ interface ContentAIRequest {
     feedback?: string;
   };
   prompt?: string;
-  product?: any;
+  product?: {
+    id?: string;
+    name?: string;
+    description?: string;
+    strategy?: string;
+    market_research?: string;
+    ideal_avatar?: string;
+    sales_angles?: string[];
+  };
   script_params?: any;
   generation_type?: string;
+}
+
+// Build product context for AI prompts
+function buildProductContext(product?: ContentAIRequest['product']): string {
+  if (!product) return "";
+  
+  const sections: string[] = [];
+  
+  sections.push("📦 INFORMACIÓN COMPLETA DEL PRODUCTO:");
+  
+  if (product.name) {
+    sections.push(`\n🏷️ NOMBRE: ${product.name}`);
+  }
+  
+  if (product.description) {
+    sections.push(`\n📝 DESCRIPCIÓN:\n${product.description}`);
+  }
+  
+  if (product.strategy) {
+    sections.push(`\n🎯 ESTRATEGIA DE PRODUCTO:\n${product.strategy}`);
+  }
+  
+  if (product.market_research) {
+    sections.push(`\n📊 INVESTIGACIÓN DE MERCADO:\n${product.market_research}`);
+  }
+  
+  if (product.ideal_avatar) {
+    sections.push(`\n👤 AVATAR / CLIENTE IDEAL:\n${product.ideal_avatar}`);
+  }
+  
+  if (product.sales_angles && product.sales_angles.length > 0) {
+    sections.push(`\n💡 ÁNGULOS DE VENTA DISPONIBLES:\n${product.sales_angles.map((a, i) => `${i + 1}. ${a}`).join('\n')}`);
+  }
+  
+  return sections.join('\n');
 }
 
 // AI Provider configurations
@@ -438,6 +481,9 @@ serve(async (req) => {
           // Get custom prompts from organization if available
           const customPrompts = await getOrganizationPrompts(supabase, organizationId);
           
+          // Build product context to inject into prompts
+          const productContext = buildProductContext(product);
+          
           let masterPrompt = MASTER_SYSTEM_PROMPT;
           let formatRules = "";
           let criticalRules = "";
@@ -461,8 +507,10 @@ ${formatRules}
 
 ${rolePrompt}
 
+${productContext}
+
 IMPORTANTE:
-- Analiza toda la información del producto proporcionada
+- Analiza toda la información del producto proporcionada arriba
 - La cantidad de hooks debe ser EXACTAMENTE la que se indica en el prompt del usuario
 - Usa expresiones y modismos del país objetivo cuando sea apropiado
 - El resultado debe ser HTML limpio, sin markdown, listo para renderizar`
@@ -470,11 +518,16 @@ IMPORTANTE:
 
 ${rolePrompt}
 
+${productContext}
+
 IMPORTANTE:
-- Analiza toda la información del producto proporcionada
+- Analiza toda la información del producto proporcionada arriba
 - La cantidad de hooks debe ser EXACTAMENTE la que se indica en el prompt del usuario
 - Usa expresiones y modismos del país objetivo cuando sea apropiado
 - El resultado debe ser HTML limpio, sin markdown, listo para renderizar`;
+
+          console.log("[content-ai] Product context length:", productContext.length);
+          console.log("[content-ai] Full system prompt length:", fullSystemPrompt.length);
 
           result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt);
 

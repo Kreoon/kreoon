@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Save, RotateCcw, Sparkles, FileText, Users, Target, Palette, BarChart3, Settings2 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Loader2, Save, RotateCcw, Sparkles, FileText, Users, Target, Palette, BarChart3, Settings2, ChevronDown, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -252,6 +253,60 @@ export function ScriptPromptsConfig({ organizationId }: ScriptPromptsConfigProps
           </div>
         </CardHeader>
       </Card>
+
+      {/* Product Variables Reference */}
+      <Collapsible>
+        <Card>
+          <CardHeader className="pb-2">
+            <CollapsibleTrigger className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Variables del producto disponibles</span>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </CollapsibleTrigger>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="pt-0">
+              <p className="text-sm text-muted-foreground mb-3">
+                La IA recibe automáticamente esta información del producto asociado al proyecto:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-muted/50 border">
+                  <div className="font-medium text-sm mb-1">🏷️ Nombre del producto</div>
+                  <p className="text-xs text-muted-foreground">El nombre comercial del producto</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50 border">
+                  <div className="font-medium text-sm mb-1">📝 Descripción</div>
+                  <p className="text-xs text-muted-foreground">Descripción detallada del producto</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50 border">
+                  <div className="font-medium text-sm mb-1">🎯 Estrategia de producto</div>
+                  <p className="text-xs text-muted-foreground">La estrategia de marketing y posicionamiento</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50 border">
+                  <div className="font-medium text-sm mb-1">📊 Investigación de mercado</div>
+                  <p className="text-xs text-muted-foreground">Datos de mercado y competencia</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50 border">
+                  <div className="font-medium text-sm mb-1">👤 Avatar / Cliente ideal</div>
+                  <p className="text-xs text-muted-foreground">Perfil del cliente objetivo</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50 border">
+                  <div className="font-medium text-sm mb-1">💡 Ángulos de venta</div>
+                  <p className="text-xs text-muted-foreground">Lista de enfoques para vender el producto</p>
+                </div>
+              </div>
+              <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <p className="text-sm">
+                  <strong>💡 Tip:</strong> Toda esta información se inyecta automáticamente en el contexto del prompt. 
+                  Asegúrate de que los productos tengan todos estos campos completos para obtener mejores resultados.
+                </p>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Prompt Editor */}
       <Card>
