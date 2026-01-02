@@ -9,7 +9,9 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   editor: 'Productor Audio-Visual',
   client: 'Cliente',
   ambassador: 'Embajador (Legacy)', // Deprecated - use badge instead
-  strategist: 'Estratega'
+  strategist: 'Estratega',
+  trafficker: 'Trafficker',
+  team_leader: 'Líder de Equipo'
 };
 
 export const ROLE_LABELS_SHORT: Record<AppRole, string> = {
@@ -18,7 +20,9 @@ export const ROLE_LABELS_SHORT: Record<AppRole, string> = {
   editor: 'Productor AV',
   client: 'Cliente',
   ambassador: 'Embajador',
-  strategist: 'Estratega'
+  strategist: 'Estratega',
+  trafficker: 'Trafficker',
+  team_leader: 'Líder'
 };
 
 // ============= COLORS =============
@@ -28,7 +32,9 @@ export const ROLE_COLORS: Record<AppRole, string> = {
   editor: 'bg-purple-500/20 text-purple-500',
   client: 'bg-info/20 text-info',
   ambassador: 'bg-success/20 text-success',
-  strategist: 'bg-orange-500/20 text-orange-500'
+  strategist: 'bg-orange-500/20 text-orange-500',
+  trafficker: 'bg-cyan-500/20 text-cyan-500',
+  team_leader: 'bg-indigo-500/20 text-indigo-500'
 };
 
 export const ROLE_BADGE_COLORS: Record<AppRole, string> = {
@@ -37,7 +43,9 @@ export const ROLE_BADGE_COLORS: Record<AppRole, string> = {
   editor: 'bg-pink-500/10 text-pink-500 border-pink-500/20',
   client: 'bg-green-500/10 text-green-500 border-green-500/20',
   ambassador: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-  strategist: 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+  strategist: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+  trafficker: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20',
+  team_leader: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20'
 };
 
 export const ROLE_SOLID_COLORS: Record<AppRole, string> = {
@@ -46,7 +54,9 @@ export const ROLE_SOLID_COLORS: Record<AppRole, string> = {
   editor: 'bg-blue-500',
   client: 'bg-green-500',
   ambassador: 'bg-yellow-500',
-  strategist: 'bg-orange-500'
+  strategist: 'bg-orange-500',
+  trafficker: 'bg-cyan-500',
+  team_leader: 'bg-indigo-500'
 };
 
 // ============= AMBASSADOR BADGE STYLING =============
@@ -97,7 +107,7 @@ export function getPrimaryRole(roles: AppRole[]): AppRole | null {
   if (roles.length === 0) return null;
   
   // Ambassador excluded from priority as it's deprecated (use badge system)
-  const priority: AppRole[] = ['admin', 'strategist', 'creator', 'editor', 'client', 'ambassador'];
+  const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client', 'ambassador'];
   
   for (const role of priority) {
     if (roles.includes(role)) {
@@ -126,14 +136,14 @@ export function isAdminRole(roles: AppRole[]): boolean {
 
 // Roles that can appear in UI selectors (e.g., role pickers, assignment dropdowns)
 // Ambassador excluded: use badge system instead
-export const SELECTABLE_ROLES: AppRole[] = ['admin', 'strategist', 'creator', 'editor', 'client'];
+export const SELECTABLE_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
 
 // All available roles for internal use (includes deprecated ambassador for backward compat)
-export const ALL_ROLES: AppRole[] = ['admin', 'strategist', 'creator', 'editor', 'client', 'ambassador'];
+export const ALL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client', 'ambassador'];
 
 // Roles that can be assigned by org owners (not platform-level)
 // Ambassador excluded - use badge system instead
-export const ORG_ASSIGNABLE_ROLES: AppRole[] = ['strategist', 'creator', 'editor', 'client'];
+export const ORG_ASSIGNABLE_ROLES: AppRole[] = ['team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
 
 // Ambassador badge levels for selection (new system)
 export const AMBASSADOR_LEVELS: AmbassadorLevel[] = ['bronze', 'silver', 'gold'];

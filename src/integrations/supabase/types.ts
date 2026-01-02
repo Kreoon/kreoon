@@ -9428,6 +9428,8 @@ export type Database = {
         | "client"
         | "ambassador"
         | "strategist"
+        | "trafficker"
+        | "team_leader"
       chat_type: "direct" | "group" | "ai_assistant"
       content_status:
         | "draft"
@@ -9641,6 +9643,8 @@ export const Constants = {
         "client",
         "ambassador",
         "strategist",
+        "trafficker",
+        "team_leader",
       ],
       chat_type: ["direct", "group", "ai_assistant"],
       content_status: [

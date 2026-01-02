@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronDown, Shield, Users, Edit3, Building2, Star, Lightbulb, User, Briefcase } from "lucide-react";
+import { Check, ChevronDown, Shield, Users, Edit3, Building2, Star, Lightbulb, User, Briefcase, Radio, UserCog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const ROLE_ICONS: Record<AppRole, React.ComponentType<{ className?: string }>> = {
@@ -21,6 +21,8 @@ const ROLE_ICONS: Record<AppRole, React.ComponentType<{ className?: string }>> =
   client: Building2,
   ambassador: Star,
   strategist: Lightbulb,
+  trafficker: Radio,
+  team_leader: UserCog,
 };
 
 // Dashboard routes for each role
@@ -31,11 +33,13 @@ const ROLE_DASHBOARDS: Record<AppRole, string> = {
   creator: '/creator-dashboard',
   editor: '/editor-dashboard',
   client: '/client-dashboard',
+  trafficker: '/marketing',
+  team_leader: '/dashboard',
 };
 
 // Classify roles into personal vs company context
 // NOTE: 'ambassador' is a legacy role (now represented by badges), so we exclude it from switching.
-const PERSONAL_ROLES: AppRole[] = ['admin', 'strategist', 'creator', 'editor'];
+const PERSONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor'];
 const COMPANY_ROLES: AppRole[] = ['client'];
 
 // Role descriptions for better UX
@@ -46,6 +50,8 @@ const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   creator: 'Creación de contenido y grabación',
   editor: 'Edición y postproducción',
   client: 'Vista de empresa y aprobaciones',
+  trafficker: 'Gestión de tráfico y campañas',
+  team_leader: 'Liderazgo y supervisión del equipo',
 };
 
 interface RoleSwitcherProps {
