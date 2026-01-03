@@ -145,31 +145,79 @@ const COUNTRIES = [
   "México", "Colombia", "Argentina", "España", "Chile", "Perú", "Estados Unidos (Latino)", "Otro",
 ];
 
-// Sphere phase info for AI context
-const SPHERE_PHASE_INFO: Record<string, { label: string; objective: string; audience: string; tone: string }> = {
+// Sphere phase info for AI context - Aligned with Método Esfera
+const SPHERE_PHASE_INFO: Record<string, { 
+  label: string; 
+  objective: string; 
+  audience: string; 
+  tone: string;
+  techniques: string[];
+  keywords: string[];
+  ctaStyle: string;
+}> = {
   engage: {
-    label: 'Enganchar (Engage)',
-    objective: 'Captar atención, generar curiosidad, crear awareness. El usuario NO conoce la marca.',
-    audience: 'Audiencia fría - personas que nunca han interactuado con la marca',
-    tone: 'Disruptivo, llamativo, sorprendente. Hooks potentes. Scroll-stoppers.',
+    label: 'ENGANCHAR (Fase 1)',
+    objective: 'Viralidad, enganche, disrupción, educar. Que las personas conozcan el producto o servicio y se den cuenta que tienen el problema.',
+    audience: 'Audiencia FRÍA - personas que nunca han interactuado con la marca, no conocen el producto ni saben que tienen un problema',
+    tone: 'Disruptivo, viral, llamativo, sorprendente. Romper patrones, generar curiosidad extrema.',
+    techniques: [
+      'Hooks ultra potentes en los primeros 1-3 segundos',
+      'Pattern interrupts (romper patrones visuales/auditivos)',
+      'Declaraciones controversiales o contraintuitivas',
+      'Preguntas que despiertan curiosidad',
+      'Mostrar el problema de forma dramatizada',
+      'Contenido educativo que revele un problema oculto'
+    ],
+    keywords: ['¿Sabías que...?', 'Esto es lo que nadie te cuenta', 'Error #1', 'Por qué no funciona', 'La verdad sobre', 'Descubrí que'],
+    ctaStyle: 'Suave - invitar a seguir, comentar, guardar. NO vender directamente.',
   },
   solution: {
-    label: 'Solución',
-    objective: 'Presentar el producto/servicio como la solución. El usuario conoce su problema.',
-    audience: 'Audiencia tibia - personas que reconocen tener un problema o necesidad',
-    tone: 'Educativo, empático, mostrando beneficios concretos y diferenciadores.',
+    label: 'SOLUCIÓN (Fase 2)',
+    objective: 'Venta directa, persuadir para comprar, ser el mejor vendiendo. Mostrar que el producto ES la solución perfecta.',
+    audience: 'Audiencia TIBIA - personas que ya saben que tienen el problema y buscan activamente una solución',
+    tone: 'Persuasivo, confiado, enfocado en beneficios y transformación. Venta directa pero no agresiva.',
+    techniques: [
+      'Demostración del producto en acción',
+      'Antes y después transformacionales',
+      'Testimonios de clientes reales',
+      'Comparación sutil con alternativas',
+      'Storytelling de éxito',
+      'Beneficios específicos y cuantificables'
+    ],
+    keywords: ['La solución es', 'Esto cambió todo', 'Finalmente', 'Por eso creamos', 'Resultados garantizados', 'Funciona porque'],
+    ctaStyle: 'Directo - invitar a comprar, probar, registrarse. Link en bio, desliza arriba.',
   },
   remarketing: {
-    label: 'Remarketing',
-    objective: 'Reconectar con usuarios que ya interactuaron. Superar objeciones, crear urgencia.',
-    audience: 'Audiencia caliente - personas que ya visitaron, agregaron al carrito o mostraron interés',
-    tone: 'Urgente, resolutivo, enfocado en beneficios y testimonios. Superar objeciones.',
+    label: 'REMARKETING (Fase 3)',
+    objective: 'Mostrar lo que se está perdiendo, crear urgencia, superar objeciones finales. Cerrar la venta.',
+    audience: 'Audiencia CALIENTE - personas que ya vieron el producto, visitaron el sitio, agregaron al carrito pero NO compraron',
+    tone: 'Urgente, resolutivo, enfocado en pérdida (FOMO). Atacar objeciones directamente.',
+    techniques: [
+      'Escasez real (stock limitado, tiempo limitado)',
+      'Social proof masivo (X personas ya compraron)',
+      'Responder objeciones comunes',
+      'Garantías y eliminación de riesgo',
+      'Comparación de precio vs valor',
+      'Recordatorio de beneficios clave'
+    ],
+    keywords: ['Últimas unidades', 'Se acaba en', 'No te pierdas', 'Mientras lees esto', 'Si no ahora, cuándo', 'Otros ya lo tienen'],
+    ctaStyle: 'Urgente - comprar ahora, última oportunidad, no esperes más.',
   },
   fidelize: {
-    label: 'Fidelizar',
-    objective: 'Retener clientes, generar recompra, crear comunidad y referidos.',
-    audience: 'Clientes existentes - personas que ya compraron',
-    tone: 'Cercano, exclusivo, valorando al cliente. Contenido de valor y ofertas especiales.',
+    label: 'FIDELIZAR (Fase 4)',
+    objective: 'Entregar valor y confianza, buscar que nos refieran y recompren. Crear comunidad y lealtad.',
+    audience: 'CLIENTES existentes - personas que ya compraron y queremos que vuelvan a comprar y nos recomienden',
+    tone: 'Cercano, exclusivo, valorando al cliente. Contenido de alto valor, tips, comunidad.',
+    techniques: [
+      'Contenido exclusivo para clientes',
+      'Tips de uso avanzado del producto',
+      'Historias de otros clientes exitosos',
+      'Ofertas exclusivas para clientes',
+      'Invitación a programas de referidos',
+      'Behind the scenes y contenido humano'
+    ],
+    keywords: ['Para ti que ya eres cliente', 'Tip exclusivo', 'Gracias por confiar', 'Comparte con', 'Tu experiencia importa', 'Familia [marca]'],
+    ctaStyle: 'Comunitario - compartir, etiquetar amigos, dejar reseña, referir.',
   },
 };
 
@@ -1319,12 +1367,29 @@ ESTRUCTURA NARRATIVA: ${narrativeLabel}
 PAÍS OBJETIVO: ${formData.target_country}
 AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
 
-${sphereInfo ? `FASE DEL MÉTODO ESFERA: ${sphereInfo.label}
-OBJETIVO DE FASE: ${sphereInfo.objective}
-TIPO DE AUDIENCIA: ${sphereInfo.audience}
-TONO RECOMENDADO: ${sphereInfo.tone}
+`;
 
-` : ''}ESTRATEGIA DEL PRODUCTO:
+    // Add detailed sphere phase context
+    if (sphereInfo) {
+      context += `=== FASE DEL MÉTODO ESFERA: ${sphereInfo.label} ===
+🎯 OBJETIVO DE FASE: ${sphereInfo.objective}
+👥 TIPO DE AUDIENCIA: ${sphereInfo.audience}
+🎨 TONO RECOMENDADO: ${sphereInfo.tone}
+
+📋 TÉCNICAS OBLIGATORIAS (usar al menos 2):
+${sphereInfo.techniques.map((t, i) => `${i + 1}. ${t}`).join('\n')}
+
+💬 FRASES/KEYWORDS SUGERIDAS:
+${sphereInfo.keywords.map(k => `• "${k}"`).join('\n')}
+
+📢 ESTILO DE CTA: ${sphereInfo.ctaStyle}
+
+⚠️ IMPORTANTE: El guión DEBE estar 100% alineado con los objetivos de ${sphereInfo.label}.
+
+`;
+    }
+
+    context += `ESTRATEGIA DEL PRODUCTO:
 ${product?.strategy || 'No disponible'}
 
 INVESTIGACIÓN DE MERCADO:
