@@ -294,26 +294,25 @@ export function ProductBriefWizard({
       const currentValue = (briefData as any)[field] || '';
       const fieldLabel = fieldLabels[field] || field;
 
-      const systemPrompt = `Eres un experto en copywriting y estrategia de marketing. Tu tarea es MEJORAR y COMPLEMENTAR el contenido existente para un brief de producto.
+      const systemPrompt = `Eres un experto en copywriting y estrategia de marketing. Tu tarea es COMPLEMENTAR el texto del usuario para un brief de producto.
 
 Producto: ${briefData.productName}
 Categoría: ${briefData.category}
 Objetivo: ${briefData.currentObjective || 'No especificado'}
 
 REGLAS CRÍTICAS:
-- NUNCA reemplaces completamente lo que escribió el usuario
-- MANTÉN las ideas originales del usuario como base
-- MEJORA la redacción, hazla más persuasiva y específica
-- COMPLEMENTA agregando detalles que refuercen el mensaje original
-- Usa español latinoamericano
-- Máximo 2-3 oraciones
-- Responde SOLO con el texto mejorado, sin explicaciones ni comillas`;
+- Si el usuario ya escribió un texto: NO lo reescribas, NO lo reemplaces y NO lo parafrasees.
+- Devuelve ÚNICAMENTE un complemento (1-2 frases) que se pueda agregar DESPUÉS del texto del usuario.
+- No repitas el texto original.
+- El complemento debe mejorar claridad, persuasión y especificidad.
+- Español latinoamericano.
+- Responde SOLO con el complemento, sin comillas ni explicaciones.`;
 
       const userPrompt = currentValue 
-        ? `El usuario escribió este ${fieldLabel}: "${currentValue}"
+        ? `Texto actual del usuario (${fieldLabel}): ${currentValue}
 
-Tu tarea: Mejora y complementa este texto manteniendo las ideas originales del usuario. Hazlo más persuasivo, específico y profesional, pero que siga siendo SU idea mejorada, no una idea completamente nueva.`
-        : `Crea un ${fieldLabel} impactante para este producto`;
+Escribe 1-2 frases de complemento para agregar al final.`
+        : `Crea un ${fieldLabel} impactante para este producto (2-3 oraciones).`;
 
       const { data, error } = await supabase.functions.invoke('multi-ai', {
         body: {
@@ -330,15 +329,18 @@ Tu tarea: Mejora y complementa este texto manteniendo las ideas originales del u
 
       if (error) throw error;
 
-      const improved = (data?.content || data?.response || data?.result || '').toString().trim();
-      if (improved) {
-        updateField(field as keyof BriefData, improved);
-        toast.success('Campo mejorado con IA');
-      } else if (data?.error) {
-        throw new Error(data.error);
-      } else {
+      const aiText = (data?.content || data?.response || data?.result || '').toString().trim();
+      if (!aiText) {
+        if (data?.error) throw new Error(data.error);
         throw new Error('Respuesta vacía de IA');
       }
+
+      const base = currentValue?.toString().trim();
+      const nextValue = base ? `${base}${base.endsWith('.') ? '' : '.'} ${aiText}` : aiText;
+
+      updateField(field as keyof BriefData, nextValue);
+      toast.success(base ? 'Texto complementado con IA' : 'Campo generado con IA');
+    } catch (error) {
       console.error('AI enhancement error:', error);
       toast.error('Error al mejorar con IA');
     } finally {
