@@ -278,26 +278,56 @@ export function ProductBriefWizard({
   const enhanceWithAI = async (field: string) => {
     setIsEnhancing(true);
     try {
+      const fieldLabels: Record<string, string> = {
+        slogan: 'slogan o frase de venta',
+        mainBenefit: 'beneficio principal',
+        transformation: 'transformación que produce',
+        differentiator: 'diferenciador único',
+        problemSolved: 'problema que resuelve',
+        mainDesire: 'deseo principal',
+        consequenceOfNotBuying: 'consecuencia de no comprar',
+        competitiveAdvantage: 'ventaja competitiva',
+        cortexBrain: 'argumento racional de compra',
+        idealScenario: 'escenario ideal post-compra',
+      };
+
+      const currentValue = (briefData as any)[field] || '';
+      const fieldLabel = fieldLabels[field] || field;
+
+      const systemPrompt = `Eres un experto en copywriting y estrategia de marketing. Tu tarea es mejorar o crear contenido para un brief de producto.
+
+Producto: ${briefData.productName}
+Categoría: ${briefData.category}
+Objetivo: ${briefData.currentObjective || 'No especificado'}
+
+Reglas:
+- Responde SOLO con el texto mejorado, sin explicaciones
+- Usa español latinoamericano
+- Sé específico y persuasivo
+- Máximo 2-3 oraciones`;
+
+      const userPrompt = currentValue 
+        ? `Mejora este ${fieldLabel}: "${currentValue}"`
+        : `Crea un ${fieldLabel} impactante para este producto`;
+
       const { data, error } = await supabase.functions.invoke('multi-ai', {
         body: {
           provider: 'lovable',
           model: 'google/gemini-2.5-flash',
-          action: 'enhance_brief_field',
-          context: {
-            productName: briefData.productName,
-            category: briefData.category,
-            field,
-            currentValue: (briefData as any)[field],
-            fullBrief: briefData
-          }
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ]
         }
       });
 
       if (error) throw error;
       
-      if (data?.result) {
-        updateField(field as keyof BriefData, data.result);
+      if (data?.content) {
+        updateField(field as keyof BriefData, data.content.trim());
         toast.success('Campo mejorado con IA');
+      } else if (data?.error) {
+        throw new Error(data.error);
       }
     } catch (error) {
       console.error('AI enhancement error:', error);
