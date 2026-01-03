@@ -1898,6 +1898,7 @@ export type Database = {
           client_id: string | null
           content_objective: string | null
           content_type: string | null
+          corrected_at: string | null
           created_at: string | null
           creator_assigned_at: string | null
           creator_id: string | null
@@ -1992,6 +1993,7 @@ export type Database = {
           client_id?: string | null
           content_objective?: string | null
           content_type?: string | null
+          corrected_at?: string | null
           created_at?: string | null
           creator_assigned_at?: string | null
           creator_id?: string | null
@@ -2086,6 +2088,7 @@ export type Database = {
           client_id?: string | null
           content_objective?: string | null
           content_type?: string | null
+          corrected_at?: string | null
           created_at?: string | null
           creator_assigned_at?: string | null
           creator_id?: string | null
@@ -9301,20 +9304,23 @@ export type Database = {
     Views: {
       marketing_available_content: {
         Row: {
-          approved_at: string | null
+          bunny_embed_url: string | null
           client_id: string | null
           client_logo: string | null
           client_name: string | null
           content_type: string | null
           created_at: string | null
           creator_id: string | null
-          description: string | null
           id: string | null
+          is_published: boolean | null
+          likes_count: number | null
           organization_id: string | null
           status: Database["public"]["Enums"]["content_status"] | null
           thumbnail_url: string | null
           title: string | null
           video_url: string | null
+          video_urls: string[] | null
+          views_count: number | null
         }
         Relationships: [
           {
