@@ -262,7 +262,7 @@ export function ProductBriefWizard({
 }: ProductBriefWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhancingField, setEnhancingField] = useState<string | null>(null);
   const [briefData, setBriefData] = useState<BriefData>({
     ...DEFAULT_BRIEF,
     productName: productName || '',
@@ -298,7 +298,7 @@ export function ProductBriefWizard({
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
   const enhanceWithAI = async (field: string, mode: 'append' | 'replace' = 'append') => {
-    setIsEnhancing(true);
+    setEnhancingField(field);
     try {
       const fieldLabels: Record<string, string> = {
         slogan: 'slogan o frase de venta',
@@ -382,7 +382,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
       console.error('AI enhancement error:', error);
       toast.error('Error al mejorar con IA');
     } finally {
-      setIsEnhancing(false);
+      setEnhancingField(null);
     }
   };
 
@@ -433,6 +433,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
 
   const renderEnhanceButton = (field: string) => {
     const hasValue = !!((briefData as any)[field] || '').toString().trim();
+    const isThisFieldEnhancing = enhancingField === field;
 
     return (
       <div className="flex items-center gap-1">
@@ -441,11 +442,11 @@ Escribe 1-2 frases de complemento para agregar al final.`
           variant="ghost"
           size="sm"
           onClick={() => enhanceWithAI(field, 'append')}
-          disabled={isEnhancing}
+          disabled={!!enhancingField}
           className="gap-1 text-xs h-7"
           title={hasValue ? 'Complementar lo que ya escribiste' : 'Generar texto con IA'}
         >
-          {isEnhancing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+          {isThisFieldEnhancing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
           {hasValue ? 'Complementar' : 'Generar'}
         </Button>
 
@@ -456,7 +457,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
                 type="button"
                 variant="ghost"
                 size="icon"
-                disabled={isEnhancing}
+                disabled={!!enhancingField}
                 className="h-7 w-7"
                 title="Más opciones"
               >
