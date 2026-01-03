@@ -97,7 +97,7 @@ interface BriefData {
   aiSuggestedHooks: string[];
 }
 
-// Esfera phases configuration
+// Esfera phases configuration with Meta campaign types
 const ESFERA_PHASES = [
   {
     key: 'engage' as const,
@@ -106,8 +106,11 @@ const ESFERA_PHASES = [
     color: 'bg-cyan-100 dark:bg-cyan-900 border-cyan-300 dark:border-cyan-700',
     textColor: 'text-cyan-700 dark:text-cyan-300',
     description: 'Captar atención de audiencia fría',
-    details: 'Videos disruptivos para personas que NO conocen tu marca. Objetivo: generar curiosidad y hacer que dejen de hacer scroll.',
-    contentExamples: 'Hooks impactantes, problemas visibles, patrones rotos',
+    details: 'Videos disruptivos para personas que NO conocen tu marca. El objetivo es hacer que dejen de hacer scroll y generar curiosidad sobre quién eres.',
+    audience: '❄️ Audiencia FRÍA: Nunca han visto tu marca',
+    metaCampaign: '📢 Meta: Campañas de RECONOCIMIENTO o ALCANCE',
+    contentExamples: 'Hooks impactantes, problemas visibles, patrones rotos, contenido viral',
+    objective: 'Métricas clave: Alcance, Impresiones, CPM bajo',
   },
   {
     key: 'solution' as const,
@@ -115,9 +118,12 @@ const ESFERA_PHASES = [
     icon: '💡',
     color: 'bg-emerald-100 dark:bg-emerald-900 border-emerald-300 dark:border-emerald-700',
     textColor: 'text-emerald-700 dark:text-emerald-300',
-    description: 'Mostrar cómo tu producto resuelve el problema',
-    details: 'Videos para audiencia tibia que reconoce tener un problema. Objetivo: demostrar que tu producto es LA solución.',
-    contentExamples: 'Demostraciones, casos de uso, storytelling de transformación',
+    description: 'Venta directa - Mostrar tu producto como LA solución',
+    details: 'Videos de VENTA DIRECTA para quienes ya reconocen tener un problema. Aquí muestras cómo tu producto elimina su dolor y los llevas a comprar.',
+    audience: '🔥 Audiencia TIBIA: Saben que tienen un problema',
+    metaCampaign: '🛒 Meta: Campañas de VENTAS o CONVERSIONES',
+    contentExamples: 'Demostraciones, beneficios claros, ofertas, llamados a la acción directos',
+    objective: 'Métricas clave: Conversiones, ROAS, CPA, Ventas',
   },
   {
     key: 'remarketing' as const,
@@ -125,9 +131,12 @@ const ESFERA_PHASES = [
     icon: '🔄',
     color: 'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700',
     textColor: 'text-amber-700 dark:text-amber-300',
-    description: 'Reconectar con quienes ya te conocen',
-    details: 'Videos para audiencia caliente que ya visitó tu web o mostró interés. Objetivo: superar objeciones y crear urgencia.',
-    contentExamples: 'Testimonios, comparativas, ofertas especiales',
+    description: 'Recuperar a quienes no compraron',
+    details: 'Videos para personas que ya visitaron tu web, vieron productos o agregaron al carrito pero NO compraron. El objetivo es superar sus objeciones y crear urgencia.',
+    audience: '🔥🔥 Audiencia CALIENTE: Ya interactuaron contigo',
+    metaCampaign: '🎯 Meta: Campañas de RETARGETING (públicos personalizados)',
+    contentExamples: 'Testimonios, garantías, urgencia, comparativas, respuesta a objeciones',
+    objective: 'Métricas clave: Conversión final, Recuperación de carrito, CPA',
   },
   {
     key: 'fidelize' as const,
@@ -135,9 +144,12 @@ const ESFERA_PHASES = [
     icon: '💎',
     color: 'bg-purple-100 dark:bg-purple-900 border-purple-300 dark:border-purple-700',
     textColor: 'text-purple-700 dark:text-purple-300',
-    description: 'Retener y hacer que vuelvan a comprar',
-    details: 'Videos para clientes existentes. Objetivo: aumentar recompra, generar referidos y crear comunidad.',
-    contentExamples: 'Tips exclusivos, upsells, contenido de comunidad',
+    description: 'Que vuelvan a comprar y te recomienden',
+    details: 'Videos para CLIENTES que ya compraron. El objetivo es que compren más, con mayor frecuencia, y que te recomienden a otros.',
+    audience: '💰 CLIENTES: Ya te compraron antes',
+    metaCampaign: '👥 Meta: Campañas de ENGAGEMENT o público de clientes',
+    contentExamples: 'Tips exclusivos, nuevos productos, upsells, programa de referidos',
+    objective: 'Métricas clave: LTV, Recompra, Referidos, Engagement',
   },
 ];
 
@@ -1280,48 +1292,71 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                     </Badge>
                   </div>
                   
-                  <div className="grid gap-3">
+                  <div className="grid gap-4">
                     {ESFERA_PHASES.map((phase) => (
                       <div
                         key={phase.key}
                         className={`p-4 rounded-lg border-2 ${phase.color} transition-all`}
                       >
                         <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xl">{phase.icon}</span>
-                              <span className={`font-bold ${phase.textColor}`}>{phase.label}</span>
+                          <div className="flex-1 min-w-0 space-y-2">
+                            {/* Header */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-2xl">{phase.icon}</span>
+                              <span className={`font-bold text-lg ${phase.textColor}`}>{phase.label}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {phase.audience.split(':')[0]}
+                              </Badge>
                             </div>
-                            <p className="text-sm font-medium mt-1">{phase.description}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{phase.details}</p>
-                            <p className="text-xs text-muted-foreground/70 mt-1 italic">
-                              Ejemplo: {phase.contentExamples}
+                            
+                            {/* Description */}
+                            <p className={`text-sm font-semibold ${phase.textColor}`}>{phase.description}</p>
+                            <p className="text-sm text-foreground/80">{phase.details}</p>
+                            
+                            {/* Meta Campaign Info */}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <Badge variant="outline" className="text-xs font-medium">
+                                {phase.metaCampaign}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {phase.objective}
+                              </Badge>
+                            </div>
+                            
+                            {/* Content Examples */}
+                            <p className="text-xs text-muted-foreground italic">
+                              📹 Contenido recomendado: {phase.contentExamples}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => updatePhaseCount(phase.key, briefData.phaseDistribution[phase.key] - 1)}
-                              disabled={briefData.phaseDistribution[phase.key] <= 0}
-                            >
-                              -
-                            </Button>
-                            <span className={`w-8 text-center font-bold text-lg ${phase.textColor}`}>
-                              {briefData.phaseDistribution[phase.key]}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => updatePhaseCount(phase.key, briefData.phaseDistribution[phase.key] + 1)}
-                              disabled={totalFromPhases >= videosAvailable}
-                            >
-                              +
-                            </Button>
+                          
+                          {/* Counter */}
+                          <div className="flex flex-col items-center gap-1 shrink-0">
+                            <span className="text-xs text-muted-foreground">Videos</span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9"
+                                onClick={() => updatePhaseCount(phase.key, briefData.phaseDistribution[phase.key] - 1)}
+                                disabled={briefData.phaseDistribution[phase.key] <= 0}
+                              >
+                                -
+                              </Button>
+                              <span className={`w-10 text-center font-bold text-2xl ${phase.textColor}`}>
+                                {briefData.phaseDistribution[phase.key]}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9"
+                                onClick={() => updatePhaseCount(phase.key, briefData.phaseDistribution[phase.key] + 1)}
+                                disabled={totalFromPhases >= videosAvailable}
+                              >
+                                +
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
