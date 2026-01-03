@@ -238,9 +238,10 @@ export default function FeedCard({ item, onSave, isSaved, onOpenComments }: Feed
         </DropdownMenu>
       </div>
 
-      {/* Media */}
+      {/* Media - Clean video area */}
       <div 
-        className="relative aspect-square bg-black/20 overflow-hidden cursor-pointer"
+        className="relative bg-black/20 overflow-hidden cursor-pointer"
+        style={{ aspectRatio: item.media_type === 'video' ? '9/16' : '1/1', maxHeight: '500px' }}
         onDoubleClick={handleDoubleClick}
       >
         {item.media_type === 'video' ? (
@@ -249,31 +250,20 @@ export default function FeedCard({ item, onSave, isSaved, onOpenComments }: Feed
               ref={videoRef}
               src={item.media_url}
               poster={item.thumbnail_url}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               muted={isMuted}
               loop
               playsInline
               onClick={toggleVideoPlay}
             />
-            {/* Video controls overlay */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              {!isPlaying && (
-                <div className="glass-card p-4 rounded-full animate-pulse">
+            {/* Play indicator - only shows when paused, centered */}
+            {!isPlaying && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="glass-card p-4 rounded-full">
                   <Play className="h-8 w-8 text-white fill-white" />
                 </div>
-              )}
-            </div>
-            {/* Mute button */}
-            <button
-              onClick={toggleMute}
-              className="absolute bottom-4 right-4 glass-card p-2 rounded-full hover:scale-110 transition-transform"
-            >
-              {isMuted ? (
-                <VolumeX className="h-4 w-4 text-white" />
-              ) : (
-                <Volume2 className="h-4 w-4 text-white" />
-              )}
-            </button>
+              </div>
+            )}
           </>
         ) : (
           <img
@@ -319,6 +309,22 @@ export default function FeedCard({ item, onSave, isSaved, onOpenComments }: Feed
             url={shareUrl}
             title={shareTitle}
           />
+
+          {/* Mute button for videos - now in action bar */}
+          {item.media_type === 'video' && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 rounded-full"
+              onClick={toggleMute}
+            >
+              {isMuted ? (
+                <VolumeX className="h-5 w-5" />
+              ) : (
+                <Volume2 className="h-5 w-5" />
+              )}
+            </Button>
+          )}
           
           <div className="flex-1" />
           
