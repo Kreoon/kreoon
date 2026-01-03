@@ -16,7 +16,8 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const bunnyApiKey = Deno.env.get('BUNNY_API_KEY')!
     const bunnyLibraryId = Deno.env.get('BUNNY_LIBRARY_ID')!
-    const bunnyCdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME') || 'vz-f0f0f0f0-f0f.b-cdn.net'
+    // Use known CDN hostname for this project
+    const bunnyCdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME') || 'vz-78fcd769-050.b-cdn.net'
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
@@ -160,10 +161,13 @@ Deno.serve(async (req) => {
     
     // For Bunny Stream, use the pull zone CDN URL
     // Format: https://<cdnHost>/{video_id}/play_1080p.mp4 (quality may vary)
-
-    const cdnHost = (bunnyCdnHostname && bunnyCdnHostname !== 'vz-f0f0f0f0-f0f.b-cdn.net')
+    // IMPORTANT: Always use the CDN hostname (b-cdn.net), NOT storage hostname
+    const defaultCdnHost = 'vz-78fcd769-050.b-cdn.net'
+    const cdnHost = (bunnyCdnHostname && bunnyCdnHostname.includes('b-cdn.net'))
       ? bunnyCdnHostname
-      : `vz-${bunnyLibraryId}.b-cdn.net`;
+      : defaultCdnHost
+
+    console.log(`Using CDN host: ${cdnHost} for video ${videoId}`)
 
     const qualities = [2160, 1440, 1080, 720, 480, 360];
     let downloadUrl = `https://${cdnHost}/${videoId}/play_720p.mp4`;
