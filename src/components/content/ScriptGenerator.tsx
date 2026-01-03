@@ -126,14 +126,26 @@ const AI_PROVIDERS = [
 ];
 
 const NARRATIVE_STRUCTURES = [
-  { value: "problema-solucion", label: "Problema → Solución" },
-  { value: "historia-personal", label: "Historia Personal" },
-  { value: "antes-despues", label: "Antes/Después" },
-  { value: "tutorial", label: "Tutorial paso a paso" },
-  { value: "testimonio", label: "Testimonio" },
-  { value: "urgencia", label: "Urgencia/Escasez" },
-  { value: "educativo", label: "Educativo/Informativo" },
-  { value: "entretenimiento", label: "Entretenimiento" },
+  { value: "problema-solucion", label: "Problema → Solución", description: "Presenta el dolor y ofrece la solución" },
+  { value: "historia-personal", label: "Historia Personal", description: "Storytelling desde la experiencia propia" },
+  { value: "antes-despues", label: "Antes/Después", description: "Transformación visual o narrativa" },
+  { value: "tutorial", label: "Tutorial paso a paso", description: "Guía práctica de uso" },
+  { value: "testimonio", label: "Testimonio", description: "Experiencia de un cliente real" },
+  { value: "urgencia", label: "Urgencia/Escasez", description: "FOMO y acción inmediata" },
+  { value: "educativo", label: "Educativo/Informativo", description: "Enseña algo valioso" },
+  { value: "entretenimiento", label: "Entretenimiento", description: "Engancha con humor o creatividad" },
+  { value: "mitos-realidades", label: "Mitos vs Realidades", description: "Desmiente creencias falsas" },
+  { value: "comparativa", label: "Comparativa", description: "vs competencia o alternativas" },
+  { value: "detras-camaras", label: "Detrás de Cámaras", description: "Muestra el proceso o equipo" },
+  { value: "unboxing", label: "Unboxing/Reveal", description: "Descubrimiento del producto" },
+  { value: "reaccion", label: "Reacción", description: "Respuesta espontánea al producto" },
+  { value: "lista", label: "Lista/Top", description: "X razones, tips o beneficios" },
+  { value: "pov", label: "POV (Punto de Vista)", description: "Perspectiva del avatar ideal" },
+  { value: "controversia", label: "Opinión Controversial", description: "Declaración que genera debate" },
+  { value: "trend", label: "Trend/Tendencia", description: "Adaptación de formato viral" },
+  { value: "dia-en-vida", label: "Día en la Vida", description: "Rutina usando el producto" },
+  { value: "pregunta-respuesta", label: "Q&A", description: "Responde preguntas frecuentes" },
+  { value: "storytime", label: "Storytime", description: "Historia larga y envolvente" },
 ];
 
 const COUNTRIES = [
