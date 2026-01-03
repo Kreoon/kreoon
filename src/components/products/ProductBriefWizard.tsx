@@ -9,7 +9,29 @@ import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, CheckCircle2, ArrowRight, ArrowLeft, Package, Target, Brain, Users, Megaphone, FileText, Wand2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Loader2,
+  Sparkles,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Package,
+  Target,
+  Brain,
+  Users,
+  Megaphone,
+  FileText,
+  Wand2,
+  ChevronDown,
+  RotateCcw,
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -275,7 +297,7 @@ export function ProductBriefWizard({
   const canProceed = isStepComplete(currentStep);
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
-  const enhanceWithAI = async (field: string) => {
+  const enhanceWithAI = async (field: string, mode: 'append' | 'replace' = 'append') => {
     setIsEnhancing(true);
     try {
       const fieldLabels: Record<string, string> = {
@@ -291,28 +313,43 @@ export function ProductBriefWizard({
         idealScenario: 'escenario ideal post-compra',
       };
 
-      const currentValue = (briefData as any)[field] || '';
+      const currentValue = ((briefData as any)[field] || '').toString();
+      const base = currentValue.trim();
       const fieldLabel = fieldLabels[field] || field;
+      const shouldAppend = mode === 'append' && !!base;
 
-      const systemPrompt = `Eres un experto en copywriting y estrategia de marketing. Tu tarea es COMPLEMENTAR el texto del usuario para un brief de producto.
+      const systemPrompt = shouldAppend
+        ? `Eres un experto en copywriting y estrategia de marketing. Tu tarea es COMPLEMENTAR el texto del usuario para un brief de producto.
 
 Producto: ${briefData.productName}
 Categoría: ${briefData.category}
 Objetivo: ${briefData.currentObjective || 'No especificado'}
 
 REGLAS CRÍTICAS:
-- Si el usuario ya escribió un texto: NO lo reescribas, NO lo reemplaces y NO lo parafrasees.
-- Devuelve ÚNICAMENTE un complemento (1-2 frases) que se pueda agregar DESPUÉS del texto del usuario.
+- NO reescribas, NO reemplaces y NO parafrasees el texto original.
+- Devuelve ÚNICAMENTE un complemento (1-2 frases) para agregar DESPUÉS del texto.
 - No repitas el texto original.
-- El complemento debe mejorar claridad, persuasión y especificidad.
 - Español latinoamericano.
-- Responde SOLO con el complemento, sin comillas ni explicaciones.`;
+- Responde SOLO con el complemento, sin comillas ni explicaciones.`
+        : `Eres un experto en copywriting y estrategia de marketing. Tu tarea es GENERAR una versión mejor del campo del brief.
 
-      const userPrompt = currentValue 
-        ? `Texto actual del usuario (${fieldLabel}): ${currentValue}
+Producto: ${briefData.productName}
+Categoría: ${briefData.category}
+Objetivo: ${briefData.currentObjective || 'No especificado'}
+
+REGLAS:
+- Entrega una versión final lista para pegar.
+- Español latinoamericano.
+- Máximo 2-3 oraciones.
+- Responde SOLO con el texto final, sin comillas ni explicaciones.`;
+
+      const userPrompt = shouldAppend
+        ? `Texto actual del usuario (${fieldLabel}): ${base}
 
 Escribe 1-2 frases de complemento para agregar al final.`
-        : `Crea un ${fieldLabel} impactante para este producto (2-3 oraciones).`;
+        : base
+          ? `Reescribe y mejora este ${fieldLabel} (puedes cambiar lo necesario, pero mantén la intención): ${base}`
+          : `Crea un ${fieldLabel} impactante para este producto (2-3 oraciones).`;
 
       const { data, error } = await supabase.functions.invoke('multi-ai', {
         body: {
@@ -322,9 +359,9 @@ Escribe 1-2 frases de complemento para agregar al final.`
           models: ['gemini'],
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ]
-        }
+            { role: 'user', content: userPrompt },
+          ],
+        },
       });
 
       if (error) throw error;
@@ -335,11 +372,12 @@ Escribe 1-2 frases de complemento para agregar al final.`
         throw new Error('Respuesta vacía de IA');
       }
 
-      const base = currentValue?.toString().trim();
-      const nextValue = base ? `${base}${base.endsWith('.') ? '' : '.'} ${aiText}` : aiText;
+      const nextValue = shouldAppend
+        ? `${base}${base.endsWith('.') ? '' : '.'} ${aiText}`
+        : aiText;
 
       updateField(field as keyof BriefData, nextValue);
-      toast.success(base ? 'Texto complementado con IA' : 'Campo generado con IA');
+      toast.success(shouldAppend ? 'Texto complementado con IA' : 'Texto generado con IA');
     } catch (error) {
       console.error('AI enhancement error:', error);
       toast.error('Error al mejorar con IA');
@@ -393,19 +431,59 @@ Escribe 1-2 frases de complemento para agregar al final.`
     }
   };
 
-  const renderEnhanceButton = (field: string) => (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      onClick={() => enhanceWithAI(field)}
-      disabled={isEnhancing}
-      className="gap-1 text-xs h-7"
-    >
-      {isEnhancing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
-      Mejorar con IA
-    </Button>
-  );
+  const renderEnhanceButton = (field: string) => {
+    const hasValue = !!((briefData as any)[field] || '').toString().trim();
+
+    return (
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => enhanceWithAI(field, 'append')}
+          disabled={isEnhancing}
+          className="gap-1 text-xs h-7"
+          title={hasValue ? 'Complementar lo que ya escribiste' : 'Generar texto con IA'}
+        >
+          {isEnhancing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+          {hasValue ? 'Complementar' : 'Generar'}
+        </Button>
+
+        {hasValue && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={isEnhancing}
+                className="h-7 w-7"
+                title="Más opciones"
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => enhanceWithAI(field, 'append')}>
+                <Wand2 className="h-4 w-4 mr-2" />
+                Complementar (agregar)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  const ok = window.confirm('Esto reemplazará el texto actual. ¿Deseas continuar?');
+                  if (ok) enhanceWithAI(field, 'replace');
+                }}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Generar nuevo (reemplazar)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    );
+  };
 
   const renderStepContent = () => {
     switch (currentStep) {
