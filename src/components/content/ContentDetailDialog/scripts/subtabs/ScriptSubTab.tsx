@@ -6,7 +6,8 @@ import { RichTextViewer } from '@/components/scripts/RichTextViewer';
 import { TeleprompterMode } from '@/components/content/TeleprompterMode';
 import { CommentsSection } from '@/components/content/CommentsSection';
 import { SectionCard } from '../../components/SectionCard';
-import { CheckCircle, FileText, Tv } from 'lucide-react';
+import { ScriptAIChat } from '../ScriptAIChat';
+import { CheckCircle, FileText, Tv, MessageSquare } from 'lucide-react';
 import { SubTabProps } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +22,7 @@ export function ScriptSubTab({
   onUpdate,
   scriptPermissions,
   advancedConfig,
+  selectedProduct,
   readOnly = false,
 }: SubTabProps) {
   const { toast } = useToast();
@@ -104,6 +106,22 @@ export function ScriptSubTab({
           )}
         </div>
       </SectionCard>
+
+      {/* AI Chat for Script Refinement - Available for clients, strategists, and admins */}
+      {hasScript && (
+        <SectionCard title="Refinar Guión con IA" iconEmoji="💬" icon={MessageSquare}>
+          <ScriptAIChat
+            currentScript={formData.script || ''}
+            onScriptUpdate={(newScript) => {
+              setFormData(prev => ({ ...prev, script: newScript }));
+              if (!editMode) setEditMode(true);
+            }}
+            productName={selectedProduct?.name}
+            spherePhase={formData.sphere_phase}
+            disabled={isReadOnly}
+          />
+        </SectionCard>
+      )}
 
       {/* Script Approval */}
       {canApprove && hasScript && !content?.script_approved_at && (
