@@ -70,7 +70,7 @@ interface ScriptFormData {
   admin_prompt: string;
   reference_transcription: string;
   video_strategies: string;
-  ai_provider: "openai" | "gemini" | "anthropic";
+  ai_provider: "lovable" | "openai" | "gemini" | "anthropic";
   ai_model: string;
 }
 
@@ -82,9 +82,23 @@ interface GenerationStep {
 
 const AI_PROVIDERS = [
   { 
+    value: "lovable", 
+    label: "IA Interna", 
+    description: "Sin API Key requerida",
+    requiresApiKey: false,
+    models: [
+      { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash (Recomendado)" },
+      { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite (Rápido)" },
+      { value: "openai/gpt-5", label: "GPT-5" },
+      { value: "openai/gpt-5-mini", label: "GPT-5 Mini" },
+    ]
+  },
+  { 
     value: "openai", 
     label: "OpenAI GPT", 
     description: "Requiere API Key",
+    requiresApiKey: true,
     models: [
       { value: "gpt-4o", label: "GPT-4o (Recomendado)" },
       { value: "gpt-4o-mini", label: "GPT-4o Mini (Rápido)" },
@@ -96,6 +110,7 @@ const AI_PROVIDERS = [
     value: "gemini", 
     label: "Google Gemini", 
     description: "Requiere API Key",
+    requiresApiKey: true,
     models: [
       { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Recomendado)" },
       { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
@@ -106,6 +121,7 @@ const AI_PROVIDERS = [
     value: "anthropic", 
     label: "Anthropic Claude", 
     description: "Requiere API Key",
+    requiresApiKey: true,
     models: [
       { value: "claude-sonnet-4-5", label: "Claude Sonnet 4.5 (Recomendado)" },
       { value: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet" },
@@ -1058,13 +1074,17 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   // Load enabled AI providers from organization settings
   const { getEnabledProviders, hasValidApiKey, loading: loadingAI } = useOrganizationAI(organizationId);
   
-  // Filter AI_PROVIDERS to only show enabled ones (excluding lovable)
-  const enabledProviders = useMemo(() => {
+  // Check which providers are enabled (lovable is always enabled)
+  const enabledProviderKeys = useMemo(() => {
     const enabled = getEnabledProviders();
-    return AI_PROVIDERS.filter(p => 
-      enabled.some(e => e.key === p.value && p.value !== 'lovable')
-    );
+    return enabled.map(e => e.key);
   }, [getEnabledProviders]);
+  
+  // Check if a provider is enabled
+  const isProviderEnabled = (providerValue: string) => {
+    if (providerValue === 'lovable') return true; // Always enabled
+    return enabledProviderKeys.includes(providerValue);
+  };
   
   // Document content from Drive
   const [documentContent, setDocumentContent] = useState<DocumentContent>({
@@ -1100,8 +1120,8 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     admin_prompt: DEFAULT_PROMPTS.admin,
     reference_transcription: "",
     video_strategies: "",
-    ai_provider: "openai",
-    ai_model: "gpt-4o",
+    ai_provider: "lovable",
+    ai_model: "google/gemini-2.5-flash",
   });
 
   // Update prompts when custom prompts are loaded
@@ -1119,36 +1139,22 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     }
   }, [customPrompts, loadingPrompts]);
 
-  const currentProvider = enabledProviders.find(p => p.value === formData.ai_provider) || 
-                         AI_PROVIDERS.find(p => p.value === formData.ai_provider);
+  const currentProvider = AI_PROVIDERS.find(p => p.value === formData.ai_provider);
   const availableModels = currentProvider?.models || [];
-
-  // Update provider and model when enabled providers change
-  useEffect(() => {
-    if (!loadingAI && enabledProviders.length > 0) {
-      const isCurrentProviderEnabled = enabledProviders.some(p => p.value === formData.ai_provider);
-      if (!isCurrentProviderEnabled) {
-        const firstEnabled = enabledProviders[0];
-        setFormData(prev => ({
-          ...prev,
-          ai_provider: firstEnabled.value as "openai" | "gemini" | "anthropic",
-          ai_model: firstEnabled.models[0]?.value || ""
-        }));
-      }
-    }
-  }, [loadingAI, enabledProviders, formData.ai_provider]);
 
   // Update model when provider changes
   useEffect(() => {
-    const provider = enabledProviders.find(p => p.value === formData.ai_provider) ||
-                    AI_PROVIDERS.find(p => p.value === formData.ai_provider);
+    const provider = AI_PROVIDERS.find(p => p.value === formData.ai_provider);
     if (provider && provider.models.length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        ai_model: provider.models[0].value
-      }));
+      const currentModelExists = provider.models.some(m => m.value === formData.ai_model);
+      if (!currentModelExists) {
+        setFormData(prev => ({
+          ...prev,
+          ai_model: provider.models[0].value
+        }));
+      }
     }
-  }, [formData.ai_provider, enabledProviders]);
+  }, [formData.ai_provider]);
 
   // Pre-fill avatar from product if available
   useEffect(() => {
@@ -1576,63 +1582,67 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="text-sm font-medium">Seleccionar IA</Label>
         </div>
         
-        {enabledProviders.length === 0 && !loadingAI ? (
-          <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
-            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-            <span>
-              No hay proveedores de IA activos. Configura al menos un proveedor en la configuración de IA.
-            </span>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Proveedor</Label>
-              <Select 
-                value={formData.ai_provider} 
-                onValueChange={(v: "openai" | "gemini" | "anthropic") => setFormData({ ...formData, ai_provider: v })}
-                disabled={enabledProviders.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar proveedor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {enabledProviders.map((provider) => (
-                    <SelectItem key={provider.value} value={provider.value}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Proveedor</Label>
+            <Select 
+              value={formData.ai_provider} 
+              onValueChange={(v: "lovable" | "openai" | "gemini" | "anthropic") => setFormData({ ...formData, ai_provider: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar proveedor" />
+              </SelectTrigger>
+              <SelectContent>
+                {AI_PROVIDERS.map((provider) => {
+                  const isEnabled = isProviderEnabled(provider.value);
+                  const needsApiKey = provider.requiresApiKey && !hasValidApiKey(provider.value);
+                  return (
+                    <SelectItem 
+                      key={provider.value} 
+                      value={provider.value}
+                      disabled={!isEnabled}
+                      className={!isEnabled ? "opacity-50" : ""}
+                    >
                       <div className="flex items-center gap-2">
                         <span>{provider.label}</span>
-                        {!hasValidApiKey(provider.value) && (
+                        {!isEnabled && (
+                          <Badge variant="outline" className="text-xs text-muted-foreground">Desactivado</Badge>
+                        )}
+                        {isEnabled && needsApiKey && (
                           <AlertCircle className="h-3 w-3 text-amber-500" />
+                        )}
+                        {provider.value === 'lovable' && (
+                          <Badge variant="secondary" className="text-xs">Sin API Key</Badge>
                         )}
                       </div>
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Modelo</Label>
-              <Select 
-                value={formData.ai_model} 
-                onValueChange={(v) => setFormData({ ...formData, ai_model: v })}
-                disabled={enabledProviders.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar modelo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableModels.map((model) => (
-                    <SelectItem key={model.value} value={model.value}>
-                      {model.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
-        )}
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Modelo</Label>
+            <Select 
+              value={formData.ai_model} 
+              onValueChange={(v) => setFormData({ ...formData, ai_model: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar modelo" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableModels.map((model) => (
+                  <SelectItem key={model.value} value={model.value}>
+                    {model.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         
-        {formData.ai_provider && !hasValidApiKey(formData.ai_provider) && enabledProviders.length > 0 && (
+        {formData.ai_provider !== 'lovable' && currentProvider?.requiresApiKey && !hasValidApiKey(formData.ai_provider) && (
           <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded mt-2">
             <AlertCircle className="h-3 w-3 flex-shrink-0" />
             <span>
