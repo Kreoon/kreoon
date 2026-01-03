@@ -164,6 +164,10 @@ export interface Content {
   editor_guidelines: string | null;
   strategist_guidelines: string | null;
   trafficker_guidelines: string | null;
+  designer_guidelines: string | null;
+  admin_guidelines: string | null;
+  // Sphere phase
+  sphere_phase: 'engage' | 'solution' | 'remarketing' | 'fidelize' | null;
   // Relaciones
   client?: Partial<Client>;
   creator?: Partial<Profile>;

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Clock, Building2, Video, FileText, Star, MoreVertical, Brain, AlertTriangle, Clock4 } from "lucide-react";
+import { Clock, Building2, Video, FileText, Star, MoreVertical, Brain, AlertTriangle, Clock4, Zap, Lightbulb, RefreshCw, Heart, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Content, STATUS_COLORS, STATUS_LABELS, ContentStatus, AppRole } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { StatusChangeDropdown, QuickStatusButtons } from "./StatusChangeDropdown";
+
+// Sphere phase configuration for display
+const SPHERE_PHASE_DISPLAY: Record<string, { label: string; shortLabel: string; icon: typeof Zap; color: string; bgColor: string }> = {
+  engage: { label: 'Enganchar', shortLabel: 'ENG', icon: Zap, color: 'text-cyan-600', bgColor: 'bg-cyan-100 dark:bg-cyan-900/50' },
+  solution: { label: 'Solución', shortLabel: 'SOL', icon: Lightbulb, color: 'text-emerald-600', bgColor: 'bg-emerald-100 dark:bg-emerald-900/50' },
+  remarketing: { label: 'Remarketing', shortLabel: 'RMK', icon: RefreshCw, color: 'text-amber-600', bgColor: 'bg-amber-100 dark:bg-amber-900/50' },
+  fidelize: { label: 'Fidelizar', shortLabel: 'FID', icon: Heart, color: 'text-purple-600', bgColor: 'bg-purple-100 dark:bg-purple-900/50' },
+};
 
 // Organization status interface
 interface OrganizationStatus {
@@ -282,6 +290,54 @@ export function EnhancedContentCard({
           )
         )}
       </div>
+
+      {/* Sphere Phase & Campaign Week Banner */}
+      {(content.sphere_phase || content.campaign_week) && (
+        <div className={cn("flex items-center flex-wrap mb-1.5", sizeConfig.spacing)}>
+          {content.sphere_phase && SPHERE_PHASE_DISPLAY[content.sphere_phase] && (() => {
+            const phase = SPHERE_PHASE_DISPLAY[content.sphere_phase];
+            const Icon = phase.icon;
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(
+                      sizeConfig.badgeSize, 
+                      phase.bgColor, 
+                      phase.color,
+                      "gap-0.5 font-medium"
+                    )}
+                  >
+                    <Icon className={cn(sizeConfig.iconSize)} />
+                    {cardSize === 'compact' ? phase.shortLabel : phase.label}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  <span className="font-medium">Fase Esfera:</span> {phase.label}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })()}
+          
+          {content.campaign_week && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge 
+                  variant="outline" 
+                  className={cn(sizeConfig.badgeSize, "gap-0.5 text-muted-foreground")}
+                >
+                  <Calendar className={cn(sizeConfig.iconSize)} />
+                  {cardSize === 'compact' ? `S${content.campaign_week}` : `Semana ${content.campaign_week}`}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                <span className="font-medium">Semana de Campaña:</span> {content.campaign_week}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      )}
 
       {/* Client */}
       {showField('client') && content.client?.name && (
