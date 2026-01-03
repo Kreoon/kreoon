@@ -159,7 +159,7 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                     <SelectValue placeholder="Seleccionar modelo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Lovable AI (Sin API Key)</div>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">IA Interna (Sin API Key)</div>
                     {AI_PROVIDERS_CONFIG.lovable.models.map((model) => (
                       <SelectItem key={model.value} value={model.value}>
                         <div className="flex items-center gap-2">

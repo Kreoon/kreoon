@@ -154,7 +154,7 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
       },
       {
         key: "lovable_ai_enabled",
-        label: "Lovable AI (Integrado)",
+        label: "IA Interna (Integrado)",
         description: "IA integrada en la plataforma. No requiere API Key. Soporta Gemini, GPT-5 y más.",
         type: "config",
         placeholder: "Habilitado por defecto",
