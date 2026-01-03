@@ -314,6 +314,8 @@ Reglas:
         body: {
           provider: 'lovable',
           model: 'google/gemini-2.5-flash',
+          mode: 'first',
+          models: ['gemini'],
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
@@ -322,14 +324,16 @@ Reglas:
       });
 
       if (error) throw error;
-      
-      if (data?.content) {
-        updateField(field as keyof BriefData, data.content.trim());
+
+      const improved = (data?.content || data?.response || data?.result || '').toString().trim();
+      if (improved) {
+        updateField(field as keyof BriefData, improved);
         toast.success('Campo mejorado con IA');
       } else if (data?.error) {
         throw new Error(data.error);
+      } else {
+        throw new Error('Respuesta vacía de IA');
       }
-    } catch (error) {
       console.error('AI enhancement error:', error);
       toast.error('Error al mejorar con IA');
     } finally {
