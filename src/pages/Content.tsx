@@ -6,7 +6,21 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Plus, Play, Eye, Heart, ExternalLink, Film, MoreVertical, Image, Settings } from "lucide-react";
+import { Search, Plus, Play, Eye, Heart, ExternalLink, Film, MoreVertical, Image, Settings, Filter, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { PageHeader } from '@/components/layout/PageHeader';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -66,6 +80,10 @@ const Content = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPublished, setFilterPublished] = useState<'all' | 'published' | 'unpublished'>('all');
+  const [filterClient, setFilterClient] = useState<string>('all');
+  const [filterCreator, setFilterCreator] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [newVideoOpen, setNewVideoOpen] = useState(false);
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [newVideoTitle, setNewVideoTitle] = useState("");
@@ -278,18 +296,54 @@ const Content = () => {
     });
   }, [content]);
 
-  // Filter by search and publish status
+  // Get unique clients and creators for filter options
+  const uniqueClients = useMemo(() => {
+    const clients = contentWithVideos
+      .filter(item => item.client)
+      .map(item => ({ id: item.client_id!, name: item.client!.name }));
+    return Array.from(new Map(clients.map(c => [c.id, c])).values());
+  }, [contentWithVideos]);
+
+  const uniqueCreators = useMemo(() => {
+    const creators = contentWithVideos
+      .filter(item => item.creator)
+      .map(item => ({ id: item.creator_id!, name: item.creator!.full_name }));
+    return Array.from(new Map(creators.map(c => [c.id, c])).values());
+  }, [contentWithVideos]);
+
+  const uniqueStatuses = useMemo(() => {
+    return [...new Set(contentWithVideos.map(item => item.status).filter(Boolean))];
+  }, [contentWithVideos]);
+
+  // Filter by search and all filters
   const filteredContent = contentWithVideos.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = searchQuery === '' || 
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.client?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.creator?.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesFilter = filterPublished === 'all' ||
+    const matchesPublished = filterPublished === 'all' ||
       (filterPublished === 'published' && item.is_published) ||
       (filterPublished === 'unpublished' && !item.is_published);
 
-    return matchesSearch && matchesFilter;
+    const matchesClient = filterClient === 'all' || item.client_id === filterClient;
+    const matchesCreator = filterCreator === 'all' || item.creator_id === filterCreator;
+    const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
+
+    return matchesSearch && matchesPublished && matchesClient && matchesCreator && matchesStatus;
   });
+
+  // Count active filters
+  const activeFiltersCount = [filterClient, filterCreator, filterStatus, filterPublished]
+    .filter(f => f !== 'all').length;
+
+  const clearAllFilters = () => {
+    setFilterClient('all');
+    setFilterCreator('all');
+    setFilterStatus('all');
+    setFilterPublished('all');
+    setSearchQuery('');
+  };
 
   // Count total variations for metrics
   const totalVariations = contentWithVideos.reduce((sum, item) => sum + getVideoUrls(item).length, 0);
@@ -408,46 +462,160 @@ const Content = () => {
         )}
 
         <div className="p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 md:mb-6">
-            <div className="relative w-full sm:w-auto">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input 
-                type="text"
-                placeholder="Buscar videos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9 md:h-10 w-full sm:w-64 md:w-80 rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+          {/* Search and Filters */}
+          <div className="flex flex-col gap-3 mb-4 md:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              {/* Search Input */}
+              <div className="relative flex-1 sm:max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input 
+                  type="text"
+                  placeholder="Buscar videos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-9 md:h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              
+              {/* Filter Button with Sheet */}
+              <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Filter className="h-4 w-4" />
+                    Filtros
+                    {activeFiltersCount > 0 && (
+                      <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                        {activeFiltersCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                  <SheetHeader>
+                    <SheetTitle>Filtros</SheetTitle>
+                  </SheetHeader>
+                  <div className="space-y-6 py-6">
+                    {/* Client Filter */}
+                    <div className="space-y-2">
+                      <Label>Cliente</Label>
+                      <Select value={filterClient} onValueChange={setFilterClient}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos los clientes" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos los clientes</SelectItem>
+                          {uniqueClients.map(client => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Creator Filter */}
+                    <div className="space-y-2">
+                      <Label>Creador</Label>
+                      <Select value={filterCreator} onValueChange={setFilterCreator}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos los creadores" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos los creadores</SelectItem>
+                          {uniqueCreators.map(creator => (
+                            <SelectItem key={creator.id} value={creator.id}>
+                              {creator.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="space-y-2">
+                      <Label>Estado</Label>
+                      <Select value={filterStatus} onValueChange={setFilterStatus}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos los estados" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos los estados</SelectItem>
+                          {uniqueStatuses.map(status => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Published Filter */}
+                    <div className="space-y-2">
+                      <Label>Publicación</Label>
+                      <Select value={filterPublished} onValueChange={(v) => setFilterPublished(v as 'all' | 'published' | 'unpublished')}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          <SelectItem value="published">Publicados</SelectItem>
+                          <SelectItem value="unpublished">Sin publicar</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-4">
+                      <Button variant="outline" className="flex-1" onClick={clearAllFilters}>
+                        Limpiar
+                      </Button>
+                      <Button className="flex-1" onClick={() => setFiltersOpen(false)}>
+                        Aplicar
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
-            
-            {isAdmin && (
-              <div className="flex items-center gap-1 md:gap-2 overflow-x-auto">
-                <Button 
-                  variant={filterPublished === 'all' ? 'default' : 'outline'} 
-                  size="sm"
-                  className="text-xs md:text-sm"
-                  onClick={() => setFilterPublished('all')}
-                >
-                  Todos
-                </Button>
-                <Button 
-                  variant={filterPublished === 'published' ? 'default' : 'outline'} 
-                  size="sm"
-                  className="text-xs md:text-sm"
-                  onClick={() => setFilterPublished('published')}
-                >
-                  Publicados
-                </Button>
-                <Button 
-                  variant={filterPublished === 'unpublished' ? 'default' : 'outline'} 
-                  size="sm"
-                  className="text-xs md:text-sm"
-                  onClick={() => setFilterPublished('unpublished')}
-                >
-                  Sin Publicar
+
+            {/* Active Filters Display */}
+            {activeFiltersCount > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground">Filtros activos:</span>
+                {filterClient !== 'all' && (
+                  <Badge variant="secondary" className="gap-1">
+                    Cliente: {uniqueClients.find(c => c.id === filterClient)?.name}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => setFilterClient('all')} />
+                  </Badge>
+                )}
+                {filterCreator !== 'all' && (
+                  <Badge variant="secondary" className="gap-1">
+                    Creador: {uniqueCreators.find(c => c.id === filterCreator)?.name}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => setFilterCreator('all')} />
+                  </Badge>
+                )}
+                {filterStatus !== 'all' && (
+                  <Badge variant="secondary" className="gap-1">
+                    Estado: {filterStatus}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => setFilterStatus('all')} />
+                  </Badge>
+                )}
+                {filterPublished !== 'all' && (
+                  <Badge variant="secondary" className="gap-1">
+                    {filterPublished === 'published' ? 'Publicados' : 'Sin publicar'}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => setFilterPublished('all')} />
+                  </Badge>
+                )}
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={clearAllFilters}>
+                  Limpiar todos
                 </Button>
               </div>
             )}
+
+            {/* Results count */}
+            <div className="text-sm text-muted-foreground">
+              {filteredContent.length} de {contentWithVideos.length} videos
+            </div>
           </div>
 
           {loading ? (
