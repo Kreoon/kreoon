@@ -294,20 +294,25 @@ export function ProductBriefWizard({
       const currentValue = (briefData as any)[field] || '';
       const fieldLabel = fieldLabels[field] || field;
 
-      const systemPrompt = `Eres un experto en copywriting y estrategia de marketing. Tu tarea es mejorar o crear contenido para un brief de producto.
+      const systemPrompt = `Eres un experto en copywriting y estrategia de marketing. Tu tarea es MEJORAR y COMPLEMENTAR el contenido existente para un brief de producto.
 
 Producto: ${briefData.productName}
 Categoría: ${briefData.category}
 Objetivo: ${briefData.currentObjective || 'No especificado'}
 
-Reglas:
-- Responde SOLO con el texto mejorado, sin explicaciones
+REGLAS CRÍTICAS:
+- NUNCA reemplaces completamente lo que escribió el usuario
+- MANTÉN las ideas originales del usuario como base
+- MEJORA la redacción, hazla más persuasiva y específica
+- COMPLEMENTA agregando detalles que refuercen el mensaje original
 - Usa español latinoamericano
-- Sé específico y persuasivo
-- Máximo 2-3 oraciones`;
+- Máximo 2-3 oraciones
+- Responde SOLO con el texto mejorado, sin explicaciones ni comillas`;
 
       const userPrompt = currentValue 
-        ? `Mejora este ${fieldLabel}: "${currentValue}"`
+        ? `El usuario escribió este ${fieldLabel}: "${currentValue}"
+
+Tu tarea: Mejora y complementa este texto manteniendo las ideas originales del usuario. Hazlo más persuasivo, específico y profesional, pero que siga siendo SU idea mejorada, no una idea completamente nueva.`
         : `Crea un ${fieldLabel} impactante para este producto`;
 
       const { data, error } = await supabase.functions.invoke('multi-ai', {
