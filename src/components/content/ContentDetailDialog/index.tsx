@@ -456,7 +456,7 @@ export function ContentDetailDialog({
                 </div>
               ) : null}
 
-              {/* Fase Esfera */}
+              {/* Fase Esfera - Siempre visible */}
               {editMode ? (
                 <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
@@ -488,24 +488,31 @@ export function ContentDetailDialog({
                     </SelectContent>
                   </Select>
                 </div>
-              ) : formData.sphere_phase ? (() => {
+              ) : (() => {
                 const phase = SPHERE_PHASES_CONFIG.find(p => p.value === formData.sphere_phase);
-                if (!phase) return null;
-                const Icon = phase.icon;
+                if (phase) {
+                  const Icon = phase.icon;
+                  return (
+                    <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full", phase.bgColor, phase.color)}>
+                      <Icon className="h-4 w-4" />
+                      <span className="font-medium">{phase.label}</span>
+                    </div>
+                  );
+                }
                 return (
-                  <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full", phase.bgColor, phase.color)}>
-                    <Icon className="h-4 w-4" />
-                    <span className="font-medium">{phase.label}</span>
+                  <div className="flex items-center gap-1.5 bg-muted/30 px-3 py-1.5 rounded-full text-muted-foreground">
+                    <Zap className="h-4 w-4" />
+                    <span className="text-sm">Sin fase</span>
                   </div>
                 );
-              })() : null}
+              })()}
 
-              {/* Semana o Campaña */}
+              {/* Semana o Campaña - Siempre visible */}
               {editMode ? (
                 <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
                     <Target className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">Semana o Campaña</span>
+                    <span className="text-xs font-medium text-muted-foreground">Semana/Campaña</span>
                   </div>
                   <Input
                     value={formData.campaign_week || ''}
@@ -514,15 +521,15 @@ export function ContentDetailDialog({
                       campaign_week: e.target.value 
                     }))}
                     className="border-0 bg-transparent h-8 w-[120px] text-sm focus-visible:ring-0"
-                    placeholder="Ej: S1, Campaña 2"
+                    placeholder="Ej: S1"
                   />
                 </div>
-              ) : displayContent.campaign_week ? (
+              ) : (
                 <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full text-muted-foreground">
                   <Target className="h-4 w-4" />
-                  <span>{displayContent.campaign_week}</span>
+                  <span>{displayContent.campaign_week || 'Sin semana'}</span>
                 </div>
-              ) : null}
+              )}
 
               {/* Deadline (read-only in header, editable in DatesTab) */}
               {displayContent.deadline && (
