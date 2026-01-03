@@ -142,8 +142,8 @@ export function ScriptAIChat({
   const applyToScript = (content: string) => {
     onScriptUpdate(content);
     toast({ 
-      title: 'Guión actualizado localmente', 
-      description: 'Usa "Guardar Guión Final" para que todos vean los cambios' 
+      title: 'Guión actualizado', 
+      description: 'Revisa los cambios y guarda cuando estés listo' 
     });
   };
 
@@ -270,11 +270,11 @@ export function ScriptAIChat({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 text-xs"
+                        className="h-6 text-xs text-primary hover:text-primary"
                         onClick={() => applyToScript(message.content)}
                       >
                         <RefreshCw className="h-3 w-3 mr-1" />
-                        Aplicar al guión
+                        Usar este guión
                       </Button>
                     </div>
                   )}
