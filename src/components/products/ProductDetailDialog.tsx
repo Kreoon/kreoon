@@ -7,12 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { ProductDocumentUploader } from "./ProductDocumentUploader";
+import { ProductBriefWizard } from "./ProductBriefWizard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   Package, FileText, Users, Target, Save, 
-  File, FolderOpen, Plus, X, Sparkles
+  File, FolderOpen, Plus, X, Sparkles, ClipboardList
 } from "lucide-react";
 
 interface Product {
@@ -30,6 +31,8 @@ interface Product {
   brief_file_url: string | null;
   onboarding_file_url: string | null;
   research_file_url: string | null;
+  brief_status?: string | null;
+  brief_data?: Record<string, unknown> | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -185,13 +188,36 @@ export function ProductDetailDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="info" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue={isNew ? "info" : "brief"} className="mt-4">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="brief" className="gap-1">
+              <ClipboardList className="h-3 w-3" />
+              Brief IA
+            </TabsTrigger>
             <TabsTrigger value="info">Información</TabsTrigger>
             <TabsTrigger value="strategy">Estrategia</TabsTrigger>
             <TabsTrigger value="avatar">Avatar & Ángulos</TabsTrigger>
             <TabsTrigger value="files">Archivos</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="brief" className="mt-4">
+            {product ? (
+              <ProductBriefWizard
+                productId={product.id}
+                productName={formData.name}
+                existingBrief={product.brief_data as any}
+                onComplete={() => {
+                  toast({ title: "Investigación generada", description: "Los datos del producto han sido actualizados con IA" });
+                  onSave?.();
+                }}
+              />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <ClipboardList className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Guarda el producto primero para acceder al Brief con IA</p>
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="info" className="space-y-4 mt-4">
             <div className="space-y-2">

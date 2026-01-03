@@ -5832,9 +5832,15 @@ export type Database = {
       }
       products: {
         Row: {
+          avatar_profiles: Json | null
+          brief_completed_at: string | null
+          brief_data: Json | null
           brief_file_url: string | null
+          brief_status: string | null
           brief_url: string | null
           client_id: string
+          competitor_analysis: Json | null
+          content_strategy: Json | null
           created_at: string
           description: string | null
           id: string
@@ -5843,16 +5849,25 @@ export type Database = {
           name: string
           onboarding_file_url: string | null
           onboarding_url: string | null
+          research_document_url: string | null
           research_file_url: string | null
+          research_generated_at: string | null
           research_url: string | null
           sales_angles: string[] | null
+          sales_angles_data: Json | null
           strategy: string | null
           updated_at: string
         }
         Insert: {
+          avatar_profiles?: Json | null
+          brief_completed_at?: string | null
+          brief_data?: Json | null
           brief_file_url?: string | null
+          brief_status?: string | null
           brief_url?: string | null
           client_id: string
+          competitor_analysis?: Json | null
+          content_strategy?: Json | null
           created_at?: string
           description?: string | null
           id?: string
@@ -5861,16 +5876,25 @@ export type Database = {
           name: string
           onboarding_file_url?: string | null
           onboarding_url?: string | null
+          research_document_url?: string | null
           research_file_url?: string | null
+          research_generated_at?: string | null
           research_url?: string | null
           sales_angles?: string[] | null
+          sales_angles_data?: Json | null
           strategy?: string | null
           updated_at?: string
         }
         Update: {
+          avatar_profiles?: Json | null
+          brief_completed_at?: string | null
+          brief_data?: Json | null
           brief_file_url?: string | null
+          brief_status?: string | null
           brief_url?: string | null
           client_id?: string
+          competitor_analysis?: Json | null
+          content_strategy?: Json | null
           created_at?: string
           description?: string | null
           id?: string
@@ -5879,9 +5903,12 @@ export type Database = {
           name?: string
           onboarding_file_url?: string | null
           onboarding_url?: string | null
+          research_document_url?: string | null
           research_file_url?: string | null
+          research_generated_at?: string | null
           research_url?: string | null
           sales_angles?: string[] | null
+          sales_angles_data?: Json | null
           strategy?: string | null
           updated_at?: string
         }
