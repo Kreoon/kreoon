@@ -61,20 +61,23 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
 
   const videoUrls = (content as any).video_urls || [];
   const hasMultipleVariants = videoUrls.length > 1;
-  const currentVideoUrl = videoUrls[currentVariantIndex] || (content as any).video_url;
-  const bunnyEmbedUrl = (content as any).bunny_embed_url;
+  // Use video_urls array first, then fallback to video_url or bunny_embed_url
+  const currentVideoUrl = videoUrls[currentVariantIndex] || (content as any).video_url || (content as any).bunny_embed_url;
+  
+  // Check if current URL is a bunny embed URL
+  const isBunnyEmbed = currentVideoUrl?.includes('iframe.mediadelivery.net/embed');
 
   // Check if content has video
-  const hasVideo = currentVideoUrl || bunnyEmbedUrl || content.thumbnail_url;
+  const hasVideo = currentVideoUrl || content.thumbnail_url;
 
   // Check if video is approved/delivered for download button
   const canDownload = ['delivered', 'approved', 'published', 'completed'].includes(content.status) && 
-    (currentVideoUrl || bunnyEmbedUrl);
+    currentVideoUrl;
 
   const handleDownload = async () => {
     if (isDownloading) return;
 
-    const sourceUrl = bunnyEmbedUrl || currentVideoUrl;
+    const sourceUrl = currentVideoUrl;
     if (!sourceUrl) {
       toast({ title: 'No hay video disponible para descargar', variant: 'destructive' });
       return;
@@ -303,10 +306,11 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
       <CardContent className="p-0">
         {/* Video/Thumbnail Section */}
         <div className="relative aspect-[9/16] max-h-[400px] bg-black">
-          {bunnyEmbedUrl ? (
+          {isBunnyEmbed && currentVideoUrl ? (
             // Use Bunny.net iframe player for reliable cross-device playback
             <iframe
-              src={`${bunnyEmbedUrl}?autoplay=false&loop=true&preload=true`}
+              key={currentVideoUrl}
+              src={`${currentVideoUrl}?autoplay=false&loop=true&preload=true`}
               className="w-full h-full"
               allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
               allowFullScreen
@@ -316,6 +320,7 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
             <>
               <video
                 ref={videoRef}
+                key={currentVideoUrl}
                 src={currentVideoUrl}
                 loop
                 muted={muted}
