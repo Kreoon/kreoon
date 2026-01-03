@@ -41,7 +41,7 @@ const ROLE_ALLOWED_STATUSES: Record<AppRole, ContentStatus[]> = {
     'editing', 'delivered', 'issue', 'corrected', 'approved'
   ],
   creator: ['recording', 'recorded', 'issue'],
-  editor: ['editing', 'delivered', 'issue'],
+  editor: ['editing', 'delivered', 'issue', 'corrected'],
   client: ['approved', 'issue'],
   trafficker: ['approved'],
 };
@@ -61,7 +61,7 @@ const ROLE_CAN_MOVE_FROM: Record<AppRole, ContentStatus[]> = {
     'editing', 'delivered', 'issue', 'corrected'
   ],
   creator: ['assigned', 'recording', 'recorded', 'issue'],
-  editor: ['recorded', 'editing', 'issue'],
+  editor: ['recorded', 'editing', 'issue', 'corrected'],
   client: ['delivered', 'corrected'],
   trafficker: ['approved'],
 };
@@ -289,6 +289,29 @@ export function QuickStatusButtons({
             className="h-8 text-xs border-red-500 text-red-500 hover:bg-red-500/10"
           >
             ⚠️
+          </Button>
+        </div>
+      );
+    }
+    // Editor can also work on corrected content or issues
+    if (currentStatus === 'issue' || currentStatus === 'corrected') {
+      return (
+        <div className="flex gap-1">
+          <Button
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); handleChange('editing'); }}
+            disabled={!!isChanging}
+            className="h-8 text-xs bg-pink-500 hover:bg-pink-600"
+          >
+            {isChanging === 'editing' ? '...' : '✂️ Editar'}
+          </Button>
+          <Button
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); handleChange('delivered'); }}
+            disabled={!!isChanging}
+            className="h-8 text-xs bg-emerald-500 hover:bg-emerald-600"
+          >
+            {isChanging === 'delivered' ? '...' : '📤 Entregar'}
           </Button>
         </div>
       );
