@@ -338,6 +338,14 @@ export function CreateProductBriefWizard({
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
   const enhanceWithAI = async (field: string, mode: 'append' | 'replace' = 'append') => {
+    // Validation: require product name to generate AI content
+    if (!briefData.productName.trim()) {
+      toast.error('Primero ingresa el nombre del producto', {
+        description: 'La IA necesita contexto para generar contenido relevante.'
+      });
+      return;
+    }
+
     setEnhancingField(field);
     try {
       const fieldLabels: Record<string, string> = {
@@ -361,11 +369,11 @@ export function CreateProductBriefWizard({
       const systemPrompt = shouldAppend
         ? `Eres un experto en copywriting. COMPLEMENTA el texto del usuario para un brief de producto.
 Producto: ${briefData.productName}
-Categoría: ${briefData.category}
+Categoría: ${briefData.category || 'No especificada'}
 REGLAS: NO reescribas el texto original. Devuelve SOLO un complemento (1-2 frases) para agregar DESPUÉS.`
         : `Eres un experto en copywriting. GENERA una versión del campo del brief.
 Producto: ${briefData.productName}
-Categoría: ${briefData.category}
+Categoría: ${briefData.category || 'No especificada'}
 REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español latinoamericano.`;
 
       const userPrompt = shouldAppend
@@ -376,8 +384,8 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
 
       const { data, error } = await supabase.functions.invoke('multi-ai', {
         body: {
-          provider: 'lovable',
-          model: 'google/gemini-2.5-flash',
+          models: ['gemini'],
+          mode: 'first',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
@@ -387,7 +395,8 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
 
       if (error) throw error;
 
-      const aiText = (data?.text || data?.choices?.[0]?.message?.content || '').trim();
+      // multi-ai returns response for combined/first mode
+      const aiText = (data?.response || data?.responses?.[0]?.content || '').trim();
       if (!aiText) throw new Error('Sin respuesta de IA');
 
       const nextValue = shouldAppend ? `${base} ${aiText}` : aiText;
@@ -395,7 +404,9 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
       toast.success(shouldAppend ? 'Texto complementado' : 'Texto generado');
     } catch (error) {
       console.error('AI enhancement error:', error);
-      toast.error('Error al mejorar con IA');
+      toast.error('Error al generar con IA', {
+        description: 'Intenta de nuevo en unos segundos'
+      });
     } finally {
       setEnhancingField(null);
     }
