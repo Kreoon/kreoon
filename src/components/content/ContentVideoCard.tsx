@@ -22,7 +22,8 @@ import {
   Send,
   FileCheck,
   AlertTriangle,
-  Calendar
+  Calendar,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -64,6 +65,39 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
 
   // Check if content has video
   const hasVideo = currentVideoUrl || bunnyEmbedUrl || content.thumbnail_url;
+
+  // Check if video is approved/delivered for download button
+  const canDownload = ['delivered', 'approved', 'published', 'completed'].includes(content.status) && 
+    (currentVideoUrl || bunnyEmbedUrl);
+
+  const handleDownload = async () => {
+    const downloadUrl = currentVideoUrl || bunnyEmbedUrl;
+    if (!downloadUrl) return;
+    
+    try {
+      // For Bunny embed URLs, convert to direct download URL
+      let finalUrl = downloadUrl;
+      if (downloadUrl.includes('iframe.mediadelivery.net')) {
+        // Extract video ID and construct direct URL
+        const match = downloadUrl.match(/\/embed\/(\d+)\/([a-f0-9-]+)/);
+        if (match) {
+          finalUrl = `https://vz-${match[1]}.b-cdn.net/${match[2]}/play_720p.mp4`;
+        }
+      }
+      
+      const link = document.createElement('a');
+      link.href = finalUrl;
+      link.download = `${content.title || 'video'}.mp4`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({ title: 'Descarga iniciada' });
+    } catch (error) {
+      toast({ title: 'Error al descargar', variant: 'destructive' });
+    }
+  };
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -336,6 +370,16 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
             </div>
 
             <div className="flex flex-col gap-2">
+              {/* Download button for approved content */}
+              {canDownload && (
+                <button
+                  onClick={handleDownload}
+                  className="p-2 rounded-full bg-green-500/80 backdrop-blur-sm text-white hover:bg-green-500 transition-colors"
+                  title="Descargar video"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+              )}
               {currentVideoUrl && (
                 <button
                   onClick={() => setMuted(!muted)}
