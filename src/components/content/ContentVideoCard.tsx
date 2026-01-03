@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -63,16 +63,40 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
   const hasMultipleVariants = videoUrls.length > 1;
   // Use video_urls array first, then fallback to video_url or bunny_embed_url
   const currentVideoUrl = videoUrls[currentVariantIndex] || (content as any).video_url || (content as any).bunny_embed_url;
-  
+
   // Check if current URL is a bunny embed URL
-  const isBunnyEmbed = currentVideoUrl?.includes('iframe.mediadelivery.net/embed');
+  const isBunnyEmbed = !!currentVideoUrl && currentVideoUrl.includes('iframe.mediadelivery.net/embed');
+
+  const getEmbedSrc = (url: string) => {
+    // Bunny embed URLs usually have no query params; keep it simple.
+    return `${url}?autoplay=false&loop=true&preload=true&responsive=true`;
+  };
+
+  const [embedSrc, setEmbedSrc] = useState<string>(() => {
+    return isBunnyEmbed && currentVideoUrl ? getEmbedSrc(currentVideoUrl) : '';
+  });
+
+  useEffect(() => {
+    if (!isBunnyEmbed || !currentVideoUrl) {
+      setEmbedSrc('');
+      return;
+    }
+
+    // Force a full reload when switching variants (Bunny iframe can get “stuck” otherwise)
+    setEmbedSrc('about:blank');
+    const t = window.setTimeout(() => {
+      setEmbedSrc(getEmbedSrc(currentVideoUrl));
+    }, 50);
+
+    return () => window.clearTimeout(t);
+  }, [isBunnyEmbed, currentVideoUrl]);
 
   // Check if content has video
   const hasVideo = currentVideoUrl || content.thumbnail_url;
 
   // Check if video is approved/delivered for download button
   const canDownload = ['delivered', 'approved', 'published', 'completed'].includes(content.status) && 
-    currentVideoUrl;
+    !!currentVideoUrl;
 
   const handleDownload = async () => {
     if (isDownloading) return;
@@ -310,7 +334,7 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
             // Use Bunny.net iframe player for reliable cross-device playback
             <iframe
               key={currentVideoUrl}
-              src={`${currentVideoUrl}?autoplay=false&loop=true&preload=true&responsive=true`}
+              src={embedSrc || getEmbedSrc(currentVideoUrl)}
               className="w-full h-full"
               loading="lazy"
               allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
