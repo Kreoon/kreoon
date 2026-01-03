@@ -67,13 +67,14 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
   // Check if current URL is a bunny embed URL
   const isBunnyEmbed = !!currentVideoUrl && currentVideoUrl.includes('iframe.mediadelivery.net/embed');
 
-  const getEmbedSrc = (url: string) => {
-    // Bunny embed URLs usually have no query params; keep it simple.
-    return `${url}?autoplay=false&loop=true&preload=true&responsive=true`;
+  const buildEmbedSrc = (url: string, nonce?: number) => {
+    const t = nonce ?? Date.now();
+    // Autoplay muted to avoid user-gesture restrictions, important when switching variants.
+    return `${url}?autoplay=true&muted=true&loop=true&preload=true&responsive=true&t=${t}`;
   };
 
   const [embedSrc, setEmbedSrc] = useState<string>(() => {
-    return isBunnyEmbed && currentVideoUrl ? getEmbedSrc(currentVideoUrl) : '';
+    return isBunnyEmbed && currentVideoUrl ? buildEmbedSrc(currentVideoUrl) : '';
   });
 
   useEffect(() => {
@@ -85,8 +86,8 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
     // Force a full reload when switching variants (Bunny iframe can get “stuck” otherwise)
     setEmbedSrc('about:blank');
     const t = window.setTimeout(() => {
-      setEmbedSrc(getEmbedSrc(currentVideoUrl));
-    }, 50);
+      setEmbedSrc(buildEmbedSrc(currentVideoUrl));
+    }, 150);
 
     return () => window.clearTimeout(t);
   }, [isBunnyEmbed, currentVideoUrl]);
@@ -331,13 +332,13 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
         {/* Video/Thumbnail Section */}
         <div className="relative aspect-[9/16] max-h-[400px] bg-black">
           {isBunnyEmbed && currentVideoUrl ? (
-            // Use Bunny.net iframe player for reliable cross-device playback
+            // Bunny iframe player
             <iframe
               key={currentVideoUrl}
-              src={embedSrc || getEmbedSrc(currentVideoUrl)}
+              src={embedSrc || buildEmbedSrc(currentVideoUrl)}
               className="w-full h-full"
               loading="lazy"
-              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+              allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
               style={{ border: 'none' }}
             />

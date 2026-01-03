@@ -82,9 +82,11 @@ export function FullscreenContentViewer({
   const videoUrls = getVideoUrls(currentItem);
   const currentVideoUrl = videoUrls[currentVariantIndex] || null;
   const hasMultipleVariants = videoUrls.length > 1;
-  
   // Check if current URL is a bunny embed URL
-  const isBunnyEmbed = currentVideoUrl?.includes('iframe.mediadelivery.net/embed');
+  const isBunnyEmbed = !!currentVideoUrl && currentVideoUrl.includes('iframe.mediadelivery.net/embed');
+  const embedSrc = isBunnyEmbed && currentVideoUrl
+    ? `${currentVideoUrl}?autoplay=true&muted=${muted}&loop=true&responsive=true&preload=true&t=${Date.now()}`
+    : null;
 
   const goToNext = () => {
     if (currentIndex < items.length - 1) {
@@ -277,9 +279,9 @@ export function FullscreenContentViewer({
           {isBunnyEmbed && currentVideoUrl ? (
             <iframe
               key={currentVideoUrl}
-              src={`${currentVideoUrl}?autoplay=true&muted=${muted}&loop=true`}
+              src={embedSrc || currentVideoUrl}
               className="w-full h-full"
-              allow="autoplay; fullscreen"
+              allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
             />
           ) : currentVideoUrl ? (
