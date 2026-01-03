@@ -1,7 +1,8 @@
 import { ProductSelector } from '@/components/products/ProductSelector';
 import { StrategistScriptForm } from '@/components/content/StrategistScriptForm';
 import { SectionCard, FieldRow } from '../../components/SectionCard';
-import { Sparkles, Package, History } from 'lucide-react';
+import { ScriptAIChat } from '../ScriptAIChat';
+import { Sparkles, Package, History, MessageSquare } from 'lucide-react';
 import { SubTabProps } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -85,6 +86,22 @@ export function IASubTab({
             onScriptGenerated={handleScriptGenerated}
             organizationId={organizationId}
             spherePhase={formData.sphere_phase}
+          />
+        </SectionCard>
+      )}
+
+      {/* AI Chat for Script Refinement */}
+      {formData.script && (
+        <SectionCard title="Refinar Guión con IA" iconEmoji="💬" icon={MessageSquare}>
+          <ScriptAIChat
+            currentScript={formData.script}
+            onScriptUpdate={(newScript) => {
+              setFormData(prev => ({ ...prev, script: newScript }));
+              if (!editMode) setEditMode(true);
+            }}
+            productName={selectedProduct?.name}
+            spherePhase={formData.sphere_phase}
+            disabled={isReadOnly}
           />
         </SectionCard>
       )}

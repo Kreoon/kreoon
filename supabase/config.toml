@@ -107,3 +107,6 @@ verify_jwt = true
 
 [functions.product-research]
 verify_jwt = true
+
+[functions.script-chat]
+verify_jwt = false
