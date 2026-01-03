@@ -81,6 +81,7 @@ interface BriefData {
   brandRestrictions: string;
   expectedResult: string;
   additionalNotes: string;
+  creativesCount: number;
   
   // AI-enhanced fields
   aiSuggestedAngles: string[];
@@ -245,6 +246,7 @@ const DEFAULT_BRIEF: BriefData = {
   brandRestrictions: '',
   expectedResult: '',
   additionalNotes: '',
+  creativesCount: 1,
   aiSuggestedAngles: [],
   aiSuggestedHooks: [],
 };
@@ -307,7 +309,8 @@ export function CreateProductBriefWizard({
           briefData.platforms.length > 0 &&
           briefData.useForAds &&
           briefData.brandStrengths.trim() &&
-          briefData.expectedResult.trim()
+          briefData.expectedResult.trim() &&
+          briefData.creativesCount >= 1
         );
       default:
         return false;
@@ -443,14 +446,45 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
 
       if (error) throw error;
 
-      if (data?.success) {
-        toast.success('¡Investigación completada!', {
-          description: 'El producto ha sido creado con análisis de mercado completo.'
-        });
-        onComplete(newProduct.id);
-      } else {
+      if (!data?.success) {
         throw new Error(data?.error || 'Error al generar la investigación');
       }
+
+      // Step 3: Get the client's organization_id
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('organization_id')
+        .eq('id', clientId)
+        .single();
+
+      // Step 4: Create the content items automatically
+      if (briefData.creativesCount > 0) {
+        const contentItems = Array.from({ length: briefData.creativesCount }, (_, index) => ({
+          title: `${briefData.productName} - Creativo ${index + 1}`,
+          client_id: clientId,
+          product_id: newProduct.id,
+          status: 'draft' as const,
+          organization_id: clientData?.organization_id || null,
+          description: `Contenido creado automáticamente desde el brief del producto. Objetivo: ${briefData.currentObjective}`,
+          target_platform: briefData.platforms[0] || null,
+        }));
+
+        const { error: contentError } = await supabase
+          .from('content')
+          .insert(contentItems);
+
+        if (contentError) {
+          console.error('Error creating content items:', contentError);
+          toast.error('Producto creado pero hubo un error al crear los creativos');
+        } else {
+          toast.success(`¡${briefData.creativesCount} creativo${briefData.creativesCount > 1 ? 's' : ''} creado${briefData.creativesCount > 1 ? 's' : ''} en el board!`);
+        }
+      }
+
+      toast.success('¡Investigación completada!', {
+        description: 'El producto ha sido creado con análisis de mercado completo.'
+      });
+      onComplete(newProduct.id);
     } catch (error) {
       console.error('Error creating product:', error);
       toast.error('Error al crear el producto', {
@@ -1042,6 +1076,35 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                 className="mt-1"
                 rows={2}
               />
+            </div>
+
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <Label htmlFor="creativesCount" className="text-base font-semibold flex items-center gap-2">
+                🎬 ¿Cuántos videos quieres crear? *
+              </Label>
+              <p className="text-sm text-muted-foreground mb-3">
+                Se crearán automáticamente los proyectos en tu tablero de contenido
+              </p>
+              <div className="flex items-center gap-4">
+                <Select 
+                  value={briefData.creativesCount.toString()} 
+                  onValueChange={(v) => updateField('creativesCount', parseInt(v))}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Cantidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20].map((num) => (
+                      <SelectItem key={num} value={num.toString()}>{num} video{num > 1 ? 's' : ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  {briefData.creativesCount > 1 
+                    ? `Se crearán ${briefData.creativesCount} proyectos listos para asignar` 
+                    : 'Se creará 1 proyecto listo para asignar'}
+                </p>
+              </div>
             </div>
           </div>
         );
