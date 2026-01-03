@@ -415,6 +415,21 @@ export default function ClientContentBoard() {
                     content={item}
                     isDragging={draggingContent?.id === item.id}
                     onDragStart={handleDragStart}
+                    onStatusChange={async (contentId, newStatus) => {
+                      try {
+                        await updateContentStatus(contentId, newStatus as ContentStatus);
+                        toast({
+                          title: 'Estado actualizado',
+                          description: `Movido a ${CLIENT_COLUMN_LABELS[newStatus as keyof typeof CLIENT_COLUMN_LABELS] || newStatus}`
+                        });
+                      } catch (error) {
+                        toast({
+                          title: 'Error',
+                          description: 'No se pudo actualizar el estado',
+                          variant: 'destructive'
+                        });
+                      }
+                    }}
                     onClick={() => {
                       // Para contenido entregado o corregido, abrir visor fullscreen
                       if (item.status === 'delivered' || item.status === 'corrected') {

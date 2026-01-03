@@ -9,8 +9,9 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Content, STATUS_COLORS, STATUS_LABELS } from "@/types/database";
+import { Content, STATUS_COLORS, STATUS_LABELS, ContentStatus, AppRole } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { StatusChangeDropdown, QuickStatusButtons } from "./StatusChangeDropdown";
 
 // Organization status interface
 interface OrganizationStatus {
@@ -31,6 +32,11 @@ interface EnhancedContentCardProps {
   onAnalyzeWithAI?: (contentId: string, title: string) => void;
   showAIIndicators?: boolean;
   organizationStatuses?: OrganizationStatus[];
+  // New props for status change
+  userRole?: AppRole | null;
+  userId?: string | null;
+  onStatusChange?: (contentId: string, newStatus: ContentStatus) => Promise<void>;
+  showStatusControls?: boolean;
 }
 
 // Size configurations for different card sizes
@@ -73,7 +79,11 @@ export function EnhancedContentCard({
   isDragging,
   onAnalyzeWithAI,
   showAIIndicators = false,
-  organizationStatuses = []
+  organizationStatuses = [],
+  userRole,
+  userId,
+  onStatusChange,
+  showStatusControls = false,
 }: EnhancedContentCardProps) {
   // Get size configuration
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
@@ -137,6 +147,11 @@ export function EnhancedContentCard({
     const staleStatuses = ['draft', 'assigned', 'recording', 'editing', 'review'];
     return staleStatuses.includes(content.status) && daysSinceUpdate >= 3;
   }, [content.updated_at, content.status]);
+
+  // Check if user is assigned to this content
+  const isAssignedCreator = userId && content.creator_id === userId;
+  const isAssignedEditor = userId && content.editor_id === userId;
+  const isAssignedStrategist = userId && content.strategist_id === userId;
 
 
   const handleAnalyzeClick = (e: React.MouseEvent) => {
@@ -242,16 +257,29 @@ export function EnhancedContentCard({
         )}
         
         {showField('status') && (
-          <Badge 
-            variant="secondary" 
-            className={cn("shrink-0", sizeConfig.badgeSize, !statusColorStyle && STATUS_COLORS[content.status])}
-            style={statusColorStyle || undefined}
-          >
-            {cardSize === 'compact' 
-              ? statusLabel?.substring(0, 3)
-              : statusLabel
-            }
-          </Badge>
+          showStatusControls && onStatusChange && userRole ? (
+            <StatusChangeDropdown
+              currentStatus={content.status as ContentStatus}
+              contentId={content.id}
+              userRole={userRole}
+              isAssignedCreator={isAssignedCreator}
+              isAssignedEditor={isAssignedEditor}
+              isAssignedStrategist={isAssignedStrategist}
+              onStatusChange={onStatusChange}
+              size={cardSize === 'compact' ? 'sm' : 'default'}
+            />
+          ) : (
+            <Badge 
+              variant="secondary" 
+              className={cn("shrink-0", sizeConfig.badgeSize, !statusColorStyle && STATUS_COLORS[content.status])}
+              style={statusColorStyle || undefined}
+            >
+              {cardSize === 'compact' 
+                ? statusLabel?.substring(0, 3)
+                : statusLabel
+              }
+            </Badge>
+          )
         )}
       </div>
 
@@ -412,6 +440,20 @@ export function EnhancedContentCard({
         <Badge variant="outline" className={cn("mt-2 border-amber-500 text-amber-500", sizeConfig.badgeSize)}>
           Embajador
         </Badge>
+      )}
+
+      {/* Quick Status Buttons - Mobile friendly */}
+      {showStatusControls && onStatusChange && userRole && cardSize !== 'compact' && (
+        <div className="mt-2">
+          <QuickStatusButtons
+            currentStatus={content.status as ContentStatus}
+            contentId={content.id}
+            userRole={userRole}
+            isAssignedCreator={isAssignedCreator}
+            isAssignedEditor={isAssignedEditor}
+            onStatusChange={onStatusChange}
+          />
+        </div>
       )}
     </Card>
   );

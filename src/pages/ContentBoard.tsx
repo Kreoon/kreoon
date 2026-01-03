@@ -872,6 +872,13 @@ export default function ContentBoard() {
                         isDragging={draggingContent?.id === item.id}
                         showAIIndicators={isAdmin}
                         organizationStatuses={orgStatuses}
+                        userRole={primaryRole as any}
+                        userId={user?.id}
+                        onStatusChange={async (contentId, newStatus) => {
+                          await updateContentStatus(contentId, newStatus);
+                          refetch();
+                        }}
+                        showStatusControls={true}
                         onAnalyzeWithAI={isAdmin ? (contentId, title) => {
                           setAIPanelMode('card');
                           setAIContentId(contentId);
