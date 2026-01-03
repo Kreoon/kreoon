@@ -310,8 +310,9 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
             // Use Bunny.net iframe player for reliable cross-device playback
             <iframe
               key={currentVideoUrl}
-              src={`${currentVideoUrl}?autoplay=false&loop=true&preload=true`}
+              src={`${currentVideoUrl}?autoplay=false&loop=true&preload=true&responsive=true`}
               className="w-full h-full"
+              loading="lazy"
               allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
               allowFullScreen
               style={{ border: 'none' }}
