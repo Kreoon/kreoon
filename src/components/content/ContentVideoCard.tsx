@@ -29,6 +29,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 
 interface ContentVideoCardProps {
   content: Content;
@@ -71,28 +72,36 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
     (currentVideoUrl || bunnyEmbedUrl);
 
   const handleDownload = async () => {
-    const downloadUrl = currentVideoUrl || bunnyEmbedUrl;
-    if (!downloadUrl) return;
-    
     try {
-      // For Bunny embed URLs, convert to direct download URL
-      let finalUrl = downloadUrl;
-      if (downloadUrl.includes('iframe.mediadelivery.net')) {
-        // Extract video ID and construct direct URL
-        const match = downloadUrl.match(/\/embed\/(\d+)\/([a-f0-9-]+)/);
-        if (match) {
-          finalUrl = `https://vz-${match[1]}.b-cdn.net/${match[2]}/play_720p.mp4`;
+      // Try to get MP4 URL from Bunny utilities
+      let downloadUrl: string | null = null;
+      
+      // First try embed URL
+      if (bunnyEmbedUrl) {
+        const bunnyUrls = getBunnyVideoUrls(bunnyEmbedUrl);
+        if (bunnyUrls?.mp4) {
+          downloadUrl = bunnyUrls.mp4;
         }
       }
       
-      const link = document.createElement('a');
-      link.href = finalUrl;
-      link.download = `${content.title || 'video'}.mp4`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Then try current video URL
+      if (!downloadUrl && currentVideoUrl) {
+        const bunnyUrls = getBunnyVideoUrls(currentVideoUrl);
+        if (bunnyUrls?.mp4) {
+          downloadUrl = bunnyUrls.mp4;
+        } else {
+          // Use current video URL directly if it's not a Bunny URL
+          downloadUrl = currentVideoUrl;
+        }
+      }
       
+      if (!downloadUrl) {
+        toast({ title: 'No hay video disponible para descargar', variant: 'destructive' });
+        return;
+      }
+      
+      // Open in new tab for download
+      window.open(downloadUrl, '_blank');
       toast({ title: 'Descarga iniciada' });
     } catch (error) {
       toast({ title: 'Error al descargar', variant: 'destructive' });
