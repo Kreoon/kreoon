@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { MarketingDashboard } from "@/components/marketing/MarketingDashboard";
@@ -9,9 +9,7 @@ import { MarketingReports } from "@/components/marketing/MarketingReports";
 import { MarketingInsights } from "@/components/marketing/MarketingInsights";
 import { MarketingContent } from "@/components/marketing/MarketingContent";
 import { ClientMarketingDashboard } from "@/components/marketing/ClientMarketingDashboard";
-import { StrategistCompanySwitcher } from "@/components/marketing/StrategistCompanySwitcher";
-import { MarketingClientSwitcher } from "@/components/marketing/MarketingClientSwitcher";
-import { useStrategistClientContext } from "@/contexts/StrategistClientContext";
+import { UnifiedClientSwitcher } from "@/components/marketing/UnifiedClientSwitcher";
 import { 
   LayoutDashboard, 
   Target, 
@@ -21,28 +19,20 @@ import {
   Sparkles,
   TrendingUp,
   FileVideo,
-  Building2,
   AlertCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Marketing() {
   const { profile } = useAuth();
-  const { selectedClient, clients } = useStrategistClientContext();
   const [activeTab, setActiveTab] = useState("dashboard");
   
-  // Local state for client selection in marketing module
-  const [selectedMarketingClientId, setSelectedMarketingClientId] = useState<string | null>(null);
-
-  const hasStrategistRole = clients.length > 0;
+  // Single state for client selection in marketing module
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
   // Determine which organization to use
   const effectiveOrgId = profile?.current_organization_id;
-  
-  // Use either the marketing-specific client or the strategist context client
-  const effectiveClientId = selectedMarketingClientId || selectedClient?.id || null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,40 +53,24 @@ export default function Marketing() {
             </div>
           </div>
           
-          {/* Switchers Container */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Company Switcher para Estrategas */}
-            {hasStrategistRole && (
-              <StrategistCompanySwitcher />
-            )}
-            
-            {/* Client Switcher - Siempre visible en Marketing */}
-            <MarketingClientSwitcher
-              organizationId={effectiveOrgId}
-              selectedClientId={selectedMarketingClientId}
-              onClientChange={setSelectedMarketingClientId}
-            />
-          </div>
+          {/* Unified Client Switcher */}
+          <UnifiedClientSwitcher
+            organizationId={effectiveOrgId}
+            selectedClientId={selectedClientId}
+            onClientChange={setSelectedClientId}
+          />
         </div>
 
-        {/* Context Badges */}
-        <div className="flex flex-wrap gap-2">
-          {hasStrategistRole && selectedClient && (
-            <Badge variant="outline" className="gap-2 py-1.5 px-3 bg-primary/5 border-primary/20">
-              <Building2 className="h-3.5 w-3.5" />
-              Empresa: {selectedClient.name}
-            </Badge>
-          )}
-          {selectedMarketingClientId && (
-            <Badge variant="default" className="gap-2 py-1.5 px-3">
-              <Target className="h-3.5 w-3.5" />
-              Analizando cliente activo
-            </Badge>
-          )}
-        </div>
+        {/* Context Badge */}
+        {selectedClientId && (
+          <Badge variant="default" className="gap-2 py-1.5 px-3 w-fit">
+            <Target className="h-3.5 w-3.5" />
+            Analizando cliente activo
+          </Badge>
+        )}
 
         {/* Alert when no client selected */}
-        {!selectedMarketingClientId && (
+        {!selectedClientId && (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Selecciona un cliente</AlertTitle>
@@ -141,15 +115,15 @@ export default function Marketing() {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-4">
-            {selectedMarketingClientId ? (
+            {selectedClientId ? (
               <ClientMarketingDashboard 
                 organizationId={effectiveOrgId}
-                clientId={selectedMarketingClientId}
+                clientId={selectedClientId}
               />
             ) : (
               <MarketingDashboard 
                 organizationId={effectiveOrgId} 
-                selectedClientId={effectiveClientId}
+                selectedClientId={selectedClientId}
               />
             )}
           </TabsContent>
@@ -157,42 +131,42 @@ export default function Marketing() {
           <TabsContent value="content" className="space-y-4">
             <MarketingContent 
               organizationId={effectiveOrgId}
-              selectedClientId={selectedMarketingClientId}
+              selectedClientId={selectedClientId}
             />
           </TabsContent>
 
           <TabsContent value="strategy" className="space-y-4">
             <MarketingStrategy 
               organizationId={effectiveOrgId}
-              selectedClientId={selectedMarketingClientId}
+              selectedClientId={selectedClientId}
             />
           </TabsContent>
 
           <TabsContent value="traffic" className="space-y-4">
             <MarketingTraffic 
               organizationId={effectiveOrgId}
-              selectedClientId={selectedMarketingClientId}
+              selectedClientId={selectedClientId}
             />
           </TabsContent>
 
           <TabsContent value="campaigns" className="space-y-4">
             <MarketingCampaigns 
               organizationId={effectiveOrgId} 
-              selectedClientId={selectedMarketingClientId}
+              selectedClientId={selectedClientId}
             />
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-4">
             <MarketingReports 
               organizationId={effectiveOrgId}
-              selectedClientId={selectedMarketingClientId}
+              selectedClientId={selectedClientId}
             />
           </TabsContent>
 
           <TabsContent value="insights" className="space-y-4">
             <MarketingInsights 
               organizationId={effectiveOrgId}
-              selectedClientId={selectedMarketingClientId}
+              selectedClientId={selectedClientId}
             />
           </TabsContent>
         </Tabs>
