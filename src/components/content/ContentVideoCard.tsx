@@ -383,12 +383,8 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
             </div>
           )}
 
-          {/* Gradients */}
-          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
-
           {/* Status badge */}
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 left-3 z-10">
             <Badge className={cn("text-xs font-medium", STATUS_COLORS[content.status])}>
               {STATUS_LABELS[content.status]}
             </Badge>
@@ -396,7 +392,7 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
 
           {/* Variant selector */}
           {hasMultipleVariants && (
-            <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+            <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
               <button
                 onClick={() => {
                   setCurrentVariantIndex(prev => {
@@ -428,24 +424,27 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
               </button>
             </div>
           )}
+        </div>
 
-          {/* Video controls & info */}
-          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-            <div className="flex-1 min-w-0 mr-3">
+        {/* Info section below video */}
+        <div className="p-3 space-y-2">
+          {/* Creator & Title */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <Avatar className="h-5 w-5 border border-white/30">
+                <Avatar className="h-5 w-5 border border-border">
                   <AvatarImage src={(content as any).creator?.avatar_url} />
-                  <AvatarFallback className="bg-white/20 text-white text-xs">
+                  <AvatarFallback className="bg-muted text-muted-foreground text-xs">
                     <User className="h-3 w-3" />
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-white text-xs font-medium truncate">
+                <span className="text-xs font-medium text-muted-foreground truncate">
                   {(content as any).creator?.full_name || 'Sin creador'}
                 </span>
               </div>
-              <p className="text-white text-sm font-medium line-clamp-2">{content.title}</p>
+              <p className="text-sm font-medium line-clamp-2">{content.title}</p>
               {content.deadline && (
-                <div className="flex items-center gap-1 mt-1 text-white/70">
+                <div className="flex items-center gap-1 mt-1 text-muted-foreground">
                   <Calendar className="h-3 w-3" />
                   <span className="text-xs">
                     {format(new Date(content.deadline), "d MMM", { locale: es })}
@@ -454,14 +453,15 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
               )}
             </div>
 
-            <div className="flex flex-col gap-2">
+            {/* Action buttons */}
+            <div className="flex items-center gap-1">
               {canDownload && (
                 <button
                   onClick={handleDownload}
                   disabled={isDownloading}
                   className={cn(
-                    "p-2 rounded-full backdrop-blur-sm transition-colors",
-                    "bg-primary/90 text-primary-foreground hover:bg-primary",
+                    "p-2 rounded-full transition-colors",
+                    "bg-primary/10 text-primary hover:bg-primary/20",
                     isDownloading && "opacity-60 cursor-not-allowed"
                   )}
                   title="Descargar video"
@@ -473,19 +473,11 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
                   )}
                 </button>
               )}
-              {currentVideoUrl && (
-                <button
-                  onClick={() => setMuted(!muted)}
-                  className="p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
-                >
-                  {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                </button>
-              )}
               <button
                 onClick={handleToggleComments}
                 className={cn(
-                  "p-2 rounded-full backdrop-blur-sm text-white transition-colors",
-                  showComments ? "bg-primary" : "bg-black/40 hover:bg-black/60"
+                  "p-2 rounded-full transition-colors",
+                  showComments ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
                 )}
               >
                 <MessageCircle className="h-4 w-4" />
