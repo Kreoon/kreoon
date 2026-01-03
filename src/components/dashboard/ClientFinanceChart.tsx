@@ -65,7 +65,7 @@ export function ClientFinanceChart({ packages, content, chartType, title }: Clie
     const pending = content.filter(c => ['draft', 'script_pending', 'assigned'].includes(c.status)).length;
     const inProgress = content.filter(c => ['script_approved', 'recording', 'editing'].includes(c.status)).length;
     const review = content.filter(c => c.status === 'review').length;
-    const completed = content.filter(c => ['approved', 'paid', 'delivered'].includes(c.status)).length;
+    const completed = content.filter(c => ['approved', 'paid', 'delivered', 'corrected'].includes(c.status)).length;
 
     return [
       { name: 'Pendiente', value: pending, fill: STATUS_CATEGORIES.pending.color },

@@ -71,7 +71,7 @@ export function getStatusProgress(
   const statusProgress: Record<string, number> = {
     'draft': 5, 'pending_script': 10, 'script_review': 20, 'script_approved': 30,
     'assigned': 40, 'recording': 50, 'recorded': 60, 'editing': 70,
-    'delivered': 80, 'issue': 75, 'approved': 90, 'paid': 100
+    'delivered': 80, 'corrected': 80, 'issue': 75, 'approved': 90, 'paid': 100
   };
   return statusProgress[status] || 0;
 }

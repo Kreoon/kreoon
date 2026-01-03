@@ -256,7 +256,7 @@ export default function StrategistDashboard() {
   const scriptApprovedContent = content.filter(c => c.status === 'script_approved');
   const assignedContent = content.filter(c => c.status === 'assigned');
   const inProgressContent = content.filter(c => ['recording', 'editing'].includes(c.status));
-  const approvedContent = content.filter(c => ['approved', 'delivered', 'paid'].includes(c.status));
+  const approvedContent = content.filter(c => ['approved', 'delivered', 'corrected', 'paid'].includes(c.status));
 
   // Progress
   const completedCount = approvedContent.length;

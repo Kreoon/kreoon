@@ -170,7 +170,7 @@ export function BoardTableView({
         </TableHeader>
         <TableBody>
           {sortedContent.map(c => {
-            const isOverdue = c.deadline && new Date(c.deadline) < new Date() && !['approved', 'paid', 'delivered'].includes(c.status);
+            const isOverdue = c.deadline && new Date(c.deadline) < new Date() && !['approved', 'paid', 'delivered', 'corrected'].includes(c.status);
             const hasVideo = c.video_url || (c.video_urls && c.video_urls.length > 0);
             const hasRawVideo = c.raw_video_urls && c.raw_video_urls.length > 0;
             

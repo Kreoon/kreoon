@@ -83,7 +83,7 @@ export function VideoTab({
   const effectiveEditMode = editMode && !readOnly;
   const canDownload = permissions.can('content.video.download', 'view');
   const currentStatus = content?.status || 'draft';
-  const approvedStatuses = ['approved', 'paid', 'delivered'];
+  const approvedStatuses = ['approved', 'paid', 'delivered', 'corrected'];
   const canDownloadVideo = isAdmin || (isClient && approvedStatuses.includes(currentStatus));
 
   return (
