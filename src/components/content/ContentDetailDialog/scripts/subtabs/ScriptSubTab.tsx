@@ -108,14 +108,16 @@ export function ScriptSubTab({
       </SectionCard>
 
       {/* AI Chat for Script Refinement - Available for clients, strategists, and admins */}
-      {hasScript && (
+      {hasScript && content?.id && (
         <SectionCard title="Refinar Guión con IA" iconEmoji="💬" icon={MessageSquare}>
           <ScriptAIChat
+            contentId={content.id}
             currentScript={formData.script || ''}
             onScriptUpdate={(newScript) => {
               setFormData(prev => ({ ...prev, script: newScript }));
               if (!editMode) setEditMode(true);
             }}
+            onSaveComplete={onUpdate}
             productName={selectedProduct?.name}
             spherePhase={formData.sphere_phase}
             disabled={isReadOnly}

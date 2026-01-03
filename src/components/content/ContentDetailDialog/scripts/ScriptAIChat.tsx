@@ -13,7 +13,8 @@ import {
   Wand2,
   RefreshCw,
   Copy,
-  Check
+  Check,
+  Save
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,8 +25,10 @@ interface Message {
 }
 
 interface ScriptAIChatProps {
+  contentId: string;
   currentScript: string;
   onScriptUpdate: (newScript: string) => void;
+  onSaveComplete?: () => void;
   productName?: string;
   spherePhase?: string | null;
   disabled?: boolean;
@@ -41,8 +44,10 @@ const QUICK_ACTIONS = [
 ];
 
 export function ScriptAIChat({ 
+  contentId,
   currentScript, 
-  onScriptUpdate, 
+  onScriptUpdate,
+  onSaveComplete,
   productName,
   spherePhase,
   disabled = false 
@@ -50,6 +55,7 @@ export function ScriptAIChat({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -136,9 +142,42 @@ export function ScriptAIChat({
   const applyToScript = (content: string) => {
     onScriptUpdate(content);
     toast({ 
-      title: 'Guión actualizado', 
-      description: 'El contenido se ha aplicado al guión' 
+      title: 'Guión actualizado localmente', 
+      description: 'Usa "Guardar Guión Final" para que todos vean los cambios' 
     });
+  };
+
+  const saveScriptToDatabase = async () => {
+    if (!contentId || !currentScript) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('content')
+        .update({ 
+          script: currentScript,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', contentId);
+
+      if (error) throw error;
+
+      toast({ 
+        title: 'Guión guardado', 
+        description: 'El guión refinado está disponible para todos los usuarios' 
+      });
+      
+      onSaveComplete?.();
+    } catch (error) {
+      console.error('Error saving script:', error);
+      toast({ 
+        title: 'Error al guardar', 
+        description: 'No se pudo guardar el guión. Intenta de nuevo.',
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!currentScript) {
@@ -266,7 +305,7 @@ export function ScriptAIChat({
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-3 border-t bg-muted/10">
+      <div className="p-3 border-t bg-muted/10 space-y-2">
         <div className="flex gap-2">
           <Textarea
             ref={textareaRef}
@@ -290,6 +329,23 @@ export function ScriptAIChat({
             )}
           </Button>
         </div>
+        
+        {/* Save Final Script Button */}
+        {messages.length > 0 && !disabled && (
+          <Button
+            onClick={saveScriptToDatabase}
+            disabled={isSaving}
+            className="w-full"
+            variant="default"
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            Guardar Guión Final
+          </Button>
+        )}
       </div>
     </div>
   );
