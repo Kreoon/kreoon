@@ -21,10 +21,18 @@ import { BlockKey } from './Config/types';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2, Building2 } from 'lucide-react';
+import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2, Building2, Zap, Lightbulb, RefreshCw, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ContentDetailDialogProps, ContentFormData, SelectOption } from './types';
 import { useInternalBrandClient } from '@/hooks/useInternalBrandClient';
+
+// Sphere phase configuration
+const SPHERE_PHASES_CONFIG = [
+  { value: 'engage', label: 'Enganchar', shortLabel: 'Fase 1', icon: Zap, color: 'text-cyan-600', bgColor: 'bg-cyan-100 dark:bg-cyan-900/50' },
+  { value: 'solution', label: 'Solución', shortLabel: 'Fase 2', icon: Lightbulb, color: 'text-emerald-600', bgColor: 'bg-emerald-100 dark:bg-emerald-900/50' },
+  { value: 'remarketing', label: 'Remarketing', shortLabel: 'Fase 3', icon: RefreshCw, color: 'text-amber-600', bgColor: 'bg-amber-100 dark:bg-amber-900/50' },
+  { value: 'fidelize', label: 'Fidelizar', shortLabel: 'Fase 4', icon: Heart, color: 'text-purple-600', bgColor: 'bg-purple-100 dark:bg-purple-900/50' },
+];
 
 // Lazy load tabs
 const ScriptsTab = lazy(() => import('./tabs/ScriptsTab').then(m => ({ default: m.ScriptsTab })));
@@ -447,6 +455,50 @@ export function ContentDetailDialog({
                   <span>Inicio: {formatDate(displayContent.start_date)}</span>
                 </div>
               ) : null}
+
+              {/* Fase Esfera */}
+              {editMode ? (
+                <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
+                    <Zap className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">Fase Esfera</span>
+                  </div>
+                  <Select
+                    value={formData.sphere_phase || ''}
+                    onValueChange={(v) => setFormData((prev: ContentFormData) => ({ 
+                      ...prev, 
+                      sphere_phase: v as 'engage' | 'solution' | 'remarketing' | 'fidelize' | null
+                    }))}
+                  >
+                    <SelectTrigger className="border-0 bg-transparent h-8 w-auto min-w-[130px] text-sm focus-visible:ring-0">
+                      <SelectValue placeholder="Seleccionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SPHERE_PHASES_CONFIG.map(phase => {
+                        const Icon = phase.icon;
+                        return (
+                          <SelectItem key={phase.value} value={phase.value}>
+                            <div className="flex items-center gap-2">
+                              <Icon className={cn("h-4 w-4", phase.color)} />
+                              <span>{phase.label}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : formData.sphere_phase ? (() => {
+                const phase = SPHERE_PHASES_CONFIG.find(p => p.value === formData.sphere_phase);
+                if (!phase) return null;
+                const Icon = phase.icon;
+                return (
+                  <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full", phase.bgColor, phase.color)}>
+                    <Icon className="h-4 w-4" />
+                    <span className="font-medium">{phase.label}</span>
+                  </div>
+                );
+              })() : null}
 
               {/* Semana o Campaña */}
               {editMode ? (

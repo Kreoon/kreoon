@@ -7,12 +7,12 @@ import { Target, FileText, Link as LinkIcon, ExternalLink, Zap, Lightbulb, Refre
 import { QualityScoreWidget } from '@/components/points/QualityScoreWidget';
 import { Badge } from '@/components/ui/badge';
 
-// Sphere phases configuration
+// Sphere phases configuration - synced with ContentDetailDialog header
 const SPHERE_PHASES = [
-  { value: 'engage', label: 'Enganchar', icon: Zap, color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  { value: 'solution', label: 'Solución', icon: Lightbulb, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  { value: 'remarketing', label: 'Remarketing', icon: RefreshCw, color: 'text-purple-600', bgColor: 'bg-purple-100' },
-  { value: 'fidelize', label: 'Fidelizar', icon: Heart, color: 'text-rose-600', bgColor: 'bg-rose-100' },
+  { value: 'engage', label: 'Enganchar', shortLabel: 'Fase 1', icon: Zap, color: 'text-cyan-600', bgColor: 'bg-cyan-100 dark:bg-cyan-900/50' },
+  { value: 'solution', label: 'Solución', shortLabel: 'Fase 2', icon: Lightbulb, color: 'text-emerald-600', bgColor: 'bg-emerald-100 dark:bg-emerald-900/50' },
+  { value: 'remarketing', label: 'Remarketing', shortLabel: 'Fase 3', icon: RefreshCw, color: 'text-amber-600', bgColor: 'bg-amber-100 dark:bg-amber-900/50' },
+  { value: 'fidelize', label: 'Fidelizar', shortLabel: 'Fase 4', icon: Heart, color: 'text-purple-600', bgColor: 'bg-purple-100 dark:bg-purple-900/50' },
 ];
 
 interface GeneralTabProps extends TabProps {
