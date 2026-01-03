@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Heart, Eye, Share2, MessageCircle, ChevronLeft, ChevronRight, Pin, Settings, Check, Video, Circle, Volume2, VolumeX } from 'lucide-react';
+import { Play, Heart, Eye, Share2, MessageCircle, ChevronLeft, ChevronRight, Pin, Settings, Check, Video, Circle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useVideoPlayback } from '@/contexts/VideoPlayerContext';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { CommentsSection } from './CommentsSection';
 import { PortfolioCommentsSection } from './PortfolioCommentsSection';
 import { ExpandableText } from '@/components/ui/expandable-text';
+import { SocialStyleVideoPlayer } from '@/components/video/SocialStyleVideoPlayer';
 
 export interface BunnyVideoCardProps {
   id: string;
@@ -120,8 +121,6 @@ export function BunnyVideoCard({
 }: BunnyVideoCardProps) {
   const navigate = useNavigate();
   const { isPlaying, play, stop } = useVideoPlayback(id);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isInView, setIsInView] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const [thumbnailError, setThumbnailError] = useState(false);
@@ -129,141 +128,12 @@ export function BunnyVideoCard({
   const [showFloatingHeart, setShowFloatingHeart] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [nativeVideoError, setNativeVideoError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const viewTracked = useRef(false);
   const viewTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentVideoUrl = videoUrls[currentIndex] || videoUrls[0];
   const hasMultiple = videoUrls.length > 1;
-
-  // Determine if current video is a native video file (not Bunny)
-  const isNativeVideo = isNativeVideoUrl(currentVideoUrl) && !isBunnyVideoUrl(currentVideoUrl);
-
-  // Reset native video error when switching videos
-  useEffect(() => {
-    setNativeVideoError(false);
-  }, [currentVideoUrl]);
-
-  // Load thumbnail for current video
-  useEffect(() => {
-    // Prefer a real image URL stored in DB
-    if (isValidImageUrl(thumbnailUrl)) {
-      setResolvedThumbnail(thumbnailUrl as string);
-      setThumbnailLoading(false);
-      setThumbnailError(false);
-      return;
-    }
-
-    // Check if it's a Bunny video URL
-    const videoId = extractVideoId(currentVideoUrl);
-    if (videoId) {
-      // Use backend proxy so the thumbnail is always accessible in the browser
-      setResolvedThumbnail(getProxiedThumbnailUrl({ contentId: id, videoId }));
-      setThumbnailLoading(false);
-      setThumbnailError(false);
-      return;
-    }
-
-    // For non-Bunny videos (like portfolio uploads), try to generate a thumbnail from the video
-    if (currentVideoUrl && !currentVideoUrl.includes('iframe.mediadelivery.net')) {
-      setThumbnailLoading(true);
-      generateVideoThumbnail(currentVideoUrl)
-        .then(thumbUrl => {
-          if (thumbUrl) {
-            setResolvedThumbnail(thumbUrl);
-            setThumbnailError(false);
-          } else {
-            setThumbnailError(true);
-          }
-        })
-        .catch(() => {
-          setThumbnailError(true);
-        })
-        .finally(() => {
-          setThumbnailLoading(false);
-        });
-      return;
-    }
-
-    // No thumbnail available
-    setResolvedThumbnail(null);
-    setThumbnailLoading(false);
-    setThumbnailError(true);
-  }, [currentVideoUrl, thumbnailUrl, id]);
-
-  // Function to generate thumbnail from video
-  async function generateVideoThumbnail(videoUrl: string): Promise<string | null> {
-    return new Promise((resolve) => {
-      const video = document.createElement('video');
-      video.crossOrigin = 'anonymous';
-      video.muted = true;
-      video.preload = 'metadata';
-      
-      video.onloadedmetadata = () => {
-        // Seek to 1 second or 10% of video duration
-        video.currentTime = Math.min(1, video.duration * 0.1);
-      };
-      
-      video.onseeked = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-            resolve(dataUrl);
-          } else {
-            resolve(null);
-          }
-        } catch {
-          resolve(null);
-        }
-        video.remove();
-      };
-      
-      video.onerror = () => {
-        resolve(null);
-        video.remove();
-      };
-      
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        resolve(null);
-        video.remove();
-      }, 5000);
-      
-      video.src = videoUrl;
-      video.load();
-    });
-  }
-
-  // Intersection Observer for scroll-based autoplay
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const visible = entry.isIntersecting && entry.intersectionRatio > 0.6;
-        setIsInView(visible);
-        
-        // Auto-play on mobile when scrolling into view
-        if (visible && window.innerWidth < 768) {
-          play();
-        } else if (!visible && isPlaying) {
-          stop();
-        }
-      },
-      { threshold: [0, 0.6, 1] }
-    );
-
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, [play, stop, isPlaying]);
 
   // Track view after 3 seconds of playback
   useEffect(() => {
@@ -288,49 +158,8 @@ export function BunnyVideoCard({
       if (viewTimerRef.current) {
         clearTimeout(viewTimerRef.current);
       }
-      // Pause native video when stopping
-      if (videoRef.current) {
-        videoRef.current.pause();
-      }
     }
   }, [isPlaying]);
-
-  // Build Bunny embed URL with autoplay params
-  const getEmbedUrl = useCallback((url: string): string => {
-    if (!url) return '';
-
-    // Already has embed format
-    if (url.includes('iframe.mediadelivery.net')) {
-      const separator = url.includes('?') ? '&' : '?';
-      return `${url}${separator}autoplay=true&muted=${isMuted}&loop=true&preload=true&controls=false`;
-    }
-
-    // Extract video ID from CDN URL and convert to embed
-    const cdnMatch = url.match(/vz-(\d+)\.b-cdn\.net\/([a-f0-9-]+)/i);
-    if (cdnMatch) {
-      const [, libraryId, videoId] = cdnMatch;
-      return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=${isMuted}&loop=true&preload=true&controls=false`;
-    }
-
-    // Fallback - return as-is with params
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}autoplay=true&muted=${isMuted}&loop=true&controls=false`;
-  }, [isMuted]);
-
-  const handlePlay = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    play();
-  };
-
-  const handleStop = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    stop();
-  };
-
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMuted(!isMuted);
-  };
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -375,7 +204,7 @@ export function BunnyVideoCard({
       )}
 
       {/* Video Container - TikTok style */}
-      <div className="relative aspect-[9/16] bg-muted" onDoubleClick={handleDoubleClick}>
+      <div className="relative aspect-[9/16] bg-black" onDoubleClick={handleDoubleClick}>
         {/* Floating Heart Animation */}
         {showFloatingHeart && (
           <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
@@ -386,189 +215,36 @@ export function BunnyVideoCard({
           </div>
         )}
 
-        {!isPlaying ? (
+        {/* Social Style Video Player */}
+        <SocialStyleVideoPlayer
+          src={currentVideoUrl}
+          poster={resolvedThumbnail}
+          showControls={true}
+          autoPlay={false}
+          onPlay={play}
+          onPause={stop}
+        />
+
+        {/* Carousel navigation */}
+        {hasMultiple && (
           <>
-            {/* Thumbnail with loading state */}
-            {resolvedThumbnail ? (
-              <img 
-                src={resolvedThumbnail} 
-                alt={title}
-                className="w-full h-full object-cover"
-                loading="eager"
-                onError={() => {
-                  setThumbnailError(true);
-                  setResolvedThumbnail(null);
-                }}
-              />
-            ) : thumbnailLoading ? (
-              <div className="w-full h-full flex items-center justify-center bg-black">
-                <div className="w-8 h-8 border-3 border-white/30 border-t-white/70 rounded-full animate-spin" />
-              </div>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-black">
-                <div className="p-3 rounded-full bg-white/15">
-                  <Play className="h-8 w-8 text-white/50" fill="currentColor" />
-                </div>
-              </div>
-            )}
-            
-            {/* Play overlay - click to play */}
-            <div 
-              className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-center justify-center cursor-pointer"
-              onClick={handlePlay}
+            <button
+              onClick={handlePrev}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
             >
-              <div className="p-4 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 hover:scale-110">
-                <Play className="h-10 w-10 text-white" fill="currentColor" />
-              </div>
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleNext}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+            
+            {/* Variation indicator */}
+            <div className="absolute top-3 left-3 z-30 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+              {currentIndex + 1}/{videoUrls.length}
             </div>
-
-            {/* Carousel navigation */}
-            {hasMultiple && (
-              <>
-                <button
-                  onClick={handlePrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-                
-                {/* Dot indicators */}
-                <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
-                  {videoUrls.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        setCurrentIndex(idx);
-                      }}
-                      className={cn(
-                        "w-2 h-2 rounded-full transition-all",
-                        idx === currentIndex 
-                          ? "bg-white w-4" 
-                          : "bg-white/50 hover:bg-white/80"
-                      )}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-
-          </>
-        ) : (
-          <>
-            {/* Video Player - Native video or Bunny iframe */}
-            {isNativeVideo ? (
-              // Native video player for mp4, mov, webm, etc.
-              <div className="absolute inset-0 bg-black flex items-center justify-center">
-                {nativeVideoError ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 px-6 text-center">
-                    <p className="text-sm text-white/80">
-                      Este video no se puede reproducir en el navegador.
-                    </p>
-                    <p className="text-xs text-white/60">
-                      Si fue subido antes del convertidor, elimínalo y súbelo de nuevo para convertirlo automáticamente a MP4 (H.264).
-                    </p>
-                    <a
-                      href={currentVideoUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs underline text-white/80 hover:text-white"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Descargar video
-                    </a>
-                  </div>
-                ) : (
-                  <video
-                    ref={videoRef}
-                    src={currentVideoUrl}
-                    className="w-full h-full object-contain"
-                    autoPlay
-                    loop
-                    muted={isMuted}
-                    playsInline
-                    onClick={handleStop}
-                    onError={() => setNativeVideoError(true)}
-                    onLoadedMetadata={(e) => {
-                      // Algunos .mov con codec no soportado “cargan” audio pero el track de video queda inválido.
-                      const el = e.currentTarget;
-                      if (!el.videoWidth || !el.videoHeight) {
-                        setNativeVideoError(true);
-                      }
-                    }}
-                    style={{ backgroundColor: 'black' }}
-                  />
-                )}
-              </div>
-            ) : (
-              // Bunny iframe player
-              <iframe
-                ref={iframeRef}
-                src={getEmbedUrl(currentVideoUrl)}
-                className="w-full h-full border-0"
-                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen={isAdmin}
-                loading="lazy"
-              />
-            )}
-
-            {/* Tap anywhere to pause/stop (no native controls) - only for iframe */}
-            {!isNativeVideo && (
-              <div 
-                className="absolute inset-0 cursor-pointer" 
-                onClick={handleStop}
-              />
-            )}
-
-            {/* Volume toggle (only visible control) */}
-            <div className="absolute top-3 right-3 z-20">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMuted((v) => {
-                    const newMuted = !v;
-                    // Sync with native video element if present
-                    if (videoRef.current) {
-                      videoRef.current.muted = newMuted;
-                    }
-                    return newMuted;
-                  });
-                }}
-                className="p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
-              >
-                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-              </button>
-            </div>
-
-
-            {/* Carousel navigation while playing */}
-            {hasMultiple && (
-              <>
-                <button
-                  onClick={handlePrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-                
-                {/* Variation indicator while playing */}
-                <div className="absolute top-3 left-3 z-20 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
-                  {currentIndex + 1}/{videoUrls.length}
-                </div>
-              </>
-            )}
           </>
         )}
       </div>
