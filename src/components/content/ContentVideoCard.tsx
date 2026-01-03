@@ -51,6 +51,7 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
   const [muted, setMuted] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
+  const [playerNonce, setPlayerNonce] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -69,12 +70,12 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
 
   const buildEmbedSrc = (url: string, nonce?: number) => {
     const t = nonce ?? Date.now();
-    // No autoplay, no muted - user clicks play and gets audio
+    // No autoplay, no muted - user clicks play and gets audio. `t` forces a fresh player instance.
     return `${url}?autoplay=false&loop=true&preload=true&responsive=true&t=${t}`;
   };
 
   const [embedSrc, setEmbedSrc] = useState<string>(() => {
-    return isBunnyEmbed && currentVideoUrl ? buildEmbedSrc(currentVideoUrl) : '';
+    return isBunnyEmbed && currentVideoUrl ? buildEmbedSrc(currentVideoUrl, playerNonce) : '';
   });
 
   useEffect(() => {
@@ -83,14 +84,14 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
       return;
     }
 
-    // Force a full reload when switching variants (Bunny iframe can get “stuck” otherwise)
+    // Hard reset between variants to avoid Bunny getting stuck on the first video
     setEmbedSrc('about:blank');
     const t = window.setTimeout(() => {
-      setEmbedSrc(buildEmbedSrc(currentVideoUrl));
+      setEmbedSrc(buildEmbedSrc(currentVideoUrl, playerNonce));
     }, 150);
 
     return () => window.clearTimeout(t);
-  }, [isBunnyEmbed, currentVideoUrl]);
+  }, [isBunnyEmbed, currentVideoUrl, playerNonce]);
 
   // Check if content has video
   const hasVideo = currentVideoUrl || content.thumbnail_url;
@@ -334,8 +335,8 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
           {isBunnyEmbed && currentVideoUrl ? (
             // Bunny iframe player - responsive=true makes it adapt to container
             <iframe
-              key={currentVideoUrl}
-              src={embedSrc || buildEmbedSrc(currentVideoUrl)}
+              key={`${currentVideoUrl}-${playerNonce}`}
+              src={embedSrc || buildEmbedSrc(currentVideoUrl, playerNonce)}
               className="absolute inset-0 w-full h-full"
               loading="lazy"
               allow="autoplay; fullscreen; picture-in-picture"
@@ -397,7 +398,13 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
           {hasMultipleVariants && (
             <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
               <button
-                onClick={() => setCurrentVariantIndex(prev => Math.max(0, prev - 1))}
+                onClick={() => {
+                  setCurrentVariantIndex(prev => {
+                    const next = Math.max(0, prev - 1);
+                    if (next !== prev) setPlayerNonce(n => n + 1);
+                    return next;
+                  });
+                }}
                 disabled={currentVariantIndex === 0}
                 className="text-white disabled:opacity-30 p-1"
               >
@@ -407,7 +414,13 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
                 {currentVariantIndex + 1}/{videoUrls.length}
               </span>
               <button
-                onClick={() => setCurrentVariantIndex(prev => Math.min(videoUrls.length - 1, prev + 1))}
+                onClick={() => {
+                  setCurrentVariantIndex(prev => {
+                    const next = Math.min(videoUrls.length - 1, prev + 1);
+                    if (next !== prev) setPlayerNonce(n => n + 1);
+                    return next;
+                  });
+                }}
                 disabled={currentVariantIndex === videoUrls.length - 1}
                 className="text-white disabled:opacity-30 p-1"
               >
