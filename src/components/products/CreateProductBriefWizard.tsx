@@ -31,6 +31,7 @@ import {
   ChevronDown,
   RotateCcw,
   Save,
+  Film,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -173,6 +174,7 @@ const STEPS = [
   { id: 'neuro', title: 'Emociones', description: '¿Qué sienten al comprarte?', icon: Brain },
   { id: 'audience', title: 'Tu Cliente', description: '¿A quién le vendes?', icon: Users },
   { id: 'content', title: 'Contenido', description: '¿Dónde y cómo publicar?', icon: Megaphone },
+  { id: 'videos', title: 'Videos', description: '¿Cuántos videos crear?', icon: Film },
 ];
 
 const CATEGORIES = [
@@ -459,9 +461,10 @@ export function CreateProductBriefWizard({
           briefData.platforms.length > 0 &&
           briefData.useForAds &&
           briefData.brandStrengths.trim() &&
-          briefData.expectedResult.trim() &&
-          totalFromPhases >= 1
+          briefData.expectedResult.trim()
         );
+      case 6:
+        return totalFromPhases >= 1;
       default:
         return false;
     }
@@ -1238,12 +1241,24 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                 rows={2}
               />
             </div>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold">🎬 Planifica tus Videos</h3>
+              <p className="text-muted-foreground">
+                Distribuye los videos disponibles según la fase del embudo de ventas
+              </p>
+            </div>
 
             {/* Videos Section - Based on Client Packages */}
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-4">
               <div>
                 <Label className="text-base font-semibold flex items-center gap-2">
-                  🎬 Videos Disponibles de tus Paquetes
+                  📦 Videos Disponibles de tus Paquetes
                 </Label>
                 
                 {loadingPackages ? (
@@ -1252,128 +1267,128 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                     <span>Cargando paquetes...</span>
                   </div>
                 ) : videosAvailable > 0 ? (
-                  <div className="mt-2 space-y-2">
-                    <div className="flex items-center gap-4 text-sm">
-                      <Badge variant="secondary" className="text-sm">
+                  <div className="mt-3 space-y-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Badge variant="secondary" className="text-sm py-1.5 px-3">
                         📦 {videosOwed} videos contratados
                       </Badge>
-                      <Badge variant="outline" className="text-sm">
+                      <Badge variant="outline" className="text-sm py-1.5 px-3">
                         ✅ {videosUsed} ya creados
                       </Badge>
-                      <Badge className="text-sm bg-emerald-600">
-                        🎯 {videosAvailable} disponibles
+                      <Badge className="text-sm py-1.5 px-3 bg-emerald-600">
+                        🎯 {videosAvailable} disponibles para crear
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Distribuye los {videosAvailable} videos disponibles entre las fases del embudo
-                    </p>
                   </div>
                 ) : (
-                  <div className="mt-2 p-3 bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-lg">
-                    <p className="text-sm text-amber-800 dark:text-amber-200">
-                      ⚠️ No tienes videos disponibles. Todos los videos de tus paquetes activos ya fueron creados.
+                  <div className="mt-2 p-4 bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-lg">
+                    <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                      ⚠️ No tienes videos disponibles
                     </p>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                      Todos los videos de tus paquetes activos ya fueron creados.
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
                       Contratados: {videosOwed} | Usados: {videosUsed}
                     </p>
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Phase Distribution Section */}
-              {videosAvailable > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-semibold">
-                      📊 Distribuye por Fase del Embudo (Método Esfera)
-                    </Label>
-                    <Badge variant={totalFromPhases > 0 ? 'default' : 'outline'}>
-                      {totalFromPhases} / {videosAvailable} seleccionados
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid gap-4">
-                    {ESFERA_PHASES.map((phase) => (
-                      <div
-                        key={phase.key}
-                        className={`p-4 rounded-lg border-2 ${phase.color} transition-all`}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0 space-y-2">
-                            {/* Header */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-2xl">{phase.icon}</span>
-                              <span className={`font-bold text-lg ${phase.textColor}`}>{phase.label}</span>
-                              <Badge variant="secondary" className="text-xs">
-                                {phase.audience.split(':')[0]}
-                              </Badge>
-                            </div>
-                            
-                            {/* Description */}
-                            <p className={`text-sm font-semibold ${phase.textColor}`}>{phase.description}</p>
-                            <p className="text-sm text-foreground/80">{phase.details}</p>
-                            
-                            {/* Meta Campaign Info */}
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs font-medium">
-                                {phase.metaCampaign}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {phase.objective}
-                              </Badge>
-                            </div>
-                            
-                            {/* Content Examples */}
-                            <p className="text-xs text-muted-foreground italic">
-                              📹 Contenido recomendado: {phase.contentExamples}
-                            </p>
+            {/* Phase Distribution Section */}
+            {videosAvailable > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">
+                    📊 Distribuye por Fase del Embudo (Método Esfera)
+                  </Label>
+                  <Badge variant={totalFromPhases > 0 ? 'default' : 'outline'} className="text-sm py-1 px-3">
+                    {totalFromPhases} / {videosAvailable} seleccionados
+                  </Badge>
+                </div>
+                
+                <div className="grid gap-4">
+                  {ESFERA_PHASES.map((phase) => (
+                    <div
+                      key={phase.key}
+                      className={`p-4 rounded-lg border-2 ${phase.color} transition-all`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0 space-y-2">
+                          {/* Header */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-2xl">{phase.icon}</span>
+                            <span className={`font-bold text-lg ${phase.textColor}`}>{phase.label}</span>
+                            <Badge variant="secondary" className="text-xs">
+                              {phase.audience.split(':')[0]}
+                            </Badge>
                           </div>
                           
-                          {/* Counter */}
-                          <div className="flex flex-col items-center gap-1 shrink-0">
-                            <span className="text-xs text-muted-foreground">Videos</span>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                className="h-9 w-9"
-                                onClick={() => updatePhaseCount(phase.key, briefData.phaseDistribution[phase.key] - 1)}
-                                disabled={briefData.phaseDistribution[phase.key] <= 0}
-                              >
-                                -
-                              </Button>
-                              <span className={`w-10 text-center font-bold text-2xl ${phase.textColor}`}>
-                                {briefData.phaseDistribution[phase.key]}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                className="h-9 w-9"
-                                onClick={() => updatePhaseCount(phase.key, briefData.phaseDistribution[phase.key] + 1)}
-                                disabled={totalFromPhases >= videosAvailable}
-                              >
-                                +
-                              </Button>
-                            </div>
+                          {/* Description */}
+                          <p className={`text-sm font-semibold ${phase.textColor}`}>{phase.description}</p>
+                          <p className="text-sm text-foreground/80">{phase.details}</p>
+                          
+                          {/* Meta Campaign Info */}
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <Badge variant="outline" className="text-xs font-medium">
+                              {phase.metaCampaign}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {phase.objective}
+                            </Badge>
+                          </div>
+                          
+                          {/* Content Examples */}
+                          <p className="text-xs text-muted-foreground italic">
+                            📹 Contenido recomendado: {phase.contentExamples}
+                          </p>
+                        </div>
+                        
+                        {/* Counter */}
+                        <div className="flex flex-col items-center gap-1 shrink-0">
+                          <span className="text-xs text-muted-foreground">Videos</span>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9"
+                              onClick={() => updatePhaseCount(phase.key, briefData.phaseDistribution[phase.key] - 1)}
+                              disabled={briefData.phaseDistribution[phase.key] <= 0}
+                            >
+                              -
+                            </Button>
+                            <span className={`w-10 text-center font-bold text-2xl ${phase.textColor}`}>
+                              {briefData.phaseDistribution[phase.key]}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9"
+                              onClick={() => updatePhaseCount(phase.key, briefData.phaseDistribution[phase.key] + 1)}
+                              disabled={totalFromPhases >= videosAvailable}
+                            >
+                              +
+                            </Button>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-
-                  {totalFromPhases > 0 && (
-                    <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-700 rounded-lg">
-                      <p className="text-sm text-emerald-800 dark:text-emerald-200">
-                        ✅ Se crearán <strong>{totalFromPhases}</strong> proyectos en tu tablero de contenido, 
-                        distribuidos estratégicamente por fase del embudo.
-                      </p>
                     </div>
-                  )}
+                  ))}
                 </div>
-              )}
-            </div>
+
+                {totalFromPhases > 0 && (
+                  <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-700 rounded-lg">
+                    <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                      ✅ Se crearán <strong>{totalFromPhases}</strong> proyectos en tu tablero de contenido, 
+                      distribuidos estratégicamente por fase del embudo.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
 
