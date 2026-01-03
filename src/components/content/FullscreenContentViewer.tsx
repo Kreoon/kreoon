@@ -84,8 +84,9 @@ export function FullscreenContentViewer({
   const hasMultipleVariants = videoUrls.length > 1;
   // Check if current URL is a bunny embed URL
   const isBunnyEmbed = !!currentVideoUrl && currentVideoUrl.includes('iframe.mediadelivery.net/embed');
+  // Fullscreen viewer: autoplay with sound (user already clicked to open)
   const embedSrc = isBunnyEmbed && currentVideoUrl
-    ? `${currentVideoUrl}?autoplay=true&muted=${muted}&loop=true&responsive=true&preload=true&t=${Date.now()}`
+    ? `${currentVideoUrl}?autoplay=true&muted=false&loop=true&responsive=true&preload=true&t=${Date.now()}`
     : null;
 
   const goToNext = () => {

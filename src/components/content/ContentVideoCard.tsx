@@ -69,8 +69,8 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
 
   const buildEmbedSrc = (url: string, nonce?: number) => {
     const t = nonce ?? Date.now();
-    // Autoplay muted to avoid user-gesture restrictions, important when switching variants.
-    return `${url}?autoplay=true&muted=true&loop=true&preload=true&responsive=true&t=${t}`;
+    // No autoplay, no muted - user clicks play and gets audio
+    return `${url}?autoplay=false&loop=true&preload=true&responsive=true&t=${t}`;
   };
 
   const [embedSrc, setEmbedSrc] = useState<string>(() => {
@@ -329,14 +329,14 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-0">
-        {/* Video/Thumbnail Section */}
-        <div className="relative aspect-[9/16] max-h-[400px] bg-black">
+        {/* Video/Thumbnail Section - responsive height for vertical video */}
+        <div className="relative w-full bg-black" style={{ aspectRatio: '9/16', maxHeight: '500px' }}>
           {isBunnyEmbed && currentVideoUrl ? (
-            // Bunny iframe player
+            // Bunny iframe player - responsive=true makes it adapt to container
             <iframe
               key={currentVideoUrl}
               src={embedSrc || buildEmbedSrc(currentVideoUrl)}
-              className="w-full h-full"
+              className="absolute inset-0 w-full h-full"
               loading="lazy"
               allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
