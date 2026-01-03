@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -969,16 +969,24 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
       />
 
       {/* Create Product Wizard - for new products */}
-      {showCreateProductWizard && (
-        <CreateProductBriefWizard
-          clientId={client.id}
-          onComplete={() => {
-            setShowCreateProductWizard(false);
-            fetchProducts();
-          }}
-          onCancel={() => setShowCreateProductWizard(false)}
-        />
-      )}
+      <Dialog open={showCreateProductWizard} onOpenChange={setShowCreateProductWizard}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Crear Nuevo Producto</DialogTitle>
+            <DialogDescription>
+              Completa el brief del producto paso a paso
+            </DialogDescription>
+          </DialogHeader>
+          <CreateProductBriefWizard
+            clientId={client.id}
+            onComplete={() => {
+              setShowCreateProductWizard(false);
+              fetchProducts();
+            }}
+            onCancel={() => setShowCreateProductWizard(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Package Dialog */}
       <ClientPackageDialog
