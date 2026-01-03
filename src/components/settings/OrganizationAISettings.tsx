@@ -21,8 +21,16 @@ import {
   Shield,
   Sparkles,
   Blocks,
-  Cpu
+  Cpu,
+  Zap
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   useOrganizationAI, 
   AI_PROVIDERS_CONFIG 
@@ -38,11 +46,13 @@ interface OrganizationAISettingsProps {
 export function OrganizationAISettings({ organizationId }: OrganizationAISettingsProps) {
   const {
     providers,
+    defaults,
     usageLogs,
     loading,
     saving,
     toggleProvider,
     updateProviderApiKey,
+    updateDefaults,
     getEnabledProviders,
     hasValidApiKey,
     getMaskedApiKey
@@ -120,6 +130,54 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
           {/* Overview Tab - Single Column Layout */}
           <TabsContent value="overview" className="mt-6">
             <div className="space-y-6">
+              {/* Default Model Selector */}
+              <div className="p-4 rounded-lg border bg-gradient-to-r from-primary/5 to-purple-500/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Zap className="h-5 w-5 text-primary" />
+                  <h3 className="font-medium">Modelo IA Predeterminado</h3>
+                  <Badge variant="outline" className="text-xs">Organización</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Este modelo se usará en todas las funciones de IA de la organización
+                </p>
+                <Select
+                  value={defaults?.default_model || 'google/gemini-2.5-flash'}
+                  onValueChange={async (value) => {
+                    try {
+                      await updateDefaults({ 
+                        default_provider: 'lovable', 
+                        default_model: value 
+                      });
+                      toast.success('Modelo predeterminado actualizado');
+                    } catch {
+                      toast.error('Error al actualizar el modelo');
+                    }
+                  }}
+                  disabled={saving}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar modelo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Lovable AI (Sin API Key)</div>
+                    {AI_PROVIDERS_CONFIG.lovable.models.map((model) => (
+                      <SelectItem key={model.value} value={model.value}>
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-3 w-3 text-purple-500" />
+                          {model.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+                  <Check className="h-3 w-3 text-green-500" />
+                  Modelo actual: {AI_PROVIDERS_CONFIG.lovable.models.find(m => m.value === (defaults?.default_model || 'google/gemini-2.5-flash'))?.label || defaults?.default_model}
+                </div>
+              </div>
+
+              <Separator />
+
               {/* Providers Summary */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
