@@ -32,14 +32,17 @@ CONTEXTO:
 GUIÓN ACTUAL:
 ${currentScript}
 
-INSTRUCCIONES:
-1. Cuando el usuario pida cambios, genera SOLO la parte modificada o el guión completo mejorado
-2. Mantén el formato HTML del guión original si es apropiado
-3. Sé creativo pero mantén la esencia del mensaje
-4. Responde en español
-5. Si generas un nuevo guión o sección, usa el formato adecuado
+INSTRUCCIONES CRÍTICAS:
+1. SIEMPRE devuelve el guión COMPLETO con las modificaciones integradas, nunca solo la parte cambiada
+2. Si el usuario pide cambiar los hooks, modifica SOLO los hooks pero devuelve el guión completo
+3. Si el usuario pide cambiar el CTA, modifica SOLO el CTA pero devuelve el guión completo
+4. Mantén intactas las secciones que el usuario NO pidió cambiar
+5. Mantén el formato HTML del guión original
+6. Sé creativo pero mantén la esencia del mensaje original
+7. Responde en español
+8. El guión debe estar listo para usar directamente, sin explicaciones adicionales
 
-Responde de forma concisa y directa. Si generas contenido nuevo, envuélvelo claramente para que sea fácil de identificar.`;
+IMPORTANTE: Tu respuesta debe ser ÚNICAMENTE el guión completo modificado, sin comentarios ni explicaciones antes o después.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
