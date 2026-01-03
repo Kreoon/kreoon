@@ -99,6 +99,15 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
     icon: Bot,
     integrations: [
       {
+        key: "perplexity_api_key",
+        label: "Perplexity API Key",
+        description: "Para investigación de mercado con IA y búsqueda web en tiempo real. Usado en el brief de productos.",
+        type: "api_key",
+        placeholder: "pplx-...",
+        isSecret: true,
+        docsUrl: "https://docs.perplexity.ai/"
+      },
+      {
         key: "openai_api_key",
         label: "OpenAI API Key",
         description: "Para GPT-4, GPT-5, DALL-E y Whisper. Modelos de OpenAI.",
