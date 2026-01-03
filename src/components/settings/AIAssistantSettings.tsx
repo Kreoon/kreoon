@@ -101,7 +101,7 @@ interface AIFeedback {
 }
 
 const PROVIDERS = [
-  { value: 'lovable', label: 'Lovable AI (Sin API Key requerida)', description: 'Usa modelos de Gemini y GPT-5' },
+  { value: 'lovable', label: 'IA Interna (Sin API Key requerida)', description: 'Usa modelos de Gemini y GPT-5' },
   { value: 'openai', label: 'OpenAI', description: 'Requiere API Key configurada' },
   { value: 'gemini', label: 'Google Gemini', description: 'Requiere API Key configurada' },
   { value: 'anthropic', label: 'Anthropic Claude', description: 'Requiere API Key configurada' },

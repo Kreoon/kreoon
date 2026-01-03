@@ -49,7 +49,7 @@ export interface AIUsageLog {
 export const AI_PROVIDERS_CONFIG = {
   lovable: {
     key: 'lovable',
-    label: 'Lovable AI',
+    label: 'IA Interna',
     description: 'Sin API Key requerida',
     requiresApiKey: false,
     models: [

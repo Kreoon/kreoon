@@ -19,7 +19,7 @@ const AI_FEATURES: { key: keyof PortfolioAIFeatures; label: string; description:
 ];
 
 const PROVIDERS = [
-  { value: 'lovable', label: 'Lovable AI (Recomendado)' },
+  { value: 'lovable', label: 'IA Interna (Recomendado)' },
   { value: 'openai', label: 'OpenAI' },
   { value: 'gemini', label: 'Google Gemini' },
 ];
