@@ -193,38 +193,104 @@ serve(async (req) => {
 function buildProductDescription(briefData: any): string {
   const parts = [];
 
+  // Basic info
   if (briefData.productName) {
     parts.push(`**Nombre del producto:** ${briefData.productName}`);
   }
-  if (briefData.productDescription) {
-    parts.push(`**Descripción:** ${briefData.productDescription}`);
-  }
   if (briefData.category) {
-    parts.push(`**Categoría:** ${briefData.category}`);
+    parts.push(`**Categoría:** ${briefData.category}${briefData.customCategory ? ` - ${briefData.customCategory}` : ''}`);
   }
-  if (briefData.targetAudience) {
-    parts.push(`**Público objetivo:** ${briefData.targetAudience}`);
+  if (briefData.currentObjective) {
+    parts.push(`**Objetivo actual:** ${briefData.currentObjective}`);
   }
-  if (briefData.mainProblem) {
-    parts.push(`**Problema principal que resuelve:** ${briefData.mainProblem}`);
+  if (briefData.slogan) {
+    parts.push(`**Slogan:** ${briefData.slogan}`);
   }
-  if (briefData.uniqueValue) {
-    parts.push(`**Propuesta de valor única:** ${briefData.uniqueValue}`);
+
+  // Value & Transformation
+  if (briefData.mainBenefit) {
+    parts.push(`**Beneficio principal:** ${briefData.mainBenefit}`);
   }
-  if (briefData.priceRange) {
-    parts.push(`**Rango de precio:** ${briefData.priceRange}`);
+  if (briefData.transformation) {
+    parts.push(`**Transformación que produce:** ${briefData.transformation}`);
   }
-  if (briefData.competitors) {
-    parts.push(`**Competidores conocidos:** ${briefData.competitors}`);
+  if (briefData.differentiator) {
+    parts.push(`**Diferenciador:** ${briefData.differentiator}`);
   }
-  if (briefData.website) {
-    parts.push(`**Sitio web:** ${briefData.website}`);
+  if (briefData.keyIngredients) {
+    parts.push(`**Ingredientes/Componentes clave:** ${briefData.keyIngredients}`);
   }
-  if (briefData.socialMedia) {
-    parts.push(`**Redes sociales:** ${briefData.socialMedia}`);
+
+  // Problem & Desire
+  if (briefData.problemSolved) {
+    parts.push(`**Problema que resuelve:** ${briefData.problemSolved}`);
   }
-  if (briefData.additionalInfo) {
-    parts.push(`**Información adicional:** ${briefData.additionalInfo}`);
+  if (briefData.mainDesire) {
+    parts.push(`**Deseo principal que satisface:** ${briefData.mainDesire}`);
+  }
+  if (briefData.consequenceOfNotBuying) {
+    parts.push(`**Consecuencia de no comprar:** ${briefData.consequenceOfNotBuying}`);
+  }
+  if (briefData.competitiveAdvantage) {
+    parts.push(`**Ventaja competitiva:** ${briefData.competitiveAdvantage}`);
+  }
+
+  // Neuromarketing
+  if (briefData.reptileBrain?.length > 0) {
+    parts.push(`**Gatillos reptilianos:** ${briefData.reptileBrain.join(', ')}`);
+  }
+  if (briefData.limbicBrain?.length > 0) {
+    parts.push(`**Emociones objetivo:** ${briefData.limbicBrain.join(', ')}`);
+  }
+  if (briefData.cortexBrain) {
+    parts.push(`**Justificación racional:** ${briefData.cortexBrain}`);
+  }
+
+  // Target Audience
+  const audienceParts = [];
+  if (briefData.targetGender) audienceParts.push(`Género: ${briefData.targetGender}`);
+  if (briefData.targetAgeRange) audienceParts.push(`Edad: ${briefData.targetAgeRange}`);
+  if (briefData.targetOccupation) audienceParts.push(`Ocupación: ${briefData.targetOccupation}`);
+  if (audienceParts.length > 0) {
+    parts.push(`**Público objetivo:** ${audienceParts.join(', ')}`);
+  }
+  if (briefData.targetInterests?.length > 0) {
+    parts.push(`**Intereses:** ${briefData.targetInterests.join(', ')}`);
+  }
+  if (briefData.targetHabits) {
+    parts.push(`**Hábitos:** ${briefData.targetHabits}`);
+  }
+  if (briefData.commonObjections?.length > 0) {
+    parts.push(`**Objeciones comunes:** ${briefData.commonObjections.join(', ')}`);
+  }
+  if (briefData.idealScenario) {
+    parts.push(`**Escenario ideal post-compra:** ${briefData.idealScenario}`);
+  }
+
+  // Content Strategy
+  if (briefData.contentTypes?.length > 0) {
+    parts.push(`**Tipos de contenido:** ${briefData.contentTypes.join(', ')}`);
+  }
+  if (briefData.platforms?.length > 0) {
+    parts.push(`**Plataformas:** ${briefData.platforms.join(', ')}`);
+  }
+  if (briefData.useForAds) {
+    parts.push(`**Uso en Ads:** ${briefData.useForAds}`);
+  }
+  if (briefData.referenceContent) {
+    parts.push(`**Contenido de referencia:** ${briefData.referenceContent}`);
+  }
+  if (briefData.brandStrengths) {
+    parts.push(`**Puntos fuertes a comunicar:** ${briefData.brandStrengths}`);
+  }
+  if (briefData.brandRestrictions) {
+    parts.push(`**Restricciones de marca:** ${briefData.brandRestrictions}`);
+  }
+  if (briefData.expectedResult) {
+    parts.push(`**Resultado esperado:** ${briefData.expectedResult}`);
+  }
+  if (briefData.additionalNotes) {
+    parts.push(`**Notas adicionales:** ${briefData.additionalNotes}`);
   }
 
   return parts.join('\n\n');
