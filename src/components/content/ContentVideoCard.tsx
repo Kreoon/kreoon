@@ -60,9 +60,10 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
   const videoUrls = (content as any).video_urls || [];
   const hasMultipleVariants = videoUrls.length > 1;
   const currentVideoUrl = videoUrls[currentVariantIndex] || (content as any).video_url;
+  const bunnyEmbedUrl = (content as any).bunny_embed_url;
 
   // Check if content has video
-  const hasVideo = currentVideoUrl || content.thumbnail_url;
+  const hasVideo = currentVideoUrl || bunnyEmbedUrl || content.thumbnail_url;
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -227,7 +228,16 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
       <CardContent className="p-0">
         {/* Video/Thumbnail Section */}
         <div className="relative aspect-[9/16] max-h-[400px] bg-black">
-          {currentVideoUrl ? (
+          {bunnyEmbedUrl ? (
+            // Use Bunny.net iframe player for reliable cross-device playback
+            <iframe
+              src={`${bunnyEmbedUrl}?autoplay=false&loop=true&preload=true`}
+              className="w-full h-full"
+              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              style={{ border: 'none' }}
+            />
+          ) : currentVideoUrl ? (
             <>
               <video
                 ref={videoRef}
