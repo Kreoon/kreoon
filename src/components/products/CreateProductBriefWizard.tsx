@@ -35,6 +35,14 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Esfera phase distribution
+interface PhaseDistribution {
+  engage: number;
+  solution: number;
+  remarketing: number;
+  fidelize: number;
+}
+
 // Comprehensive brief data structure
 interface BriefData {
   // Section 1: Product Basics
@@ -82,10 +90,62 @@ interface BriefData {
   expectedResult: string;
   additionalNotes: string;
   creativesCount: number;
+  phaseDistribution: PhaseDistribution;
   
   // AI-enhanced fields
   aiSuggestedAngles: string[];
   aiSuggestedHooks: string[];
+}
+
+// Esfera phases configuration
+const ESFERA_PHASES = [
+  {
+    key: 'engage' as const,
+    label: 'ENGANCHAR',
+    icon: '⚡',
+    color: 'bg-cyan-100 dark:bg-cyan-900 border-cyan-300 dark:border-cyan-700',
+    textColor: 'text-cyan-700 dark:text-cyan-300',
+    description: 'Captar atención de audiencia fría',
+    details: 'Videos disruptivos para personas que NO conocen tu marca. Objetivo: generar curiosidad y hacer que dejen de hacer scroll.',
+    contentExamples: 'Hooks impactantes, problemas visibles, patrones rotos',
+  },
+  {
+    key: 'solution' as const,
+    label: 'SOLUCIÓN',
+    icon: '💡',
+    color: 'bg-emerald-100 dark:bg-emerald-900 border-emerald-300 dark:border-emerald-700',
+    textColor: 'text-emerald-700 dark:text-emerald-300',
+    description: 'Mostrar cómo tu producto resuelve el problema',
+    details: 'Videos para audiencia tibia que reconoce tener un problema. Objetivo: demostrar que tu producto es LA solución.',
+    contentExamples: 'Demostraciones, casos de uso, storytelling de transformación',
+  },
+  {
+    key: 'remarketing' as const,
+    label: 'REMARKETING',
+    icon: '🔄',
+    color: 'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700',
+    textColor: 'text-amber-700 dark:text-amber-300',
+    description: 'Reconectar con quienes ya te conocen',
+    details: 'Videos para audiencia caliente que ya visitó tu web o mostró interés. Objetivo: superar objeciones y crear urgencia.',
+    contentExamples: 'Testimonios, comparativas, ofertas especiales',
+  },
+  {
+    key: 'fidelize' as const,
+    label: 'FIDELIZAR',
+    icon: '💎',
+    color: 'bg-purple-100 dark:bg-purple-900 border-purple-300 dark:border-purple-700',
+    textColor: 'text-purple-700 dark:text-purple-300',
+    description: 'Retener y hacer que vuelvan a comprar',
+    details: 'Videos para clientes existentes. Objetivo: aumentar recompra, generar referidos y crear comunidad.',
+    contentExamples: 'Tips exclusivos, upsells, contenido de comunidad',
+  },
+];
+
+interface ClientPackage {
+  id: string;
+  name: string;
+  content_quantity: number;
+  is_active: boolean;
 }
 
 interface CreateProductBriefWizardProps {
@@ -212,6 +272,13 @@ const INTERESTS = [
   'Espiritualidad',
 ];
 
+const DEFAULT_PHASE_DISTRIBUTION: PhaseDistribution = {
+  engage: 0,
+  solution: 0,
+  remarketing: 0,
+  fidelize: 0,
+};
+
 const DEFAULT_BRIEF: BriefData = {
   productName: '',
   category: '',
@@ -246,7 +313,8 @@ const DEFAULT_BRIEF: BriefData = {
   brandRestrictions: '',
   expectedResult: '',
   additionalNotes: '',
-  creativesCount: 1,
+  creativesCount: 0,
+  phaseDistribution: DEFAULT_PHASE_DISTRIBUTION,
   aiSuggestedAngles: [],
   aiSuggestedHooks: [],
 };
@@ -261,6 +329,76 @@ export function CreateProductBriefWizard({
   const [isSaving, setIsSaving] = useState(false);
   const [enhancingField, setEnhancingField] = useState<string | null>(null);
   const [briefData, setBriefData] = useState<BriefData>(DEFAULT_BRIEF);
+  
+  // Client packages state
+  const [clientPackages, setClientPackages] = useState<ClientPackage[]>([]);
+  const [videosOwed, setVideosOwed] = useState(0);
+  const [videosUsed, setVideosUsed] = useState(0);
+  const [loadingPackages, setLoadingPackages] = useState(true);
+
+  // Fetch client packages and calculate videos owed
+  useEffect(() => {
+    const fetchClientVideos = async () => {
+      setLoadingPackages(true);
+      try {
+        // Get active packages for this client
+        const { data: packages, error: packagesError } = await supabase
+          .from('client_packages')
+          .select('id, name, content_quantity, is_active')
+          .eq('client_id', clientId)
+          .eq('is_active', true);
+
+        if (packagesError) throw packagesError;
+
+        // Get existing content for this client (to calculate used videos)
+        const { count: usedCount, error: countError } = await supabase
+          .from('content')
+          .select('id', { count: 'exact', head: true })
+          .eq('client_id', clientId);
+
+        if (countError) throw countError;
+
+        const totalOwed = (packages || []).reduce((sum, pkg) => sum + (pkg.content_quantity || 0), 0);
+        const used = usedCount || 0;
+        
+        setClientPackages(packages || []);
+        setVideosOwed(totalOwed);
+        setVideosUsed(used);
+      } catch (error) {
+        console.error('Error fetching client packages:', error);
+        toast.error('Error al cargar los paquetes del cliente');
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+
+    if (clientId) {
+      fetchClientVideos();
+    }
+  }, [clientId]);
+
+  // Calculate available videos
+  const videosAvailable = Math.max(0, videosOwed - videosUsed);
+
+  // Calculate total from phase distribution
+  const totalFromPhases = Object.values(briefData.phaseDistribution).reduce((sum, val) => sum + val, 0);
+
+  // Update phase distribution helper
+  const updatePhaseCount = (phase: keyof PhaseDistribution, value: number) => {
+    const newValue = Math.max(0, value);
+    const otherPhasesTotal = totalFromPhases - briefData.phaseDistribution[phase];
+    const maxForThisPhase = videosAvailable - otherPhasesTotal;
+    const clampedValue = Math.min(newValue, maxForThisPhase);
+    
+    setBriefData(prev => ({
+      ...prev,
+      phaseDistribution: {
+        ...prev.phaseDistribution,
+        [phase]: clampedValue,
+      },
+      creativesCount: otherPhasesTotal + clampedValue,
+    }));
+  };
 
   // Validation function
   const isStepComplete = (step: number): boolean => {
@@ -310,7 +448,7 @@ export function CreateProductBriefWizard({
           briefData.useForAds &&
           briefData.brandStrengths.trim() &&
           briefData.expectedResult.trim() &&
-          briefData.creativesCount >= 1
+          totalFromPhases >= 1
         );
       default:
         return false;
@@ -457,27 +595,38 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
         .eq('id', clientId)
         .single();
 
-      // Step 4: Create the content items automatically
-      if (briefData.creativesCount > 0) {
-        const contentItems = Array.from({ length: briefData.creativesCount }, (_, index) => ({
-          title: `${briefData.productName} - Creativo ${index + 1}`,
-          client_id: clientId,
-          product_id: newProduct.id,
-          status: 'draft' as const,
-          organization_id: clientData?.organization_id || null,
-          description: `Contenido creado automáticamente desde el brief del producto. Objetivo: ${briefData.currentObjective}`,
-          target_platform: briefData.platforms[0] || null,
-        }));
+      // Step 4: Create the content items automatically with phase distribution
+      if (totalFromPhases > 0) {
+        const contentItems: any[] = [];
+        
+        // Create content items for each phase
+        ESFERA_PHASES.forEach((phase, phaseIndex) => {
+          const count = briefData.phaseDistribution[phase.key];
+          for (let i = 0; i < count; i++) {
+            contentItems.push({
+              title: `${briefData.productName} - ${phase.label} ${i + 1}`,
+              client_id: clientId,
+              product_id: newProduct.id,
+              status: 'draft' as const,
+              organization_id: clientData?.organization_id || null,
+              description: `Contenido para fase ${phase.label}: ${phase.description}. Objetivo: ${briefData.currentObjective}`,
+              target_platform: briefData.platforms[0] || null,
+              sphere_phase: phase.key,
+            });
+          }
+        });
 
-        const { error: contentError } = await supabase
-          .from('content')
-          .insert(contentItems);
+        if (contentItems.length > 0) {
+          const { error: contentError } = await supabase
+            .from('content')
+            .insert(contentItems);
 
-        if (contentError) {
-          console.error('Error creating content items:', contentError);
-          toast.error('Producto creado pero hubo un error al crear los creativos');
-        } else {
-          toast.success(`¡${briefData.creativesCount} creativo${briefData.creativesCount > 1 ? 's' : ''} creado${briefData.creativesCount > 1 ? 's' : ''} en el board!`);
+          if (contentError) {
+            console.error('Error creating content items:', contentError);
+            toast.error('Producto creado pero hubo un error al crear los creativos');
+          } else {
+            toast.success(`¡${contentItems.length} creativo${contentItems.length > 1 ? 's' : ''} creado${contentItems.length > 1 ? 's' : ''} en el board!`);
+          }
         }
       }
 
@@ -1078,33 +1227,117 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
               />
             </div>
 
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-              <Label htmlFor="creativesCount" className="text-base font-semibold flex items-center gap-2">
-                🎬 ¿Cuántos videos quieres crear? *
-              </Label>
-              <p className="text-sm text-muted-foreground mb-3">
-                Se crearán automáticamente los proyectos en tu tablero de contenido
-              </p>
-              <div className="flex items-center gap-4">
-                <Select 
-                  value={briefData.creativesCount.toString()} 
-                  onValueChange={(v) => updateField('creativesCount', parseInt(v))}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Cantidad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20].map((num) => (
-                      <SelectItem key={num} value={num.toString()}>{num} video{num > 1 ? 's' : ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground">
-                  {briefData.creativesCount > 1 
-                    ? `Se crearán ${briefData.creativesCount} proyectos listos para asignar` 
-                    : 'Se creará 1 proyecto listo para asignar'}
-                </p>
+            {/* Videos Section - Based on Client Packages */}
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-4">
+              <div>
+                <Label className="text-base font-semibold flex items-center gap-2">
+                  🎬 Videos Disponibles de tus Paquetes
+                </Label>
+                
+                {loadingPackages ? (
+                  <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Cargando paquetes...</span>
+                  </div>
+                ) : videosAvailable > 0 ? (
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center gap-4 text-sm">
+                      <Badge variant="secondary" className="text-sm">
+                        📦 {videosOwed} videos contratados
+                      </Badge>
+                      <Badge variant="outline" className="text-sm">
+                        ✅ {videosUsed} ya creados
+                      </Badge>
+                      <Badge className="text-sm bg-emerald-600">
+                        🎯 {videosAvailable} disponibles
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Distribuye los {videosAvailable} videos disponibles entre las fases del embudo
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-2 p-3 bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-lg">
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      ⚠️ No tienes videos disponibles. Todos los videos de tus paquetes activos ya fueron creados.
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                      Contratados: {videosOwed} | Usados: {videosUsed}
+                    </p>
+                  </div>
+                )}
               </div>
+
+              {/* Phase Distribution Section */}
+              {videosAvailable > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-semibold">
+                      📊 Distribuye por Fase del Embudo (Método Esfera)
+                    </Label>
+                    <Badge variant={totalFromPhases > 0 ? 'default' : 'outline'}>
+                      {totalFromPhases} / {videosAvailable} seleccionados
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid gap-3">
+                    {ESFERA_PHASES.map((phase) => (
+                      <div
+                        key={phase.key}
+                        className={`p-4 rounded-lg border-2 ${phase.color} transition-all`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">{phase.icon}</span>
+                              <span className={`font-bold ${phase.textColor}`}>{phase.label}</span>
+                            </div>
+                            <p className="text-sm font-medium mt-1">{phase.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{phase.details}</p>
+                            <p className="text-xs text-muted-foreground/70 mt-1 italic">
+                              Ejemplo: {phase.contentExamples}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updatePhaseCount(phase.key, briefData.phaseDistribution[phase.key] - 1)}
+                              disabled={briefData.phaseDistribution[phase.key] <= 0}
+                            >
+                              -
+                            </Button>
+                            <span className={`w-8 text-center font-bold text-lg ${phase.textColor}`}>
+                              {briefData.phaseDistribution[phase.key]}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updatePhaseCount(phase.key, briefData.phaseDistribution[phase.key] + 1)}
+                              disabled={totalFromPhases >= videosAvailable}
+                            >
+                              +
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {totalFromPhases > 0 && (
+                    <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-700 rounded-lg">
+                      <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                        ✅ Se crearán <strong>{totalFromPhases}</strong> proyectos en tu tablero de contenido, 
+                        distribuidos estratégicamente por fase del embudo.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         );
