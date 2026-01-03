@@ -16,7 +16,7 @@ interface DraggableContentCardProps {
   onClick?: (content: Content) => void;
   isDragging?: boolean;
   onPaymentUpdate?: () => void;
-  onStatusChange?: (contentId: string, newStatus: 'recording' | 'recorded') => void;
+  onStatusChange?: (contentId: string, newStatus: string) => void;
 }
 
 export function DraggableContentCard({ 
@@ -154,6 +154,15 @@ export function DraggableContentCard({
   const isCreatorOfContent = isCreator && content.creator_id === user?.id;
   const canStartRecording = isCreatorOfContent && content.status === 'assigned';
   const canMarkRecorded = isCreatorOfContent && content.status === 'recording';
+
+  // Check if current user is the editor and can change status
+  const isEditorOfContent = isEditor && content.editor_id === user?.id;
+  const canStartEditing = isEditorOfContent && content.status === 'recorded';
+  const canMarkDelivered = isEditorOfContent && content.status === 'editing';
+
+  // Check if current user is a client and can approve/reject
+  const { isClient } = useAuth();
+  const canClientApprove = isClient && (content.status === 'delivered' || content.status === 'corrected');
 
   return (
     <div
@@ -317,6 +326,65 @@ export function DraggableContentCard({
                   Marcar Grabado
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Editor Status Change Buttons */}
+          {(canStartEditing || canMarkDelivered) && onStatusChange && (
+            <div className="flex gap-2 mt-3 pt-3 border-t border-border">
+              {canStartEditing && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(content.id, 'editing');
+                  }}
+                  className="h-8 px-3 text-xs bg-pink-500 text-white hover:bg-pink-600"
+                >
+                  ✂️ Iniciar Edición
+                </Button>
+              )}
+              {canMarkDelivered && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(content.id, 'delivered');
+                  }}
+                  className="h-8 px-3 text-xs bg-emerald-500 text-white hover:bg-emerald-600"
+                >
+                  📤 Entregar
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Client Approve/Reject Buttons */}
+          {canClientApprove && onStatusChange && (
+            <div className="flex gap-2 mt-3 pt-3 border-t border-border">
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusChange(content.id, 'approved');
+                }}
+                className="h-8 px-3 text-xs bg-green-500 text-white hover:bg-green-600 flex-1"
+              >
+                ✅ Aprobar
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusChange(content.id, 'issue');
+                }}
+                className="h-8 px-3 text-xs border-red-500 text-red-500 hover:bg-red-500/10"
+              >
+                ❌ Novedad
+              </Button>
             </div>
           )}
         </div>
