@@ -56,7 +56,8 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     strategist_guidelines: '',
     trafficker_guidelines: '',
     designer_guidelines: '',
-    admin_guidelines: ''
+    admin_guidelines: '',
+    sphere_phase: ''
   };
 
   const [formData, setFormData] = useState<ContentFormData>(initialFormData);
@@ -102,7 +103,8 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
         strategist_guidelines: (content as any).strategist_guidelines || '',
         trafficker_guidelines: (content as any).trafficker_guidelines || '',
         designer_guidelines: (content as any).designer_guidelines || '',
-        admin_guidelines: (content as any).admin_guidelines || ''
+        admin_guidelines: (content as any).admin_guidelines || '',
+        sphere_phase: (content as any).sphere_phase || ''
       };
       
       setFormData(newFormData);
@@ -253,7 +255,8 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
           strategist_guidelines: formData.strategist_guidelines || null,
           trafficker_guidelines: formData.trafficker_guidelines || null,
           designer_guidelines: formData.designer_guidelines || null,
-          admin_guidelines: formData.admin_guidelines || null
+          admin_guidelines: formData.admin_guidelines || null,
+          sphere_phase: formData.sphere_phase || null
         };
 
         if (formData.creator_id && !content.creator_id) {
