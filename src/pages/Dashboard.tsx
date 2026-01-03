@@ -665,7 +665,7 @@ export default function Dashboard() {
 
   // Stats calculations
   const totalContent = content.length;
-  const activeContent = content.filter(c => !['approved', 'paid', 'delivered'].includes(c.status)).length;
+  const activeContent = content.filter(c => !['approved', 'paid', 'delivered', 'corrected'].includes(c.status)).length;
   const inProgress = content.filter(c => ['recording', 'editing'].includes(c.status)).length;
   const completed = content.filter(c => c.status === 'approved').length;
   const pending = content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)).length;
