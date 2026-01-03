@@ -284,13 +284,54 @@ export function ProductBriefWizard({
 
   const isStepComplete = (step: number): boolean => {
     switch (step) {
-      case 0: return !!briefData.productName && !!briefData.category;
-      case 1: return !!briefData.mainBenefit && !!briefData.transformation;
-      case 2: return !!briefData.problemSolved && !!briefData.mainDesire;
-      case 3: return briefData.reptileBrain.length > 0 && briefData.limbicBrain.length > 0;
-      case 4: return !!briefData.targetGender && !!briefData.targetAgeRange;
-      case 5: return briefData.contentTypes.length > 0 && briefData.platforms.length > 0;
-      default: return false;
+      case 0: // Basics
+        return !!(
+          briefData.productName.trim() &&
+          briefData.category &&
+          briefData.currentObjective &&
+          briefData.slogan.trim()
+        );
+      case 1: // Value
+        return !!(
+          briefData.mainBenefit.trim() &&
+          briefData.transformation.trim() &&
+          briefData.differentiator.trim() &&
+          briefData.keyIngredients.trim() &&
+          briefData.mustCommunicate.trim()
+        );
+      case 2: // Problem
+        return !!(
+          briefData.problemSolved.trim() &&
+          briefData.mainDesire.trim() &&
+          briefData.consequenceOfNotBuying.trim() &&
+          briefData.competitiveAdvantage.trim()
+        );
+      case 3: // Neuro
+        return !!(
+          briefData.reptileBrain.length > 0 &&
+          briefData.limbicBrain.length > 0 &&
+          briefData.cortexBrain.trim()
+        );
+      case 4: // Audience
+        return !!(
+          briefData.targetGender &&
+          briefData.targetAgeRange &&
+          briefData.targetOccupation.trim() &&
+          briefData.targetInterests.length > 0 &&
+          briefData.targetHabits.trim() &&
+          briefData.commonObjections.length > 0 &&
+          briefData.idealScenario.trim()
+        );
+      case 5: // Content
+        return !!(
+          briefData.contentTypes.length > 0 &&
+          briefData.platforms.length > 0 &&
+          briefData.useForAds &&
+          briefData.brandStrengths.trim() &&
+          briefData.expectedResult.trim()
+        );
+      default:
+        return false;
     }
   };
 
