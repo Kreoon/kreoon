@@ -73,35 +73,59 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
 
   const handleDownload = async () => {
     try {
-      // Try to get MP4 URL from Bunny utilities
-      let downloadUrl: string | null = null;
-      
-      // First try embed URL
-      if (bunnyEmbedUrl) {
-        const bunnyUrls = getBunnyVideoUrls(bunnyEmbedUrl);
-        if (bunnyUrls?.mp4) {
-          downloadUrl = bunnyUrls.mp4;
-        }
-      }
-      
-      // Then try current video URL
-      if (!downloadUrl && currentVideoUrl) {
-        const bunnyUrls = getBunnyVideoUrls(currentVideoUrl);
-        if (bunnyUrls?.mp4) {
-          downloadUrl = bunnyUrls.mp4;
-        } else {
-          // Use current video URL directly if it's not a Bunny URL
-          downloadUrl = currentVideoUrl;
-        }
-      }
-      
-      if (!downloadUrl) {
+      // 1) Resolve a direct MP4 URL (prefer Bunny MP4 when possible)
+      let mp4Url: string | null = null;
+
+      const resolveBunnyMp4 = (url: string) => {
+        const bunny = getBunnyVideoUrls(url);
+        return bunny?.mp4 || null;
+      };
+
+      if (bunnyEmbedUrl) mp4Url = resolveBunnyMp4(bunnyEmbedUrl);
+      if (!mp4Url && currentVideoUrl) mp4Url = resolveBunnyMp4(currentVideoUrl);
+      if (!mp4Url && currentVideoUrl) mp4Url = currentVideoUrl; // non-bunny direct file
+
+      if (!mp4Url) {
         toast({ title: 'No hay video disponible para descargar', variant: 'destructive' });
         return;
       }
-      
-      // Open in new tab for download
-      window.open(downloadUrl, '_blank');
+
+      // 2) If it's a Bunny play_###p.mp4 URL, try higher qualities first
+      const pickBestQuality = async (baseUrl: string) => {
+        const match = baseUrl.match(/play_\d+p\.mp4/i);
+        if (!match) return baseUrl;
+
+        const qualities = [2160, 1440, 1080, 720, 480, 360];
+        for (const q of qualities) {
+          const candidate = baseUrl.replace(/play_\d+p\.mp4/i, `play_${q}p.mp4`);
+          try {
+            const res = await fetch(candidate, { method: 'HEAD' });
+            if (res.ok) return candidate;
+          } catch {
+            // ignore and keep trying
+          }
+        }
+        return baseUrl;
+      };
+
+      const bestUrl = await pickBestQuality(mp4Url);
+
+      // 3) Trigger download directly (avoids opening player page / .htm downloads)
+      const safeName = (content.title || 'video')
+        .toLowerCase()
+        .replace(/[^a-z0-9\-_]+/gi, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 60);
+
+      const a = document.createElement('a');
+      a.href = bestUrl;
+      a.download = `${safeName || 'video'}.mp4`;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
       toast({ title: 'Descarga iniciada' });
     } catch (error) {
       toast({ title: 'Error al descargar', variant: 'destructive' });
@@ -383,7 +407,7 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
               {canDownload && (
                 <button
                   onClick={handleDownload}
-                  className="p-2 rounded-full bg-green-500/80 backdrop-blur-sm text-white hover:bg-green-500 transition-colors"
+                  className="p-2 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground hover:bg-primary transition-colors"
                   title="Descargar video"
                 >
                   <Download className="h-4 w-4" />
