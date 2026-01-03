@@ -75,12 +75,16 @@ export function FullscreenContentViewer({
   const getVideoUrls = (item: ContentItem): string[] => {
     if (item.video_urls && item.video_urls.length > 0) return item.video_urls;
     if (item.video_url) return [item.video_url];
+    if (item.bunny_embed_url) return [item.bunny_embed_url];
     return [];
   };
 
   const videoUrls = getVideoUrls(currentItem);
   const currentVideoUrl = videoUrls[currentVariantIndex] || null;
   const hasMultipleVariants = videoUrls.length > 1;
+  
+  // Check if current URL is a bunny embed URL
+  const isBunnyEmbed = currentVideoUrl?.includes('iframe.mediadelivery.net/embed');
 
   const goToNext = () => {
     if (currentIndex < items.length - 1) {
@@ -270,9 +274,10 @@ export function FullscreenContentViewer({
       <div className="relative w-full h-full md:w-auto md:h-[90vh] md:aspect-[9/16] max-w-full">
         {/* Video or Thumbnail */}
         <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
-          {currentItem.bunny_embed_url ? (
+          {isBunnyEmbed && currentVideoUrl ? (
             <iframe
-              src={`${currentItem.bunny_embed_url}?autoplay=true&muted=${muted}&loop=true`}
+              key={currentVideoUrl}
+              src={`${currentVideoUrl}?autoplay=true&muted=${muted}&loop=true`}
               className="w-full h-full"
               allow="autoplay; fullscreen"
               allowFullScreen
@@ -280,6 +285,7 @@ export function FullscreenContentViewer({
           ) : currentVideoUrl ? (
             <video
               ref={videoRef}
+              key={currentVideoUrl}
               src={currentVideoUrl}
               autoPlay
               loop
