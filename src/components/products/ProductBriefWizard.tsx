@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,7 @@ import {
   Wand2,
   ChevronDown,
   RotateCcw,
+  Save,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -262,6 +263,9 @@ export function ProductBriefWizard({
 }: ProductBriefWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [enhancingField, setEnhancingField] = useState<string | null>(null);
   const [briefData, setBriefData] = useState<BriefData>({
     ...DEFAULT_BRIEF,
@@ -269,29 +273,58 @@ export function ProductBriefWizard({
     ...existingBrief,
   });
 
-  const updateField = <K extends keyof BriefData>(field: K, value: BriefData[K]) => {
-    setBriefData(prev => ({ ...prev, [field]: value }));
-  };
+  // Save brief to database
+  const saveBrief = useCallback(async (showToast = true) => {
+    if (isSaving) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ 
+          brief_data: JSON.parse(JSON.stringify(briefData)),
+          brief_status: isAllStepsComplete() ? 'completed' : 'in_progress',
+          brief_completed_at: isAllStepsComplete() ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', productId);
 
-  const toggleArrayField = (field: keyof BriefData, value: string) => {
-    const current = briefData[field] as string[];
-    if (current.includes(value)) {
-      updateField(field, current.filter(v => v !== value) as any);
-    } else {
-      updateField(field, [...current, value] as any);
+      if (error) throw error;
+
+      setHasUnsavedChanges(false);
+      setLastSavedAt(new Date());
+      if (showToast) {
+        toast.success('Brief guardado correctamente');
+      }
+    } catch (error) {
+      console.error('Error saving brief:', error);
+      if (showToast) {
+        toast.error('Error al guardar el brief');
+      }
+    } finally {
+      setIsSaving(false);
     }
-  };
+  }, [briefData, productId, isSaving]);
 
-  const isStepComplete = (step: number): boolean => {
+  // Check if all steps are complete
+  const isAllStepsComplete = useCallback(() => {
+    for (let i = 0; i < STEPS.length; i++) {
+      if (!isStepCompleteCheck(i)) return false;
+    }
+    return true;
+  }, [briefData]);
+
+  // Separate validation function to avoid dependency issues
+  const isStepCompleteCheck = (step: number): boolean => {
     switch (step) {
-      case 0: // Basics
+      case 0:
         return !!(
           briefData.productName.trim() &&
           briefData.category &&
           briefData.currentObjective &&
           briefData.slogan.trim()
         );
-      case 1: // Value
+      case 1:
         return !!(
           briefData.mainBenefit.trim() &&
           briefData.transformation.trim() &&
@@ -299,20 +332,20 @@ export function ProductBriefWizard({
           briefData.keyIngredients.trim() &&
           briefData.mustCommunicate.trim()
         );
-      case 2: // Problem
+      case 2:
         return !!(
           briefData.problemSolved.trim() &&
           briefData.mainDesire.trim() &&
           briefData.consequenceOfNotBuying.trim() &&
           briefData.competitiveAdvantage.trim()
         );
-      case 3: // Neuro
+      case 3:
         return !!(
           briefData.reptileBrain.length > 0 &&
           briefData.limbicBrain.length > 0 &&
           briefData.cortexBrain.trim()
         );
-      case 4: // Audience
+      case 4:
         return !!(
           briefData.targetGender &&
           briefData.targetAgeRange &&
@@ -322,7 +355,7 @@ export function ProductBriefWizard({
           briefData.commonObjections.length > 0 &&
           briefData.idealScenario.trim()
         );
-      case 5: // Content
+      case 5:
         return !!(
           briefData.contentTypes.length > 0 &&
           briefData.platforms.length > 0 &&
@@ -334,6 +367,40 @@ export function ProductBriefWizard({
         return false;
     }
   };
+
+  // Auto-save when changing steps
+  useEffect(() => {
+    if (hasUnsavedChanges) {
+      saveBrief(false);
+    }
+  }, [currentStep]);
+
+  // Auto-save debounced (every 30 seconds if there are changes)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (hasUnsavedChanges && !isSaving) {
+        saveBrief(false);
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [hasUnsavedChanges, isSaving, saveBrief]);
+
+  const updateField = <K extends keyof BriefData>(field: K, value: BriefData[K]) => {
+    setBriefData(prev => ({ ...prev, [field]: value }));
+    setHasUnsavedChanges(true);
+  };
+
+  const toggleArrayField = (field: keyof BriefData, value: string) => {
+    const current = briefData[field] as string[];
+    if (current.includes(value)) {
+      updateField(field, current.filter(v => v !== value) as any);
+    } else {
+      updateField(field, [...current, value] as any);
+    }
+  };
+
+  const isStepComplete = (step: number): boolean => isStepCompleteCheck(step);
 
   const canProceed = isStepComplete(currentStep);
   const progress = ((currentStep + 1) / STEPS.length) * 100;
@@ -1079,10 +1146,38 @@ Escribe 1-2 frases de complemento para agregar al final.`
       </Card>
 
       {/* Navigation */}
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <Button variant="outline" onClick={() => setCurrentStep(prev => prev - 1)} disabled={currentStep === 0}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Anterior
         </Button>
+
+        <div className="flex items-center gap-2">
+          {/* Save indicator */}
+          {lastSavedAt && !hasUnsavedChanges && (
+            <span className="text-xs text-muted-foreground">
+              Guardado {lastSavedAt.toLocaleTimeString()}
+            </span>
+          )}
+          {hasUnsavedChanges && (
+            <span className="text-xs text-warning">
+              Sin guardar
+            </span>
+          )}
+          
+          {/* Save button */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => saveBrief(true)}
+            disabled={isSaving || !hasUnsavedChanges}
+          >
+            {isSaving ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Guardando...</>
+            ) : (
+              <><Save className="h-4 w-4 mr-2" /> Guardar</>
+            )}
+          </Button>
+        </div>
 
         {currentStep < STEPS.length - 1 ? (
           <Button onClick={() => setCurrentStep(prev => prev + 1)} disabled={!canProceed}>
