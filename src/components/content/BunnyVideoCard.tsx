@@ -459,55 +459,6 @@ export function BunnyVideoCard({
               </>
             )}
 
-            {/* Stats - bottom left */}
-            <div className="absolute bottom-4 left-3 z-10">
-              <div className="flex items-center gap-1.5 text-white text-xs">
-                <Eye className="h-3.5 w-3.5" />
-                <span>{formatCount(viewsCount)}</span>
-              </div>
-            </div>
-
-            {/* Action buttons - TikTok style, always visible */}
-            {showActions && (
-              <div className="absolute bottom-4 right-3 flex flex-col gap-4 z-10">
-                {onLike && (
-                  <button
-                    onClick={(e) => handleLikeWithAnimation(e)}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className={cn(
-                      "p-2.5 rounded-full transition-all duration-200 active:scale-90",
-                      isLiked 
-                        ? "text-red-500" 
-                        : "text-white hover:text-red-400"
-                    )}>
-                      <Heart className="h-7 w-7" fill={isLiked ? "currentColor" : "none"} />
-                    </div>
-                    <span className="text-white text-xs font-medium">{formatCount(likesCount)}</span>
-                  </button>
-                )}
-                {/* Comments button */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
-                    <MessageCircle className="h-7 w-7" />
-                  </div>
-                  <span className="text-white text-xs font-medium">{formatCount(commentsCount)}</span>
-                </button>
-                {onShare && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onShare(); }}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
-                      <Share2 className="h-7 w-7" />
-                    </div>
-                  </button>
-                )}
-              </div>
-            )}
           </>
         ) : (
           <>
@@ -595,47 +546,6 @@ export function BunnyVideoCard({
               </button>
             </div>
 
-            {/* Action buttons while playing - TikTok style, always visible */}
-            {showActions && (
-              <div className="absolute bottom-4 right-3 flex flex-col gap-4 z-20">
-                {onLike && (
-                  <button
-                    onClick={(e) => handleLikeWithAnimation(e)}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className={cn(
-                      "p-2.5 rounded-full transition-all duration-200 active:scale-90",
-                      isLiked 
-                        ? "text-red-500" 
-                        : "text-white hover:text-red-400"
-                    )}>
-                      <Heart className="h-7 w-7" fill={isLiked ? "currentColor" : "none"} />
-                    </div>
-                    <span className="text-white text-xs font-medium">{formatCount(likesCount)}</span>
-                  </button>
-                )}
-                {/* Comments button */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
-                    <MessageCircle className="h-7 w-7" />
-                  </div>
-                  <span className="text-white text-xs font-medium">{formatCount(commentsCount)}</span>
-                </button>
-                {onShare && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onShare(); }}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className="p-2.5 text-white hover:text-primary transition-colors active:scale-90">
-                      <Share2 className="h-7 w-7" />
-                    </div>
-                  </button>
-                )}
-              </div>
-            )}
 
             {/* Carousel navigation while playing */}
             {hasMultiple && (
@@ -663,32 +573,74 @@ export function BunnyVideoCard({
         )}
       </div>
 
-      {/* Caption/Creator info - TikTok style overlay */}
-      <div className="p-3 bg-gradient-to-t from-black/80 to-transparent absolute bottom-0 left-0 right-0 z-5">
-        {creatorName && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (creatorId) {
-                navigate(`/p/${creatorId}`);
-              }
-            }}
-            className="text-white text-sm font-semibold hover:underline truncate block"
-          >
-            @{creatorName.replace(/\s+/g, '').toLowerCase()}
-          </button>
-        )}
-        {(caption || title) && (
-          <ExpandableText 
-            text={caption || title} 
-            className="text-white/80 text-xs mt-0.5"
-            maxLines={2}
-          />
-        )}
+      {/* Info section below video */}
+      <div className="p-3 space-y-2">
+        {/* Creator & Title */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            {creatorName && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (creatorId) {
+                    navigate(`/p/${creatorId}`);
+                  }
+                }}
+                className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors truncate block mb-1"
+              >
+                @{creatorName.replace(/\s+/g, '').toLowerCase()}
+              </button>
+            )}
+            {(caption || title) && (
+              <p className="text-sm font-medium line-clamp-2">{caption || title}</p>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1">
+            {onLike && (
+              <button
+                onClick={(e) => handleLikeWithAnimation(e)}
+                className={cn(
+                  "p-2 rounded-full transition-colors",
+                  isLiked 
+                    ? "bg-red-500/10 text-red-500" 
+                    : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                )}
+              >
+                <Heart className="h-4 w-4" fill={isLiked ? "currentColor" : "none"} />
+              </button>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
+              className="p-2 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground transition-colors"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Eye className="h-3 w-3" />
+            {formatCount(viewsCount)}
+          </span>
+          <span className="flex items-center gap-1">
+            <Heart className="h-3 w-3" />
+            {formatCount(likesCount)}
+          </span>
+          {commentsCount > 0 && (
+            <span className="flex items-center gap-1">
+              <MessageCircle className="h-3 w-3" />
+              {formatCount(commentsCount)}
+            </span>
+          )}
+        </div>
         
         {/* Owner controls */}
         {isOwner && (
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-3 pt-1">
             {onPin && (
               <button
                 onClick={(e) => {
@@ -697,7 +649,7 @@ export function BunnyVideoCard({
                 }}
                 className={cn(
                   "flex items-center gap-1 text-xs transition-colors",
-                  isPinned ? "text-primary" : "text-white/60 hover:text-primary"
+                  isPinned ? "text-primary" : "text-muted-foreground hover:text-primary"
                 )}
               >
                 <Pin className="h-3 w-3" />
@@ -709,7 +661,7 @@ export function BunnyVideoCard({
                 e.stopPropagation();
                 setShowSettings(true);
               }}
-              className="flex items-center gap-1 text-xs text-white/60 hover:text-primary transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
             >
               <Settings className="h-3 w-3" />
             </button>
@@ -723,14 +675,14 @@ export function BunnyVideoCard({
               e.stopPropagation();
               onApprove();
             }}
-            className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-500 rounded-lg text-xs font-medium transition-colors"
           >
             <Check className="h-3.5 w-3.5" />
             <span>Aprobar</span>
           </button>
         )}
         {status === 'approved' && (
-          <div className="flex items-center gap-1.5 mt-2 text-green-400 text-xs">
+          <div className="flex items-center gap-1.5 text-green-500 text-xs">
             <Check className="h-3.5 w-3.5" />
             <span>Aprobado</span>
           </div>
@@ -738,14 +690,14 @@ export function BunnyVideoCard({
         
         {/* Creator status change buttons */}
         {isCreatorOwner && onCreatorStatusChange && (
-          <div className="mt-2">
+          <div className="pt-1">
             {status === 'assigned' && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onCreatorStatusChange('recording');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-500 rounded-lg text-xs font-medium transition-colors"
               >
                 <Circle className="h-3.5 w-3.5 fill-current animate-pulse" />
                 <span>Iniciar Grabación</span>
@@ -757,14 +709,14 @@ export function BunnyVideoCard({
                   e.stopPropagation();
                   onCreatorStatusChange('recorded');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-500 rounded-lg text-xs font-medium transition-colors"
               >
                 <Video className="h-3.5 w-3.5" />
                 <span>Marcar como Grabado</span>
               </button>
             )}
             {status === 'recorded' && (
-              <div className="flex items-center gap-1.5 text-green-400 text-xs">
+              <div className="flex items-center gap-1.5 text-green-500 text-xs">
                 <Video className="h-3.5 w-3.5" />
                 <span>Grabado</span>
               </div>
