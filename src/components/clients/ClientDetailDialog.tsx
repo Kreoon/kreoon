@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Content, STATUS_LABELS, STATUS_COLORS, ClientPackage, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PaymentStatus } from "@/types/database";
 import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
+import { CreateProductBriefWizard } from "@/components/products/CreateProductBriefWizard";
 import { ClientPackageDialog } from "@/components/clients/ClientPackageDialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -75,6 +76,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductDialog, setShowProductDialog] = useState(false);
+  const [showCreateProductWizard, setShowCreateProductWizard] = useState(false);
   
   // Packages state
   const [packages, setPackages] = useState<ClientPackage[]>([]);
@@ -648,7 +650,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
           <TabsContent value="products" className="space-y-4 mt-4">
             {isAdmin && (
               <div className="flex justify-end">
-                <Button onClick={() => { setSelectedProduct(null); setShowProductDialog(true); }}>
+                <Button onClick={() => setShowCreateProductWizard(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Nuevo Producto
                 </Button>
@@ -668,7 +670,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                 {isAdmin && (
                   <Button 
                     variant="outline" 
-                    onClick={() => { setSelectedProduct(null); setShowProductDialog(true); }}
+                    onClick={() => setShowCreateProductWizard(true)}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Crear primer producto
@@ -954,7 +956,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         </Tabs>
       </DialogContent>
 
-      {/* Product Dialog */}
+      {/* Product Dialog - for editing existing products */}
       <ProductDetailDialog
         product={selectedProduct as any}
         clientId={client.id}
@@ -965,6 +967,18 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
           setShowProductDialog(false);
         }}
       />
+
+      {/* Create Product Wizard - for new products */}
+      {showCreateProductWizard && (
+        <CreateProductBriefWizard
+          clientId={client.id}
+          onComplete={() => {
+            setShowCreateProductWizard(false);
+            fetchProducts();
+          }}
+          onCancel={() => setShowCreateProductWizard(false)}
+        />
+      )}
 
       {/* Package Dialog */}
       <ClientPackageDialog
