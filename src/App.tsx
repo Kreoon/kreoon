@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AchievementNotificationProvider } from "@/components/points/AchievementNotificationProvider";
 import { UnsavedChangesProvider } from "@/contexts/UnsavedChangesContext";
@@ -79,6 +80,9 @@ function ProfileRedirect() {
 
 function AppRoutes() {
   const { impersonationKey } = useImpersonation();
+  
+  // Listen for new content notifications (strategists/admins only)
+  useNewContentNotifications();
   
   return (
     <Routes key={impersonationKey}>

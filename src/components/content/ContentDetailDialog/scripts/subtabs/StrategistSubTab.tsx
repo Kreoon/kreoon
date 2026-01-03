@@ -1,8 +1,9 @@
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { RichTextViewer } from '@/components/scripts/RichTextViewer';
 import { SectionCard } from '../../components/SectionCard';
-import { Target, MessageCircle, Lightbulb, TrendingUp } from 'lucide-react';
+import { Target, MessageCircle, Lightbulb } from 'lucide-react';
 import { SubTabProps } from './types';
+import { ProductBriefSection } from './ProductBriefSection';
 
 export function StrategistSubTab({
   content,
@@ -11,6 +12,7 @@ export function StrategistSubTab({
   editMode,
   scriptPermissions,
   advancedConfig,
+  selectedProduct,
   readOnly = false,
 }: SubTabProps) {
   // Combine scriptPermissions with readOnly prop for effective edit capability
@@ -20,6 +22,9 @@ export function StrategistSubTab({
 
   return (
     <div className="space-y-6">
+      {/* Product Brief - NEW SECTION */}
+      <ProductBriefSection product={selectedProduct} />
+
       {/* Strategy Guidelines */}
       <SectionCard title="Estrategia de Contenido" iconEmoji="🧠">
         <div className="space-y-4">
@@ -81,7 +86,7 @@ export function StrategistSubTab({
 
       {/* Sales Angle Display */}
       {formData.sales_angle && (
-        <SectionCard title="Ángulo de Venta" iconEmoji="💡">
+        <SectionCard title="Ángulo de Venta Asignado" iconEmoji="💡">
           <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
             <p className="text-sm">{formData.sales_angle}</p>
           </div>
