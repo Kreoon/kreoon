@@ -29,7 +29,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 
 interface ContentVideoCardProps {
   content: Content;
@@ -50,6 +49,7 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
@@ -72,63 +72,71 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
     (currentVideoUrl || bunnyEmbedUrl);
 
   const handleDownload = async () => {
+    if (isDownloading) return;
+
+    const sourceUrl = bunnyEmbedUrl || currentVideoUrl;
+    if (!sourceUrl) {
+      toast({ title: 'No hay video disponible para descargar', variant: 'destructive' });
+      return;
+    }
+
+    setIsDownloading(true);
     try {
-      // 1) Resolve a direct MP4 URL (prefer Bunny MP4 when possible)
-      let mp4Url: string | null = null;
+      // Ask backend for the correct Bunny CDN MP4 URL (and best available quality)
+      const { data, error } = await supabase.functions.invoke('bunny-download', {
+        body: {
+          content_id: content.id,
+          video_url: sourceUrl,
+        },
+      });
 
-      const resolveBunnyMp4 = (url: string) => {
-        const bunny = getBunnyVideoUrls(url);
-        return bunny?.mp4 || null;
-      };
+      if (error) throw error;
+      const downloadUrl: string | undefined = data?.download_url;
+      const title: string | undefined = data?.title;
 
-      if (bunnyEmbedUrl) mp4Url = resolveBunnyMp4(bunnyEmbedUrl);
-      if (!mp4Url && currentVideoUrl) mp4Url = resolveBunnyMp4(currentVideoUrl);
-      if (!mp4Url && currentVideoUrl) mp4Url = currentVideoUrl; // non-bunny direct file
-
-      if (!mp4Url) {
-        toast({ title: 'No hay video disponible para descargar', variant: 'destructive' });
+      if (!downloadUrl) {
+        toast({ title: 'No se pudo generar el link de descarga', variant: 'destructive' });
         return;
       }
 
-      // 2) If it's a Bunny play_###p.mp4 URL, try higher qualities first
-      const pickBestQuality = async (baseUrl: string) => {
-        const match = baseUrl.match(/play_\d+p\.mp4/i);
-        if (!match) return baseUrl;
+      // Direct download (no new tab): fetch as blob and trigger browser download
+      const res = await fetch(downloadUrl);
+      if (!res.ok) throw new Error(`Download failed (${res.status})`);
 
-        const qualities = [2160, 1440, 1080, 720, 480, 360];
-        for (const q of qualities) {
-          const candidate = baseUrl.replace(/play_\d+p\.mp4/i, `play_${q}p.mp4`);
-          try {
-            const res = await fetch(candidate, { method: 'HEAD' });
-            if (res.ok) return candidate;
-          } catch {
-            // ignore and keep trying
-          }
-        }
-        return baseUrl;
-      };
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('text/html')) {
+        // Bunny returns an HTML page when the file/zone is misconfigured
+        throw new Error('El archivo no está disponible para descarga en Bunny');
+      }
 
-      const bestUrl = await pickBestQuality(mp4Url);
+      const blob = await res.blob();
 
-      // 3) Trigger download directly (avoids opening player page / .htm downloads)
-      const safeName = (content.title || 'video')
+      const safeName = (title || content.title || 'video')
         .toLowerCase()
         .replace(/[^a-z0-9\-_]+/gi, '-')
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '')
-        .slice(0, 60);
+        .slice(0, 80);
 
+      const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = bestUrl;
+      a.href = objectUrl;
       a.download = `${safeName || 'video'}.mp4`;
-      a.rel = 'noopener';
       document.body.appendChild(a);
       a.click();
       a.remove();
+      URL.revokeObjectURL(objectUrl);
 
       toast({ title: 'Descarga iniciada' });
-    } catch (error) {
-      toast({ title: 'Error al descargar', variant: 'destructive' });
+    } catch (e) {
+      console.error('download error', e);
+      toast({
+        title: 'Error al descargar',
+        description: e instanceof Error ? e.message : 'Intenta de nuevo',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -403,14 +411,22 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
             </div>
 
             <div className="flex flex-col gap-2">
-              {/* Download button for approved content */}
               {canDownload && (
                 <button
                   onClick={handleDownload}
-                  className="p-2 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground hover:bg-primary transition-colors"
+                  disabled={isDownloading}
+                  className={cn(
+                    "p-2 rounded-full backdrop-blur-sm transition-colors",
+                    "bg-primary/90 text-primary-foreground hover:bg-primary",
+                    isDownloading && "opacity-60 cursor-not-allowed"
+                  )}
                   title="Descargar video"
                 >
-                  <Download className="h-4 w-4" />
+                  {isDownloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
                 </button>
               )}
               {currentVideoUrl && (
