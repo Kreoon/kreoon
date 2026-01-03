@@ -158,25 +158,33 @@ Deno.serve(async (req) => {
 
     const videoData = await videoResponse.json()
     
-    // For Bunny Stream, we need to use the pull zone CDN URL
-    // Format: https://vz-{hash}.b-cdn.net/{video_id}/play_720p.mp4
-    // Or use the direct video URL from Bunny API if available
-    
-    // Try to get the direct download URL from Bunny's CDN
-    // The CDN hostname should be in format: vz-xxxxxxxx-xxx.b-cdn.net
-    let downloadUrl = ''
-    
-    // Check if we have a configured CDN hostname
-    if (bunnyCdnHostname && bunnyCdnHostname !== 'vz-f0f0f0f0-f0f.b-cdn.net') {
-      downloadUrl = `https://${bunnyCdnHostname}/${videoId}/play_720p.mp4`
-    } else {
-      // Fallback: construct from library ID pattern
-      // Bunny Stream CDN format: https://vz-{library_id_hash}.b-cdn.net/{video_id}/play_720p.mp4
-      downloadUrl = `https://vz-${bunnyLibraryId}.b-cdn.net/${videoId}/play_720p.mp4`
+    // For Bunny Stream, use the pull zone CDN URL
+    // Format: https://<cdnHost>/{video_id}/play_1080p.mp4 (quality may vary)
+
+    const cdnHost = (bunnyCdnHostname && bunnyCdnHostname !== 'vz-f0f0f0f0-f0f.b-cdn.net')
+      ? bunnyCdnHostname
+      : `vz-${bunnyLibraryId}.b-cdn.net`;
+
+    const qualities = [2160, 1440, 1080, 720, 480, 360];
+    let downloadUrl = `https://${cdnHost}/${videoId}/play_720p.mp4`;
+    let chosenQuality = 720;
+
+    // Pick best available quality by probing the CDN (server-side, no CORS issues)
+    for (const q of qualities) {
+      const candidate = `https://${cdnHost}/${videoId}/play_${q}p.mp4`;
+      try {
+        const head = await fetch(candidate, { method: 'HEAD' });
+        if (head.ok) {
+          downloadUrl = candidate;
+          chosenQuality = q;
+          break;
+        }
+      } catch (e) {
+        // ignore and keep trying
+      }
     }
 
-    console.log(`Download URL generated for video ${videoId}: ${downloadUrl}`)
-    console.log(`Video data from Bunny:`, JSON.stringify(videoData))
+    console.log(`Download URL generated for video ${videoId}: ${downloadUrl} (quality ${chosenQuality}p)`);
 
     return new Response(
       JSON.stringify({
@@ -184,6 +192,7 @@ Deno.serve(async (req) => {
         download_url: downloadUrl,
         title: videoData.title || 'video',
         size: videoData.storageSize || 0,
+        quality: chosenQuality,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
