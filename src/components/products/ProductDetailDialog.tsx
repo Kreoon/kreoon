@@ -275,7 +275,32 @@ export function ProductDetailDialog({
 
           <div className="flex-1 overflow-y-auto px-6 pb-6">
 
-          <TabsContent value="brief" className="mt-4">
+          <TabsContent value="brief" className="mt-4 space-y-6">
+            {/* Optional Document Uploader */}
+            {product && isAdmin && (
+              <div className="p-4 bg-muted/30 rounded-lg border border-dashed">
+                <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  Documentos del Producto (Opcional)
+                </h4>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Sube documentos adicionales para enriquecer la investigación con IA
+                </p>
+                <ProductDocumentUploader
+                  label="Documento de Producto"
+                  icon={<FileText className="h-4 w-4" />}
+                  fileUrl={formData.research_file_url}
+                  driveUrl={formData.research_url}
+                  productId={product?.id}
+                  productName={formData.name}
+                  documentType="research"
+                  onFileUrlChange={(url) => setFormData({ ...formData, research_file_url: url })}
+                  onDriveUrlChange={(url) => setFormData({ ...formData, research_url: url })}
+                  disabled={!isAdmin}
+                />
+              </div>
+            )}
+            
             {product ? (
               <ProductBriefWizard
                 productId={product.id}
@@ -302,7 +327,17 @@ export function ProductDetailDialog({
           </TabsContent>
 
           <TabsContent value="market" className="mt-4">
-            <MarketOverviewTab marketResearch={product?.market_research as any} />
+            <MarketOverviewTab marketResearch={(() => {
+              try {
+                if (!product?.market_research) return null;
+                if (typeof product.market_research === 'string') {
+                  return JSON.parse(product.market_research);
+                }
+                return product.market_research;
+              } catch {
+                return null;
+              }
+            })()} />
           </TabsContent>
 
           <TabsContent value="jtbd" className="mt-4">
@@ -348,11 +383,26 @@ export function ProductDetailDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Descripción</Label>
+              <Label>Descripción del Producto</Label>
+              {/* AI-Generated Description from content_strategy */}
+              {(product?.content_strategy as any)?.executiveSummary?.marketSummary && (
+                <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20 mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-medium text-primary">Descripción generada por IA</span>
+                  </div>
+                  <p className="text-sm leading-relaxed">{(product?.content_strategy as any)?.executiveSummary?.marketSummary}</p>
+                  {(product?.content_strategy as any)?.executiveSummary?.keyInsights?.slice(0, 3).map((insight: any, idx: number) => (
+                    <div key={idx} className="mt-2 text-xs text-muted-foreground">
+                      • <strong>{insight.insight}</strong>: {insight.action}
+                    </div>
+                  ))}
+                </div>
+              )}
               <RichTextEditor
                 content={formData.description}
                 onChange={(html) => setFormData({ ...formData, description: html })}
-                placeholder="Describe el producto..."
+                placeholder="Describe el producto manualmente o genera la investigación para obtener una descripción automática..."
                 className="min-h-[150px]"
               />
             </div>
