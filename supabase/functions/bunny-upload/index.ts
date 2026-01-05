@@ -282,7 +282,8 @@ Deno.serve(async (req) => {
             bunny_embed_url: variantIndex === 0 ? embedUrl : currentContent?.video_urls?.[0] || embedUrl,
             video_url: newUrls[0] || embedUrl,
             video_urls: newUrls,
-            video_processing_status: 'completed',
+            // Keep as processing until Bunny reports completed via bunny-status
+            video_processing_status: 'processing',
           })
           .eq('id', contentId)
 
@@ -428,7 +429,8 @@ Deno.serve(async (req) => {
             bunny_embed_url: variantIndex === 0 ? embedUrl : currentContent?.video_urls?.[0] || embedUrl,
             video_url: newUrls[0] || embedUrl, // Keep video_url as first video for backward compatibility
             video_urls: newUrls,
-            video_processing_status: 'completed',
+            // Keep as processing until Bunny reports completed via bunny-status
+            video_processing_status: 'processing',
           })
           .eq('id', contentId)
 
