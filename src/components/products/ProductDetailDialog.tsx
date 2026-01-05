@@ -210,68 +210,70 @@ export function ProductDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col pb-0">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
             {isNew ? "Nuevo Producto" : formData.name}
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue={isNew ? "info" : "brief"} className="mt-4 flex-1 flex flex-col min-h-0">
-          <ScrollArea className="w-full shrink-0">
-            <TabsList className="inline-flex h-10 w-max min-w-full">
-              <TabsTrigger value="brief" className="gap-1">
+        <Tabs defaultValue={isNew ? "info" : "brief"} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* Tabs en dos filas */}
+          <div className="px-6 pt-4 shrink-0 space-y-1">
+            <TabsList className="grid grid-cols-7 h-auto gap-1">
+              <TabsTrigger value="brief" className="gap-1 text-xs py-2">
                 <ClipboardList className="h-3 w-3" />
                 Brief IA
               </TabsTrigger>
-              <TabsTrigger value="summary" className="gap-1">
+              <TabsTrigger value="summary" className="gap-1 text-xs py-2">
                 <FileText className="h-3 w-3" />
                 Conclusión
               </TabsTrigger>
-              <TabsTrigger value="market" className="gap-1">
+              <TabsTrigger value="market" className="gap-1 text-xs py-2">
                 <Globe className="h-3 w-3" />
                 Mercado
               </TabsTrigger>
-              <TabsTrigger value="jtbd" className="gap-1">
+              <TabsTrigger value="jtbd" className="gap-1 text-xs py-2">
                 <Target className="h-3 w-3" />
                 JTBD
               </TabsTrigger>
-              <TabsTrigger value="avatars" className="gap-1">
+              <TabsTrigger value="avatars" className="gap-1 text-xs py-2">
                 <Users className="h-3 w-3" />
                 Avatares
               </TabsTrigger>
-              <TabsTrigger value="competition" className="gap-1">
+              <TabsTrigger value="competition" className="gap-1 text-xs py-2">
                 <Swords className="h-3 w-3" />
                 Competencia
               </TabsTrigger>
-              <TabsTrigger value="differentiation" className="gap-1">
+              <TabsTrigger value="differentiation" className="gap-1 text-xs py-2">
                 <Lightbulb className="h-3 w-3" />
                 Diferenciación
               </TabsTrigger>
-              <TabsTrigger value="esfera" className="gap-1">
+            </TabsList>
+            <TabsList className="grid grid-cols-6 h-auto gap-1">
+              <TabsTrigger value="esfera" className="gap-1 text-xs py-2">
                 <Brain className="h-3 w-3" />
                 Esfera
               </TabsTrigger>
-              <TabsTrigger value="angles" className="gap-1">
+              <TabsTrigger value="angles" className="gap-1 text-xs py-2">
                 <Sparkles className="h-3 w-3" />
                 Ángulos
               </TabsTrigger>
-              <TabsTrigger value="puv" className="gap-1">
+              <TabsTrigger value="puv" className="gap-1 text-xs py-2">
                 <Trophy className="h-3 w-3" />
                 PUV
               </TabsTrigger>
-              <TabsTrigger value="leads" className="gap-1">
+              <TabsTrigger value="leads" className="gap-1 text-xs py-2">
                 <Gift className="h-3 w-3" />
                 Leads
               </TabsTrigger>
-              <TabsTrigger value="info">Info</TabsTrigger>
-              <TabsTrigger value="files">Archivos</TabsTrigger>
+              <TabsTrigger value="info" className="text-xs py-2">Info</TabsTrigger>
+              <TabsTrigger value="files" className="text-xs py-2">Archivos</TabsTrigger>
             </TabsList>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+          </div>
 
-          <ScrollArea className="flex-1 mt-4 pr-4">
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
 
           <TabsContent value="brief" className="mt-4">
             {product ? (
@@ -439,7 +441,7 @@ export function ProductDetailDialog({
               disabled={!isAdmin}
             />
           </TabsContent>
-          </ScrollArea>
+          </div>
         </Tabs>
 
         {isAdmin && (
