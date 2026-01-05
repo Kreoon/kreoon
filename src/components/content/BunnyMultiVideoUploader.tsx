@@ -392,6 +392,17 @@ export function BunnyMultiVideoUploader({
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Variable {index + 1}</span>
             <div className="flex items-center gap-2">
+              {upload.status === 'processing' && upload.videoId && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => pollVideoStatus(upload.id, upload.videoId!)}
+                  className="h-7 w-7"
+                  title="Actualizar estado"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                </Button>
+              )}
               {upload.status === 'failed' && (
                 <Button variant="ghost" size="icon" onClick={() => handleRetry(upload.id)} className="h-7 w-7">
                   <RefreshCw className="h-3 w-3" />
@@ -409,7 +420,7 @@ export function BunnyMultiVideoUploader({
               )}
             </div>
           </div>
-          
+
           {/* Video Preview - Vertical Format */}
           {showPreview && upload.embedUrl && upload.status === 'completed' && (
             <div 

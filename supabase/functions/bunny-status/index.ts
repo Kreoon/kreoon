@@ -32,10 +32,10 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const bunnyApiKey = Deno.env.get('BUNNY_API_KEY')!
     const bunnyLibraryId = Deno.env.get('BUNNY_LIBRARY_ID')!
-    
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const body = await req.json()
+    const body = await req.json().catch(() => ({}))
     const { content_id, video_id } = body
 
     if (!video_id) {
@@ -44,6 +44,8 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('[bunny-status] Checking status for video:', video_id, 'content:', content_id || 'n/a')
 
     // Get video status from Bunny
     const statusResponse = await fetch(
@@ -57,13 +59,21 @@ Deno.serve(async (req) => {
     )
 
     if (!statusResponse.ok) {
-      const errorText = await statusResponse.text()
-      console.error('Bunny status error:', errorText)
-      throw new Error(`Failed to get video status: ${errorText}`)
+      const errorText = await statusResponse.text().catch(() => '')
+      console.error('[bunny-status] Bunny status error:', statusResponse.status, errorText)
+      return new Response(
+        JSON.stringify({ error: `Bunny status error ${statusResponse.status}`, details: errorText }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const videoData: BunnyVideoStatus = await statusResponse.json()
+
+    // Bunny API can return different casing depending on SDKs; be defensive
+    const encodeProgress = (videoData as any).encodeProgress ?? (videoData as any).EncodeProgress ?? 0
     const processingStatus = STATUS_MAP[videoData.status] || 'processing'
+
+    console.log('[bunny-status] Bunny status:', videoData.status, 'mapped:', processingStatus, 'progress:', encodeProgress)
 
     // Update content status if content_id provided
     if (content_id && (processingStatus === 'completed' || processingStatus === 'failed')) {
@@ -81,13 +91,13 @@ Deno.serve(async (req) => {
         title: videoData.title,
         status: processingStatus,
         bunny_status: videoData.status,
-        encode_progress: videoData.encodeProgress,
+        encode_progress: encodeProgress,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Status check error:', error)
+    console.error('[bunny-status] Status check error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
       JSON.stringify({ error: errorMessage }),
@@ -95,3 +105,4 @@ Deno.serve(async (req) => {
     )
   }
 })
+

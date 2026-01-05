@@ -287,6 +287,18 @@ export function BunnyVideoUploader({
           {getStatusText()}
         </Button>
 
+        {status === 'processing' && videoId && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => pollVideoStatus(videoId)}
+            disabled={uploading}
+            title="Actualizar estado"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        )}
+
         {status === 'failed' && (
           <Button variant="ghost" size="icon" onClick={handleRetry}>
             <RefreshCw className="h-4 w-4" />
@@ -298,7 +310,9 @@ export function BunnyVideoUploader({
         <div className="space-y-1">
           <Progress value={progress} className="h-2" />
           <p className="text-xs text-muted-foreground">
-            {status === 'uploading' ? `Subiendo... ${progress}%` : `Procesando... ${progress}%`}
+            {status === 'uploading'
+              ? `Subiendo... ${progress}%`
+              : `Procesando... puede tardar varios minutos (${progress}%)`}
           </p>
         </div>
       )}
