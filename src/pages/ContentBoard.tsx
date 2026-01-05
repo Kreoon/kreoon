@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTrialGuard } from "@/hooks/useTrialGuard";
 import { useContentWithFilters } from "@/hooks/useContent";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
+import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
 import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_ORDER, STATUS_LABELS, Product } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -155,6 +156,10 @@ export default function ContentBoard() {
   const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
   const { guardAction, isReadOnly } = useTrialGuard();
+  
+  // Get ambassador IDs for the organization
+  const { ambassadors } = useInternalOrgContent();
+  const ambassadorIds = useMemo(() => new Set(ambassadors.map(a => a.id)), [ambassadors]);
   
   // Board persistence hook - saves view, filters, scroll, selected content
   const persistence = useBoardPersistence({ organizationId: currentOrgId });
@@ -879,6 +884,7 @@ export default function ContentBoard() {
                           refetch();
                         }}
                         showStatusControls={true}
+                        ambassadorIds={ambassadorIds}
                         onAnalyzeWithAI={isAdmin ? (contentId, title) => {
                           setAIPanelMode('card');
                           setAIContentId(contentId);
@@ -906,6 +912,7 @@ export default function ContentBoard() {
               cardSize={settings?.card_size || 'normal'}
               visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
               organizationStatuses={orgStatuses}
+              ambassadorIds={ambassadorIds}
             />
           )}
           
@@ -919,6 +926,7 @@ export default function ContentBoard() {
               cardSize={settings?.card_size || 'normal'}
               visibleFields={settings?.visible_fields || ['title', 'status', 'responsible']}
               organizationStatuses={orgStatuses}
+              ambassadorIds={ambassadorIds}
             />
           )}
           
@@ -929,6 +937,7 @@ export default function ContentBoard() {
               onContentClick={setSelectedContent}
               visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
               organizationStatuses={orgStatuses}
+              ambassadorIds={ambassadorIds}
             />
           )}
         </div>

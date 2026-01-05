@@ -1,11 +1,12 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronDown, ChevronUp, ArrowUpDown, Star, Video, FileText } from "lucide-react";
+import { ChevronDown, ChevronUp, ArrowUpDown, Star, Video, FileText, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -26,6 +27,7 @@ interface BoardTableViewProps {
   onSelectionChange?: (ids: string[]) => void;
   visibleFields?: string[];
   organizationStatuses?: OrganizationStatus[];
+  ambassadorIds?: Set<string>;
 }
 
 type SortField = 'title' | 'status' | 'client' | 'creator' | 'deadline' | 'created_at';
@@ -50,7 +52,8 @@ export function BoardTableView({
   selectedIds = [],
   onSelectionChange,
   visibleFields = ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline'],
-  organizationStatuses = []
+  organizationStatuses = [],
+  ambassadorIds = new Set()
 }: BoardTableViewProps) {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -245,15 +248,44 @@ export function BoardTableView({
                 {showField('responsible') && (
                   <TableCell>
                     {c.creator ? (
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={c.creator.avatar_url || undefined} />
-                          <AvatarFallback className="text-xs">
-                            {c.creator.full_name?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm">{c.creator.full_name?.split(' ')[0]}</span>
-                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-2 cursor-pointer">
+                            <div className="relative">
+                              <Avatar className={cn(
+                                "h-6 w-6 ring-2",
+                                c.creator_id && ambassadorIds.has(c.creator_id)
+                                  ? "ring-amber-500"
+                                  : "ring-transparent"
+                              )}>
+                                <AvatarImage src={c.creator.avatar_url || undefined} />
+                                <AvatarFallback className="text-xs">
+                                  {c.creator.full_name?.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              {c.creator_id && ambassadorIds.has(c.creator_id) && (
+                                <div className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5">
+                                  <Crown className="h-2 w-2 text-white fill-white" />
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-sm">{c.creator.full_name?.split(' ')[0]}</span>
+                            {c.creator_id && ambassadorIds.has(c.creator_id) && (
+                              <Crown className="h-3 w-3 text-amber-500 fill-amber-500" />
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          <div className="flex items-center gap-1">
+                            <span className="font-medium">Creador:</span> {c.creator.full_name}
+                            {c.creator_id && ambassadorIds.has(c.creator_id) && (
+                              <span className="inline-flex items-center gap-0.5 text-amber-500">
+                                <Crown className="h-3 w-3 fill-amber-500" /> Embajador
+                              </span>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}

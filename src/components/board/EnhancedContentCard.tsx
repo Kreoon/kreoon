@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Clock, Building2, Video, FileText, Star, MoreVertical, Brain, AlertTriangle, Clock4, Zap, Lightbulb, RefreshCw, Heart, Calendar } from "lucide-react";
+import { Clock, Building2, Video, FileText, Star, MoreVertical, Brain, AlertTriangle, Clock4, Zap, Lightbulb, RefreshCw, Heart, Calendar, Crown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -45,6 +45,8 @@ interface EnhancedContentCardProps {
   userId?: string | null;
   onStatusChange?: (contentId: string, newStatus: ContentStatus) => Promise<void>;
   showStatusControls?: boolean;
+  // Ambassador IDs to show badge
+  ambassadorIds?: Set<string>;
 }
 
 // Size configurations for different card sizes
@@ -92,6 +94,7 @@ export function EnhancedContentCard({
   userId,
   onStatusChange,
   showStatusControls = false,
+  ambassadorIds = new Set(),
 }: EnhancedContentCardProps) {
   // Get size configuration
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
@@ -359,21 +362,39 @@ export function EnhancedContentCard({
         {showField('creator') && content.creator && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className={cn(
-                sizeConfig.avatarSize, 
-                "ring-2 ring-primary/40 cursor-pointer transition-transform duration-200 hover:scale-110"
-              )}>
-                <AvatarImage src={content.creator.avatar_url || undefined} />
-                <AvatarFallback className={cn(
-                  "bg-primary/20 text-primary font-semibold",
-                  cardSize === 'compact' ? "text-[8px]" : cardSize === 'large' ? "text-sm" : "text-xs"
+              <div className="relative">
+                <Avatar className={cn(
+                  sizeConfig.avatarSize, 
+                  "ring-2 cursor-pointer transition-transform duration-200 hover:scale-110",
+                  content.creator_id && ambassadorIds.has(content.creator_id) 
+                    ? "ring-amber-500" 
+                    : "ring-primary/40"
                 )}>
-                  {(content.creator.full_name || '?').charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+                  <AvatarImage src={content.creator.avatar_url || undefined} />
+                  <AvatarFallback className={cn(
+                    "bg-primary/20 text-primary font-semibold",
+                    cardSize === 'compact' ? "text-[8px]" : cardSize === 'large' ? "text-sm" : "text-xs"
+                  )}>
+                    {(content.creator.full_name || '?').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Ambassador Crown Indicator */}
+                {content.creator_id && ambassadorIds.has(content.creator_id) && (
+                  <div className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5">
+                    <Crown className="h-2 w-2 text-white fill-white" />
+                  </div>
+                )}
+              </div>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
-              <span className="font-medium">Creador:</span> {content.creator.full_name}
+              <div className="flex items-center gap-1">
+                <span className="font-medium">Creador:</span> {content.creator.full_name}
+                {content.creator_id && ambassadorIds.has(content.creator_id) && (
+                  <span className="inline-flex items-center gap-0.5 text-amber-500">
+                    <Crown className="h-3 w-3 fill-amber-500" /> Embajador
+                  </span>
+                )}
+              </div>
             </TooltipContent>
           </Tooltip>
         )}
@@ -382,21 +403,39 @@ export function EnhancedContentCard({
         {showField('editor') && content.editor && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className={cn(
-                sizeConfig.avatarSize, 
-                "ring-2 ring-secondary/50 cursor-pointer transition-transform duration-200 hover:scale-110 -ml-1"
-              )}>
-                <AvatarImage src={content.editor.avatar_url || undefined} />
-                <AvatarFallback className={cn(
-                  "bg-secondary/30 text-secondary-foreground font-semibold",
-                  cardSize === 'compact' ? "text-[8px]" : cardSize === 'large' ? "text-sm" : "text-xs"
+              <div className="relative -ml-1">
+                <Avatar className={cn(
+                  sizeConfig.avatarSize, 
+                  "ring-2 cursor-pointer transition-transform duration-200 hover:scale-110",
+                  content.editor_id && ambassadorIds.has(content.editor_id)
+                    ? "ring-amber-500"
+                    : "ring-secondary/50"
                 )}>
-                  {(content.editor.full_name || '?').charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+                  <AvatarImage src={content.editor.avatar_url || undefined} />
+                  <AvatarFallback className={cn(
+                    "bg-secondary/30 text-secondary-foreground font-semibold",
+                    cardSize === 'compact' ? "text-[8px]" : cardSize === 'large' ? "text-sm" : "text-xs"
+                  )}>
+                    {(content.editor.full_name || '?').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Ambassador Crown Indicator */}
+                {content.editor_id && ambassadorIds.has(content.editor_id) && (
+                  <div className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5">
+                    <Crown className="h-2 w-2 text-white fill-white" />
+                  </div>
+                )}
+              </div>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
-              <span className="font-medium">Editor:</span> {content.editor.full_name}
+              <div className="flex items-center gap-1">
+                <span className="font-medium">Editor:</span> {content.editor.full_name}
+                {content.editor_id && ambassadorIds.has(content.editor_id) && (
+                  <span className="inline-flex items-center gap-0.5 text-amber-500">
+                    <Crown className="h-3 w-3 fill-amber-500" /> Embajador
+                  </span>
+                )}
+              </div>
             </TooltipContent>
           </Tooltip>
         )}
