@@ -98,12 +98,15 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {jtbdData.pains.map((pain, idx) => (
-                <div key={idx} className="flex items-start gap-2 p-2 bg-red-500/5 rounded">
-                  <span className="text-xs font-bold text-red-500 mt-0.5">{idx + 1}</span>
-                  <p className="text-sm">{pain}</p>
-                </div>
-              ))}
+              {jtbdData.pains.map((pain, idx) => {
+                const painText = typeof pain === 'string' ? pain : (pain as any)?.pain || (pain as any)?.text || JSON.stringify(pain);
+                return (
+                  <div key={idx} className="flex items-start gap-2 p-2 bg-red-500/5 rounded">
+                    <span className="text-xs font-bold text-red-500 mt-0.5">{idx + 1}</span>
+                    <p className="text-sm">{painText}</p>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -121,12 +124,15 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {jtbdData.desires.map((desire, idx) => (
-                <div key={idx} className="flex items-start gap-2 p-2 bg-green-500/5 rounded">
-                  <span className="text-xs font-bold text-green-500 mt-0.5">{idx + 1}</span>
-                  <p className="text-sm">{desire}</p>
-                </div>
-              ))}
+              {jtbdData.desires.map((desire, idx) => {
+                const desireText = typeof desire === 'string' ? desire : (desire as any)?.desire || (desire as any)?.text || JSON.stringify(desire);
+                return (
+                  <div key={idx} className="flex items-start gap-2 p-2 bg-green-500/5 rounded">
+                    <span className="text-xs font-bold text-green-500 mt-0.5">{idx + 1}</span>
+                    <p className="text-sm">{desireText}</p>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -144,12 +150,15 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {jtbdData.objections.map((objection, idx) => (
-                <div key={idx} className="flex items-start gap-2 p-2 bg-amber-500/5 rounded">
-                  <span className="text-xs font-bold text-amber-500 mt-0.5">{idx + 1}</span>
-                  <p className="text-sm">{objection}</p>
-                </div>
-              ))}
+              {jtbdData.objections.map((objection, idx) => {
+                const objectionText = typeof objection === 'string' ? objection : (objection as any)?.objection || (objection as any)?.text || JSON.stringify(objection);
+                return (
+                  <div key={idx} className="flex items-start gap-2 p-2 bg-amber-500/5 rounded">
+                    <span className="text-xs font-bold text-amber-500 mt-0.5">{idx + 1}</span>
+                    <p className="text-sm">{objectionText}</p>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -167,12 +176,15 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {jtbdData.insights.map((insight, idx) => (
-                <div key={idx} className="flex items-start gap-2 p-3 bg-background rounded border">
-                  <span className="text-xs font-bold text-primary mt-0.5">💡</span>
-                  <p className="text-sm">{insight}</p>
-                </div>
-              ))}
+              {jtbdData.insights.map((insight, idx) => {
+                const insightText = typeof insight === 'string' ? insight : (insight as any)?.insight || (insight as any)?.text || JSON.stringify(insight);
+                return (
+                  <div key={idx} className="flex items-start gap-2 p-3 bg-background rounded border">
+                    <span className="text-xs font-bold text-primary mt-0.5">💡</span>
+                    <p className="text-sm">{insightText}</p>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
