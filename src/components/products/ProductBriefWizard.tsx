@@ -84,6 +84,9 @@ interface BriefData {
   expectedResult: string;
   additionalNotes: string;
   
+  // Document URL for additional context
+  documentUrl: string;
+  
   // AI-enhanced fields
   aiSuggestedAngles: string[];
   aiSuggestedHooks: string[];
@@ -268,6 +271,7 @@ const DEFAULT_BRIEF: BriefData = {
   brandRestrictions: '',
   expectedResult: '',
   additionalNotes: '',
+  documentUrl: '',
   aiSuggestedAngles: [],
   aiSuggestedHooks: [],
 };
@@ -691,6 +695,28 @@ Escribe 1-2 frases de complemento para agregar al final.`
                 onChange={(e) => updateField('slogan', e.target.value)}
                 placeholder="Ej: Vende más, trabaja menos"
               />
+            </div>
+
+            {/* Document Upload for additional context */}
+            <div className="space-y-2 p-4 bg-muted/30 rounded-lg border border-dashed">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <Label>Documento del producto (Opcional)</Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Sube un documento con información adicional del producto. La IA lo leerá para enriquecer la investigación.
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  value={briefData.documentUrl || ''}
+                  onChange={(e) => updateField('documentUrl', e.target.value)}
+                  placeholder="https://drive.google.com/... o URL del documento"
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Formatos soportados: PDF, Google Docs, archivos de texto. La IA extraerá el contenido automáticamente.
+              </p>
             </div>
           </div>
         );
