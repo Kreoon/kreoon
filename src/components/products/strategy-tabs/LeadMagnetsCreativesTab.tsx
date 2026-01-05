@@ -20,18 +20,19 @@ interface LeadMagnet {
   awarenessPhase?: string;
 }
 
-interface VideoCreative {
+interface Creative {
   angle?: string;
   avatar?: string;
   title?: string;
   idea?: string;
   format?: string;
   esferaPhase?: string;
+  duration?: string;
 }
 
 interface SalesAnglesData {
   leadMagnets?: LeadMagnet[];
-  videoCreatives?: VideoCreative[];
+  videoCreatives?: Creative[]; // creativos multi-formato (se mantiene el nombre por compatibilidad)
 }
 
 interface LeadMagnetsCreativesTabProps {
@@ -125,18 +126,18 @@ export function LeadMagnetsCreativesTab({ salesAnglesData }: LeadMagnetsCreative
         </>
       )}
 
-      {/* Video Creatives Section */}
-      {videoCreatives.length > 0 && (
-        <>
-          <div className="p-4 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 rounded-lg border border-indigo-500/20">
-            <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-              <Video className="h-4 w-4 text-indigo-500" />
-              20 Creativos de Video
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Ideas de video distribuidas por fase ESFERA: 5 Enganchar, 5 Solución, 5 Remarketing, 5 Fidelizar.
-            </p>
-          </div>
+       {/* Creatives Section */}
+       {videoCreatives.length > 0 && (
+         <>
+           <div className="p-4 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 rounded-lg border border-indigo-500/20">
+             <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+               <Video className="h-4 w-4 text-indigo-500" />
+               {videoCreatives.length} Creativos (multi-formato)
+             </h3>
+             <p className="text-sm text-muted-foreground">
+               Ideas distribuidas por fase ESFERA y por formato (video, carrusel, imagen, email, landing, etc.).
+             </p>
+           </div>
 
           {/* Summary by Phase */}
           <Card>

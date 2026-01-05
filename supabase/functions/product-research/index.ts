@@ -570,6 +570,13 @@ serve(async (req) => {
 
     const phasePromptB = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).\n\n${baseContext}\n\nObjetivo: avatares + diferenciación + ESFERA + ángulos + PUV + lead magnets + ideas de video.\n\nEstructura JSON EXACTA:\n{\n  "description": "",\n  "avatars": [{\n    "name": "",\n    "age": "",\n    "situation": "",\n    "awarenessLevel": "",\n    "drivers": "",\n    "biases": "",\n    "objections": "",\n    "phrases": [""],\n    "goals": "",\n    "contentConsumption": ""\n  }],\n  "differentiation": {\n    "repeatedMessages": [{"message":"","opportunity":""}],\n    "poorlyAddressedPains": [{"pain":"","opportunity":"","howToUse":""}],\n    "ignoredAspirations": [{"aspiration":"","opportunity":""}],\n    "positioningOpportunities": [{"opportunity":"","why":"","execution":""}],\n    "unexploitedEmotions": [{"emotion":"","howToUse":""}]\n  },\n  "esferaInsights": {\n    "enganchar": {"marketDominance":"","saturated":"","opportunities":[""],"hookTypes":""},\n    "solucion": {"currentPromises":"","unresolvedObjections":"","trustOpportunities":[""],"positioning":""},\n    "remarketing": {"existingProof":"","validationGaps":"","decisionMessages":[""],"testimonialFormats":""},\n    "fidelizar": {"commonErrors":"","communityOpportunities":[""],"ambassadorStrategy":""}\n  },\n  "salesAngles": [{"angle":"","type":"","avatar":"","emotion":"","contentType":"","hookExample":""}],\n  "puv": {"centralProblem":"","tangibleResult":"","marketDifference":"","idealClient":"","statement":"","credibility":""},\n  "transformation": {\n    "functional": {"before":"","after":""},\n    "emotional": {"before":"","after":""},\n    "identity": {"before":"","after":""},\n    "social": {"before":"","after":""},\n    "financial": {"before":"","after":""}\n  },\n  "leadMagnets": [{"name":"","format":"","objective":"","contentType":"","pain":"","avatar":"","awarenessPhase":"","promise":"","structure":[""]}],\n  "videoCreatives": [{"number":1,"angle":"","avatar":"","title":"","idea":"","format":"","esferaPhase":"","duration":""}],\n  "executiveSummary": {\n    "marketSummary": "",\n    "keyInsights": [{"insight":"","importance":"","action":""}],\n    "psychologicalDrivers": [{"driver":"","why":"","howToUse":""}],\n    "immediateActions": [{"action":"","howTo":"","expectedResult":""}],\n    "quickWins": [{"win":"","effort":"","impact":""}],\n    "risksToAvoid": [{"risk":"","why":""}],\n    "finalRecommendation": ""\n  }\n}`;
 
+    // === Split phase B into 3 calls to enforce minimums / richer output ===
+    const phasePromptB1 = `Devuelve SOLO JSON válido (sin markdown).\n\n${baseContext}\n\nObjetivo: Avatares + Diferenciación + ESFERA + Conclusión ejecutiva.\n\nREGLAS (OBLIGATORIAS):\n- avatars: exactamente 5 (muy detallados)\n- differentiation: mínimo 5 elementos por lista\n- esferaInsights: listas (opportunities/trustOpportunities/decisionMessages/communityOpportunities): mínimo 5\n- executiveSummary.keyInsights: exactamente 5\n- executiveSummary.psychologicalDrivers: exactamente 5\n- executiveSummary.immediateActions: exactamente 3\n- quickWins: exactamente 3\n- risksToAvoid: exactamente 3\n\nEstructura JSON EXACTA:\n{\n  "description": "",\n  "avatars": [{\n    "name": "",\n    "age": "",\n    "situation": "",\n    "awarenessLevel": "",\n    "drivers": "",\n    "biases": "",\n    "objections": "",\n    "phrases": [""],\n    "goals": "",\n    "contentConsumption": ""\n  }],\n  "differentiation": {\n    "repeatedMessages": [{"message":"","opportunity":""}],\n    "poorlyAddressedPains": [{"pain":"","opportunity":"","howToUse":""}],\n    "ignoredAspirations": [{"aspiration":"","opportunity":""}],\n    "positioningOpportunities": [{"opportunity":"","why":"","execution":""}],\n    "unexploitedEmotions": [{"emotion":"","howToUse":""}]\n  },\n  "esferaInsights": {\n    "enganchar": {"marketDominance":"","saturated":"","opportunities":[""],"hookTypes":""},\n    "solucion": {"currentPromises":"","unresolvedObjections":"","trustOpportunities":[""],"positioning":""},\n    "remarketing": {"existingProof":"","validationGaps":"","decisionMessages":[""],"testimonialFormats":""},\n    "fidelizar": {"commonErrors":"","communityOpportunities":[""],"ambassadorStrategy":""}\n  },\n  "executiveSummary": {\n    "marketSummary": "",\n    "keyInsights": [{"insight":"","importance":"","action":""}],\n    "psychologicalDrivers": [{"driver":"","why":"","howToUse":""}],\n    "immediateActions": [{"action":"","howTo":"","expectedResult":""}],\n    "quickWins": [{"win":"","effort":"","impact":""}],\n    "risksToAvoid": [{"risk":"","why":""}],\n    "finalRecommendation": ""\n  }\n}`;
+
+    const phasePromptB2 = `Devuelve SOLO JSON válido (sin markdown).\n\n${baseContext}\n\nObjetivo: 20 ángulos + PUV + transformación + 3 lead magnets.\n\nREGLAS (OBLIGATORIAS):\n- salesAngles: exactamente 20\n- leadMagnets: exactamente 3\n- transformation: completar functional/emotional/identity/social/financial\n\nEstructura JSON EXACTA:\n{\n  "salesAngles": [{"angle":"","type":"","avatar":"","emotion":"","contentType":"","hookExample":""}],\n  "puv": {"centralProblem":"","tangibleResult":"","marketDifference":"","idealClient":"","statement":"","credibility":""},\n  "transformation": {\n    "functional": {"before":"","after":""},\n    "emotional": {"before":"","after":""},\n    "identity": {"before":"","after":""},\n    "social": {"before":"","after":""},\n    "financial": {"before":"","after":""}\n  },\n  "leadMagnets": [{"name":"","format":"","objective":"","contentType":"","pain":"","avatar":"","awarenessPhase":"","promise":"","structure":[""]}]\n}`;
+
+    const phasePromptB3 = `Devuelve SOLO JSON válido (sin markdown).\n\n${baseContext}\n\nObjetivo: 30 creativos MULTI-FORMATO (no solo video), distribuidos por fase ESFERA.\n\nREGLAS (OBLIGATORIAS):\n- creatives: exactamente 30\n- format puede ser: Video UGC, Carrusel, Imagen, Story, Email, Landing, Guion corto, Testimonio, etc.\n\nEstructura JSON EXACTA:\n{\n  "creatives": [{"number":1,"angle":"","avatar":"","title":"","idea":"","format":"","esferaPhase":"enganchar | solucion | remarketing | fidelizar","duration":""}]\n}`;
+
     const phaseASchema = {
       type: 'object',
       additionalProperties: false,
@@ -682,6 +689,41 @@ serve(async (req) => {
       },
     };
 
+    // Schemas para fase B (split)
+    const phaseB1Schema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['description', 'avatars', 'differentiation', 'esferaInsights', 'executiveSummary'],
+      properties: {
+        description: { type: 'string' },
+        avatars: { type: 'array', minItems: 5, maxItems: 5, items: { type: 'object', additionalProperties: true } },
+        differentiation: { type: 'object', additionalProperties: true },
+        esferaInsights: { type: 'object', additionalProperties: true },
+        executiveSummary: { type: 'object', additionalProperties: true },
+      },
+    };
+
+    const phaseB2Schema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['salesAngles', 'puv', 'transformation', 'leadMagnets'],
+      properties: {
+        salesAngles: { type: 'array', minItems: 20, maxItems: 20, items: { type: 'object', additionalProperties: true } },
+        puv: { type: 'object', additionalProperties: true },
+        transformation: { type: 'object', additionalProperties: true },
+        leadMagnets: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'object', additionalProperties: true } },
+      },
+    };
+
+    const phaseB3Schema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['creatives'],
+      properties: {
+        creatives: { type: 'array', minItems: 30, maxItems: 30, items: { type: 'object', additionalProperties: true } },
+      },
+    };
+
     const sanitizeJsonString = (input: string) =>
       input.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
 
@@ -697,11 +739,11 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'sonar',
-            max_tokens: 3500,
-            temperature: 0.2,
+            model: 'sonar-pro',
+            max_tokens: 4500,
+            temperature: 0.15,
             messages: [
-              { role: 'system', content: `Responde en español. Sé directo. DEVUELVE SOLO JSON válido sin texto adicional.` },
+              { role: 'system', content: `Responde en español. Sé directo. DEVUELVE SOLO JSON válido sin texto adicional ni markdown.` },
               { role: 'user', content: prompt }
             ],
             response_format: {
@@ -788,40 +830,33 @@ serve(async (req) => {
     };
 
     const applyPhaseB = async () => {
-      console.log('[product-research] Running phase B (avatars/angles/esfera/etc)');
-      const { json } = await runPerplexity(phasePromptB, 55000, phaseBSchema, 'phase_b');
+      console.log('[product-research] Running phase B (split calls: B1/B2/B3)');
 
-      const updateData: any = {
-        brief_status: 'completed',
-        brief_completed_at: new Date().toISOString(),
+      // B1: avatars + differentiation + esfera + executive summary + description
+      console.log('[product-research] Phase B1');
+      const { json: b1 } = await runPerplexity(phasePromptB1, 55000, phaseB1Schema, 'phase_b1');
+
+      const updateB1: any = {
+        brief_status: 'in_progress',
         brief_data: briefData,
         research_generated_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
-      if (json.description) updateData.description = json.description;
+      if (b1?.description) updateB1.description = b1.description;
 
-      updateData.avatar_profiles = {
-        profiles: json.avatars || [],
+      updateB1.avatar_profiles = {
+        profiles: b1.avatars || [],
         generatedAt: new Date().toISOString(),
       };
 
-      updateData.sales_angles_data = {
-        angles: json.salesAngles || [],
-        puv: json.puv || {},
-        transformation: json.transformation || {},
-        leadMagnets: json.leadMagnets || [],
-        videoCreatives: json.videoCreatives || [],
+      updateB1.content_strategy = {
+        esferaInsights: b1.esferaInsights || {},
+        executiveSummary: b1.executiveSummary || {},
         generatedAt: new Date().toISOString(),
       };
 
-      updateData.content_strategy = {
-        esferaInsights: json.esferaInsights || {},
-        executiveSummary: json.executiveSummary || {},
-        generatedAt: new Date().toISOString(),
-      };
-
-      if (json.differentiation) {
+      if (b1?.differentiation) {
         const { data: existing } = await supabase
           .from('products')
           .select('competitor_analysis')
@@ -829,24 +864,92 @@ serve(async (req) => {
           .single();
 
         const existingCompetitors = (existing as any)?.competitor_analysis?.competitors || [];
-        updateData.competitor_analysis = {
+        updateB1.competitor_analysis = {
           competitors: existingCompetitors,
-          differentiation: json.differentiation,
+          differentiation: b1.differentiation,
           generatedAt: new Date().toISOString(),
         };
       }
 
-      const { error: updateError } = await supabase
+      const { error: errB1 } = await supabase
         .from('products')
-        .update(updateData)
+        .update(updateB1)
         .eq('id', productId);
 
-      if (updateError) {
-        console.error('[product-research] Database update error:', updateError);
-        throw new Error('Failed to save research to database');
+      if (errB1) {
+        console.error('[product-research] Database update error (B1):', errB1);
+        throw new Error('Failed to save research (B1) to database');
       }
 
-      return { json };
+      // B2: sales angles + PUV + transformation + lead magnets
+      console.log('[product-research] Phase B2');
+      const { json: b2 } = await runPerplexity(phasePromptB2, 55000, phaseB2Schema, 'phase_b2');
+
+      const { data: existingAngles } = await supabase
+        .from('products')
+        .select('sales_angles_data')
+        .eq('id', productId)
+        .single();
+
+      const existingSalesAnglesData = (existingAngles as any)?.sales_angles_data || {};
+
+      const updateB2: any = {
+        sales_angles_data: {
+          ...existingSalesAnglesData,
+          angles: b2.salesAngles || [],
+          puv: b2.puv || {},
+          transformation: b2.transformation || {},
+          leadMagnets: b2.leadMagnets || [],
+          generatedAt: new Date().toISOString(),
+        },
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error: errB2 } = await supabase
+        .from('products')
+        .update(updateB2)
+        .eq('id', productId);
+
+      if (errB2) {
+        console.error('[product-research] Database update error (B2):', errB2);
+        throw new Error('Failed to save research (B2) to database');
+      }
+
+      // B3: creatives (30)
+      console.log('[product-research] Phase B3');
+      const { json: b3 } = await runPerplexity(phasePromptB3, 55000, phaseB3Schema, 'phase_b3');
+
+      const { data: existingAngles2 } = await supabase
+        .from('products')
+        .select('sales_angles_data')
+        .eq('id', productId)
+        .single();
+
+      const existingSalesAnglesData2 = (existingAngles2 as any)?.sales_angles_data || {};
+
+      const updateB3: any = {
+        sales_angles_data: {
+          ...existingSalesAnglesData2,
+          videoCreatives: b3.creatives || [],
+          generatedAt: new Date().toISOString(),
+        },
+        brief_status: 'completed',
+        brief_completed_at: new Date().toISOString(),
+        research_generated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error: errB3 } = await supabase
+        .from('products')
+        .update(updateB3)
+        .eq('id', productId);
+
+      if (errB3) {
+        console.error('[product-research] Database update error (B3):', errB3);
+        throw new Error('Failed to save research (B3) to database');
+      }
+
+      return { b1, b2, b3 };
     };
 
     if (phase === 'A') {

@@ -6,9 +6,12 @@ interface MarketResearch {
   marketSize?: string;
   growthTrend?: string;
   marketState?: string;
+  marketStateExplanation?: string;
   macroVariables?: string[];
   awarenessLevel?: string;
   summary?: string;
+  opportunities?: string[];
+  threats?: string[];
   rawContent?: string;
   citations?: string[];
 }
@@ -92,10 +95,13 @@ export function MarketOverviewTab({ marketResearch }: MarketOverviewTabProps) {
               Estado del Mercado
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <Badge className={marketStateInfo.color}>
               {marketStateInfo.icon} {marketStateInfo.label}
             </Badge>
+            {marketResearch.marketStateExplanation && (
+              <p className="text-sm text-muted-foreground">{marketResearch.marketStateExplanation}</p>
+            )}
           </CardContent>
         </Card>
       )}
@@ -120,6 +126,47 @@ export function MarketOverviewTab({ marketResearch }: MarketOverviewTabProps) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Opportunities & Threats */}
+      {(marketResearch.opportunities?.length || marketResearch.threats?.length) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {marketResearch.opportunities?.length ? (
+            <Card className="border-green-500/20 bg-green-500/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">✅ Oportunidades</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {marketResearch.opportunities.slice(0, 6).map((op, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-2 bg-background rounded border">
+                      <span className="text-green-600">→</span>
+                      <p className="text-sm">{op}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {marketResearch.threats?.length ? (
+            <Card className="border-red-500/20 bg-red-500/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">⚠️ Amenazas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {marketResearch.threats.slice(0, 6).map((t, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-2 bg-background rounded border">
+                      <span className="text-red-600">→</span>
+                      <p className="text-sm">{t}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
       )}
 
       {/* Awareness Level */}

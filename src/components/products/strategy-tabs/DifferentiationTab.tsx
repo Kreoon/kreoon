@@ -2,16 +2,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, AlertCircle, Heart, Target, Lightbulb, TrendingUp } from 'lucide-react';
 
+type Maybe<T> = T | null | undefined;
+
+type RepeatedMessage = string | { message?: string; opportunity?: string };
+type PoorPain = string | { pain?: string; opportunity?: string; howToUse?: string };
+type IgnoredAspiration = string | { aspiration?: string; opportunity?: string };
+type PositioningOpportunity = string | { opportunity?: string; why?: string; execution?: string };
+type UnexploitedEmotion = string | { emotion?: string; howToUse?: string };
+
 interface Differentiation {
-  repeatedMessages?: string[];
-  poorlyAddressedPains?: string[];
-  ignoredAspirations?: string[];
-  positioningOpportunities?: string[];
-  unexploitedEmotions?: string[];
+  repeatedMessages?: RepeatedMessage[];
+  poorlyAddressedPains?: PoorPain[];
+  ignoredAspirations?: IgnoredAspiration[];
+  positioningOpportunities?: PositioningOpportunity[];
+  unexploitedEmotions?: UnexploitedEmotion[];
 }
 
 interface DifferentiationTabProps {
   differentiation?: Differentiation | null;
+}
+
+function asText(item: any, keys: string[]): string {
+  if (!item) return '';
+  if (typeof item === 'string') return item;
+  for (const k of keys) {
+    const v = item?.[k];
+    if (typeof v === 'string' && v.trim()) return v;
+  }
+  return '';
 }
 
 export function DifferentiationTab({ differentiation }: DifferentiationTabProps) {
@@ -33,6 +51,12 @@ export function DifferentiationTab({ differentiation }: DifferentiationTabProps)
     );
   }
 
+  const repeated = differentiation?.repeatedMessages || [];
+  const pains = differentiation?.poorlyAddressedPains || [];
+  const aspirations = differentiation?.ignoredAspirations || [];
+  const positioning = differentiation?.positioningOpportunities || [];
+  const emotions = differentiation?.unexploitedEmotions || [];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -47,7 +71,7 @@ export function DifferentiationTab({ differentiation }: DifferentiationTabProps)
       </div>
 
       {/* Repeated Messages - What to AVOID */}
-      {differentiation?.repeatedMessages && differentiation.repeatedMessages.length > 0 && (
+      {repeated.length > 0 && (
         <Card className="border-red-500/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -58,11 +82,17 @@ export function DifferentiationTab({ differentiation }: DifferentiationTabProps)
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {differentiation.repeatedMessages.map((msg, idx) => (
-                <Badge key={idx} variant="outline" className="text-red-600 border-red-300 bg-red-50">
-                  {msg}
-                </Badge>
-              ))}
+              {repeated.map((item, idx) => {
+                const msg = asText(item, ['message', 'text']);
+                const opportunity = typeof item === 'object' ? asText(item, ['opportunity']) : '';
+
+                return (
+                  <Badge key={idx} variant="outline" className="text-red-600 border-red-300 bg-red-50">
+                    {msg || `Mensaje ${idx + 1}`}
+                    {opportunity ? <span className="ml-2 text-muted-foreground">→ {opportunity}</span> : null}
+                  </Badge>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -70,7 +100,7 @@ export function DifferentiationTab({ differentiation }: DifferentiationTabProps)
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Poorly Addressed Pains */}
-        {differentiation?.poorlyAddressedPains && differentiation.poorlyAddressedPains.length > 0 && (
+        {pains.length > 0 && (
           <Card className="border-amber-500/20">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -81,19 +111,29 @@ export function DifferentiationTab({ differentiation }: DifferentiationTabProps)
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {differentiation.poorlyAddressedPains.map((pain, idx) => (
-                  <div key={idx} className="flex items-start gap-2 p-2 bg-amber-500/5 rounded">
-                    <span className="text-amber-500">⚡</span>
-                    <p className="text-sm">{pain}</p>
-                  </div>
-                ))}
+                {pains.map((item, idx) => {
+                  const pain = asText(item, ['pain', 'text']);
+                  const opportunity = typeof item === 'object' ? asText(item, ['opportunity']) : '';
+                  const how = typeof item === 'object' ? asText(item, ['howToUse']) : '';
+
+                  return (
+                    <div key={idx} className="space-y-1 p-2 bg-amber-500/5 rounded">
+                      <div className="flex items-start gap-2">
+                        <span className="text-amber-500">⚡</span>
+                        <p className="text-sm font-medium">{pain || `Dolor ${idx + 1}`}</p>
+                      </div>
+                      {opportunity ? <p className="text-xs text-muted-foreground">Oportunidad: {opportunity}</p> : null}
+                      {how ? <p className="text-xs text-muted-foreground">Cómo usarlo: {how}</p> : null}
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
         )}
 
         {/* Ignored Aspirations */}
-        {differentiation?.ignoredAspirations && differentiation.ignoredAspirations.length > 0 && (
+        {aspirations.length > 0 && (
           <Card className="border-purple-500/20">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -104,12 +144,20 @@ export function DifferentiationTab({ differentiation }: DifferentiationTabProps)
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {differentiation.ignoredAspirations.map((aspiration, idx) => (
-                  <div key={idx} className="flex items-start gap-2 p-2 bg-purple-500/5 rounded">
-                    <span className="text-purple-500">✨</span>
-                    <p className="text-sm">{aspiration}</p>
-                  </div>
-                ))}
+                {aspirations.map((item, idx) => {
+                  const aspiration = asText(item, ['aspiration', 'text']);
+                  const opportunity = typeof item === 'object' ? asText(item, ['opportunity']) : '';
+
+                  return (
+                    <div key={idx} className="space-y-1 p-2 bg-purple-500/5 rounded">
+                      <div className="flex items-start gap-2">
+                        <span className="text-purple-500">✨</span>
+                        <p className="text-sm font-medium">{aspiration || `Aspiración ${idx + 1}`}</p>
+                      </div>
+                      {opportunity ? <p className="text-xs text-muted-foreground">Oportunidad: {opportunity}</p> : null}
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -117,7 +165,7 @@ export function DifferentiationTab({ differentiation }: DifferentiationTabProps)
       </div>
 
       {/* Positioning Opportunities */}
-      {differentiation?.positioningOpportunities && differentiation.positioningOpportunities.length > 0 && (
+      {positioning.length > 0 && (
         <Card className="border-green-500/20 bg-green-500/5">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -128,19 +176,26 @@ export function DifferentiationTab({ differentiation }: DifferentiationTabProps)
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {differentiation.positioningOpportunities.map((opportunity, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-3 bg-background rounded border border-green-500/30">
-                  <span className="text-lg">{idx + 1}.</span>
-                  <p className="text-sm font-medium">{opportunity}</p>
-                </div>
-              ))}
+              {positioning.map((item, idx) => {
+                const opp = asText(item, ['opportunity', 'text']);
+                const why = typeof item === 'object' ? asText(item, ['why']) : '';
+                const execution = typeof item === 'object' ? asText(item, ['execution']) : '';
+
+                return (
+                  <div key={idx} className="space-y-1 p-3 bg-background rounded border border-green-500/30">
+                    <p className="text-sm font-medium">{idx + 1}. {opp || `Oportunidad ${idx + 1}`}</p>
+                    {why ? <p className="text-xs text-muted-foreground">Por qué: {why}</p> : null}
+                    {execution ? <p className="text-xs text-muted-foreground">Ejecución: {execution}</p> : null}
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Unexploited Emotions */}
-      {differentiation?.unexploitedEmotions && differentiation.unexploitedEmotions.length > 0 && (
+      {emotions.length > 0 && (
         <Card className="border-pink-500/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -151,11 +206,16 @@ export function DifferentiationTab({ differentiation }: DifferentiationTabProps)
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {differentiation.unexploitedEmotions.map((emotion, idx) => (
-                <Badge key={idx} variant="secondary" className="text-pink-600 bg-pink-100">
-                  {emotion}
-                </Badge>
-              ))}
+              {emotions.map((item, idx) => {
+                const emotion = asText(item, ['emotion', 'text']);
+                const how = typeof item === 'object' ? asText(item, ['howToUse']) : '';
+                return (
+                  <Badge key={idx} variant="secondary" className="text-pink-600 bg-pink-100">
+                    {emotion || `Emoción ${idx + 1}`}
+                    {how ? <span className="ml-2 text-muted-foreground">→ {how}</span> : null}
+                  </Badge>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
