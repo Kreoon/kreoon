@@ -66,17 +66,20 @@ export function BunnyMultiVideoUploader({
   }, []);
 
   const pollVideoStatus = async (uploadId: string, videoGuid: string) => {
+    console.log('[BunnyMultiVideoUploader] Polling status for:', videoGuid);
     try {
       const { data, error } = await supabase.functions.invoke('bunny-status', {
         body: { content_id: contentId, video_id: videoGuid }
       });
+
+      console.log('[BunnyMultiVideoUploader] Status response:', data, 'error:', error);
 
       if (error) {
         console.error('Status check error:', error);
         return;
       }
 
-      if (data.status === 'completed') {
+      if (data?.status === 'completed') {
         setUploads(prev => prev.map(u => 
           u.id === uploadId ? { ...u, status: 'completed' } : u
         ));
@@ -88,7 +91,7 @@ export function BunnyMultiVideoUploader({
           title: "¡Video listo!",
           description: "El video se ha procesado correctamente"
         });
-      } else if (data.status === 'failed') {
+      } else if (data?.status === 'failed') {
         setUploads(prev => prev.map(u => 
           u.id === uploadId ? { ...u, status: 'failed' } : u
         ));
@@ -102,8 +105,11 @@ export function BunnyMultiVideoUploader({
           variant: "destructive"
         });
       } else {
+        // Still processing
+        const progress = data?.encode_progress || 50;
+        console.log('[BunnyMultiVideoUploader] Still processing, progress:', progress);
         setUploads(prev => prev.map(u => 
-          u.id === uploadId ? { ...u, progress: data.encode_progress || 50 } : u
+          u.id === uploadId ? { ...u, progress } : u
         ));
       }
     } catch (err) {
