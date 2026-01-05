@@ -5,3 +5,6 @@ export { CompetitionAnalysisTab } from './CompetitionAnalysisTab';
 export { DifferentiationTab } from './DifferentiationTab';
 export { NeuromarketingTab } from './NeuromarketingTab';
 export { ExecutiveSummaryTab } from './ExecutiveSummaryTab';
+export { SalesAnglesTab } from './SalesAnglesTab';
+export { PUVTransformationTab } from './PUVTransformationTab';
+export { LeadMagnetsCreativesTab } from './LeadMagnetsCreativesTab';
