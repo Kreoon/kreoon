@@ -562,23 +562,42 @@ serve(async (req) => {
     // ============================================
     // FASE 1: Investigación con Perplexity
     // ============================================
-    const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'sonar-pro',
-        messages: [
-          { 
-            role: 'system', 
-            content: `Eres un estratega digital experto en investigación de mercado para ${targetMarket}, aplicando el Método ESFERA de Juan Ads y los principios de Estrategias Despegue. Responde siempre en español con datos actualizados y verificables. Usa búsqueda web para obtener información real y actualizada sobre competidores, tendencias y mercado. Incluye URLs reales de competidores cuando sea posible. Sigue el flujo estrictamente secuencial y entrega todo en formato estructurado.` 
-          },
-          { role: 'user', content: prompt }
-        ],
-      }),
-    });
+    const perplexityController = new AbortController();
+    const perplexityTimeoutId = setTimeout(() => perplexityController.abort(), 150000); // 2.5 min
+
+    let perplexityResponse: Response;
+    try {
+      perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${perplexityApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'sonar-pro',
+          messages: [
+            {
+              role: 'system',
+              content: `Eres un estratega digital experto en investigación de mercado para ${targetMarket}, aplicando el Método ESFERA de Juan Ads y los principios de Estrategias Despegue. Responde siempre en español con datos actualizados y verificables. Usa búsqueda web para obtener información real y actualizada sobre competidores, tendencias y mercado. Incluye URLs reales de competidores cuando sea posible. Sigue el flujo estrictamente secuencial y entrega todo en formato estructurado.`,
+            },
+            { role: 'user', content: prompt }
+          ],
+        }),
+        signal: perplexityController.signal,
+      });
+    } catch (fetchError: unknown) {
+      const error = fetchError as Error;
+      console.error('[product-research] Perplexity fetch error:', fetchError);
+      const msg = error?.name === 'AbortError'
+        ? 'Perplexity se demoró demasiado (timeout)'
+        : 'No se pudo conectar con Perplexity';
+      return new Response(
+        JSON.stringify({ success: false, error: msg }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } finally {
+      clearTimeout(perplexityTimeoutId);
+    }
 
     if (!perplexityResponse.ok) {
       const errorText = await perplexityResponse.text();
@@ -603,94 +622,231 @@ serve(async (req) => {
 
     console.log('[product-research] Perplexity research generated, length:', researchContent.length);
 
-    // ============================================
-    // FASE 2: Análisis y distribución con Lovable AI
-    // ============================================
-    console.log('[product-research] Starting AI analysis for field distribution...');
-
-    // Truncate research content if too long to avoid timeout
-    const maxResearchLength = 25000;
-    const truncatedResearch = researchContent.length > maxResearchLength 
-      ? researchContent.substring(0, maxResearchLength) + '\n\n[... contenido truncado por longitud ...]'
-      : researchContent;
-
-    const distributionPrompt = DISTRIBUTION_PROMPT
-      .replace('{{RESEARCH_CONTENT}}', truncatedResearch)
-      .replace('{{BRIEF_DATA}}', JSON.stringify(briefData, null, 2));
-
-    console.log('[product-research] Distribution prompt length:', distributionPrompt.length);
-
-    // Use AbortController for timeout handling
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
-
-    let aiResponse: Response | null = null;
-    try {
-      aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash', // Use flash for speed with large context
-          messages: [
-            { 
-              role: 'system', 
-              content: 'Eres un asistente que extrae y organiza información de investigación de mercado en formato JSON estructurado. Responde SOLO con JSON válido, sin markdown ni texto adicional. Extrae la información más completa y detallada posible.' 
-            },
-            { role: 'user', content: distributionPrompt }
-          ],
-        }),
-        signal: controller.signal,
-      });
-    } catch (fetchError: unknown) {
-      const error = fetchError as Error;
-      if (error.name === 'AbortError') {
-        console.error('[product-research] AI request timed out after 2 minutes');
-      } else {
-        console.error('[product-research] AI fetch error:', fetchError);
-      }
-      aiResponse = null;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    if (aiResponse && !aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('[product-research] Lovable AI error:', aiResponse.status, errorText);
-      aiResponse = null;
-    }
-
-    let structuredData;
-    try {
-      if (!aiResponse) {
-        throw new Error('AI response not available');
-      }
-      const aiData = await aiResponse.json();
-      const aiContent = aiData.choices?.[0]?.message?.content || '';
-      
-      // Extract JSON from the response
-      const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        structuredData = JSON.parse(jsonMatch[0]);
-        console.log('[product-research] AI distribution completed successfully');
-      } else {
-        throw new Error('No JSON found in AI response');
-      }
-    } catch (parseError) {
-      console.error('[product-research] Error parsing AI response:', parseError);
-      // Fallback to basic parsing
-      structuredData = parseResearchContentFallback(researchContent, citations, briefData);
-    }
-
-    // ============================================
-    // FASE 3: Guardar en base de datos
-    // ============================================
+    // Supabase client (para guardar progreso entre fases)
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const savePartial = async (partialUpdate: Record<string, unknown>) => {
+      const { error: partialError } = await supabase
+        .from('products')
+        .update({
+          ...partialUpdate,
+          brief_status: 'in_progress',
+          research_generated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', productId);
+
+      if (partialError) {
+        console.error('[product-research] Partial DB update error:', partialError);
+      }
+    };
+
+    const callLovableJson = async (
+      label: string,
+      userPrompt: string,
+      timeoutMs: number,
+    ): Promise<any> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        console.log(`[product-research] Starting Lovable AI phase: ${label}`);
+        console.log(`[product-research] ${label} prompt length:`, userPrompt.length);
+
+        const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              {
+                role: 'system',
+                content: 'Devuelve SOLO JSON válido (sin markdown ni texto extra). Si no sabes un dato, deja el campo vacío o null. Prioriza información accionable y concreta.'
+              },
+              { role: 'user', content: userPrompt }
+            ],
+          }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Lovable AI HTTP ${res.status}: ${errorText}`);
+        }
+
+        const aiData = await res.json();
+        const aiContent = (aiData.choices?.[0]?.message?.content || '').toString();
+        const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in AI response');
+
+        return JSON.parse(jsonMatch[0]);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+
+    // ============================================
+    // FASE 2A: Distribución (mercado + JTBD + competencia)
+    // ============================================
+    const researchA = researchContent.length > 18000
+      ? researchContent.substring(0, 18000) + '\n\n[... contenido truncado por longitud ...]'
+      : researchContent;
+
+    const phaseAPrompt = `Analiza la INVESTIGACIÓN ORIGINAL y devuelve SOLO JSON con esta estructura exacta.
+
+INVESTIGACIÓN ORIGINAL:\n${researchA}\n\nBRIEF DEL PRODUCTO:\n${JSON.stringify(briefData, null, 2)}\n\nEstructura JSON:\n{
+  "market_overview": {
+    "marketSize": "",
+    "growthTrend": "",
+    "marketState": "crecimiento | saturacion | declive",
+    "marketStateExplanation": "",
+    "macroVariables": [""],
+    "awarenessLevel": "",
+    "summary": "",
+    "opportunities": [""],
+    "threats": [""]
+  },
+  "jtbd": {
+    "functional": "",
+    "emotional": "",
+    "social": "",
+    "pains": [{"pain":"","why":"","impact":""}],
+    "desires": [{"desire":"","emotion":"","idealState":""}],
+    "objections": [{"objection":"","belief":"","counter":""}],
+    "insights": ["" ]
+  },
+  "competitors": [{
+    "name": "",
+    "website": "",
+    "instagram": "",
+    "tiktok": "",
+    "facebook": "",
+    "youtube": "",
+    "linkedin": "",
+    "promise": "",
+    "valueProposition": "",
+    "differentiator": "",
+    "price": "",
+    "tone": "",
+    "cta": "",
+    "awarenessLevel": "",
+    "channels": [""],
+    "contentFormats": [""],
+    "strengths": [""],
+    "weaknesses": [""]
+  }]
+}`;
+
+    let phaseAData: any = null;
+    try {
+      phaseAData = await callLovableJson('2A', phaseAPrompt, 90000);
+    } catch (e) {
+      console.error('[product-research] Phase 2A failed:', e);
+      phaseAData = null;
+    }
+
+    if (phaseAData) {
+      await savePartial({
+        market_research: {
+          ...(phaseAData.market_overview || {}),
+          rawContent: researchContent,
+          citations,
+          generatedAt: new Date().toISOString(),
+        },
+        ideal_avatar: phaseAData.jtbd ? JSON.stringify({ jtbd: phaseAData.jtbd, summary: phaseAData.jtbd.functional }) : null,
+        competitor_analysis: {
+          competitors: phaseAData.competitors || [],
+          differentiation: {},
+          generatedAt: new Date().toISOString(),
+        },
+      });
+    }
+
+    // ============================================
+    // FASE 2B: Distribución (avatares + ángulos + ESFERA + PUV + assets)
+    // ============================================
+    const researchB = researchContent.length > 22000
+      ? researchContent.substring(researchContent.length - 22000) + '\n\n[... contenido truncado por longitud ...]'
+      : researchContent;
+
+    const phaseBPrompt = `Analiza la INVESTIGACIÓN ORIGINAL y devuelve SOLO JSON con esta estructura exacta.
+
+INVESTIGACIÓN ORIGINAL:\n${researchB}\n\nBRIEF DEL PRODUCTO:\n${JSON.stringify(briefData, null, 2)}\n\nEstructura JSON:\n{
+  "description": "",
+  "avatars": [{
+    "name": "",
+    "age": "",
+    "situation": "",
+    "awarenessLevel": "",
+    "drivers": "",
+    "biases": "",
+    "objections": "",
+    "phrases": [""],
+    "goals": "",
+    "contentConsumption": ""
+  }],
+  "differentiation": {
+    "repeatedMessages": [{"message":"","opportunity":""}],
+    "poorlyAddressedPains": [{"pain":"","opportunity":"","howToUse":""}],
+    "ignoredAspirations": [{"aspiration":"","opportunity":""}],
+    "positioningOpportunities": [{"opportunity":"","why":"","execution":""}],
+    "unexploitedEmotions": [{"emotion":"","howToUse":""}]
+  },
+  "esferaInsights": {
+    "enganchar": {"marketDominance":"","saturated":"","opportunities":[""],"hookTypes":""},
+    "solucion": {"currentPromises":"","unresolvedObjections":"","trustOpportunities":[""],"positioning":""},
+    "remarketing": {"existingProof":"","validationGaps":"","decisionMessages":[""],"testimonialFormats":""},
+    "fidelizar": {"commonErrors":"","communityOpportunities":[""],"ambassadorStrategy":""}
+  },
+  "salesAngles": [{"angle":"","type":"","avatar":"","emotion":"","contentType":"","hookExample":""}],
+  "puv": {"centralProblem":"","tangibleResult":"","marketDifference":"","idealClient":"","statement":"","credibility":""},
+  "transformation": {
+    "functional": {"before":"","after":""},
+    "emotional": {"before":"","after":""},
+    "identity": {"before":"","after":""},
+    "social": {"before":"","after":""},
+    "financial": {"before":"","after":""}
+  },
+  "leadMagnets": [{"name":"","format":"","objective":"","contentType":"","pain":"","avatar":"","awarenessPhase":"","promise":"","structure":[""]}],
+  "videoCreatives": [{"number":1,"angle":"","avatar":"","title":"","idea":"","format":"","esferaPhase":"","duration":""}],
+  "executiveSummary": {
+    "marketSummary": "",
+    "keyInsights": [{"insight":"","importance":"","action":""}],
+    "psychologicalDrivers": [{"driver":"","why":"","howToUse":""}],
+    "immediateActions": [{"action":"","howTo":"","expectedResult":""}],
+    "quickWins": [{"win":"","effort":"","impact":""}],
+    "risksToAvoid": [{"risk":"","why":""}],
+    "finalRecommendation": ""
+  }
+}`;
+
+    let phaseBData: any = null;
+    try {
+      phaseBData = await callLovableJson('2B', phaseBPrompt, 90000);
+    } catch (e) {
+      console.error('[product-research] Phase 2B failed:', e);
+      phaseBData = null;
+    }
+
+    // Merge final structured data (A tiene mercado/JTBD/competencia; B tiene el resto)
+    let structuredData: any = {
+      ...(phaseAData || {}),
+      ...(phaseBData || {}),
+    };
+
+    if (!phaseAData && !phaseBData) {
+      // Fallback total
+      structuredData = parseResearchContentFallback(researchContent, citations, briefData);
+    }
+
+    // ============================================
+    // FASE 3: Guardar en base de datos (final)
+    // ============================================
     const updateData: any = {
       brief_status: 'completed',
       brief_completed_at: new Date().toISOString(),
@@ -704,7 +860,6 @@ serve(async (req) => {
       if (structuredData.description) {
         updateData.description = structuredData.description;
       }
-      
       // Store market research data
       updateData.market_research = {
         ...structuredData.market_overview,
