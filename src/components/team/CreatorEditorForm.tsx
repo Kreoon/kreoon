@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +71,8 @@ interface CreatorEditorFormProps {
 export function CreatorEditorForm({ open, onOpenChange, profile, onSuccess }: CreatorEditorFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const isEditing = !!profile;
+  const { currentOrgId } = useOrgOwner();
+  const { user } = useAuth();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -118,6 +122,8 @@ export function CreatorEditorForm({ open, onOpenChange, profile, onSuccess }: Cr
 
     setIsLoading(true);
     try {
+      const newIsAmbassador = !!data.is_ambassador;
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -130,11 +136,44 @@ export function CreatorEditorForm({ open, onOpenChange, profile, onSuccess }: Cr
           instagram: data.instagram || null,
           facebook: data.facebook || null,
           tiktok: data.tiktok || null,
-          is_ambassador: data.is_ambassador || false,
+          is_ambassador: newIsAmbassador,
         })
         .eq("id", profile.id);
 
       if (error) throw error;
+
+      // Keep ambassador badge system in sync (source of truth for internal brand assignments)
+      if (currentOrgId) {
+        if (newIsAmbassador) {
+          const { error: badgeError } = await supabase
+            .from('organization_member_badges')
+            .upsert(
+              {
+                organization_id: currentOrgId,
+                user_id: profile.id,
+                badge: 'ambassador',
+                level: 'bronze',
+                is_active: true,
+                granted_at: new Date().toISOString(),
+                granted_by: user?.id || null,
+              },
+              { onConflict: 'organization_id,user_id,badge' }
+            );
+          if (badgeError) throw badgeError;
+        } else {
+          const { error: badgeError } = await supabase
+            .from('organization_member_badges')
+            .update({
+              is_active: false,
+              revoked_at: new Date().toISOString(),
+              revoked_by: user?.id || null,
+            })
+            .eq('organization_id', currentOrgId)
+            .eq('user_id', profile.id)
+            .eq('badge', 'ambassador');
+          if (badgeError) throw badgeError;
+        }
+      }
 
       toast({
         title: "Éxito",
