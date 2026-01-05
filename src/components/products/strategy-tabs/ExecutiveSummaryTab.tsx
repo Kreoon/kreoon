@@ -1,11 +1,44 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Lightbulb, Brain, Rocket, CheckCircle } from 'lucide-react';
+import { FileText, Lightbulb, Brain, Rocket, CheckCircle, AlertTriangle, TrendingUp, Zap } from 'lucide-react';
+
+interface KeyInsight {
+  insight?: string;
+  importance?: string;
+  action?: string;
+}
+
+interface PsychologicalDriver {
+  driver?: string;
+  why?: string;
+  howToUse?: string;
+}
+
+interface ImmediateAction {
+  action?: string;
+  howTo?: string;
+  expectedResult?: string;
+}
+
+interface QuickWin {
+  win?: string;
+  effort?: string;
+  impact?: string;
+}
+
+interface Risk {
+  risk?: string;
+  why?: string;
+}
 
 interface ExecutiveSummary {
-  keyInsights?: string[];
-  psychologicalDrivers?: string[];
-  immediateActions?: string[];
+  marketSummary?: string;
+  keyInsights?: (string | KeyInsight)[];
+  psychologicalDrivers?: (string | PsychologicalDriver)[];
+  immediateActions?: (string | ImmediateAction)[];
+  quickWins?: (string | QuickWin)[];
+  risksToAvoid?: (string | Risk)[];
+  finalRecommendation?: string;
 }
 
 interface ContentStrategy {
@@ -21,9 +54,13 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
   const summary = contentStrategy?.executiveSummary;
 
   const hasData = summary && (
+    summary.marketSummary ||
     summary.keyInsights?.length ||
     summary.psychologicalDrivers?.length ||
-    summary.immediateActions?.length
+    summary.immediateActions?.length ||
+    summary.quickWins?.length ||
+    summary.risksToAvoid?.length ||
+    summary.finalRecommendation
   );
 
   if (!hasData) {
@@ -35,6 +72,32 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
       </div>
     );
   }
+
+  // Helper to extract string from object or string
+  const extractInsight = (item: string | KeyInsight): { text: string; importance?: string; action?: string } => {
+    if (typeof item === 'string') return { text: item };
+    return { text: item.insight || '', importance: item.importance, action: item.action };
+  };
+
+  const extractDriver = (item: string | PsychologicalDriver): { text: string; why?: string; howToUse?: string } => {
+    if (typeof item === 'string') return { text: item };
+    return { text: item.driver || '', why: item.why, howToUse: item.howToUse };
+  };
+
+  const extractAction = (item: string | ImmediateAction): { text: string; howTo?: string; expectedResult?: string } => {
+    if (typeof item === 'string') return { text: item };
+    return { text: item.action || '', howTo: item.howTo, expectedResult: item.expectedResult };
+  };
+
+  const extractQuickWin = (item: string | QuickWin): { text: string; effort?: string; impact?: string } => {
+    if (typeof item === 'string') return { text: item };
+    return { text: item.win || '', effort: item.effort, impact: item.impact };
+  };
+
+  const extractRisk = (item: string | Risk): { text: string; why?: string } => {
+    if (typeof item === 'string') return { text: item };
+    return { text: item.risk || '', why: item.why };
+  };
 
   return (
     <div className="space-y-6">
@@ -51,26 +114,58 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
         )}
       </div>
 
+      {/* Market Summary */}
+      {summary?.marketSummary && (
+        <Card className="border-blue-500/20 bg-blue-500/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+              Resumen del Mercado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed">{summary.marketSummary}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Key Insights */}
       {summary?.keyInsights && summary.keyInsights.length > 0 && (
         <Card className="border-amber-500/20 bg-amber-500/5">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Lightbulb className="h-4 w-4 text-amber-500" />
-              5 Insights Estratégicos Clave
+              Insights Estratégicos Clave
             </CardTitle>
             <CardDescription>Los descubrimientos más importantes del análisis de mercado</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {summary.keyInsights.map((insight, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-3 bg-background rounded-lg border">
-                  <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
-                    {idx + 1}
+            <div className="space-y-4">
+              {summary.keyInsights.map((item, idx) => {
+                const insight = extractInsight(item);
+                return (
+                  <div key={idx} className="p-4 bg-background rounded-lg border">
+                    <div className="flex items-start gap-3">
+                      <div className="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                        {idx + 1}
+                      </div>
+                      <div className="space-y-2 flex-1">
+                        <p className="text-sm font-medium">{insight.text}</p>
+                        {insight.importance && (
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-amber-600">Por qué importa:</span> {insight.importance}
+                          </p>
+                        )}
+                        {insight.action && (
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-green-600">Cómo aprovecharlo:</span> {insight.action}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-sm">{insight}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -87,13 +182,30 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
             <CardDescription>Motivadores que generan mayor impacto en la decisión de compra</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-3">
-              {summary.psychologicalDrivers.map((driver, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-3 bg-background rounded-lg border border-purple-500/30">
-                  <Brain className="h-4 w-4 text-purple-500 shrink-0" />
-                  <p className="text-sm font-medium">{driver}</p>
-                </div>
-              ))}
+            <div className="space-y-4">
+              {summary.psychologicalDrivers.map((item, idx) => {
+                const driver = extractDriver(item);
+                return (
+                  <div key={idx} className="p-4 bg-background rounded-lg border border-purple-500/30">
+                    <div className="flex items-start gap-3">
+                      <Brain className="h-5 w-5 text-purple-500 shrink-0 mt-0.5" />
+                      <div className="space-y-2 flex-1">
+                        <p className="text-sm font-medium">{driver.text}</p>
+                        {driver.why && (
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-purple-600">Por qué funciona:</span> {driver.why}
+                          </p>
+                        )}
+                        {driver.howToUse && (
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-primary">Cómo usarlo:</span> {driver.howToUse}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -105,22 +217,125 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Rocket className="h-4 w-4 text-green-500" />
-              3 Acciones Inmediatas
+              Acciones Inmediatas Prioritarias
             </CardTitle>
             <CardDescription>Pasos concretos para validar en campañas reales</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {summary.immediateActions.map((action, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-4 bg-background rounded-lg border border-green-500/30">
-                  <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-medium text-green-600 mb-1">ACCIÓN {idx + 1}</p>
-                    <p className="text-sm">{action}</p>
+            <div className="space-y-4">
+              {summary.immediateActions.map((item, idx) => {
+                const action = extractAction(item);
+                return (
+                  <div key={idx} className="p-4 bg-background rounded-lg border border-green-500/30">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                            Acción {idx + 1}
+                          </Badge>
+                        </div>
+                        <p className="text-sm font-medium">{action.text}</p>
+                        {action.howTo && (
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-green-600">Cómo hacerlo:</span> {action.howTo}
+                          </p>
+                        )}
+                        {action.expectedResult && (
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-blue-600">Resultado esperado:</span> {action.expectedResult}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Quick Wins & Risks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Quick Wins */}
+        {summary?.quickWins && summary.quickWins.length > 0 && (
+          <Card className="border-teal-500/20 bg-teal-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Zap className="h-4 w-4 text-teal-500" />
+                Victorias Rápidas
+              </CardTitle>
+              <CardDescription>Bajo esfuerzo, alto impacto</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {summary.quickWins.map((item, idx) => {
+                  const win = extractQuickWin(item);
+                  return (
+                    <div key={idx} className="p-3 bg-background rounded-lg border">
+                      <p className="text-sm">{win.text}</p>
+                      {(win.effort || win.impact) && (
+                        <div className="flex gap-2 mt-2">
+                          {win.effort && (
+                            <Badge variant="outline" className="text-xs">
+                              Esfuerzo: {win.effort}
+                            </Badge>
+                          )}
+                          {win.impact && (
+                            <Badge variant="secondary" className="text-xs bg-teal-100 text-teal-700">
+                              Impacto: {win.impact}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Risks to Avoid */}
+        {summary?.risksToAvoid && summary.risksToAvoid.length > 0 && (
+          <Card className="border-red-500/20 bg-red-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                Riesgos a Evitar
+              </CardTitle>
+              <CardDescription>Qué no hacer y por qué</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {summary.risksToAvoid.map((item, idx) => {
+                  const risk = extractRisk(item);
+                  return (
+                    <div key={idx} className="p-3 bg-background rounded-lg border border-red-500/30">
+                      <p className="text-sm font-medium text-red-600">{risk.text}</p>
+                      {risk.why && (
+                        <p className="text-xs text-muted-foreground mt-1">{risk.why}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Final Recommendation */}
+      {summary?.finalRecommendation && (
+        <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              🎯 Recomendación Final
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed">{summary.finalRecommendation}</p>
           </CardContent>
         </Card>
       )}

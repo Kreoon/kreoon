@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Prompt completo del Método Esfera - Versión actualizada
+// Prompt completo del Método Esfera - Versión mejorada con más detalle
 const RESEARCH_PROMPT = `Actúa como un Estratega Digital Senior especializado en investigación de mercado, análisis competitivo, creación de avatares y desarrollo de ángulos de venta, aplicando de forma estricta el Método ESFERA de Juan Ads y los principios de Estrategias Despegue.
 
 🔒 Contexto asumido:
@@ -50,23 +50,16 @@ INFORMACIÓN DEL PRODUCTO:
 
 🔹 PASO 1 · PANORAMA GENERAL DEL MERCADO
 
-Con base en el brief:
+IMPORTANTE: Enfoca el análisis en el mercado objetivo indicado ({{TARGET_MARKET}}).
 
-Tamaño estimado del mercado.
+Entrega obligatoriamente:
 
-Tendencia y ritmo de crecimiento.
-
-Estado del mercado:
-
-Crecimiento
-
-Saturación
-
-Declive
-
-Variables macroeconómicas, sociales y culturales relevantes.
-
-Nivel de conciencia predominante del público (Eugene Schwartz).
+1. Tamaño estimado del mercado en {{TARGET_MARKET}}.
+2. Tendencia y ritmo de crecimiento (porcentaje anual estimado).
+3. Estado del mercado: Crecimiento, Saturación o Declive. Explica por qué.
+4. Al menos 5 variables macroeconómicas, sociales y culturales relevantes para este mercado específico.
+5. Nivel de conciencia predominante del público según Eugene Schwartz (Unaware, Problem Aware, Solution Aware, Product Aware, Most Aware).
+6. Un resumen ejecutivo de 3-4 párrafos que sintetice las principales oportunidades y amenazas del mercado.
 
 🔹 PASO 2 · JOB TO BE DONE (JTBD) + INSIGHTS REALES
 
@@ -74,201 +67,202 @@ Define el trabajo real que el cliente busca resolver.
 
 Entrega obligatoriamente:
 
-JTBD funcional, emocional y social.
+JTBD funcional: Describe en detalle la tarea funcional que el cliente quiere completar.
+JTBD emocional: Describe cómo quiere sentirse el cliente durante y después del proceso.
+JTBD social: Describe cómo quiere ser percibido por otros.
 
-10 dolores profundos (no superficiales).
+10 dolores profundos (no superficiales). Para cada dolor incluye:
+- El dolor específico
+- Por qué es tan frustrante
+- Cómo afecta su día a día
 
-10 deseos aspiracionales reales.
+10 deseos aspiracionales reales. Para cada deseo incluye:
+- El deseo específico
+- La emoción asociada
+- El estado ideal al lograrlo
 
-10 objeciones / miedos latentes.
+10 objeciones / miedos latentes. Para cada objeción incluye:
+- La objeción específica
+- La creencia subyacente
+- Cómo neutralizarla
 
-10 insights estratégicos obtenidos de review mining y social listening.
+10 insights estratégicos obtenidos de review mining y social listening con fuentes citables.
 
 🔹 PASO 3 · AVATARES ESTRATÉGICOS (5 OBLIGATORIOS)
 
-Crea 5 buyer persona estratégicos, cada uno con:
+Crea 5 buyer persona estratégicos ULTRA DETALLADOS. Cada uno DEBE incluir:
 
-Nombre simbólico.
-
-Edad y contexto de vida.
-
-Situación actual (antes del producto).
-
-Nivel de conciencia.
-
-Drivers psicológicos.
-
-Sesgos cognitivos dominantes.
-
-Objeciones clave.
-
-Frases reales que usan para describir su problema.
+1. Nombre simbólico memorable
+2. Edad y contexto de vida detallado (ocupación, situación familiar, nivel socioeconómico)
+3. Situación actual ANTES del producto (describe su día típico, frustraciones, intentos fallidos)
+4. Nivel de conciencia según Eugene Schwartz
+5. Drivers psicológicos principales (mínimo 3, explicados)
+6. Sesgos cognitivos dominantes (mínimo 3, explicados con ejemplos de cómo aplican)
+7. Objeciones clave específicas de este avatar (mínimo 3)
+8. Al menos 5 frases REALES textuales que usa para describir su problema (entre comillas, como hablan realmente)
+9. Sus metas a corto y largo plazo relacionadas con el producto
+10. Dónde consume contenido y qué tipo le atrae
 
 🔹 PASO 4 · ANÁLISIS DE COMPETENCIA 360°
 
-Identifica 10 competidores directos e indirectos.
+ENFOCA EN COMPETIDORES REALES DEL MERCADO: {{TARGET_MARKET}}
 
-Analiza para cada uno:
+Identifica 10 competidores directos e indirectos REALES con presencia online verificable.
 
-Propuesta de valor.
-
-Promesa central.
-
-Precio aproximado.
-
-Tono de comunicación.
-
-Formatos de contenido.
-
-Canales principales (Meta, TikTok, YouTube, Google).
+Para CADA competidor, proporciona OBLIGATORIAMENTE:
+1. Nombre de la marca/empresa
+2. Website URL (si está disponible)
+3. Redes sociales principales (Instagram, TikTok, Facebook, LinkedIn, YouTube) con URLs
+4. Propuesta de valor en una oración
+5. Promesa central de marketing
+6. Rango de precios (específico)
+7. Tono de comunicación (ejemplos de su copy)
+8. Formatos de contenido que usan (lista específica)
+9. Canales principales donde hacen ads
+10. Puntos fuertes
+11. Debilidades detectadas
+12. Nivel de conciencia que trabajan
 
 Tabla comparativa obligatoria:
-
-| Marca | Promesa | Diferenciador | Precio | Tono | CTA | Nivel de conciencia |
+| Marca | Website | Promesa | Diferenciador | Precio | Tono | CTA | Nivel de conciencia |
 
 🔹 PASO 5 · VACÍOS Y OPORTUNIDADES DE DIFERENCIACIÓN
 
-Detecta con precisión:
+Detecta con precisión y EXPLICA en detalle:
 
-Mensajes repetidos por todo el mercado.
+1. Mínimo 5 mensajes repetidos por todo el mercado (copia exacta de frases que todos usan)
+2. Mínimo 5 dolores mal comunicados o ignorados (con explicación de por qué es una oportunidad)
+3. Mínimo 5 aspiraciones que nadie está atendiendo adecuadamente
+4. Mínimo 5 oportunidades CLARAS y ESPECÍFICAS de posicionamiento único
+5. Mínimo 5 emociones no explotadas por la competencia (con ejemplos de cómo aprovecharlas)
 
-Dolores mal comunicados.
-
-Aspiraciones ignoradas.
-
-Oportunidades claras de posicionamiento.
-
-Emociones no explotadas por la competencia.
+Para cada punto, incluye:
+- El hallazgo específico
+- Por qué representa una oportunidad
+- Cómo aprovecharlo en la comunicación
 
 🔹 PASO 6 · INSIGHTS POR FASE – MÉTODO ESFERA
 
-Para cada fase del Método ESFERA analiza:
+Para CADA fase del Método ESFERA, entrega un análisis DETALLADO:
 
-1️⃣ Enganchar
+1️⃣ ENGANCHAR (Atención y curiosidad)
+- Qué domina el mercado actualmente (con ejemplos específicos de hooks usados)
+- Qué formatos y ángulos están saturados (ejemplos)
+- Mínimo 5 nuevas oportunidades creativas ESPECÍFICAS para destacar
+- Tipos de hooks que funcionarían mejor
 
-Qué domina el mercado.
+2️⃣ SOLUCIÓN (Presentar y educar)
+- Promesas actuales del mercado (ejemplos literales)
+- Objeciones que la competencia NO está resolviendo
+- Mínimo 5 oportunidades específicas para construir autoridad y confianza
+- Cómo posicionar la solución como única
 
-Qué está saturado.
+3️⃣ REMARKETING (Reforzar decisión)
+- Tipos de prueba social que existen en el mercado
+- Vacíos de validación que nadie llena
+- Mínimo 5 mensajes específicos que empujarían la decisión de compra
+- Formatos de testimonios que funcionarían mejor
 
-Nuevas oportunidades creativas.
-
-2️⃣ Solución
-
-Promesas actuales.
-
-Objeciones no resueltas.
-
-Oportunidades de autoridad y confianza.
-
-3️⃣ Remarketing
-
-Tipos de prueba social existentes.
-
-Vacíos de validación.
-
-Mensajes que empujan la decisión.
-
-4️⃣ Fidelizar
-
-Errores comunes del mercado.
-
-Oportunidades de comunidad, LTV y referidos.
+4️⃣ FIDELIZAR (Retención y referidos)
+- Errores comunes del mercado en postventa
+- Mínimo 5 oportunidades específicas de comunidad, LTV y programa de referidos
+- Cómo convertir clientes en embajadores
 
 🔹 PASO 7 · ÁNGULOS DE VENTA (20 OBLIGATORIOS)
 
-Crea 20 ángulos de venta estratégicos, variados y no redundantes:
+Crea exactamente 20 ángulos de venta estratégicos, variados y no redundantes.
 
-Educativos
+Tipos requeridos (distribuye equilibradamente):
+- Educativos (enseñar algo nuevo)
+- Emocionales (conectar con sentimientos)
+- Aspiracionales (mostrar el yo futuro)
+- Autoridad (demostrar expertise)
+- Comparativos (vs alternativas)
+- Anti-mercado (ir contra lo establecido)
+- Storytelling (narrativas)
+- Prueba social (validación externa)
+- Error común / riesgo oculto (alertar sobre problemas)
 
-Emocionales
-
-Aspiracionales
-
-Autoridad
-
-Comparativos
-
-Anti-mercado
-
-Storytelling
-
-Prueba social
-
-Error común / riesgo oculto
-
-Para cada ángulo indica:
-
-Avatar principal.
-
-Emoción activada.
-
-Tipo de contenido ideal (UGC, Ads, Reel, Testimonio).
+Para CADA ángulo incluye:
+1. Descripción del ángulo (2-3 oraciones que expliquen el enfoque)
+2. Tipo de ángulo
+3. Avatar principal al que aplica
+4. Emoción específica que activa
+5. Tipo de contenido ideal (UGC, Ads pagados, Reel orgánico, Testimonio, etc.)
+6. Ejemplo de hook o primer frase
 
 🔹 PASO 8 · PROPUESTA ÚNICA DE VALOR (PUV)
 
-Construye una PUV clara y defendible, enfocada en:
+Construye una PUV clara, memorable y defendible:
 
-Problema central.
-
-Resultado tangible.
-
-Diferencia frente al mercado.
-
-Tipo de cliente ideal.
+1. Problema central que resuelve (específico, no genérico)
+2. Resultado tangible y medible que entrega
+3. Diferencia fundamental frente al mercado
+4. Tipo de cliente ideal en una frase
+5. Statement completo de la PUV (una oración poderosa de máximo 25 palabras)
+6. Por qué esta PUV es creíble y sostenible
 
 🔹 PASO 9 · TRANSFORMACIÓN (ANTES VS DESPUÉS)
 
-Tabla obligatoria:
+Tabla de transformación DETALLADA:
 
-| Antes | Después |
-
-Debe reflejar:
-
-Cambio funcional.
-
-Cambio emocional.
-
-Cambio de identidad.
+| Dimensión | ANTES (específico y detallado) | DESPUÉS (específico y detallado) |
+|-----------|--------------------------------|----------------------------------|
+| Funcional | Qué no puede hacer/lograr | Qué puede hacer/lograr ahora |
+| Emocional | Cómo se siente (emociones específicas) | Cómo se siente ahora |
+| Identidad | Cómo se ve a sí mismo | Cómo se ve ahora (nueva identidad) |
+| Social | Cómo lo ven los demás | Cómo lo ven ahora |
+| Financiero | Impacto económico negativo | Impacto económico positivo |
 
 🔹 PASO 10 · LEAD MAGNETS (3 ESTRATÉGICOS)
 
-Diseña 3 lead magnets, indicando:
+Diseña 3 lead magnets altamente efectivos:
 
-Objetivo.
-
-Tipo de contenido.
-
-Dolor principal que ataca.
-
-Avatar al que apunta.
-
-Fase de conciencia.
+Para CADA uno incluye:
+1. Nombre atractivo del lead magnet
+2. Formato específico (guía PDF, checklist, video training, quiz, plantilla, etc.)
+3. Objetivo específico de conversión
+4. Dolor principal que ataca (y por qué es irresistible)
+5. Avatar específico al que apunta
+6. Fase de conciencia objetivo
+7. Promesa del lead magnet en una oración
+8. Contenido/estructura propuesta (bullets de lo que incluiría)
 
 🔹 PASO 11 · CREATIVOS DE VIDEO (20 TOTALES)
 
 Crea 20 ideas de video, distribuidas así:
-
-5 Enganchar
-
-5 Solución
-
-5 Remarketing
-
-5 Fidelizar
+- 5 para Enganchar
+- 5 para Solución  
+- 5 para Remarketing
+- 5 para Fidelizar
 
 Tabla obligatoria:
+| # | Fase ESFERA | Ángulo | Avatar | Título/Hook | Idea principal (2-3 líneas) | Formato | Duración sugerida |
 
-| Ángulo | Avatar | Título | Idea principal | Formato | Fase ESFERA |
+🎯 CONCLUSIÓN EJECUTIVA COMPLETA
 
-🎯 CONCLUSIÓN EJECUTIVA
+Finaliza con una conclusión ejecutiva EXTENSA que incluya:
 
-Finaliza con:
+1. RESUMEN DEL MERCADO (1 párrafo)
+- Estado actual y oportunidad principal
 
-5 insights estratégicos clave del mercado.
+2. 5 INSIGHTS ESTRATÉGICOS CLAVE
+- Cada uno con explicación de por qué es importante y cómo aprovecharlo
 
-Drivers psicológicos más potentes.
+3. TOP 5 DRIVERS PSICOLÓGICOS MÁS POTENTES
+- Para cada uno: qué es, por qué funciona, cómo usarlo
 
-3 acciones inmediatas para validar en campañas reales.`;
+4. 3 ACCIONES INMEDIATAS PRIORITARIAS
+- Para cada una: qué hacer, cómo hacerlo, resultado esperado
+
+5. QUICK WINS (3 victorias rápidas)
+- Acciones de bajo esfuerzo y alto impacto
+
+6. RIESGOS A EVITAR (3 principales)
+- Qué no hacer y por qué
+
+7. RECOMENDACIÓN FINAL
+- Párrafo de síntesis estratégica con el camino a seguir`;
 
 // Prompt para la segunda fase de IA - Distribución de contenido estructurado
 const DISTRIBUTION_PROMPT = `Eres un asistente experto en organización de información de marketing y producto.
@@ -287,140 +281,225 @@ Debes devolver un JSON con la siguiente estructura exacta. Cada campo debe conte
   "description": "Descripción completa del producto que integre beneficios principales, transformación y propuesta de valor única. 2-3 párrafos.",
   
   "market_overview": {
-    "marketSize": "Tamaño estimado del mercado",
-    "growthTrend": "Tendencia y ritmo de crecimiento",
+    "marketSize": "Tamaño estimado del mercado con números específicos",
+    "growthTrend": "Tendencia y ritmo de crecimiento con porcentajes",
     "marketState": "crecimiento | saturacion | declive",
-    "macroVariables": ["Variable 1", "Variable 2", "Variable 3"],
-    "awarenessLevel": "Nivel de conciencia predominante del público (Eugene Schwartz)",
-    "summary": "Resumen ejecutivo del panorama de mercado"
+    "marketStateExplanation": "Explicación detallada del estado del mercado",
+    "macroVariables": ["Variable 1 con explicación", "Variable 2 con explicación", "Variable 3", "Variable 4", "Variable 5"],
+    "awarenessLevel": "Nivel de conciencia predominante (Eugene Schwartz) con explicación",
+    "summary": "Resumen ejecutivo del panorama de mercado de 3-4 párrafos detallados",
+    "opportunities": ["Oportunidad 1", "Oportunidad 2", "Oportunidad 3"],
+    "threats": ["Amenaza 1", "Amenaza 2", "Amenaza 3"]
   },
   
   "jtbd": {
-    "functional": "JTBD funcional",
-    "emotional": "JTBD emocional",
-    "social": "JTBD social",
-    "pains": ["Dolor 1", "Dolor 2", "Dolor 3", "Dolor 4", "Dolor 5", "Dolor 6", "Dolor 7", "Dolor 8", "Dolor 9", "Dolor 10"],
-    "desires": ["Deseo 1", "Deseo 2", "Deseo 3", "Deseo 4", "Deseo 5", "Deseo 6", "Deseo 7", "Deseo 8", "Deseo 9", "Deseo 10"],
-    "objections": ["Objeción 1", "Objeción 2", "Objeción 3", "Objeción 4", "Objeción 5", "Objeción 6", "Objeción 7", "Objeción 8", "Objeción 9", "Objeción 10"],
-    "insights": ["Insight 1", "Insight 2", "Insight 3", "Insight 4", "Insight 5", "Insight 6", "Insight 7", "Insight 8", "Insight 9", "Insight 10"]
+    "functional": "JTBD funcional detallado con contexto",
+    "emotional": "JTBD emocional detallado con sentimientos específicos",
+    "social": "JTBD social detallado con percepciones",
+    "pains": [
+      {"pain": "Dolor 1", "why": "Por qué es frustrante", "impact": "Cómo afecta el día a día"},
+      {"pain": "Dolor 2", "why": "Por qué es frustrante", "impact": "Cómo afecta el día a día"}
+    ],
+    "desires": [
+      {"desire": "Deseo 1", "emotion": "Emoción asociada", "idealState": "Estado ideal al lograrlo"},
+      {"desire": "Deseo 2", "emotion": "Emoción asociada", "idealState": "Estado ideal al lograrlo"}
+    ],
+    "objections": [
+      {"objection": "Objeción 1", "belief": "Creencia subyacente", "counter": "Cómo neutralizarla"},
+      {"objection": "Objeción 2", "belief": "Creencia subyacente", "counter": "Cómo neutralizarla"}
+    ],
+    "insights": ["Insight 1 con fuente", "Insight 2 con fuente", "Insight 3", "Insight 4", "Insight 5", "Insight 6", "Insight 7", "Insight 8", "Insight 9", "Insight 10"]
   },
   
   "avatars": [
     {
-      "name": "Nombre simbólico",
-      "age": "Edad y contexto de vida",
-      "situation": "Situación actual (antes del producto)",
-      "awarenessLevel": "Nivel de conciencia",
-      "drivers": "Drivers psicológicos",
-      "biases": "Sesgos cognitivos dominantes",
-      "objections": "Objeciones clave",
-      "phrases": ["Frase real 1", "Frase real 2", "Frase real 3"]
+      "name": "Nombre simbólico memorable",
+      "age": "Edad y contexto completo (ocupación, situación familiar, nivel socioeconómico)",
+      "situation": "Situación actual detallada ANTES del producto (día típico, frustraciones, intentos fallidos)",
+      "awarenessLevel": "Nivel de conciencia según Eugene Schwartz",
+      "drivers": "3+ drivers psicológicos explicados en detalle",
+      "biases": "3+ sesgos cognitivos con ejemplos de cómo aplican",
+      "objections": "3+ objeciones específicas de este avatar",
+      "phrases": ["Frase real 1 entre comillas", "Frase real 2", "Frase real 3", "Frase real 4", "Frase real 5"],
+      "goals": "Metas a corto y largo plazo relacionadas con el producto",
+      "contentConsumption": "Dónde consume contenido y qué tipo le atrae"
     }
   ],
   
   "competitors": [
     {
-      "name": "Nombre del competidor",
-      "promise": "Promesa central",
-      "differentiator": "Diferenciador",
-      "price": "Precio aproximado",
-      "tone": "Tono de comunicación",
-      "cta": "Llamado a la acción",
-      "awarenessLevel": "Nivel de conciencia trabajado",
+      "name": "Nombre del competidor real",
+      "website": "https://website.com",
+      "instagram": "https://instagram.com/usuario",
+      "tiktok": "https://tiktok.com/@usuario",
+      "facebook": "https://facebook.com/pagina",
+      "youtube": "https://youtube.com/canal",
+      "linkedin": "https://linkedin.com/company/empresa",
+      "promise": "Promesa central de marketing",
+      "valueProposition": "Propuesta de valor en una oración",
+      "differentiator": "Diferenciador principal",
+      "price": "Rango de precios específico (ej: $97-$497)",
+      "tone": "Tono de comunicación con ejemplos de su copy",
+      "cta": "Llamados a la acción que usan",
+      "awarenessLevel": "Nivel de conciencia que trabajan",
       "channels": ["Meta", "TikTok", "YouTube"],
-      "contentFormats": ["Formato 1", "Formato 2"]
+      "contentFormats": ["Formato 1", "Formato 2", "Formato 3"],
+      "strengths": ["Fortaleza 1", "Fortaleza 2"],
+      "weaknesses": ["Debilidad 1", "Debilidad 2"]
     }
   ],
   
   "differentiation": {
-    "repeatedMessages": ["Mensaje repetido 1", "Mensaje repetido 2"],
-    "poorlyAddressedPains": ["Dolor mal comunicado 1", "Dolor mal comunicado 2"],
-    "ignoredAspirations": ["Aspiración ignorada 1", "Aspiración ignorada 2"],
-    "positioningOpportunities": ["Oportunidad 1", "Oportunidad 2", "Oportunidad 3"],
-    "unexploitedEmotions": ["Emoción no explotada 1", "Emoción no explotada 2"]
+    "repeatedMessages": [
+      {"message": "Mensaje saturado 1", "opportunity": "Cómo diferenciarse"},
+      {"message": "Mensaje saturado 2", "opportunity": "Cómo diferenciarse"}
+    ],
+    "poorlyAddressedPains": [
+      {"pain": "Dolor ignorado 1", "opportunity": "Por qué es oportunidad", "howToUse": "Cómo aprovecharlo"},
+      {"pain": "Dolor ignorado 2", "opportunity": "Por qué es oportunidad", "howToUse": "Cómo aprovecharlo"}
+    ],
+    "ignoredAspirations": [
+      {"aspiration": "Aspiración 1", "opportunity": "Cómo atenderla"},
+      {"aspiration": "Aspiración 2", "opportunity": "Cómo atenderla"}
+    ],
+    "positioningOpportunities": [
+      {"opportunity": "Oportunidad 1", "why": "Por qué es única", "execution": "Cómo ejecutarla"},
+      {"opportunity": "Oportunidad 2", "why": "Por qué es única", "execution": "Cómo ejecutarla"}
+    ],
+    "unexploitedEmotions": [
+      {"emotion": "Emoción 1", "howToUse": "Cómo aprovecharla en comunicación"},
+      {"emotion": "Emoción 2", "howToUse": "Cómo aprovecharla en comunicación"}
+    ]
   },
   
   "esferaInsights": {
     "enganchar": {
-      "marketDominance": "Qué domina el mercado",
-      "saturated": "Qué está saturado",
-      "opportunities": ["Oportunidad creativa 1", "Oportunidad creativa 2"]
+      "marketDominance": "Qué domina el mercado con ejemplos específicos de hooks",
+      "saturated": "Qué formatos y ángulos están saturados con ejemplos",
+      "opportunities": ["Oportunidad creativa 1 específica", "Oportunidad 2", "Oportunidad 3", "Oportunidad 4", "Oportunidad 5"],
+      "hookTypes": "Tipos de hooks que funcionarían mejor"
     },
     "solucion": {
-      "currentPromises": "Promesas actuales",
-      "unresolvedObjections": "Objeciones no resueltas",
-      "trustOpportunities": ["Oportunidad de autoridad 1", "Oportunidad de autoridad 2"]
+      "currentPromises": "Promesas actuales del mercado con ejemplos literales",
+      "unresolvedObjections": "Objeciones que la competencia NO resuelve",
+      "trustOpportunities": ["Oportunidad de autoridad 1", "Oportunidad 2", "Oportunidad 3", "Oportunidad 4", "Oportunidad 5"],
+      "positioning": "Cómo posicionar la solución como única"
     },
     "remarketing": {
-      "existingProof": "Tipos de prueba social existentes",
-      "validationGaps": "Vacíos de validación",
-      "decisionMessages": ["Mensaje que empuja decisión 1", "Mensaje que empuja decisión 2"]
+      "existingProof": "Tipos de prueba social que existen en el mercado",
+      "validationGaps": "Vacíos de validación que nadie llena",
+      "decisionMessages": ["Mensaje de decisión 1", "Mensaje 2", "Mensaje 3", "Mensaje 4", "Mensaje 5"],
+      "testimonialFormats": "Formatos de testimonios que funcionarían mejor"
     },
     "fidelizar": {
-      "commonErrors": "Errores comunes del mercado",
-      "communityOpportunities": ["Oportunidad de comunidad/LTV 1", "Oportunidad de comunidad/LTV 2"]
+      "commonErrors": "Errores comunes del mercado en postventa",
+      "communityOpportunities": ["Oportunidad comunidad 1", "Oportunidad 2", "Oportunidad 3", "Oportunidad 4", "Oportunidad 5"],
+      "ambassadorStrategy": "Cómo convertir clientes en embajadores"
     }
   },
   
   "salesAngles": [
     {
-      "angle": "Descripción del ángulo de venta",
+      "angle": "Descripción completa del ángulo de venta en 2-3 oraciones",
       "type": "educativo | emocional | aspiracional | autoridad | comparativo | anti-mercado | storytelling | prueba-social | error-comun",
-      "avatar": "Avatar principal",
-      "emotion": "Emoción activada",
-      "contentType": "UGC | Ads | Reel | Testimonio"
+      "avatar": "Avatar principal al que aplica",
+      "emotion": "Emoción específica que activa",
+      "contentType": "UGC | Ads | Reel | Testimonio | etc",
+      "hookExample": "Ejemplo de hook o primera frase"
     }
   ],
   
   "puv": {
-    "centralProblem": "Problema central",
-    "tangibleResult": "Resultado tangible",
-    "marketDifference": "Diferencia frente al mercado",
-    "idealClient": "Tipo de cliente ideal",
-    "statement": "Declaración completa de la PUV en una oración"
+    "centralProblem": "Problema central específico que resuelve",
+    "tangibleResult": "Resultado tangible y medible",
+    "marketDifference": "Diferencia fundamental frente al mercado",
+    "idealClient": "Tipo de cliente ideal en una frase",
+    "statement": "Statement completo de la PUV en máximo 25 palabras poderosas",
+    "credibility": "Por qué esta PUV es creíble y sostenible"
   },
   
   "transformation": {
     "functional": {
-      "before": "Antes funcional",
-      "after": "Después funcional"
+      "before": "Qué no puede hacer/lograr específicamente",
+      "after": "Qué puede hacer/lograr ahora específicamente"
     },
     "emotional": {
-      "before": "Antes emocional",
-      "after": "Después emocional"
+      "before": "Cómo se siente (emociones específicas negativas)",
+      "after": "Cómo se siente ahora (emociones positivas)"
     },
     "identity": {
-      "before": "Antes identidad",
-      "after": "Después identidad"
+      "before": "Cómo se ve a sí mismo (identidad limitante)",
+      "after": "Cómo se ve ahora (nueva identidad empoderada)"
+    },
+    "social": {
+      "before": "Cómo lo ven los demás actualmente",
+      "after": "Cómo lo ven los demás después"
+    },
+    "financial": {
+      "before": "Impacto económico negativo actual",
+      "after": "Impacto económico positivo después"
     }
   },
   
   "leadMagnets": [
     {
-      "name": "Nombre del lead magnet",
-      "objective": "Objetivo",
+      "name": "Nombre atractivo del lead magnet",
+      "format": "PDF, Video, Quiz, Plantilla, etc",
+      "objective": "Objetivo específico de conversión",
       "contentType": "Tipo de contenido",
-      "pain": "Dolor principal que ataca",
-      "avatar": "Avatar al que apunta",
-      "awarenessPhase": "Fase de conciencia"
+      "pain": "Dolor principal que ataca y por qué es irresistible",
+      "avatar": "Avatar específico al que apunta",
+      "awarenessPhase": "Fase de conciencia objetivo",
+      "promise": "Promesa del lead magnet en una oración",
+      "structure": ["Bullet 1 de contenido", "Bullet 2", "Bullet 3"]
     }
   ],
   
   "videoCreatives": [
     {
-      "angle": "Ángulo",
-      "avatar": "Avatar",
-      "title": "Título",
-      "idea": "Idea principal",
-      "format": "Formato",
-      "esferaPhase": "enganchar | solucion | remarketing | fidelizar"
+      "number": 1,
+      "angle": "Ángulo del video",
+      "avatar": "Avatar objetivo",
+      "title": "Título/Hook atractivo",
+      "idea": "Idea principal en 2-3 líneas",
+      "format": "Formato específico",
+      "esferaPhase": "enganchar | solucion | remarketing | fidelizar",
+      "duration": "Duración sugerida"
     }
   ],
   
   "executiveSummary": {
-    "keyInsights": ["Insight 1", "Insight 2", "Insight 3", "Insight 4", "Insight 5"],
-    "psychologicalDrivers": ["Driver 1", "Driver 2", "Driver 3"],
-    "immediateActions": ["Acción 1", "Acción 2", "Acción 3"]
+    "marketSummary": "Resumen del estado actual del mercado y oportunidad principal (1 párrafo)",
+    "keyInsights": [
+      {"insight": "Insight 1", "importance": "Por qué es importante", "action": "Cómo aprovecharlo"},
+      {"insight": "Insight 2", "importance": "Por qué es importante", "action": "Cómo aprovecharlo"},
+      {"insight": "Insight 3", "importance": "Por qué es importante", "action": "Cómo aprovecharlo"},
+      {"insight": "Insight 4", "importance": "Por qué es importante", "action": "Cómo aprovecharlo"},
+      {"insight": "Insight 5", "importance": "Por qué es importante", "action": "Cómo aprovecharlo"}
+    ],
+    "psychologicalDrivers": [
+      {"driver": "Driver 1", "why": "Por qué funciona", "howToUse": "Cómo usarlo"},
+      {"driver": "Driver 2", "why": "Por qué funciona", "howToUse": "Cómo usarlo"},
+      {"driver": "Driver 3", "why": "Por qué funciona", "howToUse": "Cómo usarlo"},
+      {"driver": "Driver 4", "why": "Por qué funciona", "howToUse": "Cómo usarlo"},
+      {"driver": "Driver 5", "why": "Por qué funciona", "howToUse": "Cómo usarlo"}
+    ],
+    "immediateActions": [
+      {"action": "Acción 1", "howTo": "Cómo hacerlo", "expectedResult": "Resultado esperado"},
+      {"action": "Acción 2", "howTo": "Cómo hacerlo", "expectedResult": "Resultado esperado"},
+      {"action": "Acción 3", "howTo": "Cómo hacerlo", "expectedResult": "Resultado esperado"}
+    ],
+    "quickWins": [
+      {"win": "Victoria rápida 1", "effort": "Bajo", "impact": "Alto"},
+      {"win": "Victoria rápida 2", "effort": "Bajo", "impact": "Alto"},
+      {"win": "Victoria rápida 3", "effort": "Bajo", "impact": "Alto"}
+    ],
+    "risksToAvoid": [
+      {"risk": "Riesgo 1", "why": "Por qué evitarlo"},
+      {"risk": "Riesgo 2", "why": "Por qué evitarlo"},
+      {"risk": "Riesgo 3", "why": "Por qué evitarlo"}
+    ],
+    "finalRecommendation": "Párrafo de síntesis estratégica con el camino a seguir"
   }
 }
 
@@ -428,11 +507,12 @@ IMPORTANTE:
 - Devuelve SOLO el JSON, sin texto adicional ni markdown.
 - Asegúrate de que el JSON sea válido.
 - Extrae información real del contenido de investigación proporcionado.
-- avatars debe tener exactamente 5 elementos.
-- competitors debe tener hasta 10 elementos.
-- salesAngles debe tener exactamente 20 elementos.
+- avatars debe tener exactamente 5 elementos con información MUY DETALLADA.
+- competitors debe tener hasta 10 elementos con URLs REALES cuando estén disponibles.
+- salesAngles debe tener exactamente 20 elementos variados.
 - leadMagnets debe tener exactamente 3 elementos.
-- videoCreatives debe tener exactamente 20 elementos (5 por fase ESFERA).`;
+- videoCreatives debe tener exactamente 20 elementos (5 por fase ESFERA).
+- Para los competidores, intenta incluir URLs reales de sus sitios web y redes sociales.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -469,9 +549,14 @@ serve(async (req) => {
 
     // Build product description from brief data
     const productDescription = buildProductDescription(briefData);
-    const prompt = RESEARCH_PROMPT.replace('{{PRODUCT_DESCRIPTION}}', productDescription);
+    const targetMarket = briefData.targetMarket || 'Latinoamérica (LATAM)';
+    
+    const prompt = RESEARCH_PROMPT
+      .replace('{{PRODUCT_DESCRIPTION}}', productDescription)
+      .replaceAll('{{TARGET_MARKET}}', targetMarket);
 
     console.log('[product-research] Starting research for product:', productId);
+    console.log('[product-research] Target market:', targetMarket);
     console.log('[product-research] Product description length:', productDescription.length);
 
     // ============================================
@@ -488,7 +573,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'Eres un estratega digital experto en investigación de mercado, aplicando el Método ESFERA de Juan Ads y los principios de Estrategias Despegue. Responde siempre en español con datos actualizados y verificables. Usa búsqueda web para obtener información real y actualizada sobre competidores, tendencias y mercado. Sigue el flujo estrictamente secuencial y entrega todo en formato estructurado.' 
+            content: `Eres un estratega digital experto en investigación de mercado para ${targetMarket}, aplicando el Método ESFERA de Juan Ads y los principios de Estrategias Despegue. Responde siempre en español con datos actualizados y verificables. Usa búsqueda web para obtener información real y actualizada sobre competidores, tendencias y mercado. Incluye URLs reales de competidores cuando sea posible. Sigue el flujo estrictamente secuencial y entrega todo en formato estructurado.` 
           },
           { role: 'user', content: prompt }
         ],
@@ -534,11 +619,11 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-2.5-pro',
         messages: [
           { 
             role: 'system', 
-            content: 'Eres un asistente que extrae y organiza información de investigación de mercado en formato JSON estructurado. Responde SOLO con JSON válido, sin markdown ni texto adicional.' 
+            content: 'Eres un asistente que extrae y organiza información de investigación de mercado en formato JSON estructurado. Responde SOLO con JSON válido, sin markdown ni texto adicional. Extrae la información más completa y detallada posible.' 
           },
           { role: 'user', content: distributionPrompt }
         ],
@@ -618,7 +703,7 @@ serve(async (req) => {
         generatedAt: new Date().toISOString()
       };
 
-      // Store sales angles and content strategy
+      // Store sales angles and content strategy - ALL 20 angles
       updateData.sales_angles_data = {
         angles: structuredData.salesAngles || [],
         puv: structuredData.puv || {},
@@ -635,23 +720,44 @@ serve(async (req) => {
         generatedAt: new Date().toISOString()
       };
 
-      // Extract sales angles for the simple array field
+      // Extract ALL sales angles for the simple array field (not just 10)
       if (structuredData.salesAngles && Array.isArray(structuredData.salesAngles)) {
-        updateData.sales_angles = structuredData.salesAngles.slice(0, 10).map((a: any) => a.angle);
+        updateData.sales_angles = structuredData.salesAngles.map((a: any) => 
+          typeof a === 'string' ? a : a.angle
+        );
       }
 
       // Build strategy summary
       if (structuredData.executiveSummary) {
         const summary = structuredData.executiveSummary;
+        const keyInsights = Array.isArray(summary.keyInsights) 
+          ? summary.keyInsights.map((i: any) => typeof i === 'string' ? i : i.insight)
+          : [];
+        const drivers = Array.isArray(summary.psychologicalDrivers)
+          ? summary.psychologicalDrivers.map((d: any) => typeof d === 'string' ? d : d.driver)
+          : [];
+        const actions = Array.isArray(summary.immediateActions)
+          ? summary.immediateActions.map((a: any) => typeof a === 'string' ? a : a.action)
+          : [];
+        
         updateData.strategy = `
+RESUMEN DEL MERCADO:
+${summary.marketSummary || ''}
+
 INSIGHTS CLAVE:
-${(summary.keyInsights || []).map((i: string, idx: number) => `${idx + 1}. ${i}`).join('\n')}
+${keyInsights.map((i: string, idx: number) => `${idx + 1}. ${i}`).join('\n')}
 
 DRIVERS PSICOLÓGICOS:
-${(summary.psychologicalDrivers || []).map((d: string) => `• ${d}`).join('\n')}
+${drivers.map((d: string) => `• ${d}`).join('\n')}
 
 ACCIONES INMEDIATAS:
-${(summary.immediateActions || []).map((a: string, idx: number) => `${idx + 1}. ${a}`).join('\n')}
+${actions.map((a: string, idx: number) => `${idx + 1}. ${a}`).join('\n')}
+
+VICTORIAS RÁPIDAS:
+${(summary.quickWins || []).map((w: any) => `• ${typeof w === 'string' ? w : w.win}`).join('\n')}
+
+RECOMENDACIÓN FINAL:
+${summary.finalRecommendation || ''}
         `.trim();
       }
     }
@@ -707,6 +813,11 @@ function buildProductDescription(briefData: any): string {
   }
   if (briefData.slogan) {
     parts.push(`**Slogan:** ${briefData.slogan}`);
+  }
+
+  // Target Market
+  if (briefData.targetMarket) {
+    parts.push(`**Mercado objetivo:** ${briefData.targetMarket}`);
   }
 
   // Value & Transformation
