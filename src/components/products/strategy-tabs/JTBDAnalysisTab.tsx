@@ -2,14 +2,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Heart, Zap, Target, Lightbulb, ShieldAlert, Eye } from 'lucide-react';
 
+type Pain = string | { pain?: string; why?: string; impact?: string };
+type Desire = string | { desire?: string; emotion?: string; idealState?: string };
+type Objection = string | { objection?: string; belief?: string; counter?: string };
+type Insight = string | { insight?: string; source?: string };
+
 interface JTBD {
   functional?: string;
   emotional?: string;
   social?: string;
-  pains?: string[];
-  desires?: string[];
-  objections?: string[];
-  insights?: string[];
+  pains?: Pain[];
+  desires?: Desire[];
+  objections?: Objection[];
+  insights?: Insight[];
 }
 
 interface JTBDAnalysisTabProps {
@@ -99,11 +104,27 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {jtbdData.pains.map((pain, idx) => {
-                const painText = typeof pain === 'string' ? pain : (pain as any)?.pain || (pain as any)?.text || JSON.stringify(pain);
+                if (typeof pain === 'string') {
+                  return (
+                    <div key={idx} className="flex items-start gap-2 p-2 bg-red-500/5 rounded">
+                      <span className="text-xs font-bold text-red-500 mt-0.5">{idx + 1}</span>
+                      <p className="text-sm">{pain}</p>
+                    </div>
+                  );
+                }
+
+                const title = pain?.pain || '';
+                const why = pain?.why || '';
+                const impact = pain?.impact || '';
+
                 return (
-                  <div key={idx} className="flex items-start gap-2 p-2 bg-red-500/5 rounded">
-                    <span className="text-xs font-bold text-red-500 mt-0.5">{idx + 1}</span>
-                    <p className="text-sm">{painText}</p>
+                  <div key={idx} className="space-y-1 p-3 bg-red-500/5 rounded border border-red-500/10">
+                    <p className="text-sm font-medium">
+                      <span className="text-xs font-bold text-red-500 mr-2">{idx + 1}</span>
+                      {title || 'Dolor'}
+                    </p>
+                    {why ? <p className="text-xs text-muted-foreground">Por qué: {why}</p> : null}
+                    {impact ? <p className="text-xs text-muted-foreground">Impacto: {impact}</p> : null}
                   </div>
                 );
               })}
@@ -125,11 +146,27 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {jtbdData.desires.map((desire, idx) => {
-                const desireText = typeof desire === 'string' ? desire : (desire as any)?.desire || (desire as any)?.text || JSON.stringify(desire);
+                if (typeof desire === 'string') {
+                  return (
+                    <div key={idx} className="flex items-start gap-2 p-2 bg-green-500/5 rounded">
+                      <span className="text-xs font-bold text-green-500 mt-0.5">{idx + 1}</span>
+                      <p className="text-sm">{desire}</p>
+                    </div>
+                  );
+                }
+
+                const title = desire?.desire || '';
+                const emotion = desire?.emotion || '';
+                const idealState = desire?.idealState || '';
+
                 return (
-                  <div key={idx} className="flex items-start gap-2 p-2 bg-green-500/5 rounded">
-                    <span className="text-xs font-bold text-green-500 mt-0.5">{idx + 1}</span>
-                    <p className="text-sm">{desireText}</p>
+                  <div key={idx} className="space-y-1 p-3 bg-green-500/5 rounded border border-green-500/10">
+                    <p className="text-sm font-medium">
+                      <span className="text-xs font-bold text-green-500 mr-2">{idx + 1}</span>
+                      {title || 'Deseo'}
+                    </p>
+                    {emotion ? <p className="text-xs text-muted-foreground">Emoción: {emotion}</p> : null}
+                    {idealState ? <p className="text-xs text-muted-foreground">Estado ideal: {idealState}</p> : null}
                   </div>
                 );
               })}
@@ -150,12 +187,28 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {jtbdData.objections.map((objection, idx) => {
-                const objectionText = typeof objection === 'string' ? objection : (objection as any)?.objection || (objection as any)?.text || JSON.stringify(objection);
+              {jtbdData.objections.map((obj, idx) => {
+                if (typeof obj === 'string') {
+                  return (
+                    <div key={idx} className="flex items-start gap-2 p-2 bg-amber-500/5 rounded">
+                      <span className="text-xs font-bold text-amber-500 mt-0.5">{idx + 1}</span>
+                      <p className="text-sm">{obj}</p>
+                    </div>
+                  );
+                }
+
+                const title = obj?.objection || '';
+                const belief = obj?.belief || '';
+                const counter = obj?.counter || '';
+
                 return (
-                  <div key={idx} className="flex items-start gap-2 p-2 bg-amber-500/5 rounded">
-                    <span className="text-xs font-bold text-amber-500 mt-0.5">{idx + 1}</span>
-                    <p className="text-sm">{objectionText}</p>
+                  <div key={idx} className="space-y-1 p-3 bg-amber-500/5 rounded border border-amber-500/10">
+                    <p className="text-sm font-medium">
+                      <span className="text-xs font-bold text-amber-500 mr-2">{idx + 1}</span>
+                      {title || 'Objeción'}
+                    </p>
+                    {belief ? <p className="text-xs text-muted-foreground">Creencia: {belief}</p> : null}
+                    {counter ? <p className="text-xs text-muted-foreground">Neutralización: {counter}</p> : null}
                   </div>
                 );
               })}

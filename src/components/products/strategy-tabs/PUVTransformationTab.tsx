@@ -14,6 +14,8 @@ interface Transformation {
   functional?: { before?: string; after?: string };
   emotional?: { before?: string; after?: string };
   identity?: { before?: string; after?: string };
+  social?: { before?: string; after?: string };
+  financial?: { before?: string; after?: string };
 }
 
 interface SalesAnglesData {
@@ -194,6 +196,52 @@ export function PUVTransformationTab({ salesAnglesData }: PUVTransformationTabPr
                     <div className="flex-1 p-3 bg-green-500/10 rounded-lg">
                       <p className="text-xs font-medium text-green-600 mb-1">DESPUÉS</p>
                       <p className="text-sm">{transformation.identity.after || '-'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Social Transformation */}
+            {transformation.social && (transformation.social.before || transformation.social.after) && (
+              <Card className="border-amber-500/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">🧑‍🤝‍🧑 Cambio Social</CardTitle>
+                  <CardDescription>Cómo lo perciben los demás</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 p-3 bg-red-500/10 rounded-lg">
+                      <p className="text-xs font-medium text-red-600 mb-1">ANTES</p>
+                      <p className="text-sm">{transformation.social.before || '-'}</p>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+                    <div className="flex-1 p-3 bg-green-500/10 rounded-lg">
+                      <p className="text-xs font-medium text-green-600 mb-1">DESPUÉS</p>
+                      <p className="text-sm">{transformation.social.after || '-'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Financial Transformation */}
+            {transformation.financial && (transformation.financial.before || transformation.financial.after) && (
+              <Card className="border-emerald-500/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">💰 Cambio Financiero</CardTitle>
+                  <CardDescription>Impacto económico</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 p-3 bg-red-500/10 rounded-lg">
+                      <p className="text-xs font-medium text-red-600 mb-1">ANTES</p>
+                      <p className="text-sm">{transformation.financial.before || '-'}</p>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+                    <div className="flex-1 p-3 bg-green-500/10 rounded-lg">
+                      <p className="text-xs font-medium text-green-600 mb-1">DESPUÉS</p>
+                      <p className="text-sm">{transformation.financial.after || '-'}</p>
                     </div>
                   </div>
                 </CardContent>
