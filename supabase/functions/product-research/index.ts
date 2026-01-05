@@ -550,79 +550,67 @@ serve(async (req) => {
     // Build product description from brief data
     const productDescription = buildProductDescription(briefData);
     const targetMarket = briefData.targetMarket || 'Latinoamérica (LATAM)';
-    
-    const prompt = RESEARCH_PROMPT
-      .replace('{{PRODUCT_DESCRIPTION}}', productDescription)
-      .replaceAll('{{TARGET_MARKET}}', targetMarket);
+    const phase = (briefData?.researchPhase || (await (async () => {
+      try {
+        const body = await req.clone().json();
+        return body?.phase;
+      } catch {
+        return undefined;
+      }
+    })())) as ('A' | 'B' | undefined);
 
     console.log('[product-research] Starting research for product:', productId);
     console.log('[product-research] Target market:', targetMarket);
     console.log('[product-research] Product description length:', productDescription.length);
+    console.log('[product-research] Phase:', phase || 'A+B');
 
-    // ============================================
-    // FASE 1: Investigación con Perplexity
-    // ============================================
-    const perplexityController = new AbortController();
-    const perplexityTimeoutId = setTimeout(() => perplexityController.abort(), 150000); // 2.5 min
+    const baseContext = `Producto (brief resumido):\n${productDescription}\n\nMercado objetivo: ${targetMarket}`;
 
-    let perplexityResponse: Response;
-    try {
-      perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${perplexityApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'sonar-pro',
-          messages: [
-            {
-              role: 'system',
-              content: `Eres un estratega digital experto en investigación de mercado para ${targetMarket}, aplicando el Método ESFERA de Juan Ads y los principios de Estrategias Despegue. Responde siempre en español con datos actualizados y verificables. Usa búsqueda web para obtener información real y actualizada sobre competidores, tendencias y mercado. Incluye URLs reales de competidores cuando sea posible. Sigue el flujo estrictamente secuencial y entrega todo en formato estructurado.`,
-            },
-            { role: 'user', content: prompt }
-          ],
-        }),
-        signal: perplexityController.signal,
-      });
-    } catch (fetchError: unknown) {
-      const error = fetchError as Error;
-      console.error('[product-research] Perplexity fetch error:', fetchError);
-      const msg = error?.name === 'AbortError'
-        ? 'Perplexity se demoró demasiado (timeout)'
-        : 'No se pudo conectar con Perplexity';
-      return new Response(
-        JSON.stringify({ success: false, error: msg }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } finally {
-      clearTimeout(perplexityTimeoutId);
-    }
+    const phasePromptA = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).\n\n${baseContext}\n\nObjetivo: mercado + JTBD + competencia.\n\nEstructura JSON EXACTA:\n{\n  "market_overview": {\n    "marketSize": "",\n    "growthTrend": "",\n    "marketState": "crecimiento | saturacion | declive",\n    "marketStateExplanation": "",\n    "macroVariables": [""],\n    "awarenessLevel": "",\n    "summary": "",\n    "opportunities": [""],\n    "threats": [""]\n  },\n  "jtbd": {\n    "functional": "",\n    "emotional": "",\n    "social": "",\n    "pains": [{"pain":"","why":"","impact":""}],\n    "desires": [{"desire":"","emotion":"","idealState":""}],\n    "objections": [{"objection":"","belief":"","counter":""}],\n    "insights": [""]\n  },\n  "competitors": [{\n    "name": "",\n    "website": "",\n    "instagram": "",\n    "tiktok": "",\n    "facebook": "",\n    "youtube": "",\n    "linkedin": "",\n    "promise": "",\n    "valueProposition": "",\n    "differentiator": "",\n    "price": "",\n    "tone": "",\n    "cta": "",\n    "awarenessLevel": "",\n    "channels": [""],\n    "contentFormats": [""],\n    "strengths": [""],\n    "weaknesses": [""]\n  }]\n}`;
 
-    if (!perplexityResponse.ok) {
-      const errorText = await perplexityResponse.text();
-      console.error('[product-research] Perplexity API error:', perplexityResponse.status, errorText);
-      return new Response(
-        JSON.stringify({ success: false, error: `Perplexity API error: ${perplexityResponse.status}` }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const phasePromptB = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).\n\n${baseContext}\n\nObjetivo: avatares + diferenciación + ESFERA + ángulos + PUV + lead magnets + ideas de video.\n\nEstructura JSON EXACTA:\n{\n  "description": "",\n  "avatars": [{\n    "name": "",\n    "age": "",\n    "situation": "",\n    "awarenessLevel": "",\n    "drivers": "",\n    "biases": "",\n    "objections": "",\n    "phrases": [""],\n    "goals": "",\n    "contentConsumption": ""\n  }],\n  "differentiation": {\n    "repeatedMessages": [{"message":"","opportunity":""}],\n    "poorlyAddressedPains": [{"pain":"","opportunity":"","howToUse":""}],\n    "ignoredAspirations": [{"aspiration":"","opportunity":""}],\n    "positioningOpportunities": [{"opportunity":"","why":"","execution":""}],\n    "unexploitedEmotions": [{"emotion":"","howToUse":""}]\n  },\n  "esferaInsights": {\n    "enganchar": {"marketDominance":"","saturated":"","opportunities":[""],"hookTypes":""},\n    "solucion": {"currentPromises":"","unresolvedObjections":"","trustOpportunities":[""],"positioning":""},\n    "remarketing": {"existingProof":"","validationGaps":"","decisionMessages":[""],"testimonialFormats":""},\n    "fidelizar": {"commonErrors":"","communityOpportunities":[""],"ambassadorStrategy":""}\n  },\n  "salesAngles": [{"angle":"","type":"","avatar":"","emotion":"","contentType":"","hookExample":""}],\n  "puv": {"centralProblem":"","tangibleResult":"","marketDifference":"","idealClient":"","statement":"","credibility":""},\n  "transformation": {\n    "functional": {"before":"","after":""},\n    "emotional": {"before":"","after":""},\n    "identity": {"before":"","after":""},\n    "social": {"before":"","after":""},\n    "financial": {"before":"","after":""}\n  },\n  "leadMagnets": [{"name":"","format":"","objective":"","contentType":"","pain":"","avatar":"","awarenessPhase":"","promise":"","structure":[""]}],\n  "videoCreatives": [{"number":1,"angle":"","avatar":"","title":"","idea":"","format":"","esferaPhase":"","duration":""}],\n  "executiveSummary": {\n    "marketSummary": "",\n    "keyInsights": [{"insight":"","importance":"","action":""}],\n    "psychologicalDrivers": [{"driver":"","why":"","howToUse":""}],\n    "immediateActions": [{"action":"","howTo":"","expectedResult":""}],\n    "quickWins": [{"win":"","effort":"","impact":""}],\n    "risksToAvoid": [{"risk":"","why":""}],\n    "finalRecommendation": ""\n  }\n}`;
 
-    const perplexityData = await perplexityResponse.json();
-    const researchContent = perplexityData.choices?.[0]?.message?.content;
-    const citations = perplexityData.citations || [];
+    const runPerplexity = async (prompt: string, timeoutMs: number) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!researchContent) {
-      console.error('[product-research] No content in Perplexity response');
-      return new Response(
-        JSON.stringify({ success: false, error: 'No research content generated' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      try {
+        const res = await fetch('https://api.perplexity.ai/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${perplexityApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'sonar',
+            max_tokens: 2000,
+            temperature: 0.2,
+            messages: [
+              { role: 'system', content: `Responde en español. Sé directo. DEVUELVE SOLO JSON válido.` },
+              { role: 'user', content: prompt }
+            ],
+          }),
+          signal: controller.signal,
+        });
 
-    console.log('[product-research] Perplexity research generated, length:', researchContent.length);
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Perplexity HTTP ${res.status}: ${errorText}`);
+        }
 
-    // Supabase client (para guardar progreso entre fases)
+        const data = await res.json();
+        const content = (data.choices?.[0]?.message?.content || '').toString();
+        const citations = data.citations || [];
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in Perplexity response');
+
+        return { json: JSON.parse(jsonMatch[0]), rawContent: content, citations };
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+
+    // Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -643,333 +631,114 @@ serve(async (req) => {
       }
     };
 
-    const callLovableJson = async (
-      label: string,
-      userPrompt: string,
-      timeoutMs: number,
-    ): Promise<any> => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      try {
-        console.log(`[product-research] Starting Lovable AI phase: ${label}`);
-        console.log(`[product-research] ${label} prompt length:`, userPrompt.length);
+    const applyPhaseA = async () => {
+      console.log('[product-research] Running phase A (market/JTBD/competitors)');
+      const { json, rawContent, citations } = await runPerplexity(phasePromptA, 55000);
 
-        const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${lovableApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [
-              {
-                role: 'system',
-                content: 'Devuelve SOLO JSON válido (sin markdown ni texto extra). Si no sabes un dato, deja el campo vacío o null. Prioriza información accionable y concreta.'
-              },
-              { role: 'user', content: userPrompt }
-            ],
-          }),
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`Lovable AI HTTP ${res.status}: ${errorText}`);
-        }
-
-        const aiData = await res.json();
-        const aiContent = (aiData.choices?.[0]?.message?.content || '').toString();
-        const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON found in AI response');
-
-        return JSON.parse(jsonMatch[0]);
-      } finally {
-        clearTimeout(timeoutId);
-      }
-    };
-
-    // ============================================
-    // FASE 2A: Distribución (mercado + JTBD + competencia)
-    // ============================================
-    const researchA = researchContent.length > 18000
-      ? researchContent.substring(0, 18000) + '\n\n[... contenido truncado por longitud ...]'
-      : researchContent;
-
-    const phaseAPrompt = `Analiza la INVESTIGACIÓN ORIGINAL y devuelve SOLO JSON con esta estructura exacta.
-
-INVESTIGACIÓN ORIGINAL:\n${researchA}\n\nBRIEF DEL PRODUCTO:\n${JSON.stringify(briefData, null, 2)}\n\nEstructura JSON:\n{
-  "market_overview": {
-    "marketSize": "",
-    "growthTrend": "",
-    "marketState": "crecimiento | saturacion | declive",
-    "marketStateExplanation": "",
-    "macroVariables": [""],
-    "awarenessLevel": "",
-    "summary": "",
-    "opportunities": [""],
-    "threats": [""]
-  },
-  "jtbd": {
-    "functional": "",
-    "emotional": "",
-    "social": "",
-    "pains": [{"pain":"","why":"","impact":""}],
-    "desires": [{"desire":"","emotion":"","idealState":""}],
-    "objections": [{"objection":"","belief":"","counter":""}],
-    "insights": ["" ]
-  },
-  "competitors": [{
-    "name": "",
-    "website": "",
-    "instagram": "",
-    "tiktok": "",
-    "facebook": "",
-    "youtube": "",
-    "linkedin": "",
-    "promise": "",
-    "valueProposition": "",
-    "differentiator": "",
-    "price": "",
-    "tone": "",
-    "cta": "",
-    "awarenessLevel": "",
-    "channels": [""],
-    "contentFormats": [""],
-    "strengths": [""],
-    "weaknesses": [""]
-  }]
-}`;
-
-    let phaseAData: any = null;
-    try {
-      phaseAData = await callLovableJson('2A', phaseAPrompt, 90000);
-    } catch (e) {
-      console.error('[product-research] Phase 2A failed:', e);
-      phaseAData = null;
-    }
-
-    if (phaseAData) {
       await savePartial({
         market_research: {
-          ...(phaseAData.market_overview || {}),
-          rawContent: researchContent,
+          ...(json.market_overview || {}),
+          rawContent,
           citations,
           generatedAt: new Date().toISOString(),
         },
-        ideal_avatar: phaseAData.jtbd ? JSON.stringify({ jtbd: phaseAData.jtbd, summary: phaseAData.jtbd.functional }) : null,
+        ideal_avatar: json.jtbd
+          ? JSON.stringify({ jtbd: json.jtbd, summary: json.jtbd.functional })
+          : null,
         competitor_analysis: {
-          competitors: phaseAData.competitors || [],
+          competitors: json.competitors || [],
           differentiation: {},
           generatedAt: new Date().toISOString(),
         },
       });
-    }
 
-    // ============================================
-    // FASE 2B: Distribución (avatares + ángulos + ESFERA + PUV + assets)
-    // ============================================
-    const researchB = researchContent.length > 22000
-      ? researchContent.substring(researchContent.length - 22000) + '\n\n[... contenido truncado por longitud ...]'
-      : researchContent;
-
-    const phaseBPrompt = `Analiza la INVESTIGACIÓN ORIGINAL y devuelve SOLO JSON con esta estructura exacta.
-
-INVESTIGACIÓN ORIGINAL:\n${researchB}\n\nBRIEF DEL PRODUCTO:\n${JSON.stringify(briefData, null, 2)}\n\nEstructura JSON:\n{
-  "description": "",
-  "avatars": [{
-    "name": "",
-    "age": "",
-    "situation": "",
-    "awarenessLevel": "",
-    "drivers": "",
-    "biases": "",
-    "objections": "",
-    "phrases": [""],
-    "goals": "",
-    "contentConsumption": ""
-  }],
-  "differentiation": {
-    "repeatedMessages": [{"message":"","opportunity":""}],
-    "poorlyAddressedPains": [{"pain":"","opportunity":"","howToUse":""}],
-    "ignoredAspirations": [{"aspiration":"","opportunity":""}],
-    "positioningOpportunities": [{"opportunity":"","why":"","execution":""}],
-    "unexploitedEmotions": [{"emotion":"","howToUse":""}]
-  },
-  "esferaInsights": {
-    "enganchar": {"marketDominance":"","saturated":"","opportunities":[""],"hookTypes":""},
-    "solucion": {"currentPromises":"","unresolvedObjections":"","trustOpportunities":[""],"positioning":""},
-    "remarketing": {"existingProof":"","validationGaps":"","decisionMessages":[""],"testimonialFormats":""},
-    "fidelizar": {"commonErrors":"","communityOpportunities":[""],"ambassadorStrategy":""}
-  },
-  "salesAngles": [{"angle":"","type":"","avatar":"","emotion":"","contentType":"","hookExample":""}],
-  "puv": {"centralProblem":"","tangibleResult":"","marketDifference":"","idealClient":"","statement":"","credibility":""},
-  "transformation": {
-    "functional": {"before":"","after":""},
-    "emotional": {"before":"","after":""},
-    "identity": {"before":"","after":""},
-    "social": {"before":"","after":""},
-    "financial": {"before":"","after":""}
-  },
-  "leadMagnets": [{"name":"","format":"","objective":"","contentType":"","pain":"","avatar":"","awarenessPhase":"","promise":"","structure":[""]}],
-  "videoCreatives": [{"number":1,"angle":"","avatar":"","title":"","idea":"","format":"","esferaPhase":"","duration":""}],
-  "executiveSummary": {
-    "marketSummary": "",
-    "keyInsights": [{"insight":"","importance":"","action":""}],
-    "psychologicalDrivers": [{"driver":"","why":"","howToUse":""}],
-    "immediateActions": [{"action":"","howTo":"","expectedResult":""}],
-    "quickWins": [{"win":"","effort":"","impact":""}],
-    "risksToAvoid": [{"risk":"","why":""}],
-    "finalRecommendation": ""
-  }
-}`;
-
-    let phaseBData: any = null;
-    try {
-      phaseBData = await callLovableJson('2B', phaseBPrompt, 90000);
-    } catch (e) {
-      console.error('[product-research] Phase 2B failed:', e);
-      phaseBData = null;
-    }
-
-    // Merge final structured data (A tiene mercado/JTBD/competencia; B tiene el resto)
-    let structuredData: any = {
-      ...(phaseAData || {}),
-      ...(phaseBData || {}),
+      return { json, rawContent, citations };
     };
 
-    if (!phaseAData && !phaseBData) {
-      // Fallback total
-      structuredData = parseResearchContentFallback(researchContent, citations, briefData);
-    }
+    const applyPhaseB = async () => {
+      console.log('[product-research] Running phase B (avatars/angles/esfera/etc)');
+      const { json } = await runPerplexity(phasePromptB, 55000);
 
-    // ============================================
-    // FASE 3: Guardar en base de datos (final)
-    // ============================================
-    const updateData: any = {
-      brief_status: 'completed',
-      brief_completed_at: new Date().toISOString(),
-      brief_data: briefData,
-      research_generated_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    // Distribute AI-analyzed content to product fields
-    if (structuredData) {
-      if (structuredData.description) {
-        updateData.description = structuredData.description;
-      }
-      // Store market research data
-      updateData.market_research = {
-        ...structuredData.market_overview,
-        rawContent: researchContent,
-        citations: citations,
-        generatedAt: new Date().toISOString()
+      const updateData: any = {
+        brief_status: 'completed',
+        brief_completed_at: new Date().toISOString(),
+        brief_data: briefData,
+        research_generated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
-      // Store JTBD and customer analysis
-      updateData.ideal_avatar = structuredData.jtbd ? JSON.stringify({
-        jtbd: structuredData.jtbd,
-        summary: structuredData.jtbd.functional
-      }) : null;
+      if (json.description) updateData.description = json.description;
 
-      // Store competitor analysis
-      updateData.competitor_analysis = {
-        competitors: structuredData.competitors || [],
-        differentiation: structuredData.differentiation || {},
-        generatedAt: new Date().toISOString()
-      };
-
-      // Store avatar profiles
       updateData.avatar_profiles = {
-        profiles: structuredData.avatars || [],
-        generatedAt: new Date().toISOString()
+        profiles: json.avatars || [],
+        generatedAt: new Date().toISOString(),
       };
 
-      // Store sales angles and content strategy - ALL 20 angles
       updateData.sales_angles_data = {
-        angles: structuredData.salesAngles || [],
-        puv: structuredData.puv || {},
-        transformation: structuredData.transformation || {},
-        leadMagnets: structuredData.leadMagnets || [],
-        videoCreatives: structuredData.videoCreatives || [],
-        generatedAt: new Date().toISOString()
+        angles: json.salesAngles || [],
+        puv: json.puv || {},
+        transformation: json.transformation || {},
+        leadMagnets: json.leadMagnets || [],
+        videoCreatives: json.videoCreatives || [],
+        generatedAt: new Date().toISOString(),
       };
 
-      // Store ESFERA insights and content strategy
       updateData.content_strategy = {
-        esferaInsights: structuredData.esferaInsights || {},
-        executiveSummary: structuredData.executiveSummary || {},
-        generatedAt: new Date().toISOString()
+        esferaInsights: json.esferaInsights || {},
+        executiveSummary: json.executiveSummary || {},
+        generatedAt: new Date().toISOString(),
       };
 
-      // Extract ALL sales angles for the simple array field (not just 10)
-      if (structuredData.salesAngles && Array.isArray(structuredData.salesAngles)) {
-        updateData.sales_angles = structuredData.salesAngles.map((a: any) => 
-          typeof a === 'string' ? a : a.angle
-        );
+      if (json.differentiation) {
+        const { data: existing } = await supabase
+          .from('products')
+          .select('competitor_analysis')
+          .eq('id', productId)
+          .single();
+
+        const existingCompetitors = (existing as any)?.competitor_analysis?.competitors || [];
+        updateData.competitor_analysis = {
+          competitors: existingCompetitors,
+          differentiation: json.differentiation,
+          generatedAt: new Date().toISOString(),
+        };
       }
 
-      // Build strategy summary
-      if (structuredData.executiveSummary) {
-        const summary = structuredData.executiveSummary;
-        const keyInsights = Array.isArray(summary.keyInsights) 
-          ? summary.keyInsights.map((i: any) => typeof i === 'string' ? i : i.insight)
-          : [];
-        const drivers = Array.isArray(summary.psychologicalDrivers)
-          ? summary.psychologicalDrivers.map((d: any) => typeof d === 'string' ? d : d.driver)
-          : [];
-        const actions = Array.isArray(summary.immediateActions)
-          ? summary.immediateActions.map((a: any) => typeof a === 'string' ? a : a.action)
-          : [];
-        
-        updateData.strategy = `
-RESUMEN DEL MERCADO:
-${summary.marketSummary || ''}
+      const { error: updateError } = await supabase
+        .from('products')
+        .update(updateData)
+        .eq('id', productId);
 
-INSIGHTS CLAVE:
-${keyInsights.map((i: string, idx: number) => `${idx + 1}. ${i}`).join('\n')}
-
-DRIVERS PSICOLÓGICOS:
-${drivers.map((d: string) => `• ${d}`).join('\n')}
-
-ACCIONES INMEDIATAS:
-${actions.map((a: string, idx: number) => `${idx + 1}. ${a}`).join('\n')}
-
-VICTORIAS RÁPIDAS:
-${(summary.quickWins || []).map((w: any) => `• ${typeof w === 'string' ? w : w.win}`).join('\n')}
-
-RECOMENDACIÓN FINAL:
-${summary.finalRecommendation || ''}
-        `.trim();
+      if (updateError) {
+        console.error('[product-research] Database update error:', updateError);
+        throw new Error('Failed to save research to database');
       }
-    }
 
-    const { error: updateError } = await supabase
-      .from('products')
-      .update(updateData)
-      .eq('id', productId);
+      return { json };
+    };
 
-    if (updateError) {
-      console.error('[product-research] Database update error:', updateError);
+    if (phase === 'A') {
+      await applyPhaseA();
       return new Response(
-        JSON.stringify({ success: false, error: 'Failed to save research to database' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: true, phase: 'A' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[product-research] Research saved successfully for product:', productId);
+    if (phase === 'B') {
+      await applyPhaseB();
+      return new Response(
+        JSON.stringify({ success: true, phase: 'B' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    await applyPhaseA();
+    await applyPhaseB();
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        data: {
-          ...structuredData,
-          rawContent: researchContent,
-          citations
-        }
-      }),
+      JSON.stringify({ success: true, phase: 'A+B' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
