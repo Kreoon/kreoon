@@ -77,8 +77,11 @@ export function OrgRegistrationSettings() {
   useEffect(() => {
     if (currentOrgId && canManage) {
       fetchConfig();
+    } else if (!orgLoading) {
+      // If we're not loading org data and either no org or no permission, stop loading
+      setLoading(false);
     }
-  }, [currentOrgId, canManage]);
+  }, [currentOrgId, canManage, orgLoading]);
 
   const fetchConfig = async () => {
     if (!currentOrgId) return;
