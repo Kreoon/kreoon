@@ -362,14 +362,34 @@ export function ProductDetailDialog({
                 <Sparkles className="h-4 w-4" /> Ángulos de Venta
               </Label>
               <p className="text-sm text-muted-foreground">
-                Define los diferentes ángulos de venta que se pueden usar en los guiones
+                Ángulos de venta generados por IA y personalizados
               </p>
               
+              {/* AI Generated Angles */}
+              {(product?.sales_angles_data as any)?.angles?.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">🤖 Generados por IA ({(product?.sales_angles_data as any)?.angles?.length})</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(product?.sales_angles_data as any)?.angles?.slice(0, 10).map((angleData: any, idx: number) => (
+                      <Badge key={`ai-${idx}`} variant="outline" className="text-xs">
+                        {typeof angleData === 'string' ? angleData : angleData?.angle || angleData?.type || `Ángulo ${idx + 1}`}
+                      </Badge>
+                    ))}
+                    {(product?.sales_angles_data as any)?.angles?.length > 10 && (
+                      <Badge variant="secondary" className="text-xs">
+                        +{(product?.sales_angles_data as any)?.angles?.length - 10} más
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Manual Angles */}
               <div className="flex gap-2">
                 <Input
                   value={newAngle}
                   onChange={(e) => setNewAngle(e.target.value)}
-                  placeholder="Ej: Urgencia, Escasez, Transformación..."
+                  placeholder="Agregar ángulo personalizado..."
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSalesAngle())}
                 />
                 <Button type="button" onClick={addSalesAngle} variant="outline">
@@ -390,8 +410,8 @@ export function ProductDetailDialog({
                     </button>
                   </Badge>
                 ))}
-                {formData.sales_angles.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No hay ángulos definidos</p>
+                {formData.sales_angles.length === 0 && !(product?.sales_angles_data as any)?.angles?.length && (
+                  <p className="text-sm text-muted-foreground">No hay ángulos definidos. Genera la investigación para obtener ángulos con IA.</p>
                 )}
               </div>
             </div>
