@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Star, Video, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, Video, FileText, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,6 +17,7 @@ interface BoardCalendarViewProps {
   cardSize?: 'compact' | 'normal' | 'large';
   visibleFields?: string[];
   organizationStatuses?: OrganizationStatus[];
+  ambassadorIds?: Set<string>;
 }
 
 export function BoardCalendarView({
@@ -26,7 +27,8 @@ export function BoardCalendarView({
   onContentClick,
   cardSize = 'normal',
   visibleFields = ['title', 'status', 'responsible'],
-  organizationStatuses = []
+  organizationStatuses = [],
+  ambassadorIds = new Set()
 }: BoardCalendarViewProps) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);

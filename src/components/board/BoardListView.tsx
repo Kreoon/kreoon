@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Clock, Building2, ChevronRight, Video, FileText, Star } from "lucide-react";
+import { Clock, Building2, ChevronRight, Video, FileText, Star, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -15,6 +15,7 @@ interface BoardListViewProps {
   cardSize?: 'compact' | 'normal' | 'large';
   visibleFields?: string[];
   organizationStatuses?: OrganizationStatus[];
+  ambassadorIds?: Set<string>;
 }
 
 // Size configurations
@@ -47,7 +48,8 @@ export function BoardListView({
   onContentClick,
   cardSize = 'normal',
   visibleFields = ['title', 'thumbnail', 'status', 'client', 'creator', 'editor', 'deadline'],
-  organizationStatuses = []
+  organizationStatuses = [],
+  ambassadorIds = new Set()
 }: BoardListViewProps) {
   const showField = (field: string) => visibleFields.includes(field);
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
@@ -154,15 +156,35 @@ export function BoardListView({
                   {showField('creator') && c.creator && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-primary/30 cursor-pointer")}>
-                          <AvatarImage src={c.creator.avatar_url || undefined} />
-                          <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
-                            {(c.creator.full_name || '?').charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar className={cn(
+                            sizeConfig.avatarSize, 
+                            "ring-2 cursor-pointer",
+                            c.creator_id && ambassadorIds.has(c.creator_id)
+                              ? "ring-amber-500"
+                              : "ring-primary/30"
+                          )}>
+                            <AvatarImage src={c.creator.avatar_url || undefined} />
+                            <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
+                              {(c.creator.full_name || '?').charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {c.creator_id && ambassadorIds.has(c.creator_id) && (
+                            <div className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5">
+                              <Crown className="h-2 w-2 text-white fill-white" />
+                            </div>
+                          )}
+                        </div>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="text-xs">
-                        <span className="font-medium">Creador:</span> {c.creator.full_name}
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Creador:</span> {c.creator.full_name}
+                          {c.creator_id && ambassadorIds.has(c.creator_id) && (
+                            <span className="inline-flex items-center gap-0.5 text-amber-500">
+                              <Crown className="h-3 w-3 fill-amber-500" /> Embajador
+                            </span>
+                          )}
+                        </div>
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -171,15 +193,35 @@ export function BoardListView({
                   {showField('editor') && c.editor && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Avatar className={cn(sizeConfig.avatarSize, "ring-2 ring-secondary/50 cursor-pointer")}>
-                          <AvatarImage src={c.editor.avatar_url || undefined} />
-                          <AvatarFallback className="bg-secondary/20 text-secondary-foreground font-medium text-xs">
-                            {(c.editor.full_name || '?').charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar className={cn(
+                            sizeConfig.avatarSize, 
+                            "ring-2 cursor-pointer",
+                            c.editor_id && ambassadorIds.has(c.editor_id)
+                              ? "ring-amber-500"
+                              : "ring-secondary/50"
+                          )}>
+                            <AvatarImage src={c.editor.avatar_url || undefined} />
+                            <AvatarFallback className="bg-secondary/20 text-secondary-foreground font-medium text-xs">
+                              {(c.editor.full_name || '?').charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {c.editor_id && ambassadorIds.has(c.editor_id) && (
+                            <div className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5">
+                              <Crown className="h-2 w-2 text-white fill-white" />
+                            </div>
+                          )}
+                        </div>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="text-xs">
-                        <span className="font-medium">Editor:</span> {c.editor.full_name}
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Editor:</span> {c.editor.full_name}
+                          {c.editor_id && ambassadorIds.has(c.editor_id) && (
+                            <span className="inline-flex items-center gap-0.5 text-amber-500">
+                              <Crown className="h-3 w-3 fill-amber-500" /> Embajador
+                            </span>
+                          )}
+                        </div>
                       </TooltipContent>
                     </Tooltip>
                   )}
