@@ -155,8 +155,158 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     const contentType = req.headers.get('content-type') || ''
+    const url = new URL(req.url)
     
-    // Handle direct video upload
+    // ========== PATH A: Create video and get upload URL (for direct browser upload) ==========
+    if (req.method === 'GET' || (req.method === 'POST' && contentType.includes('application/json'))) {
+      let contentId: string;
+      let title: string;
+      let variantIndex: number;
+      
+      if (req.method === 'GET') {
+        contentId = url.searchParams.get('content_id') || '';
+        title = url.searchParams.get('title') || 'Video';
+        variantIndex = parseInt(url.searchParams.get('variant_index') || '0', 10);
+      } else {
+        const body = await req.json();
+        contentId = body.content_id || '';
+        title = body.title || 'Video';
+        variantIndex = parseInt(body.variant_index || '0', 10);
+      }
+      
+      if (!contentId) {
+        return new Response(
+          JSON.stringify({ error: 'Missing content_id' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      console.log(`[bunny-upload] Creating video slot for content ${contentId}, variant ${variantIndex}`);
+
+      // Update status to processing
+      await supabase
+        .from('content')
+        .update({
+          video_processing_status: 'processing',
+          video_processing_started_at: new Date().toISOString(),
+        })
+        .eq('id', contentId)
+
+      // Create video in Bunny Stream
+      const createResponse = await fetch(
+        `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos`,
+        {
+          method: 'POST',
+          headers: {
+            'AccessKey': bunnyApiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title }),
+        }
+      )
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text()
+        console.error('Bunny create video error:', errorText)
+        throw new Error(`Failed to create video in Bunny: ${errorText}`)
+      }
+
+      const videoData: BunnyVideoResponse = await createResponse.json()
+      console.log('[bunny-upload] Created Bunny video slot:', videoData.guid)
+
+      // Return upload URL and credentials for direct browser upload
+      const uploadUrl = `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`
+      const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          uploadUrl,
+          accessKey: bunnyApiKey,
+          video_id: videoData.guid,
+          embed_url: embedUrl,
+          content_id: contentId,
+          variant_index: variantIndex,
+          library_id: bunnyLibraryId
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    // ========== PATH B: Confirm upload completion (called after browser uploads directly) ==========
+    if (req.method === 'PUT') {
+      const body = await req.json();
+      const { content_id: contentId, video_id: videoId, embed_url: embedUrl, variant_index: variantIndex = 0 } = body;
+      
+      if (!contentId || !videoId || !embedUrl) {
+        return new Response(
+          JSON.stringify({ error: 'Missing content_id, video_id, or embed_url' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      console.log(`[bunny-upload] Confirming upload for content ${contentId}, video ${videoId}`);
+
+      // Update database with video URL
+      let retryCount = 0;
+      const maxRetries = 5;
+      let updateSuccess = false;
+
+      while (!updateSuccess && retryCount < maxRetries) {
+        const { data: currentContent, error: fetchError } = await supabase
+          .from('content')
+          .select('video_urls, hooks_count')
+          .eq('id', contentId)
+          .single()
+
+        if (fetchError) {
+          console.error('Error fetching current content:', fetchError)
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 200 * retryCount));
+          continue;
+        }
+
+        const currentUrls = currentContent?.video_urls || []
+        const hooksCount = currentContent?.hooks_count || 1
+        const arrayLength = Math.max(hooksCount, variantIndex + 1, currentUrls.length)
+        
+        const newUrls = Array.from({ length: arrayLength }, (_, i) => {
+          if (i === variantIndex) return embedUrl;
+          return currentUrls[i] || '';
+        });
+
+        const { error: updateError } = await supabase
+          .from('content')
+          .update({
+            bunny_embed_url: variantIndex === 0 ? embedUrl : currentContent?.video_urls?.[0] || embedUrl,
+            video_url: newUrls[0] || embedUrl,
+            video_urls: newUrls,
+            video_processing_status: 'completed',
+          })
+          .eq('id', contentId)
+
+        if (updateError) {
+          console.error('Error updating content (attempt', retryCount + 1, '):', updateError)
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 200 * retryCount));
+        } else {
+          updateSuccess = true;
+          console.log(`[bunny-upload] Successfully updated video_urls at index ${variantIndex}`);
+        }
+      }
+
+      // Schedule thumbnail generation in background (fire and forget)
+      const cdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME') || 'vz-cfd5aa48-17c.b-cdn.net';
+      generateAndSaveThumbnail(supabaseUrl, supabaseServiceKey, contentId, videoId, bunnyApiKey, bunnyLibraryId, cdnHostname)
+        .catch(err => console.error('[bunny-upload] Background thumbnail error:', err));
+
+      return new Response(
+        JSON.stringify({ success: true, embed_url: embedUrl, video_id: videoId }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    // ========== PATH C: Legacy FormData upload (for backward compatibility - will hit memory limits on large files) ==========
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData()
       const file = formData.get('file') as File

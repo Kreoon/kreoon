@@ -244,49 +244,80 @@ export function RawAssetsUploader({
 
       try {
         setFilesToUpload(prev =>
-          prev.map(f => f.id === fileToUpload.id ? { ...f, status: 'uploading' as const, progress: 10 } : f)
+          prev.map(f => f.id === fileToUpload.id ? { ...f, status: 'uploading' as const, progress: 5 } : f)
         );
 
         // Get session for auth
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.access_token) throw new Error('No autenticado');
 
-        // Progress simulation
-        const progressInterval = setInterval(() => {
-          setFilesToUpload(prev =>
-            prev.map(f => f.id === fileToUpload.id && f.progress < 80 
-              ? { ...f, progress: f.progress + 5 } 
-              : f
-            )
-          );
-        }, 800);
-
-        // Use FormData for streaming upload (avoids memory issues with large files)
-        const formData = new FormData();
-        formData.append('file', fileToUpload.file);
-        formData.append('storagePath', storagePath);
-        formData.append('contentType', fileToUpload.file.type);
-
         // Get Supabase URL from environment
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         
-        const response = await fetch(`${supabaseUrl}/functions/v1/bunny-raw-upload`, {
-          method: 'POST',
+        // Step 1: Get upload credentials from edge function (GET request - no file data)
+        const credentialsUrl = new URL(`${supabaseUrl}/functions/v1/bunny-raw-upload`);
+        credentialsUrl.searchParams.set('storagePath', storagePath);
+        
+        const credResponse = await fetch(credentialsUrl.toString(), {
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
           },
-          body: formData
         });
 
-        clearInterval(progressInterval);
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData?.error || `Error HTTP ${response.status}`);
+        if (!credResponse.ok) {
+          const errorData = await credResponse.json().catch(() => ({}));
+          throw new Error(errorData?.error || `Error obteniendo credenciales: ${credResponse.status}`);
         }
 
-        const data = await response.json();
-        if (!data?.success) throw new Error(data?.error || 'Error de subida');
+        const credentials = await credResponse.json();
+        if (!credentials?.success || !credentials?.uploadUrl) {
+          throw new Error('No se pudieron obtener las credenciales de subida');
+        }
+
+        setFilesToUpload(prev =>
+          prev.map(f => f.id === fileToUpload.id ? { ...f, progress: 15 } : f)
+        );
+
+        // Step 2: Upload directly to Bunny Storage from the browser
+        // This bypasses edge function memory limits completely
+        const xhr = new XMLHttpRequest();
+        
+        await new Promise<void>((resolve, reject) => {
+          xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+              const percentComplete = Math.round((event.loaded / event.total) * 80) + 15;
+              setFilesToUpload(prev =>
+                prev.map(f => f.id === fileToUpload.id ? { ...f, progress: percentComplete } : f)
+              );
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Error de Bunny Storage: ${xhr.status}`));
+            }
+          });
+
+          xhr.addEventListener('error', () => {
+            reject(new Error('Error de red al subir archivo'));
+          });
+
+          xhr.addEventListener('abort', () => {
+            reject(new Error('Subida cancelada'));
+          });
+
+          xhr.open('PUT', credentials.uploadUrl);
+          xhr.setRequestHeader('AccessKey', credentials.accessKey);
+          xhr.setRequestHeader('Content-Type', fileToUpload.file.type || 'application/octet-stream');
+          xhr.send(fileToUpload.file);
+        });
+
+        setFilesToUpload(prev =>
+          prev.map(f => f.id === fileToUpload.id ? { ...f, progress: 95 } : f)
+        );
 
         // Save to database
         const { error: dbError } = await supabase
@@ -302,8 +333,6 @@ export function RawAssetsUploader({
             file_type: ext,
             file_size: fileToUpload.file.size
           });
-
-        if (dbError) throw dbError;
 
         if (dbError) throw dbError;
 
