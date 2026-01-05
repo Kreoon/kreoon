@@ -566,7 +566,66 @@ serve(async (req) => {
 
     const baseContext = `Producto (brief resumido):\n${productDescription}\n\nMercado objetivo: ${targetMarket}`;
 
-    const phasePromptA = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).\n\n${baseContext}\n\nObjetivo: mercado + JTBD + competencia.\n\nEstructura JSON EXACTA:\n{\n  "market_overview": {\n    "marketSize": "",\n    "growthTrend": "",\n    "marketState": "crecimiento | saturacion | declive",\n    "marketStateExplanation": "",\n    "macroVariables": [""],\n    "awarenessLevel": "",\n    "summary": "",\n    "opportunities": [""],\n    "threats": [""]\n  },\n  "jtbd": {\n    "functional": "",\n    "emotional": "",\n    "social": "",\n    "pains": [{"pain":"","why":"","impact":""}],\n    "desires": [{"desire":"","emotion":"","idealState":""}],\n    "objections": [{"objection":"","belief":"","counter":""}],\n    "insights": [""]\n  },\n  "competitors": [{\n    "name": "",\n    "website": "",\n    "instagram": "",\n    "tiktok": "",\n    "facebook": "",\n    "youtube": "",\n    "linkedin": "",\n    "promise": "",\n    "valueProposition": "",\n    "differentiator": "",\n    "price": "",\n    "tone": "",\n    "cta": "",\n    "awarenessLevel": "",\n    "channels": [""],\n    "contentFormats": [""],\n    "strengths": [""],\n    "weaknesses": [""]\n  }]\n}`;
+    const phasePromptA = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).
+
+${baseContext}
+
+Objetivo: mercado + JTBD + competencia.
+
+REGLAS OBLIGATORIAS (CUMPLIR TODAS):
+- market_overview.macroVariables: mínimo 5 variables
+- market_overview.opportunities: mínimo 3
+- market_overview.threats: mínimo 3
+- market_overview.summary: mínimo 3 párrafos detallados
+- jtbd.pains: EXACTAMENTE 10 dolores profundos con pain/why/impact
+- jtbd.desires: EXACTAMENTE 10 deseos aspiracionales con desire/emotion/idealState
+- jtbd.objections: EXACTAMENTE 10 objeciones con objection/belief/counter
+- jtbd.insights: mínimo 10 insights estratégicos
+- competitors: EXACTAMENTE 10 competidores REALES del mercado ${targetMarket} con URLs verificables
+
+Estructura JSON EXACTA:
+{
+  "market_overview": {
+    "marketSize": "Tamaño específico con números",
+    "growthTrend": "Tendencia con porcentajes",
+    "marketState": "crecimiento | saturacion | declive",
+    "marketStateExplanation": "Explicación detallada de 2-3 párrafos",
+    "macroVariables": ["Variable 1", "Variable 2", "Variable 3", "Variable 4", "Variable 5"],
+    "awarenessLevel": "Nivel de conciencia con explicación",
+    "summary": "Resumen ejecutivo de 3-4 párrafos",
+    "opportunities": ["Oportunidad 1", "Oportunidad 2", "Oportunidad 3"],
+    "threats": ["Amenaza 1", "Amenaza 2", "Amenaza 3"]
+  },
+  "jtbd": {
+    "functional": "JTBD funcional detallado",
+    "emotional": "JTBD emocional detallado",
+    "social": "JTBD social detallado",
+    "pains": [{"pain":"","why":"","impact":""}],
+    "desires": [{"desire":"","emotion":"","idealState":""}],
+    "objections": [{"objection":"","belief":"","counter":""}],
+    "insights": ["Insight 1", "Insight 2", "...hasta 10"]
+  },
+  "competitors": [{
+    "name": "Nombre real del competidor",
+    "website": "https://...",
+    "instagram": "https://instagram.com/...",
+    "tiktok": "https://tiktok.com/@...",
+    "facebook": "https://facebook.com/...",
+    "youtube": "",
+    "linkedin": "",
+    "promise": "Promesa central",
+    "valueProposition": "Propuesta de valor",
+    "differentiator": "Diferenciador",
+    "price": "Rango de precios COP",
+    "tone": "Tono de comunicación",
+    "cta": "CTA principal",
+    "awarenessLevel": "Nivel de conciencia",
+    "channels": ["Meta", "TikTok"],
+    "contentFormats": ["UGC", "Testimoniales"],
+    "strengths": ["Fortaleza 1", "Fortaleza 2"],
+    "weaknesses": ["Debilidad 1", "Debilidad 2"]
+  }]
+}`;
 
     const phasePromptB = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).\n\n${baseContext}\n\nObjetivo: avatares + diferenciación + ESFERA + ángulos + PUV + lead magnets + ideas de video.\n\nEstructura JSON EXACTA:\n{\n  "description": "",\n  "avatars": [{\n    "name": "",\n    "age": "",\n    "situation": "",\n    "awarenessLevel": "",\n    "drivers": "",\n    "biases": "",\n    "objections": "",\n    "phrases": [""],\n    "goals": "",\n    "contentConsumption": ""\n  }],\n  "differentiation": {\n    "repeatedMessages": [{"message":"","opportunity":""}],\n    "poorlyAddressedPains": [{"pain":"","opportunity":"","howToUse":""}],\n    "ignoredAspirations": [{"aspiration":"","opportunity":""}],\n    "positioningOpportunities": [{"opportunity":"","why":"","execution":""}],\n    "unexploitedEmotions": [{"emotion":"","howToUse":""}]\n  },\n  "esferaInsights": {\n    "enganchar": {"marketDominance":"","saturated":"","opportunities":[""],"hookTypes":""},\n    "solucion": {"currentPromises":"","unresolvedObjections":"","trustOpportunities":[""],"positioning":""},\n    "remarketing": {"existingProof":"","validationGaps":"","decisionMessages":[""],"testimonialFormats":""},\n    "fidelizar": {"commonErrors":"","communityOpportunities":[""],"ambassadorStrategy":""}\n  },\n  "salesAngles": [{"angle":"","type":"","avatar":"","emotion":"","contentType":"","hookExample":""}],\n  "puv": {"centralProblem":"","tangibleResult":"","marketDifference":"","idealClient":"","statement":"","credibility":""},\n  "transformation": {\n    "functional": {"before":"","after":""},\n    "emotional": {"before":"","after":""},\n    "identity": {"before":"","after":""},\n    "social": {"before":"","after":""},\n    "financial": {"before":"","after":""}\n  },\n  "leadMagnets": [{"name":"","format":"","objective":"","contentType":"","pain":"","avatar":"","awarenessPhase":"","promise":"","structure":[""]}],\n  "videoCreatives": [{"number":1,"angle":"","avatar":"","title":"","idea":"","format":"","esferaPhase":"","duration":""}],\n  "executiveSummary": {\n    "marketSummary": "",\n    "keyInsights": [{"insight":"","importance":"","action":""}],\n    "psychologicalDrivers": [{"driver":"","why":"","howToUse":""}],\n    "immediateActions": [{"action":"","howTo":"","expectedResult":""}],\n    "quickWins": [{"win":"","effort":"","impact":""}],\n    "risksToAvoid": [{"risk":"","why":""}],\n    "finalRecommendation": ""\n  }\n}`;
 
@@ -589,11 +648,11 @@ serve(async (req) => {
             growthTrend: { type: 'string' },
             marketState: { type: 'string' },
             marketStateExplanation: { type: 'string' },
-            macroVariables: { type: 'array', items: { type: 'string' } },
+            macroVariables: { type: 'array', minItems: 5, items: { type: 'string' } },
             awarenessLevel: { type: 'string' },
             summary: { type: 'string' },
-            opportunities: { type: 'array', items: { type: 'string' } },
-            threats: { type: 'array', items: { type: 'string' } },
+            opportunities: { type: 'array', minItems: 3, items: { type: 'string' } },
+            threats: { type: 'array', minItems: 3, items: { type: 'string' } },
           },
         },
         jtbd: {
@@ -605,6 +664,8 @@ serve(async (req) => {
             social: { type: 'string' },
             pains: {
               type: 'array',
+              minItems: 10,
+              maxItems: 10,
               items: {
                 type: 'object',
                 additionalProperties: true,
@@ -617,6 +678,8 @@ serve(async (req) => {
             },
             desires: {
               type: 'array',
+              minItems: 10,
+              maxItems: 10,
               items: {
                 type: 'object',
                 additionalProperties: true,
@@ -629,6 +692,8 @@ serve(async (req) => {
             },
             objections: {
               type: 'array',
+              minItems: 10,
+              maxItems: 10,
               items: {
                 type: 'object',
                 additionalProperties: true,
@@ -639,11 +704,13 @@ serve(async (req) => {
                 },
               },
             },
-            insights: { type: 'array', items: { type: 'string' } },
+            insights: { type: 'array', minItems: 10, items: { type: 'string' } },
           },
         },
         competitors: {
           type: 'array',
+          minItems: 10,
+          maxItems: 10,
           items: {
             type: 'object',
             additionalProperties: true,
