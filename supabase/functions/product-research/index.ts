@@ -7,6 +7,88 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Function to fetch document content from URL
+async function fetchDocumentContent(url: string): Promise<string> {
+  try {
+    // Handle Google Drive URLs
+    if (url.includes('drive.google.com')) {
+      // Extract file ID from various Google Drive URL formats
+      let fileId = '';
+      
+      // Format: https://drive.google.com/file/d/FILE_ID/view
+      const fileMatch = url.match(/\/file\/d\/([^\/]+)/);
+      if (fileMatch) {
+        fileId = fileMatch[1];
+      }
+      
+      // Format: https://drive.google.com/open?id=FILE_ID
+      const openMatch = url.match(/[?&]id=([^&]+)/);
+      if (openMatch) {
+        fileId = openMatch[1];
+      }
+      
+      // Format: https://docs.google.com/document/d/FILE_ID/edit
+      const docsMatch = url.match(/\/document\/d\/([^\/]+)/);
+      if (docsMatch) {
+        fileId = docsMatch[1];
+      }
+      
+      if (fileId) {
+        // Try to get text export from Google Docs
+        const exportUrl = `https://docs.google.com/document/d/${fileId}/export?format=txt`;
+        console.log('[fetchDocumentContent] Trying Google Docs export:', exportUrl);
+        
+        const response = await fetch(exportUrl, {
+          headers: { 'Accept': 'text/plain' }
+        });
+        
+        if (response.ok) {
+          const text = await response.text();
+          // Limit to first 15000 characters to not overwhelm the context
+          return text.substring(0, 15000);
+        }
+        
+        console.log('[fetchDocumentContent] Google Docs export failed, status:', response.status);
+      }
+    }
+    
+    // For regular URLs, try to fetch directly
+    const response = await fetch(url, {
+      headers: { 
+        'Accept': 'text/plain, text/html, application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; ProductResearch/1.0)'
+      }
+    });
+    
+    if (!response.ok) {
+      console.warn('[fetchDocumentContent] Fetch failed:', response.status);
+      return '';
+    }
+    
+    const contentType = response.headers.get('content-type') || '';
+    
+    if (contentType.includes('text/plain') || contentType.includes('text/html')) {
+      const text = await response.text();
+      // Remove HTML tags if it's HTML
+      const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      return cleanText.substring(0, 15000);
+    }
+    
+    if (contentType.includes('application/json')) {
+      const json = await response.json();
+      return JSON.stringify(json, null, 2).substring(0, 15000);
+    }
+    
+    // For PDFs and other binary formats, we can't process them directly
+    console.log('[fetchDocumentContent] Unsupported content type:', contentType);
+    return '';
+    
+  } catch (error) {
+    console.error('[fetchDocumentContent] Error:', error);
+    return '';
+  }
+}
+
 // Prompt completo del Método Esfera - Versión mejorada con más detalle
 const RESEARCH_PROMPT = `Actúa como un Estratega Digital Senior especializado en investigación de mercado, análisis competitivo, creación de avatares y desarrollo de ángulos de venta, aplicando de forma estricta el Método ESFERA de Juan Ads y los principios de Estrategias Despegue.
 
@@ -548,7 +630,7 @@ serve(async (req) => {
     }
 
     // Build product description from brief data
-    const productDescription = buildProductDescription(briefData);
+    let productDescription = buildProductDescription(briefData);
     const targetMarket = briefData.targetMarket || 'Latinoamérica (LATAM)';
     const phase = (briefData?.researchPhase || (await (async () => {
       try {
@@ -559,10 +641,28 @@ serve(async (req) => {
       }
     })())) as ('A' | 'B' | undefined);
 
+    // Try to fetch document content if URL is provided
+    let documentContent = '';
+    if (briefData.documentUrl) {
+      console.log('[product-research] Fetching document from:', briefData.documentUrl);
+      try {
+        documentContent = await fetchDocumentContent(briefData.documentUrl);
+        console.log('[product-research] Document content length:', documentContent.length);
+      } catch (docError) {
+        console.warn('[product-research] Could not fetch document:', docError);
+      }
+    }
+
+    // Append document content if available
+    if (documentContent) {
+      productDescription += `\n\n---\n\n**INFORMACIÓN ADICIONAL DEL DOCUMENTO:**\n\n${documentContent}`;
+    }
+
     console.log('[product-research] Starting research for product:', productId);
     console.log('[product-research] Target market:', targetMarket);
     console.log('[product-research] Product description length:', productDescription.length);
     console.log('[product-research] Phase:', phase || 'A+B');
+    console.log('[product-research] Has document content:', !!documentContent);
 
     const baseContext = `Producto (brief resumido):\n${productDescription}\n\nMercado objetivo: ${targetMarket}`;
 
