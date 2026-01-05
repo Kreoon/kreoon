@@ -180,7 +180,38 @@ const Creators = () => {
 
       if (profileError) throw profileError;
 
-      // Update organization_members ambassador_level
+      // Keep ambassador badge system in sync (used by internal brand assignment lists)
+      if (newStatus) {
+        const { error: badgeError } = await supabase
+          .from('organization_member_badges')
+          .upsert(
+            {
+              organization_id: currentOrgId,
+              user_id: talent.id,
+              badge: 'ambassador',
+              level: 'bronze',
+              is_active: true,
+              granted_at: new Date().toISOString(),
+              granted_by: user?.id || null,
+            },
+            { onConflict: 'organization_id,user_id,badge' }
+          );
+        if (badgeError) throw badgeError;
+      } else {
+        const { error: badgeError } = await supabase
+          .from('organization_member_badges')
+          .update({
+            is_active: false,
+            revoked_at: new Date().toISOString(),
+            revoked_by: user?.id || null,
+          })
+          .eq('organization_id', currentOrgId)
+          .eq('user_id', talent.id)
+          .eq('badge', 'ambassador');
+        if (badgeError) throw badgeError;
+      }
+
+      // Update organization_members ambassador_level (legacy)
       const { error: memberError } = await supabase
         .from('organization_members')
         .update({ ambassador_level: newLevel })
