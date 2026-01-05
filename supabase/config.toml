@@ -118,7 +118,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.bunny-status]
-verify_jwt = true
+verify_jwt = false
 
 [functions.bunny-download]
 verify_jwt = true
