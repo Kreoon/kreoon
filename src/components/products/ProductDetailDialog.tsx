@@ -5,15 +5,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { ProductDocumentUploader } from "./ProductDocumentUploader";
 import { ProductBriefWizard } from "./ProductBriefWizard";
+import {
+  MarketOverviewTab,
+  JTBDAnalysisTab,
+  AvatarSegmentationTab,
+  CompetitionAnalysisTab,
+  DifferentiationTab,
+  NeuromarketingTab,
+  ExecutiveSummaryTab,
+} from "./strategy-tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   Package, FileText, Users, Target, Save, 
-  File, FolderOpen, Plus, X, Sparkles, ClipboardList
+  File, FolderOpen, Plus, X, Sparkles, ClipboardList,
+  Globe, Briefcase, Swords, Lightbulb, Brain
 } from "lucide-react";
 
 interface Product {
@@ -189,16 +200,45 @@ export function ProductDetailDialog({
         </DialogHeader>
 
         <Tabs defaultValue={isNew ? "info" : "brief"} className="mt-4">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="brief" className="gap-1">
-              <ClipboardList className="h-3 w-3" />
-              Brief IA
-            </TabsTrigger>
-            <TabsTrigger value="info">Información</TabsTrigger>
-            <TabsTrigger value="strategy">Estrategia</TabsTrigger>
-            <TabsTrigger value="avatar">Avatar & Ángulos</TabsTrigger>
-            <TabsTrigger value="files">Archivos</TabsTrigger>
-          </TabsList>
+          <ScrollArea className="w-full">
+            <TabsList className="inline-flex h-10 w-max min-w-full">
+              <TabsTrigger value="brief" className="gap-1">
+                <ClipboardList className="h-3 w-3" />
+                Brief IA
+              </TabsTrigger>
+              <TabsTrigger value="summary" className="gap-1">
+                <FileText className="h-3 w-3" />
+                Resumen
+              </TabsTrigger>
+              <TabsTrigger value="market" className="gap-1">
+                <Globe className="h-3 w-3" />
+                Mercado
+              </TabsTrigger>
+              <TabsTrigger value="jtbd" className="gap-1">
+                <Target className="h-3 w-3" />
+                JTBD
+              </TabsTrigger>
+              <TabsTrigger value="avatars" className="gap-1">
+                <Users className="h-3 w-3" />
+                Avatares
+              </TabsTrigger>
+              <TabsTrigger value="competition" className="gap-1">
+                <Swords className="h-3 w-3" />
+                Competencia
+              </TabsTrigger>
+              <TabsTrigger value="differentiation" className="gap-1">
+                <Lightbulb className="h-3 w-3" />
+                Diferenciación
+              </TabsTrigger>
+              <TabsTrigger value="neuro" className="gap-1">
+                <Brain className="h-3 w-3" />
+                Esfera
+              </TabsTrigger>
+              <TabsTrigger value="info">Información</TabsTrigger>
+              <TabsTrigger value="files">Archivos</TabsTrigger>
+            </TabsList>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
 
           <TabsContent value="brief" className="mt-4">
             {product ? (
@@ -219,6 +259,37 @@ export function ProductDetailDialog({
             )}
           </TabsContent>
 
+          <TabsContent value="summary" className="mt-4">
+            <ExecutiveSummaryTab 
+              briefData={product?.brief_data as any} 
+              productName={formData.name}
+            />
+          </TabsContent>
+
+          <TabsContent value="market" className="mt-4">
+            <MarketOverviewTab briefData={product?.brief_data as any} />
+          </TabsContent>
+
+          <TabsContent value="jtbd" className="mt-4">
+            <JTBDAnalysisTab briefData={product?.brief_data as any} />
+          </TabsContent>
+
+          <TabsContent value="avatars" className="mt-4">
+            <AvatarSegmentationTab briefData={product?.brief_data as any} />
+          </TabsContent>
+
+          <TabsContent value="competition" className="mt-4">
+            <CompetitionAnalysisTab briefData={product?.brief_data as any} />
+          </TabsContent>
+
+          <TabsContent value="differentiation" className="mt-4">
+            <DifferentiationTab briefData={product?.brief_data as any} />
+          </TabsContent>
+
+          <TabsContent value="neuro" className="mt-4">
+            <NeuromarketingTab briefData={product?.brief_data as any} />
+          </TabsContent>
+
           <TabsContent value="info" className="space-y-4 mt-4">
             <div className="space-y-2">
               <Label>Nombre del Producto *</Label>
@@ -236,46 +307,6 @@ export function ProductDetailDialog({
                 onChange={(html) => setFormData({ ...formData, description: html })}
                 placeholder="Describe el producto..."
                 className="min-h-[150px]"
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="strategy" className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Target className="h-4 w-4" /> Estrategia de Contenido
-              </Label>
-              <RichTextEditor
-                content={formData.strategy}
-                onChange={(html) => setFormData({ ...formData, strategy: html })}
-                placeholder="Define la estrategia de contenido para este producto..."
-                className="min-h-[200px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <FileText className="h-4 w-4" /> Investigación de Mercado
-              </Label>
-              <RichTextEditor
-                content={formData.market_research}
-                onChange={(html) => setFormData({ ...formData, market_research: html })}
-                placeholder="Información de la investigación de mercado..."
-                className="min-h-[200px]"
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="avatar" className="space-y-6 mt-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Users className="h-4 w-4" /> Avatar Ideal
-              </Label>
-              <RichTextEditor
-                content={formData.ideal_avatar}
-                onChange={(html) => setFormData({ ...formData, ideal_avatar: html })}
-                placeholder="Describe el cliente ideal: demografía, dolores, deseos, objeciones..."
-                className="min-h-[200px]"
               />
             </div>
 
