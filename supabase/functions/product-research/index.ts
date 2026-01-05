@@ -583,10 +583,10 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             model: 'sonar',
-            max_tokens: 2000,
+            max_tokens: 3500,
             temperature: 0.2,
             messages: [
-              { role: 'system', content: `Responde en español. Sé directo. DEVUELVE SOLO JSON válido.` },
+              { role: 'system', content: `Responde en español. Sé directo. DEVUELVE SOLO JSON válido sin texto adicional.` },
               { role: 'user', content: prompt }
             ],
           }),
@@ -601,10 +601,52 @@ serve(async (req) => {
         const data = await res.json();
         const content = (data.choices?.[0]?.message?.content || '').toString();
         const citations = data.citations || [];
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON found in Perplexity response');
+        
+        // Extract JSON from response, handling possible markdown code blocks
+        let jsonStr = content;
+        
+        // Remove markdown code block if present
+        const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (codeBlockMatch) {
+          jsonStr = codeBlockMatch[1].trim();
+        } else {
+          // Try to extract JSON object
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            jsonStr = jsonMatch[0];
+          }
+        }
 
-        return { json: JSON.parse(jsonMatch[0]), rawContent: content, citations };
+        if (!jsonStr || !jsonStr.startsWith('{')) {
+          console.error('[product-research] No JSON found in Perplexity response:', content.substring(0, 500));
+          throw new Error('No JSON found in Perplexity response');
+        }
+
+        // Try to fix common JSON issues
+        let parsed: any;
+        try {
+          parsed = JSON.parse(jsonStr);
+        } catch (parseError) {
+          console.error('[product-research] JSON parse error, attempting fix:', parseError);
+          
+          // Try fixing common issues: trailing commas, unescaped quotes
+          let fixedJson = jsonStr
+            .replace(/,\s*}/g, '}')          // Remove trailing commas before }
+            .replace(/,\s*]/g, ']')          // Remove trailing commas before ]
+            .replace(/'/g, '"')              // Replace single quotes with double
+            .replace(/(\w+):/g, '"$1":')     // Add quotes to unquoted keys (simple cases)
+            .replace(/""+/g, '"');           // Fix double quotes
+          
+          try {
+            parsed = JSON.parse(fixedJson);
+          } catch {
+            // If still fails, return empty structure based on expected keys
+            console.error('[product-research] Could not parse JSON even after fixes, using fallback');
+            parsed = {};
+          }
+        }
+
+        return { json: parsed, rawContent: content, citations };
       } finally {
         clearTimeout(timeoutId);
       }
