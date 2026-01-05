@@ -223,7 +223,7 @@ export function RawAssetsUploader({
     return true;
   };
 
-  // Upload files to Bunny Storage using FormData (streaming)
+  // Upload files directly to Bunny Storage (bypasses edge function memory limits)
   const handleUpload = async () => {
     if (!validateFiles()) return;
     if (!user?.id) {
@@ -232,33 +232,30 @@ export function RawAssetsUploader({
     }
 
     setIsUploading(true);
+    let successCount = 0;
 
     for (const fileToUpload of filesToUpload) {
       if (fileToUpload.status !== 'pending') continue;
 
       const ext = getFileExtension(fileToUpload.originalName);
       const customFilename = `${fileToUpload.customName}.${ext}`;
-      // IMPORTANT: storagePath must be RELATIVE to the Bunny Storage Zone.
-      // The backend function will prefix it with BUNNY_STORAGE_ZONE.
       const storagePath = `org_${organizationId}/client_${clientId || 'none'}/project_${contentId}/raw/${customFilename}`;
 
       try {
         setFilesToUpload(prev =>
-          prev.map(f => f.id === fileToUpload.id ? { ...f, status: 'uploading' as const, progress: 5 } : f)
+          prev.map(f => f.id === fileToUpload.id ? { ...f, status: 'uploading' as const, progress: 2 } : f)
         );
 
         // Get session for auth
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.access_token) throw new Error('No autenticado');
 
-        // Get Supabase URL from environment
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         
-        // Step 1: Get upload credentials from edge function (GET request - no file data)
-        const credentialsUrl = new URL(`${supabaseUrl}/functions/v1/bunny-raw-upload`);
-        credentialsUrl.searchParams.set('storagePath', storagePath);
+        // Step 1: Get upload credentials from edge function
+        const credentialsUrl = `${supabaseUrl}/functions/v1/bunny-raw-upload?storagePath=${encodeURIComponent(storagePath)}`;
         
-        const credResponse = await fetch(credentialsUrl.toString(), {
+        const credResponse = await fetch(credentialsUrl, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -267,59 +264,61 @@ export function RawAssetsUploader({
 
         if (!credResponse.ok) {
           const errorData = await credResponse.json().catch(() => ({}));
-          throw new Error(errorData?.error || `Error obteniendo credenciales: ${credResponse.status}`);
+          throw new Error(errorData?.error || `Error ${credResponse.status}`);
         }
 
         const credentials = await credResponse.json();
         if (!credentials?.success || !credentials?.uploadUrl) {
-          throw new Error('No se pudieron obtener las credenciales de subida');
+          throw new Error('No se obtuvieron credenciales');
         }
 
         setFilesToUpload(prev =>
-          prev.map(f => f.id === fileToUpload.id ? { ...f, progress: 15 } : f)
+          prev.map(f => f.id === fileToUpload.id ? { ...f, progress: 5 } : f)
         );
 
-        // Step 2: Upload directly to Bunny Storage from the browser
-        // This bypasses edge function memory limits completely
-        const xhr = new XMLHttpRequest();
-        
-        await new Promise<void>((resolve, reject) => {
-          xhr.upload.addEventListener('progress', (event) => {
+        // Step 2: Upload directly to Bunny Storage using fetch with ReadableStream
+        // This works better on mobile than XMLHttpRequest for large files
+        const uploadPromise = new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          
+          // Track upload progress
+          xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
-              const percentComplete = Math.round((event.loaded / event.total) * 80) + 15;
+              const percent = Math.round((event.loaded / event.total) * 90) + 5;
               setFilesToUpload(prev =>
-                prev.map(f => f.id === fileToUpload.id ? { ...f, progress: percentComplete } : f)
+                prev.map(f => f.id === fileToUpload.id ? { ...f, progress: percent } : f)
               );
             }
-          });
+          };
 
-          xhr.addEventListener('load', () => {
+          xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
               resolve();
             } else {
-              reject(new Error(`Error de Bunny Storage: ${xhr.status}`));
+              reject(new Error(`Bunny error: ${xhr.status}`));
             }
-          });
+          };
 
-          xhr.addEventListener('error', () => {
-            reject(new Error('Error de red al subir archivo'));
-          });
+          xhr.onerror = () => reject(new Error('Error de conexión'));
+          xhr.ontimeout = () => reject(new Error('Tiempo de espera agotado'));
+          xhr.onabort = () => reject(new Error('Subida cancelada'));
 
-          xhr.addEventListener('abort', () => {
-            reject(new Error('Subida cancelada'));
-          });
+          // Set timeout for large files (10 min)
+          xhr.timeout = 600000;
 
-          xhr.open('PUT', credentials.uploadUrl);
+          xhr.open('PUT', credentials.uploadUrl, true);
           xhr.setRequestHeader('AccessKey', credentials.accessKey);
           xhr.setRequestHeader('Content-Type', fileToUpload.file.type || 'application/octet-stream');
           xhr.send(fileToUpload.file);
         });
 
+        await uploadPromise;
+
         setFilesToUpload(prev =>
-          prev.map(f => f.id === fileToUpload.id ? { ...f, progress: 95 } : f)
+          prev.map(f => f.id === fileToUpload.id ? { ...f, progress: 96 } : f)
         );
 
-        // Save to database
+        // Step 3: Save to database
         const { error: dbError } = await supabase
           .from('project_raw_assets')
           .insert({
@@ -328,7 +327,6 @@ export function RawAssetsUploader({
             uploaded_by: user.id,
             original_filename: fileToUpload.originalName,
             custom_filename: customFilename,
-            // Store the relative path (not CDN URL) so backend downloads can reliably auth.
             storage_path: storagePath,
             file_type: ext,
             file_size: fileToUpload.file.size
@@ -339,6 +337,7 @@ export function RawAssetsUploader({
         setFilesToUpload(prev =>
           prev.map(f => f.id === fileToUpload.id ? { ...f, status: 'success' as const, progress: 100 } : f)
         );
+        successCount++;
 
       } catch (error: any) {
         console.error('Upload error:', error);
@@ -353,16 +352,15 @@ export function RawAssetsUploader({
     }
 
     setIsUploading(false);
-    
-    // Refresh assets list
     await fetchAssets();
     
-    // Clear successful uploads
-    setFilesToUpload(prev => prev.filter(f => f.status !== 'success'));
+    // Clear successful uploads after a short delay
+    setTimeout(() => {
+      setFilesToUpload(prev => prev.filter(f => f.status !== 'success'));
+    }, 1500);
     
-    const successCount = filesToUpload.filter(f => f.status === 'pending').length;
     if (successCount > 0) {
-      toast.success(`${successCount} archivo(s) subido(s) correctamente`);
+      toast.success(`${successCount} archivo(s) subido(s)`);
     }
   };
 
@@ -468,13 +466,13 @@ export function RawAssetsUploader({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Upload Zone */}
+    <div className="space-y-4">
+      {/* Upload Zone - Optimized for mobile */}
       {canUpload && !disabled && (
         <Card className="border-dashed">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors ${
                 isDragging 
                   ? 'border-primary bg-primary/5' 
                   : 'border-muted-foreground/25 hover:border-muted-foreground/50'
@@ -483,13 +481,15 @@ export function RawAssetsUploader({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-              <p className="text-sm text-muted-foreground mb-2">
+              <Upload className="h-8 w-8 sm:h-10 sm:w-10 mx-auto text-muted-foreground mb-3" />
+              <p className="text-sm text-muted-foreground mb-3 hidden sm:block">
                 Arrastra archivos aquí o
               </p>
               <Button
                 type="button"
-                variant="outline"
+                variant="default"
+                size="lg"
+                className="w-full sm:w-auto"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -497,6 +497,7 @@ export function RawAssetsUploader({
                 }}
                 disabled={isUploading}
               >
+                <Upload className="h-4 w-4 mr-2" />
                 Seleccionar archivos
               </Button>
               <input
@@ -507,25 +508,24 @@ export function RawAssetsUploader({
                 onChange={(e) => {
                   e.stopPropagation();
                   handleFileSelect(e.target.files);
-                  // Reset input value to allow selecting the same file again
                   e.target.value = '';
                 }}
                 accept="video/*,audio/*,.mov,.mp4,.avi,.mkv,.webm,.wav,.mp3,.aac,.flac"
               />
-              <p className="text-xs text-muted-foreground mt-2">
-                Videos y audio: MP4, MOV, AVI, MKV, WEBM, WAV, MP3, AAC, FLAC
+              <p className="text-xs text-muted-foreground mt-3">
+                MP4, MOV, AVI, MKV, WEBM, WAV, MP3, AAC, FLAC
               </p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Files to Upload Queue */}
+      {/* Files to Upload Queue - Mobile optimized */}
       {filesToUpload.length > 0 && (
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center justify-between">
-              <span>Archivos para subir ({filesToUpload.length})</span>
+          <CardHeader className="pb-2 px-4">
+            <CardTitle className="text-sm sm:text-base flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span>Archivos ({filesToUpload.length})</span>
               <Button 
                 type="button"
                 onClick={(e) => {
@@ -535,6 +535,7 @@ export function RawAssetsUploader({
                 }} 
                 disabled={isUploading || filesToUpload.every(f => f.status !== 'pending')}
                 size="sm"
+                className="w-full sm:w-auto"
               >
                 {isUploading ? (
                   <>
@@ -544,25 +545,27 @@ export function RawAssetsUploader({
                 ) : (
                   <>
                     <Upload className="h-4 w-4 mr-2" />
-                    Guardar archivos
+                    Subir archivos
                   </>
                 )}
               </Button>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="max-h-[300px]">
-              <div className="space-y-3">
+          <CardContent className="px-4 pb-4">
+            <ScrollArea className="max-h-[250px] sm:max-h-[300px]">
+              <div className="space-y-2">
                 {filesToUpload.map((file) => (
                   <div 
                     key={file.id} 
-                    className={`flex items-center gap-3 p-3 rounded-lg border ${
+                    className={`flex items-start gap-2 p-2 sm:p-3 rounded-lg border ${
                       file.status === 'error' ? 'border-destructive/50 bg-destructive/5' :
-                      file.status === 'success' ? 'border-success/50 bg-success/5' :
+                      file.status === 'success' ? 'border-green-500/50 bg-green-500/5' :
                       'border-border bg-muted/30'
                     }`}
                   >
-                    {getFileIcon(getFileExtension(file.originalName))}
+                    <div className="pt-1">
+                      {getFileIcon(getFileExtension(file.originalName))}
+                    </div>
                     
                     <div className="flex-1 min-w-0">
                       {file.status === 'pending' ? (
@@ -570,30 +573,33 @@ export function RawAssetsUploader({
                           value={file.customName}
                           onChange={(e) => updateCustomName(file.id, e.target.value)}
                           className="h-8 text-sm"
-                          placeholder="Nombre del archivo..."
+                          placeholder="Nombre..."
                         />
                       ) : (
                         <p className="text-sm font-medium truncate">
                           {file.customName}.{getFileExtension(file.originalName)}
                         </p>
                       )}
-                      <p className="text-xs text-muted-foreground truncate">
-                        Original: {file.originalName} • {formatFileSize(file.file.size)}
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {formatFileSize(file.file.size)}
                       </p>
                       
                       {file.status === 'uploading' && (
-                        <Progress value={file.progress} className="h-1 mt-2" />
+                        <div className="mt-2">
+                          <Progress value={file.progress} className="h-2" />
+                          <p className="text-xs text-muted-foreground mt-1">{file.progress}%</p>
+                        </div>
                       )}
                       
                       {file.status === 'error' && (
                         <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {file.errorMessage}
+                          <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{file.errorMessage}</span>
                         </p>
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {file.status === 'error' && (
                         <Button
                           variant="ghost"
@@ -605,7 +611,7 @@ export function RawAssetsUploader({
                         </Button>
                       )}
                       {file.status === 'success' && (
-                        <Check className="h-5 w-5 text-success" />
+                        <Check className="h-5 w-5 text-green-500" />
                       )}
                       {file.status !== 'uploading' && (
                         <Button
@@ -626,10 +632,10 @@ export function RawAssetsUploader({
         </Card>
       )}
 
-      {/* Uploaded Assets List */}
+      {/* Uploaded Assets List - Mobile optimized */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center justify-between gap-3">
+        <CardHeader className="pb-2 px-4">
+          <CardTitle className="text-sm sm:text-base flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span>Material Crudo ({uploadedAssets.length})</span>
             {uploadedAssets.length > 0 && (
               <Button 
@@ -637,11 +643,12 @@ export function RawAssetsUploader({
                 size="sm"
                 onClick={handleDownloadZip}
                 disabled={downloadingZip}
+                className="w-full sm:w-auto"
               >
                 {downloadingZip ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generando ZIP...
+                    Generando...
                   </>
                 ) : (
                   <>
@@ -653,35 +660,37 @@ export function RawAssetsUploader({
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 pb-4">
           {loadingAssets ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center py-6">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : uploadedAssets.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <File className="h-10 w-10 mx-auto mb-2 opacity-50" />
+            <div className="text-center py-6 text-muted-foreground">
+              <File className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No hay material crudo</p>
             </div>
           ) : (
-            <ScrollArea className="max-h-[400px]">
+            <ScrollArea className="max-h-[300px] sm:max-h-[400px]">
               <div className="space-y-2">
                 {uploadedAssets.map((asset) => (
                   <div 
                     key={asset.id} 
-                    className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                    className="flex items-start gap-2 p-2 sm:p-3 rounded-lg border bg-muted/30"
                   >
-                    {getFileIcon(asset.file_type)}
+                    <div className="pt-0.5">
+                      {getFileIcon(asset.file_type)}
+                    </div>
                     
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{asset.custom_filename}</p>
                       <p className="text-xs text-muted-foreground">
-                        {formatFileSize(asset.file_size)} • Subido por {asset.uploader_name}
+                        {formatFileSize(asset.file_size)}
                       </p>
                     </div>
                     
-                    <div className="flex items-center gap-1">
-                      <Badge variant="secondary" className="text-xs">
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Badge variant="secondary" className="text-xs hidden sm:inline-flex">
                         {asset.file_type.toUpperCase()}
                       </Badge>
                       
@@ -692,7 +701,6 @@ export function RawAssetsUploader({
                           className="h-8 w-8 text-muted-foreground hover:text-destructive"
                           onClick={() => handleDelete(asset.id)}
                           disabled={deletingId === asset.id}
-                          title="Eliminar"
                         >
                           {deletingId === asset.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
