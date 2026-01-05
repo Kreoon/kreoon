@@ -608,36 +608,65 @@ serve(async (req) => {
     // ============================================
     console.log('[product-research] Starting AI analysis for field distribution...');
 
+    // Truncate research content if too long to avoid timeout
+    const maxResearchLength = 25000;
+    const truncatedResearch = researchContent.length > maxResearchLength 
+      ? researchContent.substring(0, maxResearchLength) + '\n\n[... contenido truncado por longitud ...]'
+      : researchContent;
+
     const distributionPrompt = DISTRIBUTION_PROMPT
-      .replace('{{RESEARCH_CONTENT}}', researchContent)
+      .replace('{{RESEARCH_CONTENT}}', truncatedResearch)
       .replace('{{BRIEF_DATA}}', JSON.stringify(briefData, null, 2));
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'Eres un asistente que extrae y organiza información de investigación de mercado en formato JSON estructurado. Responde SOLO con JSON válido, sin markdown ni texto adicional. Extrae la información más completa y detallada posible.' 
-          },
-          { role: 'user', content: distributionPrompt }
-        ],
-      }),
-    });
+    console.log('[product-research] Distribution prompt length:', distributionPrompt.length);
 
-    if (!aiResponse.ok) {
+    // Use AbortController for timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+
+    let aiResponse: Response | null = null;
+    try {
+      aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash', // Use flash for speed with large context
+          messages: [
+            { 
+              role: 'system', 
+              content: 'Eres un asistente que extrae y organiza información de investigación de mercado en formato JSON estructurado. Responde SOLO con JSON válido, sin markdown ni texto adicional. Extrae la información más completa y detallada posible.' 
+            },
+            { role: 'user', content: distributionPrompt }
+          ],
+        }),
+        signal: controller.signal,
+      });
+    } catch (fetchError: unknown) {
+      const error = fetchError as Error;
+      if (error.name === 'AbortError') {
+        console.error('[product-research] AI request timed out after 2 minutes');
+      } else {
+        console.error('[product-research] AI fetch error:', fetchError);
+      }
+      aiResponse = null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (aiResponse && !aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('[product-research] Lovable AI error:', aiResponse.status, errorText);
-      // Continue with basic parsing if AI fails
+      aiResponse = null;
     }
 
     let structuredData;
     try {
+      if (!aiResponse) {
+        throw new Error('AI response not available');
+      }
       const aiData = await aiResponse.json();
       const aiContent = aiData.choices?.[0]?.message?.content || '';
       
