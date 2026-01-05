@@ -566,22 +566,18 @@ serve(async (req) => {
 
     const baseContext = `Producto (brief resumido):\n${productDescription}\n\nMercado objetivo: ${targetMarket}`;
 
-    const phasePromptA = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).
+    // Phase A is split into 3 smaller calls to avoid truncation / invalid JSON
+    const phasePromptA1 = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).
 
 ${baseContext}
 
-Objetivo: mercado + JTBD + competencia.
+Objetivo: SOLO panorama de mercado.
 
-REGLAS OBLIGATORIAS (CUMPLIR TODAS):
-- market_overview.macroVariables: mínimo 5 variables
-- market_overview.opportunities: mínimo 3
-- market_overview.threats: mínimo 3
-- market_overview.summary: mínimo 3 párrafos detallados
-- jtbd.pains: EXACTAMENTE 10 dolores profundos con pain/why/impact
-- jtbd.desires: EXACTAMENTE 10 deseos aspiracionales con desire/emotion/idealState
-- jtbd.objections: EXACTAMENTE 10 objeciones con objection/belief/counter
-- jtbd.insights: mínimo 10 insights estratégicos
-- competitors: EXACTAMENTE 10 competidores REALES del mercado ${targetMarket} con URLs verificables
+REGLAS OBLIGATORIAS:
+- macroVariables: mínimo 5
+- opportunities: mínimo 3
+- threats: mínimo 3
+- summary: mínimo 3 párrafos
 
 Estructura JSON EXACTA:
 {
@@ -589,13 +585,29 @@ Estructura JSON EXACTA:
     "marketSize": "Tamaño específico con números",
     "growthTrend": "Tendencia con porcentajes",
     "marketState": "crecimiento | saturacion | declive",
-    "marketStateExplanation": "Explicación detallada de 2-3 párrafos",
-    "macroVariables": ["Variable 1", "Variable 2", "Variable 3", "Variable 4", "Variable 5"],
+    "marketStateExplanation": "Explicación detallada",
+    "macroVariables": [""],
     "awarenessLevel": "Nivel de conciencia con explicación",
-    "summary": "Resumen ejecutivo de 3-4 párrafos",
-    "opportunities": ["Oportunidad 1", "Oportunidad 2", "Oportunidad 3"],
-    "threats": ["Amenaza 1", "Amenaza 2", "Amenaza 3"]
-  },
+    "summary": "Resumen ejecutivo (3-4 párrafos)",
+    "opportunities": [""],
+    "threats": [""]
+  }
+}`;
+
+    const phasePromptA2 = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).
+
+${baseContext}
+
+Objetivo: SOLO JTBD.
+
+REGLAS OBLIGATORIAS:
+- pains: EXACTAMENTE 10 (pain/why/impact)
+- desires: EXACTAMENTE 10 (desire/emotion/idealState)
+- objections: EXACTAMENTE 10 (objection/belief/counter)
+- insights: mínimo 10
+
+Estructura JSON EXACTA:
+{
   "jtbd": {
     "functional": "JTBD funcional detallado",
     "emotional": "JTBD emocional detallado",
@@ -603,8 +615,21 @@ Estructura JSON EXACTA:
     "pains": [{"pain":"","why":"","impact":""}],
     "desires": [{"desire":"","emotion":"","idealState":""}],
     "objections": [{"objection":"","belief":"","counter":""}],
-    "insights": ["Insight 1", "Insight 2", "...hasta 10"]
-  },
+    "insights": ["Insight 1", "...hasta 10+"]
+  }
+}`;
+
+    const phasePromptA3 = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).
+
+${baseContext}
+
+Objetivo: SOLO competencia.
+
+REGLAS OBLIGATORIAS:
+- competitors: EXACTAMENTE 10 competidores REALES del mercado ${targetMarket} con URLs verificables
+
+Estructura JSON EXACTA:
+{
   "competitors": [{
     "name": "Nombre real del competidor",
     "website": "https://...",
@@ -616,14 +641,14 @@ Estructura JSON EXACTA:
     "promise": "Promesa central",
     "valueProposition": "Propuesta de valor",
     "differentiator": "Diferenciador",
-    "price": "Rango de precios COP",
+    "price": "Rango de precios",
     "tone": "Tono de comunicación",
     "cta": "CTA principal",
     "awarenessLevel": "Nivel de conciencia",
-    "channels": ["Meta", "TikTok"],
-    "contentFormats": ["UGC", "Testimoniales"],
-    "strengths": ["Fortaleza 1", "Fortaleza 2"],
-    "weaknesses": ["Debilidad 1", "Debilidad 2"]
+    "channels": [""],
+    "contentFormats": [""],
+    "strengths": [""],
+    "weaknesses": [""]
   }]
 }`;
 
@@ -636,9 +661,10 @@ Estructura JSON EXACTA:
 
     const phasePromptB3 = `Devuelve SOLO JSON válido (sin markdown).\n\n${baseContext}\n\nObjetivo: 30 creativos MULTI-FORMATO (no solo video), distribuidos por fase ESFERA.\n\nREGLAS (OBLIGATORIAS):\n- creatives: exactamente 30\n- format puede ser: Video UGC, Carrusel, Imagen, Story, Email, Landing, Guion corto, Testimonio, etc.\n\nEstructura JSON EXACTA:\n{\n  "creatives": [{"number":1,"angle":"","avatar":"","title":"","idea":"","format":"","esferaPhase":"enganchar | solucion | remarketing | fidelizar","duration":""}]\n}`;
 
-    const phaseASchema = {
+    const phaseA1Schema = {
       type: 'object',
       additionalProperties: false,
+      required: ['market_overview'],
       properties: {
         market_overview: {
           type: 'object',
@@ -655,6 +681,14 @@ Estructura JSON EXACTA:
             threats: { type: 'array', minItems: 3, items: { type: 'string' } },
           },
         },
+      },
+    };
+
+    const phaseA2Schema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['jtbd'],
+      properties: {
         jtbd: {
           type: 'object',
           additionalProperties: true,
@@ -707,6 +741,14 @@ Estructura JSON EXACTA:
             insights: { type: 'array', minItems: 10, items: { type: 'string' } },
           },
         },
+      },
+    };
+
+    const phaseA3Schema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['competitors'],
+      properties: {
         competitors: {
           type: 'array',
           minItems: 10,
@@ -873,27 +915,44 @@ Estructura JSON EXACTA:
 
 
     const applyPhaseA = async () => {
-      console.log('[product-research] Running phase A (market/JTBD/competitors)');
-      const { json, rawContent, citations } = await runPerplexity(phasePromptA, 55000, phaseASchema, 'phase_a');
+      console.log('[product-research] Running phase A (split: market/JTBD/competitors)');
+
+      // A1: market
+      console.log('[product-research] Phase A1 (market_overview)');
+      const { json: a1, rawContent: rawA1, citations: citA1 } = await runPerplexity(phasePromptA1, 55000, phaseA1Schema, 'phase_a1');
 
       await savePartial({
         market_research: {
-          ...(json.market_overview || {}),
-          rawContent,
-          citations,
+          ...(a1.market_overview || {}),
+          rawContent: rawA1,
+          citations: citA1,
           generatedAt: new Date().toISOString(),
         },
-        ideal_avatar: json.jtbd
-          ? JSON.stringify({ jtbd: json.jtbd, summary: json.jtbd.functional })
+      });
+
+      // A2: JTBD
+      console.log('[product-research] Phase A2 (jtbd)');
+      const { json: a2 } = await runPerplexity(phasePromptA2, 55000, phaseA2Schema, 'phase_a2');
+
+      await savePartial({
+        ideal_avatar: a2.jtbd
+          ? JSON.stringify({ jtbd: a2.jtbd, summary: a2.jtbd.functional })
           : null,
+      });
+
+      // A3: competitors
+      console.log('[product-research] Phase A3 (competitors)');
+      const { json: a3 } = await runPerplexity(phasePromptA3, 55000, phaseA3Schema, 'phase_a3');
+
+      await savePartial({
         competitor_analysis: {
-          competitors: json.competitors || [],
+          competitors: a3.competitors || [],
           differentiation: {},
           generatedAt: new Date().toISOString(),
         },
       });
 
-      return { json, rawContent, citations };
+      return { a1, a2, a3 };
     };
 
     const applyPhaseB = async () => {
