@@ -110,3 +110,27 @@ verify_jwt = true
 
 [functions.script-chat]
 verify_jwt = false
+
+[functions.bunny-upload]
+verify_jwt = true
+
+[functions.bunny-storage]
+verify_jwt = true
+
+[functions.bunny-status]
+verify_jwt = true
+
+[functions.bunny-download]
+verify_jwt = true
+
+[functions.bunny-raw-upload]
+verify_jwt = true
+
+[functions.bunny-raw-download]
+verify_jwt = true
+
+[functions.bunny-raw-delete]
+verify_jwt = true
+
+[functions.bunny-raw-zip]
+verify_jwt = true
