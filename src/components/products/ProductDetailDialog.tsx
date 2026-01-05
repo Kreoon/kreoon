@@ -210,7 +210,7 @@ export function ProductDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto pb-8">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col pb-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
@@ -218,8 +218,8 @@ export function ProductDetailDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue={isNew ? "info" : "brief"} className="mt-4">
-          <ScrollArea className="w-full">
+        <Tabs defaultValue={isNew ? "info" : "brief"} className="mt-4 flex-1 flex flex-col min-h-0">
+          <ScrollArea className="w-full shrink-0">
             <TabsList className="inline-flex h-10 w-max min-w-full">
               <TabsTrigger value="brief" className="gap-1">
                 <ClipboardList className="h-3 w-3" />
@@ -270,6 +270,8 @@ export function ProductDetailDialog({
             </TabsList>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
+
+          <ScrollArea className="flex-1 mt-4 pr-4">
 
           <TabsContent value="brief" className="mt-4">
             {product ? (
@@ -437,10 +439,11 @@ export function ProductDetailDialog({
               disabled={!isAdmin}
             />
           </TabsContent>
+          </ScrollArea>
         </Tabs>
 
         {isAdmin && (
-          <div className="flex justify-end pt-4 border-t mt-4">
+          <div className="flex justify-end pt-4 pb-4 border-t mt-4 shrink-0">
             <Button onClick={handleSave} disabled={loading}>
               <Save className="h-4 w-4 mr-2" />
               {isNew ? "Crear Producto" : "Guardar Cambios"}

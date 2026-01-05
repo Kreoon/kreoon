@@ -44,6 +44,7 @@ interface BriefData {
   customCategory: string;
   currentObjective: string;
   slogan: string;
+  targetMarket: string; // Country/Region for competition analysis
   
   // Section 2: Value & Transformation
   mainBenefit: string;
@@ -217,12 +218,28 @@ const INTERESTS = [
   'Espiritualidad',
 ];
 
+const TARGET_MARKETS = [
+  'México',
+  'Colombia',
+  'Argentina',
+  'España',
+  'Chile',
+  'Perú',
+  'Estados Unidos (Hispano)',
+  'Latinoamérica (LATAM)',
+  'Centroamérica',
+  'Sudamérica',
+  'Europa (Hispano)',
+  'Global (Español)',
+];
+
 const DEFAULT_BRIEF: BriefData = {
   productName: '',
   category: '',
   customCategory: '',
   currentObjective: '',
   slogan: '',
+  targetMarket: '',
   mainBenefit: '',
   transformation: '',
   differentiator: '',
@@ -322,7 +339,8 @@ export function ProductBriefWizard({
           briefData.productName.trim() &&
           briefData.category &&
           briefData.currentObjective &&
-          briefData.slogan.trim()
+          briefData.slogan.trim() &&
+          briefData.targetMarket
         );
       case 1:
         return !!(
@@ -646,8 +664,25 @@ Escribe 1-2 frases de complemento para agregar al final.`
             </div>
 
             <div className="space-y-2">
+              <Label>¿En qué mercado/región vendes principalmente? *</Label>
+              <p className="text-xs text-muted-foreground">
+                Esto enfoca el análisis de competencia en tu mercado objetivo
+              </p>
+              <Select value={briefData.targetMarket} onValueChange={(v) => updateField('targetMarket', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona el mercado objetivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TARGET_MARKETS.map(market => (
+                    <SelectItem key={market} value={market}>{market}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="slogan">¿Hay un slogan o frase de venta que lo represente?</Label>
+                <Label htmlFor="slogan">¿Hay un slogan o frase de venta que lo represente? *</Label>
                 {renderEnhanceButton('slogan')}
               </div>
               <Input
