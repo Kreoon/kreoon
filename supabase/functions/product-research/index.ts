@@ -7,67 +7,273 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Prompt completo del Método Esfera
-const RESEARCH_PROMPT = `🧭 Prompt: Investigación de Mercado y Competencia Completa (Método Esfera)
+// Prompt completo del Método Esfera - Versión actualizada
+const RESEARCH_PROMPT = `Actúa como un Estratega Digital Senior especializado en investigación de mercado, análisis competitivo, creación de avatares y desarrollo de ángulos de venta, aplicando de forma estricta el Método ESFERA de Juan Ads y los principios de Estrategias Despegue.
 
-Quiero que actúes como un Estratega Digital especializado en investigación de mercado, análisis competitivo y desarrollo de avatares, aplicando el Método Esfera de Juan Ads y los principios de Estrategias Despegue.
+🔒 Contexto asumido:
+El Brief de Marca y el Brief de Producto ya han sido entregados, analizados y comprendidos en su totalidad.
+No solicites información adicional ni pidas aclaraciones iniciales.
+Trabaja exclusivamente sobre ese contexto.
 
-Tu tarea es realizar una investigación de mercado y competencia completa sobre el siguiente producto o servicio:
+Tu objetivo es entregar inteligencia de mercado profunda, accionable y orientada a decisiones, lista para ejecutar campañas, validar posicionamiento y escalar en el mercado hispano.
 
-👉 {{PRODUCT_DESCRIPTION}}
+Debes responder como consultor estratégico, no como redactor.
+Usa frameworks avanzados: JTBD, Eugene Schwartz, sesgos cognitivos, awareness levels, market gaps y teardown competitivo 360°.
 
-Desarrolla el análisis siguiendo esta estructura exacta y detallada:
+⚠️ REGLAS OBLIGATORIAS
 
-🔹 1. Panorama general del mercado
-- Define el tamaño, crecimiento y tendencias del mercado hispano relevante.
-- Identifica si el mercado está en fase de crecimiento, saturación o declive.
-- Menciona las variables macroeconómicas y socioculturales que influyen en la demanda.
-- Explica el nivel de conciencia predominante del público (según Eugene Schwartz).
+Sigue el flujo estrictamente secuencial.
+No adelantes ni omitas pasos.
 
-🔹 2. Análisis del cliente y del "Job To Be Done" (JTBD)
-- Identifica qué "trabajo" el cliente busca resolver al adquirir el producto.
-- Lista los dolores funcionales, emocionales y sociales del cliente.
-- Define los deseos aspiracionales y miedos latentes.
-- Extrae 10 insights clave de comportamiento (review mining, foros, TikTok, Reddit, reseñas, etc.).
+Cada bloque es la base del siguiente.
 
-🔹 3. Segmentación y avatares estratégicos
-Crea 5 buyer persona con:
-- Nombre, edad, ocupación y contexto de vida.
-- Nivel de conciencia del problema.
-- Drivers psicológicos y sesgos cognitivos que influyen en su decisión.
-- Objeciones más comunes.
-- Palabras y frases que usan para describir su situación.
+Usa lenguaje real del mercado, no marketing genérico.
 
-🔹 4. Análisis de competencia
-- Lista los 10 principales competidores directos e indirectos.
-- Incluye su propuesta de valor, precios, promesa central y formatos de contenido.
-- Analiza sus estrategias en Meta Ads, YouTube, TikTok y Google Ads (mensajes, creatividades y ofertas).
-- Realiza un teardown comparativo 360°:
-| Marca | Promesa | Diferenciador | Precio | Tono de comunicación | Llamado a la acción | Nivel de conciencia trabajado |
+Todo debe entregarse en formato estructurado: tablas, listas claras y síntesis ejecutiva.
 
-🔹 5. Oportunidades de diferenciación
-- Identifica vacíos del mercado y mensajes no explotados.
-- Sugiere posicionamientos únicos posibles.
-- Determina qué emociones o aspiraciones no están siendo atendidas por la competencia.
+Apóyate en patrones reales del mercado:
 
-🔹 6. Insights estratégicos del Método Esfera
-Para cada fase del Método Esfera (Enganchar, Solución, Remarketing, Fidelizar), resume:
-- Qué tipo de mensaje, formato o promesa predomina.
-- Qué falta o puede mejorar.
-- Qué ángulos de venta nuevos o disruptivos se podrían explorar.
+Reseñas
 
-🔹 7. Conclusión ejecutiva
-- Resume las principales oportunidades de diferenciación y posicionamiento.
-- Define los drivers psicológicos más potentes para captar atención.
-- Propón los 3 primeros pasos estratégicos para validar el posicionamiento en campaña.
+Comentarios
 
-📌 Instrucción final:
-Presenta todo en formato estructurado, con tablas, bullet points y un tono estratégico, enfocado en acciones concretas para el lanzamiento, validación y escalado del producto.`;
+TikTok, Instagram, YouTube
 
-// Prompt para la segunda fase de IA - Distribución de contenido
+Reddit, foros, Ads visibles
+
+Si detectas supuestos implícitos del brief, acláralos brevemente y continúa.
+
+🔥 FLUJO DE TRABAJO OBLIGATORIO
+
+INFORMACIÓN DEL PRODUCTO:
+{{PRODUCT_DESCRIPTION}}
+
+🔹 PASO 1 · PANORAMA GENERAL DEL MERCADO
+
+Con base en el brief:
+
+Tamaño estimado del mercado.
+
+Tendencia y ritmo de crecimiento.
+
+Estado del mercado:
+
+Crecimiento
+
+Saturación
+
+Declive
+
+Variables macroeconómicas, sociales y culturales relevantes.
+
+Nivel de conciencia predominante del público (Eugene Schwartz).
+
+🔹 PASO 2 · JOB TO BE DONE (JTBD) + INSIGHTS REALES
+
+Define el trabajo real que el cliente busca resolver.
+
+Entrega obligatoriamente:
+
+JTBD funcional, emocional y social.
+
+10 dolores profundos (no superficiales).
+
+10 deseos aspiracionales reales.
+
+10 objeciones / miedos latentes.
+
+10 insights estratégicos obtenidos de review mining y social listening.
+
+🔹 PASO 3 · AVATARES ESTRATÉGICOS (5 OBLIGATORIOS)
+
+Crea 5 buyer persona estratégicos, cada uno con:
+
+Nombre simbólico.
+
+Edad y contexto de vida.
+
+Situación actual (antes del producto).
+
+Nivel de conciencia.
+
+Drivers psicológicos.
+
+Sesgos cognitivos dominantes.
+
+Objeciones clave.
+
+Frases reales que usan para describir su problema.
+
+🔹 PASO 4 · ANÁLISIS DE COMPETENCIA 360°
+
+Identifica 10 competidores directos e indirectos.
+
+Analiza para cada uno:
+
+Propuesta de valor.
+
+Promesa central.
+
+Precio aproximado.
+
+Tono de comunicación.
+
+Formatos de contenido.
+
+Canales principales (Meta, TikTok, YouTube, Google).
+
+Tabla comparativa obligatoria:
+
+| Marca | Promesa | Diferenciador | Precio | Tono | CTA | Nivel de conciencia |
+
+🔹 PASO 5 · VACÍOS Y OPORTUNIDADES DE DIFERENCIACIÓN
+
+Detecta con precisión:
+
+Mensajes repetidos por todo el mercado.
+
+Dolores mal comunicados.
+
+Aspiraciones ignoradas.
+
+Oportunidades claras de posicionamiento.
+
+Emociones no explotadas por la competencia.
+
+🔹 PASO 6 · INSIGHTS POR FASE – MÉTODO ESFERA
+
+Para cada fase del Método ESFERA analiza:
+
+1️⃣ Enganchar
+
+Qué domina el mercado.
+
+Qué está saturado.
+
+Nuevas oportunidades creativas.
+
+2️⃣ Solución
+
+Promesas actuales.
+
+Objeciones no resueltas.
+
+Oportunidades de autoridad y confianza.
+
+3️⃣ Remarketing
+
+Tipos de prueba social existentes.
+
+Vacíos de validación.
+
+Mensajes que empujan la decisión.
+
+4️⃣ Fidelizar
+
+Errores comunes del mercado.
+
+Oportunidades de comunidad, LTV y referidos.
+
+🔹 PASO 7 · ÁNGULOS DE VENTA (20 OBLIGATORIOS)
+
+Crea 20 ángulos de venta estratégicos, variados y no redundantes:
+
+Educativos
+
+Emocionales
+
+Aspiracionales
+
+Autoridad
+
+Comparativos
+
+Anti-mercado
+
+Storytelling
+
+Prueba social
+
+Error común / riesgo oculto
+
+Para cada ángulo indica:
+
+Avatar principal.
+
+Emoción activada.
+
+Tipo de contenido ideal (UGC, Ads, Reel, Testimonio).
+
+🔹 PASO 8 · PROPUESTA ÚNICA DE VALOR (PUV)
+
+Construye una PUV clara y defendible, enfocada en:
+
+Problema central.
+
+Resultado tangible.
+
+Diferencia frente al mercado.
+
+Tipo de cliente ideal.
+
+🔹 PASO 9 · TRANSFORMACIÓN (ANTES VS DESPUÉS)
+
+Tabla obligatoria:
+
+| Antes | Después |
+
+Debe reflejar:
+
+Cambio funcional.
+
+Cambio emocional.
+
+Cambio de identidad.
+
+🔹 PASO 10 · LEAD MAGNETS (3 ESTRATÉGICOS)
+
+Diseña 3 lead magnets, indicando:
+
+Objetivo.
+
+Tipo de contenido.
+
+Dolor principal que ataca.
+
+Avatar al que apunta.
+
+Fase de conciencia.
+
+🔹 PASO 11 · CREATIVOS DE VIDEO (20 TOTALES)
+
+Crea 20 ideas de video, distribuidas así:
+
+5 Enganchar
+
+5 Solución
+
+5 Remarketing
+
+5 Fidelizar
+
+Tabla obligatoria:
+
+| Ángulo | Avatar | Título | Idea principal | Formato | Fase ESFERA |
+
+🎯 CONCLUSIÓN EJECUTIVA
+
+Finaliza con:
+
+5 insights estratégicos clave del mercado.
+
+Drivers psicológicos más potentes.
+
+3 acciones inmediatas para validar en campañas reales.`;
+
+// Prompt para la segunda fase de IA - Distribución de contenido estructurado
 const DISTRIBUTION_PROMPT = `Eres un asistente experto en organización de información de marketing y producto.
 
-Tu tarea es analizar el contenido de investigación de mercado y extraer información específica para cada campo del producto.
+Tu tarea es analizar el contenido de investigación de mercado y extraer información específica en formato JSON estructurado.
 
 INVESTIGACIÓN ORIGINAL:
 {{RESEARCH_CONTENT}}
@@ -80,47 +286,153 @@ Debes devolver un JSON con la siguiente estructura exacta. Cada campo debe conte
 {
   "description": "Descripción completa del producto que integre beneficios principales, transformación y propuesta de valor única. 2-3 párrafos.",
   
-  "strategy": "Estrategia de contenido recomendada basada en el análisis del Método Esfera. Incluir: fases, tipos de contenido por fase, mensajes clave y formatos recomendados.",
-  
-  "market_research": "Resumen ejecutivo del panorama de mercado: tamaño, tendencias, nivel de conciencia del público, oportunidades identificadas.",
-  
-  "ideal_avatar": "Perfil detallado del avatar ideal principal: demografía, psicografía, dolores, deseos, objeciones y lenguaje que usa.",
-  
-  "sales_angles": ["Ángulo 1: descripción y mensaje", "Ángulo 2: descripción y mensaje", "Ángulo 3: descripción y mensaje", "Ángulo 4: descripción y mensaje", "Ángulo 5: descripción y mensaje"],
-  
-  "competitor_summary": "Resumen del análisis competitivo: principales competidores, sus estrategias y vacíos de mercado identificados.",
-  
-  "differentiation_opportunities": "Top 5 oportunidades de diferenciación con acciones concretas.",
-  
-  "esfera_insights": {
-    "enganchar": "Insights para la fase de Enganchar",
-    "solucion": "Insights para la fase de Solución",
-    "remarketing": "Insights para la fase de Remarketing",
-    "fidelizar": "Insights para la fase de Fidelizar"
+  "market_overview": {
+    "marketSize": "Tamaño estimado del mercado",
+    "growthTrend": "Tendencia y ritmo de crecimiento",
+    "marketState": "crecimiento | saturacion | declive",
+    "macroVariables": ["Variable 1", "Variable 2", "Variable 3"],
+    "awarenessLevel": "Nivel de conciencia predominante del público (Eugene Schwartz)",
+    "summary": "Resumen ejecutivo del panorama de mercado"
   },
   
-  "avatar_profiles": [
+  "jtbd": {
+    "functional": "JTBD funcional",
+    "emotional": "JTBD emocional",
+    "social": "JTBD social",
+    "pains": ["Dolor 1", "Dolor 2", "Dolor 3", "Dolor 4", "Dolor 5", "Dolor 6", "Dolor 7", "Dolor 8", "Dolor 9", "Dolor 10"],
+    "desires": ["Deseo 1", "Deseo 2", "Deseo 3", "Deseo 4", "Deseo 5", "Deseo 6", "Deseo 7", "Deseo 8", "Deseo 9", "Deseo 10"],
+    "objections": ["Objeción 1", "Objeción 2", "Objeción 3", "Objeción 4", "Objeción 5", "Objeción 6", "Objeción 7", "Objeción 8", "Objeción 9", "Objeción 10"],
+    "insights": ["Insight 1", "Insight 2", "Insight 3", "Insight 4", "Insight 5", "Insight 6", "Insight 7", "Insight 8", "Insight 9", "Insight 10"]
+  },
+  
+  "avatars": [
     {
-      "name": "Nombre del avatar",
-      "age": "Rango de edad",
-      "occupation": "Ocupación",
-      "context": "Contexto de vida",
-      "awareness_level": "Nivel de conciencia",
+      "name": "Nombre simbólico",
+      "age": "Edad y contexto de vida",
+      "situation": "Situación actual (antes del producto)",
+      "awarenessLevel": "Nivel de conciencia",
       "drivers": "Drivers psicológicos",
-      "objections": "Objeciones principales",
-      "phrases": "Frases que usa"
+      "biases": "Sesgos cognitivos dominantes",
+      "objections": "Objeciones clave",
+      "phrases": ["Frase real 1", "Frase real 2", "Frase real 3"]
     }
   ],
   
-  "executive_summary": "Conclusión ejecutiva con los 3 pasos estratégicos recomendados."
+  "competitors": [
+    {
+      "name": "Nombre del competidor",
+      "promise": "Promesa central",
+      "differentiator": "Diferenciador",
+      "price": "Precio aproximado",
+      "tone": "Tono de comunicación",
+      "cta": "Llamado a la acción",
+      "awarenessLevel": "Nivel de conciencia trabajado",
+      "channels": ["Meta", "TikTok", "YouTube"],
+      "contentFormats": ["Formato 1", "Formato 2"]
+    }
+  ],
+  
+  "differentiation": {
+    "repeatedMessages": ["Mensaje repetido 1", "Mensaje repetido 2"],
+    "poorlyAddressedPains": ["Dolor mal comunicado 1", "Dolor mal comunicado 2"],
+    "ignoredAspirations": ["Aspiración ignorada 1", "Aspiración ignorada 2"],
+    "positioningOpportunities": ["Oportunidad 1", "Oportunidad 2", "Oportunidad 3"],
+    "unexploitedEmotions": ["Emoción no explotada 1", "Emoción no explotada 2"]
+  },
+  
+  "esferaInsights": {
+    "enganchar": {
+      "marketDominance": "Qué domina el mercado",
+      "saturated": "Qué está saturado",
+      "opportunities": ["Oportunidad creativa 1", "Oportunidad creativa 2"]
+    },
+    "solucion": {
+      "currentPromises": "Promesas actuales",
+      "unresolvedObjections": "Objeciones no resueltas",
+      "trustOpportunities": ["Oportunidad de autoridad 1", "Oportunidad de autoridad 2"]
+    },
+    "remarketing": {
+      "existingProof": "Tipos de prueba social existentes",
+      "validationGaps": "Vacíos de validación",
+      "decisionMessages": ["Mensaje que empuja decisión 1", "Mensaje que empuja decisión 2"]
+    },
+    "fidelizar": {
+      "commonErrors": "Errores comunes del mercado",
+      "communityOpportunities": ["Oportunidad de comunidad/LTV 1", "Oportunidad de comunidad/LTV 2"]
+    }
+  },
+  
+  "salesAngles": [
+    {
+      "angle": "Descripción del ángulo de venta",
+      "type": "educativo | emocional | aspiracional | autoridad | comparativo | anti-mercado | storytelling | prueba-social | error-comun",
+      "avatar": "Avatar principal",
+      "emotion": "Emoción activada",
+      "contentType": "UGC | Ads | Reel | Testimonio"
+    }
+  ],
+  
+  "puv": {
+    "centralProblem": "Problema central",
+    "tangibleResult": "Resultado tangible",
+    "marketDifference": "Diferencia frente al mercado",
+    "idealClient": "Tipo de cliente ideal",
+    "statement": "Declaración completa de la PUV en una oración"
+  },
+  
+  "transformation": {
+    "functional": {
+      "before": "Antes funcional",
+      "after": "Después funcional"
+    },
+    "emotional": {
+      "before": "Antes emocional",
+      "after": "Después emocional"
+    },
+    "identity": {
+      "before": "Antes identidad",
+      "after": "Después identidad"
+    }
+  },
+  
+  "leadMagnets": [
+    {
+      "name": "Nombre del lead magnet",
+      "objective": "Objetivo",
+      "contentType": "Tipo de contenido",
+      "pain": "Dolor principal que ataca",
+      "avatar": "Avatar al que apunta",
+      "awarenessPhase": "Fase de conciencia"
+    }
+  ],
+  
+  "videoCreatives": [
+    {
+      "angle": "Ángulo",
+      "avatar": "Avatar",
+      "title": "Título",
+      "idea": "Idea principal",
+      "format": "Formato",
+      "esferaPhase": "enganchar | solucion | remarketing | fidelizar"
+    }
+  ],
+  
+  "executiveSummary": {
+    "keyInsights": ["Insight 1", "Insight 2", "Insight 3", "Insight 4", "Insight 5"],
+    "psychologicalDrivers": ["Driver 1", "Driver 2", "Driver 3"],
+    "immediateActions": ["Acción 1", "Acción 2", "Acción 3"]
+  }
 }
 
 IMPORTANTE:
-- Devuelve SOLO el JSON, sin texto adicional.
+- Devuelve SOLO el JSON, sin texto adicional ni markdown.
 - Asegúrate de que el JSON sea válido.
 - Extrae información real del contenido de investigación proporcionado.
-- sales_angles debe ser un array de exactamente 5 strings.
-- avatar_profiles debe ser un array con los 5 buyer personas identificados.`;
+- avatars debe tener exactamente 5 elementos.
+- competitors debe tener hasta 10 elementos.
+- salesAngles debe tener exactamente 20 elementos.
+- leadMagnets debe tener exactamente 3 elementos.
+- videoCreatives debe tener exactamente 20 elementos (5 por fase ESFERA).`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -176,7 +488,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'Eres un estratega digital experto en investigación de mercado, aplicando el Método Esfera. Responde siempre en español con datos actualizados y verificables. Usa búsqueda web para obtener información real y actualizada sobre competidores, tendencias y mercado.' 
+            content: 'Eres un estratega digital experto en investigación de mercado, aplicando el Método ESFERA de Juan Ads y los principios de Estrategias Despegue. Responde siempre en español con datos actualizados y verificables. Usa búsqueda web para obtener información real y actualizada sobre competidores, tendencias y mercado. Sigue el flujo estrictamente secuencial y entrega todo en formato estructurado.' 
           },
           { role: 'user', content: prompt }
         ],
@@ -226,7 +538,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'Eres un asistente que extrae y organiza información de investigación de mercado en formato JSON estructurado. Responde SOLO con JSON válido.' 
+            content: 'Eres un asistente que extrae y organiza información de investigación de mercado en formato JSON estructurado. Responde SOLO con JSON válido, sin markdown ni texto adicional.' 
           },
           { role: 'user', content: distributionPrompt }
         ],
@@ -278,49 +590,70 @@ serve(async (req) => {
       if (structuredData.description) {
         updateData.description = structuredData.description;
       }
-      if (structuredData.strategy) {
-        updateData.strategy = structuredData.strategy;
-      }
-      if (structuredData.market_research) {
-        updateData.market_research = structuredData.market_research;
-      }
-      if (structuredData.ideal_avatar) {
-        updateData.ideal_avatar = structuredData.ideal_avatar;
-      }
-      if (structuredData.sales_angles && Array.isArray(structuredData.sales_angles)) {
-        updateData.sales_angles = structuredData.sales_angles;
-      }
       
-      // Store complex structured data in JSONB fields
+      // Store market research data
+      updateData.market_research = {
+        ...structuredData.market_overview,
+        rawContent: researchContent,
+        citations: citations,
+        generatedAt: new Date().toISOString()
+      };
+
+      // Store JTBD and customer analysis
+      updateData.ideal_avatar = structuredData.jtbd ? JSON.stringify({
+        jtbd: structuredData.jtbd,
+        summary: structuredData.jtbd.functional
+      }) : null;
+
+      // Store competitor analysis
       updateData.competitor_analysis = {
-        summary: structuredData.competitor_summary || '',
-        differentiation: structuredData.differentiation_opportunities || '',
-        rawContent: researchContent.substring(
-          researchContent.indexOf('4. Análisis de competencia'),
-          researchContent.indexOf('5. Oportunidades')
-        ),
-        citations: citations.slice(0, 10),
+        competitors: structuredData.competitors || [],
+        differentiation: structuredData.differentiation || {},
         generatedAt: new Date().toISOString()
       };
 
+      // Store avatar profiles
       updateData.avatar_profiles = {
-        profiles: structuredData.avatar_profiles || [],
-        summary: structuredData.ideal_avatar || '',
+        profiles: structuredData.avatars || [],
         generatedAt: new Date().toISOString()
       };
 
+      // Store sales angles and content strategy
       updateData.sales_angles_data = {
-        angles: structuredData.sales_angles || [],
-        esferaInsights: structuredData.esfera_insights || {},
+        angles: structuredData.salesAngles || [],
+        puv: structuredData.puv || {},
+        transformation: structuredData.transformation || {},
+        leadMagnets: structuredData.leadMagnets || [],
+        videoCreatives: structuredData.videoCreatives || [],
         generatedAt: new Date().toISOString()
       };
 
+      // Store ESFERA insights and content strategy
       updateData.content_strategy = {
-        strategy: structuredData.strategy || '',
-        executiveSummary: structuredData.executive_summary || '',
-        esferaInsights: structuredData.esfera_insights || {},
+        esferaInsights: structuredData.esferaInsights || {},
+        executiveSummary: structuredData.executiveSummary || {},
         generatedAt: new Date().toISOString()
       };
+
+      // Extract sales angles for the simple array field
+      if (structuredData.salesAngles && Array.isArray(structuredData.salesAngles)) {
+        updateData.sales_angles = structuredData.salesAngles.slice(0, 10).map((a: any) => a.angle);
+      }
+
+      // Build strategy summary
+      if (structuredData.executiveSummary) {
+        const summary = structuredData.executiveSummary;
+        updateData.strategy = `
+INSIGHTS CLAVE:
+${(summary.keyInsights || []).map((i: string, idx: number) => `${idx + 1}. ${i}`).join('\n')}
+
+DRIVERS PSICOLÓGICOS:
+${(summary.psychologicalDrivers || []).map((d: string) => `• ${d}`).join('\n')}
+
+ACCIONES INMEDIATAS:
+${(summary.immediateActions || []).map((a: string, idx: number) => `${idx + 1}. ${a}`).join('\n')}
+        `.trim();
+      }
     }
 
     const { error: updateError } = await supabase
@@ -487,19 +820,55 @@ function parseResearchContentFallback(content: string, citations: string[], brie
 
   return {
     description: `${briefData.mainBenefit || ''}\n\n${briefData.transformation || ''}\n\n${briefData.differentiator || ''}`.trim(),
-    strategy: extractSection('6. Insights estratégicos', '7.'),
-    market_research: extractSection('1. Panorama general', '2.'),
-    ideal_avatar: extractSection('3. Segmentación y avatares', '4.'),
-    sales_angles: briefData.aiSuggestedAngles || [],
-    competitor_summary: extractSection('4. Análisis de competencia', '5.'),
-    differentiation_opportunities: extractSection('5. Oportunidades de diferenciación', '6.'),
-    esfera_insights: {
-      enganchar: '',
-      solucion: '',
-      remarketing: '',
-      fidelizar: ''
+    market_overview: {
+      summary: extractSection('PASO 1', 'PASO 2'),
+      marketState: 'crecimiento',
+      macroVariables: [],
+      awarenessLevel: ''
     },
-    avatar_profiles: [],
-    executive_summary: extractSection('7. Conclusión ejecutiva', null)
+    jtbd: {
+      functional: extractSection('PASO 2', 'PASO 3'),
+      emotional: '',
+      social: '',
+      pains: [],
+      desires: [],
+      objections: [],
+      insights: []
+    },
+    avatars: [],
+    competitors: [],
+    differentiation: {
+      repeatedMessages: [],
+      poorlyAddressedPains: [],
+      ignoredAspirations: [],
+      positioningOpportunities: [],
+      unexploitedEmotions: []
+    },
+    esferaInsights: {
+      enganchar: { marketDominance: '', saturated: '', opportunities: [] },
+      solucion: { currentPromises: '', unresolvedObjections: '', trustOpportunities: [] },
+      remarketing: { existingProof: '', validationGaps: '', decisionMessages: [] },
+      fidelizar: { commonErrors: '', communityOpportunities: [] }
+    },
+    salesAngles: [],
+    puv: {
+      centralProblem: briefData.problemSolved || '',
+      tangibleResult: briefData.transformation || '',
+      marketDifference: briefData.differentiator || '',
+      idealClient: '',
+      statement: ''
+    },
+    transformation: {
+      functional: { before: '', after: '' },
+      emotional: { before: '', after: '' },
+      identity: { before: '', after: '' }
+    },
+    leadMagnets: [],
+    videoCreatives: [],
+    executiveSummary: {
+      keyInsights: [],
+      psychologicalDrivers: [],
+      immediateActions: []
+    }
   };
 }

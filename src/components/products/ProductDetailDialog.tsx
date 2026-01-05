@@ -17,6 +17,9 @@ import {
   DifferentiationTab,
   NeuromarketingTab,
   ExecutiveSummaryTab,
+  SalesAnglesTab,
+  PUVTransformationTab,
+  LeadMagnetsCreativesTab,
 } from "./strategy-tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +27,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { 
   Package, FileText, Users, Target, Save, 
   File, FolderOpen, Plus, X, Sparkles, ClipboardList,
-  Globe, Briefcase, Swords, Lightbulb, Brain
+  Globe, Briefcase, Swords, Lightbulb, Brain, Trophy, Gift, Video
 } from "lucide-react";
 
 interface Product {
@@ -33,7 +36,7 @@ interface Product {
   name: string;
   description: string | null;
   strategy: string | null;
-  market_research: string | null;
+  market_research: any | null;
   ideal_avatar: string | null;
   sales_angles: string[] | null;
   brief_url: string | null;
@@ -44,6 +47,10 @@ interface Product {
   research_file_url: string | null;
   brief_status?: string | null;
   brief_data?: Record<string, unknown> | null;
+  competitor_analysis?: any | null;
+  avatar_profiles?: any | null;
+  sales_angles_data?: any | null;
+  content_strategy?: any | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -91,7 +98,7 @@ export function ProductDetailDialog({
         name: product.name || "",
         description: product.description || "",
         strategy: product.strategy || "",
-        market_research: product.market_research || "",
+        market_research: typeof product.market_research === 'string' ? product.market_research : "",
         ideal_avatar: product.ideal_avatar || "",
         sales_angles: product.sales_angles || [],
         brief_url: product.brief_url || "",
@@ -137,7 +144,6 @@ export function ProductDetailDialog({
         name: formData.name,
         description: formData.description || null,
         strategy: formData.strategy || null,
-        market_research: formData.market_research || null,
         ideal_avatar: formData.ideal_avatar || null,
         sales_angles: formData.sales_angles.length > 0 ? formData.sales_angles : null,
         brief_url: formData.brief_url || null,
@@ -189,6 +195,19 @@ export function ProductDetailDialog({
     });
   };
 
+  // Extract JTBD data from ideal_avatar if it's stored as JSON
+  const jtbdData = (() => {
+    try {
+      if (product?.ideal_avatar && typeof product.ideal_avatar === 'string') {
+        const parsed = JSON.parse(product.ideal_avatar);
+        return parsed.jtbd || null;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  })();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto pb-8">
@@ -208,7 +227,7 @@ export function ProductDetailDialog({
               </TabsTrigger>
               <TabsTrigger value="summary" className="gap-1">
                 <FileText className="h-3 w-3" />
-                Resumen
+                Conclusión
               </TabsTrigger>
               <TabsTrigger value="market" className="gap-1">
                 <Globe className="h-3 w-3" />
@@ -230,11 +249,23 @@ export function ProductDetailDialog({
                 <Lightbulb className="h-3 w-3" />
                 Diferenciación
               </TabsTrigger>
-              <TabsTrigger value="neuro" className="gap-1">
+              <TabsTrigger value="esfera" className="gap-1">
                 <Brain className="h-3 w-3" />
                 Esfera
               </TabsTrigger>
-              <TabsTrigger value="info">Información</TabsTrigger>
+              <TabsTrigger value="angles" className="gap-1">
+                <Sparkles className="h-3 w-3" />
+                Ángulos
+              </TabsTrigger>
+              <TabsTrigger value="puv" className="gap-1">
+                <Trophy className="h-3 w-3" />
+                PUV
+              </TabsTrigger>
+              <TabsTrigger value="leads" className="gap-1">
+                <Gift className="h-3 w-3" />
+                Leads
+              </TabsTrigger>
+              <TabsTrigger value="info">Info</TabsTrigger>
               <TabsTrigger value="files">Archivos</TabsTrigger>
             </TabsList>
             <ScrollBar orientation="horizontal" />
@@ -261,33 +292,45 @@ export function ProductDetailDialog({
 
           <TabsContent value="summary" className="mt-4">
             <ExecutiveSummaryTab 
-              briefData={product?.brief_data as any} 
+              contentStrategy={product?.content_strategy as any} 
               productName={formData.name}
             />
           </TabsContent>
 
           <TabsContent value="market" className="mt-4">
-            <MarketOverviewTab briefData={product?.brief_data as any} />
+            <MarketOverviewTab marketResearch={product?.market_research as any} />
           </TabsContent>
 
           <TabsContent value="jtbd" className="mt-4">
-            <JTBDAnalysisTab briefData={product?.brief_data as any} />
+            <JTBDAnalysisTab jtbdData={jtbdData} />
           </TabsContent>
 
           <TabsContent value="avatars" className="mt-4">
-            <AvatarSegmentationTab briefData={product?.brief_data as any} />
+            <AvatarSegmentationTab avatarProfiles={product?.avatar_profiles as any} />
           </TabsContent>
 
           <TabsContent value="competition" className="mt-4">
-            <CompetitionAnalysisTab briefData={product?.brief_data as any} />
+            <CompetitionAnalysisTab competitorAnalysis={product?.competitor_analysis as any} />
           </TabsContent>
 
           <TabsContent value="differentiation" className="mt-4">
-            <DifferentiationTab briefData={product?.brief_data as any} />
+            <DifferentiationTab differentiation={product?.competitor_analysis?.differentiation as any} />
           </TabsContent>
 
-          <TabsContent value="neuro" className="mt-4">
-            <NeuromarketingTab briefData={product?.brief_data as any} />
+          <TabsContent value="esfera" className="mt-4">
+            <NeuromarketingTab contentStrategy={product?.content_strategy as any} />
+          </TabsContent>
+
+          <TabsContent value="angles" className="mt-4">
+            <SalesAnglesTab salesAnglesData={product?.sales_angles_data as any} />
+          </TabsContent>
+
+          <TabsContent value="puv" className="mt-4">
+            <PUVTransformationTab salesAnglesData={product?.sales_angles_data as any} />
+          </TabsContent>
+
+          <TabsContent value="leads" className="mt-4">
+            <LeadMagnetsCreativesTab salesAnglesData={product?.sales_angles_data as any} />
           </TabsContent>
 
           <TabsContent value="info" className="space-y-4 mt-4">

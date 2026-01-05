@@ -1,113 +1,139 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, User, Briefcase, Heart, Target } from 'lucide-react';
+import { Users, User, Brain, MessageSquare, AlertTriangle, Target } from 'lucide-react';
 
-interface BriefData {
-  targetGender?: string;
-  targetAgeRange?: string;
-  targetOccupation?: string;
-  targetInterests?: string[];
-  targetHabits?: string;
-  idealScenario?: string;
+interface AvatarProfile {
+  name?: string;
+  age?: string;
+  situation?: string;
+  awarenessLevel?: string;
+  drivers?: string;
+  biases?: string;
+  objections?: string;
+  phrases?: string[];
+}
+
+interface AvatarProfiles {
+  profiles?: AvatarProfile[];
 }
 
 interface AvatarSegmentationTabProps {
-  briefData?: BriefData | null;
+  avatarProfiles?: AvatarProfiles | null;
 }
 
-export function AvatarSegmentationTab({ briefData }: AvatarSegmentationTabProps) {
-  if (!briefData) {
+export function AvatarSegmentationTab({ avatarProfiles }: AvatarSegmentationTabProps) {
+  const profiles = avatarProfiles?.profiles || [];
+
+  if (profiles.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p>Completa el Brief IA para ver la segmentación de avatares</p>
+        <p>Genera la investigación de mercado para ver los avatares estratégicos</p>
+        <p className="text-sm mt-2">Completa el Brief IA y haz clic en "Generar Investigación"</p>
       </div>
     );
   }
 
-  const demographics = [
-    { label: 'Género', value: briefData.targetGender },
-    { label: 'Rango de Edad', value: briefData.targetAgeRange },
-    { label: 'Ocupación', value: briefData.targetOccupation },
-  ].filter(d => d.value);
-
-  const interests = briefData.targetInterests || [];
-
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <User className="h-4 w-4 text-primary" />
-            Perfil Demográfico
-          </CardTitle>
-          <CardDescription>Características básicas del cliente ideal</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {demographics.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {demographics.map(({ label, value }) => (
-                <div key={label} className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">{label}</p>
-                  <p className="font-medium text-sm">{value}</p>
+      {/* Header */}
+      <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+          <Users className="h-4 w-4 text-purple-500" />
+          5 Avatares Estratégicos
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Buyer personas creados a partir de la investigación de mercado con datos reales de comportamiento, sesgos cognitivos y frases textuales.
+        </p>
+      </div>
+
+      {/* Avatar Cards */}
+      <div className="space-y-6">
+        {profiles.map((avatar, idx) => (
+          <Card key={idx} className="overflow-hidden">
+            <CardHeader className="pb-3 bg-gradient-to-r from-muted/50 to-muted/30">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-5 w-5 text-primary" />
+                  </div>
+                  {avatar.name || `Avatar ${idx + 1}`}
+                </CardTitle>
+                {avatar.awarenessLevel && (
+                  <Badge variant="outline" className="text-xs">
+                    <Target className="h-3 w-3 mr-1" />
+                    {avatar.awarenessLevel}
+                  </Badge>
+                )}
+              </div>
+              {avatar.age && (
+                <CardDescription>{avatar.age}</CardDescription>
+              )}
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
+              {/* Situation */}
+              {avatar.situation && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">📍 Situación Actual</p>
+                  <p className="text-sm">{avatar.situation}</p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No hay datos demográficos definidos</p>
-          )}
-        </CardContent>
-      </Card>
+              )}
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Heart className="h-4 w-4 text-pink-500" />
-            Intereses
-          </CardTitle>
-          <CardDescription>Temas y actividades que le interesan</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {interests.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {interests.map((interest) => (
-                <Badge key={interest} variant="secondary">{interest}</Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No hay intereses definidos</p>
-          )}
-        </CardContent>
-      </Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Drivers */}
+                {avatar.drivers && (
+                  <div className="p-3 bg-green-500/5 rounded-lg border border-green-500/20">
+                    <p className="text-xs font-medium text-green-600 mb-1 flex items-center gap-1">
+                      <Brain className="h-3 w-3" />
+                      Drivers Psicológicos
+                    </p>
+                    <p className="text-sm">{avatar.drivers}</p>
+                  </div>
+                )}
 
-      {briefData.targetHabits && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Briefcase className="h-4 w-4 text-amber-500" />
-              Hábitos y Comportamiento
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">{briefData.targetHabits}</p>
-          </CardContent>
-        </Card>
-      )}
+                {/* Biases */}
+                {avatar.biases && (
+                  <div className="p-3 bg-purple-500/5 rounded-lg border border-purple-500/20">
+                    <p className="text-xs font-medium text-purple-600 mb-1 flex items-center gap-1">
+                      <Brain className="h-3 w-3" />
+                      Sesgos Cognitivos
+                    </p>
+                    <p className="text-sm">{avatar.biases}</p>
+                  </div>
+                )}
+              </div>
 
-      {briefData.idealScenario && (
-        <Card className="border-green-500/20 bg-green-500/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Target className="h-4 w-4 text-green-500" />
-              Escenario Ideal de Uso
-            </CardTitle>
-            <CardDescription>Cuándo y cómo el cliente usaría el producto</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">{briefData.idealScenario}</p>
-          </CardContent>
-        </Card>
-      )}
+              {/* Objections */}
+              {avatar.objections && (
+                <div className="p-3 bg-amber-500/5 rounded-lg border border-amber-500/20">
+                  <p className="text-xs font-medium text-amber-600 mb-1 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Objeciones Clave
+                  </p>
+                  <p className="text-sm">{avatar.objections}</p>
+                </div>
+              )}
+
+              {/* Phrases */}
+              {avatar.phrases && avatar.phrases.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" />
+                    Frases Reales que Usa
+                  </p>
+                  <div className="space-y-2">
+                    {avatar.phrases.map((phrase, pIdx) => (
+                      <div key={pIdx} className="p-2 bg-muted/50 rounded border-l-2 border-primary italic text-sm">
+                        "{phrase}"
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
