@@ -115,18 +115,24 @@ export function AvatarSegmentationTab({ avatarProfiles }: AvatarSegmentationTabP
               )}
 
               {/* Phrases */}
-              {avatar.phrases && avatar.phrases.length > 0 && (
+              {avatar.phrases && (
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
                     <MessageSquare className="h-3 w-3" />
                     Frases Reales que Usa
                   </p>
                   <div className="space-y-2">
-                    {avatar.phrases.map((phrase, pIdx) => (
-                      <div key={pIdx} className="p-2 bg-muted/50 rounded border-l-2 border-primary italic text-sm">
-                        "{phrase}"
+                    {Array.isArray(avatar.phrases) ? (
+                      avatar.phrases.map((phrase, pIdx) => (
+                        <div key={pIdx} className="p-2 bg-muted/50 rounded border-l-2 border-primary italic text-sm">
+                          "{phrase}"
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-2 bg-muted/50 rounded border-l-2 border-primary italic text-sm">
+                        "{avatar.phrases}"
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               )}
