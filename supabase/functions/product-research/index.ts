@@ -570,7 +570,122 @@ serve(async (req) => {
 
     const phasePromptB = `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).\n\n${baseContext}\n\nObjetivo: avatares + diferenciación + ESFERA + ángulos + PUV + lead magnets + ideas de video.\n\nEstructura JSON EXACTA:\n{\n  "description": "",\n  "avatars": [{\n    "name": "",\n    "age": "",\n    "situation": "",\n    "awarenessLevel": "",\n    "drivers": "",\n    "biases": "",\n    "objections": "",\n    "phrases": [""],\n    "goals": "",\n    "contentConsumption": ""\n  }],\n  "differentiation": {\n    "repeatedMessages": [{"message":"","opportunity":""}],\n    "poorlyAddressedPains": [{"pain":"","opportunity":"","howToUse":""}],\n    "ignoredAspirations": [{"aspiration":"","opportunity":""}],\n    "positioningOpportunities": [{"opportunity":"","why":"","execution":""}],\n    "unexploitedEmotions": [{"emotion":"","howToUse":""}]\n  },\n  "esferaInsights": {\n    "enganchar": {"marketDominance":"","saturated":"","opportunities":[""],"hookTypes":""},\n    "solucion": {"currentPromises":"","unresolvedObjections":"","trustOpportunities":[""],"positioning":""},\n    "remarketing": {"existingProof":"","validationGaps":"","decisionMessages":[""],"testimonialFormats":""},\n    "fidelizar": {"commonErrors":"","communityOpportunities":[""],"ambassadorStrategy":""}\n  },\n  "salesAngles": [{"angle":"","type":"","avatar":"","emotion":"","contentType":"","hookExample":""}],\n  "puv": {"centralProblem":"","tangibleResult":"","marketDifference":"","idealClient":"","statement":"","credibility":""},\n  "transformation": {\n    "functional": {"before":"","after":""},\n    "emotional": {"before":"","after":""},\n    "identity": {"before":"","after":""},\n    "social": {"before":"","after":""},\n    "financial": {"before":"","after":""}\n  },\n  "leadMagnets": [{"name":"","format":"","objective":"","contentType":"","pain":"","avatar":"","awarenessPhase":"","promise":"","structure":[""]}],\n  "videoCreatives": [{"number":1,"angle":"","avatar":"","title":"","idea":"","format":"","esferaPhase":"","duration":""}],\n  "executiveSummary": {\n    "marketSummary": "",\n    "keyInsights": [{"insight":"","importance":"","action":""}],\n    "psychologicalDrivers": [{"driver":"","why":"","howToUse":""}],\n    "immediateActions": [{"action":"","howTo":"","expectedResult":""}],\n    "quickWins": [{"win":"","effort":"","impact":""}],\n    "risksToAvoid": [{"risk":"","why":""}],\n    "finalRecommendation": ""\n  }\n}`;
 
-    const runPerplexity = async (prompt: string, timeoutMs: number) => {
+    const phaseASchema = {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        market_overview: {
+          type: 'object',
+          additionalProperties: true,
+          properties: {
+            marketSize: { type: 'string' },
+            growthTrend: { type: 'string' },
+            marketState: { type: 'string' },
+            marketStateExplanation: { type: 'string' },
+            macroVariables: { type: 'array', items: { type: 'string' } },
+            awarenessLevel: { type: 'string' },
+            summary: { type: 'string' },
+            opportunities: { type: 'array', items: { type: 'string' } },
+            threats: { type: 'array', items: { type: 'string' } },
+          },
+        },
+        jtbd: {
+          type: 'object',
+          additionalProperties: true,
+          properties: {
+            functional: { type: 'string' },
+            emotional: { type: 'string' },
+            social: { type: 'string' },
+            pains: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: true,
+                properties: {
+                  pain: { type: 'string' },
+                  why: { type: 'string' },
+                  impact: { type: 'string' },
+                },
+              },
+            },
+            desires: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: true,
+                properties: {
+                  desire: { type: 'string' },
+                  emotion: { type: 'string' },
+                  idealState: { type: 'string' },
+                },
+              },
+            },
+            objections: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: true,
+                properties: {
+                  objection: { type: 'string' },
+                  belief: { type: 'string' },
+                  counter: { type: 'string' },
+                },
+              },
+            },
+            insights: { type: 'array', items: { type: 'string' } },
+          },
+        },
+        competitors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: true,
+            properties: {
+              name: { type: 'string' },
+              website: { type: 'string' },
+              instagram: { type: 'string' },
+              tiktok: { type: 'string' },
+              facebook: { type: 'string' },
+              youtube: { type: 'string' },
+              linkedin: { type: 'string' },
+              promise: { type: 'string' },
+              valueProposition: { type: 'string' },
+              differentiator: { type: 'string' },
+              price: { type: 'string' },
+              tone: { type: 'string' },
+              cta: { type: 'string' },
+              awarenessLevel: { type: 'string' },
+              channels: { type: 'array', items: { type: 'string' } },
+              contentFormats: { type: 'array', items: { type: 'string' } },
+              strengths: { type: 'array', items: { type: 'string' } },
+              weaknesses: { type: 'array', items: { type: 'string' } },
+            },
+          },
+        },
+      },
+    };
+
+    const phaseBSchema = {
+      type: 'object',
+      additionalProperties: true,
+      properties: {
+        description: { type: 'string' },
+        avatars: { type: 'array', items: { type: 'object', additionalProperties: true } },
+        differentiation: { type: 'object', additionalProperties: true },
+        esferaInsights: { type: 'object', additionalProperties: true },
+        salesAngles: { type: 'array', items: { type: 'object', additionalProperties: true } },
+        puv: { type: 'object', additionalProperties: true },
+        transformation: { type: 'object', additionalProperties: true },
+        leadMagnets: { type: 'array', items: { type: 'object', additionalProperties: true } },
+        videoCreatives: { type: 'array', items: { type: 'object', additionalProperties: true } },
+        executiveSummary: { type: 'object', additionalProperties: true },
+      },
+    };
+
+    const sanitizeJsonString = (input: string) =>
+      input.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+
+    const runPerplexity = async (prompt: string, timeoutMs: number, schema: any, schemaName: string) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -589,6 +704,13 @@ serve(async (req) => {
               { role: 'system', content: `Responde en español. Sé directo. DEVUELVE SOLO JSON válido sin texto adicional.` },
               { role: 'user', content: prompt }
             ],
+            response_format: {
+              type: 'json_schema',
+              json_schema: {
+                name: schemaName,
+                schema,
+              },
+            },
           }),
           signal: controller.signal,
         });
@@ -601,49 +723,16 @@ serve(async (req) => {
         const data = await res.json();
         const content = (data.choices?.[0]?.message?.content || '').toString();
         const citations = data.citations || [];
-        
-        // Extract JSON from response, handling possible markdown code blocks
-        let jsonStr = content;
-        
-        // Remove markdown code block if present
-        const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (codeBlockMatch) {
-          jsonStr = codeBlockMatch[1].trim();
-        } else {
-          // Try to extract JSON object
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            jsonStr = jsonMatch[0];
-          }
-        }
 
-        if (!jsonStr || !jsonStr.startsWith('{')) {
-          console.error('[product-research] No JSON found in Perplexity response:', content.substring(0, 500));
-          throw new Error('No JSON found in Perplexity response');
-        }
+        const jsonStr = sanitizeJsonString(content.trim());
+        if (!jsonStr) throw new Error('Empty response from Perplexity');
 
-        // Try to fix common JSON issues
         let parsed: any;
         try {
           parsed = JSON.parse(jsonStr);
-        } catch (parseError) {
-          console.error('[product-research] JSON parse error, attempting fix:', parseError);
-          
-          // Try fixing common issues: trailing commas, unescaped quotes
-          let fixedJson = jsonStr
-            .replace(/,\s*}/g, '}')          // Remove trailing commas before }
-            .replace(/,\s*]/g, ']')          // Remove trailing commas before ]
-            .replace(/'/g, '"')              // Replace single quotes with double
-            .replace(/(\w+):/g, '"$1":')     // Add quotes to unquoted keys (simple cases)
-            .replace(/""+/g, '"');           // Fix double quotes
-          
-          try {
-            parsed = JSON.parse(fixedJson);
-          } catch {
-            // If still fails, return empty structure based on expected keys
-            console.error('[product-research] Could not parse JSON even after fixes, using fallback');
-            parsed = {};
-          }
+        } catch (e) {
+          console.error('[product-research] Perplexity returned non-JSON content (first 400 chars):', content.slice(0, 400));
+          throw new Error(`Invalid JSON from Perplexity: ${(e as Error).message}`);
         }
 
         return { json: parsed, rawContent: content, citations };
@@ -676,7 +765,7 @@ serve(async (req) => {
 
     const applyPhaseA = async () => {
       console.log('[product-research] Running phase A (market/JTBD/competitors)');
-      const { json, rawContent, citations } = await runPerplexity(phasePromptA, 55000);
+      const { json, rawContent, citations } = await runPerplexity(phasePromptA, 55000, phaseASchema, 'phase_a');
 
       await savePartial({
         market_research: {
@@ -700,7 +789,7 @@ serve(async (req) => {
 
     const applyPhaseB = async () => {
       console.log('[product-research] Running phase B (avatars/angles/esfera/etc)');
-      const { json } = await runPerplexity(phasePromptB, 55000);
+      const { json } = await runPerplexity(phasePromptB, 55000, phaseBSchema, 'phase_b');
 
       const updateData: any = {
         brief_status: 'completed',
