@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -9,17 +9,15 @@ import { cn } from '@/lib/utils';
  */
 export function UpdatePrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
-  const [countdown, setCountdown] = useState(3);
   const [waitingSW, setWaitingSW] = useState<ServiceWorker | null>(null);
-  
-  const updateTriggered = useRef(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const triggerUpdate = useCallback(() => {
-    if (waitingSW && !updateTriggered.current) {
-      updateTriggered.current = true;
+    if (waitingSW && !isUpdating) {
+      setIsUpdating(true);
       waitingSW.postMessage({ type: 'SKIP_WAITING' });
     }
-  }, [waitingSW]);
+  }, [waitingSW, isUpdating]);
 
   const checkForUpdates = useCallback(async () => {
     if (!('serviceWorker' in navigator)) return;
@@ -59,22 +57,8 @@ export function UpdatePrompt() {
     }
   }, []);
 
-  // Auto-countdown and trigger update
-  useEffect(() => {
-    if (!showPrompt || !waitingSW) return;
-
-    const timer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          triggerUpdate();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [showPrompt, waitingSW, triggerUpdate]);
+  // Removed auto-countdown - updates should only happen when user clicks the button
+  // This prevents unexpected reloads during active form editing
 
   useEffect(() => {
     checkForUpdates();
@@ -113,11 +97,14 @@ export function UpdatePrompt() {
             🚀 Actualizando KREOON
           </h4>
           <p className="text-muted-foreground text-xs mt-1">
-            Nueva versión disponible. Actualizando en {countdown}s...
+            Nueva versión disponible. Actualiza cuando estés listo.
           </p>
           <div className="flex gap-2 mt-3">
-            <Button size="sm" onClick={handleUpdateNow} className="text-xs">
-              Actualizar ahora
+            <Button size="sm" onClick={handleUpdateNow} className="text-xs" disabled={isUpdating}>
+              {isUpdating ? 'Actualizando...' : 'Actualizar ahora'}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowPrompt(false)} className="text-xs">
+              Después
             </Button>
           </div>
         </div>
