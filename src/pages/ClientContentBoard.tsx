@@ -513,6 +513,35 @@ export default function ClientContentBoard() {
             await fetchClientData();
             toast({ title: 'Novedad reportada', description: 'El equipo revisará y corregirá el contenido' });
           }}
+          onDownload={async (item) => {
+            try {
+              const videoUrl = item.video_url || item.bunny_embed_url || (item.video_urls && item.video_urls[0]);
+              if (!videoUrl) {
+                toast({ title: 'Sin video disponible', variant: 'destructive' });
+                return;
+              }
+              
+              const { data, error } = await supabase.functions.invoke('bunny-download', {
+                body: { content_id: item.id, video_url: videoUrl }
+              });
+              
+              if (error) throw error;
+              
+              if (data.download_url) {
+                const link = document.createElement('a');
+                link.href = data.download_url;
+                link.download = `${item.title}.mp4`;
+                link.target = '_blank';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                toast({ title: 'Descarga iniciada' });
+              }
+            } catch (error) {
+              console.error('Download error:', error);
+              toast({ title: 'Error al descargar', variant: 'destructive' });
+            }
+          }}
           showActions={true}
           mode="review"
         />

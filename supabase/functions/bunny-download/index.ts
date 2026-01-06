@@ -85,15 +85,29 @@ Deno.serve(async (req) => {
     const isClient = (clientUserData?.length || 0) > 0
 
     // Check if user is the client associated with this content
+    // Check both: if user is in client_users for this content's client, OR if user is the client owner
     let isContentClient = false
     if (isClient && content.client_id) {
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('user_id')
-        .eq('id', content.client_id)
-        .single()
+      // Check if user is in client_users for this specific client
+      const { data: clientUserMatch } = await supabase
+        .from('client_users')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('client_id', content.client_id)
+        .limit(1)
       
-      isContentClient = clientData?.user_id === user.id
+      if (clientUserMatch && clientUserMatch.length > 0) {
+        isContentClient = true
+      } else {
+        // Fallback: check if user is the client owner
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('user_id')
+          .eq('id', content.client_id)
+          .single()
+        
+        isContentClient = clientData?.user_id === user.id
+      }
     }
 
     // Permission check:
@@ -101,7 +115,7 @@ Deno.serve(async (req) => {
     // - Editors can download anytime (to work on raw videos)
     // - Creators can download anytime (their own content)
     // - Clients can only download when status is approved, paid, or delivered
-    const approvedStatuses = ['approved', 'paid', 'delivered']
+    const approvedStatuses = ['approved', 'paid', 'delivered', 'corrected']
     const canDownload = isAdmin || isEditor || isCreator || (isContentClient && approvedStatuses.includes(content.status))
 
     if (!canDownload) {
