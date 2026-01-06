@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,22 +34,23 @@ const MONTHS = [
 
 const QUARTERS = ['Q1 (Ene-Mar)', 'Q2 (Abr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Oct-Dic)'];
 
-export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
-  const { toast } = useToast();
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
-  
-  const [loading, setLoading] = useState(false);
-  const [goal, setGoal] = useState<Goal>({
-    period_type: 'month',
-    period_value: currentMonth,
-    year: currentYear,
-    revenue_goal: 0,
-    revenue_goal_usd: 0,
-    content_goal: 0,
-    new_clients_goal: 0,
-    notes: ''
-  });
+export const GoalsDialog = forwardRef<HTMLDivElement, GoalsDialogProps>(
+  function GoalsDialog({ open, onOpenChange, onSave }, ref) {
+    const { toast } = useToast();
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    
+    const [loading, setLoading] = useState(false);
+    const [goal, setGoal] = useState<Goal>({
+      period_type: 'month',
+      period_value: currentMonth,
+      year: currentYear,
+      revenue_goal: 0,
+      revenue_goal_usd: 0,
+      content_goal: 0,
+      new_clients_goal: 0,
+      notes: ''
+    });
   const [existingGoalId, setExistingGoalId] = useState<string | null>(null);
 
   // Fetch existing goal when period changes
@@ -315,4 +316,4 @@ export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
       </DialogContent>
     </Dialog>
   );
-}
+});
