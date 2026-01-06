@@ -105,11 +105,11 @@ function AppRoutes() {
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="/" element={<HomePage />} />
       <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-      <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'creator']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
-      <Route path="/content" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
-      <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Creators /></MainLayout></ProtectedRoute>} />
+      <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'creator', 'strategist']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
+      <Route path="/content" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
+      <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Creators /></MainLayout></ProtectedRoute>} />
       <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
-      <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
+      <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
       <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
       <Route path="/live" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Live /></MainLayout></ProtectedRoute>} />
       <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute>} />
@@ -119,7 +119,7 @@ function AppRoutes() {
       <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
       <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
       <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
-      <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute>} />
+      <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor', 'strategist']}><MainLayout><Ranking /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
