@@ -53,17 +53,26 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
   const fetchClients = async () => {
     if (!organizationId) return;
 
-    const { data, error } = await supabase
-      .from('marketing_clients')
-      .select(`
-        *,
-        client:clients(id, name, logo_url)
-      `)
-      .eq('organization_id', organizationId)
-      .eq('is_active', true);
+    try {
+      const { data, error } = await supabase
+        .from('marketing_clients')
+        .select(`
+          *,
+          client:clients(id, name, logo_url)
+        `)
+        .eq('organization_id', organizationId)
+        .eq('is_active', true);
 
-    if (!error && data) {
-      setClients(data as unknown as MarketingClient[]);
+      if (error) {
+        console.error('Error fetching clients:', error);
+        return;
+      }
+      
+      if (data) {
+        setClients(data as unknown as MarketingClient[]);
+      }
+    } catch (err) {
+      console.error('Error fetching clients:', err);
     }
   };
 

@@ -245,12 +245,19 @@ function HeroBlock({ userId, isOwner }: { userId: string; isOwner: boolean }) {
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('full_name, avatar_url, bio, city, country')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => setProfile(data));
+    const fetchProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url, bio, city, country')
+          .eq('id', userId)
+          .single();
+        if (!error && data) setProfile(data);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    };
+    fetchProfile();
   }, [userId]);
 
   if (!profile) return null;
@@ -450,12 +457,19 @@ function InternalVerificationBlock({ userId }: { userId: string }) {
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('is_verified, verification_date')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => setProfile(data));
+    const fetchData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('is_verified, verification_date')
+          .eq('id', userId)
+          .single();
+        if (!error && data) setProfile(data);
+      } catch (err) {
+        console.error('Error fetching verification:', err);
+      }
+    };
+    fetchData();
   }, [userId]);
 
   return (
@@ -478,12 +492,19 @@ function PrivateContactBlock({ userId }: { userId: string }) {
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('phone, email')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => setProfile(data));
+    const fetchData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('phone, email')
+          .eq('id', userId)
+          .single();
+        if (!error && data) setProfile(data);
+      } catch (err) {
+        console.error('Error fetching contact:', err);
+      }
+    };
+    fetchData();
   }, [userId]);
 
   return (
@@ -505,12 +526,19 @@ function LegalIdBlock({ userId }: { userId: string }) {
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('document_type, document_number')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => setProfile(data));
+    const fetchData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('document_type, document_number')
+          .eq('id', userId)
+          .single();
+        if (!error && data) setProfile(data);
+      } catch (err) {
+        console.error('Error fetching legal id:', err);
+      }
+    };
+    fetchData();
   }, [userId]);
 
   return (
@@ -531,12 +559,19 @@ function PaymentInfoBlock({ userId }: { userId: string }) {
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('payment_method, payment_account')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => setProfile(data));
+    const fetchData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('payment_method, payment_account')
+          .eq('id', userId)
+          .single();
+        if (!error && data) setProfile(data);
+      } catch (err) {
+        console.error('Error fetching payment info:', err);
+      }
+    };
+    fetchData();
   }, [userId]);
 
   return (
@@ -573,13 +608,20 @@ function InternalMetricsBlock({ userId }: { userId: string }) {
   const [metrics, setMetrics] = useState({ content: 0, earnings: 0 });
 
   useEffect(() => {
-    supabase
-      .from('content')
-      .select('id', { count: 'exact', head: true })
-      .eq('creator_id', userId)
-      .then(({ count }) => {
-        setMetrics(prev => ({ ...prev, content: count || 0 }));
-      });
+    const fetchData = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('content')
+          .select('id', { count: 'exact', head: true })
+          .eq('creator_id', userId);
+        if (!error) {
+          setMetrics(prev => ({ ...prev, content: count || 0 }));
+        }
+      } catch (err) {
+        console.error('Error fetching metrics:', err);
+      }
+    };
+    fetchData();
   }, [userId]);
 
   return (

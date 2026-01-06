@@ -69,18 +69,27 @@ export function UPLevelsManager({ organizationId }: UPLevelsManagerProps) {
   }, []);
 
   const fetchThresholds = async () => {
-    const { data, error } = await supabase
-      .from('up_settings')
-      .select('value')
-      .eq('key', 'level_thresholds')
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('up_settings')
+        .select('value')
+        .eq('key', 'level_thresholds')
+        .maybeSingle();
 
-    if (data?.value && typeof data.value === 'string') {
-      try {
-        setThresholds(JSON.parse(data.value));
-      } catch (e) {
-        console.error('Error parsing thresholds:', e);
+      if (error) {
+        console.error('Error fetching thresholds:', error);
+        return;
       }
+
+      if (data?.value && typeof data.value === 'string') {
+        try {
+          setThresholds(JSON.parse(data.value));
+        } catch (e) {
+          console.error('Error parsing thresholds:', e);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching thresholds:', err);
     }
   };
 
