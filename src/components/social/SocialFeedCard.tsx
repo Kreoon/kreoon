@@ -5,7 +5,37 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ExpandableText } from '@/components/ui/expandable-text';
 import { HLSVideoPlayer, HLSVideoPlayerRef } from '@/components/video/HLSVideoPlayer';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 
+// Check if URL is a Bunny embed URL
+function isBunnyEmbed(url: string): boolean {
+  return url.includes('iframe.mediadelivery.net') || url.includes('video.bunnycdn.com');
+}
+
+// Extract video ID from Bunny embed URL
+function extractBunnyVideoId(url: string): string | null {
+  const patterns = [
+    /iframe\.mediadelivery\.net\/embed\/\d+\/([a-f0-9-]+)/i,
+    /video\.bunnycdn\.com\/embed\/\d+\/([a-f0-9-]+)/i,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+// Build Bunny embed URL with proper parameters
+function buildBunnyEmbedUrl(url: string, autoplay: boolean, muted: boolean, loop: boolean): string {
+  const baseUrl = url.split('?')[0];
+  const params = new URLSearchParams({
+    autoplay: autoplay ? 'true' : 'false',
+    muted: muted ? 'true' : 'false',
+    loop: loop ? 'true' : 'false',
+    preload: 'true',
+  });
+  return `${baseUrl}?${params.toString()}`;
+}
 export interface SocialFeedItem {
   id: string;
   title: string;
@@ -252,19 +282,37 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
         {/* Media Container - 100vh with proper aspect ratio */}
         <div className="relative w-full h-full flex items-center justify-center">
           {isVideo ? (
-            <HLSVideoPlayer
-              ref={playerRef}
-              src={item.videoUrls?.[0] || item.mediaUrl}
-              poster={item.thumbnailUrl || undefined}
-              autoPlay={isActive && !isPaused}
-              muted={isMuted}
-              loop
-              showControls={false}
-              aspectRatio="auto"
-              objectFit="contain"
-              className="w-full h-full"
-              onLoadComplete={handleVideoLoadComplete}
-            />
+            // Check if it's a Bunny embed URL - use iframe
+            isBunnyEmbed(item.videoUrls?.[0] || item.mediaUrl) ? (
+              <iframe
+                src={buildBunnyEmbedUrl(
+                  item.videoUrls?.[0] || item.mediaUrl,
+                  isActive && !isPaused,
+                  isMuted,
+                  true
+                )}
+                className="w-full h-full"
+                style={{ border: 'none' }}
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+              />
+            ) : (
+              // Native video with HLS support
+              <HLSVideoPlayer
+                ref={playerRef}
+                src={item.videoUrls?.[0] || item.mediaUrl}
+                poster={item.thumbnailUrl || undefined}
+                autoPlay={isActive && !isPaused}
+                muted={isMuted}
+                loop
+                showControls={false}
+                aspectRatio="auto"
+                objectFit="contain"
+                className="w-full h-full"
+                onLoadComplete={handleVideoLoadComplete}
+              />
+            )
           ) : (
             <div className="relative w-full h-full flex items-center justify-center">
               {!imageLoaded && (
