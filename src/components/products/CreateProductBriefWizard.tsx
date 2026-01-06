@@ -333,16 +333,75 @@ const DEFAULT_BRIEF: BriefData = {
   aiSuggestedHooks: [],
 };
 
+// LocalStorage key for auto-save
+const DRAFT_STORAGE_KEY = 'kreoon_product_brief_draft';
+const DRAFT_STEP_KEY = 'kreoon_product_brief_step';
+
+// Helper to load draft from localStorage
+const loadDraft = (clientId: string): BriefData | null => {
+  try {
+    const stored = localStorage.getItem(`${DRAFT_STORAGE_KEY}_${clientId}`);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Check if draft is less than 24 hours old
+      if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+        return parsed.data;
+      }
+      // Clear old draft
+      localStorage.removeItem(`${DRAFT_STORAGE_KEY}_${clientId}`);
+    }
+  } catch (e) {
+    console.error('Error loading draft:', e);
+  }
+  return null;
+};
+
+// Helper to save draft to localStorage
+const saveDraft = (clientId: string, data: BriefData, step: number) => {
+  try {
+    localStorage.setItem(`${DRAFT_STORAGE_KEY}_${clientId}`, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+    localStorage.setItem(`${DRAFT_STEP_KEY}_${clientId}`, String(step));
+  } catch (e) {
+    console.error('Error saving draft:', e);
+  }
+};
+
+// Helper to clear draft from localStorage
+const clearDraft = (clientId: string) => {
+  try {
+    localStorage.removeItem(`${DRAFT_STORAGE_KEY}_${clientId}`);
+    localStorage.removeItem(`${DRAFT_STEP_KEY}_${clientId}`);
+  } catch (e) {
+    console.error('Error clearing draft:', e);
+  }
+};
+
+// Helper to load step from localStorage
+const loadStep = (clientId: string): number => {
+  try {
+    const stored = localStorage.getItem(`${DRAFT_STEP_KEY}_${clientId}`);
+    return stored ? parseInt(stored, 10) : 0;
+  } catch (e) {
+    return 0;
+  }
+};
+
 export function CreateProductBriefWizard({ 
   clientId, 
   onComplete,
   onCancel 
 }: CreateProductBriefWizardProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+  // Load initial state from localStorage
+  const [currentStep, setCurrentStep] = useState(() => loadStep(clientId));
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [enhancingField, setEnhancingField] = useState<string | null>(null);
-  const [briefData, setBriefData] = useState<BriefData>(DEFAULT_BRIEF);
+  const [briefData, setBriefData] = useState<BriefData>(() => loadDraft(clientId) || DEFAULT_BRIEF);
+  const [draftRestored, setDraftRestored] = useState(() => loadDraft(clientId) !== null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   
   // Client packages state
   const [clientPackages, setClientPackages] = useState<ClientPackage[]>([]);
@@ -390,6 +449,28 @@ export function CreateProductBriefWizard({
       fetchClientVideos();
     }
   }, [clientId]);
+
+  // Auto-save to localStorage whenever briefData or currentStep changes
+  useEffect(() => {
+    // Debounce the save to avoid excessive writes
+    const timeoutId = setTimeout(() => {
+      saveDraft(clientId, briefData, currentStep);
+      setLastSaved(new Date());
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [briefData, currentStep, clientId]);
+
+  // Handle draft restored notification
+  useEffect(() => {
+    if (draftRestored) {
+      toast.success('Borrador restaurado', {
+        description: 'Continúa donde lo dejaste. Tu progreso se guarda automáticamente.',
+        duration: 5000,
+      });
+      setDraftRestored(false);
+    }
+  }, [draftRestored]);
 
   // Calculate available videos
   const videosAvailable = Math.max(0, videosOwed - videosUsed);
@@ -648,6 +729,8 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
       toast.success('¡Investigación completada!', {
         description: 'El producto ha sido creado con análisis de mercado completo.'
       });
+      // Clear the draft after successful creation
+      clearDraft(clientId);
       onComplete(newProduct.id);
     } catch (error) {
       console.error('Error creating product:', error);
@@ -1403,7 +1486,15 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
       <div className="space-y-2">
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>Paso {currentStep + 1} de {STEPS.length}</span>
-          <span>{Math.round(progress)}% completado</span>
+          <div className="flex items-center gap-3">
+            {lastSaved && (
+              <span className="flex items-center gap-1 text-xs text-green-600">
+                <CheckCircle2 className="h-3 w-3" />
+                Guardado automáticamente
+              </span>
+            )}
+            <span>{Math.round(progress)}% completado</span>
+          </div>
         </div>
         <Progress value={progress} className="h-2" />
       </div>
@@ -1450,7 +1541,17 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
       <div className="flex justify-between items-center">
         <div className="flex gap-2">
           {onCancel && (
-            <Button variant="ghost" onClick={onCancel}>
+            <Button variant="ghost" onClick={() => {
+              // Ask before canceling if there's data
+              if (briefData.productName.trim()) {
+                if (window.confirm('¿Seguro que quieres salir? Tu progreso se guardará automáticamente y podrás continuar después.')) {
+                  onCancel();
+                }
+              } else {
+                clearDraft(clientId);
+                onCancel();
+              }
+            }}>
               Cancelar
             </Button>
           )}
