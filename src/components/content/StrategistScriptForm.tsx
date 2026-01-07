@@ -59,6 +59,9 @@ interface ScriptFormData {
   sales_angle: string;
   hooks_count: string;
   ideal_avatar: string;
+  selected_pain: string;
+  selected_desire: string;
+  selected_objection: string;
   target_country: string;
   narrative_structure: string;
   additional_instructions: string;
@@ -1169,6 +1172,9 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     sales_angle: "",
     hooks_count: "3",
     ideal_avatar: "",
+    selected_pain: "",
+    selected_desire: "",
+    selected_objection: "",
     target_country: "",
     narrative_structure: "",
     additional_instructions: "",
@@ -2039,143 +2045,161 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
         {/* Dolores */}
         <div className="space-y-2 md:col-span-2">
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="w-full justify-between">
-                <span className="flex items-center gap-2">
-                  💔 Dolores / Pains ({researchPains.length})
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
-              {researchPains.map((pain: any, idx: number) => {
-                const painText = typeof pain === 'string' ? pain : (pain?.pain || pain?.description || pain?.text || `Dolor ${idx + 1}`);
-                const category = typeof pain === 'object' ? (pain?.category || pain?.type) : null;
+          <Label className="flex items-center gap-2">
+            💔 Dolor Seleccionado
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              value={formData.selected_pain}
+              onChange={(e) => setFormData({ ...formData, selected_pain: e.target.value })}
+              placeholder="Selecciona un dolor de la investigación..."
+              className="flex-1"
+            />
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="outline" size="sm">
+                  <span className="flex items-center gap-1">
+                    Dolores ({researchPains.length})
+                  </span>
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="absolute mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-80 shadow-lg">
+                {researchPains.map((pain: any, idx: number) => {
+                  const painText = typeof pain === 'string' ? pain : (pain?.pain || pain?.description || pain?.text || `Dolor ${idx + 1}`);
+                  const category = typeof pain === 'object' ? (pain?.category || pain?.type) : null;
 
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                    onClick={() => setFormData(prev => ({ 
-                      ...prev, 
-                      additional_instructions: prev.additional_instructions 
-                        ? `${prev.additional_instructions}\n\nDOLOR CLAVE: ${painText}` 
-                        : `DOLOR CLAVE: ${painText}` 
-                    }))}
-                  >
-                    <span className="text-sm">{painText}</span>
-                    {category && (
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {category}
-                      </Badge>
-                    )}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
+                      onClick={() => setFormData(prev => ({ ...prev, selected_pain: painText }))}
+                    >
+                      <span className="text-sm">{painText}</span>
+                      {category && (
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {category}
+                        </Badge>
+                      )}
+                    </button>
+                  );
+                })}
 
-              {researchPains.length === 0 && (
-                <p className="text-sm text-muted-foreground p-2">
-                  Selecciona un producto con investigación para ver los dolores.
-                </p>
-              )}
-            </CollapsibleContent>
-          </Collapsible>
+                {researchPains.length === 0 && (
+                  <p className="text-sm text-muted-foreground p-2">
+                    Selecciona un producto con investigación para ver los dolores.
+                  </p>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
         </div>
 
         {/* Deseos */}
         <div className="space-y-2 md:col-span-2">
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="w-full justify-between">
-                <span className="flex items-center gap-2">
-                  ✨ Deseos / Desires ({researchDesires.length})
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
-              {researchDesires.map((desire: any, idx: number) => {
-                const desireText = typeof desire === 'string' ? desire : (desire?.desire || desire?.description || desire?.text || `Deseo ${idx + 1}`);
-                const category = typeof desire === 'object' ? (desire?.category || desire?.type) : null;
+          <Label className="flex items-center gap-2">
+            ✨ Deseo Seleccionado
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              value={formData.selected_desire}
+              onChange={(e) => setFormData({ ...formData, selected_desire: e.target.value })}
+              placeholder="Selecciona un deseo de la investigación..."
+              className="flex-1"
+            />
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="outline" size="sm">
+                  <span className="flex items-center gap-1">
+                    Deseos ({researchDesires.length})
+                  </span>
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="absolute mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-80 shadow-lg">
+                {researchDesires.map((desire: any, idx: number) => {
+                  const desireText = typeof desire === 'string' ? desire : (desire?.desire || desire?.description || desire?.text || `Deseo ${idx + 1}`);
+                  const category = typeof desire === 'object' ? (desire?.category || desire?.type) : null;
 
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                    onClick={() => setFormData(prev => ({ 
-                      ...prev, 
-                      additional_instructions: prev.additional_instructions 
-                        ? `${prev.additional_instructions}\n\nDESEO CLAVE: ${desireText}` 
-                        : `DESEO CLAVE: ${desireText}` 
-                    }))}
-                  >
-                    <span className="text-sm">{desireText}</span>
-                    {category && (
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {category}
-                      </Badge>
-                    )}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
+                      onClick={() => setFormData(prev => ({ ...prev, selected_desire: desireText }))}
+                    >
+                      <span className="text-sm">{desireText}</span>
+                      {category && (
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {category}
+                        </Badge>
+                      )}
+                    </button>
+                  );
+                })}
 
-              {researchDesires.length === 0 && (
-                <p className="text-sm text-muted-foreground p-2">
-                  Selecciona un producto con investigación para ver los deseos.
-                </p>
-              )}
-            </CollapsibleContent>
-          </Collapsible>
+                {researchDesires.length === 0 && (
+                  <p className="text-sm text-muted-foreground p-2">
+                    Selecciona un producto con investigación para ver los deseos.
+                  </p>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
         </div>
 
         {/* Objeciones */}
         <div className="space-y-2 md:col-span-2">
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="w-full justify-between">
-                <span className="flex items-center gap-2">
-                  🚫 Objeciones ({researchObjections.length})
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
-              {researchObjections.map((objection: any, idx: number) => {
-                const objectionText = typeof objection === 'string' ? objection : (objection?.objection || objection?.description || objection?.text || `Objeción ${idx + 1}`);
-                const category = typeof objection === 'object' ? (objection?.category || objection?.type) : null;
+          <Label className="flex items-center gap-2">
+            🚫 Objeción Seleccionada
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              value={formData.selected_objection}
+              onChange={(e) => setFormData({ ...formData, selected_objection: e.target.value })}
+              placeholder="Selecciona una objeción de la investigación..."
+              className="flex-1"
+            />
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="outline" size="sm">
+                  <span className="flex items-center gap-1">
+                    Objeciones ({researchObjections.length})
+                  </span>
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="absolute mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-80 shadow-lg">
+                {researchObjections.map((objection: any, idx: number) => {
+                  const objectionText = typeof objection === 'string' ? objection : (objection?.objection || objection?.description || objection?.text || `Objeción ${idx + 1}`);
+                  const category = typeof objection === 'object' ? (objection?.category || objection?.type) : null;
 
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                    onClick={() => setFormData(prev => ({ 
-                      ...prev, 
-                      additional_instructions: prev.additional_instructions 
-                        ? `${prev.additional_instructions}\n\nOBJECIÓN A SUPERAR: ${objectionText}` 
-                        : `OBJECIÓN A SUPERAR: ${objectionText}` 
-                    }))}
-                  >
-                    <span className="text-sm">{objectionText}</span>
-                    {category && (
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {category}
-                      </Badge>
-                    )}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
+                      onClick={() => setFormData(prev => ({ ...prev, selected_objection: objectionText }))}
+                    >
+                      <span className="text-sm">{objectionText}</span>
+                      {category && (
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {category}
+                        </Badge>
+                      )}
+                    </button>
+                  );
+                })}
 
-              {researchObjections.length === 0 && (
-                <p className="text-sm text-muted-foreground p-2">
-                  Selecciona un producto con investigación para ver las objeciones.
-                </p>
-              )}
-            </CollapsibleContent>
-          </Collapsible>
+                {researchObjections.length === 0 && (
+                  <p className="text-sm text-muted-foreground p-2">
+                    Selecciona un producto con investigación para ver las objeciones.
+                  </p>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
         </div>
       </div>
 
