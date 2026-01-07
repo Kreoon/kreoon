@@ -14,11 +14,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useScriptPrompts, DEFAULT_SCRIPT_PROMPTS } from "@/hooks/useScriptPrompts";
 import { useOrganizationAI, AI_PROVIDERS_CONFIG } from "@/hooks/useOrganizationAI";
+import { ProductResearchSelector } from "./ProductResearchSelector";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
   Video, ChevronDown, CheckCircle2, Bot, RefreshCw, Building2,
-  Package, Lightbulb, Copy, Download, FileJson, AlertCircle
+  Package, Lightbulb, Copy, Download, FileJson, AlertCircle, Database
 } from "lucide-react";
 
 interface GeneratedContent {
@@ -484,6 +485,37 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Left: Form */}
       <div className="space-y-6">
+        {/* Product Research Selector */}
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Database className="h-5 w-5 text-primary" />
+              Cargar Investigación de Producto
+            </CardTitle>
+            <CardDescription>
+              Selecciona un producto con investigación de mercado para autocompletar los campos
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProductResearchSelector
+              onSelectProduct={(product) => {
+                if (product) {
+                  setFormData(prev => ({
+                    ...prev,
+                    product_name: product.name || prev.product_name,
+                    product_description: product.description || prev.product_description,
+                  }));
+                }
+              }}
+              onSelectAvatar={(avatar) => setFormData(prev => ({ ...prev, ideal_avatar: avatar }))}
+              onSelectSalesAngle={(angle) => setFormData(prev => ({ ...prev, sales_angle: angle }))}
+              onSelectStrategy={(strategy) => setFormData(prev => ({ ...prev, product_strategy: strategy }))}
+              onSelectMarketResearch={(research) => setFormData(prev => ({ ...prev, market_research: research }))}
+              onSelectHooks={(hooks) => setFormData(prev => ({ ...prev, hooks }))}
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
