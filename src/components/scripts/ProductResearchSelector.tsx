@@ -115,10 +115,30 @@ export function ProductResearchSelector({
         
         if (error) throw error;
         
-        // Filter products that have research data
-        const productsWithResearch = (data || []).filter(p => 
-          p.market_research || p.avatar_profiles || p.sales_angles_data || p.content_strategy
-        );
+        // Filter products that have research data - check all possible locations
+        const productsWithResearch = (data || []).filter(p => {
+          const avatarProfiles = p.avatar_profiles as any;
+          const salesAnglesData = p.sales_angles_data as any;
+          return (
+            p.market_research || 
+            avatarProfiles?.profiles?.length > 0 || 
+            salesAnglesData?.angles?.length > 0 || 
+            p.content_strategy ||
+            p.sales_angles?.length > 0
+          );
+        });
+        
+        console.log("[ProductResearchSelector] Products with research:", productsWithResearch.map(p => {
+          const avatarProfiles = p.avatar_profiles as any;
+          const salesAnglesData = p.sales_angles_data as any;
+          return {
+            name: p.name,
+            hasMarketResearch: !!p.market_research,
+            avatarProfilesCount: avatarProfiles?.profiles?.length || 0,
+            salesAnglesCount: salesAnglesData?.angles?.length || 0,
+            salesAnglesSimple: p.sales_angles?.length || 0,
+          };
+        }));
         
         setProducts(productsWithResearch as Product[]);
         
@@ -185,10 +205,74 @@ export function ProductResearchSelector({
     return text || JSON.stringify(research, null, 2);
   };
 
-  const avatarProfiles: AvatarProfile[] = selectedProduct?.avatar_profiles?.profiles || [];
-  const salesAngles: SalesAngle[] = selectedProduct?.sales_angles_data?.angles || [];
-  const competitors = selectedProduct?.competitor_analysis?.competitors || [];
-  const contentStrategy = selectedProduct?.content_strategy;
+  // Extract avatar profiles from multiple possible locations
+  const getAvatarProfiles = (): AvatarProfile[] => {
+    if (!selectedProduct) return [];
+    
+    // Try avatar_profiles.profiles first
+    if (selectedProduct.avatar_profiles?.profiles?.length > 0) {
+      return selectedProduct.avatar_profiles.profiles;
+    }
+    
+    // Try market_research.strategicAvatars
+    if (selectedProduct.market_research?.strategicAvatars?.length > 0) {
+      return selectedProduct.market_research.strategicAvatars.map((a: any) => ({
+        name: a.name || a.avatarName,
+        age: a.age,
+        situation: a.situation || a.currentSituation,
+        awarenessLevel: a.awarenessLevel || a.awareness,
+        drivers: a.drivers || (Array.isArray(a.emotionalDrivers) ? a.emotionalDrivers.join(', ') : a.emotionalDrivers),
+        biases: a.biases || (Array.isArray(a.cognitiveBiases) ? a.cognitiveBiases.join(', ') : a.cognitiveBiases),
+        objections: a.objections || (Array.isArray(a.mainObjections) ? a.mainObjections.join(', ') : a.mainObjections),
+        phrases: a.phrases || a.typicalPhrases,
+        goals: a.goals,
+        contentConsumption: a.contentConsumption,
+      }));
+    }
+    
+    return [];
+  };
+
+  // Extract sales angles from multiple possible locations
+  const getSalesAngles = (): SalesAngle[] => {
+    if (!selectedProduct) return [];
+    
+    // Try sales_angles_data.angles first
+    if (selectedProduct.sales_angles_data?.angles?.length > 0) {
+      return selectedProduct.sales_angles_data.angles;
+    }
+    
+    // Try market_research.salesAngles
+    if (selectedProduct.market_research?.salesAngles?.length > 0) {
+      return selectedProduct.market_research.salesAngles.map((a: any) => ({
+        angle: a.angle || a.salesAngle || a.name,
+        type: a.type || a.category,
+        avatar: a.avatar || a.targetAvatar,
+        emotion: a.emotion || a.primaryEmotion,
+        contentType: a.contentType || a.format,
+      }));
+    }
+    
+    // Try simple sales_angles array
+    if (selectedProduct.sales_angles?.length > 0) {
+      return selectedProduct.sales_angles.map((angle: string) => ({
+        angle,
+        type: 'general',
+        avatar: '',
+        emotion: '',
+        contentType: 'video',
+      }));
+    }
+    
+    return [];
+  };
+
+  const avatarProfiles = getAvatarProfiles();
+  const salesAngles = getSalesAngles();
+  const competitors = selectedProduct?.competitor_analysis?.competitors || 
+                     selectedProduct?.market_research?.competitors || [];
+  const contentStrategy = selectedProduct?.content_strategy || 
+                         selectedProduct?.market_research?.contentStrategy;
 
   const handleSelectAvatar = (avatar: AvatarProfile) => {
     const formatted = `
@@ -256,33 +340,54 @@ Frases: ${avatar.phrases?.join('; ') || ''}
             <SelectValue placeholder="Seleccionar producto..." />
           </SelectTrigger>
           <SelectContent>
-            {products.map(product => (
-              <SelectItem key={product.id} value={product.id}>
-                <div className="flex items-center gap-2">
-                  {product.name}
-                  {product.avatar_profiles?.profiles?.length > 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      <Users className="h-3 w-3 mr-1" />
-                      {product.avatar_profiles.profiles.length}
-                    </Badge>
-                  )}
-                  {product.sales_angles_data?.angles?.length > 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      {product.sales_angles_data.angles.length}
-                    </Badge>
-                  )}
-                </div>
-              </SelectItem>
-            ))}
+            {products.map(product => {
+              // Count avatars from multiple sources
+              const avatarCount = 
+                product.avatar_profiles?.profiles?.length || 
+                product.market_research?.strategicAvatars?.length || 0;
+              
+              // Count angles from multiple sources
+              const anglesCount = 
+                product.sales_angles_data?.angles?.length || 
+                product.market_research?.salesAngles?.length ||
+                product.sales_angles?.length || 0;
+              
+              return (
+                <SelectItem key={product.id} value={product.id}>
+                  <div className="flex items-center gap-2">
+                    {product.name}
+                    {avatarCount > 0 && (
+                      <Badge variant="outline" className="text-xs">
+                        <Users className="h-3 w-3 mr-1" />
+                        {avatarCount}
+                      </Badge>
+                    )}
+                    {anglesCount > 0 && (
+                      <Badge variant="outline" className="text-xs">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        {anglesCount}
+                      </Badge>
+                    )}
+                  </div>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
 
       {selectedProduct && (
         <div className="space-y-3">
+          {/* Debug info - shows data availability */}
+          {avatarProfiles.length === 0 && salesAngles.length === 0 && (
+            <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-sm text-yellow-700 dark:text-yellow-400">
+              <p className="font-medium">Este producto no tiene investigación de mercado completa.</p>
+              <p className="text-xs mt-1">Genera el Brief IA para obtener avatares y ángulos de venta.</p>
+            </div>
+          )}
+          
           {/* Avatars Collapsible */}
-          {avatarProfiles.length > 0 && (
+          {avatarProfiles.length > 0 ? (
             <Collapsible open={avatarsOpen} onOpenChange={setAvatarsOpen}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full justify-between">
@@ -331,10 +436,15 @@ Frases: ${avatar.phrases?.join('; ') || ''}
                 </ScrollArea>
               </CollapsibleContent>
             </Collapsible>
+          ) : (
+            <div className="p-2 border border-dashed rounded-lg text-center text-muted-foreground text-sm">
+              <Users className="h-4 w-4 mx-auto mb-1 opacity-50" />
+              Sin avatares disponibles
+            </div>
           )}
 
           {/* Sales Angles Collapsible */}
-          {salesAngles.length > 0 && (
+          {salesAngles.length > 0 ? (
             <Collapsible open={anglesOpen} onOpenChange={setAnglesOpen}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full justify-between">
@@ -367,17 +477,25 @@ Frases: ${avatar.phrases?.join('; ') || ''}
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="text-xs capitalize">
-                              {angle.type || 'general'}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs">
-                              {angle.emotion || ''}
-                            </Badge>
+                            {angle.type && (
+                              <Badge variant="outline" className="text-xs capitalize">
+                                {angle.type}
+                              </Badge>
+                            )}
+                            {angle.emotion && (
+                              <Badge variant="secondary" className="text-xs">
+                                {angle.emotion}
+                              </Badge>
+                            )}
                           </div>
-                          <p className="text-sm">{angle.angle}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Avatar: {angle.avatar} • Formato: {angle.contentType}
-                          </p>
+                          <p className="text-sm font-medium">{angle.angle}</p>
+                          {(angle.avatar || angle.contentType) && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {angle.avatar && `Avatar: ${angle.avatar}`}
+                              {angle.avatar && angle.contentType && ' • '}
+                              {angle.contentType && `Formato: ${angle.contentType}`}
+                            </p>
+                          )}
                         </div>
                         <Button
                           size="sm"
@@ -396,6 +514,11 @@ Frases: ${avatar.phrases?.join('; ') || ''}
                 </ScrollArea>
               </CollapsibleContent>
             </Collapsible>
+          ) : (
+            <div className="p-2 border border-dashed rounded-lg text-center text-muted-foreground text-sm">
+              <Sparkles className="h-4 w-4 mx-auto mb-1 opacity-50" />
+              Sin ángulos de venta disponibles
+            </div>
           )}
 
           {/* Market Insights Collapsible */}
