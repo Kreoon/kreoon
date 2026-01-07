@@ -185,6 +185,28 @@ export function StandaloneScriptGenerator() {
     ai_model: "gpt-4o",
   });
 
+  // Producto seleccionado en “Cargar Investigación de Producto”
+  const [researchProduct, setResearchProduct] = useState<any | null>(null);
+
+  const extractResearchAvatars = (product: any): any[] => {
+    if (!product) return [];
+    if (product.avatar_profiles?.profiles?.length) return product.avatar_profiles.profiles;
+    if (product.market_research?.strategicAvatars?.length) return product.market_research.strategicAvatars;
+    return [];
+  };
+
+  const extractResearchAngles = (product: any): any[] => {
+    if (!product) return [];
+    if (product.sales_angles_data?.angles?.length) return product.sales_angles_data.angles;
+    if (product.market_research?.salesAngles?.length) return product.market_research.salesAngles;
+    if (Array.isArray(product.sales_angles) && product.sales_angles.length)
+      return product.sales_angles.map((a: string) => ({ angle: a }));
+    return [];
+  };
+
+  const researchAvatars = useMemo(() => extractResearchAvatars(researchProduct), [researchProduct]);
+  const researchAngles = useMemo(() => extractResearchAngles(researchProduct), [researchProduct]);
+
   const currentProvider = enabledProviders.find(p => p.value === formData.ai_provider) || 
                          AI_PROVIDERS.find(p => p.value === formData.ai_provider);
   const availableModels = currentProvider?.models || [];
@@ -499,13 +521,21 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <CardContent>
             <ProductResearchSelector
               onSelectProduct={(product) => {
-                if (product) {
-                  setFormData(prev => ({
-                    ...prev,
-                    product_name: product.name || prev.product_name,
-                    product_description: product.description || prev.product_description,
-                  }));
-                }
+                setResearchProduct(product);
+
+                if (!product) return;
+
+                const angles = (product?.sales_angles_data?.angles || [])
+                  .map((a: any) => a?.angle)
+                  .filter(Boolean);
+
+                setFormData(prev => ({
+                  ...prev,
+                  product_name: product.name || prev.product_name,
+                  product_description: product.description || prev.product_description,
+                  // Guardamos todos los ángulos como texto (para contexto) y dejamos el selector para escoger 1 en “Ángulo de Venta”
+                  sales_angles: angles.length ? angles.join(", ") : prev.sales_angles,
+                }));
               }}
               onSelectAvatar={(avatar) => setFormData(prev => ({ ...prev, ideal_avatar: avatar }))}
               onSelectSalesAngle={(angle) => setFormData(prev => ({ ...prev, sales_angle: angle }))}
@@ -568,6 +598,60 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                 onChange={(e) => setFormData({ ...formData, ideal_avatar: e.target.value })}
                 rows={3}
               />
+
+              {researchAvatars.length > 0 && (
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button type="button" variant="outline" size="sm" className="w-full justify-between">
+                      <span className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-primary" />
+                        Elegir avatar de la investigación ({Math.min(5, researchAvatars.length)})
+                      </span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-2">
+                    <div className="space-y-2">
+                      {researchAvatars.slice(0, 5).map((a: any, idx: number) => {
+                        const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
+                        const situation = a?.situation || a?.currentSituation || "";
+                        const awareness = a?.awarenessLevel || a?.awareness || "";
+                        const drivers = Array.isArray(a?.drivers) ? a.drivers.join(", ") : (a?.drivers || a?.emotionalDrivers || "");
+                        const objections = Array.isArray(a?.objections) ? a.objections.join(", ") : (a?.objections || a?.mainObjections || "");
+                        const phrases = Array.isArray(a?.phrases) ? a.phrases : (Array.isArray(a?.typicalPhrases) ? a.typicalPhrases : []);
+
+                        const formatted = [
+                          `AVATAR: ${name}`,
+                          situation ? `SITUACIÓN: ${situation}` : "",
+                          awareness ? `NIVEL DE CONSCIENCIA: ${awareness}` : "",
+                          drivers ? `DRIVERS: ${drivers}` : "",
+                          objections ? `OBJECIONES: ${objections}` : "",
+                          phrases?.length ? `FRASES TEXTUALES: ${phrases.join(" | ")}` : "",
+                        ].filter(Boolean).join("\n");
+
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full text-left p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                            onClick={() => setFormData(prev => ({ ...prev, ideal_avatar: formatted }))}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium text-sm">{name}</span>
+                              <Badge variant="secondary" className="text-xs">Usar</Badge>
+                            </div>
+                            {(situation || awareness) && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {situation || awareness}
+                              </p>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -674,6 +758,47 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                   value={formData.sales_angle}
                   onChange={(e) => setFormData({ ...formData, sales_angle: e.target.value })}
                 />
+
+                {researchAngles.length > 0 && (
+                  <Collapsible>
+                    <CollapsibleTrigger asChild>
+                      <Button type="button" variant="outline" size="sm" className="w-full justify-between">
+                        <span className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-primary" />
+                          Elegir ángulo de venta ({researchAngles.length})
+                        </span>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-2">
+                      <ScrollArea className="max-h-60">
+                        <div className="space-y-2 p-1">
+                          {researchAngles.map((a: any, idx: number) => {
+                            const angleText = a?.angle || a?.salesAngle || a?.name || "";
+                            if (!angleText) return null;
+                            const avatar = a?.avatar || a?.targetAvatar;
+                            const type = a?.type || a?.category;
+
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                className="w-full text-left p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                                onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
+                              >
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {type && <Badge variant="outline" className="text-xs">{type}</Badge>}
+                                  {avatar && <Badge variant="secondary" className="text-xs">{avatar}</Badge>}
+                                </div>
+                                <p className="text-sm font-medium mt-1">{angleText}</p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </ScrollArea>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
               </div>
             </div>
 
