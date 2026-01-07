@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useScriptPrompts } from "@/hooks/useScriptPrompts";
@@ -1227,6 +1228,77 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     }
   }, [product]);
 
+  // Cargar la investigación COMPLETA del producto (avatar_profiles + sales_angles_data + market_research)
+  const [researchProduct, setResearchProduct] = useState<any | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchResearchProduct = async () => {
+      if (!product?.id) {
+        setResearchProduct(null);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, avatar_profiles, sales_angles_data, market_research, sales_angles")
+          .eq("id", product.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        const normalized = (() => {
+          if (!data) return null;
+          const mr = (data as any).market_research;
+          if (typeof mr === "string") {
+            try {
+              return { ...(data as any), market_research: JSON.parse(mr) };
+            } catch {
+              return data as any;
+            }
+          }
+          return data as any;
+        })();
+
+        if (!cancelled) setResearchProduct(normalized);
+      } catch (e) {
+        console.error("[StrategistScriptForm] Error fetching product research", e);
+        if (!cancelled) setResearchProduct(null);
+      }
+    };
+
+    fetchResearchProduct();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [product?.id]);
+
+  const researchAvatars = useMemo(() => {
+    const profiles = researchProduct?.avatar_profiles?.profiles;
+    if (Array.isArray(profiles) && profiles.length) return profiles;
+
+    const strategicAvatars = researchProduct?.market_research?.strategicAvatars;
+    if (Array.isArray(strategicAvatars) && strategicAvatars.length) return strategicAvatars;
+
+    return [];
+  }, [researchProduct]);
+
+  const researchAngles = useMemo(() => {
+    const angles = researchProduct?.sales_angles_data?.angles;
+    if (Array.isArray(angles) && angles.length) return angles;
+
+    const salesAngles = researchProduct?.market_research?.salesAngles;
+    if (Array.isArray(salesAngles) && salesAngles.length) return salesAngles;
+
+    const fallback = (researchProduct?.sales_angles ?? product?.sales_angles) as any;
+    if (Array.isArray(fallback) && fallback.length) return fallback.map((a: any) => ({ angle: a }));
+
+    return [];
+  }, [researchProduct, product?.sales_angles]);
+
   // Fetch document from URL - returns { content, warning }
   const fetchDocument = async (url: string): Promise<{ content: string; warning?: string }> => {
     if (!url) return { content: "" };
@@ -1747,22 +1819,66 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" /> Ángulo de Venta *
           </Label>
-          <Select 
-            value={formData.sales_angle} 
-            onValueChange={(v) => setFormData({ ...formData, sales_angle: v })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar ángulo..." />
-            </SelectTrigger>
-            <SelectContent>
-              {product.sales_angles?.map((angle, idx) => (
-                <SelectItem key={idx} value={angle}>{angle}</SelectItem>
-              ))}
-              {(!product.sales_angles || product.sales_angles.length === 0) && (
-                <div className="px-2 py-2 text-sm text-muted-foreground">No hay ángulos definidos</div>
-              )}
-            </SelectContent>
-          </Select>
+
+          <Accordion type="single" collapsible className="border rounded-lg">
+            {researchAngles.map((a: any, idx: number) => {
+              const angleText = a?.angle || a?.salesAngle || a?.name || "";
+              if (!angleText) return null;
+
+              const type = a?.type || a?.category;
+              const avatar = a?.avatar || a?.targetAvatar;
+              const emotion = a?.emotion || a?.primaryEmotion;
+
+              return (
+                <AccordionItem key={idx} value={`angle-${idx}`} className="px-3">
+                  <AccordionTrigger className="py-3 hover:no-underline">
+                    <div className="flex flex-1 items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium">{angleText}</span>
+                      {type ? (
+                        <Badge variant="outline" className="text-xs">
+                          {type}
+                        </Badge>
+                      ) : null}
+                      {emotion ? (
+                        <Badge variant="secondary" className="text-xs">
+                          {emotion}
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-2">
+                      {avatar ? (
+                        <p className="text-xs text-muted-foreground">Avatar: {avatar}</p>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Usar este ángulo
+                      </Button>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+
+            {researchAngles.length === 0 && (
+              <AccordionItem value="angle-empty" className="px-3">
+                <AccordionTrigger className="py-3 hover:no-underline">
+                  <span className="text-sm text-muted-foreground">Ángulos de venta</span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-sm text-muted-foreground">
+                    Selecciona un producto con investigación para ver los ángulos aquí.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Accordion>
         </div>
 
         {/* Número de Hooks */}
@@ -1830,6 +1946,60 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             placeholder="Describe al cliente ideal..."
             rows={2}
           />
+
+          {/* Selector SIEMPRE visible */}
+          <Accordion type="single" collapsible className="border rounded-lg">
+            <AccordionItem value="avatars" className="px-3">
+              <AccordionTrigger className="py-3 hover:no-underline">
+                <div className="flex flex-1 items-center justify-between gap-3">
+                  <span className="text-sm font-medium">Avatares</span>
+                  <Badge variant="outline" className="text-xs">
+                    {researchAvatars.length}
+                  </Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-2">
+                  {researchAvatars.slice(0, 5).map((a: any, idx: number) => {
+                    const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
+                    const situation = a?.situation || a?.currentSituation || "";
+
+                    const formatted = [
+                      `AVATAR: ${name}`,
+                      situation ? `SITUACIÓN: ${situation}` : "",
+                    ]
+                      .filter(Boolean)
+                      .join("\n");
+
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        className="w-full text-left p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                        onClick={() => setFormData(prev => ({ ...prev, ideal_avatar: formatted }))}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{name}</p>
+                            {situation ? (
+                              <p className="text-xs text-muted-foreground line-clamp-2">{situation}</p>
+                            ) : null}
+                          </div>
+                          <span className="text-xs text-muted-foreground">Seleccionar</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                  {researchAvatars.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Selecciona un producto con investigación para ver los avatares aquí.
+                    </p>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </div>
 
