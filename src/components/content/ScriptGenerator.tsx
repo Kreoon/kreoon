@@ -7,14 +7,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganizationAI } from "@/hooks/useOrganizationAI";
-import { 
-  Sparkles, Loader2, Target, Users, Globe, FileText, 
-  MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
-  Video, ChevronDown, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle
+import {
+  Sparkles,
+  Loader2,
+  Target,
+  Users,
+  Globe,
+  FileText,
+  MessageSquare,
+  ListOrdered,
+  Plus,
+  X,
+  Wand2,
+  Settings2,
+  Video,
+  ChevronDown,
+  CheckCircle2,
+  Bot,
+  RefreshCw,
+  FileSearch,
+  AlertCircle,
 } from "lucide-react";
+
 
 interface Product {
   id: string;
@@ -570,14 +588,88 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated, organiz
   // Pre-fill avatar from product if available
   useEffect(() => {
     if (product?.ideal_avatar) {
-      const strippedAvatar = product.ideal_avatar.replace(/<[^>]*>/g, '').substring(0, 200);
-      setFormData(prev => ({
+      const strippedAvatar = product.ideal_avatar.replace(/<[^>]*>/g, "").substring(0, 200);
+      setFormData((prev) => ({
         ...prev,
-        ideal_avatar: strippedAvatar
+        ideal_avatar: strippedAvatar,
       }));
     }
   }, [product]);
 
+  // Cargar la investigación COMPLETA del producto (avatar_profiles + sales_angles_data)
+  const [researchProduct, setResearchProduct] = useState<any | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchResearchProduct = async () => {
+      if (!product?.id) {
+        setResearchProduct(null);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, avatar_profiles, sales_angles_data, market_research")
+          .eq("id", product.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (!cancelled) setResearchProduct(data ?? null);
+      } catch (e) {
+        console.error("[ScriptGenerator] Error fetching product research", e);
+        if (!cancelled) setResearchProduct(null);
+      }
+    };
+
+    fetchResearchProduct();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [product?.id]);
+
+  const researchAvatars = useMemo(() => {
+    const profiles = researchProduct?.avatar_profiles?.profiles;
+    return Array.isArray(profiles) ? profiles : [];
+  }, [researchProduct]);
+
+  const researchAngles = useMemo(() => {
+    const angles = researchProduct?.sales_angles_data?.angles;
+    if (Array.isArray(angles)) return angles;
+
+    // fallback (si algún producto guarda ángulos como array simple)
+    if (Array.isArray(product?.sales_angles) && product?.sales_angles?.length) {
+      return product.sales_angles.map((a) => ({ angle: a }));
+    }
+
+    return [];
+  }, [researchProduct, product?.sales_angles]);
+
+  const formatAvatarForField = (a: any, index: number) => {
+    const name = a?.name || a?.avatarName || `Avatar ${index + 1}`;
+    const situation = a?.situation || a?.currentSituation || "";
+    const awareness = a?.awarenessLevel || a?.awareness || "";
+    const drivers = Array.isArray(a?.drivers)
+      ? a.drivers.join(", ")
+      : a?.drivers || a?.emotionalDrivers || "";
+    const objections = Array.isArray(a?.objections)
+      ? a.objections.join(", ")
+      : a?.objections || a?.mainObjections || "";
+    const phrases = Array.isArray(a?.phrases) ? a.phrases : Array.isArray(a?.typicalPhrases) ? a.typicalPhrases : [];
+
+    return [
+      `AVATAR: ${name}`,
+      situation ? `SITUACIÓN: ${situation}` : "",
+      awareness ? `NIVEL DE CONSCIENCIA: ${awareness}` : "",
+      drivers ? `DRIVERS: ${drivers}` : "",
+      objections ? `OBJECIONES: ${objections}` : "",
+      phrases?.length ? `FRASES TEXTUALES: ${phrases.join(" | ")}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  };
   // Fetch document from URL - returns { content, warning }
   const fetchDocument = async (url: string): Promise<{ content: string; warning?: string }> => {
     if (!url) return { content: "" };
@@ -1140,22 +1232,74 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" /> Ángulo de Venta *
           </Label>
-          <Select 
-            value={formData.sales_angle} 
-            onValueChange={(v) => setFormData({ ...formData, sales_angle: v })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar ángulo..." />
-            </SelectTrigger>
-            <SelectContent>
-              {product.sales_angles?.map((angle, idx) => (
-                <SelectItem key={idx} value={angle}>{angle}</SelectItem>
-              ))}
-              {(!product.sales_angles || product.sales_angles.length === 0) && (
-                <div className="px-2 py-2 text-sm text-muted-foreground">No hay ángulos definidos</div>
-              )}
-            </SelectContent>
-          </Select>
+
+          <Accordion type="single" collapsible className="border rounded-lg">
+            {researchAngles.length > 0 ? (
+              researchAngles.map((a: any, idx: number) => {
+                const angleText = a?.angle || a?.salesAngle || a?.name || "";
+                if (!angleText) return null;
+
+                const type = a?.type || a?.category;
+                const avatar = a?.avatar || a?.targetAvatar;
+                const emotion = a?.emotion || a?.primaryEmotion;
+                const hookExample = a?.hookExample;
+
+                return (
+                  <AccordionItem key={idx} value={`angle-${idx}`} className="px-3">
+                    <AccordionTrigger className="py-3 hover:no-underline">
+                      <div className="flex flex-1 items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium">{angleText}</span>
+                        {type && (
+                          <Badge variant="outline" className="text-xs">
+                            {type}
+                          </Badge>
+                        )}
+                        {emotion && (
+                          <Badge variant="secondary" className="text-xs">
+                            {emotion}
+                          </Badge>
+                        )}
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2">
+                        {(avatar || a?.contentType) && (
+                          <p className="text-xs text-muted-foreground">
+                            {avatar ? `Avatar: ${avatar}` : ""}
+                            {avatar && a?.contentType ? " • " : ""}
+                            {a?.contentType ? `Formato: ${a.contentType}` : ""}
+                          </p>
+                        )}
+                        {hookExample && (
+                          <p className="text-xs text-muted-foreground">Hook ejemplo: {hookExample}</p>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setFormData((prev) => ({ ...prev, sales_angle: angleText }))}
+                        >
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Usar este ángulo
+                        </Button>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })
+            ) : (
+              <AccordionItem value="angle-empty" className="px-3">
+                <AccordionTrigger className="py-3 hover:no-underline">
+                  <span className="text-sm text-muted-foreground">Ángulos de venta</span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-sm text-muted-foreground">
+                    No se encontraron ángulos en la investigación de este producto.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Accordion>
         </div>
 
         {/* Número de Hooks */}
@@ -1223,6 +1367,62 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             placeholder="Describe al cliente ideal..."
             rows={2}
           />
+
+          {/* Selector SIEMPRE visible (aunque esté vacío) */}
+          <Accordion type="single" collapsible className="border rounded-lg">
+            {researchAvatars.length > 0 ? (
+              researchAvatars.map((a: any, idx: number) => {
+                const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
+                const situation = a?.situation || a?.currentSituation || "";
+                const awareness = a?.awarenessLevel || a?.awareness || "";
+
+                return (
+                  <AccordionItem key={idx} value={`avatar-${idx}`} className="px-3">
+                    <AccordionTrigger className="py-3 hover:no-underline">
+                      <div className="flex flex-1 items-center justify-between gap-3">
+                        <span className="text-sm font-medium">{name}</span>
+                        {awareness ? (
+                          <Badge variant="secondary" className="text-xs">
+                            {String(awareness).slice(0, 28)}
+                          </Badge>
+                        ) : null}
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2">
+                        {(situation || awareness) && (
+                          <p className="text-sm text-muted-foreground">{situation || awareness}</p>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            const formatted = formatAvatarForField(a, idx);
+                            setFormData((prev) => ({ ...prev, ideal_avatar: formatted }));
+                          }}
+                        >
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Usar este avatar
+                        </Button>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })
+            ) : (
+              <AccordionItem value="avatar-empty" className="px-3">
+                <AccordionTrigger className="py-3 hover:no-underline">
+                  <span className="text-sm text-muted-foreground">Avatares</span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-sm text-muted-foreground">
+                    No se encontraron avatares en la investigación de este producto.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Accordion>
         </div>
       </div>
 
