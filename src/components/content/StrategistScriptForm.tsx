@@ -1299,6 +1299,39 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     return [];
   }, [researchProduct, product?.sales_angles]);
 
+  // Extraer dolores desde la investigación de mercado
+  const researchPains = useMemo(() => {
+    const pains = researchProduct?.market_research?.pains;
+    if (Array.isArray(pains) && pains.length) return pains;
+
+    const jtbdPains = researchProduct?.market_research?.jtbd?.pains;
+    if (Array.isArray(jtbdPains) && jtbdPains.length) return jtbdPains;
+
+    return [];
+  }, [researchProduct]);
+
+  // Extraer deseos desde la investigación de mercado
+  const researchDesires = useMemo(() => {
+    const desires = researchProduct?.market_research?.desires;
+    if (Array.isArray(desires) && desires.length) return desires;
+
+    const jtbdDesires = researchProduct?.market_research?.jtbd?.desires;
+    if (Array.isArray(jtbdDesires) && jtbdDesires.length) return jtbdDesires;
+
+    return [];
+  }, [researchProduct]);
+
+  // Extraer objeciones desde la investigación de mercado
+  const researchObjections = useMemo(() => {
+    const objections = researchProduct?.market_research?.objections;
+    if (Array.isArray(objections) && objections.length) return objections;
+
+    const jtbdObjections = researchProduct?.market_research?.jtbd?.objections;
+    if (Array.isArray(jtbdObjections) && jtbdObjections.length) return jtbdObjections;
+
+    return [];
+  }, [researchProduct]);
+
   // Fetch document from URL - returns { content, warning }
   const fetchDocument = async (url: string): Promise<{ content: string; warning?: string }> => {
     if (!url) return { content: "" };
@@ -1969,6 +2002,147 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
               {researchAvatars.length === 0 && (
                 <p className="text-sm text-muted-foreground p-2">
                   Selecciona un producto con investigación para ver los avatares.
+                </p>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+
+        {/* Dolores */}
+        <div className="space-y-2 md:col-span-2">
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="w-full justify-between">
+                <span className="flex items-center gap-2">
+                  💔 Dolores / Pains ({researchPains.length})
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
+              {researchPains.map((pain: any, idx: number) => {
+                const painText = typeof pain === 'string' ? pain : (pain?.pain || pain?.description || pain?.text || `Dolor ${idx + 1}`);
+                const category = typeof pain === 'object' ? (pain?.category || pain?.type) : null;
+
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
+                    onClick={() => setFormData(prev => ({ 
+                      ...prev, 
+                      additional_instructions: prev.additional_instructions 
+                        ? `${prev.additional_instructions}\n\nDOLOR CLAVE: ${painText}` 
+                        : `DOLOR CLAVE: ${painText}` 
+                    }))}
+                  >
+                    <span className="text-sm">{painText}</span>
+                    {category && (
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {category}
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
+
+              {researchPains.length === 0 && (
+                <p className="text-sm text-muted-foreground p-2">
+                  Selecciona un producto con investigación para ver los dolores.
+                </p>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+
+        {/* Deseos */}
+        <div className="space-y-2 md:col-span-2">
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="w-full justify-between">
+                <span className="flex items-center gap-2">
+                  ✨ Deseos / Desires ({researchDesires.length})
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
+              {researchDesires.map((desire: any, idx: number) => {
+                const desireText = typeof desire === 'string' ? desire : (desire?.desire || desire?.description || desire?.text || `Deseo ${idx + 1}`);
+                const category = typeof desire === 'object' ? (desire?.category || desire?.type) : null;
+
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
+                    onClick={() => setFormData(prev => ({ 
+                      ...prev, 
+                      additional_instructions: prev.additional_instructions 
+                        ? `${prev.additional_instructions}\n\nDESEO CLAVE: ${desireText}` 
+                        : `DESEO CLAVE: ${desireText}` 
+                    }))}
+                  >
+                    <span className="text-sm">{desireText}</span>
+                    {category && (
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {category}
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
+
+              {researchDesires.length === 0 && (
+                <p className="text-sm text-muted-foreground p-2">
+                  Selecciona un producto con investigación para ver los deseos.
+                </p>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+
+        {/* Objeciones */}
+        <div className="space-y-2 md:col-span-2">
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="w-full justify-between">
+                <span className="flex items-center gap-2">
+                  🚫 Objeciones ({researchObjections.length})
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
+              {researchObjections.map((objection: any, idx: number) => {
+                const objectionText = typeof objection === 'string' ? objection : (objection?.objection || objection?.description || objection?.text || `Objeción ${idx + 1}`);
+                const category = typeof objection === 'object' ? (objection?.category || objection?.type) : null;
+
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
+                    onClick={() => setFormData(prev => ({ 
+                      ...prev, 
+                      additional_instructions: prev.additional_instructions 
+                        ? `${prev.additional_instructions}\n\nOBJECIÓN A SUPERAR: ${objectionText}` 
+                        : `OBJECIÓN A SUPERAR: ${objectionText}` 
+                    }))}
+                  >
+                    <span className="text-sm">{objectionText}</span>
+                    {category && (
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {category}
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
+
+              {researchObjections.length === 0 && (
+                <p className="text-sm text-muted-foreground p-2">
+                  Selecciona un producto con investigación para ver las objeciones.
                 </p>
               )}
             </CollapsibleContent>
