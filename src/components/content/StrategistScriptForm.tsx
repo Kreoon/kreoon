@@ -1820,65 +1820,46 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             <Sparkles className="h-4 w-4" /> Ángulo de Venta *
           </Label>
 
-          <Accordion type="single" collapsible className="border rounded-lg">
-            {researchAngles.map((a: any, idx: number) => {
-              const angleText = a?.angle || a?.salesAngle || a?.name || "";
-              if (!angleText) return null;
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button type="button" variant="outline" className="w-full justify-between">
+                <span className="truncate">
+                  {formData.sales_angle || "Seleccionar ángulo..."}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 ml-2" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
+              {researchAngles.map((a: any, idx: number) => {
+                const angleText = a?.angle || a?.salesAngle || a?.name || "";
+                if (!angleText) return null;
 
-              const type = a?.type || a?.category;
-              const avatar = a?.avatar || a?.targetAvatar;
-              const emotion = a?.emotion || a?.primaryEmotion;
+                const type = a?.type || a?.category;
 
-              return (
-                <AccordionItem key={idx} value={`angle-${idx}`} className="px-3">
-                  <AccordionTrigger className="py-3 hover:no-underline">
-                    <div className="flex flex-1 items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium">{angleText}</span>
-                      {type ? (
-                        <Badge variant="outline" className="text-xs">
-                          {type}
-                        </Badge>
-                      ) : null}
-                      {emotion ? (
-                        <Badge variant="secondary" className="text-xs">
-                          {emotion}
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-2">
-                      {avatar ? (
-                        <p className="text-xs text-muted-foreground">Avatar: {avatar}</p>
-                      ) : null}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
-                      >
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Usar este ángulo
-                      </Button>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
+                    onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
+                  >
+                    <span className="text-sm truncate">{angleText}</span>
+                    {type ? (
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {type}
+                      </Badge>
+                    ) : null}
+                  </button>
+                );
+              })}
 
-            {researchAngles.length === 0 && (
-              <AccordionItem value="angle-empty" className="px-3">
-                <AccordionTrigger className="py-3 hover:no-underline">
-                  <span className="text-sm text-muted-foreground">Ángulos de venta</span>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <p className="text-sm text-muted-foreground">
-                    Selecciona un producto con investigación para ver los ángulos aquí.
-                  </p>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-          </Accordion>
+              {researchAngles.length === 0 && (
+                <p className="text-sm text-muted-foreground p-2">
+                  Selecciona un producto con investigación para ver los ángulos.
+                </p>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
 
         {/* Número de Hooks */}
@@ -1947,59 +1928,51 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             rows={2}
           />
 
-          {/* Selector SIEMPRE visible */}
-          <Accordion type="single" collapsible className="border rounded-lg">
-            <AccordionItem value="avatars" className="px-3">
-              <AccordionTrigger className="py-3 hover:no-underline">
-                <div className="flex flex-1 items-center justify-between gap-3">
-                  <span className="text-sm font-medium">Avatares</span>
-                  <Badge variant="outline" className="text-xs">
-                    {researchAvatars.length}
-                  </Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2">
-                  {researchAvatars.slice(0, 5).map((a: any, idx: number) => {
-                    const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
-                    const situation = a?.situation || a?.currentSituation || "";
+          {/* Selector desplegable para avatares */}
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="w-full justify-between">
+                <span className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Seleccionar avatar ({researchAvatars.length})
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
+              {researchAvatars.slice(0, 5).map((a: any, idx: number) => {
+                const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
+                const situation = a?.situation || a?.currentSituation || "";
 
-                    const formatted = [
-                      `AVATAR: ${name}`,
-                      situation ? `SITUACIÓN: ${situation}` : "",
-                    ]
-                      .filter(Boolean)
-                      .join("\n");
+                const formatted = [
+                  `AVATAR: ${name}`,
+                  situation ? `SITUACIÓN: ${situation}` : "",
+                ]
+                  .filter(Boolean)
+                  .join("\n");
 
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        className="w-full text-left p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                        onClick={() => setFormData(prev => ({ ...prev, ideal_avatar: formatted }))}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{name}</p>
-                            {situation ? (
-                              <p className="text-xs text-muted-foreground line-clamp-2">{situation}</p>
-                            ) : null}
-                          </div>
-                          <span className="text-xs text-muted-foreground">Seleccionar</span>
-                        </div>
-                      </button>
-                    );
-                  })}
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors"
+                    onClick={() => setFormData(prev => ({ ...prev, ideal_avatar: formatted }))}
+                  >
+                    <p className="text-sm font-medium">{name}</p>
+                    {situation ? (
+                      <p className="text-xs text-muted-foreground line-clamp-1">{situation}</p>
+                    ) : null}
+                  </button>
+                );
+              })}
 
-                  {researchAvatars.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      Selecciona un producto con investigación para ver los avatares aquí.
-                    </p>
-                  )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              {researchAvatars.length === 0 && (
+                <p className="text-sm text-muted-foreground p-2">
+                  Selecciona un producto con investigación para ver los avatares.
+                </p>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </div>
 
