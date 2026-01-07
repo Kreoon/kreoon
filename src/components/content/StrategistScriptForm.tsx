@@ -1243,7 +1243,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, avatar_profiles, sales_angles_data, market_research, sales_angles")
+          .select("id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar")
           .eq("id", product.id)
           .maybeSingle();
 
@@ -1299,38 +1299,67 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     return [];
   }, [researchProduct, product?.sales_angles]);
 
-  // Extraer dolores desde la investigación de mercado
+  // Parsear ideal_avatar si es un JSON string para extraer JTBD
+  const parsedIdealAvatar = useMemo(() => {
+    const avatar = researchProduct?.ideal_avatar || product?.ideal_avatar;
+    if (!avatar || typeof avatar !== 'string') return null;
+    try {
+      return JSON.parse(avatar);
+    } catch {
+      return null;
+    }
+  }, [researchProduct, product]);
+
+  // Extraer dolores desde la investigación de mercado o ideal_avatar.jtbd
   const researchPains = useMemo(() => {
+    // 1. Buscar en market_research.pains
     const pains = researchProduct?.market_research?.pains;
     if (Array.isArray(pains) && pains.length) return pains;
 
+    // 2. Buscar en market_research.jtbd.pains
     const jtbdPains = researchProduct?.market_research?.jtbd?.pains;
     if (Array.isArray(jtbdPains) && jtbdPains.length) return jtbdPains;
 
-    return [];
-  }, [researchProduct]);
+    // 3. Buscar en ideal_avatar.jtbd.pains (JSON parseado)
+    const avatarJtbdPains = parsedIdealAvatar?.jtbd?.pains;
+    if (Array.isArray(avatarJtbdPains) && avatarJtbdPains.length) return avatarJtbdPains;
 
-  // Extraer deseos desde la investigación de mercado
+    return [];
+  }, [researchProduct, parsedIdealAvatar]);
+
+  // Extraer deseos desde la investigación de mercado o ideal_avatar.jtbd
   const researchDesires = useMemo(() => {
+    // 1. Buscar en market_research.desires
     const desires = researchProduct?.market_research?.desires;
     if (Array.isArray(desires) && desires.length) return desires;
 
+    // 2. Buscar en market_research.jtbd.desires
     const jtbdDesires = researchProduct?.market_research?.jtbd?.desires;
     if (Array.isArray(jtbdDesires) && jtbdDesires.length) return jtbdDesires;
 
-    return [];
-  }, [researchProduct]);
+    // 3. Buscar en ideal_avatar.jtbd.desires (JSON parseado)
+    const avatarJtbdDesires = parsedIdealAvatar?.jtbd?.desires;
+    if (Array.isArray(avatarJtbdDesires) && avatarJtbdDesires.length) return avatarJtbdDesires;
 
-  // Extraer objeciones desde la investigación de mercado
+    return [];
+  }, [researchProduct, parsedIdealAvatar]);
+
+  // Extraer objeciones desde la investigación de mercado o ideal_avatar.jtbd
   const researchObjections = useMemo(() => {
+    // 1. Buscar en market_research.objections
     const objections = researchProduct?.market_research?.objections;
     if (Array.isArray(objections) && objections.length) return objections;
 
+    // 2. Buscar en market_research.jtbd.objections
     const jtbdObjections = researchProduct?.market_research?.jtbd?.objections;
     if (Array.isArray(jtbdObjections) && jtbdObjections.length) return jtbdObjections;
 
+    // 3. Buscar en ideal_avatar.jtbd.objections (JSON parseado)
+    const avatarJtbdObjections = parsedIdealAvatar?.jtbd?.objections;
+    if (Array.isArray(avatarJtbdObjections) && avatarJtbdObjections.length) return avatarJtbdObjections;
+
     return [];
-  }, [researchProduct]);
+  }, [researchProduct, parsedIdealAvatar]);
 
   // Fetch document from URL - returns { content, warning }
   const fetchDocument = async (url: string): Promise<{ content: string; warning?: string }> => {
