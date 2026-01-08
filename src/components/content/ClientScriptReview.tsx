@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/collapsible';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { sanitizeHTML } from '@/lib/sanitizeHTML';
 import { 
   FileText,
   CheckCircle2,
@@ -823,7 +824,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                       ) : (
                         <div 
                           className="prose prose-sm dark:prose-invert max-w-none script-content"
-                          dangerouslySetInnerHTML={{ __html: content.script }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeHTML(content.script) }}
                           style={{
                             lineHeight: '1.8',
                           }}

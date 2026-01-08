@@ -6,6 +6,47 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
 };
 
+// Hash API key using SHA-256
+async function hashApiKey(apiKey: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(apiKey);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Validate API key against stored keys
+async function validateApiKey(supabase: any, apiKey: string): Promise<{ valid: boolean; permissions: string[] }> {
+  const keyHash = await hashApiKey(apiKey);
+  
+  const { data: validKey, error } = await supabase
+    .from('api_keys')
+    .select('permissions, expires_at, is_active')
+    .eq('key_hash', keyHash)
+    .eq('is_active', true)
+    .single();
+  
+  if (error || !validKey) {
+    return { valid: false, permissions: [] };
+  }
+  
+  // Check expiration
+  if (validKey.expires_at && new Date(validKey.expires_at) < new Date()) {
+    return { valid: false, permissions: [] };
+  }
+  
+  // Update last_used_at
+  await supabase.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('key_hash', keyHash);
+  
+  return { valid: true, permissions: validKey.permissions || ['read'] };
+}
+
+// Check if operation is allowed based on permissions
+function hasPermission(permissions: string[], requiredPermission: string): boolean {
+  if (permissions.includes('admin')) return true;
+  return permissions.includes(requiredPermission);
+}
+
 // API pública para integraciones con n8n, Zapier, Make, etc.
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -59,12 +100,13 @@ serve(async (req) => {
           authentication: {
             type: "API Key",
             header: "x-api-key",
-            description: "Incluye tu API key en el header x-api-key para autenticación"
+            description: "Incluye tu API key en el header x-api-key para autenticación. Las keys se generan desde el panel de administración."
           },
           endpoints: {
             "/content": {
               GET: {
                 description: "Listar todo el contenido",
+                permissions: ["read"],
                 query_params: {
                   status: "Filtrar por estado (draft, script_pending, script_approved, etc.)",
                   client_id: "Filtrar por cliente",
@@ -75,6 +117,7 @@ serve(async (req) => {
               },
               POST: {
                 description: "Crear nuevo contenido",
+                permissions: ["write", "admin"],
                 body: {
                   title: "string (required)",
                   description: "string",
@@ -90,13 +133,18 @@ serve(async (req) => {
             "/content/:id": {
               PATCH: {
                 description: "Actualizar contenido existente",
+                permissions: ["write", "admin"],
                 body: "Campos a actualizar"
               }
             },
             "/clients": {
-              GET: { description: "Listar todos los clientes" },
+              GET: { 
+                description: "Listar todos los clientes",
+                permissions: ["read"]
+              },
               POST: {
                 description: "Crear nuevo cliente",
+                permissions: ["write", "admin"],
                 body: {
                   name: "string (required)",
                   contact_email: "string",
@@ -105,11 +153,15 @@ serve(async (req) => {
               }
             },
             "/creators": {
-              GET: { description: "Listar todos los creadores" }
+              GET: { 
+                description: "Listar todos los creadores",
+                permissions: ["read"]
+              }
             },
             "/ai/generate-script": {
               POST: {
                 description: "Generar guion con IA",
+                permissions: ["write", "admin"],
                 body: {
                   client_name: "string",
                   product: "string",
@@ -122,6 +174,7 @@ serve(async (req) => {
             "/webhooks/content-status": {
               POST: {
                 description: "Webhook para recibir cambios de estado de contenido",
+                permissions: ["write", "admin"],
                 body: {
                   content_id: "uuid",
                   new_status: "content_status enum"
@@ -135,11 +188,33 @@ serve(async (req) => {
     }
 
     // Verificar API key para endpoints protegidos
-    if (!isPublic && !apiKey) {
-      return new Response(
-        JSON.stringify({ error: "API key required. Add x-api-key header." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!isPublic) {
+      if (!apiKey) {
+        return new Response(
+          JSON.stringify({ error: "API key required. Add x-api-key header." }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validate API key against database
+      const { valid, permissions } = await validateApiKey(supabase, apiKey);
+      
+      if (!valid) {
+        return new Response(
+          JSON.stringify({ error: "Invalid or expired API key." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Determine required permission based on method
+      const requiredPermission = req.method === 'GET' ? 'read' : 'write';
+      
+      if (!hasPermission(permissions, requiredPermission)) {
+        return new Response(
+          JSON.stringify({ error: `Insufficient permissions. Required: ${requiredPermission}` }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const body = req.method !== "GET" ? await req.json().catch(() => ({})) : {};

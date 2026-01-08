@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { sanitizeHTML } from "@/lib/sanitizeHTML";
 
 interface RichTextViewerProps {
   content: string;
@@ -45,7 +46,7 @@ export function RichTextViewer({ content, className, maxHeight = "max-h-[600px]"
           // Underline for CTAs
           "[&_u]:underline [&_u]:decoration-2 [&_u]:underline-offset-2 [&_u]:decoration-primary",
         )}
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHTML(content) }}
       />
     </ScrollArea>
   );

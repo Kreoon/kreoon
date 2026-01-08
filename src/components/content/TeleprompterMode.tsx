@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { sanitizeHTML } from "@/lib/sanitizeHTML";
 import { 
   X, 
   Play, 
@@ -177,7 +178,7 @@ export function TeleprompterMode({ content, isOpen, onClose }: TeleprompterModeP
               "[&_li]:text-gray-300"
             )}
             style={{ fontSize: `${fontSize}px` }}
-            dangerouslySetInnerHTML={{ __html: teleprompterContent }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHTML(teleprompterContent) }}
           />
         </div>
       </div>
