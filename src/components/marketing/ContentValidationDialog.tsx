@@ -34,6 +34,7 @@ import {
   Brain,
 } from "lucide-react";
 import { toast } from "sonner";
+import { sanitizeHTML } from "@/lib/sanitizeHTML";
 import { SPHERE_PHASES, SpherePhase, getSpherePhaseConfig } from "./types";
 import { HLSVideoPlayer } from "@/components/video/HLSVideoPlayer";
 import { ContentAIAnalysis } from "@/components/content/ContentAIAnalysis";
@@ -319,7 +320,7 @@ export function ContentValidationDialog({
                     {content.script ? (
                       <div 
                         className="prose prose-sm dark:prose-invert max-w-none"
-                        dangerouslySetInnerHTML={{ __html: content.script }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeHTML(content.script) }}
                       />
                     ) : (
                       <p className="text-muted-foreground text-sm">Sin guión disponible</p>

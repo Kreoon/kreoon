@@ -17,6 +17,7 @@ import {
   Save
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { sanitizeHTMLWithBreaks } from '@/lib/sanitizeHTML';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -250,7 +251,7 @@ export function ScriptAIChat({
                 >
                   <div 
                     className="prose prose-sm max-w-none dark:prose-invert"
-                    dangerouslySetInnerHTML={{ __html: message.content.replace(/\n/g, '<br>') }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHTMLWithBreaks(message.content) }}
                   />
                   {message.role === 'assistant' && (
                     <div className="flex gap-1 mt-2 pt-2 border-t border-border/50">

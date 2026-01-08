@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
 import { MonitorPlay } from "lucide-react";
 import { TeleprompterMode } from "./TeleprompterMode";
+import { sanitizeHTML } from "@/lib/sanitizeHTML";
 
 interface ScriptViewerProps {
   content: string;
@@ -229,7 +230,7 @@ function ScriptSection({
           "[&_li]:leading-relaxed",
           "[&_u]:underline [&_u]:decoration-2 [&_u]:underline-offset-2 [&_u]:decoration-primary",
         )}
-        dangerouslySetInnerHTML={{ __html: cleanContent }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHTML(cleanContent) }}
       />
     </div>
   );
@@ -289,7 +290,7 @@ export function ScriptViewer({
                 "[&_strong]:font-bold",
                 "[&_em]:text-muted-foreground"
               )}
-              dangerouslySetInnerHTML={{ __html: content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHTML(content) }}
             />
           </ScrollArea>
         ) : (

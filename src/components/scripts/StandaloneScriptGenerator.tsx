@@ -21,6 +21,7 @@ import {
   Video, ChevronDown, CheckCircle2, Bot, RefreshCw, Building2,
   Package, Lightbulb, Copy, Download, FileJson, AlertCircle, Database
 } from "lucide-react";
+import { sanitizeHTML } from "@/lib/sanitizeHTML";
 
 interface GeneratedContent {
   script: string;
@@ -1116,7 +1117,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                     <ScrollArea className="h-[500px] rounded-lg border p-4">
                       <div 
                         className="prose prose-sm max-w-none dark:prose-invert"
-                        dangerouslySetInnerHTML={{ __html: tab.content || '' }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeHTML(tab.content || '') }}
                       />
                     </ScrollArea>
                   </TabsContent>
