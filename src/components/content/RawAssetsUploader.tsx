@@ -20,7 +20,8 @@ import {
   Check,
   FolderDown,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react';
 
 interface FileToUpload {
@@ -96,6 +97,7 @@ export function RawAssetsUploader({
   const [editingName, setEditingName] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [downloadingZip, setDownloadingZip] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   // Fetch existing assets
@@ -403,6 +405,15 @@ export function RawAssetsUploader({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        
+        // Handle 413 - files too large
+        if (response.status === 413) {
+          toast.error('Archivos muy grandes. Descarga individualmente.', {
+            duration: 5000,
+          });
+          return;
+        }
+        
         throw new Error(errorData?.error || `Error HTTP ${response.status}`);
       }
 
@@ -415,6 +426,42 @@ export function RawAssetsUploader({
       toast.error('Error al generar el ZIP: ' + (error.message || 'Error desconocido'));
     } finally {
       setDownloadingZip(false);
+    }
+  };
+
+  // Download individual file
+  const handleDownloadFile = async (asset: UploadedAsset) => {
+    setDownloadingId(asset.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No autenticado');
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/bunny-raw-download`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          storagePath: asset.storage_path,
+          filename: asset.custom_filename,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error || `Error HTTP ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      triggerBlobDownload(blob, asset.custom_filename);
+      toast.success('Descarga iniciada');
+    } catch (error: any) {
+      console.error('Download error:', error);
+      toast.error('Error al descargar: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -693,6 +740,21 @@ export function RawAssetsUploader({
                       <Badge variant="secondary" className="text-xs hidden sm:inline-flex">
                         {asset.file_type.toUpperCase()}
                       </Badge>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => handleDownloadFile(asset)}
+                        disabled={downloadingId === asset.id}
+                        title="Descargar archivo"
+                      >
+                        {downloadingId === asset.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4" />
+                        )}
+                      </Button>
                       
                       {canDelete && (
                         <Button
