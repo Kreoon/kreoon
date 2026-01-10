@@ -66,7 +66,7 @@ interface BriefData {
   
   // Section 5: Target Audience
   targetGender: string;
-  targetAgeRange: string;
+  targetAgeRange: string[];
   targetOccupation: string;
   targetInterests: string[];
   targetHabits: string;
@@ -256,7 +256,7 @@ const DEFAULT_BRIEF: BriefData = {
   limbicBrain: [],
   cortexBrain: '',
   targetGender: '',
-  targetAgeRange: '',
+  targetAgeRange: [],
   targetOccupation: '',
   targetInterests: [],
   targetHabits: '',
@@ -370,7 +370,7 @@ export function ProductBriefWizard({
       case 4:
         return !!(
           briefData.targetGender &&
-          briefData.targetAgeRange &&
+          briefData.targetAgeRange.length > 0 &&
           briefData.targetOccupation.trim() &&
           briefData.targetInterests.length > 0 &&
           briefData.targetHabits.trim() &&
@@ -950,17 +950,19 @@ Escribe 1-2 frases de complemento para agregar al final.`
               </div>
 
               <div className="space-y-2">
-                <Label>Rango de edad *</Label>
-                <Select value={briefData.targetAgeRange} onValueChange={(v) => updateField('targetAgeRange', v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {AGE_RANGES.map(age => (
-                      <SelectItem key={age} value={age}>{age}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Rango de edad * (puedes elegir varios)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {AGE_RANGES.map(age => (
+                    <Badge
+                      key={age}
+                      variant={briefData.targetAgeRange.includes(age) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => toggleArrayField('targetAgeRange', age)}
+                    >
+                      {age}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
 
