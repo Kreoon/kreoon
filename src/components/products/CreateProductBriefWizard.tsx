@@ -73,7 +73,7 @@ interface BriefData {
   
   // Section 5: Target Audience
   targetGender: string;
-  targetAgeRange: string;
+  targetAgeRange: string[];
   targetOccupation: string;
   targetInterests: string[];
   targetHabits: string;
@@ -312,7 +312,7 @@ const DEFAULT_BRIEF: BriefData = {
   limbicBrain: [],
   cortexBrain: '',
   targetGender: '',
-  targetAgeRange: '',
+  targetAgeRange: [],
   targetOccupation: '',
   targetInterests: [],
   targetHabits: '',
@@ -529,7 +529,7 @@ export function CreateProductBriefWizard({
       case 4:
         return !!(
           briefData.targetGender &&
-          briefData.targetAgeRange &&
+          briefData.targetAgeRange.length > 0 &&
           briefData.targetOccupation.trim() &&
           briefData.targetInterests.length > 0 &&
           briefData.targetHabits.trim() &&
@@ -1115,17 +1115,19 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
               </div>
 
               <div>
-                <Label>¿Qué edad tienen? *</Label>
-                <Select value={briefData.targetAgeRange} onValueChange={(v) => updateField('targetAgeRange', v)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Elige un rango" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {AGE_RANGES.map((age) => (
-                      <SelectItem key={age} value={age}>{age}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>¿Qué edad tienen? * (puedes elegir varios)</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {AGE_RANGES.map((age) => (
+                    <Badge
+                      key={age}
+                      variant={briefData.targetAgeRange.includes(age) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => toggleArrayField('targetAgeRange', age)}
+                    >
+                      {age}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
 

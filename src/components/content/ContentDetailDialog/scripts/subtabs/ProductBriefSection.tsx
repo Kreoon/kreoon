@@ -32,7 +32,7 @@ interface BriefData {
   limbicBrain?: string[];
   cortexBrain?: string;
   targetGender?: string;
-  targetAgeRange?: string;
+  targetAgeRange?: string | string[];
   targetOccupation?: string;
   targetInterests?: string[];
   commonObjections?: string[];
@@ -246,7 +246,11 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
                   <Badge variant="secondary">{brief.targetGender}</Badge>
                 )}
                 {brief.targetAgeRange && (
-                  <Badge variant="secondary">{brief.targetAgeRange}</Badge>
+                  Array.isArray(brief.targetAgeRange) 
+                    ? brief.targetAgeRange.map((age) => (
+                        <Badge key={age} variant="secondary">{age}</Badge>
+                      ))
+                    : <Badge variant="secondary">{brief.targetAgeRange}</Badge>
                 )}
                 {brief.targetOccupation && (
                   <Badge variant="secondary">{brief.targetOccupation}</Badge>
