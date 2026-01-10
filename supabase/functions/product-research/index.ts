@@ -936,6 +936,96 @@ Estructura JSON EXACTA:
     const sanitizeJsonString = (input: string) =>
       input.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
 
+    // Attempt to repair truncated or malformed JSON
+    const repairJson = (jsonStr: string): string => {
+      let str = jsonStr.trim();
+      
+      // Remove any trailing incomplete string (ends with unmatched quote)
+      // Find the last complete property value
+      const lastQuoteIdx = str.lastIndexOf('"');
+      if (lastQuoteIdx > 0) {
+        // Check if there's an unclosed string by counting quotes
+        const beforeLast = str.substring(0, lastQuoteIdx);
+        const quoteCount = (beforeLast.match(/(?<!\\)"/g) || []).length;
+        
+        // If odd number of quotes before the last one, the string is incomplete
+        if (quoteCount % 2 !== 0) {
+          // Find the start of the incomplete string and remove it
+          let searchIdx = lastQuoteIdx - 1;
+          while (searchIdx > 0 && str[searchIdx] !== '"') {
+            searchIdx--;
+          }
+          if (searchIdx > 0) {
+            // Check if this looks like a truncated property
+            const afterPrevQuote = str.substring(searchIdx + 1, lastQuoteIdx);
+            if (!afterPrevQuote.includes(':') && !afterPrevQuote.includes('{') && !afterPrevQuote.includes('[')) {
+              // This might be a value string, keep looking for property start
+              str = str.substring(0, searchIdx);
+            }
+          }
+        }
+      }
+      
+      // Remove trailing comma if present
+      str = str.replace(/,\s*$/, '');
+      
+      // Remove incomplete property assignments (ending with "key": or "key":")
+      str = str.replace(/,?\s*"[^"]*"\s*:\s*"?$/, '');
+      str = str.replace(/,?\s*"[^"]*"\s*:$/, '');
+      
+      // Count brackets and braces
+      let openBraces = 0;
+      let openBrackets = 0;
+      let inString = false;
+      let escapeNext = false;
+      
+      for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        
+        if (escapeNext) {
+          escapeNext = false;
+          continue;
+        }
+        
+        if (char === '\\') {
+          escapeNext = true;
+          continue;
+        }
+        
+        if (char === '"') {
+          inString = !inString;
+          continue;
+        }
+        
+        if (!inString) {
+          if (char === '{') openBraces++;
+          else if (char === '}') openBraces--;
+          else if (char === '[') openBrackets++;
+          else if (char === ']') openBrackets--;
+        }
+      }
+      
+      // Close any unclosed strings
+      if (inString) {
+        str += '"';
+      }
+      
+      // Remove trailing comma again after potential string closure
+      str = str.replace(/,\s*$/, '');
+      
+      // Close brackets and braces in reverse order
+      while (openBrackets > 0) {
+        str += ']';
+        openBrackets--;
+      }
+      while (openBraces > 0) {
+        str += '}';
+        openBraces--;
+      }
+      
+      return str;
+    };
+
     const runPerplexity = async (prompt: string, timeoutMs: number, schema: any, schemaName: string) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -975,15 +1065,24 @@ Estructura JSON EXACTA:
         const content = (data.choices?.[0]?.message?.content || '').toString();
         const citations = data.citations || [];
 
-        const jsonStr = sanitizeJsonString(content.trim());
+        let jsonStr = sanitizeJsonString(content.trim());
         if (!jsonStr) throw new Error('Empty response from Perplexity');
 
         let parsed: any;
         try {
           parsed = JSON.parse(jsonStr);
         } catch (e) {
-          console.error('[product-research] Perplexity returned non-JSON content (first 400 chars):', content.slice(0, 400));
-          throw new Error(`Invalid JSON from Perplexity: ${(e as Error).message}`);
+          // Try to repair the JSON
+          console.warn('[product-research] Initial JSON parse failed, attempting repair...');
+          const repaired = repairJson(jsonStr);
+          try {
+            parsed = JSON.parse(repaired);
+            console.log('[product-research] JSON repair successful');
+          } catch (e2) {
+            console.error('[product-research] Perplexity returned non-JSON content (first 400 chars):', content.slice(0, 400));
+            console.error('[product-research] Repaired JSON (first 400 chars):', repaired.slice(0, 400));
+            throw new Error(`Invalid JSON from Perplexity: ${(e as Error).message}`);
+          }
         }
 
         return { json: parsed, rawContent: content, citations };
