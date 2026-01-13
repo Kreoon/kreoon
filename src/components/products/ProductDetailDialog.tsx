@@ -46,7 +46,7 @@ interface Product {
   onboarding_file_url: string | null;
   research_file_url: string | null;
   brief_status?: string | null;
-  brief_data?: Record<string, unknown> | null;
+  brief_data?: any;
   competitor_analysis?: any | null;
   avatar_profiles?: any | null;
   sales_angles_data?: any | null;
@@ -61,6 +61,7 @@ interface ProductDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave?: () => void;
+  readOnly?: boolean;
 }
 
 export function ProductDetailDialog({ 
@@ -68,10 +69,12 @@ export function ProductDetailDialog({
   clientId,
   open, 
   onOpenChange, 
-  onSave 
+  onSave,
+  readOnly = false
 }: ProductDetailDialogProps) {
   const { toast } = useToast();
   const { isAdmin } = useAuth();
+  const canEdit = isAdmin && !readOnly;
   const [loading, setLoading] = useState(false);
   const [newAngle, setNewAngle] = useState("");
   
@@ -277,7 +280,7 @@ export function ProductDetailDialog({
 
           <TabsContent value="brief" className="mt-4 space-y-6">
             {/* Optional Document Uploader */}
-            {product && isAdmin && (
+            {product && canEdit && (
               <div className="p-4 bg-muted/30 rounded-lg border border-dashed">
                 <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
@@ -296,7 +299,7 @@ export function ProductDetailDialog({
                   documentType="research"
                   onFileUrlChange={(url) => setFormData({ ...formData, research_file_url: url })}
                   onDriveUrlChange={(url) => setFormData({ ...formData, research_url: url })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </div>
             )}
@@ -482,7 +485,7 @@ export function ProductDetailDialog({
               documentType="brief"
               onFileUrlChange={(url) => setFormData({ ...formData, brief_file_url: url })}
               onDriveUrlChange={(url) => setFormData({ ...formData, brief_url: url })}
-              disabled={!isAdmin}
+              disabled={!canEdit}
             />
 
             <ProductDocumentUploader
@@ -495,7 +498,7 @@ export function ProductDetailDialog({
               documentType="onboarding"
               onFileUrlChange={(url) => setFormData({ ...formData, onboarding_file_url: url })}
               onDriveUrlChange={(url) => setFormData({ ...formData, onboarding_url: url })}
-              disabled={!isAdmin}
+              disabled={!canEdit}
             />
 
             <ProductDocumentUploader
@@ -508,13 +511,13 @@ export function ProductDetailDialog({
               documentType="research"
               onFileUrlChange={(url) => setFormData({ ...formData, research_file_url: url })}
               onDriveUrlChange={(url) => setFormData({ ...formData, research_url: url })}
-              disabled={!isAdmin}
+              disabled={!canEdit}
             />
           </TabsContent>
           </div>
         </Tabs>
 
-        {isAdmin && (
+        {canEdit && (
           <div className="flex justify-end pt-4 pb-4 border-t mt-4 shrink-0">
             <Button onClick={handleSave} disabled={loading}>
               <Save className="h-4 w-4 mr-2" />
