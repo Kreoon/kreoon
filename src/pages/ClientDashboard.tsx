@@ -25,6 +25,7 @@ import { ContentVideoCard } from '@/components/content/ContentVideoCard';
 import { ScriptReviewCard } from '@/components/content/ScriptReviewCard';
 import { useClientRealtimeContent } from '@/hooks/useClientRealtimeContent';
 import { CreateProductBriefWizard } from '@/components/products/CreateProductBriefWizard';
+import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
 import { 
   LogOut, 
   Video, 
@@ -91,16 +92,27 @@ interface ClientInfo {
 
 interface Product {
   id: string;
+  client_id: string;
   name: string;
   description: string | null;
   strategy: string | null;
-  market_research: string | null;
+  market_research: any | null;
   ideal_avatar: string | null;
   sales_angles: string[] | null;
   brief_url: string | null;
   onboarding_url: string | null;
   research_url: string | null;
+  brief_file_url: string | null;
+  onboarding_file_url: string | null;
+  research_file_url: string | null;
+  brief_status?: string | null;
+  brief_data?: any;
+  competitor_analysis?: any | null;
+  avatar_profiles?: any | null;
+  sales_angles_data?: any | null;
+  content_strategy?: any | null;
   created_at: string | null;
+  updated_at: string | null;
 }
 
 // Animated number counter
@@ -1811,156 +1823,13 @@ export default function ClientDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Product Detail Dialog */}
-      <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0">
-          <DialogHeader className="p-4 pb-0 border-b bg-gradient-to-r from-primary/5 to-primary/10">
-            <div className="flex items-center gap-3 pb-4">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Package className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl">{selectedProduct?.name}</DialogTitle>
-                <p className="text-xs text-muted-foreground">
-                  Información detallada del producto
-                </p>
-              </div>
-            </div>
-          </DialogHeader>
-          
-          {selectedProduct && (
-            <ScrollArea className="max-h-[calc(90vh-100px)]">
-              <div className="p-4 space-y-6">
-                {/* Sales Angles */}
-                {selectedProduct.sales_angles && selectedProduct.sales_angles.length > 0 && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-primary" /> Ángulos de Venta
-                    </Label>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedProduct.sales_angles.map((angle, idx) => (
-                        <Badge key={idx} variant="secondary" className="px-3 py-1">
-                          {angle}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Description */}
-                {selectedProduct.description && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <FileText className="h-4 w-4" /> Descripción
-                    </Label>
-                    <div className="p-4 rounded-lg bg-muted/50 border">
-                      <RichTextViewer content={selectedProduct.description} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Strategy */}
-                {selectedProduct.strategy && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <Target className="h-4 w-4 text-purple-500" /> Estrategia de Contenido
-                    </Label>
-                    <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20">
-                      <RichTextViewer content={selectedProduct.strategy} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Market Research */}
-                {selectedProduct.market_research && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-blue-500" /> Investigación de Mercado
-                    </Label>
-                    <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
-                      <RichTextViewer content={selectedProduct.market_research} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Ideal Avatar */}
-                {selectedProduct.ideal_avatar && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <Users className="h-4 w-4 text-green-500" /> Avatar / Cliente Ideal
-                    </Label>
-                    <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20">
-                      <RichTextViewer content={selectedProduct.ideal_avatar} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Document Links */}
-                {(selectedProduct.brief_url || selectedProduct.onboarding_url || selectedProduct.research_url) && (
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <FolderOpen className="h-4 w-4" /> Documentos
-                    </Label>
-                    <div className="grid gap-2">
-                      {selectedProduct.brief_url && (
-                        <a 
-                          href={selectedProduct.brief_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border hover:bg-muted transition-colors"
-                        >
-                          <div className="p-1.5 rounded bg-primary/10">
-                            <FileText className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">Brief del Producto</p>
-                            <p className="text-xs text-muted-foreground">Documento de briefing</p>
-                          </div>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        </a>
-                      )}
-                      {selectedProduct.onboarding_url && (
-                        <a 
-                          href={selectedProduct.onboarding_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border hover:bg-muted transition-colors"
-                        >
-                          <div className="p-1.5 rounded bg-info/10">
-                            <FolderOpen className="h-4 w-4 text-info" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">Material de Onboarding</p>
-                            <p className="text-xs text-muted-foreground">Documentos de incorporación</p>
-                          </div>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        </a>
-                      )}
-                      {selectedProduct.research_url && (
-                        <a 
-                          href={selectedProduct.research_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border hover:bg-muted transition-colors"
-                        >
-                          <div className="p-1.5 rounded bg-success/10">
-                            <Target className="h-4 w-4 text-success" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">Investigación y Recursos</p>
-                            <p className="text-xs text-muted-foreground">Materiales de investigación</p>
-                          </div>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Product Detail Dialog - Usando el mismo componente que los admins */}
+      <ProductDetailDialog
+        product={selectedProduct}
+        open={!!selectedProduct}
+        onOpenChange={(open) => !open && setSelectedProduct(null)}
+        readOnly={true}
+      />
 
       {/* Fullscreen Review Viewer */}
       {showFullscreenReview && videoReviewContent.length > 0 && (
