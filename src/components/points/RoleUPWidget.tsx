@@ -81,58 +81,22 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
     }
 
     try {
-      // Fetch from V2 tables
-      const { data: v2Data, error: v2Error } = await supabase
+      const { data, error } = await supabase
         .from(tableName)
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (v2Error) throw v2Error;
-
-      // Also fetch legacy points from user_points table
-      const { data: legacyData } = await supabase
-        .from('user_points')
-        .select('total_points, current_level, total_on_time, total_late, total_corrections')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      // Additionally, sum points from point_transactions for legacy support
-      const { data: legacyTransactions } = await supabase
-        .from('point_transactions')
-        .select('points')
-        .eq('user_id', userId);
-
-      const legacyTransactionPoints = (legacyTransactions || []).reduce((sum, t) => sum + (t.points || 0), 0);
-
-      // V2 data
-      const v2Points = v2Data?.total_points || 0;
-      const v2Deliveries = v2Data?.total_deliveries || 0;
-      const v2OnTime = v2Data?.on_time_deliveries || 0;
-      const v2Late = v2Data?.late_deliveries || 0;
-      const v2Clean = v2Data?.clean_approvals || 0;
-      const v2Issues = v2Data?.total_issues || 0;
-
-      // Legacy data - use legacy points OR transaction sum (whichever is greater)
-      const legacyPointsValue = Math.max(legacyData?.total_points || 0, legacyTransactionPoints);
-      const legacyOnTime = legacyData?.total_on_time || 0;
-      const legacyLate = legacyData?.total_late || 0;
-      const legacyIssues = legacyData?.total_corrections || 0;
-
-      // Combine: use V2 if available, otherwise legacy. Add legacy points to V2 points.
-      const combinedPoints = v2Points + legacyPointsValue;
-      const combinedOnTime = v2OnTime + legacyOnTime;
-      const combinedLate = v2Late + legacyLate;
-      const combinedIssues = v2Issues + legacyIssues;
+      if (error) throw error;
 
       const rolePoints: RolePoints = {
-        total_points: combinedPoints,
-        current_level: (v2Data?.current_level as UPLevel) || calculateLevel(combinedPoints),
-        total_deliveries: v2Deliveries,
-        on_time_deliveries: combinedOnTime,
-        late_deliveries: combinedLate,
-        clean_approvals: v2Clean,
-        total_issues: combinedIssues
+        total_points: data?.total_points || 0,
+        current_level: (data?.current_level as UPLevel) || calculateLevel(data?.total_points || 0),
+        total_deliveries: data?.total_deliveries || 0,
+        on_time_deliveries: data?.on_time_deliveries || 0,
+        late_deliveries: data?.late_deliveries || 0,
+        clean_approvals: data?.clean_approvals || 0,
+        total_issues: data?.total_issues || 0
       };
 
       setPoints(rolePoints);
