@@ -8268,7 +8268,7 @@ export type Database = {
       up_creadores: {
         Row: {
           approved_at: string | null
-          content_id: string
+          content_id: string | null
           created_at: string
           created_by: string | null
           days_to_deliver: number | null
@@ -8287,7 +8287,7 @@ export type Database = {
         }
         Insert: {
           approved_at?: string | null
-          content_id: string
+          content_id?: string | null
           created_at?: string
           created_by?: string | null
           days_to_deliver?: number | null
@@ -8306,7 +8306,7 @@ export type Database = {
         }
         Update: {
           approved_at?: string | null
-          content_id?: string
+          content_id?: string | null
           created_at?: string
           created_by?: string | null
           days_to_deliver?: number | null
@@ -8485,7 +8485,7 @@ export type Database = {
       up_editores: {
         Row: {
           approved_at: string | null
-          content_id: string
+          content_id: string | null
           created_at: string
           created_by: string | null
           days_to_deliver: number | null
@@ -8504,7 +8504,7 @@ export type Database = {
         }
         Insert: {
           approved_at?: string | null
-          content_id: string
+          content_id?: string | null
           created_at?: string
           created_by?: string | null
           days_to_deliver?: number | null
@@ -8523,7 +8523,7 @@ export type Database = {
         }
         Update: {
           approved_at?: string | null
-          content_id?: string
+          content_id?: string | null
           created_at?: string
           created_by?: string | null
           days_to_deliver?: number | null
