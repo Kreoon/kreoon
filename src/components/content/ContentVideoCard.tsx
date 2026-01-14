@@ -23,18 +23,21 @@ import {
   FileCheck,
   AlertTriangle,
   Calendar,
-  Download
+  Download,
+  Star
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ContentRatingSection } from './ContentRatingSection';
 
 interface ContentVideoCardProps {
   content: Content;
   onUpdate?: () => void;
   userId?: string;
   onStatusChange?: (id: string, status: ContentStatus, notes?: string) => Promise<void>;
+  showRatings?: boolean;
 }
 
 interface Comment {
@@ -44,8 +47,9 @@ interface Comment {
   profile?: { full_name: string; avatar_url?: string };
 }
 
-export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: ContentVideoCardProps) {
+export function ContentVideoCard({ content, onUpdate, userId, onStatusChange, showRatings = false }: ContentVideoCardProps) {
   const { toast } = useToast();
+  const [showRatingsSection, setShowRatingsSection] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -455,6 +459,18 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
 
             {/* Action buttons */}
             <div className="flex items-center gap-1">
+              {showRatings && (
+                <button
+                  onClick={() => setShowRatingsSection(!showRatingsSection)}
+                  className={cn(
+                    "p-2 rounded-full transition-colors",
+                    showRatingsSection ? "bg-amber-500 text-white" : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                  )}
+                  title="Calificar proyecto"
+                >
+                  <Star className="h-4 w-4" />
+                </button>
+              )}
               {canDownload && (
                 <button
                   onClick={handleDownload}
@@ -485,6 +501,24 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange }: 
             </div>
           </div>
         </div>
+
+        {/* Ratings section - only for clients */}
+        {showRatings && showRatingsSection && (
+          <div className="border-t">
+            <ContentRatingSection
+              contentId={content.id}
+              userId={userId}
+              creatorRating={(content as any).creator_rating}
+              editorRating={(content as any).editor_rating}
+              strategyRating={(content as any).strategy_rating}
+              hasCreator={!!(content as any).creator_id}
+              hasEditor={!!(content as any).editor_id}
+              hasStrategist={!!(content as any).strategist_id}
+              onUpdate={onUpdate}
+              canRate={true}
+            />
+          </div>
+        )}
 
         {/* Comments section */}
         {showComments && (

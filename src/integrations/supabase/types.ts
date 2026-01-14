@@ -1969,6 +1969,9 @@ export type Database = {
           status: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines: string | null
           strategist_id: string | null
+          strategy_rated_at: string | null
+          strategy_rated_by: string | null
+          strategy_rating: number | null
           strategy_status: string | null
           target_platform: string | null
           thumbnail_url: string | null
@@ -2070,6 +2073,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines?: string | null
           strategist_id?: string | null
+          strategy_rated_at?: string | null
+          strategy_rated_by?: string | null
+          strategy_rating?: number | null
           strategy_status?: string | null
           target_platform?: string | null
           thumbnail_url?: string | null
@@ -2171,6 +2177,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"] | null
           strategist_guidelines?: string | null
           strategist_id?: string | null
+          strategy_rated_at?: string | null
+          strategy_rated_by?: string | null
+          strategy_rating?: number | null
           strategy_status?: string | null
           target_platform?: string | null
           thumbnail_url?: string | null
