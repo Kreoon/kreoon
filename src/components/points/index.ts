@@ -25,3 +25,4 @@ export { UPPermissionsEditor } from './UPPermissionsEditor';
 // UP V2 Components
 export { UPBadgeHolders } from './UPBadgeHolders';
 export { UPSeasonLeaderboard } from './UPSeasonLeaderboard';
+export { UPSeasonHistory } from './UPSeasonHistory';

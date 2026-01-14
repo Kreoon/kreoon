@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Settings, Users, History, Sword, Shield, Castle, Swords, Award, Video, Scissors } from 'lucide-react';
+import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Settings, Users, History, Sword, Shield, Castle, Swords, Award, Video, Scissors, Calendar } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
 import { UPSettingsPanel } from '@/components/points/UPSettingsPanel';
@@ -20,6 +20,7 @@ import { UPLeaderboardTabs } from '@/components/points/UPLeaderboardTabs';
 import { UPUserStats } from '@/components/points/UPUserStats';
 import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { UPBadgeHolders } from '@/components/points/UPBadgeHolders';
+import { UPSeasonHistory } from '@/components/points/UPSeasonHistory';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -111,7 +112,7 @@ export default function RankingPage() {
       {/* Tabs for Admin */}
       {isAdmin ? (
         <Tabs defaultValue="upv2" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
             <TabsTrigger value="upv2" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Video className="w-4 h-4" />
               <span className="hidden sm:inline">UP V2</span>
@@ -123,6 +124,10 @@ export default function RankingPage() {
             <TabsTrigger value="achievements" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Award className="w-4 h-4" />
               <span className="hidden sm:inline">Insignias</span>
+            </TabsTrigger>
+            <TabsTrigger value="seasons" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">Temporadas</span>
             </TabsTrigger>
             <TabsTrigger value="manage" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Swords className="w-4 h-4" />
@@ -206,6 +211,10 @@ export default function RankingPage() {
             {user && <AchievementsShowcase userId={user.id} />}
           </TabsContent>
 
+          <TabsContent value="seasons" className="space-y-6">
+            <UPSeasonHistory />
+          </TabsContent>
+
           <TabsContent value="manage" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <UPManualAdjustment />
@@ -276,7 +285,7 @@ export default function RankingPage() {
         </Tabs>
       ) : (
         <Tabs defaultValue="upv2" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
             <TabsTrigger value="upv2" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Video className="w-4 h-4" />
               Mis Puntos
@@ -284,6 +293,10 @@ export default function RankingPage() {
             <TabsTrigger value="ranking" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Trophy className="w-4 h-4" />
               Ranking
+            </TabsTrigger>
+            <TabsTrigger value="seasons" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Calendar className="w-4 h-4" />
+              Temporadas
             </TabsTrigger>
             <TabsTrigger value="achievements" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Award className="w-4 h-4" />
@@ -313,6 +326,10 @@ export default function RankingPage() {
               currentUserId={user?.id}
               thresholds={thresholds}
             />
+          </TabsContent>
+
+          <TabsContent value="seasons" className="space-y-6">
+            <UPSeasonHistory />
           </TabsContent>
 
           <TabsContent value="achievements" className="space-y-6">
