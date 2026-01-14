@@ -35,7 +35,7 @@ const PERMISSION_MATRIX: Record<string, Partial<Record<ContentResource, ContentA
   },
   creator: {
     'content.title': ['view'],
-    'content.status': ['view'],
+    'content.status': ['view', 'edit'], // Can advance status (recording -> recorded)
     'content.scripts': ['view'],
     'content.scripts.creator': ['view', 'edit'], // Can edit their own block
     'content.scripts.editor': ['view'],
@@ -53,7 +53,7 @@ const PERMISSION_MATRIX: Record<string, Partial<Record<ContentResource, ContentA
   },
   editor: {
     'content.title': ['view'],
-    'content.status': ['view'],
+    'content.status': ['view', 'edit'], // Can advance status (editing -> delivered)
     'content.scripts': ['view'],
     'content.scripts.creator': ['view'],
     'content.scripts.editor': ['view', 'edit'], // Can edit their own block
