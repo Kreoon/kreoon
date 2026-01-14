@@ -17,6 +17,7 @@ import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { UPWidget } from '@/components/points/UPWidget';
 import { Leaderboard } from '@/components/points/Leaderboard';
 import { PointsHistory } from '@/components/points/PointsHistory';
+import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { 
   Scissors, 
   Clock, 
@@ -100,14 +101,18 @@ const StatsCard = ({
 export default function EditorDashboard() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { content, loading, refetch } = useContent(user?.id, 'editor');
+  const { content: allContent, loading, refetch } = useContent(user?.id, 'editor');
   const { toast } = useToast();
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  const [thisMonthActive, setThisMonthActive] = useState(false);
   const [kpiDialog, setKpiDialog] = useState<{
     open: boolean;
     title: string;
     content: Content[];
   }>({ open: false, title: '', content: [] });
+
+  // Filtrar por mes actual
+  const content = useThisMonthFilter(allContent, thisMonthActive);
 
   const openKpiDialog = (title: string, contentList: Content[]) => {
     setKpiDialog({ open: true, title, content: contentList });
@@ -150,6 +155,7 @@ export default function EditorDashboard() {
         subtitle={`Bienvenido, ${profile?.full_name}`}
         action={
           <div className="flex flex-wrap items-center gap-3">
+            <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
             {profile?.is_ambassador && (
               <AmbassadorBadge size="md" variant="glow" />
             )}
