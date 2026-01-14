@@ -30,6 +30,13 @@ interface UserPoints {
   consecutive_on_time: number;
 }
 
+interface UserRatings {
+  avg_creator_rating: number | null;
+  avg_editor_rating: number | null;
+  avg_strategy_rating: number | null;
+  total_rated: number;
+}
+
 interface Achievement {
   id: string;
   key: string;
@@ -116,6 +123,7 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
   const [userPoints, setUserPoints] = useState<UserPoints | null>(null);
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [orgBadges, setOrgBadges] = useState<OrgBadge[]>([]);
+  const [userRatings, setUserRatings] = useState<UserRatings | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -144,6 +152,51 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
           setAchievements(achievementsRes.data as unknown as UserAchievement[]);
         }
         if (badgesRes.data) setOrgBadges(badgesRes.data);
+
+        // Fetch star ratings from content
+        const [creatorRatingsRes, editorRatingsRes, strategyRatingsRes] = await Promise.all([
+          supabase
+            .from('content')
+            .select('creator_rating')
+            .eq('creator_id', userId)
+            .not('creator_rating', 'is', null),
+          supabase
+            .from('content')
+            .select('editor_rating')
+            .eq('editor_id', userId)
+            .not('editor_rating', 'is', null),
+          supabase
+            .from('content')
+            .select('strategy_rating')
+            .eq('strategist_id', userId)
+            .not('strategy_rating', 'is', null),
+        ]);
+
+        // Calculate averages
+        const creatorRatings = creatorRatingsRes.data || [];
+        const editorRatings = editorRatingsRes.data || [];
+        const strategyRatings = strategyRatingsRes.data || [];
+
+        const avgCreator = creatorRatings.length > 0 
+          ? creatorRatings.reduce((sum, r) => sum + (r.creator_rating || 0), 0) / creatorRatings.length 
+          : null;
+        const avgEditor = editorRatings.length > 0 
+          ? editorRatings.reduce((sum, r) => sum + (r.editor_rating || 0), 0) / editorRatings.length 
+          : null;
+        const avgStrategy = strategyRatings.length > 0 
+          ? strategyRatings.reduce((sum, r) => sum + (r.strategy_rating || 0), 0) / strategyRatings.length 
+          : null;
+
+        const totalRated = creatorRatings.length + editorRatings.length + strategyRatings.length;
+
+        if (totalRated > 0) {
+          setUserRatings({
+            avg_creator_rating: avgCreator,
+            avg_editor_rating: avgEditor,
+            avg_strategy_rating: avgStrategy,
+            total_rated: totalRated,
+          });
+        }
       } catch (error) {
         console.error('Error fetching trust badges:', error);
       } finally {
@@ -164,8 +217,15 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
     );
   }
 
-  const hasContent = userPoints || achievements.length > 0 || orgBadges.length > 0;
+  const hasContent = userPoints || achievements.length > 0 || orgBadges.length > 0 || userRatings;
   if (!hasContent) return null;
+
+  // Calculate overall star rating (highest average across roles)
+  const overallStarRating = userRatings ? Math.max(
+    userRatings.avg_creator_rating || 0,
+    userRatings.avg_editor_rating || 0,
+    userRatings.avg_strategy_rating || 0
+  ) : 0;
 
   const levelConfig = userPoints?.current_level 
     ? LEVEL_CONFIG[userPoints.current_level as keyof typeof LEVEL_CONFIG] 
@@ -179,6 +239,35 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
     return (
       <TooltipProvider>
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Star Rating Badge */}
+          {overallStarRating > 0 && (
+            <Tooltip>
+              <TooltipTrigger>
+                <Badge 
+                  variant="outline" 
+                  className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-0 gap-1"
+                >
+                  <Star className="h-3 w-3 fill-current" />
+                  {overallStarRating.toFixed(1)}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent className="bg-social-card border-social-border">
+                <div className="space-y-1 text-social-foreground">
+                  {userRatings?.avg_creator_rating && (
+                    <p className="text-xs">Creación: {userRatings.avg_creator_rating.toFixed(1)} ⭐</p>
+                  )}
+                  {userRatings?.avg_editor_rating && (
+                    <p className="text-xs">Edición: {userRatings.avg_editor_rating.toFixed(1)} ⭐</p>
+                  )}
+                  {userRatings?.avg_strategy_rating && (
+                    <p className="text-xs">Estrategia: {userRatings.avg_strategy_rating.toFixed(1)} ⭐</p>
+                  )}
+                  <p className="text-xs text-social-muted-foreground">{userRatings?.total_rated} proyectos calificados</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           {/* Level Badge */}
           {userPoints && (
             <Tooltip>

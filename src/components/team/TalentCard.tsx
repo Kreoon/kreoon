@@ -13,7 +13,7 @@ export interface TalentProfile {
   avatar_url: string | null;
   phone: string | null;
   bio: string | null;
-  role: 'creator' | 'editor';
+  role: 'creator' | 'editor' | 'strategist';
   content_count: number;
   is_ambassador: boolean;
   // Performance scores
@@ -34,9 +34,13 @@ export interface TalentProfile {
   // UP System
   up_points?: number;
   up_level?: string;
-  // Star ratings (0-5)
-  avg_star_rating?: number;
+  // Star ratings by role (0-5)
+  avg_creator_rating?: number;
+  avg_editor_rating?: number;
+  avg_strategy_rating?: number;
   rated_content_count?: number;
+  // Combined average (for backwards compatibility)
+  avg_star_rating?: number;
 }
 
 interface TalentCardProps {
@@ -49,7 +53,8 @@ interface TalentCardProps {
 
 const ROLE_STYLES = {
   creator: { label: "Creador de Contenido", className: "bg-primary/10 text-primary border-primary/20" },
-  editor: { label: "Productor Audio-Visual", className: "bg-info/10 text-info border-info/20" }
+  editor: { label: "Productor Audio-Visual", className: "bg-info/10 text-info border-info/20" },
+  strategist: { label: "Estratega", className: "bg-purple-500/10 text-purple-500 border-purple-500/20" }
 };
 
 const LEVEL_STYLES = {
@@ -171,32 +176,42 @@ export function TalentCard({ talent, onClick, onAmbassadorToggle, isAdmin, showK
         {/* KPIs Section */}
         {showKPIs && (
           <div className="space-y-3 mb-4">
-            {/* Star Rating Display */}
-            {talent.avg_star_rating !== undefined && talent.avg_star_rating > 0 && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={cn(
-                        "h-4 w-4",
-                        star <= Math.round(talent.avg_star_rating || 0)
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-muted-foreground/30"
-                      )}
-                    />
-                  ))}
-                  <span className="text-xs text-muted-foreground ml-1">
-                    ({talent.avg_star_rating.toFixed(1)})
-                  </span>
-                </div>
-                {talent.rated_content_count && talent.rated_content_count > 0 && (
-                  <span className="text-[10px] text-muted-foreground">
-                    {talent.rated_content_count} calificados
-                  </span>
-                )}
-              </div>
-            )}
+            {/* Star Rating Display - show role-specific rating */}
+            {(() => {
+              const roleRating = talent.role === 'creator' ? talent.avg_creator_rating :
+                                talent.role === 'editor' ? talent.avg_editor_rating :
+                                talent.avg_strategy_rating;
+              const displayRating = roleRating ?? talent.avg_star_rating;
+              
+              if (displayRating && displayRating > 0) {
+                return (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={cn(
+                            "h-4 w-4",
+                            star <= Math.round(displayRating)
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-muted-foreground/30"
+                          )}
+                        />
+                      ))}
+                      <span className="text-xs text-muted-foreground ml-1">
+                        ({displayRating.toFixed(1)})
+                      </span>
+                    </div>
+                    {talent.rated_content_count && talent.rated_content_count > 0 && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {talent.rated_content_count} calificados
+                      </span>
+                    )}
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             {/* UP Points and Level */}
             {(talent.up_points !== undefined && talent.up_points > 0) && (

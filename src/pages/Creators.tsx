@@ -33,12 +33,12 @@ const Creators = () => {
         return;
       }
 
-      // Get creators and editors scoped to the current organization
+      // Get creators, editors and strategists scoped to the current organization
       const { data: memberRoles, error: memberRolesError } = await supabase
         .from('organization_member_roles')
         .select('user_id, role')
         .eq('organization_id', currentOrgId)
-        .in('role', ['creator', 'editor']);
+        .in('role', ['creator', 'editor', 'strategist']);
 
       if (memberRolesError) throw memberRolesError;
 
@@ -139,7 +139,7 @@ const Creators = () => {
       const creatorUpMap = new Map(creatorTotals?.map(t => [t.user_id, t]) || []);
       const editorUpMap = new Map(editorTotals?.map(t => [t.user_id, t]) || []);
 
-      // Get star ratings from content
+      // Get star ratings from content (creator, editor, strategy)
       const { data: creatorRatings } = await supabase
         .from('content')
         .select('creator_id, creator_rating')
@@ -154,7 +154,14 @@ const Creators = () => {
         .in('editor_id', userIds)
         .not('editor_rating', 'is', null);
 
-      // Calculate average ratings
+      const { data: strategyRatings } = await supabase
+        .from('content')
+        .select('strategist_id, strategy_rating')
+        .eq('organization_id', currentOrgId)
+        .in('strategist_id', userIds)
+        .not('strategy_rating', 'is', null);
+
+      // Calculate average ratings for each role
       const creatorRatingMap = new Map<string, { sum: number; count: number }>();
       creatorRatings?.forEach(c => {
         if (c.creator_id && c.creator_rating !== null) {
@@ -177,10 +184,30 @@ const Creators = () => {
         }
       });
 
+      const strategyRatingMap = new Map<string, { sum: number; count: number }>();
+      strategyRatings?.forEach(c => {
+        if (c.strategist_id && c.strategy_rating !== null) {
+          const existing = strategyRatingMap.get(c.strategist_id) || { sum: 0, count: 0 };
+          strategyRatingMap.set(c.strategist_id, { 
+            sum: existing.sum + c.strategy_rating, 
+            count: existing.count + 1 
+          });
+        }
+      });
+
       const talentsData: TalentProfile[] = (profiles || []).map(p => {
-        const role = roleMap.get(p.id) as 'creator' | 'editor';
+        const role = roleMap.get(p.id) as 'creator' | 'editor' | 'strategist';
         const upData = role === 'creator' ? creatorUpMap.get(p.id) : editorUpMap.get(p.id);
-        const ratingData = role === 'creator' ? creatorRatingMap.get(p.id) : editorRatingMap.get(p.id);
+        
+        // Get ratings based on role
+        const creatorRating = creatorRatingMap.get(p.id);
+        const editorRating = editorRatingMap.get(p.id);
+        const strategyRating = strategyRatingMap.get(p.id);
+        
+        // Calculate primary rating based on role
+        const primaryRating = role === 'creator' ? creatorRating : 
+                             role === 'editor' ? editorRating : 
+                             strategyRating;
 
         return {
           id: p.id,
@@ -205,9 +232,13 @@ const Creators = () => {
           // UP System data
           up_points: upData?.total_points || 0,
           up_level: upData?.current_level || 'bronze',
-          // Star ratings
-          avg_star_rating: ratingData ? ratingData.sum / ratingData.count : 0,
-          rated_content_count: ratingData?.count || 0,
+          // Star ratings by role
+          avg_creator_rating: creatorRating ? creatorRating.sum / creatorRating.count : undefined,
+          avg_editor_rating: editorRating ? editorRating.sum / editorRating.count : undefined,
+          avg_strategy_rating: strategyRating ? strategyRating.sum / strategyRating.count : undefined,
+          // Combined for backwards compatibility
+          avg_star_rating: primaryRating ? primaryRating.sum / primaryRating.count : 0,
+          rated_content_count: primaryRating?.count || 0,
         };
       });
 
