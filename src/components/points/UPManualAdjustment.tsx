@@ -108,6 +108,7 @@ export function UPManualAdjustment() {
       const { data: { user } } = await supabase.auth.getUser();
       
       // Insert into the appropriate UP table based on role type
+      // Note: content_id is now nullable for manual adjustments
       if (roleType === 'creator') {
         const { error } = await supabase
           .from('up_creadores')
@@ -117,8 +118,9 @@ export function UPManualAdjustment() {
             event_type: 'manual_adjustment',
             points: finalPoints,
             description: reason,
-            created_by: user?.id
-          });
+            created_by: user?.id,
+            content_id: null
+          } as any);
         
         if (error) throw error;
       } else {
@@ -130,8 +132,9 @@ export function UPManualAdjustment() {
             event_type: 'manual_adjustment',
             points: finalPoints,
             description: reason,
-            created_by: user?.id
-          });
+            created_by: user?.id,
+            content_id: null
+          } as any);
         
         if (error) throw error;
       }
@@ -273,6 +276,29 @@ export function UPManualAdjustment() {
             </div>
           </div>
         )}
+
+        {/* Tipo de rol */}
+        <div className="space-y-2">
+          <Label>Rol del Usuario</Label>
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              variant={roleType === 'creator' ? 'default' : 'outline'}
+              onClick={() => setRoleType('creator')}
+              className="flex items-center gap-2"
+            >
+              <Video className="w-4 h-4" />
+              Creador
+            </Button>
+            <Button
+              variant={roleType === 'editor' ? 'default' : 'outline'}
+              onClick={() => setRoleType('editor')}
+              className="flex items-center gap-2"
+            >
+              <Film className="w-4 h-4" />
+              Editor
+            </Button>
+          </div>
+        </div>
 
         {/* Tipo de ajuste */}
         <div className="grid grid-cols-2 gap-4">
