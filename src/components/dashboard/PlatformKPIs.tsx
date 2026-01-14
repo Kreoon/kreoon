@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
-  MessageSquare, Brain, FileText, Target, Users, 
-  Sparkles, Globe, TrendingUp, Calendar, Package
+  MessageSquare, Brain, Package, Sparkles, TrendingUp
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -19,7 +16,6 @@ interface PlatformStats {
   // Chat & Collaboration
   totalConversations: number;
   totalMessages: number;
-  activeChats: number;
   
   // AI Usage
   aiRequests: number;
@@ -29,17 +25,6 @@ interface PlatformStats {
   // Products & Strategy
   totalProducts: number;
   productsWithStrategy: number;
-  scriptsGenerated: number;
-  
-  // Clients & Packages
-  totalClients: number;
-  activePackages: number;
-  completedPackages: number;
-  
-  // Team
-  totalMembers: number;
-  activeCreators: number;
-  activeEditors: number;
 }
 
 export function PlatformKPIs({ organizationId, className }: PlatformKPIsProps) {
@@ -47,19 +32,11 @@ export function PlatformKPIs({ organizationId, className }: PlatformKPIsProps) {
   const [stats, setStats] = useState<PlatformStats>({
     totalConversations: 0,
     totalMessages: 0,
-    activeChats: 0,
     aiRequests: 0,
     aiSuccessRate: 0,
     tokensUsed: 0,
     totalProducts: 0,
     productsWithStrategy: 0,
-    scriptsGenerated: 0,
-    totalClients: 0,
-    activePackages: 0,
-    completedPackages: 0,
-    totalMembers: 0,
-    activeCreators: 0,
-    activeEditors: 0,
   });
 
   useEffect(() => {
@@ -112,53 +89,14 @@ export function PlatformKPIs({ organizationId, className }: PlatformKPIsProps) {
         productsWithStrategy = products?.filter(p => p.strategy)?.length || 0;
       }
 
-      // Fetch packages
-      let activePackages = 0;
-      let completedPackages = 0;
-      if (clientIds.length > 0) {
-        const { data: packages } = await supabase
-          .from('client_packages')
-          .select('id, is_active, content_quantity')
-          .in('client_id', clientIds);
-
-        activePackages = packages?.filter(p => p.is_active)?.length || 0;
-        completedPackages = packages?.filter(p => !p.is_active)?.length || 0;
-      }
-
-      // Fetch team members
-      const { data: members } = await supabase
-        .from('organization_members')
-        .select('user_id')
-        .eq('organization_id', organizationId);
-
-      const { data: creatorRoles } = await supabase
-        .from('organization_member_roles')
-        .select('user_id')
-        .eq('organization_id', organizationId)
-        .eq('role', 'creator');
-
-      const { data: editorRoles } = await supabase
-        .from('organization_member_roles')
-        .select('user_id')
-        .eq('organization_id', organizationId)
-        .eq('role', 'editor');
-
       setStats({
         totalConversations: conversationsCount || 0,
         totalMessages: messagesCount || 0,
-        activeChats: 0, // Would need more complex query
         aiRequests: aiLogs?.length || 0,
         aiSuccessRate,
         tokensUsed,
         totalProducts: productsCount,
         productsWithStrategy,
-        scriptsGenerated: 0, // Would need content table
-        totalClients: clients?.length || 0,
-        activePackages,
-        completedPackages,
-        totalMembers: members?.length || 0,
-        activeCreators: creatorRoles?.length || 0,
-        activeEditors: editorRoles?.length || 0,
       });
     } catch (error) {
       console.error('Error fetching platform stats:', error);
@@ -169,8 +107,8 @@ export function PlatformKPIs({ organizationId, className }: PlatformKPIsProps) {
 
   if (loading) {
     return (
-      <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-2", className)}>
-        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
+      <div className={cn("grid grid-cols-2 md:grid-cols-5 gap-2", className)}>
+        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
       </div>
     );
   }
@@ -198,27 +136,6 @@ export function PlatformKPIs({ organizationId, className }: PlatformKPIsProps) {
       subtitle: `${stats.productsWithStrategy} con estrategia`,
     },
     {
-      label: 'Clientes',
-      value: stats.totalClients,
-      icon: Globe,
-      color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
-      subtitle: `${stats.activePackages} paquetes activos`,
-    },
-    {
-      label: 'Equipo',
-      value: stats.totalMembers,
-      icon: Users,
-      color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
-      subtitle: `${stats.activeCreators}C / ${stats.activeEditors}E`,
-    },
-    {
-      label: 'Paquetes Activos',
-      value: stats.activePackages,
-      icon: Target,
-      color: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20',
-      subtitle: `${stats.completedPackages} completados`,
-    },
-    {
       label: 'Tokens IA',
       value: stats.tokensUsed > 1000 ? `${(stats.tokensUsed / 1000).toFixed(1)}K` : stats.tokensUsed,
       icon: Sparkles,
@@ -239,7 +156,7 @@ export function PlatformKPIs({ organizationId, className }: PlatformKPIsProps) {
   ];
 
   return (
-    <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-2", className)}>
+    <div className={cn("grid grid-cols-2 md:grid-cols-5 gap-2", className)}>
       {kpis.map((kpi, idx) => (
         <div 
           key={idx}
