@@ -1,9 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings2, Palette, Globe, Coins } from 'lucide-react';
+import { Settings2, Palette, Globe, Coins, BarChart3 } from 'lucide-react';
 import { AppSettingsManagement } from '@/components/settings/AppSettingsManagement';
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
 import { TokenGiftingPanel } from '@/components/settings/TokenGiftingPanel';
+import { PlatformMetricsPanel } from '@/components/settings/PlatformMetricsPanel';
 
 export default function PlatformConfigSection() {
   return (
@@ -11,32 +12,40 @@ export default function PlatformConfigSection() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Configuración de Plataforma</h2>
         <p className="text-muted-foreground">
-          Ajustes globales, apariencia e integraciones externas
+          Ajustes globales, apariencia, métricas e integraciones externas
         </p>
       </div>
 
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="settings" className="gap-2">
             <Settings2 className="h-4 w-4" />
-            Ajustes
+            <span className="hidden sm:inline">Ajustes</span>
+          </TabsTrigger>
+          <TabsTrigger value="metrics" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Métricas</span>
           </TabsTrigger>
           <TabsTrigger value="tokens" className="gap-2">
             <Coins className="h-4 w-4" />
-            Tokens
+            <span className="hidden sm:inline">Tokens</span>
           </TabsTrigger>
           <TabsTrigger value="appearance" className="gap-2">
             <Palette className="h-4 w-4" />
-            Apariencia
+            <span className="hidden sm:inline">Apariencia</span>
           </TabsTrigger>
           <TabsTrigger value="integrations" className="gap-2">
             <Globe className="h-4 w-4" />
-            Integraciones
+            <span className="hidden sm:inline">Integraciones</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings">
           <AppSettingsManagement />
+        </TabsContent>
+
+        <TabsContent value="metrics">
+          <PlatformMetricsPanel />
         </TabsContent>
 
         <TabsContent value="tokens">
