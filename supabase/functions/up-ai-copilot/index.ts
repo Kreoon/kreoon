@@ -764,6 +764,34 @@ async function checkAntiFraud(
     userEventCounts[e.user_id] = (userEventCounts[e.user_id] || 0) + 1;
   });
 
+  // Get all unique user IDs to fetch their names
+  const allUserIds = new Set<string>();
+  Object.keys(userEventCounts).forEach(id => allUserIds.add(id));
+  (userPoints || []).forEach((up: any) => allUserIds.add(up.user_id));
+
+  // Fetch user profiles to get names
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .in("id", Array.from(allUserIds));
+
+  // Create a map of user_id to name
+  const userNameMap: Record<string, string> = {};
+  (profiles || []).forEach((p: any) => {
+    userNameMap[p.id] = p.full_name || p.email || p.id;
+  });
+
+  // Transform data to include names
+  const userEventCountsWithNames: Record<string, { count: number; name: string; id: string }> = {};
+  Object.entries(userEventCounts).forEach(([id, count]) => {
+    userEventCountsWithNames[userNameMap[id] || id] = { count: count as number, name: userNameMap[id] || id, id };
+  });
+
+  const userPointsWithNames = (userPoints || []).map((up: any) => ({
+    ...up,
+    user_name: userNameMap[up.user_id] || up.user_id
+  }));
+
   const systemPrompt = `Eres un sistema anti-fraude para el sistema de gamificación UP de UGC Colombia.
 Detecta patrones sospechosos como:
 - Rachas perfectas irreales
@@ -783,12 +811,14 @@ Responde con un JSON válido con esta estructura:
   const prompt = `Analiza estos datos de actividad:
 
 EVENTOS RECIENTES (${events?.length || 0}):
-Top usuarios por eventos: ${JSON.stringify(userEventCounts)}
+Top usuarios por eventos: ${JSON.stringify(userEventCountsWithNames)}
 
-RACHAS ACTUALES:
-${JSON.stringify(userPoints || [])}
+RACHAS ACTUALES (con nombres):
+${JSON.stringify(userPointsWithNames)}
 
 PERIODO: Últimas ${timeRange} horas
+
+IMPORTANTE: Cuando menciones usuarios en las alertas, usa SIEMPRE el nombre del usuario (user_name), NO el ID.
 
 Detecta patrones de fraude o gaming del sistema.`;
 
@@ -807,9 +837,10 @@ Detecta patrones de fraude o gaming del sistema.`;
               properties: {
                 severity: { type: "string", enum: ["low", "medium", "high"] },
                 alertType: { type: "string" },
-                reason: { type: "string" },
-                evidence: { type: "array", items: { type: "string" } },
-                affectedUserId: { type: "string" }
+                reason: { type: "string", description: "Descripción del problema usando el NOMBRE del usuario, no el ID" },
+                evidence: { type: "array", items: { type: "string" }, description: "Lista de evidencias usando NOMBRES de usuarios" },
+                affectedUserId: { type: "string", description: "ID técnico del usuario afectado" },
+                affectedUserName: { type: "string", description: "Nombre del usuario afectado para mostrar en la UI" }
               },
               required: ["severity", "alertType", "reason", "evidence"]
             }

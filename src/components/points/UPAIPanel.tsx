@@ -737,9 +737,9 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
                               )} />
                               <div className="flex-1">
                                 <p className="font-medium">{alert.reason}</p>
-                                {alert.user_id && (
+                                {(alert.affectedUserName || alert.user_id) && (
                                   <p className="text-xs text-muted-foreground mt-1">
-                                    Usuario: {alert.user_id}
+                                    Usuario afectado: <span className="font-medium text-foreground">{alert.affectedUserName || alert.user_id}</span>
                                   </p>
                                 )}
                                 <ul className="text-sm text-muted-foreground mt-2 list-disc list-inside">
