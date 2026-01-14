@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Settings, Users, History, Sword, Shield, Castle, Swords, Award } from 'lucide-react';
+import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Settings, Users, History, Sword, Shield, Castle, Swords, Award, Video, Scissors } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
 import { UPSettingsPanel } from '@/components/points/UPSettingsPanel';
@@ -16,6 +16,9 @@ import { UPControlCenter } from '@/components/points/UPControlCenter';
 import { Leaderboard } from '@/components/points/Leaderboard';
 import { PointsHistory } from '@/components/points/PointsHistory';
 import { AchievementsShowcase } from '@/components/points/AchievementsShowcase';
+import { UPLeaderboardTabs } from '@/components/points/UPLeaderboardTabs';
+import { UPUserStats } from '@/components/points/UPUserStats';
+import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -106,11 +109,15 @@ export default function RankingPage() {
 
       {/* Tabs for Admin */}
       {isAdmin ? (
-        <Tabs defaultValue="ranking" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+        <Tabs defaultValue="upv2" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+            <TabsTrigger value="upv2" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Video className="w-4 h-4" />
+              <span className="hidden sm:inline">UP V2</span>
+            </TabsTrigger>
             <TabsTrigger value="ranking" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Trophy className="w-4 h-4" />
-              <span className="hidden sm:inline">Ranking</span>
+              <span className="hidden sm:inline">General</span>
             </TabsTrigger>
             <TabsTrigger value="achievements" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Award className="w-4 h-4" />
@@ -133,6 +140,54 @@ export default function RankingPage() {
               <span className="hidden sm:inline">Decretos</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* New UP V2 Tab - Separate Creator/Editor Rankings */}
+          <TabsContent value="upv2" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <UPLeaderboardTabs />
+              <Card className="border-2 border-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-yellow-500" />
+                    Sistema UP V2
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-sm text-muted-foreground space-y-2">
+                    <p><strong>Creadores:</strong></p>
+                    <ul className="list-disc list-inside ml-2 space-y-1">
+                      <li>+70 UP: Entrega Día 1-2</li>
+                      <li>+50 UP: Entrega Día 3</li>
+                      <li>-30 UP: Retraso Día 4-5</li>
+                      <li>Día 6+: Reasignación automática</li>
+                    </ul>
+                    <p className="mt-3"><strong>Editores:</strong></p>
+                    <ul className="list-disc list-inside ml-2 space-y-1">
+                      <li>+70 UP: Entrega Día 1</li>
+                      <li>+50 UP: Entrega Día 2</li>
+                      <li>-30 UP: Retraso Día 3-4</li>
+                      <li>Día 5+: Reasignación automática</li>
+                    </ul>
+                    <p className="mt-3"><strong>Correcciones (Novedad):</strong></p>
+                    <ul className="list-disc list-inside ml-2 space-y-1">
+                      <li>-10 UP: Por cada novedad</li>
+                      <li>+10 UP: Recuperable si se corrige en 2 días</li>
+                      <li>+10 UP: Bonus aprobación limpia</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* User's own stats if viewing as non-admin or own profile */}
+            {user && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Mis Puntos UP</h3>
+                <UPUserStats userId={user.id} />
+                <UPHistoryTable userId={user.id} />
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="ranking" className="space-y-6">
             <RankingContent 
@@ -219,17 +274,33 @@ export default function RankingPage() {
           </TabsContent>
         </Tabs>
       ) : (
-        <Tabs defaultValue="ranking" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+        <Tabs defaultValue="upv2" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+            <TabsTrigger value="upv2" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Video className="w-4 h-4" />
+              Mis Puntos
+            </TabsTrigger>
             <TabsTrigger value="ranking" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Trophy className="w-4 h-4" />
               Ranking
             </TabsTrigger>
             <TabsTrigger value="achievements" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Award className="w-4 h-4" />
-              Mis Insignias
+              Insignias
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="upv2" className="space-y-6">
+            {user && (
+              <>
+                <UPUserStats userId={user.id} />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <UPLeaderboardTabs />
+                  <UPHistoryTable userId={user.id} />
+                </div>
+              </>
+            )}
+          </TabsContent>
 
           <TabsContent value="ranking" className="space-y-6">
             <RankingContent 
