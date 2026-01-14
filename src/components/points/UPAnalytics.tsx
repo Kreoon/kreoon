@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   BarChart3, TrendingUp, Users, Zap, Trophy, 
-  CheckCircle2, Target, Flame
+  CheckCircle2, Target, Flame, Video, Scissors
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -15,15 +17,19 @@ interface UPAnalyticsProps {
 }
 
 interface AnalyticsData {
-  totalUsers: number;
-  totalPoints: number;
-  avgPoints: number;
-  topPerformers: any[];
-  levelDistribution: Record<string, number>;
+  totalCreators: number;
+  totalEditors: number;
+  totalCreatorPoints: number;
+  totalEditorPoints: number;
+  avgCreatorPoints: number;
+  avgEditorPoints: number;
+  topCreators: any[];
+  topEditors: any[];
+  creatorLevelDistribution: Record<string, number>;
+  editorLevelDistribution: Record<string, number>;
   eventBreakdown: { type: string; count: number; points: number }[];
-  completionRate: number;
-  onTimeRate: number;
-  avgQualityScore: number;
+  onTimeRateCreators: number;
+  onTimeRateEditors: number;
 }
 
 const LEVEL_COLORS = {
@@ -37,6 +43,7 @@ export function UPAnalytics({ organizationId }: UPAnalyticsProps) {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('month');
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [activeTab, setActiveTab] = useState('creators');
 
   useEffect(() => {
     fetchAnalytics();
@@ -45,44 +52,71 @@ export function UPAnalytics({ organizationId }: UPAnalyticsProps) {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      // Fetch user points data
-      const { data: pointsData } = await supabase
-        .from('user_points')
-        .select('*');
+      // Fetch from V2 tables
+      const [creatorsResult, editorsResult, eventsResult] = await Promise.all([
+        supabase
+          .from('up_creadores_totals')
+          .select(`
+            *,
+            profiles:user_id (
+              full_name,
+              avatar_url
+            )
+          `)
+          .eq('organization_id', organizationId)
+          .order('total_points', { ascending: false }),
+        supabase
+          .from('up_editores_totals')
+          .select(`
+            *,
+            profiles:user_id (
+              full_name,
+              avatar_url
+            )
+          `)
+          .eq('organization_id', organizationId)
+          .order('total_points', { ascending: false }),
+        supabase
+          .from('up_events')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .order('created_at', { ascending: false })
+          .limit(500)
+      ]);
 
-      // Fetch recent events
-      const { data: eventsData } = await supabase
-        .from('up_events')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .order('created_at', { ascending: false })
-        .limit(500);
+      const creators = creatorsResult.data || [];
+      const editors = editorsResult.data || [];
+      const events = eventsResult.data || [];
 
-      // Fetch quality scores
-      const { data: qualityData } = await supabase
-        .from('up_quality_scores')
-        .select('score')
-        .eq('organization_id', organizationId);
-
-      const users = pointsData || [];
-      const events = eventsData || [];
-      const qualityScores = qualityData || [];
-
-      // Calculate analytics
-      const totalPoints = users.reduce((sum, u) => sum + (u.total_points || 0), 0);
-      const avgPoints = users.length > 0 ? Math.round(totalPoints / users.length) : 0;
-
-      const levelDistribution = users.reduce((acc, u) => {
-        const level = u.current_level || 'bronze';
+      // Calculate creator stats
+      const totalCreatorPoints = creators.reduce((sum, c) => sum + (c.total_points || 0), 0);
+      const avgCreatorPoints = creators.length > 0 ? Math.round(totalCreatorPoints / creators.length) : 0;
+      const creatorLevelDistribution = creators.reduce((acc, c) => {
+        const level = c.current_level || 'bronze';
         acc[level] = (acc[level] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
-      const topPerformers = [...users]
-        .sort((a, b) => (b.total_points || 0) - (a.total_points || 0))
-        .slice(0, 5);
+      // Calculate editor stats
+      const totalEditorPoints = editors.reduce((sum, e) => sum + (e.total_points || 0), 0);
+      const avgEditorPoints = editors.length > 0 ? Math.round(totalEditorPoints / editors.length) : 0;
+      const editorLevelDistribution = editors.reduce((acc, e) => {
+        const level = e.current_level || 'bronze';
+        acc[level] = (acc[level] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
 
-      // Event breakdown - use event_type_key
+      // On-time rates
+      const onTimeRateCreators = creators.length > 0 
+        ? Math.round((creators.reduce((sum, c) => sum + (c.on_time_deliveries || 0), 0) / 
+            Math.max(1, creators.reduce((sum, c) => sum + (c.total_deliveries || 0), 0))) * 100)
+        : 0;
+      const onTimeRateEditors = editors.length > 0
+        ? Math.round((editors.reduce((sum, e) => sum + (e.on_time_deliveries || 0), 0) / 
+            Math.max(1, editors.reduce((sum, e) => sum + (e.total_deliveries || 0), 0))) * 100)
+        : 0;
+
+      // Event breakdown
       const eventCounts = events.reduce((acc, e) => {
         const eventKey = e.event_type_key || 'unknown';
         if (!acc[eventKey]) {
@@ -93,31 +127,25 @@ export function UPAnalytics({ organizationId }: UPAnalyticsProps) {
         return acc;
       }, {} as Record<string, { count: number; points: number }>);
 
-      const eventBreakdown = Object.entries(eventCounts).map(([type, data]) => ({
+      const eventBreakdown = Object.entries(eventCounts).map(([type, eData]) => ({
         type,
-        ...data
+        ...eData
       })).sort((a, b) => b.count - a.count);
 
-      // Completion and on-time rates
-      const totalCompletions = users.reduce((sum, u) => sum + (u.total_completions || 0), 0);
-      const totalOnTime = users.reduce((sum, u) => sum + (u.total_on_time || 0), 0);
-      const completionRate = totalCompletions > 0 ? Math.round((totalOnTime / totalCompletions) * 100) : 0;
-
-      // Average quality score
-      const avgQualityScore = qualityScores.length > 0
-        ? Math.round(qualityScores.reduce((sum, q) => sum + q.score, 0) / qualityScores.length)
-        : 0;
-
       setData({
-        totalUsers: users.length,
-        totalPoints,
-        avgPoints,
-        topPerformers,
-        levelDistribution,
+        totalCreators: creators.length,
+        totalEditors: editors.length,
+        totalCreatorPoints,
+        totalEditorPoints,
+        avgCreatorPoints,
+        avgEditorPoints,
+        topCreators: creators.slice(0, 5),
+        topEditors: editors.slice(0, 5),
+        creatorLevelDistribution,
+        editorLevelDistribution,
         eventBreakdown,
-        completionRate,
-        onTimeRate: completionRate,
-        avgQualityScore
+        onTimeRateCreators,
+        onTimeRateEditors
       });
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -142,6 +170,9 @@ export function UPAnalytics({ organizationId }: UPAnalyticsProps) {
 
   if (!data) return null;
 
+  const totalPoints = data.totalCreatorPoints + data.totalEditorPoints;
+  const totalUsers = data.totalCreators + data.totalEditors;
+
   return (
     <div className="space-y-6">
       {/* Period Selector */}
@@ -164,11 +195,23 @@ export function UPAnalytics({ organizationId }: UPAnalyticsProps) {
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/20">
-              <Users className="w-5 h-5 text-primary" />
+              <Video className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{data.totalUsers}</p>
-              <p className="text-xs text-muted-foreground">Usuarios Activos</p>
+              <p className="text-2xl font-bold">{data.totalCreators}</p>
+              <p className="text-xs text-muted-foreground">Creadores</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-500/20">
+              <Scissors className="w-5 h-5 text-purple-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{data.totalEditors}</p>
+              <p className="text-xs text-muted-foreground">Editores</p>
             </div>
           </CardContent>
         </Card>
@@ -179,7 +222,7 @@ export function UPAnalytics({ organizationId }: UPAnalyticsProps) {
               <Zap className="w-5 h-5 text-success" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{data.totalPoints.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{totalPoints.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">UP Totales</p>
             </div>
           </CardContent>
@@ -191,162 +234,297 @@ export function UPAnalytics({ organizationId }: UPAnalyticsProps) {
               <TrendingUp className="w-5 h-5 text-cyan-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{data.avgPoints}</p>
+              <p className="text-2xl font-bold">
+                {totalUsers > 0 ? Math.round(totalPoints / totalUsers) : 0}
+              </p>
               <p className="text-xs text-muted-foreground">Promedio UP</p>
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-500/20">
-              <Target className="w-5 h-5 text-purple-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{data.avgQualityScore || 'N/A'}</p>
-              <p className="text-xs text-muted-foreground">Quality Score Prom.</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Level Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Trophy className="w-5 h-5 text-yellow-500" />
-              Distribución por Nivel
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {(['diamond', 'gold', 'silver', 'bronze'] as const).map(level => {
-              const count = data.levelDistribution[level] || 0;
-              const percentage = data.totalUsers > 0 
-                ? Math.round((count / data.totalUsers) * 100) 
-                : 0;
+      {/* Tabs for Creators vs Editors */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="creators" className="flex items-center gap-2">
+            <Video className="w-4 h-4" />
+            Creadores
+          </TabsTrigger>
+          <TabsTrigger value="editors" className="flex items-center gap-2">
+            <Scissors className="w-4 h-4" />
+            Editores
+          </TabsTrigger>
+        </TabsList>
 
-              return (
-                <div key={level} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="capitalize flex items-center gap-2">
-                      {level === 'diamond' && '🏰'}
-                      {level === 'gold' && '👑'}
-                      {level === 'silver' && '🛡️'}
-                      {level === 'bronze' && '⚔️'}
-                      {level}
-                    </span>
-                    <span className="font-medium">{count} usuarios ({percentage}%)</span>
-                  </div>
-                  <div className="h-3 rounded-full bg-muted overflow-hidden">
+        {/* Creator Tab */}
+        <TabsContent value="creators" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Creator Level Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Trophy className="w-5 h-5 text-yellow-500" />
+                  Niveles de Creadores
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(['diamond', 'gold', 'silver', 'bronze'] as const).map(level => {
+                  const count = data.creatorLevelDistribution[level] || 0;
+                  const percentage = data.totalCreators > 0 
+                    ? Math.round((count / data.totalCreators) * 100) 
+                    : 0;
+
+                  return (
+                    <div key={level} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="capitalize flex items-center gap-2">
+                          {level === 'diamond' && '💎'}
+                          {level === 'gold' && '🥇'}
+                          {level === 'silver' && '🥈'}
+                          {level === 'bronze' && '🥉'}
+                          {level}
+                        </span>
+                        <span className="font-medium">{count} ({percentage}%)</span>
+                      </div>
+                      <div className="h-3 rounded-full bg-muted overflow-hidden">
+                        <div 
+                          className={cn("h-full transition-all", LEVEL_COLORS[level])}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {/* Top Creators */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  Top Creadores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {data.topCreators.map((user, index) => (
                     <div 
-                      className={cn("h-full transition-all", LEVEL_COLORS[level])}
-                      style={{ width: `${percentage}%` }}
-                    />
+                      key={user.user_id}
+                      className="flex items-center gap-3 p-2 rounded-lg bg-muted/50"
+                    >
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                        index === 0 && "bg-yellow-600 text-white",
+                        index === 1 && "bg-slate-400 text-white",
+                        index === 2 && "bg-amber-700 text-white",
+                        index > 2 && "bg-muted text-muted-foreground"
+                      )}>
+                        {index + 1}
+                      </div>
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.profiles?.avatar_url} />
+                        <AvatarFallback className="text-xs">
+                          {(user.profiles?.full_name || 'U').slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{user.profiles?.full_name || 'Usuario'}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {user.current_level}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-primary">{user.total_points} UP</p>
+                        <p className="text-xs text-muted-foreground">
+                          {user.total_deliveries || 0} entregas
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Creator Metrics */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CheckCircle2 className="w-5 h-5 text-success" />
+                  Métricas de Creadores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-4 rounded-lg bg-success/10 border border-success/20 text-center">
+                    <p className="text-3xl font-bold text-success">{data.onTimeRateCreators}%</p>
+                    <p className="text-sm text-muted-foreground">Entregas a Tiempo</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                    <p className="text-3xl font-bold text-primary">{data.totalCreatorPoints.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground">UP Totales</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-center">
+                    <p className="text-3xl font-bold text-cyan-500">{data.avgCreatorPoints}</p>
+                    <p className="text-sm text-muted-foreground">Promedio UP</p>
                   </div>
                 </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-        {/* Top Performers */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Flame className="w-5 h-5 text-orange-500" />
-              Top Performers
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {data.topPerformers.map((user, index) => (
-                <div 
-                  key={user.user_id}
-                  className="flex items-center gap-3 p-2 rounded-lg bg-muted/50"
-                >
-                  <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                    index === 0 && "bg-yellow-600 text-white",
-                    index === 1 && "bg-slate-400 text-white",
-                    index === 2 && "bg-amber-700 text-white",
-                    index > 2 && "bg-muted text-muted-foreground"
+        {/* Editor Tab */}
+        <TabsContent value="editors" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Editor Level Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Trophy className="w-5 h-5 text-yellow-500" />
+                  Niveles de Editores
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(['diamond', 'gold', 'silver', 'bronze'] as const).map(level => {
+                  const count = data.editorLevelDistribution[level] || 0;
+                  const percentage = data.totalEditors > 0 
+                    ? Math.round((count / data.totalEditors) * 100) 
+                    : 0;
+
+                  return (
+                    <div key={level} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="capitalize flex items-center gap-2">
+                          {level === 'diamond' && '💎'}
+                          {level === 'gold' && '🥇'}
+                          {level === 'silver' && '🥈'}
+                          {level === 'bronze' && '🥉'}
+                          {level}
+                        </span>
+                        <span className="font-medium">{count} ({percentage}%)</span>
+                      </div>
+                      <div className="h-3 rounded-full bg-muted overflow-hidden">
+                        <div 
+                          className={cn("h-full transition-all", LEVEL_COLORS[level])}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {/* Top Editors */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  Top Editores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {data.topEditors.map((user, index) => (
+                    <div 
+                      key={user.user_id}
+                      className="flex items-center gap-3 p-2 rounded-lg bg-muted/50"
+                    >
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                        index === 0 && "bg-yellow-600 text-white",
+                        index === 1 && "bg-slate-400 text-white",
+                        index === 2 && "bg-amber-700 text-white",
+                        index > 2 && "bg-muted text-muted-foreground"
+                      )}>
+                        {index + 1}
+                      </div>
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.profiles?.avatar_url} />
+                        <AvatarFallback className="text-xs">
+                          {(user.profiles?.full_name || 'U').slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{user.profiles?.full_name || 'Usuario'}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {user.current_level}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-primary">{user.total_points} UP</p>
+                        <p className="text-xs text-muted-foreground">
+                          {user.total_deliveries || 0} entregas
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Editor Metrics */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CheckCircle2 className="w-5 h-5 text-success" />
+                  Métricas de Editores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-4 rounded-lg bg-success/10 border border-success/20 text-center">
+                    <p className="text-3xl font-bold text-success">{data.onTimeRateEditors}%</p>
+                    <p className="text-sm text-muted-foreground">Entregas a Tiempo</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                    <p className="text-3xl font-bold text-primary">{data.totalEditorPoints.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground">UP Totales</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-center">
+                    <p className="text-3xl font-bold text-cyan-500">{data.avgEditorPoints}</p>
+                    <p className="text-sm text-muted-foreground">Promedio UP</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Event Breakdown - Common to both */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <BarChart3 className="w-5 h-5 text-primary" />
+            Eventos por Tipo
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {data.eventBreakdown.slice(0, 9).map(event => (
+              <div 
+                key={event.type}
+                className="flex items-center justify-between p-2 rounded bg-muted/30"
+              >
+                <span className="text-sm capitalize truncate">
+                  {event.type.replace(/_/g, ' ')}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">{event.count}</Badge>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    event.points >= 0 ? "text-success" : "text-destructive"
                   )}>
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">Usuario #{user.user_id?.slice(0, 8)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Nivel: {user.current_level}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-primary">{user.total_points} UP</p>
-                    <p className="text-xs text-muted-foreground">
-                      {user.total_completions} completados
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Performance Metrics */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <CheckCircle2 className="w-5 h-5 text-success" />
-              Métricas de Rendimiento
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-success/10 border border-success/20 text-center">
-                <p className="text-3xl font-bold text-success">{data.onTimeRate}%</p>
-                <p className="text-sm text-muted-foreground">Entregas a Tiempo</p>
-              </div>
-              <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20 text-center">
-                <p className="text-3xl font-bold text-purple-500">{data.avgQualityScore}</p>
-                <p className="text-sm text-muted-foreground">Quality Score Prom.</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Event Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="w-5 h-5 text-primary" />
-              Eventos por Tipo
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {data.eventBreakdown.slice(0, 6).map(event => (
-                <div 
-                  key={event.type}
-                  className="flex items-center justify-between p-2 rounded bg-muted/30"
-                >
-                  <span className="text-sm capitalize">
-                    {event.type.replace(/_/g, ' ')}
+                    {event.points >= 0 ? '+' : ''}{event.points} UP
                   </span>
-                  <div className="flex items-center gap-3">
-                    <Badge variant="secondary">{event.count}</Badge>
-                    <span className={cn(
-                      "text-sm font-medium",
-                      event.points >= 0 ? "text-success" : "text-destructive"
-                    )}>
-                      {event.points >= 0 ? '+' : ''}{event.points} UP
-                    </span>
-                  </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
