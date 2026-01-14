@@ -9,6 +9,7 @@ import { Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw, F
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Content, ContentStatus, STATUS_LABELS } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,6 +74,7 @@ interface ClientInfo {
 
 export default function ClientContentBoard() {
   const { user, profile } = useAuth();
+  const { isImpersonating, effectiveClientId, effectiveUserId } = useImpersonation();
   const { toast } = useToast();
   
   const [content, setContent] = useState<Content[]>([]);
@@ -91,12 +93,12 @@ export default function ClientContentBoard() {
   const [showFullscreenViewer, setShowFullscreenViewer] = useState(false);
   const [fullscreenStartIndex, setFullscreenStartIndex] = useState(0);
 
-  // Fetch client data
+  // Fetch client data - react to impersonation changes
   useEffect(() => {
     if (user) {
       fetchClientData();
     }
-  }, [user]);
+  }, [user, isImpersonating, effectiveClientId]);
 
   const fetchClientData = async () => {
     if (!user) return;
@@ -104,36 +106,41 @@ export default function ClientContentBoard() {
     try {
       setLoading(true);
       
-      // Check for selected client from localStorage first
-      const savedClientId = localStorage.getItem('selectedClientId');
-      
       let clientId: string | null = null;
       
-      if (savedClientId) {
-        // Verify user has access to this client
-        const { data: association } = await supabase
-          .from('client_users')
-          .select('client_id')
-          .eq('user_id', user.id)
-          .eq('client_id', savedClientId)
-          .maybeSingle();
+      // IMPERSONATION MODE: Use effectiveClientId directly
+      if (isImpersonating && effectiveClientId) {
+        clientId = effectiveClientId;
+      } else {
+        // Normal mode: Check for selected client from localStorage first
+        const savedClientId = localStorage.getItem('selectedClientId');
         
-        if (association) {
-          clientId = savedClientId;
+        if (savedClientId) {
+          // Verify user has access to this client
+          const { data: association } = await supabase
+            .from('client_users')
+            .select('client_id')
+            .eq('user_id', user.id)
+            .eq('client_id', savedClientId)
+            .maybeSingle();
+          
+          if (association) {
+            clientId = savedClientId;
+          }
         }
-      }
-      
-      // If no saved client or invalid, get first associated client
-      if (!clientId) {
-        const { data: associations } = await supabase
-          .from('client_users')
-          .select('client_id')
-          .eq('user_id', user.id)
-          .limit(1);
         
-        if (associations && associations.length > 0) {
-          clientId = associations[0].client_id;
-          localStorage.setItem('selectedClientId', clientId);
+        // If no saved client or invalid, get first associated client
+        if (!clientId) {
+          const { data: associations } = await supabase
+            .from('client_users')
+            .select('client_id')
+            .eq('user_id', user.id)
+            .limit(1);
+          
+          if (associations && associations.length > 0) {
+            clientId = associations[0].client_id;
+            localStorage.setItem('selectedClientId', clientId);
+          }
         }
       }
       
