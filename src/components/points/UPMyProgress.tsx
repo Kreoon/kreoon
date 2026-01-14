@@ -34,15 +34,15 @@ const LEVEL_LABELS = {
 };
 
 const TRANSACTION_ICONS: Record<string, { icon: any; color: string }> = {
-  base_completion: { icon: CheckCircle2, color: 'text-success' },
   early_delivery: { icon: TrendingUp, color: 'text-cyan-400' },
-  late_delivery: { icon: Clock, color: 'text-destructive' },
-  perfect_streak: { icon: Flame, color: 'text-orange-500' },
-  five_star_rating: { icon: Star, color: 'text-yellow-500' },
-  correction_needed: { icon: XCircle, color: 'text-destructive' },
-  manual_adjustment: { icon: Zap, color: 'text-primary' },
-  quest_completion: { icon: Target, color: 'text-purple-500' },
-  achievement_bonus: { icon: Award, color: 'text-amber-500' }
+  on_time_delivery: { icon: CheckCircle2, color: 'text-success' },
+  slight_delay: { icon: Clock, color: 'text-yellow-500' },
+  late_delivery: { icon: Clock, color: 'text-orange-500' },
+  very_late_delivery: { icon: Clock, color: 'text-destructive' },
+  clean_approval_bonus: { icon: Star, color: 'text-yellow-500' },
+  issue_penalty: { icon: XCircle, color: 'text-destructive' },
+  issue_recovery: { icon: CheckCircle2, color: 'text-success' },
+  manual_adjustment: { icon: Zap, color: 'text-primary' }
 };
 
 export function UPMyProgress({ userId }: UPMyProgressProps) {
@@ -75,7 +75,6 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
 
   const level = points?.current_level || 'bronze';
   const { progress, nextLevel, pointsNeeded } = getProgressToNextLevel();
-  const streak = points?.consecutive_on_time || 0;
   const totalPoints = points?.total_points || 0;
 
   // Get next 3 achievements
@@ -136,35 +135,25 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
               )}
             </div>
 
-            {/* Streak */}
-            {streak > 0 && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-orange-500/20 rounded-lg border border-orange-500/30">
-                <Flame className="w-6 h-6 text-orange-500" />
-                <div>
-                  <p className="text-2xl font-bold text-orange-500">{streak}</p>
-                  <p className="text-xs text-orange-400">Racha Activa</p>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-border/50">
             <div className="text-center">
-              <p className="text-2xl font-bold">{points?.total_completions || 0}</p>
-              <p className="text-xs text-muted-foreground">Completados</p>
+              <p className="text-2xl font-bold">{points?.total_deliveries || 0}</p>
+              <p className="text-xs text-muted-foreground">Entregas</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-success">{points?.total_on_time || 0}</p>
+              <p className="text-2xl font-bold text-success">{points?.on_time_deliveries || 0}</p>
               <p className="text-xs text-muted-foreground">A tiempo</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-destructive">{points?.total_late || 0}</p>
-              <p className="text-xs text-muted-foreground">Tardíos</p>
+              <p className="text-2xl font-bold text-emerald-500">{points?.clean_approvals || 0}</p>
+              <p className="text-xs text-muted-foreground">Aprobación limpia</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-warning">{points?.total_corrections || 0}</p>
-              <p className="text-xs text-muted-foreground">Correcciones</p>
+              <p className="text-2xl font-bold text-orange-500">{points?.total_issues || 0}</p>
+              <p className="text-xs text-muted-foreground">Novedades</p>
             </div>
           </div>
         </CardContent>
@@ -283,7 +272,7 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
             <div className="space-y-3">
               {history.length > 0 ? (
                 history.map((transaction) => {
-                  const typeInfo = TRANSACTION_ICONS[transaction.transaction_type] || 
+                  const typeInfo = TRANSACTION_ICONS[transaction.event_type] || 
                     { icon: Zap, color: 'text-muted-foreground' };
                   const Icon = typeInfo.icon;
                   const isPositive = transaction.points > 0;
@@ -305,7 +294,7 @@ export function UPMyProgress({ userId }: UPMyProgressProps) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-medium truncate">
-                            {transaction.description || transaction.transaction_type}
+                            {transaction.description || transaction.event_type}
                           </p>
                           <span className={cn(
                             "font-bold shrink-0",
