@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
+import { ThisMonthFilter } from "@/components/dashboard/ThisMonthFilter";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
@@ -737,6 +738,26 @@ export default function Dashboard() {
     setEndDateFilter(undefined);
   };
 
+  const setThisMonth = (active: boolean) => {
+    if (active) {
+      const now = new Date();
+      setStartDateFilter(startOfMonth(now));
+      setEndDateFilter(endOfMonth(now));
+    } else {
+      setStartDateFilter(undefined);
+      setEndDateFilter(undefined);
+    }
+  };
+
+  const isThisMonthActive = useMemo(() => {
+    if (!startDateFilter || !endDateFilter) return false;
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    return startDateFilter.getTime() === monthStart.getTime() && 
+           endDateFilter.getTime() === monthEnd.getTime();
+  }, [startDateFilter, endDateFilter]);
+
   const hasActiveFilters = filterClientId !== 'all' || filterCreatorId !== 'all' || filterEditorId !== 'all' || startDateFilter || endDateFilter;
 
   if (loading) {
@@ -761,6 +782,7 @@ export default function Dashboard() {
           subtitle="Centro de comando y métricas"
           action={
             <div className="flex items-center gap-2">
+              <ThisMonthFilter isActive={isThisMonthActive} onToggle={setThisMonth} />
               {profile?.is_ambassador && (
                 <AmbassadorBadge size="sm" variant="glow" />
               )}

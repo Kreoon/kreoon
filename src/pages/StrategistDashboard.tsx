@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS, Product } from '@/types/database';
 import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/index';
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
+import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { 
   Lightbulb, 
   FileText, 
@@ -93,10 +94,11 @@ export default function StrategistDashboard() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   
-  const [content, setContent] = useState<Content[]>([]);
+  const [allContent, setAllContent] = useState<Content[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  const [thisMonthActive, setThisMonthActive] = useState(false);
   
   // AI Script Generator State
   const [generatingScript, setGeneratingScript] = useState(false);
@@ -110,6 +112,9 @@ export default function StrategistDashboard() {
     title: string;
     content: Content[];
   }>({ open: false, title: '', content: [] });
+
+  // Filtrar por mes actual
+  const content = useThisMonthFilter(allContent, thisMonthActive);
 
   useEffect(() => {
     fetchData();
@@ -133,7 +138,7 @@ export default function StrategistDashboard() {
       if (contentError) {
         console.error('Content error:', contentError);
       }
-      setContent((contentData || []) as Content[]);
+      setAllContent((contentData || []) as Content[]);
 
       // Fetch products for script generation - only for clients in user's current organization
       const { data: authProfile } = await supabase
@@ -277,6 +282,9 @@ export default function StrategistDashboard() {
         icon={Scroll}
         title="KREOON Board"
         subtitle={`Bienvenido, ${profile?.full_name}`}
+        action={
+          <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
+        }
       />
 
       {/* Stats Grid */}
