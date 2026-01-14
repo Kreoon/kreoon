@@ -8255,6 +8255,7 @@ export type Database = {
           recorded_at: string | null
           recording_started_at: string | null
           related_issue_id: string | null
+          season_id: string | null
           user_id: string
         }
         Insert: {
@@ -8273,6 +8274,7 @@ export type Database = {
           recorded_at?: string | null
           recording_started_at?: string | null
           related_issue_id?: string | null
+          season_id?: string | null
           user_id: string
         }
         Update: {
@@ -8291,6 +8293,7 @@ export type Database = {
           recorded_at?: string | null
           recording_started_at?: string | null
           related_issue_id?: string | null
+          season_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -8323,6 +8326,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "up_creadores_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "up_seasons"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "up_creadores_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -8340,6 +8350,7 @@ export type Database = {
           on_time_deliveries: number
           organization_id: string
           reassignments: number
+          season_id: string | null
           total_deliveries: number
           total_issues: number
           total_points: number
@@ -8354,6 +8365,7 @@ export type Database = {
           on_time_deliveries?: number
           organization_id: string
           reassignments?: number
+          season_id?: string | null
           total_deliveries?: number
           total_issues?: number
           total_points?: number
@@ -8368,6 +8380,7 @@ export type Database = {
           on_time_deliveries?: number
           organization_id?: string
           reassignments?: number
+          season_id?: string | null
           total_deliveries?: number
           total_issues?: number
           total_points?: number
@@ -8380,6 +8393,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_creadores_totals_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "up_seasons"
             referencedColumns: ["id"]
           },
           {
@@ -8452,6 +8472,7 @@ export type Database = {
           organization_id: string
           points: number
           related_issue_id: string | null
+          season_id: string | null
           user_id: string
         }
         Insert: {
@@ -8470,6 +8491,7 @@ export type Database = {
           organization_id: string
           points: number
           related_issue_id?: string | null
+          season_id?: string | null
           user_id: string
         }
         Update: {
@@ -8488,6 +8510,7 @@ export type Database = {
           organization_id?: string
           points?: number
           related_issue_id?: string | null
+          season_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -8520,6 +8543,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "up_editores_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "up_seasons"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "up_editores_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -8537,6 +8567,7 @@ export type Database = {
           on_time_deliveries: number
           organization_id: string
           reassignments: number
+          season_id: string | null
           total_deliveries: number
           total_issues: number
           total_points: number
@@ -8551,6 +8582,7 @@ export type Database = {
           on_time_deliveries?: number
           organization_id: string
           reassignments?: number
+          season_id?: string | null
           total_deliveries?: number
           total_issues?: number
           total_points?: number
@@ -8565,6 +8597,7 @@ export type Database = {
           on_time_deliveries?: number
           organization_id?: string
           reassignments?: number
+          season_id?: string | null
           total_deliveries?: number
           total_issues?: number
           total_points?: number
@@ -8577,6 +8610,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_editores_totals_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "up_seasons"
             referencedColumns: ["id"]
           },
           {
@@ -9098,9 +9138,11 @@ export type Database = {
           final_points: number | null
           final_rank: number | null
           id: string
+          organization_id: string | null
           season_id: string
           total_events: number | null
           user_id: string
+          user_type: string | null
         }
         Insert: {
           achievements_unlocked?: number | null
@@ -9109,9 +9151,11 @@ export type Database = {
           final_points?: number | null
           final_rank?: number | null
           id?: string
+          organization_id?: string | null
           season_id: string
           total_events?: number | null
           user_id: string
+          user_type?: string | null
         }
         Update: {
           achievements_unlocked?: number | null
@@ -9120,11 +9164,20 @@ export type Database = {
           final_points?: number | null
           final_rank?: number | null
           id?: string
+          organization_id?: string | null
           season_id?: string
           total_events?: number | null
           user_id?: string
+          user_type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "up_season_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "up_season_snapshots_season_id_fkey"
             columns: ["season_id"]
@@ -9797,6 +9850,7 @@ export type Database = {
         Args: { full_name: string }
         Returns: string
       }
+      get_active_season: { Args: { org_id: string }; Returns: string }
       get_ai_module_config: {
         Args: { _module_key: string; _org_id: string }
         Returns: {
