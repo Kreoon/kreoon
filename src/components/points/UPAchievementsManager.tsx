@@ -8,13 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Plus, Edit2, Trash2, Sparkles, Loader2, ImageIcon
+  Plus, Edit2, Trash2, Sparkles, Loader2, Users
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { UPBadgeHolders } from './UPBadgeHolders';
 
 interface UPAchievementsManagerProps {
   organizationId?: string;
@@ -400,32 +402,44 @@ export function UPAchievementsManager({ organizationId }: UPAchievementsManagerP
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Gestor de Logros</h3>
-          <p className="text-sm text-muted-foreground">
-            Configura los logros que los usuarios pueden desbloquear
-          </p>
+    <Tabs defaultValue="manage" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="manage" className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4" />
+          Gestionar Logros
+        </TabsTrigger>
+        <TabsTrigger value="holders" className="flex items-center gap-2">
+          <Users className="w-4 h-4" />
+          Poseedores
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="manage" className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Gestor de Logros</h3>
+            <p className="text-sm text-muted-foreground">
+              Configura los logros que los usuarios pueden desbloquear
+            </p>
+          </div>
+          <Dialog open={isCreating} onOpenChange={setIsCreating}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Nuevo Logro
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Crear Nuevo Logro</DialogTitle>
+                <DialogDescription>
+                  Define las condiciones para desbloquear este logro. Puedes generar un icono personalizado con IA.
+                </DialogDescription>
+              </DialogHeader>
+              <AchievementForm />
+            </DialogContent>
+          </Dialog>
         </div>
-        <Dialog open={isCreating} onOpenChange={setIsCreating}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Logro
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Crear Nuevo Logro</DialogTitle>
-              <DialogDescription>
-                Define las condiciones para desbloquear este logro. Puedes generar un icono personalizado con IA.
-              </DialogDescription>
-            </DialogHeader>
-            <AchievementForm />
-          </DialogContent>
-        </Dialog>
-      </div>
 
       <ScrollArea className="h-[500px]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-4">
@@ -493,6 +507,11 @@ export function UPAchievementsManager({ organizationId }: UPAchievementsManagerP
           <AchievementForm />
         </DialogContent>
       </Dialog>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="holders">
+        <UPBadgeHolders />
+      </TabsContent>
+    </Tabs>
   );
 }

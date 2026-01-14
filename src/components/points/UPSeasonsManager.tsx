@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,15 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Trophy, Calendar as CalendarIcon, Plus, Play, Pause, 
-  Clock, CheckCircle2
+  Clock, Camera, BarChart3
 } from 'lucide-react';
 import { UPSeason, useUPEngine } from '@/hooks/useUPEngine';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { UPSeasonLeaderboard } from './UPSeasonLeaderboard';
 
 interface UPSeasonsManagerProps {
   organizationId: string;
@@ -82,14 +84,26 @@ export function UPSeasonsManager({ organizationId, seasons }: UPSeasonsManagerPr
   const activeSeason = seasons.find(s => s.is_active);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Gestión de Temporadas</h3>
-          <p className="text-sm text-muted-foreground">
-            Configura ciclos de puntos y rankings
-          </p>
-        </div>
+    <Tabs defaultValue="manage" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="manage" className="flex items-center gap-2">
+          <Trophy className="w-4 h-4" />
+          Gestión
+        </TabsTrigger>
+        <TabsTrigger value="leaderboard" className="flex items-center gap-2">
+          <BarChart3 className="w-4 h-4" />
+          Rankings por Temporada
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="manage" className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Gestión de Temporadas</h3>
+            <p className="text-sm text-muted-foreground">
+              Configura ciclos de puntos y rankings
+            </p>
+          </div>
         <Dialog open={isCreating} onOpenChange={setIsCreating}>
           <DialogTrigger asChild>
             <Button>
@@ -271,6 +285,11 @@ export function UPSeasonsManager({ organizationId, seasons }: UPSeasonsManagerPr
           </Card>
         )}
       </div>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="leaderboard">
+        <UPSeasonLeaderboard organizationId={organizationId} seasons={seasons} />
+      </TabsContent>
+    </Tabs>
   );
 }
