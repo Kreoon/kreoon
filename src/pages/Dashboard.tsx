@@ -32,9 +32,8 @@ import { AmbassadorBadge } from "@/components/ui/ambassador-badge";
 import { ReferralStats } from "@/components/dashboard/ReferralStats";
 import { CurrencyDisplay, CurrencyBadge, formatCurrency, type CurrencyType } from "@/components/ui/currency-input";
 import { useCurrency } from "@/hooks/useCurrency";
-import { Leaderboard } from "@/components/points/Leaderboard";
-import { useLeaderboard } from "@/hooks/useUserPoints";
 import { UPSystemKPIs } from "@/components/dashboard/UPSystemKPIs";
+import { ActiveSeasonBanner } from "@/components/dashboard/ActiveSeasonBanner";
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -1269,21 +1268,20 @@ export default function Dashboard() {
           <span className="text-lg font-bold text-destructive">{clientsBilling.contentOwed}</span>
         </div>
 
-        {/* Row 5: UP System KPIs - Separated by Creators/Editors */}
+        {/* Active Season Banner - visible for all users */}
+        {currentOrgId && (
+          <ActiveSeasonBanner />
+        )}
 
-        {/* Row 6: UP System KPIs - Separated by Creators/Editors */}
+        {/* Row 5: UP System KPIs - Separated by Creators/Editors */}
         {isAdmin && currentOrgId && (
           <UPSystemKPIs organizationId={currentOrgId} />
         )}
 
         {/* Row 7: Tabs for Charts, Leaderboard, Referrals */}
         {isAdmin && (
-          <Tabs defaultValue="leaderboard" className="rounded-xl border border-border/50 bg-card p-3">
-            <TabsList className="grid w-full grid-cols-3 h-8">
-              <TabsTrigger value="leaderboard" className="text-xs h-7">
-                <Trophy className="h-3 w-3 mr-1" />
-                Ranking
-              </TabsTrigger>
+          <Tabs defaultValue="goals" className="rounded-xl border border-border/50 bg-card p-3">
+            <TabsList className="grid w-full grid-cols-2 h-8">
               <TabsTrigger value="goals" className="text-xs h-7">
                 <Target className="h-3 w-3 mr-1" />
                 Metas
@@ -1293,10 +1291,6 @@ export default function Dashboard() {
                 Referidos
               </TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="leaderboard" className="mt-2">
-              <Leaderboard maxItems={5} showHeader={false} />
-            </TabsContent>
             
             <TabsContent value="goals" className="mt-2">
               {allGoals.length > 0 ? (

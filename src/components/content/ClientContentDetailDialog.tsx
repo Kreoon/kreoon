@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AutoPauseVideo } from "@/components/content/AutoPauseVideo";
 import { RichTextViewer } from "@/components/ui/rich-text-editor";
 import { ScriptViewer } from "@/components/content/ScriptViewer";
+import { StarRatingInput } from "@/components/ui/star-rating-input";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +19,7 @@ import { es } from "date-fns/locale";
 import { 
   Calendar, Video, Clock, CheckCircle, MessageSquare, Send, 
   Package, Target, Download, Loader2, ThumbsUp, AlertTriangle,
-  FileText, X, User
+  FileText, X, User, Star
 } from "lucide-react";
 
 // Download Video Button Component
@@ -105,6 +106,11 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
   const [loadingComment, setLoadingComment] = useState(false);
   const [productName, setProductName] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'videos' | 'script' | 'comments'>('videos');
+  
+  // Star rating state for approval
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [creatorRating, setCreatorRating] = useState(0);
+  const [editorRating, setEditorRating] = useState(0);
 
   const videoUrls = (content as any)?.video_urls || [];
   const hooksCount = (content as any)?.hooks_count || Math.max(videoUrls.length, 1);
@@ -176,15 +182,64 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
     }
   };
 
-  const handleStatusChange = async (newStatus: ContentStatus) => {
+  const handleApproveClick = () => {
+    // Show rating dialog instead of immediately approving
+    setShowRatingDialog(true);
+  };
+
+  const handleConfirmApproval = async () => {
     if (!content) return;
     setLoading(true);
     try {
-      const updates: any = { status: newStatus };
-      if (newStatus === 'approved') {
-        updates.approved_at = new Date().toISOString();
-        updates.approved_by = user?.id;
+      const updates: any = { 
+        status: 'approved',
+        approved_at: new Date().toISOString(),
+        approved_by: user?.id,
+      };
+      
+      // Add ratings if provided
+      if (creatorRating > 0 && content.creator_id) {
+        updates.creator_rating = creatorRating;
+        updates.creator_rated_at = new Date().toISOString();
+        updates.creator_rated_by = user?.id;
       }
+      if (editorRating > 0 && content.editor_id) {
+        updates.editor_rating = editorRating;
+        updates.editor_rated_at = new Date().toISOString();
+        updates.editor_rated_by = user?.id;
+      }
+      
+      const { error } = await supabase
+        .from('content')
+        .update(updates)
+        .eq('id', content.id);
+      if (error) throw error;
+      
+      setCurrentStatus('approved');
+      setShowRatingDialog(false);
+      setCreatorRating(0);
+      setEditorRating(0);
+      toast({ title: "¡Contenido aprobado!", description: "Gracias por tu calificación" });
+      onUpdate?.();
+    } catch (error) {
+      toast({ title: "Error al aprobar", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: ContentStatus) => {
+    if (!content) return;
+    
+    // For approval, use the rating dialog flow
+    if (newStatus === 'approved') {
+      handleApproveClick();
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const updates: any = { status: newStatus };
       
       const { error } = await supabase
         .from('content')
@@ -832,6 +887,76 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
           </div>
         </ScrollArea>
       </DialogContent>
+
+      {/* Rating Dialog for Approval */}
+      <Dialog open={showRatingDialog} onOpenChange={setShowRatingDialog}>
+        <DialogContent className="max-w-md">
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="mx-auto w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mb-3">
+                <ThumbsUp className="h-6 w-6 text-success" />
+              </div>
+              <h3 className="text-lg font-semibold">¡Aprobar Contenido!</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Antes de aprobar, califica el trabajo del equipo (opcional)
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {content?.creator_id && (
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="h-4 w-4 text-info" />
+                    <span className="text-sm font-medium">Creador de Contenido</span>
+                  </div>
+                  <StarRatingInput
+                    value={creatorRating}
+                    onChange={setCreatorRating}
+                    size="lg"
+                  />
+                </div>
+              )}
+
+              {content?.editor_id && (
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Video className="h-4 w-4 text-warning" />
+                    <span className="text-sm font-medium">Editor de Video</span>
+                  </div>
+                  <StarRatingInput
+                    value={editorRating}
+                    onChange={setEditorRating}
+                    size="lg"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowRatingDialog(false)}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-success hover:bg-success/90 text-success-foreground gap-2"
+                onClick={handleConfirmApproval}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle className="h-4 w-4" />
+                )}
+                Aprobar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
