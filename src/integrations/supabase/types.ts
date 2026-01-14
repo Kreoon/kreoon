@@ -8238,6 +8238,159 @@ export type Database = {
           },
         ]
       }
+      up_creadores: {
+        Row: {
+          approved_at: string | null
+          content_id: string
+          created_at: string
+          created_by: string | null
+          days_to_deliver: number | null
+          description: string | null
+          event_type: string
+          id: string
+          is_recovered: boolean | null
+          issue_at: string | null
+          organization_id: string
+          points: number
+          recorded_at: string | null
+          recording_started_at: string | null
+          related_issue_id: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          content_id: string
+          created_at?: string
+          created_by?: string | null
+          days_to_deliver?: number | null
+          description?: string | null
+          event_type: string
+          id?: string
+          is_recovered?: boolean | null
+          issue_at?: string | null
+          organization_id: string
+          points: number
+          recorded_at?: string | null
+          recording_started_at?: string | null
+          related_issue_id?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          content_id?: string
+          created_at?: string
+          created_by?: string | null
+          days_to_deliver?: number | null
+          description?: string | null
+          event_type?: string
+          id?: string
+          is_recovered?: boolean | null
+          issue_at?: string | null
+          organization_id?: string
+          points?: number
+          recorded_at?: string | null
+          recording_started_at?: string | null
+          related_issue_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_creadores_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_creadores_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_creadores_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_creadores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_creadores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_creadores_totals: {
+        Row: {
+          clean_approvals: number
+          current_level: string
+          id: string
+          late_deliveries: number
+          on_time_deliveries: number
+          organization_id: string
+          reassignments: number
+          total_deliveries: number
+          total_issues: number
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clean_approvals?: number
+          current_level?: string
+          id?: string
+          late_deliveries?: number
+          on_time_deliveries?: number
+          organization_id: string
+          reassignments?: number
+          total_deliveries?: number
+          total_issues?: number
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clean_approvals?: number
+          current_level?: string
+          id?: string
+          late_deliveries?: number
+          on_time_deliveries?: number
+          organization_id?: string
+          reassignments?: number
+          total_deliveries?: number
+          total_issues?: number
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_creadores_totals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_creadores_totals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       up_currency_conversions: {
         Row: {
           conversion_rate: number
@@ -8278,6 +8431,159 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_editores: {
+        Row: {
+          approved_at: string | null
+          content_id: string
+          created_at: string
+          created_by: string | null
+          days_to_deliver: number | null
+          delivered_at: string | null
+          description: string | null
+          editing_started_at: string | null
+          event_type: string
+          id: string
+          is_recovered: boolean | null
+          issue_at: string | null
+          organization_id: string
+          points: number
+          related_issue_id: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          content_id: string
+          created_at?: string
+          created_by?: string | null
+          days_to_deliver?: number | null
+          delivered_at?: string | null
+          description?: string | null
+          editing_started_at?: string | null
+          event_type: string
+          id?: string
+          is_recovered?: boolean | null
+          issue_at?: string | null
+          organization_id: string
+          points: number
+          related_issue_id?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          content_id?: string
+          created_at?: string
+          created_by?: string | null
+          days_to_deliver?: number | null
+          delivered_at?: string | null
+          description?: string | null
+          editing_started_at?: string | null
+          event_type?: string
+          id?: string
+          is_recovered?: boolean | null
+          issue_at?: string | null
+          organization_id?: string
+          points?: number
+          related_issue_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_editores_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_editores_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_editores_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_editores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_editores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      up_editores_totals: {
+        Row: {
+          clean_approvals: number
+          current_level: string
+          id: string
+          late_deliveries: number
+          on_time_deliveries: number
+          organization_id: string
+          reassignments: number
+          total_deliveries: number
+          total_issues: number
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clean_approvals?: number
+          current_level?: string
+          id?: string
+          late_deliveries?: number
+          on_time_deliveries?: number
+          organization_id: string
+          reassignments?: number
+          total_deliveries?: number
+          total_issues?: number
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clean_approvals?: number
+          current_level?: string
+          id?: string
+          late_deliveries?: number
+          on_time_deliveries?: number
+          organization_id?: string
+          reassignments?: number
+          total_deliveries?: number
+          total_issues?: number
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "up_editores_totals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "up_editores_totals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -9356,10 +9662,6 @@ export type Database = {
         Returns: string[]
       }
       calculate_security_score: { Args: { _user_id: string }; Returns: number }
-      calculate_up_level: {
-        Args: { points: number }
-        Returns: Database["public"]["Enums"]["up_level"]
-      }
       can_chat_with_user: {
         Args: {
           _org_id: string
