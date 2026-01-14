@@ -34,6 +34,8 @@ import { CurrencyDisplay, CurrencyBadge, formatCurrency, type CurrencyType } fro
 import { useCurrency } from "@/hooks/useCurrency";
 import { Leaderboard } from "@/components/points/Leaderboard";
 import { useLeaderboard } from "@/hooks/useUserPoints";
+import { UPSystemKPIs } from "@/components/dashboard/UPSystemKPIs";
+import { PlatformKPIs } from "@/components/dashboard/PlatformKPIs";
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -1268,7 +1270,23 @@ export default function Dashboard() {
           <span className="text-lg font-bold text-destructive">{clientsBilling.contentOwed}</span>
         </div>
 
-        {/* Row 5: Tabs for Charts, Leaderboard, Referrals */}
+        {/* Row 5: Platform KPIs */}
+        {isAdmin && currentOrgId && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold">Métricas de Plataforma</h3>
+            </div>
+            <PlatformKPIs organizationId={currentOrgId} />
+          </div>
+        )}
+
+        {/* Row 6: UP System KPIs - Separated by Creators/Editors */}
+        {isAdmin && currentOrgId && (
+          <UPSystemKPIs organizationId={currentOrgId} />
+        )}
+
+        {/* Row 7: Tabs for Charts, Leaderboard, Referrals */}
         {isAdmin && (
           <Tabs defaultValue="leaderboard" className="rounded-xl border border-border/50 bg-card p-3">
             <TabsList className="grid w-full grid-cols-3 h-8">
