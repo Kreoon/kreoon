@@ -122,42 +122,19 @@ export function UPSettingsPanel() {
     );
   }
 
-  // Agrupar settings por categoría
-  const groupedSettings = settings.reduce((acc, setting) => {
-    const category = setting.category || 'general';
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(setting);
-    return acc;
-  }, {} as Record<string, UPSetting[]>);
+  // Agrupar settings por categoría, excluyendo 'levels' (gestionados en UPLevelsManager)
+  const groupedSettings = settings
+    .filter(setting => setting.category !== 'levels' && setting.key !== 'level_thresholds')
+    .reduce((acc, setting) => {
+      const category = setting.category || 'general';
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(setting);
+      return acc;
+    }, {} as Record<string, UPSetting[]>);
 
   const renderSettingControl = (setting: UPSetting) => {
     const value = getValue(setting);
     const SettingIcon = SETTING_ICONS[setting.key] || Zap;
-
-    // Level thresholds - special case
-    if (setting.key === 'level_thresholds') {
-      return (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {['bronze', 'silver', 'gold', 'diamond'].map(level => (
-            <div key={level} className="space-y-1">
-              <Label className="text-xs capitalize flex items-center gap-1">
-                {level === 'bronze' && '🥉'}
-                {level === 'silver' && '🥈'}
-                {level === 'gold' && '🥇'}
-                {level === 'diamond' && '💎'}
-                {level}
-              </Label>
-              <Input
-                type="number"
-                value={value[level] || 0}
-                onChange={(e) => handleValueChange(setting.key, level, parseInt(e.target.value) || 0)}
-                className="h-9"
-              />
-            </div>
-          ))}
-        </div>
-      );
-    }
 
     // Boolean enabled/disabled
     if (value.enabled !== undefined && Object.keys(value).length === 1) {
