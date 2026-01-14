@@ -23,29 +23,31 @@ interface PointsHistoryProps {
 }
 
 const TRANSACTION_ICONS: Record<string, any> = {
-  base_completion: CheckCircle2,
-  early_delivery: Clock,
+  early_delivery: TrendingUp,
+  on_time_delivery: CheckCircle2,
+  slight_delay: Clock,
   late_delivery: AlertCircle,
-  correction_needed: AlertCircle,
-  perfect_streak: Flame,
-  five_star_rating: Star,
-  viral_hook: Sparkles,
+  very_late_delivery: AlertCircle,
+  clean_approval_bonus: Star,
+  issue_penalty: AlertCircle,
+  issue_recovery: Sparkles,
   manual_adjustment: Zap
 };
 
 const TRANSACTION_LABELS: Record<string, string> = {
-  base_completion: 'Video completado',
   early_delivery: 'Entrega anticipada',
+  on_time_delivery: 'Entrega a tiempo',
+  slight_delay: 'Ligero retraso',
   late_delivery: 'Entrega tardía',
-  correction_needed: 'Corrección requerida',
-  perfect_streak: 'Racha perfecta',
-  five_star_rating: 'Aprobación 5 estrellas',
-  viral_hook: 'Hook viral',
+  very_late_delivery: 'Entrega muy tardía',
+  clean_approval_bonus: 'Aprobación limpia',
+  issue_penalty: 'Penalización por novedad',
+  issue_recovery: 'Recuperación de novedad',
   manual_adjustment: 'Ajuste manual'
 };
 
 function TransactionItem({ transaction }: { transaction: PointTransaction }) {
-  const Icon = TRANSACTION_ICONS[transaction.transaction_type] || Zap;
+  const Icon = TRANSACTION_ICONS[transaction.event_type] || Zap;
   const isPositive = transaction.points > 0;
   
   return (
@@ -62,11 +64,11 @@ function TransactionItem({ transaction }: { transaction: PointTransaction }) {
       
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">
-          {TRANSACTION_LABELS[transaction.transaction_type] || transaction.transaction_type}
+          {TRANSACTION_LABELS[transaction.event_type] || transaction.event_type}
         </p>
-        {transaction.description && (
+        {transaction.source && (
           <p className="text-xs text-muted-foreground truncate">
-            {transaction.description}
+            Como {transaction.source === 'creator' ? 'Creador' : 'Editor'}
           </p>
         )}
       </div>
