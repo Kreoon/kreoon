@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
-import { Zap, UserPlus, Minus, Plus, Search } from 'lucide-react';
+import { Zap, Minus, Plus, Search, Video, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface UserWithPoints {
@@ -21,6 +21,8 @@ interface UserWithPoints {
   current_level: string;
 }
 
+type RoleType = 'creator' | 'editor';
+
 export function UPManualAdjustment() {
   const { toast } = useToast();
   const { currentOrgId } = useOrgOwner();
@@ -31,6 +33,7 @@ export function UPManualAdjustment() {
   const [points, setPoints] = useState(0);
   const [reason, setReason] = useState('');
   const [adjustmentType, setAdjustmentType] = useState<'add' | 'subtract'>('add');
+  const [roleType, setRoleType] = useState<RoleType>('creator');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -90,7 +93,7 @@ export function UPManualAdjustment() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedUser || points <= 0 || !reason.trim()) {
+    if (!selectedUser || points <= 0 || !reason.trim() || !currentOrgId) {
       toast({
         title: 'Campos incompletos',
         description: 'Selecciona un usuario, ingresa los puntos y una razón.',
@@ -102,8 +105,39 @@ export function UPManualAdjustment() {
     setSubmitting(true);
     try {
       const finalPoints = adjustmentType === 'subtract' ? -points : points;
+      const { data: { user } } = await supabase.auth.getUser();
       
-      const { error } = await supabase.rpc('add_user_points', {
+      // Insert into the appropriate UP table based on role type
+      if (roleType === 'creator') {
+        const { error } = await supabase
+          .from('up_creadores')
+          .insert({
+            user_id: selectedUser.id,
+            organization_id: currentOrgId,
+            event_type: 'manual_adjustment',
+            points: finalPoints,
+            description: reason,
+            created_by: user?.id
+          });
+        
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('up_editores')
+          .insert({
+            user_id: selectedUser.id,
+            organization_id: currentOrgId,
+            event_type: 'manual_adjustment',
+            points: finalPoints,
+            description: reason,
+            created_by: user?.id
+          });
+        
+        if (error) throw error;
+      }
+
+      // Also update legacy user_points table for backwards compatibility
+      await supabase.rpc('add_user_points', {
         _user_id: selectedUser.id,
         _content_id: null,
         _transaction_type: 'manual_adjustment',
@@ -111,11 +145,9 @@ export function UPManualAdjustment() {
         _description: reason
       });
 
-      if (error) throw error;
-
       toast({
         title: 'Ajuste realizado',
-        description: `Se ${adjustmentType === 'add' ? 'agregaron' : 'restaron'} ${points} UP a ${selectedUser.full_name}.`
+        description: `Se ${adjustmentType === 'add' ? 'agregaron' : 'restaron'} ${points} UP a ${selectedUser.full_name} como ${roleType === 'creator' ? 'Creador' : 'Editor'}.`
       });
 
       // Reset form
