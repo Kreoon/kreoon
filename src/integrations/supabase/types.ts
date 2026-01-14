@@ -1905,6 +1905,9 @@ export type Database = {
           creator_paid: boolean | null
           creator_payment: number | null
           creator_payment_currency: Database["public"]["Enums"]["currency_type"]
+          creator_rated_at: string | null
+          creator_rated_by: string | null
+          creator_rating: number | null
           cta: string | null
           custom_status_id: string | null
           deadline: string | null
@@ -1920,6 +1923,9 @@ export type Database = {
           editor_paid: boolean | null
           editor_payment: number | null
           editor_payment_currency: Database["public"]["Enums"]["currency_type"]
+          editor_rated_at: string | null
+          editor_rated_by: string | null
+          editor_rating: number | null
           funnel_stage: string | null
           hook: string | null
           hooks_count: number | null
@@ -2000,6 +2006,9 @@ export type Database = {
           creator_paid?: boolean | null
           creator_payment?: number | null
           creator_payment_currency?: Database["public"]["Enums"]["currency_type"]
+          creator_rated_at?: string | null
+          creator_rated_by?: string | null
+          creator_rating?: number | null
           cta?: string | null
           custom_status_id?: string | null
           deadline?: string | null
@@ -2015,6 +2024,9 @@ export type Database = {
           editor_paid?: boolean | null
           editor_payment?: number | null
           editor_payment_currency?: Database["public"]["Enums"]["currency_type"]
+          editor_rated_at?: string | null
+          editor_rated_by?: string | null
+          editor_rating?: number | null
           funnel_stage?: string | null
           hook?: string | null
           hooks_count?: number | null
@@ -2095,6 +2107,9 @@ export type Database = {
           creator_paid?: boolean | null
           creator_payment?: number | null
           creator_payment_currency?: Database["public"]["Enums"]["currency_type"]
+          creator_rated_at?: string | null
+          creator_rated_by?: string | null
+          creator_rating?: number | null
           cta?: string | null
           custom_status_id?: string | null
           deadline?: string | null
@@ -2110,6 +2125,9 @@ export type Database = {
           editor_paid?: boolean | null
           editor_payment?: number | null
           editor_payment_currency?: Database["public"]["Enums"]["currency_type"]
+          editor_rated_at?: string | null
+          editor_rated_by?: string | null
+          editor_rating?: number | null
           funnel_stage?: string | null
           hook?: string | null
           hooks_count?: number | null

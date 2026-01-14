@@ -122,27 +122,94 @@ const Creators = () => {
         }
       });
 
-      const talentsData: TalentProfile[] = (profiles || []).map(p => ({
-        id: p.id,
-        full_name: p.full_name,
-        email: p.email,
-        avatar_url: p.avatar_url,
-        phone: p.phone,
-        bio: p.bio,
-        role: roleMap.get(p.id) as 'creator' | 'editor',
-        content_count: countMap.get(p.id) || 0,
-        is_ambassador: ambassadorSet.has(p.id) || p.is_ambassador || false,
-        quality_score_avg: p.quality_score_avg || 0,
-        reliability_score: p.reliability_score || 0,
-        velocity_score: p.velocity_score || 0,
-        ai_recommended_level: (p.ai_recommended_level as 'junior' | 'pro' | 'elite') || 'junior',
-        ai_risk_flag: (p.ai_risk_flag as 'none' | 'warning' | 'high') || 'none',
-        ambassador_level: (ambassadorLevelMap.get(p.id) as 'none' | 'bronze' | 'silver' | 'gold') || 'none',
-        editor_rating: p.editor_rating,
-        editor_completed_count: p.editor_completed_count,
-        editor_on_time_count: p.editor_on_time_count,
-        active_tasks: activeTasksMap.get(p.id) || 0,
-      }));
+      // Get UP creator totals
+      const { data: creatorTotals } = await supabase
+        .from('up_creadores_totals')
+        .select('user_id, total_points, current_level')
+        .eq('organization_id', currentOrgId)
+        .in('user_id', userIds);
+
+      // Get UP editor totals
+      const { data: editorTotals } = await supabase
+        .from('up_editores_totals')
+        .select('user_id, total_points, current_level')
+        .eq('organization_id', currentOrgId)
+        .in('user_id', userIds);
+
+      const creatorUpMap = new Map(creatorTotals?.map(t => [t.user_id, t]) || []);
+      const editorUpMap = new Map(editorTotals?.map(t => [t.user_id, t]) || []);
+
+      // Get star ratings from content
+      const { data: creatorRatings } = await supabase
+        .from('content')
+        .select('creator_id, creator_rating')
+        .eq('organization_id', currentOrgId)
+        .in('creator_id', userIds)
+        .not('creator_rating', 'is', null);
+
+      const { data: editorRatings } = await supabase
+        .from('content')
+        .select('editor_id, editor_rating')
+        .eq('organization_id', currentOrgId)
+        .in('editor_id', userIds)
+        .not('editor_rating', 'is', null);
+
+      // Calculate average ratings
+      const creatorRatingMap = new Map<string, { sum: number; count: number }>();
+      creatorRatings?.forEach(c => {
+        if (c.creator_id && c.creator_rating !== null) {
+          const existing = creatorRatingMap.get(c.creator_id) || { sum: 0, count: 0 };
+          creatorRatingMap.set(c.creator_id, { 
+            sum: existing.sum + c.creator_rating, 
+            count: existing.count + 1 
+          });
+        }
+      });
+
+      const editorRatingMap = new Map<string, { sum: number; count: number }>();
+      editorRatings?.forEach(c => {
+        if (c.editor_id && c.editor_rating !== null) {
+          const existing = editorRatingMap.get(c.editor_id) || { sum: 0, count: 0 };
+          editorRatingMap.set(c.editor_id, { 
+            sum: existing.sum + c.editor_rating, 
+            count: existing.count + 1 
+          });
+        }
+      });
+
+      const talentsData: TalentProfile[] = (profiles || []).map(p => {
+        const role = roleMap.get(p.id) as 'creator' | 'editor';
+        const upData = role === 'creator' ? creatorUpMap.get(p.id) : editorUpMap.get(p.id);
+        const ratingData = role === 'creator' ? creatorRatingMap.get(p.id) : editorRatingMap.get(p.id);
+
+        return {
+          id: p.id,
+          full_name: p.full_name,
+          email: p.email,
+          avatar_url: p.avatar_url,
+          phone: p.phone,
+          bio: p.bio,
+          role,
+          content_count: countMap.get(p.id) || 0,
+          is_ambassador: ambassadorSet.has(p.id) || p.is_ambassador || false,
+          quality_score_avg: p.quality_score_avg || 0,
+          reliability_score: p.reliability_score || 0,
+          velocity_score: p.velocity_score || 0,
+          ai_recommended_level: (p.ai_recommended_level as 'junior' | 'pro' | 'elite') || 'junior',
+          ai_risk_flag: (p.ai_risk_flag as 'none' | 'warning' | 'high') || 'none',
+          ambassador_level: (ambassadorLevelMap.get(p.id) as 'none' | 'bronze' | 'silver' | 'gold') || 'none',
+          editor_rating: p.editor_rating,
+          editor_completed_count: p.editor_completed_count,
+          editor_on_time_count: p.editor_on_time_count,
+          active_tasks: activeTasksMap.get(p.id) || 0,
+          // UP System data
+          up_points: upData?.total_points || 0,
+          up_level: upData?.current_level || 'bronze',
+          // Star ratings
+          avg_star_rating: ratingData ? ratingData.sum / ratingData.count : 0,
+          rated_content_count: ratingData?.count || 0,
+        };
+      });
 
       setTalents(talentsData);
     } catch (error) {
