@@ -12,7 +12,7 @@ import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/in
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { UPWidget } from '@/components/points/UPWidget';
-import { Leaderboard } from '@/components/points/Leaderboard';
+import { RoleLeaderboard } from '@/components/points/RoleLeaderboard';
 import { PointsHistory } from '@/components/points/PointsHistory';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { 
@@ -314,7 +314,7 @@ export default function CreatorDashboard() {
         {/* Ranking y Historial de Puntos */}
         {user && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Leaderboard currentUserId={user.id} maxItems={5} />
+            <RoleLeaderboard role="creator" currentUserId={user.id} maxItems={5} />
             <PointsHistory userId={user.id} maxItems={10} />
           </div>
         )}
