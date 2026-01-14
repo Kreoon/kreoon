@@ -1551,6 +1551,7 @@ export default function ClientDashboard() {
                 onStatusChange={handleQuickStatusChange}
                 userId={user?.id}
                 onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
+                showRatings={true}
               />
             ) : (
               <Tabs defaultValue="all" className="w-full">
@@ -1562,16 +1563,16 @@ export default function ClientDashboard() {
                 </TabsList>
 
                 <TabsContent value="all">
-                  <ContentList items={content} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} />
+                  <ContentList items={content} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} showRatings={true} />
                 </TabsContent>
                 <TabsContent value="progress">
-                  <ContentList items={inProgressContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} />
+                  <ContentList items={inProgressContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} showRatings={true} />
                 </TabsContent>
                 <TabsContent value="approved">
-                  <ContentList items={approvedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} />
+                  <ContentList items={approvedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} showRatings={true} />
                 </TabsContent>
                 <TabsContent value="published">
-                  <ContentList items={publishedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} />
+                  <ContentList items={publishedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} showRatings={true} />
                 </TabsContent>
               </Tabs>
             )}
@@ -1898,13 +1899,15 @@ function ContentList({
   onSelect, 
   onStatusChange,
   userId,
-  onUpdate
+  onUpdate,
+  showRatings = false
 }: { 
   items: Content[]; 
   onSelect: (c: Content) => void;
   onStatusChange?: (id: string, status: ContentStatus, notes?: string) => Promise<void>;
   userId?: string;
   onUpdate?: () => void;
+  showRatings?: boolean;
 }) {
   if (items.length === 0) {
     return (
@@ -1926,6 +1929,7 @@ function ContentList({
           userId={userId}
           onStatusChange={onStatusChange}
           onUpdate={onUpdate}
+          showRatings={showRatings}
         />
       ))}
     </div>
