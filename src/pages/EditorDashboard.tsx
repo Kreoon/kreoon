@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useContent } from '@/hooks/useContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -101,7 +102,12 @@ const StatsCard = ({
 export default function EditorDashboard() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { content: allContent, loading, refetch } = useContent(user?.id, 'editor');
+  const { effectiveUserId, isImpersonating } = useImpersonation();
+  
+  // Use effective user ID for impersonation, otherwise real user ID
+  const targetUserId = isImpersonating ? effectiveUserId : user?.id;
+  
+  const { content: allContent, loading, refetch } = useContent(targetUserId, 'editor');
   const { toast } = useToast();
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [thisMonthActive, setThisMonthActive] = useState(false);
@@ -220,9 +226,9 @@ export default function EditorDashboard() {
       </div>
 
       {/* UGC Points Widget */}
-      {user && (
+      {targetUserId && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <RoleUPWidget userId={user.id} role="editor" />
+          <RoleUPWidget userId={targetUserId} role="editor" />
           <div className="lg:col-span-2">
             <Card className="border-border/50 h-full">
               <CardContent className="p-4">
@@ -308,10 +314,10 @@ export default function EditorDashboard() {
       </div>
 
       {/* Ranking y Historial de Puntos */}
-      {user && (
+      {targetUserId && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <RoleLeaderboard role="editor" currentUserId={user.id} maxItems={5} />
-          <PointsHistory userId={user.id} maxItems={10} />
+          <RoleLeaderboard role="editor" currentUserId={targetUserId} maxItems={5} />
+          <PointsHistory userId={targetUserId} maxItems={10} />
         </div>
       )}
 

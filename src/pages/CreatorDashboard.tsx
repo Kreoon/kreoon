@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useContent } from '@/hooks/useContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -97,7 +98,12 @@ const StatsCard = ({
 export default function CreatorDashboard() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { content: allContent, loading, refetch } = useContent(user?.id, 'creator');
+  const { effectiveUserId, isImpersonating } = useImpersonation();
+  
+  // Use effective user ID for impersonation, otherwise real user ID
+  const targetUserId = isImpersonating ? effectiveUserId : user?.id;
+  
+  const { content: allContent, loading, refetch } = useContent(targetUserId, 'creator');
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [thisMonthActive, setThisMonthActive] = useState(false);
   const [kpiDialog, setKpiDialog] = useState<{
@@ -161,7 +167,7 @@ export default function CreatorDashboard() {
               </span>
               <span className="text-xs text-muted-foreground hidden sm:inline">pendiente</span>
             </div>
-            {user && <PortfolioButton userId={user.id} />}
+            {targetUserId && <PortfolioButton userId={targetUserId} />}
           </div>
         }
       />
@@ -217,9 +223,9 @@ export default function CreatorDashboard() {
         </div>
 
         {/* UGC Points Widget */}
-        {user && (
+        {targetUserId && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <RoleUPWidget userId={user.id} role="creator" />
+            <RoleUPWidget userId={targetUserId} role="creator" />
             <div className="lg:col-span-2">
               <Card className="border-border/50 h-full">
                 <CardContent className="p-4">
@@ -312,10 +318,10 @@ export default function CreatorDashboard() {
         </div>
 
         {/* Ranking y Historial de Puntos */}
-        {user && (
+        {targetUserId && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <RoleLeaderboard role="creator" currentUserId={user.id} maxItems={5} />
-            <PointsHistory userId={user.id} maxItems={10} />
+            <RoleLeaderboard role="creator" currentUserId={targetUserId} maxItems={5} />
+            <PointsHistory userId={targetUserId} maxItems={10} />
           </div>
         )}
       </div>
