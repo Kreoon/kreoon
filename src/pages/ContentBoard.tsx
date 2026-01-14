@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useTrialGuard } from "@/hooks/useTrialGuard";
 import { useContentWithFilters } from "@/hooks/useContent";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
@@ -153,14 +154,26 @@ const canMoveToStatusLegacy = (
 };
 
 export default function ContentBoard() {
-  const { user, isAdmin, isStrategist, isCreator, isEditor, isClient, activeRole } = useAuth();
+  const { user, isAdmin, isStrategist, isCreator, isEditor, isClient, activeRole: realActiveRole } = useAuth();
+  const { effectiveUserId, effectiveRoles, isImpersonating, impersonationTarget } = useImpersonation();
   const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
   const { guardAction, isReadOnly } = useTrialGuard();
   
+  // Use effective user ID for impersonation
+  const targetUserId = isImpersonating ? effectiveUserId : user?.id;
+  
+  // Use effective role for impersonation
+  const activeRole = isImpersonating && impersonationTarget.role 
+    ? impersonationTarget.role 
+    : realActiveRole;
+  
   // Get ambassador IDs for the organization
   const { ambassadors } = useInternalOrgContent();
   const ambassadorIds = useMemo(() => new Set(ambassadors.map(a => a.id)), [ambassadors]);
+  
+  // Show admin controls only when user is admin AND not impersonating a non-admin role
+  const showAdminControls = isAdmin && (!isImpersonating || impersonationTarget.role === 'admin');
   
   // Board persistence hook - saves view, filters, scroll, selected content
   const persistence = useBoardPersistence({ organizationId: currentOrgId });
@@ -271,15 +284,16 @@ export default function ContentBoard() {
   // Board settings hook
   const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings } = useBoardSettings(currentOrgId);
 
-  // Rol efectivo para permisos del board
-  const primaryRole = (
-    activeRole ||
-    (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client')
-  );
+  // Rol efectivo para permisos del board - use impersonated role if active
+  const primaryRole = isImpersonating && impersonationTarget.role
+    ? impersonationTarget.role
+    : (activeRole ||
+       (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client'));
+  
   // Helper function to check if a status is visible for the current role
   const isStatusVisibleForRole = useCallback((statusKey: string): boolean => {
-    // Admin always sees everything
-    if (primaryRole === 'admin') return true;
+    // Admin always sees everything (but NOT when impersonating as non-admin)
+    if (primaryRole === 'admin' && !isImpersonating) return true;
 
     // Find the org status for this status key
     const orgStatus = orgStatuses.find(s => s.status_key === statusKey);
@@ -297,11 +311,11 @@ export default function ContentBoard() {
 
     const effectiveCanViewRoles = canViewRoles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
     return effectiveCanViewRoles.includes(primaryRole);
-  }, [primaryRole, orgStatuses, rules]);
+  }, [primaryRole, orgStatuses, rules, isImpersonating]);
 
-  // Fetch content según rol
+  // Fetch content según rol - use targetUserId for impersonation
   const { content, loading, updateContentStatus, deleteContent, refetch } = useContentWithFilters({
-    userId: user?.id,
+    userId: targetUserId,
     role: primaryRole as any,
     creatorId: filterCreatorId !== 'all' ? filterCreatorId : undefined,
     editorId: filterEditorId !== 'all' ? filterEditorId : undefined,
@@ -329,7 +343,7 @@ export default function ContentBoard() {
     // Wait for org context
     if (orgLoading) return;
 
-    if (!isAdmin || !currentOrgId) {
+    if (!showAdminControls || !currentOrgId) {
       setCreators([]);
       setEditors([]);
       setClients([]);
@@ -398,7 +412,7 @@ export default function ContentBoard() {
     };
 
     fetchFilters();
-  }, [isAdmin, currentOrgId]);
+  }, [showAdminControls, currentOrgId]);
 
   // Extract unique campaign weeks from content
   const campaignWeeks = useMemo(() => {
@@ -595,7 +609,7 @@ export default function ContentBoard() {
                   className="h-9 md:h-10 w-40 md:w-64 rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
-              {isAdmin && (
+              {showAdminControls && (
                 <Button 
                   variant="glow" 
                   size="sm" 
@@ -627,7 +641,7 @@ export default function ContentBoard() {
         </div>
 
         {/* Filtros para admin */}
-        {isAdmin && (
+        {showAdminControls && (
           <div className="flex flex-wrap items-center gap-2 md:gap-3 px-4 md:px-6 pb-4 overflow-x-auto">
             <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             
@@ -791,7 +805,7 @@ export default function ContentBoard() {
                 </Tooltip>
               )}
               <BoardViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
-              {isAdmin && (
+              {showAdminControls && (
                 <>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -829,14 +843,14 @@ export default function ContentBoard() {
           {/* Kanban View */}
           {currentView === 'kanban' && (
             <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0">
-              {(isAdmin ? BOARD_COLUMNS : (orgStatuses.length > 0 && rules.length > 0 ? BOARD_COLUMNS : (isCreator ? CREATOR_COLUMNS : isEditor ? EDITOR_COLUMNS : BOARD_COLUMNS)))
+              {(primaryRole === 'admin' && !isImpersonating ? BOARD_COLUMNS : (orgStatuses.length > 0 && rules.length > 0 ? BOARD_COLUMNS : (primaryRole === 'creator' ? CREATOR_COLUMNS : primaryRole === 'editor' ? EDITOR_COLUMNS : BOARD_COLUMNS)))
                 // Filter columns by visibility permissions (board config)
                 .filter((column) => isStatusVisibleForRole(column.status))
                 .map(column => {
                 const columnContent = getContentByStatus(column.status);
                 const isCurrentDropTarget = dropTarget === column.status;
                 const canDropHere = draggingContent 
-                  ? canMoveToStatusWithRules(primaryRole, draggingContent.status, column.status, draggingContent, user?.id || '', orgStatuses, rules)
+                  ? canMoveToStatusWithRules(primaryRole, draggingContent.status, column.status, draggingContent, targetUserId || '', orgStatuses, rules)
                   : true;
                 
                 // Get dynamic color and title from organization settings
@@ -880,17 +894,17 @@ export default function ContentBoard() {
                         onClick={() => setSelectedContent(item)}
                         onDragStart={(e) => handleDragStart(e, item)}
                         isDragging={draggingContent?.id === item.id}
-                        showAIIndicators={isAdmin}
+                        showAIIndicators={showAdminControls}
                         organizationStatuses={orgStatuses}
                         userRole={primaryRole as any}
-                        userId={user?.id}
+                        userId={targetUserId}
                         onStatusChange={async (contentId, newStatus) => {
                           await updateContentStatus(contentId, newStatus);
                           refetch();
                         }}
                         showStatusControls={true}
                         ambassadorIds={ambassadorIds}
-                        onAnalyzeWithAI={isAdmin ? (contentId, title) => {
+                        onAnalyzeWithAI={showAdminControls ? (contentId, title) => {
                           setAIPanelMode('card');
                           setAIContentId(contentId);
                           setAIContentTitle(title);
@@ -949,7 +963,7 @@ export default function ContentBoard() {
       </div>
       
       {/* Config Dialog */}
-      {isAdmin && (
+      {showAdminControls && (
         <BoardConfigDialog 
           organizationId={currentOrgId}
           open={showConfigDialog}
@@ -975,7 +989,7 @@ export default function ContentBoard() {
       />
 
       {/* AI Analysis Panel */}
-      {isAdmin && currentOrgId && (
+      {showAdminControls && currentOrgId && (
         <BoardAIPanel
           organizationId={currentOrgId}
           open={showAIPanel}
