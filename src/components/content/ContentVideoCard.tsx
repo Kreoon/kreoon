@@ -513,7 +513,7 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange, sh
               strategyRating={(content as any).strategy_rating}
               hasCreator={!!(content as any).creator_id}
               hasEditor={!!(content as any).editor_id}
-              hasStrategist={!!(content as any).strategist_id}
+              hasStrategist={true}
               onUpdate={onUpdate}
               canRate={true}
             />
