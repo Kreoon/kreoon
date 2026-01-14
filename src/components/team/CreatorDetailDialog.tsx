@@ -30,7 +30,7 @@ interface CreatorProfile {
   instagram?: string | null;
   facebook?: string | null;
   tiktok?: string | null;
-  role: 'creator' | 'editor';
+  role: 'creator' | 'editor' | 'strategist';
   editor_rating?: number | null;
   editor_completed_count?: number | null;
   editor_on_time_count?: number | null;
@@ -121,7 +121,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
     if (!creator) return;
     setLoadingContent(true);
     try {
-      const field = creator.role === 'creator' ? 'creator_id' : 'editor_id';
+      const field = creator.role === 'creator' ? 'creator_id' : creator.role === 'editor' ? 'editor_id' : 'strategist_id';
       const { data } = await supabase
         .from('content')
         .select(`
@@ -152,7 +152,9 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
   const profile = fullProfile || creator;
 
   const totalPayment = assignedContent.reduce((sum, c) => {
-    return sum + (creator?.role === 'creator' ? (c.creator_payment || 0) : (c.editor_payment || 0));
+    if (creator?.role === 'creator') return sum + (c.creator_payment || 0);
+    if (creator?.role === 'editor') return sum + (c.editor_payment || 0);
+    return sum; // strategist doesn't have direct payment field yet
   }, 0);
 
   const completedContent = assignedContent.filter(c => c.status === 'approved' || c.status === 'paid');
@@ -162,7 +164,8 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
 
   const roleLabels = {
     creator: { label: "Creador de Contenido", className: "bg-primary/10 text-primary" },
-    editor: { label: "Productor Audio-Visual", className: "bg-info/10 text-info" }
+    editor: { label: "Productor Audio-Visual", className: "bg-info/10 text-info" },
+    strategist: { label: "Estratega", className: "bg-purple-500/10 text-purple-500" }
   };
 
   return (
