@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Trophy, Medal, Star, TrendingUp, Crown, Zap, Shield } from "lucide-react";
+import { Trophy, Medal, Star, TrendingUp, Crown, Zap, Shield, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,18 +11,24 @@ interface RankedTalent {
   full_name: string;
   avatar_url: string | null;
   role: 'creator' | 'editor';
-  quality_score_avg: number;
-  reliability_score: number;
-  velocity_score: number;
-  total_score: number;
+  // UP System data
+  up_points: number;
+  up_level: string;
+  on_time_deliveries: number;
+  late_deliveries: number;
+  total_deliveries: number;
+  // Star ratings from content
+  avg_rating: number;
+  rated_content_count: number;
+  // Content count
   content_count: number;
-  ai_recommended_level: 'junior' | 'pro' | 'elite';
 }
 
-const LEVEL_ICONS = {
-  junior: Shield,
-  pro: Zap,
-  elite: Crown
+const LEVEL_COLORS: Record<string, string> = {
+  diamond: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/30',
+  gold: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
+  silver: 'text-gray-400 bg-gray-400/10 border-gray-400/30',
+  bronze: 'text-orange-400 bg-orange-400/10 border-orange-400/30',
 };
 
 export function TalentRanking() {
@@ -51,67 +57,122 @@ export function TalentRanking() {
 
       if (!memberRoles?.length) {
         setTalents([]);
+        setLoading(false);
         return;
       }
 
       const userIds = [...new Set(memberRoles.map(r => r.user_id))];
       const roleMap = new Map(memberRoles.map(r => [r.user_id, r.role]));
 
-      // Get profiles with performance data
+      // Get profiles
       const { data: profiles } = await supabase
         .from('profiles')
-        .select(`
-          id, full_name, avatar_url,
-          quality_score_avg, reliability_score, velocity_score,
-          ai_recommended_level
-        `)
+        .select('id, full_name, avatar_url')
         .in('id', userIds);
 
-      // Get content counts
-      const { data: creatorCounts } = await supabase
+      // Get UP creator totals
+      const { data: creatorTotals } = await supabase
+        .from('up_creadores_totals')
+        .select('user_id, total_points, current_level, on_time_deliveries, late_deliveries, total_deliveries')
+        .eq('organization_id', currentOrgId)
+        .in('user_id', userIds);
+
+      // Get UP editor totals
+      const { data: editorTotals } = await supabase
+        .from('up_editores_totals')
+        .select('user_id, total_points, current_level, on_time_deliveries, late_deliveries, total_deliveries')
+        .eq('organization_id', currentOrgId)
+        .in('user_id', userIds);
+
+      // Get content with ratings
+      const { data: creatorContent } = await supabase
+        .from('content')
+        .select('creator_id, creator_rating')
+        .eq('organization_id', currentOrgId)
+        .in('creator_id', userIds)
+        .not('creator_rating', 'is', null);
+
+      const { data: editorContent } = await supabase
+        .from('content')
+        .select('editor_id, editor_rating')
+        .eq('organization_id', currentOrgId)
+        .in('editor_id', userIds)
+        .not('editor_rating', 'is', null);
+
+      // Get all content counts
+      const { data: allCreatorContent } = await supabase
         .from('content')
         .select('creator_id')
         .eq('organization_id', currentOrgId)
-        .eq('status', 'approved')
         .in('creator_id', userIds);
 
-      const { data: editorCounts } = await supabase
+      const { data: allEditorContent } = await supabase
         .from('content')
         .select('editor_id')
         .eq('organization_id', currentOrgId)
-        .eq('status', 'approved')
         .in('editor_id', userIds);
 
-      const countMap = new Map<string, number>();
-      creatorCounts?.forEach(c => {
-        if (c.creator_id) countMap.set(c.creator_id, (countMap.get(c.creator_id) || 0) + 1);
-      });
-      editorCounts?.forEach(c => {
-        if (c.editor_id) countMap.set(c.editor_id, (countMap.get(c.editor_id) || 0) + 1);
+      // Build maps
+      const creatorUpMap = new Map(creatorTotals?.map(t => [t.user_id, t]) || []);
+      const editorUpMap = new Map(editorTotals?.map(t => [t.user_id, t]) || []);
+
+      // Calculate creator ratings
+      const creatorRatings = new Map<string, { sum: number; count: number }>();
+      creatorContent?.forEach(c => {
+        if (c.creator_id && c.creator_rating !== null) {
+          const existing = creatorRatings.get(c.creator_id) || { sum: 0, count: 0 };
+          creatorRatings.set(c.creator_id, { 
+            sum: existing.sum + c.creator_rating, 
+            count: existing.count + 1 
+          });
+        }
       });
 
+      // Calculate editor ratings
+      const editorRatings = new Map<string, { sum: number; count: number }>();
+      editorContent?.forEach(c => {
+        if (c.editor_id && c.editor_rating !== null) {
+          const existing = editorRatings.get(c.editor_id) || { sum: 0, count: 0 };
+          editorRatings.set(c.editor_id, { 
+            sum: existing.sum + c.editor_rating, 
+            count: existing.count + 1 
+          });
+        }
+      });
+
+      // Content counts
+      const contentCountMap = new Map<string, number>();
+      allCreatorContent?.forEach(c => {
+        if (c.creator_id) contentCountMap.set(c.creator_id, (contentCountMap.get(c.creator_id) || 0) + 1);
+      });
+      allEditorContent?.forEach(c => {
+        if (c.editor_id) contentCountMap.set(c.editor_id, (contentCountMap.get(c.editor_id) || 0) + 1);
+      });
+
+      // Build ranked talents
       const ranked: RankedTalent[] = (profiles || []).map(p => {
-        const quality = p.quality_score_avg || 0;
-        const reliability = p.reliability_score || 0;
-        const velocity = p.velocity_score || 0;
-        const totalScore = (quality + reliability + velocity) / 3;
+        const role = roleMap.get(p.id) as 'creator' | 'editor';
+        const upData = role === 'creator' ? creatorUpMap.get(p.id) : editorUpMap.get(p.id);
+        const ratingData = role === 'creator' ? creatorRatings.get(p.id) : editorRatings.get(p.id);
 
         return {
           id: p.id,
-          full_name: p.full_name,
+          full_name: p.full_name || 'Sin nombre',
           avatar_url: p.avatar_url,
-          role: roleMap.get(p.id) as 'creator' | 'editor',
-          quality_score_avg: quality,
-          reliability_score: reliability,
-          velocity_score: velocity,
-          total_score: totalScore,
-          content_count: countMap.get(p.id) || 0,
-          ai_recommended_level: (p.ai_recommended_level as 'junior' | 'pro' | 'elite') || 'junior'
+          role,
+          up_points: upData?.total_points || 0,
+          up_level: upData?.current_level || 'bronze',
+          on_time_deliveries: upData?.on_time_deliveries || 0,
+          late_deliveries: upData?.late_deliveries || 0,
+          total_deliveries: upData?.total_deliveries || 0,
+          avg_rating: ratingData ? ratingData.sum / ratingData.count : 0,
+          rated_content_count: ratingData?.count || 0,
+          content_count: contentCountMap.get(p.id) || 0,
         };
       });
 
-      // Sort by total score descending
-      ranked.sort((a, b) => b.total_score - a.total_score);
+      // Sort by UP points descending
+      ranked.sort((a, b) => b.up_points - a.up_points);
       setTalents(ranked);
     } catch (error) {
       console.error('Error fetching ranking:', error);
@@ -133,11 +194,31 @@ export function TalentRanking() {
     }
   };
 
+  const renderStars = (rating: number) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalf = rating - fullStars >= 0.5;
+    
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />);
+      } else if (i === fullStars && hasHalf) {
+        stars.push(<Star key={i} className="h-3 w-3 fill-yellow-400/50 text-yellow-400" />);
+      } else {
+        stars.push(<Star key={i} className="h-3 w-3 text-muted-foreground/30" />);
+      }
+    }
+    return stars;
+  };
+
+  const getPunctualityRate = (onTime: number, total: number) => 
+    total > 0 ? Math.round((onTime / total) * 100) : 0;
+
   if (loading) {
     return (
       <div className="space-y-3">
         {[1, 2, 3, 4, 5].map(i => (
-          <Skeleton key={i} className="h-16 rounded-lg" />
+          <Skeleton key={i} className="h-20 rounded-lg" />
         ))}
       </div>
     );
@@ -145,6 +226,12 @@ export function TalentRanking() {
 
   return (
     <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-2">
+        <Flame className="h-5 w-5 text-primary" />
+        <h3 className="font-semibold">Ranking Sistema UP</h3>
+      </div>
+
       {/* Filter tabs */}
       <div className="flex gap-2">
         {(['all', 'creator', 'editor'] as const).map(f => (
@@ -166,22 +253,22 @@ export function TalentRanking() {
       {/* Ranking list */}
       <div className="space-y-2">
         {filteredTalents.map((talent, index) => {
-          const LevelIcon = LEVEL_ICONS[talent.ai_recommended_level];
+          const punctualityRate = getPunctualityRate(talent.on_time_deliveries, talent.total_deliveries);
           
           return (
             <div 
               key={talent.id}
               className={cn(
-                "flex items-center gap-4 p-4 rounded-lg border bg-card transition-all hover:shadow-md",
+                "flex items-center gap-3 p-3 rounded-lg border bg-card transition-all hover:shadow-md",
                 index < 3 && "border-amber-500/30 bg-gradient-to-r from-card to-amber-500/5"
               )}
             >
               {/* Position */}
               <div className="flex-shrink-0 w-8 text-center">
                 {index < 3 ? (
-                  <Medal className={cn("h-6 w-6 mx-auto", getMedalColor(index))} />
+                  <Medal className={cn("h-5 w-5 mx-auto", getMedalColor(index))} />
                 ) : (
-                  <span className="text-lg font-bold text-muted-foreground">{index + 1}</span>
+                  <span className="text-sm font-bold text-muted-foreground">{index + 1}</span>
                 )}
               </div>
 
@@ -203,34 +290,51 @@ export function TalentRanking() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium truncate">{talent.full_name}</span>
-                  <LevelIcon className={cn(
-                    "h-4 w-4 flex-shrink-0",
-                    talent.ai_recommended_level === 'elite' ? "text-amber-500" :
-                    talent.ai_recommended_level === 'pro' ? "text-blue-500" : "text-muted-foreground"
-                  )} />
+                  <span className="font-medium truncate text-sm">{talent.full_name}</span>
+                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", LEVEL_COLORS[talent.up_level])}>
+                    {talent.up_level}
+                  </Badge>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                     {talent.role === 'creator' ? 'Creador' : 'Editor'}
                   </Badge>
-                  <span>{talent.content_count} videos</span>
+                  <span>{talent.content_count} contenidos</span>
+                  {talent.rated_content_count > 0 && (
+                    <div className="flex items-center gap-0.5">
+                      {renderStars(talent.avg_rating)}
+                      <span className="ml-1">({talent.avg_rating.toFixed(1)})</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Scores */}
-              <div className="flex items-center gap-4 text-sm">
+              {/* Stats */}
+              <div className="flex items-center gap-3 text-xs">
+                {/* UP Points */}
                 <div className="text-center">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Star className="h-3 w-3" />
+                  <div className="flex items-center gap-1 text-primary">
+                    <Zap className="h-3 w-3" />
+                    <span className="font-bold">{talent.up_points}</span>
                   </div>
-                  <span className="font-semibold">{talent.quality_score_avg.toFixed(1)}</span>
+                  <span className="text-[10px] text-muted-foreground">UP</span>
                 </div>
+
+                {/* Punctuality */}
                 <div className="text-center">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <TrendingUp className="h-3 w-3" />
-                  </div>
-                  <span className="font-semibold">{talent.total_score.toFixed(1)}</span>
+                  <span className={cn(
+                    "font-bold",
+                    punctualityRate >= 80 ? "text-success" : punctualityRate >= 60 ? "text-warning" : "text-destructive"
+                  )}>
+                    {punctualityRate}%
+                  </span>
+                  <div className="text-[10px] text-muted-foreground">Puntual</div>
+                </div>
+
+                {/* Deliveries */}
+                <div className="text-center hidden sm:block">
+                  <span className="font-bold text-foreground">{talent.total_deliveries}</span>
+                  <div className="text-[10px] text-muted-foreground">Entregas</div>
                 </div>
               </div>
             </div>
@@ -241,6 +345,7 @@ export function TalentRanking() {
           <div className="text-center py-8 text-muted-foreground">
             <Trophy className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p>No hay datos de ranking disponibles</p>
+            <p className="text-xs mt-1">Los puntos UP se acumulan cuando se entregan contenidos</p>
           </div>
         )}
       </div>

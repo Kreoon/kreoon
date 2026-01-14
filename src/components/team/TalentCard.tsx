@@ -25,12 +25,18 @@ export interface TalentProfile {
   ai_risk_flag?: 'none' | 'warning' | 'high';
   // Ambassador
   ambassador_level?: 'none' | 'bronze' | 'silver' | 'gold';
-  // Editor specific
+  // Editor specific (legacy)
   editor_rating?: number;
   editor_completed_count?: number;
   editor_on_time_count?: number;
   // Workload
   active_tasks?: number;
+  // UP System
+  up_points?: number;
+  up_level?: string;
+  // Star ratings (0-5)
+  avg_star_rating?: number;
+  rated_content_count?: number;
 }
 
 interface TalentCardProps {
@@ -165,6 +171,54 @@ export function TalentCard({ talent, onClick, onAmbassadorToggle, isAdmin, showK
         {/* KPIs Section */}
         {showKPIs && (
           <div className="space-y-3 mb-4">
+            {/* Star Rating Display */}
+            {talent.avg_star_rating !== undefined && talent.avg_star_rating > 0 && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={cn(
+                        "h-4 w-4",
+                        star <= Math.round(talent.avg_star_rating || 0)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-muted-foreground/30"
+                      )}
+                    />
+                  ))}
+                  <span className="text-xs text-muted-foreground ml-1">
+                    ({talent.avg_star_rating.toFixed(1)})
+                  </span>
+                </div>
+                {talent.rated_content_count && talent.rated_content_count > 0 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {talent.rated_content_count} calificados
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* UP Points and Level */}
+            {(talent.up_points !== undefined && talent.up_points > 0) && (
+              <div className="flex items-center justify-between p-2 rounded-lg bg-primary/5 border border-primary/10">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-bold text-primary">{talent.up_points} UP</span>
+                </div>
+                {talent.up_level && (
+                  <Badge variant="outline" className={cn(
+                    "text-[10px]",
+                    talent.up_level === 'diamond' ? 'text-cyan-400 border-cyan-400/30' :
+                    talent.up_level === 'gold' ? 'text-yellow-400 border-yellow-400/30' :
+                    talent.up_level === 'silver' ? 'text-gray-400 border-gray-400/30' :
+                    'text-orange-400 border-orange-400/30'
+                  )}>
+                    {talent.up_level}
+                  </Badge>
+                )}
+              </div>
+            )}
+
             {/* Overall score bar */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
