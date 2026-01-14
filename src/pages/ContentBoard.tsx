@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -521,21 +522,24 @@ export default function ContentBoard() {
     setDropTarget(status);
   }, []);
 
-  // Handler for creator status change (assigned -> recording -> recorded)
+  // Handler for creator status change (assigned -> recording -> recorded) with UP integration
   const handleCreatorStatusChange = useCallback(async (contentId: string, newStatus: 'recording' | 'recorded') => {
     try {
-      const updateData: any = { status: newStatus };
-      
-      if (newStatus === 'recorded') {
-        updateData.recorded_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
+      // First get the current status
+      const { data: currentContent } = await supabase
         .from('content')
-        .update(updateData)
-        .eq('id', contentId);
+        .select('status')
+        .eq('id', contentId)
+        .single();
 
-      if (error) throw error;
+      if (!currentContent) throw new Error('Content not found');
+
+      // Use centralized status change with UP points
+      await updateContentStatusWithUP({
+        contentId,
+        oldStatus: currentContent.status as ContentStatus,
+        newStatus: newStatus as ContentStatus
+      });
       
       // Refresh the content list
       refetch();
@@ -549,6 +553,7 @@ export default function ContentBoard() {
         description: `Cambiado a: ${statusLabels[newStatus]}`
       });
     } catch (error) {
+      console.error('Error updating status:', error);
       toast({
         title: 'Error',
         description: 'No se pudo actualizar el estado',
