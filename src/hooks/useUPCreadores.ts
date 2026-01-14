@@ -369,12 +369,35 @@ export function useCreatorLeaderboard() {
           .select('id, full_name, avatar_url')
           .in('id', userIds);
 
-        const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+        // Fetch legacy user_points to merge
+        const { data: legacyPoints } = await supabase
+          .from('user_points')
+          .select('user_id, total_points, current_level')
+          .in('user_id', userIds);
 
-        setLeaderboard((data || []).map(d => ({
-          ...d as UPCreadorTotals,
-          profile: profilesMap.get(d.user_id)
-        })));
+        const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+        const legacyMap = new Map((legacyPoints || []).map(lp => [lp.user_id, lp]));
+
+        // Merge V2 with legacy points (use max)
+        const mergedData = (data || []).map(d => {
+          const legacy = legacyMap.get(d.user_id);
+          const legacyPts = legacy?.total_points || 0;
+          const v2Pts = d.total_points || 0;
+          const level = legacyPts > v2Pts 
+            ? (legacy?.current_level as 'bronze' | 'silver' | 'gold' | 'diamond' || d.current_level) 
+            : d.current_level;
+          return {
+            ...d as UPCreadorTotals,
+            total_points: Math.max(legacyPts, v2Pts),
+            current_level: level,
+            profile: profilesMap.get(d.user_id)
+          };
+        });
+
+        // Re-sort by merged points
+        mergedData.sort((a, b) => (b.total_points || 0) - (a.total_points || 0));
+
+        setLeaderboard(mergedData as any);
       } else {
         setLeaderboard([]);
       }

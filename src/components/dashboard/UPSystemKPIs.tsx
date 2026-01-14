@@ -87,12 +87,17 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      // Fetch creator totals
+      // Fetch creator totals from V2 system
       const { data: creatorTotals } = await supabase
         .from('up_creadores_totals')
         .select('*, profiles(full_name)')
         .eq('organization_id', organizationId)
         .order('total_points', { ascending: false });
+
+      // Fetch legacy user_points to merge with V2
+      const { data: legacyPoints } = await supabase
+        .from('user_points')
+        .select('user_id, total_points, current_level');
 
       // Fetch editor totals
       const { data: editorTotals } = await supabase
@@ -115,9 +120,30 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
         .eq('organization_id', organizationId)
         .not('days_to_deliver', 'is', null);
 
-      // Calculate creator stats
+      // Calculate creator stats - merge legacy points with V2
       if (creatorTotals) {
-        const totals = creatorTotals.reduce((acc, ct) => ({
+        // Create a map of legacy points by user_id
+        const legacyMap = new Map(
+          (legacyPoints || []).map(lp => [lp.user_id, lp])
+        );
+
+        // Merge V2 totals with legacy points (take the higher value)
+        const mergedCreatorTotals = creatorTotals.map(ct => {
+          const legacy = legacyMap.get(ct.user_id);
+          const legacyPts = legacy?.total_points || 0;
+          const v2Pts = ct.total_points || 0;
+          // Use max between legacy and V2 to show the real accumulated points
+          return {
+            ...ct,
+            total_points: Math.max(legacyPts, v2Pts),
+            current_level: legacyPts > v2Pts ? (legacy?.current_level || ct.current_level) : ct.current_level
+          };
+        });
+
+        // Sort by merged points
+        mergedCreatorTotals.sort((a, b) => (b.total_points || 0) - (a.total_points || 0));
+
+        const totals = mergedCreatorTotals.reduce((acc, ct) => ({
           totalPoints: acc.totalPoints + (ct.total_points || 0),
           totalDeliveries: acc.totalDeliveries + (ct.total_deliveries || 0),
           onTimeDeliveries: acc.onTimeDeliveries + (ct.on_time_deliveries || 0),
@@ -137,7 +163,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
         setCreatorStats({
           ...totals,
           avgDeliveryDays: Math.round(avgDays * 10) / 10,
-          topPerformers: creatorTotals.slice(0, 5).map(ct => ({
+          topPerformers: mergedCreatorTotals.slice(0, 5).map(ct => ({
             name: (ct.profiles as any)?.full_name || 'Sin nombre',
             points: ct.total_points || 0,
             level: ct.current_level || 'bronze',
