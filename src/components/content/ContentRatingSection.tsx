@@ -161,9 +161,26 @@ export function ContentRatingSection({
       </div>
       
       <div className="space-y-2">
+        {hasStrategist && (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground">Estrategia</span>
+              <span className="text-[10px] text-muted-foreground/60">Guión, investigación, concepto</span>
+            </div>
+            <StarRating 
+              value={localStrategyRating} 
+              onChange={canRate ? handleStrategyChange : undefined}
+              disabled={!canRate}
+            />
+          </div>
+        )}
+        
         {hasCreator && (
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-muted-foreground">Creación</span>
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground">Creación</span>
+              <span className="text-[10px] text-muted-foreground/60">Grabación, actuación, calidad</span>
+            </div>
             <StarRating 
               value={localCreatorRating} 
               onChange={canRate ? handleCreatorChange : undefined}
@@ -174,21 +191,13 @@ export function ContentRatingSection({
         
         {hasEditor && (
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-muted-foreground">Edición</span>
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground">Edición</span>
+              <span className="text-[10px] text-muted-foreground/60">Montaje, efectos, audio</span>
+            </div>
             <StarRating 
               value={localEditorRating} 
               onChange={canRate ? handleEditorChange : undefined}
-              disabled={!canRate}
-            />
-          </div>
-        )}
-        
-        {hasStrategist && (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-muted-foreground">Estrategia</span>
-            <StarRating 
-              value={localStrategyRating} 
-              onChange={canRate ? handleStrategyChange : undefined}
               disabled={!canRate}
             />
           </div>
