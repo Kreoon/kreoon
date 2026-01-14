@@ -180,14 +180,7 @@ export default function RankingPage() {
               </Card>
             </div>
             
-            {/* User's own stats if viewing as non-admin or own profile */}
-            {user && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Mis Puntos UP</h3>
-                <UPUserStats userId={user.id} />
-                <UPHistoryTable userId={user.id} />
-              </div>
-            )}
+            {/* User's own stats - only show for non-admin users */}
           </TabsContent>
 
           <TabsContent value="ranking" className="space-y-6">
