@@ -81,22 +81,39 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
     }
 
     try {
-      const { data, error } = await supabase
+      // Fetch V2 data
+      const { data: v2Data, error: v2Error } = await supabase
         .from(tableName)
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (v2Error) throw v2Error;
+
+      // For creators, also fetch legacy points from user_points table
+      let legacyPoints = 0;
+      if (role === 'creator') {
+        const { data: legacyData } = await supabase
+          .from('user_points')
+          .select('total_points')
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        legacyPoints = legacyData?.total_points || 0;
+      }
+
+      // Use the maximum between V2 and legacy points
+      const v2Points = v2Data?.total_points || 0;
+      const totalPoints = Math.max(v2Points, legacyPoints);
 
       const rolePoints: RolePoints = {
-        total_points: data?.total_points || 0,
-        current_level: (data?.current_level as UPLevel) || calculateLevel(data?.total_points || 0),
-        total_deliveries: data?.total_deliveries || 0,
-        on_time_deliveries: data?.on_time_deliveries || 0,
-        late_deliveries: data?.late_deliveries || 0,
-        clean_approvals: data?.clean_approvals || 0,
-        total_issues: data?.total_issues || 0
+        total_points: totalPoints,
+        current_level: calculateLevel(totalPoints),
+        total_deliveries: v2Data?.total_deliveries || 0,
+        on_time_deliveries: v2Data?.on_time_deliveries || 0,
+        late_deliveries: v2Data?.late_deliveries || 0,
+        clean_approvals: v2Data?.clean_approvals || 0,
+        total_issues: v2Data?.total_issues || 0
       };
 
       setPoints(rolePoints);
