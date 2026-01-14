@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Content, ContentStatus } from '@/types/database';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
+import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 
 interface UseContentOptions {
   userId?: string;
@@ -86,13 +87,37 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     }
   }, [userId, role, isPlatformRoot, currentOrgId, orgLoading]);
 
-  const updateContentStatus = async (contentId: string, newStatus: ContentStatus) => {
-    const { error } = await supabase
-      .from('content')
-      .update({ status: newStatus })
-      .eq('id', contentId);
-
-    if (error) throw error;
+  const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {
+    // If oldStatus is provided, use UP integration
+    if (oldStatus) {
+      await updateContentStatusWithUP({
+        contentId,
+        oldStatus,
+        newStatus
+      });
+    } else {
+      // Fetch current status if not provided
+      const { data: currentContent } = await supabase
+        .from('content')
+        .select('status')
+        .eq('id', contentId)
+        .single();
+      
+      if (currentContent) {
+        await updateContentStatusWithUP({
+          contentId,
+          oldStatus: currentContent.status as ContentStatus,
+          newStatus
+        });
+      } else {
+        // Fallback to simple update
+        const { error } = await supabase
+          .from('content')
+          .update({ status: newStatus })
+          .eq('id', contentId);
+        if (error) throw error;
+      }
+    }
     await fetchContent();
   };
 
@@ -252,13 +277,37 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     }
   }, [options.userId, options.role, options.clientId, options.creatorId, options.editorId, isPlatformRoot, currentOrgId, orgLoading]);
 
-  const updateContentStatus = async (contentId: string, newStatus: ContentStatus) => {
-    const { error } = await supabase
-      .from('content')
-      .update({ status: newStatus })
-      .eq('id', contentId);
-
-    if (error) throw error;
+  const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {
+    // If oldStatus is provided, use UP integration
+    if (oldStatus) {
+      await updateContentStatusWithUP({
+        contentId,
+        oldStatus,
+        newStatus
+      });
+    } else {
+      // Fetch current status if not provided
+      const { data: currentContent } = await supabase
+        .from('content')
+        .select('status')
+        .eq('id', contentId)
+        .single();
+      
+      if (currentContent) {
+        await updateContentStatusWithUP({
+          contentId,
+          oldStatus: currentContent.status as ContentStatus,
+          newStatus
+        });
+      } else {
+        // Fallback to simple update
+        const { error } = await supabase
+          .from('content')
+          .update({ status: newStatus })
+          .eq('id', contentId);
+        if (error) throw error;
+      }
+    }
     await fetchContent();
   };
 

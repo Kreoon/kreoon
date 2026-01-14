@@ -9662,6 +9662,7 @@ export type Database = {
         Returns: string[]
       }
       calculate_security_score: { Args: { _user_id: string }; Returns: number }
+      calculate_up_level: { Args: { points: number }; Returns: string }
       can_chat_with_user: {
         Args: {
           _org_id: string

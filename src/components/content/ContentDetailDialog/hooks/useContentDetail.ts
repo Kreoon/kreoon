@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useUnsavedChangesSafe } from '@/contexts/UnsavedChangesContext';
 import { useTrialGuard } from '@/hooks/useTrialGuard';
+import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 
 interface UseContentDetailOptions {
   content: Content | null;
@@ -182,15 +183,17 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     if (!content) return;
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('content')
-        .update({ status: newStatus })
-        .eq('id', content.id);
-      if (error) throw error;
+      // Use centralized status change with UP points integration
+      await updateContentStatusWithUP({
+        contentId: content.id,
+        oldStatus: content.status as ContentStatus,
+        newStatus
+      });
       setCurrentStatus(newStatus);
       toast({ title: 'Estado actualizado' });
       onUpdate?.();
     } catch (error) {
+      console.error('Error updating status:', error);
       toast({ title: 'Error al actualizar estado', variant: 'destructive' });
     } finally {
       setLoading(false);
