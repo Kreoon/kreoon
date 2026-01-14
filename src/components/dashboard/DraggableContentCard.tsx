@@ -1,10 +1,11 @@
-import { Calendar, User, GripVertical, DollarSign, CheckCircle, Video, FileVideo, Crown, Circle } from "lucide-react";
+import { Calendar, User, GripVertical, DollarSign, CheckCircle, Video, FileVideo, Crown, Circle, Clock, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Content, STATUS_LABELS, STATUS_COLORS } from "@/types/database";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -27,29 +28,51 @@ export function DraggableContentCard({
   onPaymentUpdate,
   onStatusChange
 }: DraggableContentCardProps) {
-  const { isAdmin, isCreator, isEditor, user } = useAuth();
+  const { isAdmin, isCreator, isEditor, isClient, user } = useAuth();
+  const { isImpersonating, effectiveRoles, impersonationTarget } = useImpersonation();
   const { toast } = useToast();
 
+  // Determine effective role for display logic
+  const effectiveIsClient = isImpersonating 
+    ? effectiveRoles.includes('client') || impersonationTarget?.role === 'client'
+    : isClient;
+  
+  const effectiveIsAdmin = isImpersonating 
+    ? effectiveRoles.includes('admin') || impersonationTarget?.role === 'admin'
+    : isAdmin;
+
+  const effectiveIsCreator = isImpersonating
+    ? effectiveRoles.includes('creator') || impersonationTarget?.role === 'creator'
+    : isCreator;
+
+  const effectiveIsEditor = isImpersonating
+    ? effectiveRoles.includes('editor') || impersonationTarget?.role === 'editor'
+    : isEditor;
+
   // Determine what payment to show based on user role
+  // CLIENTS SHOULD NEVER SEE PAYMENT INFORMATION
   const isUserCreator = user?.id === content.creator_id;
   const isUserEditor = user?.id === content.editor_id;
   
   const getDisplayPayment = () => {
-    if (isAdmin) {
+    // Clients never see payments
+    if (effectiveIsClient) return null;
+    
+    if (effectiveIsAdmin) {
       // Admin sees total
       return {
         value: (content.creator_payment || 0) + (content.editor_payment || 0),
         currency: ((content as any).creator_payment_currency as CurrencyType) || 'COP'
       };
     }
-    if (isUserCreator) {
+    if (isUserCreator && effectiveIsCreator) {
       // Creator sees their payment
       return {
         value: content.creator_payment || 0,
         currency: ((content as any).creator_payment_currency as CurrencyType) || 'COP'
       };
     }
-    if (isUserEditor) {
+    if (isUserEditor && effectiveIsEditor) {
       // Editor sees their payment
       return {
         value: content.editor_payment || 0,
@@ -147,22 +170,21 @@ export function DraggableContentCard({
     }
   };
 
-  // Show pay buttons only for admin on approved content
-  const showPayButtons = isAdmin && content.status === 'approved' && (!content.creator_paid || !content.editor_paid);
+  // Show pay buttons only for admin on approved content - NEVER for clients
+  const showPayButtons = effectiveIsAdmin && !effectiveIsClient && content.status === 'approved' && (!content.creator_paid || !content.editor_paid);
 
-  // Check if current user is the creator and can change status
-  const isCreatorOfContent = isCreator && content.creator_id === user?.id;
+  // Check if current user is the creator and can change status - NOT when impersonating client
+  const isCreatorOfContent = effectiveIsCreator && !effectiveIsClient && content.creator_id === user?.id;
   const canStartRecording = isCreatorOfContent && content.status === 'assigned';
   const canMarkRecorded = isCreatorOfContent && content.status === 'recording';
 
-  // Check if current user is the editor and can change status
-  const isEditorOfContent = isEditor && content.editor_id === user?.id;
+  // Check if current user is the editor and can change status - NOT when impersonating client
+  const isEditorOfContent = effectiveIsEditor && !effectiveIsClient && content.editor_id === user?.id;
   const canStartEditing = isEditorOfContent && content.status === 'recorded';
   const canMarkDelivered = isEditorOfContent && content.status === 'editing';
 
   // Check if current user is a client and can approve/reject
-  const { isClient } = useAuth();
-  const canClientApprove = isClient && (content.status === 'delivered' || content.status === 'corrected');
+  const canClientApprove = effectiveIsClient && (content.status === 'delivered' || content.status === 'corrected');
 
   return (
     <div
@@ -184,7 +206,8 @@ export function DraggableContentCard({
             )}>
               {statusInfo.label}
             </span>
-            {content.is_ambassador_content && (
+            {/* Ambassador badge - only show to non-clients */}
+            {!effectiveIsClient && content.is_ambassador_content && (
               <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-sm">
                 <Crown className="h-3 w-3" />
                 Embajador
@@ -196,12 +219,25 @@ export function DraggableContentCard({
             {content.title}
           </h3>
           
-          <p className="text-sm text-muted-foreground mb-3 truncate">
-            {content.client?.name || 'Sin cliente'}
-          </p>
+          {/* For clients: show product info instead of internal client name */}
+          {effectiveIsClient ? (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {(content as any).product?.name && (
+                <Badge variant="outline" className="text-xs gap-1">
+                  <Tag className="h-3 w-3" />
+                  {(content as any).product.name}
+                </Badge>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground mb-3 truncate">
+              {content.client?.name || 'Sin cliente'}
+            </p>
+          )}
 
           <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-            {content.creator && (
+            {/* Creator info - only for non-clients */}
+            {!effectiveIsClient && content.creator && (
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
                 <span className="truncate max-w-[100px]">{content.creator.full_name}</span>
@@ -211,7 +247,8 @@ export function DraggableContentCard({
               <Calendar className="h-3 w-3" />
               <span>{formatDate(content.deadline)}</span>
             </div>
-            {displayPayment && displayPayment.value > 0 && (
+            {/* Payment info - never for clients */}
+            {!effectiveIsClient && displayPayment && displayPayment.value > 0 && (
               <div className="flex items-center gap-1 text-success">
                 <CurrencyDisplay 
                   value={displayPayment.value} 
@@ -221,15 +258,22 @@ export function DraggableContentCard({
                 />
               </div>
             )}
+            {/* For clients: show creation date */}
+            {effectiveIsClient && content.created_at && (
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>Creado {formatDate(content.created_at)}</span>
+              </div>
+            )}
           </div>
 
-          {/* Video Variants Info */}
+          {/* Video Variants Info - simplified for clients */}
           <div className="flex flex-wrap gap-2 mt-2">
-            {/* Show hooks/variables count */}
+            {/* Show hooks/variables count - for clients show as "versions" */}
             {(content as any).hooks_count > 1 && (
               <Badge variant="outline" className="text-xs gap-1">
                 <Video className="h-3 w-3" />
-                {(content as any).hooks_count} variables
+                {(content as any).hooks_count} {effectiveIsClient ? 'versiones' : 'variables'}
               </Badge>
             )}
             
@@ -258,8 +302,8 @@ export function DraggableContentCard({
               return null;
             })()}
             
-            {/* Show raw material status */}
-            {(content as any).drive_url && (
+            {/* Show raw material status - only for internal team, not clients */}
+            {!effectiveIsClient && (content as any).drive_url && (
               <Badge variant="outline" className="text-xs gap-1 bg-blue-500/10 text-blue-600 border-blue-500/20">
                 <FileVideo className="h-3 w-3" />
                 Material crudo
