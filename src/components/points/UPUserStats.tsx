@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Video, Scissors, TrendingUp, TrendingDown, CheckCircle, AlertCircle, 
-  Trophy, Crown, Medal, Award, Star, Zap
+  Crown, Medal, Award, Star, Zap
 } from 'lucide-react';
 import { useUPCreadores, UPCreadorTotals } from '@/hooks/useUPCreadores';
 import { useUPEditores, UPEditorTotals } from '@/hooks/useUPEditores';
