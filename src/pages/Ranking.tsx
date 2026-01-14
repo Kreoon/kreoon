@@ -19,6 +19,7 @@ import { AchievementsShowcase } from '@/components/points/AchievementsShowcase';
 import { UPLeaderboardTabs } from '@/components/points/UPLeaderboardTabs';
 import { UPUserStats } from '@/components/points/UPUserStats';
 import { UPHistoryTable } from '@/components/points/UPHistoryTable';
+import { UPBadgeHolders } from '@/components/points/UPBadgeHolders';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';

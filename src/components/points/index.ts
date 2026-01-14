@@ -21,3 +21,7 @@ export { RuleSimulator } from './RuleSimulator';
 export { UPAchievementsManager } from './UPAchievementsManager';
 export { UPLevelsManager } from './UPLevelsManager';
 export { UPPermissionsEditor } from './UPPermissionsEditor';
+
+// UP V2 Components
+export { UPBadgeHolders } from './UPBadgeHolders';
+export { UPSeasonLeaderboard } from './UPSeasonLeaderboard';
