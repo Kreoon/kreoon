@@ -7,10 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Settings, Users, History, Sword, Shield, Castle, Swords, Award, Video, Scissors, Calendar } from 'lucide-react';
+import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Users, History, Sword, Shield, Castle, Swords, Award, Video, Scissors, Calendar } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
-import { UPSettingsPanel } from '@/components/points/UPSettingsPanel';
 import { UPManualAdjustment } from '@/components/points/UPManualAdjustment';
 import { UPControlCenter } from '@/components/points/UPControlCenter';
 import { Leaderboard } from '@/components/points/Leaderboard';
@@ -112,7 +111,7 @@ export default function RankingPage() {
       {/* Tabs for Admin */}
       {isAdmin ? (
         <Tabs defaultValue="upv2" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
             <TabsTrigger value="upv2" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Video className="w-4 h-4" />
               <span className="hidden sm:inline">UP V2</span>
@@ -140,10 +139,6 @@ export default function RankingPage() {
             <TabsTrigger value="control" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Castle className="w-4 h-4" />
               <span className="hidden sm:inline">Control</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Decretos</span>
             </TabsTrigger>
           </TabsList>
 
@@ -277,10 +272,6 @@ export default function RankingPage() {
 
           <TabsContent value="control">
             {currentOrgId && <UPControlCenter organizationId={currentOrgId} />}
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <UPSettingsPanel />
           </TabsContent>
         </Tabs>
       ) : (
