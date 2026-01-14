@@ -36,6 +36,9 @@ import { Leaderboard } from "@/components/points/Leaderboard";
 import { useLeaderboard } from "@/hooks/useUserPoints";
 import { UPSystemKPIs } from "@/components/dashboard/UPSystemKPIs";
 import { PlatformKPIs } from "@/components/dashboard/PlatformKPIs";
+import { MarketingKPIs } from "@/components/dashboard/MarketingKPIs";
+import { AmbassadorKPIs } from "@/components/dashboard/AmbassadorKPIs";
+import { ContentKPIs } from "@/components/dashboard/ContentKPIs";
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -1270,7 +1273,18 @@ export default function Dashboard() {
           <span className="text-lg font-bold text-destructive">{clientsBilling.contentOwed}</span>
         </div>
 
-        {/* Row 5: Platform KPIs */}
+        {/* Row 5: Content Pipeline KPIs */}
+        {isAdmin && currentOrgId && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Video className="h-4 w-4 text-violet-500" />
+              <h3 className="text-sm font-semibold">Pipeline de Contenido</h3>
+            </div>
+            <ContentKPIs organizationId={currentOrgId} />
+          </div>
+        )}
+
+        {/* Row 6: Platform KPIs */}
         {isAdmin && currentOrgId && (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -1281,7 +1295,29 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Row 6: UP System KPIs - Separated by Creators/Editors */}
+        {/* Row 7: Marketing KPIs */}
+        {isAdmin && currentOrgId && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-violet-500" />
+              <h3 className="text-sm font-semibold">Marketing & Campañas</h3>
+            </div>
+            <MarketingKPIs organizationId={currentOrgId} />
+          </div>
+        )}
+
+        {/* Row 8: Ambassador KPIs */}
+        {isAdmin && currentOrgId && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Crown className="h-4 w-4 text-yellow-500" />
+              <h3 className="text-sm font-semibold">Programa de Embajadores</h3>
+            </div>
+            <AmbassadorKPIs organizationId={currentOrgId} />
+          </div>
+        )}
+
+        {/* Row 9: UP System KPIs - Separated by Creators/Editors */}
         {isAdmin && currentOrgId && (
           <UPSystemKPIs organizationId={currentOrgId} />
         )}
