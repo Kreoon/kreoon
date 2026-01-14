@@ -594,29 +594,71 @@ function GlobalPointsHistory() {
         return;
       }
 
-      const { data: membersData } = await supabase
-        .from('organization_members')
-        .select('user_id')
-        .eq('organization_id', currentOrgId);
+      // Fetch from all three sources: up_creadores, up_editores, and point_transactions
+      const [creatorsRes, editorsRes, legacyRes] = await Promise.all([
+        supabase
+          .from('up_creadores')
+          .select('id, user_id, event_type, points, description, created_at')
+          .eq('organization_id', currentOrgId)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('up_editores')
+          .select('id, user_id, event_type, points, description, created_at')
+          .eq('organization_id', currentOrgId)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('point_transactions')
+          .select('id, user_id, transaction_type, points, description, created_at')
+          .order('created_at', { ascending: false })
+          .limit(50)
+      ]);
 
-      const memberIds = (membersData || []).map(m => m.user_id);
-      if (!memberIds.length) {
-        setTransactions([]);
-        return;
-      }
+      // Combine and normalize all transactions
+      const creatorTx = (creatorsRes.data || []).map(tx => ({
+        ...tx,
+        transaction_type: tx.event_type,
+        source: 'creator' as const
+      }));
 
-      const { data, error } = await supabase
-        .from('point_transactions')
-        .select(`
-          *,
-          profiles:user_id (full_name, avatar_url)
-        `)
-        .in('user_id', memberIds)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      const editorTx = (editorsRes.data || []).map(tx => ({
+        ...tx,
+        transaction_type: tx.event_type,
+        source: 'editor' as const
+      }));
 
-      if (error) throw error;
-      setTransactions(data || []);
+      const legacyTx = (legacyRes.data || []).map(tx => ({
+        ...tx,
+        source: 'legacy' as const
+      }));
+
+      // Merge all transactions
+      const allTransactions = [...creatorTx, ...editorTx, ...legacyTx];
+
+      // Sort by date descending
+      allTransactions.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      // Get unique user IDs
+      const userIds = [...new Set(allTransactions.map(tx => tx.user_id))];
+
+      // Fetch profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', userIds);
+
+      const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+
+      // Attach profiles and take top 100
+      const enrichedTransactions = allTransactions.slice(0, 100).map(tx => ({
+        ...tx,
+        profiles: profilesMap.get(tx.user_id)
+      }));
+
+      setTransactions(enrichedTransactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
     } finally {
@@ -625,6 +667,7 @@ function GlobalPointsHistory() {
   };
 
   const TRANSACTION_LABELS: Record<string, string> = {
+    // Legacy labels
     base_completion: 'Entrega Completada',
     early_delivery: 'Entrega Anticipada',
     late_delivery: 'Entrega Tardía',
@@ -632,7 +675,24 @@ function GlobalPointsHistory() {
     perfect_streak: 'Racha de Excelencia',
     five_star_rating: 'Calidad Premium',
     viral_hook: 'Alto Impacto',
-    manual_adjustment: 'Ajuste Administrativo'
+    manual_adjustment: 'Ajuste Administrativo',
+    // V2 Creator events
+    on_time_delivery: 'Entrega a Tiempo',
+    issue_penalty: 'Novedad Reportada',
+    issue_recovery: 'Novedad Resuelta',
+    clean_approval_bonus: 'Aprobación Limpia',
+    reassignment_penalty: 'Reasignación'
+  };
+
+  const getSourceBadge = (source: string) => {
+    switch (source) {
+      case 'creator':
+        return <Badge variant="outline" className="text-[10px] px-1 py-0 bg-info/10 text-info border-info/30">Creador</Badge>;
+      case 'editor':
+        return <Badge variant="outline" className="text-[10px] px-1 py-0 bg-warning/10 text-warning border-warning/30">Editor</Badge>;
+      default:
+        return null;
+    }
   };
 
   if (loading) {
@@ -669,7 +729,10 @@ function GlobalPointsHistory() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm truncate">{tx.profiles?.full_name || 'Usuario'}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium text-sm truncate">{tx.profiles?.full_name || 'Usuario'}</p>
+              {getSourceBadge(tx.source)}
+            </div>
             <p className="text-xs text-muted-foreground">
               {TRANSACTION_LABELS[tx.transaction_type] || tx.transaction_type}
               {tx.description && ` — ${tx.description}`}
