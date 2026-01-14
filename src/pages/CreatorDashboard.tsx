@@ -11,7 +11,7 @@ import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/index';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
-import { UPWidget } from '@/components/points/UPWidget';
+import { RoleUPWidget } from '@/components/points/RoleUPWidget';
 import { RoleLeaderboard } from '@/components/points/RoleLeaderboard';
 import { PointsHistory } from '@/components/points/PointsHistory';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
@@ -219,7 +219,7 @@ export default function CreatorDashboard() {
         {/* UGC Points Widget */}
         {user && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <UPWidget userId={user.id} />
+            <RoleUPWidget userId={user.id} role="creator" />
             <div className="lg:col-span-2">
               <Card className="border-border/50 h-full">
                 <CardContent className="p-4">
