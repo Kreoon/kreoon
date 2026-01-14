@@ -35,7 +35,6 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { Leaderboard } from "@/components/points/Leaderboard";
 import { useLeaderboard } from "@/hooks/useUserPoints";
 import { UPSystemKPIs } from "@/components/dashboard/UPSystemKPIs";
-import { PlatformKPIs } from "@/components/dashboard/PlatformKPIs";
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -1270,16 +1269,7 @@ export default function Dashboard() {
           <span className="text-lg font-bold text-destructive">{clientsBilling.contentOwed}</span>
         </div>
 
-        {/* Row 5: Platform KPIs - Solo métricas únicas (Chat, IA, Productos) */}
-        {isAdmin && currentOrgId && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold">Métricas de Plataforma</h3>
-            </div>
-            <PlatformKPIs organizationId={currentOrgId} />
-          </div>
-        )}
+        {/* Row 5: UP System KPIs - Separated by Creators/Editors */}
 
         {/* Row 6: UP System KPIs - Separated by Creators/Editors */}
         {isAdmin && currentOrgId && (
