@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -9,12 +10,41 @@ import {
 import { useUPCreadores, UPCreadorTotals } from '@/hooks/useUPCreadores';
 import { useUPEditores, UPEditorTotals } from '@/hooks/useUPEditores';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
-const LEVEL_CONFIG = {
-  bronze: { label: 'Bronce', color: 'text-amber-600', bg: 'bg-amber-600/20', icon: Medal, min: 0, max: 99 },
-  silver: { label: 'Plata', color: 'text-slate-400', bg: 'bg-slate-400/20', icon: Award, min: 100, max: 249 },
-  gold: { label: 'Oro', color: 'text-yellow-500', bg: 'bg-yellow-500/20', icon: Crown, min: 250, max: 499 },
-  diamond: { label: 'Diamante', color: 'text-cyan-400', bg: 'bg-cyan-400/20', icon: Star, min: 500, max: Infinity }
+interface LevelThresholds {
+  bronze: number;
+  silver: number;
+  gold: number;
+  diamond: number;
+}
+
+const DEFAULT_THRESHOLDS: LevelThresholds = {
+  bronze: 0,
+  silver: 500,
+  gold: 800,
+  diamond: 1200
+};
+
+const LEVEL_LABELS = {
+  bronze: 'Escudero',
+  silver: 'Caballero',
+  gold: 'Comandante',
+  diamond: 'Gran Maestre'
+};
+
+const LEVEL_COLORS = {
+  bronze: { color: 'text-amber-600', bg: 'bg-amber-600/20' },
+  silver: { color: 'text-slate-400', bg: 'bg-slate-400/20' },
+  gold: { color: 'text-yellow-500', bg: 'bg-yellow-500/20' },
+  diamond: { color: 'text-cyan-400', bg: 'bg-cyan-400/20' }
+};
+
+const LEVEL_ICONS = {
+  bronze: Medal,
+  silver: Award,
+  gold: Crown,
+  diamond: Star
 };
 
 interface StatsCardProps {
@@ -23,9 +53,10 @@ interface StatsCardProps {
   totals: UPCreadorTotals | UPEditorTotals | null;
   loading: boolean;
   type: 'creator' | 'editor';
+  thresholds: LevelThresholds;
 }
 
-function StatsCard({ title, icon: Icon, totals, loading, type }: StatsCardProps) {
+function StatsCard({ title, icon: Icon, totals, loading, type, thresholds }: StatsCardProps) {
   if (loading) {
     return (
       <Card>
@@ -67,24 +98,28 @@ function StatsCard({ title, icon: Icon, totals, loading, type }: StatsCardProps)
     );
   }
 
-  const level = totals.current_level as keyof typeof LEVEL_CONFIG;
-  const levelConfig = LEVEL_CONFIG[level];
-  const LevelIcon = levelConfig.icon;
+  const level = totals.current_level as 'bronze' | 'silver' | 'gold' | 'diamond';
+  const levelLabel = LEVEL_LABELS[level];
+  const levelColor = LEVEL_COLORS[level];
+  const LevelIcon = LEVEL_ICONS[level];
 
   // Calculate progress to next level
   const currentPoints = totals.total_points;
   let progress = 100;
-  let nextLevel = 'diamond';
+  let nextLevelLabel = 'Gran Maestre';
   let pointsNeeded = 0;
 
+  const levelOrder: Array<'bronze' | 'silver' | 'gold' | 'diamond'> = ['bronze', 'silver', 'gold', 'diamond'];
+  const currentIdx = levelOrder.indexOf(level);
+
   if (level !== 'diamond') {
-    const levelOrder: Array<keyof typeof LEVEL_CONFIG> = ['bronze', 'silver', 'gold', 'diamond'];
-    const currentIdx = levelOrder.indexOf(level);
-    nextLevel = levelOrder[currentIdx + 1];
-    const nextConfig = LEVEL_CONFIG[nextLevel as keyof typeof LEVEL_CONFIG];
-    const range = nextConfig.min - levelConfig.min;
-    progress = ((currentPoints - levelConfig.min) / range) * 100;
-    pointsNeeded = nextConfig.min - currentPoints;
+    const nextLevel = levelOrder[currentIdx + 1];
+    nextLevelLabel = LEVEL_LABELS[nextLevel];
+    const currentThreshold = thresholds[level];
+    const nextThreshold = thresholds[nextLevel];
+    const range = nextThreshold - currentThreshold;
+    progress = ((currentPoints - currentThreshold) / range) * 100;
+    pointsNeeded = nextThreshold - currentPoints;
   }
 
   const deliveryRate = totals.total_deliveries > 0 
@@ -106,9 +141,9 @@ function StatsCard({ title, icon: Icon, totals, loading, type }: StatsCardProps)
             <div className="text-3xl font-bold">{totals.total_points}</div>
             <div className="text-xs text-muted-foreground">Puntos UP</div>
           </div>
-          <Badge className={cn("gap-1 text-sm py-1 px-3", levelConfig.bg, levelConfig.color)}>
+          <Badge className={cn("gap-1 text-sm py-1 px-3", levelColor.bg, levelColor.color)}>
             <LevelIcon className="h-4 w-4" />
-            {levelConfig.label}
+            {levelLabel}
           </Badge>
         </div>
 
@@ -116,7 +151,7 @@ function StatsCard({ title, icon: Icon, totals, loading, type }: StatsCardProps)
         {level !== 'diamond' && (
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Progreso a {LEVEL_CONFIG[nextLevel as keyof typeof LEVEL_CONFIG].label}</span>
+              <span>Progreso a {nextLevelLabel}</span>
               <span>{pointsNeeded} UP restantes</span>
             </div>
             <Progress value={Math.min(100, Math.max(0, progress))} className="h-2" />
@@ -179,6 +214,32 @@ interface UPUserStatsProps {
 export function UPUserStats({ userId, showCreator = true, showEditor = true }: UPUserStatsProps) {
   const { totals: creatorTotals, loading: loadingCreator } = useUPCreadores(userId);
   const { totals: editorTotals, loading: loadingEditor } = useUPEditores(userId);
+  const [thresholds, setThresholds] = useState<LevelThresholds>(DEFAULT_THRESHOLDS);
+
+  useEffect(() => {
+    const fetchThresholds = async () => {
+      try {
+        const { data } = await supabase
+          .from('up_settings')
+          .select('value')
+          .eq('key', 'level_thresholds')
+          .maybeSingle();
+        
+        if (data?.value && typeof data.value === 'object' && !Array.isArray(data.value)) {
+          const val = data.value as Record<string, number>;
+          setThresholds({
+            bronze: val.bronze ?? 0,
+            silver: val.silver ?? 500,
+            gold: val.gold ?? 800,
+            diamond: val.diamond ?? 1200
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching level thresholds:', err);
+      }
+    };
+    fetchThresholds();
+  }, []);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -189,6 +250,7 @@ export function UPUserStats({ userId, showCreator = true, showEditor = true }: U
           totals={creatorTotals}
           loading={loadingCreator}
           type="creator"
+          thresholds={thresholds}
         />
       )}
       {showEditor && (
@@ -198,6 +260,7 @@ export function UPUserStats({ userId, showCreator = true, showEditor = true }: U
           totals={editorTotals}
           loading={loadingEditor}
           type="editor"
+          thresholds={thresholds}
         />
       )}
     </div>

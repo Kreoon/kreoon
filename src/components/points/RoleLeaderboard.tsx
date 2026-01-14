@@ -22,6 +22,13 @@ const LEVEL_ICONS = {
   diamond: '💎'
 };
 
+const LEVEL_LABELS = {
+  bronze: 'Escudero',
+  silver: 'Caballero',
+  gold: 'Comandante',
+  diamond: 'Gran Maestre'
+};
+
 const LEVEL_COLORS = {
   bronze: 'text-amber-600',
   silver: 'text-slate-400',
@@ -138,7 +145,7 @@ export function RoleLeaderboard({ role, currentUserId, maxItems = 10, showHeader
                         )}
                       </div>
                       <p className={cn("text-xs", LEVEL_COLORS[level])}>
-                        {LEVEL_ICONS[level]} {level.charAt(0).toUpperCase() + level.slice(1)}
+                        {LEVEL_ICONS[level]} {LEVEL_LABELS[level]}
                       </p>
                     </div>
                     

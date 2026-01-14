@@ -24,6 +24,13 @@ interface RolePoints {
   total_issues: number;
 }
 
+interface LevelThresholds {
+  bronze: number;
+  silver: number;
+  gold: number;
+  diamond: number;
+}
+
 const LEVEL_ICONS: Record<UPLevel, string> = {
   bronze: '🥉',
   silver: '🥈',
@@ -32,10 +39,10 @@ const LEVEL_ICONS: Record<UPLevel, string> = {
 };
 
 const LEVEL_LABELS: Record<UPLevel, string> = {
-  bronze: 'Bronce',
-  silver: 'Plata',
-  gold: 'Oro',
-  diamond: 'Diamante'
+  bronze: 'Escudero',
+  silver: 'Caballero',
+  gold: 'Comandante',
+  diamond: 'Gran Maestre'
 };
 
 const LEVEL_COLORS: Record<UPLevel, string> = {
@@ -52,27 +59,55 @@ const LEVEL_BG_COLORS: Record<UPLevel, string> = {
   diamond: 'bg-cyan-400/20 border-cyan-400/30'
 };
 
-const LEVEL_THRESHOLDS: Record<UPLevel, number> = {
+// Default thresholds (fallback if DB not available)
+const DEFAULT_THRESHOLDS: LevelThresholds = {
   bronze: 0,
-  silver: 100,
-  gold: 300,
-  diamond: 600
+  silver: 500,
+  gold: 800,
+  diamond: 1200
 };
 
-function calculateLevel(points: number): UPLevel {
-  if (points >= LEVEL_THRESHOLDS.diamond) return 'diamond';
-  if (points >= LEVEL_THRESHOLDS.gold) return 'gold';
-  if (points >= LEVEL_THRESHOLDS.silver) return 'silver';
+function calculateLevel(points: number, thresholds: LevelThresholds): UPLevel {
+  if (points >= thresholds.diamond) return 'diamond';
+  if (points >= thresholds.gold) return 'gold';
+  if (points >= thresholds.silver) return 'silver';
   return 'bronze';
 }
 
 export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProps) {
   const [points, setPoints] = useState<RolePoints | null>(null);
   const [loading, setLoading] = useState(true);
+  const [thresholds, setThresholds] = useState<LevelThresholds>(DEFAULT_THRESHOLDS);
 
   const tableName = role === 'creator' ? 'up_creadores_totals' : 'up_editores_totals';
   const RoleIcon = role === 'creator' ? Video : Scissors;
   const roleLabel = role === 'creator' ? 'Creador' : 'Editor';
+
+  // Fetch level thresholds from up_settings
+  useEffect(() => {
+    const fetchThresholds = async () => {
+      try {
+        const { data } = await supabase
+          .from('up_settings')
+          .select('value')
+          .eq('key', 'level_thresholds')
+          .maybeSingle();
+        
+        if (data?.value && typeof data.value === 'object' && !Array.isArray(data.value)) {
+          const val = data.value as Record<string, number>;
+          setThresholds({
+            bronze: val.bronze ?? 0,
+            silver: val.silver ?? 500,
+            gold: val.gold ?? 800,
+            diamond: val.diamond ?? 1200
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching level thresholds:', err);
+      }
+    };
+    fetchThresholds();
+  }, []);
 
   const fetchPoints = useCallback(async () => {
     if (!userId) {
@@ -108,7 +143,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
 
       const rolePoints: RolePoints = {
         total_points: totalPoints,
-        current_level: calculateLevel(totalPoints),
+        current_level: calculateLevel(totalPoints, thresholds),
         total_deliveries: v2Data?.total_deliveries || 0,
         on_time_deliveries: v2Data?.on_time_deliveries || 0,
         late_deliveries: v2Data?.late_deliveries || 0,
@@ -122,7 +157,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
     } finally {
       setLoading(false);
     }
-  }, [userId, tableName, role]);
+  }, [userId, tableName, role, thresholds]);
 
   useEffect(() => {
     fetchPoints();
@@ -158,15 +193,15 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
     }
 
     const nextLevel = levels[currentIndex + 1] as UPLevel;
-    const currentThreshold = LEVEL_THRESHOLDS[currentLevel];
-    const nextThreshold = LEVEL_THRESHOLDS[nextLevel];
+    const currentThreshold = thresholds[currentLevel];
+    const nextThreshold = thresholds[nextLevel];
     const pointsInLevel = currentPoints - currentThreshold;
     const pointsForLevel = nextThreshold - currentThreshold;
     const progress = Math.min(100, (pointsInLevel / pointsForLevel) * 100);
     const pointsNeeded = nextThreshold - currentPoints;
 
     return { progress, nextLevel, pointsNeeded };
-  }, [points]);
+  }, [points, thresholds]);
 
   if (loading) {
     return (
