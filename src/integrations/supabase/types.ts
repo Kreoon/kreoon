@@ -9477,7 +9477,7 @@ export type Database = {
         Row: {
           consecutive_on_time: number
           created_at: string
-          current_level: Database["public"]["Enums"]["up_level"]
+          current_level: string
           id: string
           secondary_points: number | null
           total_completions: number
@@ -9491,7 +9491,7 @@ export type Database = {
         Insert: {
           consecutive_on_time?: number
           created_at?: string
-          current_level?: Database["public"]["Enums"]["up_level"]
+          current_level?: string
           id?: string
           secondary_points?: number | null
           total_completions?: number
@@ -9505,7 +9505,7 @@ export type Database = {
         Update: {
           consecutive_on_time?: number
           created_at?: string
-          current_level?: Database["public"]["Enums"]["up_level"]
+          current_level?: string
           id?: string
           secondary_points?: number | null
           total_completions?: number
