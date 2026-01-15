@@ -186,7 +186,7 @@ export default function RankingPage() {
       {/* Tabs for Admin */}
       {isAdmin ? (
         <Tabs defaultValue="upv2" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
             <TabsTrigger value="upv2" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Video className="w-4 h-4" />
               <span className="hidden sm:inline">UP V2</span>
@@ -194,10 +194,6 @@ export default function RankingPage() {
             <TabsTrigger value="ranking" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Trophy className="w-4 h-4" />
               <span className="hidden sm:inline">General</span>
-            </TabsTrigger>
-            <TabsTrigger value="achievements" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Award className="w-4 h-4" />
-              <span className="hidden sm:inline">Logros</span>
             </TabsTrigger>
             <TabsTrigger value="seasons" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Calendar className="w-4 h-4" />
@@ -266,10 +262,6 @@ export default function RankingPage() {
               currentUserId={user?.id}
               thresholds={thresholds}
             />
-          </TabsContent>
-
-          <TabsContent value="achievements" className="space-y-6">
-            {user && <UnifiedBadgesShowcase userId={user.id} variant="full" />}
           </TabsContent>
 
           <TabsContent value="seasons" className="space-y-6">
