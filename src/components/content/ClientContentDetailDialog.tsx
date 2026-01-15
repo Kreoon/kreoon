@@ -355,7 +355,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
           </div>
 
           {/* Content Area */}
-          <ScrollArea className="flex-1 max-h-[calc(95vh-200px)]">
+          <div className="flex-1 overflow-y-auto max-h-[calc(95vh-200px)]">
             <div className="p-6 space-y-6">
               {/* Script Section */}
               {hasScript ? (
@@ -491,7 +491,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
                 </CardContent>
               </Card>
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Footer with Approve Script button */}
           {canApproveScript && (
@@ -657,7 +657,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
         </div>
 
         {/* Content Area */}
-        <ScrollArea className="flex-1 max-h-[calc(95vh-280px)]">
+        <div className="flex-1 overflow-y-auto max-h-[calc(95vh-280px)]">
           <div className="p-6">
             {/* Videos Tab */}
             {activeTab === 'videos' && (
@@ -885,7 +885,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
 
       {/* Rating Dialog for Approval */}

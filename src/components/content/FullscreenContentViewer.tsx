@@ -236,12 +236,13 @@ export function FullscreenContentViewer({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Close button */}
+      {/* Close button - Made more prominent */}
       <button
         onClick={onClose}
-        className="absolute top-4 left-4 z-50 p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+        className="absolute top-4 left-4 z-50 p-3 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all shadow-lg border border-white/20"
+        aria-label="Cerrar"
       >
-        <X className="h-6 w-6" />
+        <X className="h-7 w-7" />
       </button>
 
       {/* Counter */}
