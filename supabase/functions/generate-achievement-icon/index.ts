@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,49 +21,47 @@ serve(async (req) => {
       );
     }
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Build a detailed prompt for the icon
+    // Build a detailed prompt for the icon based on rarity
     const rarityStyle: Record<string, string> = {
-      common: 'simple, clean, minimal design with subtle gray and white colors',
-      uncommon: 'slightly detailed with green accents, emerald glow, and nature themes',
-      rare: 'detailed with cyan/blue glowing effects, magical aura, and mystical elements',
-      legendary: 'highly detailed with golden glow, epic flames, royal crown elements, and divine light'
+      common: 'simple design with bronze/copper metallic tones',
+      uncommon: 'detailed with green emerald accents and nature energy',
+      rare: 'glowing cyan/blue magical aura with mystical elements',
+      legendary: 'epic golden divine light, flames, royal crown elements'
     };
 
     const styleDescription = rarityStyle[rarity] || rarityStyle.common;
 
-    const prompt = `A game achievement badge icon for "${name}". ${description ? `Achievement for: ${description}.` : ''} 
+    const prompt = `Create a game achievement badge icon for "${name}". ${description ? `For: ${description}.` : ''} 
 Style: ${styleDescription}. 
-Design: Circular badge or shield shape, centered composition, suitable for gaming UI.
-Background: Dark gradient or transparent.
-The icon should be clear and detailed, professional game art style, digital illustration.
-No text, no letters, no words in the image.`;
+Design: Circular badge or shield shape, centered, professional gaming UI style.
+Dark gradient background, highly detailed digital illustration.
+No text or letters in the image.`;
 
-    console.log('Generating icon with OpenAI DALL-E, prompt:', prompt);
+    console.log('Generating icon with Gemini, prompt:', prompt);
 
-    // Use OpenAI's gpt-image-1 model for image generation
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-image-1',
-        prompt: prompt,
-        n: 1,
-        size: '1024x1024',
-        quality: 'medium'
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [
+          { role: 'user', content: prompt }
+        ],
+        modalities: ['image', 'text']
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      console.error('Gemini API error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -72,39 +69,32 @@ No text, no letters, no words in the image.`;
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (response.status === 402 || response.status === 401) {
+      if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: 'OpenAI API key issue. Please check your API key.' }),
+          JSON.stringify({ error: 'Payment required. Please add credits to your workspace.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('OpenAI response received');
+    console.log('Gemini response received');
 
-    // Extract the image URL or base64 from the response
-    const imageData = data.data?.[0];
+    // Extract the image from Gemini's response
+    const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     
     if (!imageData) {
       console.error('No image in response:', JSON.stringify(data));
       throw new Error('No image generated');
     }
 
-    // OpenAI returns either url or b64_json depending on response_format
-    const imageUrl = imageData.url || (imageData.b64_json ? `data:image/png;base64,${imageData.b64_json}` : null);
-
-    if (!imageUrl) {
-      throw new Error('No image URL in response');
-    }
-
     return new Response(
       JSON.stringify({ 
         success: true, 
-        imageUrl,
-        model: 'gpt-image-1'
+        imageUrl: imageData,
+        model: 'gemini-2.5-flash-image'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
