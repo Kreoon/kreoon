@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { UnifiedBadgesShowcase } from '@/components/points/UnifiedBadgesShowcase';
 
 interface ProfileTrustBadgesProps {
   userId: string;
@@ -345,142 +346,14 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
     );
   }
 
-  // Full view
+  // Full view - Use unified component
   return (
-    <div className="space-y-4">
-      {/* Trust Score Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-social-foreground flex items-center gap-2">
-          <Shield className="h-5 w-5 text-social-accent" />
-          Insignias de Confianza
-        </h3>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-social-accent/20 text-social-accent">
-            <Star className="h-4 w-4 fill-social-accent" />
-            <span className="font-bold">{trustScore}%</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Level & Points Section */}
-      {userPoints && (
-        <div className="p-4 rounded-xl bg-social-card border border-social-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "h-14 w-14 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-lg",
-                levelConfig.color
-              )}>
-                <LevelIcon className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-social-muted-foreground">Nivel actual</p>
-                <p className={cn("text-xl font-bold", levelConfig.textColor)}>
-                  {levelConfig.label}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-social-foreground">{userPoints.total_points}</p>
-              <p className="text-sm text-social-muted-foreground">UP totales</p>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-social-border">
-            <StatBlock 
-              icon={<CheckCircle2 className="h-4 w-4" />} 
-              value={userPoints.total_completions} 
-              label="Completados" 
-            />
-            <StatBlock 
-              icon={<Clock className="h-4 w-4" />} 
-              value={userPoints.total_on_time} 
-              label="A tiempo" 
-            />
-            <StatBlock 
-              icon={<Flame className="h-4 w-4" />} 
-              value={userPoints.consecutive_on_time} 
-              label="Racha" 
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Organization Badges */}
-      {orgBadges.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-social-muted-foreground">Badges de Organización</p>
-          <div className="flex flex-wrap gap-2">
-            {orgBadges.map((badge) => (
-              <TooltipProvider key={badge.id}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <div className={cn(
-                      "px-4 py-2 rounded-xl flex items-center gap-2 bg-gradient-to-r shadow-lg cursor-pointer hover:scale-105 transition-transform",
-                      badge.level === 'gold' ? 'from-yellow-500 to-amber-600' :
-                      badge.level === 'silver' ? 'from-slate-400 to-slate-500' :
-                      'from-amber-600 to-amber-700'
-                    )}>
-                      <Crown className="h-5 w-5 text-white" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-white">
-                          {badge.badge === 'ambassador' ? 'Embajador' : badge.badge}
-                        </p>
-                        <p className="text-xs text-white/70">
-                          {badge.level?.charAt(0).toUpperCase()}{badge.level?.slice(1)}
-                        </p>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-social-card border-social-border">
-                    <p className="text-social-foreground">
-                      Otorgado el {format(new Date(badge.granted_at), "d 'de' MMMM, yyyy", { locale: es })}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Achievements Grid */}
-      {achievements.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-social-muted-foreground">Logros Desbloqueados</p>
-          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
-            {achievements.map((ua) => {
-              const IconComponent = ICON_MAP[ua.achievement.icon] || Shield;
-              return (
-                <TooltipProvider key={ua.id}>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <div className={cn(
-                        "h-12 w-12 rounded-xl flex items-center justify-center bg-gradient-to-br border-2 cursor-pointer hover:scale-110 transition-transform shadow-lg",
-                        RARITY_STYLES[ua.achievement.rarity],
-                        ua.achievement.rarity === 'legendary' && 'animate-pulse'
-                      )}>
-                        <IconComponent className="h-5 w-5 text-white drop-shadow" />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-social-card border-social-border max-w-xs">
-                      <div className="space-y-1">
-                        <p className="font-bold text-social-foreground">{ua.achievement.name}</p>
-                        <p className="text-xs text-social-muted-foreground">{ua.achievement.description}</p>
-                        <p className="text-xs text-social-accent">
-                          {format(new Date(ua.unlocked_at), "d MMM yyyy", { locale: es })}
-                        </p>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
+    <UnifiedBadgesShowcase 
+      userId={userId} 
+      variant="full"
+      showOrgBadges={true}
+      showLevelProgress={true}
+    />
   );
 }
 
