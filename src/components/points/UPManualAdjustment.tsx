@@ -68,21 +68,11 @@ export function UPManualAdjustment() {
 
       if (profilesError) throw profilesError;
 
-      const { data: userPoints, error: pointsError } = await supabase
-        .from('user_points')
-        .select('user_id, total_points, current_level')
-        .in('user_id', memberIds);
-
-      if (pointsError) throw pointsError;
-
-      const usersWithPoints: UserWithPoints[] = (profiles || []).map(profile => {
-        const userPoint = userPoints?.find(p => p.user_id === profile.id);
-        return {
-          ...profile,
-          total_points: userPoint?.total_points || 0,
-          current_level: userPoint?.current_level || 'bronze'
-        };
-      });
+      const usersWithPoints: UserWithPoints[] = (profiles || []).map(profile => ({
+        ...profile,
+        total_points: 0,
+        current_level: 'bronze'
+      }));
 
       setUsers(usersWithPoints.sort((a, b) => b.total_points - a.total_points));
     } catch (error) {
@@ -139,14 +129,6 @@ export function UPManualAdjustment() {
         if (error) throw error;
       }
 
-      // Also update legacy user_points table for backwards compatibility
-      await supabase.rpc('add_user_points', {
-        _user_id: selectedUser.id,
-        _content_id: null,
-        _transaction_type: 'manual_adjustment',
-        _points: finalPoints,
-        _description: reason
-      });
 
       toast({
         title: 'Ajuste realizado',

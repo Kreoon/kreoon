@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
-import { useLeaderboard } from '@/hooks/useUserPoints';
+import { useCreatorLeaderboard } from '@/hooks/useUPCreadores';
+import { useEditorLeaderboard } from '@/hooks/useUPEditores';
 import { useUPSettings } from '@/hooks/useUPSettings';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,15 +13,13 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
 import { UPManualAdjustment } from '@/components/points/UPManualAdjustment';
 import { UPControlCenter } from '@/components/points/UPControlCenter';
-import { Leaderboard } from '@/components/points/Leaderboard';
-import { PointsHistory } from '@/components/points/PointsHistory';
 import { AchievementsShowcase } from '@/components/points/AchievementsShowcase';
 import { UPLeaderboardTabs } from '@/components/points/UPLeaderboardTabs';
 import { UPUserStats } from '@/components/points/UPUserStats';
 import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { UPBadgeHolders } from '@/components/points/UPBadgeHolders';
 import { UPSeasonHistory } from '@/components/points/UPSeasonHistory';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -60,13 +59,89 @@ const RANK_STYLES = [
   { icon: Award, color: 'text-amber-700', bg: 'bg-gradient-to-br from-amber-700/30 to-amber-800/10 border-amber-700/50' }
 ];
 
+interface CombinedLeaderboardEntry {
+  user_id: string;
+  full_name: string;
+  avatar_url: string | null;
+  total_points: number;
+  current_level: 'bronze' | 'silver' | 'gold' | 'diamond';
+  rank: number;
+}
+
 export default function RankingPage() {
   const { user, isAdmin } = useAuth();
-  const { leaderboard, loading } = useLeaderboard();
+  const { leaderboard: creatorLeaderboard, loading: loadingCreators } = useCreatorLeaderboard();
+  const { leaderboard: editorLeaderboard, loading: loadingEditors } = useEditorLeaderboard();
   const { getLevelThresholds, isSystemEnabled } = useUPSettings();
   const { currentOrgId } = useOrgOwner();
 
   const thresholds = getLevelThresholds();
+  const loading = loadingCreators || loadingEditors;
+
+  // Combine creator and editor leaderboards into a unified ranking
+  const leaderboard = useMemo<CombinedLeaderboardEntry[]>(() => {
+    const userPointsMap = new Map<string, { points: number; level: 'bronze' | 'silver' | 'gold' | 'diamond'; name: string; avatar: string | null }>();
+
+    // Add creator points
+    creatorLeaderboard.forEach(entry => {
+      const existing = userPointsMap.get(entry.user_id);
+      if (existing) {
+        existing.points += entry.total_points;
+      } else {
+        userPointsMap.set(entry.user_id, {
+          points: entry.total_points,
+          level: entry.current_level,
+          name: entry.profile?.full_name || 'Usuario',
+          avatar: entry.profile?.avatar_url || null
+        });
+      }
+    });
+
+    // Add editor points
+    editorLeaderboard.forEach(entry => {
+      const existing = userPointsMap.get(entry.user_id);
+      if (existing) {
+        existing.points += entry.total_points;
+        // Use higher level
+        const levelOrder = { bronze: 0, silver: 1, gold: 2, diamond: 3 };
+        if (levelOrder[entry.current_level] > levelOrder[existing.level]) {
+          existing.level = entry.current_level;
+        }
+      } else {
+        userPointsMap.set(entry.user_id, {
+          points: entry.total_points,
+          level: entry.current_level,
+          name: entry.profile?.full_name || 'Usuario',
+          avatar: entry.profile?.avatar_url || null
+        });
+      }
+    });
+
+    // Calculate level based on combined points
+    const calculateLevel = (points: number): 'bronze' | 'silver' | 'gold' | 'diamond' => {
+      if (points >= thresholds.diamond) return 'diamond';
+      if (points >= thresholds.gold) return 'gold';
+      if (points >= thresholds.silver) return 'silver';
+      return 'bronze';
+    };
+
+    // Convert to array, recalculate levels, sort and rank
+    const entries = Array.from(userPointsMap.entries())
+      .map(([user_id, data]) => ({
+        user_id,
+        full_name: data.name,
+        avatar_url: data.avatar,
+        total_points: data.points,
+        current_level: calculateLevel(data.points)
+      }))
+      .sort((a, b) => b.total_points - a.total_points)
+      .map((entry, index) => ({
+        ...entry,
+        rank: index + 1
+      }));
+
+    return entries;
+  }, [creatorLeaderboard, editorLeaderboard, thresholds]);
 
   // Estadísticas globales
   const totalPoints = leaderboard.reduce((sum, entry) => sum + entry.total_points, 0);
@@ -179,8 +254,6 @@ export default function RankingPage() {
                 </CardContent>
               </Card>
             </div>
-            
-            {/* User's own stats - only show for non-admin users */}
           </TabsContent>
 
           <TabsContent value="ranking" className="space-y-6">
@@ -327,7 +400,7 @@ export default function RankingPage() {
 
 // Componente separado para el contenido del ranking
 interface RankingContentProps {
-  leaderboard: any[];
+  leaderboard: CombinedLeaderboardEntry[];
   totalPoints: number;
   diamondCount: number;
   goldCount: number;
@@ -398,105 +471,19 @@ function RankingContent({
         </Card>
       </div>
 
-      {/* Top 3 Podium - Medieval Style */}
-      {leaderboard.length >= 3 && (
-        <div className="grid grid-cols-3 gap-4">
-          {/* 2nd Place - Silver Knight */}
-          <div className="flex flex-col items-center pt-8">
-            <Card className={cn("w-full border-2 emboss", RANK_STYLES[1].bg)}>
-              <CardContent className="p-4 flex flex-col items-center">
-                <div className="relative -mt-10 mb-2">
-                  <Avatar className="h-16 w-16 border-4 border-slate-400">
-                    <AvatarImage src={leaderboard[1].avatar_url || undefined} />
-                    <AvatarFallback className="text-lg font-medieval bg-slate-500 text-white">
-                      {leaderboard[1].full_name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-slate-400 border-2 border-slate-300">
-                    <Shield className="w-4 h-4 text-white" />
-                  </div>
-                </div>
-                <p className="font-bold text-center truncate w-full font-medieval">{leaderboard[1].full_name}</p>
-                <p className={cn("text-sm font-body", LEVEL_COLORS[leaderboard[1].current_level as keyof typeof LEVEL_COLORS])}>
-                  {LEVEL_ICONS[leaderboard[1].current_level as keyof typeof LEVEL_ICONS]} {LEVEL_LABELS[leaderboard[1].current_level as keyof typeof LEVEL_LABELS]}
-                </p>
-                <div className="flex items-center gap-1 mt-2 px-3 py-1 rounded bg-slate-400/20 border border-slate-400/30">
-                  <Flame className="w-4 h-4 text-slate-400" />
-                  <span className="font-bold font-medieval">{leaderboard[1].total_points}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* 1st Place - Champion */}
-          <div className="flex flex-col items-center">
-            <Card className={cn("w-full border-2 emboss glow-gold", RANK_STYLES[0].bg)}>
-              <CardContent className="p-4 flex flex-col items-center">
-                <div className="relative -mt-10 mb-2">
-                  <Avatar className="h-20 w-20 border-4 border-yellow-600">
-                    <AvatarImage src={leaderboard[0].avatar_url || undefined} />
-                    <AvatarFallback className="text-xl font-medieval bg-yellow-600 text-white">
-                      {leaderboard[0].full_name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-yellow-600 border-2 border-yellow-500 animate-torch">
-                    <Crown className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-                <p className="font-bold text-lg text-center truncate w-full font-medieval">{leaderboard[0].full_name}</p>
-                <p className={cn("text-sm font-body", LEVEL_COLORS[leaderboard[0].current_level as keyof typeof LEVEL_COLORS])}>
-                  {LEVEL_ICONS[leaderboard[0].current_level as keyof typeof LEVEL_ICONS]} {LEVEL_LABELS[leaderboard[0].current_level as keyof typeof LEVEL_LABELS]}
-                </p>
-                <div className="flex items-center gap-1 mt-2 px-4 py-1.5 rounded level-gold">
-                  <Flame className="w-5 h-5" />
-                  <span className="font-bold text-lg font-medieval">{leaderboard[0].total_points}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* 3rd Place - Bronze Knight */}
-          <div className="flex flex-col items-center pt-12">
-            <Card className={cn("w-full border-2 emboss", RANK_STYLES[2].bg)}>
-              <CardContent className="p-4 flex flex-col items-center">
-                <div className="relative -mt-10 mb-2">
-                  <Avatar className="h-14 w-14 border-4 border-amber-700">
-                    <AvatarImage src={leaderboard[2].avatar_url || undefined} />
-                    <AvatarFallback className="font-medieval bg-amber-700 text-white">
-                      {leaderboard[2].full_name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-amber-700 border-2 border-amber-600">
-                    <Sword className="w-3 h-3 text-white" />
-                  </div>
-                </div>
-                <p className="font-bold text-center truncate w-full text-sm font-medieval">{leaderboard[2].full_name}</p>
-                <p className={cn("text-xs font-body", LEVEL_COLORS[leaderboard[2].current_level as keyof typeof LEVEL_COLORS])}>
-                  {LEVEL_ICONS[leaderboard[2].current_level as keyof typeof LEVEL_ICONS]} {LEVEL_LABELS[leaderboard[2].current_level as keyof typeof LEVEL_LABELS]}
-                </p>
-                <div className="flex items-center gap-1 mt-2 px-2 py-1 rounded bg-amber-700/20 border border-amber-700/30">
-                  <Flame className="w-3 h-3 text-amber-700" />
-                  <span className="font-bold text-sm font-medieval">{leaderboard[2].total_points}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* Full Leaderboard - Medieval Scroll */}
-      <Card className="border-2 border-border bg-gradient-parchment">
+      {/* Combined Leaderboard */}
+      <Card className="border-2 border-border">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2 font-medieval">
-            <Swords className="w-5 h-5 text-primary" />
-            Registro de la Orden
+          <CardTitle className="flex items-center gap-2 font-medieval">
+            <Trophy className="w-5 h-5 text-yellow-500" />
+            Ranking General (Creadores + Editores)
           </CardTitle>
         </CardHeader>
         <CardContent>
           {leaderboard.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <Castle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium font-medieval">El salón está vacío</p>
+              <Sword className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium font-medieval">Sin caballeros en la orden</p>
               <p className="text-sm font-body">Completa misiones para ser nombrado caballero</p>
             </div>
           ) : (
@@ -542,19 +529,19 @@ function RankingContent({
                           <Badge variant="outline" className="text-xs font-medieval">Tú</Badge>
                         )}
                       </div>
-                      <div className={cn("flex items-center gap-1 text-sm font-body", LEVEL_COLORS[entry.current_level as keyof typeof LEVEL_COLORS])}>
-                        <span>{LEVEL_ICONS[entry.current_level as keyof typeof LEVEL_ICONS]}</span>
-                        <span>{LEVEL_LABELS[entry.current_level as keyof typeof LEVEL_LABELS]}</span>
+                      <div className={cn("flex items-center gap-1 text-sm font-body", LEVEL_COLORS[entry.current_level])}>
+                        <span>{LEVEL_ICONS[entry.current_level]}</span>
+                        <span>{LEVEL_LABELS[entry.current_level]}</span>
                       </div>
                     </div>
                     
                     {/* Points */}
                     <div className={cn(
                       "flex items-center gap-2 px-3 py-1.5 rounded-lg border font-medieval",
-                      LEVEL_BG_COLORS[entry.current_level as keyof typeof LEVEL_BG_COLORS]
+                      LEVEL_BG_COLORS[entry.current_level]
                     )}>
-                      <Flame className={cn("w-4 h-4", LEVEL_COLORS[entry.current_level as keyof typeof LEVEL_COLORS])} />
-                      <span className={cn("font-bold", LEVEL_COLORS[entry.current_level as keyof typeof LEVEL_COLORS])}>
+                      <Flame className={cn("w-4 h-4", LEVEL_COLORS[entry.current_level])} />
+                      <span className={cn("font-bold", LEVEL_COLORS[entry.current_level])}>
                         {entry.total_points}
                       </span>
                     </div>
@@ -569,7 +556,7 @@ function RankingContent({
   );
 }
 
-// Componente para historial global - Medieval Chronicle
+// Componente para historial global - Medieval Chronicle (V2 only)
 function GlobalPointsHistory() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -587,8 +574,8 @@ function GlobalPointsHistory() {
         return;
       }
 
-      // Fetch from all three sources: up_creadores, up_editores, and point_transactions
-      const [creatorsRes, editorsRes, legacyRes] = await Promise.all([
+      // Fetch from V2 sources only: up_creadores and up_editores
+      const [creatorsRes, editorsRes] = await Promise.all([
         supabase
           .from('up_creadores')
           .select('id, user_id, event_type, points, description, created_at')
@@ -599,11 +586,6 @@ function GlobalPointsHistory() {
           .from('up_editores')
           .select('id, user_id, event_type, points, description, created_at')
           .eq('organization_id', currentOrgId)
-          .order('created_at', { ascending: false })
-          .limit(50),
-        supabase
-          .from('point_transactions')
-          .select('id, user_id, transaction_type, points, description, created_at')
           .order('created_at', { ascending: false })
           .limit(50)
       ]);
@@ -621,13 +603,8 @@ function GlobalPointsHistory() {
         source: 'editor' as const
       }));
 
-      const legacyTx = (legacyRes.data || []).map(tx => ({
-        ...tx,
-        source: 'legacy' as const
-      }));
-
       // Merge all transactions
-      const allTransactions = [...creatorTx, ...editorTx, ...legacyTx];
+      const allTransactions = [...creatorTx, ...editorTx];
 
       // Sort by date descending
       allTransactions.sort((a, b) => 
@@ -660,21 +637,19 @@ function GlobalPointsHistory() {
   };
 
   const TRANSACTION_LABELS: Record<string, string> = {
-    // Legacy labels
-    base_completion: 'Entrega Completada',
-    early_delivery: 'Entrega Anticipada',
-    late_delivery: 'Entrega Tardía',
-    correction_needed: 'Ajuste Requerido',
-    perfect_streak: 'Racha de Excelencia',
-    five_star_rating: 'Calidad Premium',
-    viral_hook: 'Alto Impacto',
-    manual_adjustment: 'Ajuste Administrativo',
-    // V2 Creator events
+    // V2 events
+    delivery_on_time: 'Entrega a Tiempo',
+    delivery_day2: 'Entrega Día 2',
+    delivery_day3: 'Entrega Día 3',
+    late_day3: 'Retraso Día 3',
+    late_day4: 'Retraso Día 4',
+    late_day5: 'Retraso Día 5',
     on_time_delivery: 'Entrega a Tiempo',
     issue_penalty: 'Novedad Reportada',
     issue_recovery: 'Novedad Resuelta',
     clean_approval_bonus: 'Aprobación Limpia',
-    reassignment_penalty: 'Reasignación'
+    reassignment_penalty: 'Reasignación',
+    manual_adjustment: 'Ajuste Manual'
   };
 
   const getSourceBadge = (source: string) => {
