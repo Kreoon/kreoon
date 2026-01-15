@@ -18,9 +18,9 @@ interface UPLevelsManagerProps {
 
 const DEFAULT_THRESHOLDS = {
   bronze: 0,
-  silver: 100,
-  gold: 250,
-  diamond: 500
+  silver: 500,
+  gold: 800,
+  diamond: 1200
 };
 
 const LEVEL_CONFIG = [
@@ -81,11 +81,15 @@ export function UPLevelsManager({ organizationId }: UPLevelsManagerProps) {
         return;
       }
 
-      if (data?.value && typeof data.value === 'string') {
-        try {
-          setThresholds(JSON.parse(data.value));
-        } catch (e) {
-          console.error('Error parsing thresholds:', e);
+      if (data?.value) {
+        if (typeof data.value === 'string') {
+          try {
+            setThresholds(JSON.parse(data.value));
+          } catch (e) {
+            console.error('Error parsing thresholds:', e);
+          }
+        } else if (typeof data.value === 'object') {
+          setThresholds(data.value as any);
         }
       }
     } catch (err) {
@@ -105,7 +109,7 @@ export function UPLevelsManager({ organizationId }: UPLevelsManagerProps) {
         .from('up_settings')
         .upsert({
           key: 'level_thresholds',
-          value: JSON.stringify(thresholds),
+          value: thresholds,
           label: 'Umbrales de niveles',
           description: 'Umbrales de puntos para cada nivel'
         } as any, { onConflict: 'key' });

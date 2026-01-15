@@ -140,11 +140,22 @@ export function useUPSettings() {
 
   const getLevelThresholds = (): LevelThresholds => {
     const setting = getSetting('level_thresholds');
+
+    const toNumber = (v: unknown, fallback: number) => {
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      if (typeof v === 'string') {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : fallback;
+      }
+      return fallback;
+    };
+
+    // Defaults aligned with backend / database function
     return {
-      bronze: setting?.bronze ?? 0,
-      silver: setting?.silver ?? 100,
-      gold: setting?.gold ?? 250,
-      diamond: setting?.diamond ?? 500
+      bronze: toNumber(setting?.bronze, 0),
+      silver: toNumber(setting?.silver, 500),
+      gold: toNumber(setting?.gold, 800),
+      diamond: toNumber(setting?.diamond, 1200)
     };
   };
 

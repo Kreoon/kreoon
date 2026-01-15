@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, Zap, TrendingUp, Flame, Video, Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { useUPSettings } from '@/hooks/useUPSettings';
 
 interface UPWidgetProps {
   userId: string;
@@ -53,21 +54,17 @@ const LEVEL_BG_COLORS: Record<UPLevel, string> = {
   diamond: 'bg-cyan-400/20 border-cyan-400/30'
 };
 
-const LEVEL_THRESHOLDS: Record<UPLevel, number> = {
-  bronze: 0,
-  silver: 100,
-  gold: 300,
-  diamond: 600
-};
-
-function calculateLevel(points: number): UPLevel {
-  if (points >= LEVEL_THRESHOLDS.diamond) return 'diamond';
-  if (points >= LEVEL_THRESHOLDS.gold) return 'gold';
-  if (points >= LEVEL_THRESHOLDS.silver) return 'silver';
+function calculateLevel(points: number, thresholds: Record<UPLevel, number>): UPLevel {
+  if (points >= thresholds.diamond) return 'diamond';
+  if (points >= thresholds.gold) return 'gold';
+  if (points >= thresholds.silver) return 'silver';
   return 'bronze';
 }
 
 export function UPWidget({ userId, compact = false }: UPWidgetProps) {
+  const { getLevelThresholds, loading: loadingSettings } = useUPSettings();
+  const thresholds = useMemo(() => getLevelThresholds(), [getLevelThresholds]);
+
   const [points, setPoints] = useState<CombinedPoints | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -101,7 +98,7 @@ export function UPWidget({ userId, compact = false }: UPWidgetProps) {
 
       const combinedPoints: CombinedPoints = {
         total_points: totalPoints,
-        current_level: calculateLevel(totalPoints),
+        current_level: calculateLevel(totalPoints, thresholds),
         total_deliveries: (creatorData?.total_deliveries || 0) + (editorData?.total_deliveries || 0),
         on_time_deliveries: (creatorData?.on_time_deliveries || 0) + (editorData?.on_time_deliveries || 0),
         late_deliveries: (creatorData?.late_deliveries || 0) + (editorData?.late_deliveries || 0),
@@ -163,23 +160,23 @@ export function UPWidget({ userId, compact = false }: UPWidgetProps) {
 
     const levels: UPLevel[] = ['bronze', 'silver', 'gold', 'diamond'];
     const currentIndex = levels.indexOf(currentLevel);
-    
+
     if (currentLevel === 'diamond') {
       return { progress: 100, nextLevel: 'diamond' as UPLevel, pointsNeeded: 0 };
     }
 
     const nextLevel = levels[currentIndex + 1] as UPLevel;
-    const currentThreshold = LEVEL_THRESHOLDS[currentLevel];
-    const nextThreshold = LEVEL_THRESHOLDS[nextLevel];
+    const currentThreshold = thresholds[currentLevel];
+    const nextThreshold = thresholds[nextLevel];
     const pointsInLevel = currentPoints - currentThreshold;
     const pointsForLevel = nextThreshold - currentThreshold;
     const progress = Math.min(100, (pointsInLevel / pointsForLevel) * 100);
     const pointsNeeded = nextThreshold - currentPoints;
 
     return { progress, nextLevel, pointsNeeded };
-  }, [points]);
+  }, [points, thresholds]);
 
-  if (loading) {
+  if (loading || loadingSettings) {
     return (
       <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5">
         <CardContent className={cn("flex items-center gap-4", compact ? "p-3" : "p-4")}>

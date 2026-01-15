@@ -72,11 +72,11 @@ export default function RankingPage() {
   const { user, isAdmin } = useAuth();
   const { leaderboard: creatorLeaderboard, loading: loadingCreators } = useCreatorLeaderboard();
   const { leaderboard: editorLeaderboard, loading: loadingEditors } = useEditorLeaderboard();
-  const { getLevelThresholds, isSystemEnabled } = useUPSettings();
+  const { getLevelThresholds, isSystemEnabled, loading: loadingSettings } = useUPSettings();
   const { currentOrgId } = useOrgOwner();
 
   const thresholds = getLevelThresholds();
-  const loading = loadingCreators || loadingEditors;
+  const loading = loadingCreators || loadingEditors || loadingSettings;
 
   // Combine creator and editor leaderboards into a unified ranking
   const leaderboard = useMemo<CombinedLeaderboardEntry[]>(() => {
