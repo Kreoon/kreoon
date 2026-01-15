@@ -5,21 +5,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, Zap, TrendingUp, Flame, Video, Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  calculateLevel, 
-  DEFAULT_LEVEL_THRESHOLDS, 
-  LEVEL_EMOJIS, 
-  LEVEL_LABELS_GENERIC, 
-  LEVEL_COLORS,
-  parseThresholdsFromDB,
-  type UPLevel,
-  type LevelThresholds
-} from '@/lib/upLevels';
 
 interface UPWidgetProps {
   userId: string;
   compact?: boolean;
 }
+
+type UPLevel = 'bronze' | 'silver' | 'gold' | 'diamond';
 
 interface CombinedPoints {
   total_points: number;
@@ -33,6 +25,27 @@ interface CombinedPoints {
   editor_points: number;
 }
 
+const LEVEL_ICONS: Record<UPLevel, string> = {
+  bronze: '🥉',
+  silver: '🥈',
+  gold: '🥇',
+  diamond: '💎'
+};
+
+const LEVEL_LABELS: Record<UPLevel, string> = {
+  bronze: 'Bronce',
+  silver: 'Plata',
+  gold: 'Oro',
+  diamond: 'Diamante'
+};
+
+const LEVEL_COLORS: Record<UPLevel, string> = {
+  bronze: 'text-amber-600',
+  silver: 'text-slate-400',
+  gold: 'text-yellow-500',
+  diamond: 'text-cyan-400'
+};
+
 const LEVEL_BG_COLORS: Record<UPLevel, string> = {
   bronze: 'bg-amber-600/20 border-amber-600/30',
   silver: 'bg-slate-400/20 border-slate-400/30',
@@ -40,26 +53,23 @@ const LEVEL_BG_COLORS: Record<UPLevel, string> = {
   diamond: 'bg-cyan-400/20 border-cyan-400/30'
 };
 
+const LEVEL_THRESHOLDS: Record<UPLevel, number> = {
+  bronze: 0,
+  silver: 100,
+  gold: 300,
+  diamond: 600
+};
+
+function calculateLevel(points: number): UPLevel {
+  if (points >= LEVEL_THRESHOLDS.diamond) return 'diamond';
+  if (points >= LEVEL_THRESHOLDS.gold) return 'gold';
+  if (points >= LEVEL_THRESHOLDS.silver) return 'silver';
+  return 'bronze';
+}
+
 export function UPWidget({ userId, compact = false }: UPWidgetProps) {
   const [points, setPoints] = useState<CombinedPoints | null>(null);
   const [loading, setLoading] = useState(true);
-  const [thresholds, setThresholds] = useState<LevelThresholds>(DEFAULT_LEVEL_THRESHOLDS);
-
-  // Fetch thresholds from settings
-  useEffect(() => {
-    const fetchThresholds = async () => {
-      const { data } = await supabase
-        .from('up_settings')
-        .select('value')
-        .eq('key', 'level_thresholds')
-        .maybeSingle();
-      
-      if (data?.value) {
-        setThresholds(parseThresholdsFromDB(data.value));
-      }
-    };
-    fetchThresholds();
-  }, []);
 
   const fetchPoints = useCallback(async () => {
     if (!userId) {
@@ -159,15 +169,15 @@ export function UPWidget({ userId, compact = false }: UPWidgetProps) {
     }
 
     const nextLevel = levels[currentIndex + 1] as UPLevel;
-    const currentThreshold = thresholds[currentLevel];
-    const nextThreshold = thresholds[nextLevel];
+    const currentThreshold = LEVEL_THRESHOLDS[currentLevel];
+    const nextThreshold = LEVEL_THRESHOLDS[nextLevel];
     const pointsInLevel = currentPoints - currentThreshold;
     const pointsForLevel = nextThreshold - currentThreshold;
     const progress = Math.min(100, (pointsInLevel / pointsForLevel) * 100);
     const pointsNeeded = nextThreshold - currentPoints;
 
     return { progress, nextLevel, pointsNeeded };
-  }, [points, thresholds]);
+  }, [points]);
 
   if (loading) {
     return (
@@ -193,10 +203,10 @@ export function UPWidget({ userId, compact = false }: UPWidgetProps) {
         "flex items-center gap-2 px-3 py-1.5 rounded-lg border",
         LEVEL_BG_COLORS[level]
       )}>
-        <span className="text-lg">{LEVEL_EMOJIS[level]}</span>
+        <span className="text-lg">{LEVEL_ICONS[level]}</span>
         <div className="flex items-center gap-1">
-          <Zap className={cn("w-4 h-4", LEVEL_COLORS[level].text)} />
-          <span className={cn("font-bold text-sm", LEVEL_COLORS[level].text)}>
+          <Zap className={cn("w-4 h-4", LEVEL_COLORS[level])} />
+          <span className={cn("font-bold text-sm", LEVEL_COLORS[level])}>
             {totalPoints} UP
           </span>
         </div>
@@ -217,18 +227,18 @@ export function UPWidget({ userId, compact = false }: UPWidgetProps) {
               "bg-background/50 border",
               LEVEL_BG_COLORS[level]
             )}>
-              {LEVEL_EMOJIS[level]}
+              {LEVEL_ICONS[level]}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <Zap className={cn("w-5 h-5", LEVEL_COLORS[level].text)} />
-                <span className={cn("text-2xl font-bold", LEVEL_COLORS[level].text)}>
+                <Zap className={cn("w-5 h-5", LEVEL_COLORS[level])} />
+                <span className={cn("text-2xl font-bold", LEVEL_COLORS[level])}>
                   {totalPoints}
                 </span>
                 <span className="text-sm text-muted-foreground">UP</span>
               </div>
-              <p className={cn("text-sm font-medium", LEVEL_COLORS[level].text)}>
-                Nivel {LEVEL_LABELS_GENERIC[level]}
+              <p className={cn("text-sm font-medium", LEVEL_COLORS[level])}>
+                Nivel {LEVEL_LABELS[level]}
               </p>
             </div>
           </div>
@@ -239,7 +249,7 @@ export function UPWidget({ userId, compact = false }: UPWidgetProps) {
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
-                Próximo: {LEVEL_LABELS_GENERIC[nextLevel]}
+                Próximo: {LEVEL_LABELS[nextLevel]}
               </span>
               <span className="text-muted-foreground">
                 {pointsNeeded} UP restantes

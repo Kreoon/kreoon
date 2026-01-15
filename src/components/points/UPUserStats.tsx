@@ -11,14 +11,41 @@ import { useUPCreadores, UPCreadorTotals } from '@/hooks/useUPCreadores';
 import { useUPEditores, UPEditorTotals } from '@/hooks/useUPEditores';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  DEFAULT_LEVEL_THRESHOLDS, 
-  LEVEL_LABELS, 
-  LEVEL_COLORS, 
-  LEVEL_ICONS_ALT,
-  parseThresholdsFromDB,
-  type LevelThresholds 
-} from '@/lib/upLevels';
+
+interface LevelThresholds {
+  bronze: number;
+  silver: number;
+  gold: number;
+  diamond: number;
+}
+
+const DEFAULT_THRESHOLDS: LevelThresholds = {
+  bronze: 0,
+  silver: 500,
+  gold: 800,
+  diamond: 1200
+};
+
+const LEVEL_LABELS = {
+  bronze: 'Escudero',
+  silver: 'Caballero',
+  gold: 'Comandante',
+  diamond: 'Gran Maestre'
+};
+
+const LEVEL_COLORS = {
+  bronze: { color: 'text-amber-600', bg: 'bg-amber-600/20' },
+  silver: { color: 'text-slate-400', bg: 'bg-slate-400/20' },
+  gold: { color: 'text-yellow-500', bg: 'bg-yellow-500/20' },
+  diamond: { color: 'text-cyan-400', bg: 'bg-cyan-400/20' }
+};
+
+const LEVEL_ICONS = {
+  bronze: Medal,
+  silver: Award,
+  gold: Crown,
+  diamond: Star
+};
 
 interface StatsCardProps {
   title: string;

@@ -5,22 +5,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, Zap, TrendingUp, Clock, CheckCircle2, AlertTriangle, Video, Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  calculateLevel,
-  DEFAULT_LEVEL_THRESHOLDS,
-  LEVEL_EMOJIS,
-  LEVEL_LABELS,
-  LEVEL_COLORS,
-  parseThresholdsFromDB,
-  type UPLevel,
-  type LevelThresholds
-} from '@/lib/upLevels';
 
 interface RoleUPWidgetProps {
   userId: string;
   role: 'creator' | 'editor';
   compact?: boolean;
 }
+
+type UPLevel = 'bronze' | 'silver' | 'gold' | 'diamond';
 
 interface RolePoints {
   total_points: number;
@@ -32,6 +24,34 @@ interface RolePoints {
   total_issues: number;
 }
 
+interface LevelThresholds {
+  bronze: number;
+  silver: number;
+  gold: number;
+  diamond: number;
+}
+
+const LEVEL_ICONS: Record<UPLevel, string> = {
+  bronze: '🥉',
+  silver: '🥈',
+  gold: '🥇',
+  diamond: '💎'
+};
+
+const LEVEL_LABELS: Record<UPLevel, string> = {
+  bronze: 'Escudero',
+  silver: 'Caballero',
+  gold: 'Comandante',
+  diamond: 'Gran Maestre'
+};
+
+const LEVEL_COLORS: Record<UPLevel, string> = {
+  bronze: 'text-amber-600',
+  silver: 'text-slate-400',
+  gold: 'text-yellow-500',
+  diamond: 'text-cyan-400'
+};
+
 const LEVEL_BG_COLORS: Record<UPLevel, string> = {
   bronze: 'bg-amber-600/20 border-amber-600/30',
   silver: 'bg-slate-400/20 border-slate-400/30',
@@ -39,10 +59,25 @@ const LEVEL_BG_COLORS: Record<UPLevel, string> = {
   diamond: 'bg-cyan-400/20 border-cyan-400/30'
 };
 
+// Default thresholds (fallback if DB not available)
+const DEFAULT_THRESHOLDS: LevelThresholds = {
+  bronze: 0,
+  silver: 500,
+  gold: 800,
+  diamond: 1200
+};
+
+function calculateLevel(points: number, thresholds: LevelThresholds): UPLevel {
+  if (points >= thresholds.diamond) return 'diamond';
+  if (points >= thresholds.gold) return 'gold';
+  if (points >= thresholds.silver) return 'silver';
+  return 'bronze';
+}
+
 export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProps) {
   const [points, setPoints] = useState<RolePoints | null>(null);
   const [loading, setLoading] = useState(true);
-  const [thresholds, setThresholds] = useState<LevelThresholds>(DEFAULT_LEVEL_THRESHOLDS);
+  const [thresholds, setThresholds] = useState<LevelThresholds>(DEFAULT_THRESHOLDS);
 
   const tableName = role === 'creator' ? 'up_creadores_totals' : 'up_editores_totals';
   const RoleIcon = role === 'creator' ? Video : Scissors;
@@ -58,8 +93,14 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
           .eq('key', 'level_thresholds')
           .maybeSingle();
         
-        if (data?.value) {
-          setThresholds(parseThresholdsFromDB(data.value));
+        if (data?.value && typeof data.value === 'object' && !Array.isArray(data.value)) {
+          const val = data.value as Record<string, number>;
+          setThresholds({
+            bronze: val.bronze ?? 0,
+            silver: val.silver ?? 500,
+            gold: val.gold ?? 800,
+            diamond: val.diamond ?? 1200
+          });
         }
       } catch (err) {
         console.error('Error fetching level thresholds:', err);
@@ -173,10 +214,10 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
         "flex items-center gap-2 px-3 py-1.5 rounded-lg border",
         LEVEL_BG_COLORS[level]
       )}>
-        <span className="text-lg">{LEVEL_EMOJIS[level]}</span>
+        <span className="text-lg">{LEVEL_ICONS[level]}</span>
         <div className="flex items-center gap-1">
-          <Zap className={cn("w-4 h-4", LEVEL_COLORS[level].text)} />
-          <span className={cn("font-bold text-sm", LEVEL_COLORS[level].text)}>
+          <Zap className={cn("w-4 h-4", LEVEL_COLORS[level])} />
+          <span className={cn("font-bold text-sm", LEVEL_COLORS[level])}>
             {totalPoints} UP
           </span>
         </div>
@@ -198,17 +239,17 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
               "bg-background/50 border",
               LEVEL_BG_COLORS[level]
             )}>
-              {LEVEL_EMOJIS[level]}
+              {LEVEL_ICONS[level]}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <Zap className={cn("w-5 h-5", LEVEL_COLORS[level].text)} />
-                <span className={cn("text-2xl font-bold", LEVEL_COLORS[level].text)}>
+                <Zap className={cn("w-5 h-5", LEVEL_COLORS[level])} />
+                <span className={cn("text-2xl font-bold", LEVEL_COLORS[level])}>
                   {totalPoints}
                 </span>
                 <span className="text-sm text-muted-foreground">UP</span>
               </div>
-              <p className={cn("text-sm font-medium", LEVEL_COLORS[level].text)}>
+              <p className={cn("text-sm font-medium", LEVEL_COLORS[level])}>
                 Nivel {LEVEL_LABELS[level]}
               </p>
             </div>
