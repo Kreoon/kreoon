@@ -39,7 +39,7 @@ export function UPManualAdjustment() {
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentOrgId]);
+  }, [currentOrgId, roleType]);
 
   const fetchUsers = async () => {
     try {
@@ -68,11 +68,36 @@ export function UPManualAdjustment() {
 
       if (profilesError) throw profilesError;
 
-      const usersWithPoints: UserWithPoints[] = (profiles || []).map(profile => ({
-        ...profile,
-        total_points: 0,
-        current_level: 'bronze'
-      }));
+      // Fetch UP points from the appropriate V2 table based on role
+      const upTable = roleType === 'creator' ? 'up_creadores' : 'up_editores';
+      const { data: upData } = await supabase
+        .from(upTable)
+        .select('user_id, points')
+        .eq('organization_id', currentOrgId)
+        .in('user_id', memberIds);
+
+      // Calculate total points per user
+      const pointsByUser: Record<string, number> = {};
+      (upData || []).forEach((record: any) => {
+        pointsByUser[record.user_id] = (pointsByUser[record.user_id] || 0) + (record.points || 0);
+      });
+
+      // Determine level based on points
+      const getLevel = (points: number): string => {
+        if (points >= 5000) return 'diamond';
+        if (points >= 2000) return 'gold';
+        if (points >= 500) return 'silver';
+        return 'bronze';
+      };
+
+      const usersWithPoints: UserWithPoints[] = (profiles || []).map(profile => {
+        const totalPoints = pointsByUser[profile.id] || 0;
+        return {
+          ...profile,
+          total_points: totalPoints,
+          current_level: getLevel(totalPoints)
+        };
+      });
 
       setUsers(usersWithPoints.sort((a, b) => b.total_points - a.total_points));
     } catch (error) {
