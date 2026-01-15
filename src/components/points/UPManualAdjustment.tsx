@@ -11,6 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { Zap, Minus, Plus, Search, Video, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { 
+  calculateLevel, 
+  DEFAULT_LEVEL_THRESHOLDS, 
+  parseThresholdsFromDB,
+  type LevelThresholds 
+} from '@/lib/upLevels';
 
 interface UserWithPoints {
   id: string;
@@ -35,6 +41,22 @@ export function UPManualAdjustment() {
   const [adjustmentType, setAdjustmentType] = useState<'add' | 'subtract'>('add');
   const [roleType, setRoleType] = useState<RoleType>('creator');
   const [submitting, setSubmitting] = useState(false);
+  const [thresholds, setThresholds] = useState<LevelThresholds>(DEFAULT_LEVEL_THRESHOLDS);
+
+  // Fetch thresholds once
+  useEffect(() => {
+    const fetchThresholds = async () => {
+      const { data } = await supabase
+        .from('up_settings')
+        .select('value')
+        .eq('key', 'level_thresholds')
+        .maybeSingle();
+      if (data?.value) {
+        setThresholds(parseThresholdsFromDB(data.value));
+      }
+    };
+    fetchThresholds();
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -82,20 +104,12 @@ export function UPManualAdjustment() {
         pointsByUser[record.user_id] = (pointsByUser[record.user_id] || 0) + (record.points || 0);
       });
 
-      // Determine level based on points
-      const getLevel = (points: number): string => {
-        if (points >= 5000) return 'diamond';
-        if (points >= 2000) return 'gold';
-        if (points >= 500) return 'silver';
-        return 'bronze';
-      };
-
       const usersWithPoints: UserWithPoints[] = (profiles || []).map(profile => {
         const totalPoints = pointsByUser[profile.id] || 0;
         return {
           ...profile,
           total_points: totalPoints,
-          current_level: getLevel(totalPoints)
+          current_level: calculateLevel(totalPoints, thresholds)
         };
       });
 
