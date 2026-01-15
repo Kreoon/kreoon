@@ -233,7 +233,7 @@ export function EnhancedSmartSearch({
         // Fetch all enrichment data in parallel
         const [pointsResult, achievementsResult, followersResult, contentCountResult] = await Promise.all([
           supabase
-            .from('user_points')
+            .from('up_creadores_totals')
             .select('user_id, total_points, current_level')
             .in('user_id', userIds),
           
