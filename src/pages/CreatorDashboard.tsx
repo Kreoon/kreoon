@@ -14,7 +14,7 @@ import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { RoleUPWidget } from '@/components/points/RoleUPWidget';
 import { RoleLeaderboard } from '@/components/points/RoleLeaderboard';
-import { PointsHistory } from '@/components/points/PointsHistory';
+import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { 
   Video, 
@@ -321,7 +321,7 @@ export default function CreatorDashboard() {
         {targetUserId && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <RoleLeaderboard role="creator" currentUserId={targetUserId} maxItems={5} />
-            <PointsHistory userId={targetUserId} maxItems={10} />
+            <UPHistoryTable userId={targetUserId} />
           </div>
         )}
       </div>
