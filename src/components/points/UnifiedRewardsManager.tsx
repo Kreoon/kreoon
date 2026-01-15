@@ -144,9 +144,9 @@ export function UnifiedRewardsManager({ organizationId }: UnifiedRewardsManagerP
     enabled: !!organizationId
   });
 
-  // Fetch recent unlocks
-  const { data: recentUnlocks = [] } = useQuery({
-    queryKey: ['recent-unlocks'],
+  // Fetch ALL unlocks (full history)
+  const { data: allUnlocks = [], isLoading: loadingUnlocks } = useQuery({
+    queryKey: ['all-unlocks-history'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_achievements')
@@ -156,13 +156,38 @@ export function UnifiedRewardsManager({ organizationId }: UnifiedRewardsManagerP
           achievement_id,
           unlocked_at,
           profiles:user_id (full_name, avatar_url),
-          achievements:achievement_id (name, icon, rarity)
+          achievements:achievement_id (name, icon, rarity, category)
         `)
-        .order('unlocked_at', { ascending: false })
-        .limit(20);
+        .order('unlocked_at', { ascending: false });
       if (error) throw error;
       return data || [];
     }
+  });
+
+  // Fetch ALL badge grants history
+  const { data: allBadgeGrants = [], isLoading: loadingBadgeGrants } = useQuery({
+    queryKey: ['all-badge-grants-history', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const { data, error } = await supabase
+        .from('organization_member_badges')
+        .select(`
+          id,
+          user_id,
+          badge,
+          level,
+          granted_at,
+          granted_by,
+          is_active,
+          profiles:user_id (full_name, avatar_url),
+          granted_by_profile:granted_by (full_name)
+        `)
+        .eq('organization_id', organizationId)
+        .order('granted_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!organizationId
   });
 
   // Fetch achievement holders count
@@ -1004,57 +1029,133 @@ export function UnifiedRewardsManager({ organizationId }: UnifiedRewardsManagerP
           </Card>
         </TabsContent>
 
-        {/* Activity Tab */}
+        {/* Activity Tab - Full History */}
         <TabsContent value="activity" className="space-y-4">
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="w-5 h-5 text-primary" />
-                Desbloqueos Recientes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-2">
-                  {recentUnlocks.length > 0 ? (
-                    recentUnlocks.map((unlock: any) => {
-                      const rarityInfo = RARITY_OPTIONS.find(r => r.value === unlock.achievements?.rarity);
-                      return (
-                        <div key={unlock.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={unlock.profiles?.avatar_url} />
-                            <AvatarFallback className="text-sm">
-                              {unlock.profiles?.full_name?.slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium">{unlock.profiles?.full_name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {format(new Date(unlock.unlocked_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
-                            </p>
-                          </div>
-                          <div className={cn(
-                            "flex items-center gap-2 px-3 py-1.5 rounded-full border",
-                            rarityInfo?.bg
-                          )}>
-                            <div className="w-6 h-6 flex items-center justify-center">
-                              {renderIcon(unlock.achievements?.icon || '🏆')}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Achievements History */}
+            <Card className="border-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Trophy className="w-5 h-5 text-primary" />
+                  Historial de Logros
+                  <Badge variant="secondary" className="ml-auto">{allUnlocks.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-2">
+                    {loadingUnlocks ? (
+                      [...Array(5)].map((_, i) => (
+                        <Skeleton key={i} className="h-16 w-full" />
+                      ))
+                    ) : allUnlocks.length > 0 ? (
+                      allUnlocks.map((unlock: any) => {
+                        const rarityInfo = RARITY_OPTIONS.find(r => r.value === unlock.achievements?.rarity);
+                        return (
+                          <div key={unlock.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={unlock.profiles?.avatar_url} />
+                              <AvatarFallback className="text-sm">
+                                {unlock.profiles?.full_name?.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{unlock.profiles?.full_name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(unlock.unlocked_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
+                              </p>
                             </div>
-                            <span className="text-sm font-medium">{unlock.achievements?.name}</span>
+                            <div className={cn(
+                              "flex items-center gap-2 px-2 py-1 rounded-full border text-xs",
+                              rarityInfo?.bg
+                            )}>
+                              <div className="w-5 h-5 flex items-center justify-center overflow-hidden rounded-full">
+                                {renderIcon(unlock.achievements?.icon || '🏆')}
+                              </div>
+                              <span className="font-medium truncate max-w-[100px]">{unlock.achievements?.name}</span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Award className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No hay desbloqueos recientes</p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Award className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>No hay logros desbloqueados aún</p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Badges History */}
+            <Card className="border-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Crown className="w-5 h-5 text-amber-500" />
+                  Historial de Insignias
+                  <Badge variant="secondary" className="ml-auto">{allBadgeGrants.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-2">
+                    {loadingBadgeGrants ? (
+                      [...Array(5)].map((_, i) => (
+                        <Skeleton key={i} className="h-16 w-full" />
+                      ))
+                    ) : allBadgeGrants.length > 0 ? (
+                      allBadgeGrants.map((grant: any) => {
+                        const badgeType = BADGE_TYPES.find(b => b.value === grant.badge);
+                        const levelInfo = LEVEL_OPTIONS.find(l => l.value === grant.level);
+                        const BadgeIcon = badgeType?.icon || Shield;
+                        
+                        return (
+                          <div key={grant.id} className={cn(
+                            "flex items-center gap-3 p-3 rounded-lg transition-colors",
+                            grant.is_active ? "bg-muted/30 hover:bg-muted/50" : "bg-destructive/10 opacity-60"
+                          )}>
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={grant.profiles?.avatar_url} />
+                              <AvatarFallback className="text-sm">
+                                {grant.profiles?.full_name?.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium truncate">{grant.profiles?.full_name}</p>
+                                {!grant.is_active && (
+                                  <Badge variant="destructive" className="text-xs">Revocado</Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(grant.granted_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
+                                {grant.granted_by_profile?.full_name && (
+                                  <span> · por {grant.granted_by_profile.full_name}</span>
+                                )}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 px-2 py-1 rounded-full border bg-background/50">
+                              <BadgeIcon className={cn("w-4 h-4", levelInfo?.color)} />
+                              <span className="text-xs font-medium">{badgeType?.label}</span>
+                              <Badge variant="outline" className={cn("text-xs", levelInfo?.color)}>
+                                {levelInfo?.label}
+                              </Badge>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Crown className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>No hay insignias otorgadas aún</p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
