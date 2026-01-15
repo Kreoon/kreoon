@@ -29,3 +29,6 @@ export { UPUserStats } from './UPUserStats';
 export { UPHistoryTable } from './UPHistoryTable';
 export { UPLeaderboardTabs } from './UPLeaderboardTabs';
 export { ReassignmentAlert } from './ReassignmentAlert';
+
+// Unified Badges System
+export { UnifiedBadgesShowcase } from './UnifiedBadgesShowcase';
