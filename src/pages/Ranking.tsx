@@ -13,7 +13,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
 import { UPManualAdjustment } from '@/components/points/UPManualAdjustment';
 import { UPControlCenter } from '@/components/points/UPControlCenter';
-import { AchievementsShowcase } from '@/components/points/AchievementsShowcase';
+import { UnifiedBadgesShowcase } from '@/components/points/UnifiedBadgesShowcase';
 import { UPLeaderboardTabs } from '@/components/points/UPLeaderboardTabs';
 import { UPUserStats } from '@/components/points/UPUserStats';
 import { UPHistoryTable } from '@/components/points/UPHistoryTable';
@@ -197,7 +197,7 @@ export default function RankingPage() {
             </TabsTrigger>
             <TabsTrigger value="achievements" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Award className="w-4 h-4" />
-              <span className="hidden sm:inline">Insignias</span>
+              <span className="hidden sm:inline">Logros</span>
             </TabsTrigger>
             <TabsTrigger value="seasons" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Calendar className="w-4 h-4" />
@@ -269,7 +269,7 @@ export default function RankingPage() {
           </TabsContent>
 
           <TabsContent value="achievements" className="space-y-6">
-            {user && <AchievementsShowcase userId={user.id} />}
+            {user && <UnifiedBadgesShowcase userId={user.id} variant="full" />}
           </TabsContent>
 
           <TabsContent value="seasons" className="space-y-6">
@@ -357,7 +357,7 @@ export default function RankingPage() {
             </TabsTrigger>
             <TabsTrigger value="achievements" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Award className="w-4 h-4" />
-              Insignias
+              Logros
             </TabsTrigger>
           </TabsList>
 
@@ -390,7 +390,7 @@ export default function RankingPage() {
           </TabsContent>
 
           <TabsContent value="achievements" className="space-y-6">
-            {user && <AchievementsShowcase userId={user.id} />}
+            {user && <UnifiedBadgesShowcase userId={user.id} variant="full" />}
           </TabsContent>
         </Tabs>
       )}

@@ -125,25 +125,12 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
 
       if (v2Error) throw v2Error;
 
-      // For creators, also fetch legacy points from user_points table
-      let legacyPoints = 0;
-      if (role === 'creator') {
-        const { data: legacyData } = await supabase
-          .from('user_points')
-          .select('total_points')
-          .eq('user_id', userId)
-          .maybeSingle();
-        
-        legacyPoints = legacyData?.total_points || 0;
-      }
-
-      // Use the maximum between V2 and legacy points
+      // Use only V2 points
       const v2Points = v2Data?.total_points || 0;
-      const totalPoints = Math.max(v2Points, legacyPoints);
 
       const rolePoints: RolePoints = {
-        total_points: totalPoints,
-        current_level: calculateLevel(totalPoints, thresholds),
+        total_points: v2Points,
+        current_level: calculateLevel(v2Points, thresholds),
         total_deliveries: v2Data?.total_deliveries || 0,
         on_time_deliveries: v2Data?.on_time_deliveries || 0,
         late_deliveries: v2Data?.late_deliveries || 0,

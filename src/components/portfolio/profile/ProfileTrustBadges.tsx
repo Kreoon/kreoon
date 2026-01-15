@@ -129,10 +129,11 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [pointsRes, achievementsRes, badgesRes] = await Promise.all([
+        // Fetch from V2 tables and user_achievements
+        const [creatorTotalsRes, achievementsRes, badgesRes] = await Promise.all([
           supabase
-            .from('user_points')
-            .select('total_points, current_level, total_completions, total_on_time, consecutive_on_time')
+            .from('up_creadores_totals')
+            .select('total_points, current_level, total_deliveries, on_time_deliveries')
             .eq('user_id', userId)
             .maybeSingle(),
           supabase
@@ -148,7 +149,16 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
             .eq('is_active', true),
         ]);
 
-        if (pointsRes.data) setUserPoints(pointsRes.data);
+        if (creatorTotalsRes.data) {
+          // Map V2 data to the UserPoints interface
+          setUserPoints({
+            total_points: creatorTotalsRes.data.total_points || 0,
+            current_level: creatorTotalsRes.data.current_level || 'bronze',
+            total_completions: creatorTotalsRes.data.total_deliveries || 0,
+            total_on_time: creatorTotalsRes.data.on_time_deliveries || 0,
+            consecutive_on_time: 0 // Not tracked in V2 totals
+          });
+        }
         if (achievementsRes.data) {
           setAchievements(achievementsRes.data as unknown as UserAchievement[]);
         }
