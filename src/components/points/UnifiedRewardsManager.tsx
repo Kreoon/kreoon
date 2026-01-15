@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Plus, Edit2, Trash2, Sparkles, Loader2, Users, Award, Calendar, 
-  Trophy, Star, Shield, Crown, Gem
+  Trophy, Star, Shield, Crown, Gem, Swords, Flame, Castle, ChevronDown
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -62,6 +62,17 @@ const LEVEL_OPTIONS = [
 
 const ICON_OPTIONS = ['🏆', '⭐', '🎯', '🔥', '💎', '👑', '⚔️', '🛡️', '🎖️', '🏅', '🌟', '💫', '🚀', '🎪', '🎭'];
 
+// Gaming category config for achievements
+const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ComponentType<any>; description: string }> = {
+  completion: { label: 'Conquistas', icon: Swords, description: 'Por completar contenido' },
+  punctuality: { label: 'Velocidad', icon: Flame, description: 'Por entregar a tiempo' },
+  streak: { label: 'Rachas', icon: Crown, description: 'Por mantener consistencia' },
+  points: { label: 'Tesoros', icon: Star, description: 'Por acumular puntos' },
+  special: { label: 'Especiales', icon: Castle, description: 'Logros únicos' },
+  level: { label: 'Ascensos', icon: Shield, description: 'Por subir de nivel' },
+  general: { label: 'General', icon: Trophy, description: 'Logros generales' },
+};
+
 export function UnifiedRewardsManager({ organizationId }: UnifiedRewardsManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -71,6 +82,7 @@ export function UnifiedRewardsManager({ organizationId }: UnifiedRewardsManagerP
   const [isGeneratingIcon, setIsGeneratingIcon] = useState(false);
   const [generatedIconUrl, setGeneratedIconUrl] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Form data for achievements
   const [achievementForm, setAchievementForm] = useState({
@@ -763,147 +775,256 @@ export function UnifiedRewardsManager({ organizationId }: UnifiedRewardsManagerP
           </Dialog>
         </div>
 
-        {/* Achievements Tab */}
+        {/* Achievements Tab - Gaming Style */}
         <TabsContent value="achievements" className="space-y-4">
-          <ScrollArea className="h-[500px]">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-4">
-              {achievements.map(achievement => {
-                const rarityInfo = RARITY_OPTIONS.find(r => r.value === achievement.rarity);
-                const conditionInfo = CONDITION_TYPES.find(c => c.value === achievement.condition_type);
-                const holdersCount = holdersCounts[achievement.id] || 0;
+          {/* Category Filter Pills */}
+          <div className="flex flex-wrap gap-2 pb-2 border-b border-border">
+            <Button
+              variant={selectedCategory === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedCategory('all')}
+              className="rounded-full"
+            >
+              <Trophy className="w-4 h-4 mr-1" />
+              Todos ({achievements.length})
+            </Button>
+            {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
+              const count = achievements.filter(a => a.category === key).length;
+              if (count === 0) return null;
+              const Icon = config.icon;
+              return (
+                <Button
+                  key={key}
+                  variant={selectedCategory === key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory(key)}
+                  className="rounded-full"
+                >
+                  <Icon className="w-4 h-4 mr-1" />
+                  {config.label} ({count})
+                </Button>
+              );
+            })}
+          </div>
 
-                return (
-                  <Card key={achievement.id} className="border-2">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className={cn(
-                          "h-12 w-12 rounded-full flex items-center justify-center overflow-hidden shrink-0",
-                          "bg-gradient-to-br from-primary/20 to-primary/5 border-2",
-                          achievement.rarity === 'legendary' && "border-amber-500",
-                          achievement.rarity === 'rare' && "border-cyan-500",
-                          achievement.rarity === 'uncommon' && "border-green-500"
-                        )}>
-                          {renderIcon(achievement.icon)}
+          <ScrollArea className="h-[450px]">
+            <div className="space-y-6 pr-4">
+              {(selectedCategory === 'all' ? Object.keys(CATEGORY_CONFIG) : [selectedCategory])
+                .filter(cat => achievements.some(a => a.category === cat))
+                .map(categoryKey => {
+                  const categoryConfig = CATEGORY_CONFIG[categoryKey];
+                  const CategoryIcon = categoryConfig?.icon || Trophy;
+                  const categoryAchievements = achievements.filter(a => a.category === categoryKey);
+                  
+                  if (categoryAchievements.length === 0) return null;
+
+                  return (
+                    <div key={categoryKey} className="space-y-3">
+                      {/* Category Header */}
+                      <div className="flex items-center gap-2 pb-2 border-b border-primary/20">
+                        <div className="p-1.5 rounded-lg bg-primary/10">
+                          <CategoryIcon className="w-4 h-4 text-primary" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-medium truncate">{achievement.name}</h4>
-                            <Badge variant="outline" className={rarityInfo?.color}>
-                              {rarityInfo?.label}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {achievement.description}
-                          </p>
-                          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
-                            <span>{conditionInfo?.label}: {achievement.condition_value}</span>
-                            {(achievement.points_required ?? 0) > 0 && (
-                              <span className="text-primary">+{achievement.points_required} UP</span>
-                            )}
-                            <Badge variant="secondary" className="text-xs">
-                              <Users className="w-3 h-3 mr-1" />
-                              {holdersCount}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon" onClick={() => openEditAchievement(achievement)}>
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle>Editar Logro</DialogTitle>
-                              </DialogHeader>
-                              {/* Achievement form content - same as create */}
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <Label>Key (único)</Label>
-                                    <Input 
-                                      value={achievementForm.key}
-                                      onChange={(e) => setAchievementForm(prev => ({ ...prev, key: e.target.value }))}
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label>Nombre</Label>
-                                    <Input 
-                                      value={achievementForm.name}
-                                      onChange={(e) => setAchievementForm(prev => ({ ...prev, name: e.target.value }))}
-                                    />
-                                  </div>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>Descripción</Label>
-                                  <Textarea 
-                                    value={achievementForm.description}
-                                    onChange={(e) => setAchievementForm(prev => ({ ...prev, description: e.target.value }))}
-                                    rows={2}
-                                  />
-                                </div>
-                                <div className="grid grid-cols-3 gap-4">
-                                  <div className="space-y-2">
-                                    <Label>Rareza</Label>
-                                    <Select value={achievementForm.rarity} onValueChange={(v) => setAchievementForm(prev => ({ ...prev, rarity: v }))}>
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {RARITY_OPTIONS.map(r => (
-                                          <SelectItem key={r.value} value={r.value}>
-                                            <span className={r.color}>{r.label}</span>
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label>Condición</Label>
-                                    <Select value={achievementForm.condition_type} onValueChange={(v) => setAchievementForm(prev => ({ ...prev, condition_type: v }))}>
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {CONDITION_TYPES.map(ct => (
-                                          <SelectItem key={ct.value} value={ct.value}>{ct.label}</SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label>Valor</Label>
-                                    <Input 
-                                      type="number"
-                                      value={achievementForm.condition_value}
-                                      onChange={(e) => setAchievementForm(prev => ({ ...prev, condition_value: parseInt(e.target.value) || 0 }))}
-                                    />
-                                  </div>
-                                </div>
-                                <DialogFooter>
-                                  <Button variant="outline" onClick={() => { setEditingItem(null); resetAchievementForm(); }}>
-                                    Cancelar
-                                  </Button>
-                                  <Button onClick={handleSubmitAchievement}>Guardar</Button>
-                                </DialogFooter>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => deleteAchievementMutation.mutate(achievement.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <h3 className="font-semibold text-sm">{categoryConfig?.label || 'General'}</h3>
+                        <span className="text-xs text-muted-foreground">({categoryAchievements.length})</span>
+                        <span className="text-xs text-muted-foreground ml-2">{categoryConfig?.description}</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+
+                      {/* Achievements Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {categoryAchievements.map(achievement => {
+                          const rarityInfo = RARITY_OPTIONS.find(r => r.value === achievement.rarity);
+                          const conditionInfo = CONDITION_TYPES.find(c => c.value === achievement.condition_type);
+                          const holdersCount = holdersCounts[achievement.id] || 0;
+
+                          return (
+                            <Card key={achievement.id} className={cn(
+                              "border-2 transition-all hover:shadow-lg",
+                              achievement.rarity === 'legendary' && "border-amber-500/50 bg-gradient-to-br from-amber-500/5 to-transparent",
+                              achievement.rarity === 'rare' && "border-cyan-500/50 bg-gradient-to-br from-cyan-500/5 to-transparent",
+                              achievement.rarity === 'uncommon' && "border-green-500/50 bg-gradient-to-br from-green-500/5 to-transparent"
+                            )}>
+                              <CardContent className="p-3">
+                                <div className="flex items-start gap-3">
+                                  <div className={cn(
+                                    "h-14 w-14 rounded-xl flex items-center justify-center overflow-hidden shrink-0",
+                                    "bg-gradient-to-br border-2 shadow-lg",
+                                    achievement.rarity === 'legendary' && "from-amber-500/30 to-yellow-600/20 border-amber-500",
+                                    achievement.rarity === 'rare' && "from-cyan-500/30 to-blue-600/20 border-cyan-500",
+                                    achievement.rarity === 'uncommon' && "from-green-500/30 to-emerald-600/20 border-green-500",
+                                    achievement.rarity === 'common' && "from-muted/50 to-muted/20 border-muted-foreground/30"
+                                  )}>
+                                    {renderIcon(achievement.icon)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="font-semibold text-sm truncate">{achievement.name}</h4>
+                                      <Badge 
+                                        variant="outline" 
+                                        className={cn("text-xs", rarityInfo?.color, rarityInfo?.bg)}
+                                      >
+                                        {rarityInfo?.label}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                                      {achievement.description}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-2 text-xs flex-wrap">
+                                      <Badge variant="secondary" className="text-xs">
+                                        {conditionInfo?.label}: {achievement.condition_value}
+                                      </Badge>
+                                      {(achievement.points_required ?? 0) > 0 && (
+                                        <Badge className="bg-primary/20 text-primary text-xs">
+                                          +{achievement.points_required} UP
+                                        </Badge>
+                                      )}
+                                      <Badge variant="outline" className="text-xs">
+                                        <Users className="w-3 h-3 mr-1" />
+                                        {holdersCount}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col gap-1 shrink-0">
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditAchievement(achievement)}>
+                                          <Edit2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-2xl">
+                                        <DialogHeader>
+                                          <DialogTitle>Editar Logro</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="space-y-4">
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                              <Label>Key (único)</Label>
+                                              <Input 
+                                                value={achievementForm.key}
+                                                onChange={(e) => setAchievementForm(prev => ({ ...prev, key: e.target.value }))}
+                                              />
+                                            </div>
+                                            <div className="space-y-2">
+                                              <Label>Nombre</Label>
+                                              <Input 
+                                                value={achievementForm.name}
+                                                onChange={(e) => setAchievementForm(prev => ({ ...prev, name: e.target.value }))}
+                                              />
+                                            </div>
+                                          </div>
+                                          <div className="space-y-2">
+                                            <Label>Descripción</Label>
+                                            <Textarea 
+                                              value={achievementForm.description}
+                                              onChange={(e) => setAchievementForm(prev => ({ ...prev, description: e.target.value }))}
+                                              rows={2}
+                                            />
+                                          </div>
+                                          <div className="grid grid-cols-3 gap-4">
+                                            <div className="space-y-2">
+                                              <Label>Rareza</Label>
+                                              <Select value={achievementForm.rarity} onValueChange={(v) => setAchievementForm(prev => ({ ...prev, rarity: v }))}>
+                                                <SelectTrigger>
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  {RARITY_OPTIONS.map(r => (
+                                                    <SelectItem key={r.value} value={r.value}>
+                                                      <span className={r.color}>{r.label}</span>
+                                                    </SelectItem>
+                                                  ))}
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                              <Label>Categoría</Label>
+                                              <Select value={achievementForm.category} onValueChange={(v) => setAchievementForm(prev => ({ ...prev, category: v }))}>
+                                                <SelectTrigger>
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
+                                                    <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                                                  ))}
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                              <Label>Valor</Label>
+                                              <Input 
+                                                type="number"
+                                                value={achievementForm.condition_value}
+                                                onChange={(e) => setAchievementForm(prev => ({ ...prev, condition_value: parseInt(e.target.value) || 0 }))}
+                                              />
+                                            </div>
+                                          </div>
+                                          <DialogFooter>
+                                            <Button variant="outline" onClick={() => { setEditingItem(null); resetAchievementForm(); }}>
+                                              Cancelar
+                                            </Button>
+                                            <Button onClick={handleSubmitAchievement}>Guardar</Button>
+                                          </DialogFooter>
+                                        </div>
+                                      </DialogContent>
+                                    </Dialog>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-7 w-7 text-destructive hover:text-destructive"
+                                      onClick={() => deleteAchievementMutation.mutate(achievement.id)}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+              {/* Show uncategorized achievements */}
+              {achievements.filter(a => !CATEGORY_CONFIG[a.category]).length > 0 && (selectedCategory === 'all') && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-muted">
+                    <div className="p-1.5 rounded-lg bg-muted">
+                      <Trophy className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-semibold text-sm">Sin Categoría</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {achievements.filter(a => !CATEGORY_CONFIG[a.category]).map(achievement => {
+                      const rarityInfo = RARITY_OPTIONS.find(r => r.value === achievement.rarity);
+                      const holdersCount = holdersCounts[achievement.id] || 0;
+
+                      return (
+                        <Card key={achievement.id} className="border-2">
+                          <CardContent className="p-3">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-muted">
+                                {renderIcon(achievement.icon)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-sm truncate">{achievement.name}</h4>
+                                <Badge variant="outline" className={cn("text-xs", rarityInfo?.color)}>
+                                  {rarityInfo?.label}
+                                </Badge>
+                              </div>
+                              <Badge variant="secondary" className="text-xs">
+                                <Users className="w-3 h-3 mr-1" />
+                                {holdersCount}
+                              </Badge>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </ScrollArea>
         </TabsContent>
