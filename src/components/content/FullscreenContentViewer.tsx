@@ -236,17 +236,17 @@ export function FullscreenContentViewer({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Close button - Made more prominent */}
+      {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 left-4 z-50 p-3 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all shadow-lg border border-white/20"
+        className="absolute top-[calc(env(safe-area-inset-top)+1rem)] right-4 z-50 p-3 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all shadow-lg border border-white/20 pointer-events-auto"
         aria-label="Cerrar"
       >
         <X className="h-7 w-7" />
       </button>
 
       {/* Counter */}
-      <div className="absolute top-4 right-4 z-50 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-sm font-medium">
+      <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-4 z-50 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-sm font-medium pointer-events-none">
         {currentIndex + 1} / {items.length}
       </div>
 
