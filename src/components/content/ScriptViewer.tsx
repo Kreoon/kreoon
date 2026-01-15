@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
 import { MonitorPlay } from "lucide-react";
@@ -281,7 +280,7 @@ export function ScriptViewer({
         )}
         
         {sections.length === 0 ? (
-          <ScrollArea className={cn(maxHeight, className)}>
+          <div className={cn("overflow-y-auto", maxHeight, className)}>
             <div 
               className={cn(
                 "p-5 rounded-xl border bg-card",
@@ -292,9 +291,9 @@ export function ScriptViewer({
               )}
               dangerouslySetInnerHTML={{ __html: sanitizeHTML(content) }}
             />
-          </ScrollArea>
+          </div>
         ) : (
-          <ScrollArea className={cn(maxHeight, className)}>
+          <div className={cn("overflow-y-auto", maxHeight, className)}>
             <div className={cn(
               "space-y-4 p-1",
               compact ? "space-y-3" : "space-y-5"
@@ -308,7 +307,7 @@ export function ScriptViewer({
                 />
               ))}
             </div>
-          </ScrollArea>
+          </div>
         )}
       </div>
 

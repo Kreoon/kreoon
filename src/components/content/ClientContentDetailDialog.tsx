@@ -369,7 +369,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
                   <CardContent>
                     <ScriptViewer 
                       content={content.script} 
-                      maxHeight="max-h-[500px]"
+                      maxHeight="h-[500px]"
                     />
                   </CardContent>
                 </Card>
