@@ -83,6 +83,8 @@ export function UnifiedRewardsManager({ organizationId }: UnifiedRewardsManagerP
   const [generatedIconUrl, setGeneratedIconUrl] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState({ current: 0, total: 0 });
 
   // Form data for achievements
   const [achievementForm, setAchievementForm] = useState({
@@ -397,6 +399,68 @@ export function UnifiedRewardsManager({ organizationId }: UnifiedRewardsManagerP
     }
   };
 
+  // Generate all icons with AI
+  const generateAllIcons = async () => {
+    const achievementsNeedingIcons = achievements.filter(
+      a => !a.icon?.startsWith('data:') && !a.icon?.startsWith('http')
+    );
+
+    if (achievementsNeedingIcons.length === 0) {
+      toast({ title: 'Todos los logros ya tienen iconos generados' });
+      return;
+    }
+
+    setIsGeneratingAll(true);
+    setGenerationProgress({ current: 0, total: achievementsNeedingIcons.length });
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < achievementsNeedingIcons.length; i++) {
+      const achievement = achievementsNeedingIcons[i];
+      setGenerationProgress({ current: i + 1, total: achievementsNeedingIcons.length });
+
+      try {
+        const response = await supabase.functions.invoke('generate-achievement-icon', {
+          body: {
+            name: achievement.name,
+            description: achievement.description,
+            rarity: achievement.rarity
+          }
+        });
+
+        if (response.error) throw new Error(response.error.message);
+        
+        if (response.data?.imageUrl) {
+          // Update achievement with new icon
+          await supabase
+            .from('achievements')
+            .update({ icon: response.data.imageUrl })
+            .eq('id', achievement.id);
+          
+          successCount++;
+        }
+
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+      } catch (error) {
+        console.error(`Error generating icon for ${achievement.name}:`, error);
+        errorCount++;
+        // Continue with next achievement
+      }
+    }
+
+    setIsGeneratingAll(false);
+    setGenerationProgress({ current: 0, total: 0 });
+    queryClient.invalidateQueries({ queryKey: ['achievements'] });
+
+    toast({
+      title: 'Generación completada',
+      description: `${successCount} iconos generados, ${errorCount} errores`,
+    });
+  };
+
   const renderIcon = (icon: string) => {
     if (icon?.startsWith('data:') || icon?.startsWith('http')) {
       return <img src={icon} alt="Icon" className="w-full h-full object-cover rounded-full" />;
@@ -512,13 +576,34 @@ export function UnifiedRewardsManager({ organizationId }: UnifiedRewardsManagerP
             </TabsTrigger>
           </TabsList>
 
-          <Dialog open={isCreating} onOpenChange={(open) => { setIsCreating(open); if (!open) { resetAchievementForm(); resetBadgeForm(); } }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                {activeTab === 'badges' ? 'Otorgar Insignia' : 'Nuevo Logro'}
+          <div className="flex items-center gap-2">
+            {activeTab === 'achievements' && (
+              <Button
+                variant="outline"
+                onClick={generateAllIcons}
+                disabled={isGeneratingAll}
+              >
+                {isGeneratingAll ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generando {generationProgress.current}/{generationProgress.total}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generar Iconos IA
+                  </>
+                )}
               </Button>
-            </DialogTrigger>
+            )}
+
+            <Dialog open={isCreating} onOpenChange={(open) => { setIsCreating(open); if (!open) { resetAchievementForm(); resetBadgeForm(); } }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  {activeTab === 'badges' ? 'Otorgar Insignia' : 'Nuevo Logro'}
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>
@@ -773,6 +858,7 @@ export function UnifiedRewardsManager({ organizationId }: UnifiedRewardsManagerP
               )}
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Achievements Tab - Gaming Style */}
