@@ -13,7 +13,7 @@ import { UPAIPanel } from './UPAIPanel';
 import { UPAnalytics } from './UPAnalytics';
 import { UPSeasonsManager } from './UPSeasonsManager';
 import { UPSettingsPanel } from './UPSettingsPanel';
-import { UPAchievementsManager } from './UPAchievementsManager';
+import { UnifiedRewardsManager } from './UnifiedRewardsManager';
 import { UPLevelsManager } from './UPLevelsManager';
 import { UPPermissionsEditor } from './UPPermissionsEditor';
 import { cn } from '@/lib/utils';
@@ -123,7 +123,7 @@ export function UPControlCenter({ organizationId }: UPControlCenterProps) {
           </TabsTrigger>
           <TabsTrigger value="achievements" className="flex items-center gap-2">
             <Award className="w-4 h-4" />
-            <span className="hidden sm:inline">Logros</span>
+            <span className="hidden sm:inline">Logros e Insignias</span>
           </TabsTrigger>
           <TabsTrigger value="levels" className="flex items-center gap-2">
             <Trophy className="w-4 h-4" />
@@ -163,7 +163,7 @@ export function UPControlCenter({ organizationId }: UPControlCenterProps) {
         </TabsContent>
 
         <TabsContent value="achievements">
-          <UPAchievementsManager organizationId={organizationId} />
+          <UnifiedRewardsManager organizationId={organizationId} />
         </TabsContent>
 
         <TabsContent value="levels">
