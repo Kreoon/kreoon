@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { DEFAULT_LEVEL_THRESHOLDS, parseThresholdsFromDB, type LevelThresholds } from '@/lib/upLevels';
+
+export type { LevelThresholds };
 
 export interface UPSetting {
   id: string;
@@ -10,13 +13,6 @@ export interface UPSetting {
   category: string;
   updated_at: string;
   updated_by: string | null;
-}
-
-export interface LevelThresholds {
-  bronze: number;
-  silver: number;
-  gold: number;
-  diamond: number;
 }
 
 export interface MultiCurrencyConfig {
@@ -140,12 +136,7 @@ export function useUPSettings() {
 
   const getLevelThresholds = (): LevelThresholds => {
     const setting = getSetting('level_thresholds');
-    return {
-      bronze: setting?.bronze ?? 0,
-      silver: setting?.silver ?? 100,
-      gold: setting?.gold ?? 250,
-      diamond: setting?.diamond ?? 500
-    };
+    return parseThresholdsFromDB(setting);
   };
 
   const isSystemEnabled = (): boolean => {

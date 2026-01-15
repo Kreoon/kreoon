@@ -22,6 +22,15 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAchievements, RARITY_LABELS, RARITY_COLORS, RARITY_BORDERS } from '@/hooks/useAchievements';
 import type { Achievement } from '@/hooks/useAchievements';
+import { 
+  calculateLevel, 
+  DEFAULT_LEVEL_THRESHOLDS, 
+  LEVEL_LABELS_GENERIC,
+  LEVEL_COLORS as UP_LEVEL_COLORS,
+  LEVEL_ICONS as UP_LEVEL_ICONS,
+  parseThresholdsFromDB,
+  type LevelThresholds
+} from '@/lib/upLevels';
 
 interface UnifiedBadgesShowcaseProps {
   userId: string;
@@ -72,44 +81,45 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ComponentType
   level: { label: 'Ascensos', icon: Shield, description: 'Por subir de nivel' },
 };
 
-const LEVEL_CONFIG = {
+// Dynamic LEVEL_CONFIG using centralized thresholds
+const getLevelConfig = (thresholds: LevelThresholds) => ({
   bronze: {
-    label: 'Bronce',
-    color: 'from-amber-600 to-amber-800',
-    border: 'border-amber-600',
-    textColor: 'text-amber-500',
-    bgColor: 'bg-amber-500/10',
-    icon: Shield,
-    minPoints: 0,
+    label: LEVEL_LABELS_GENERIC.bronze,
+    color: UP_LEVEL_COLORS.bronze.gradient,
+    border: UP_LEVEL_COLORS.bronze.border,
+    textColor: UP_LEVEL_COLORS.bronze.text,
+    bgColor: UP_LEVEL_COLORS.bronze.bg,
+    icon: UP_LEVEL_ICONS.bronze,
+    minPoints: thresholds.bronze,
   },
   silver: {
-    label: 'Plata',
-    color: 'from-slate-300 to-slate-500',
-    border: 'border-slate-400',
-    textColor: 'text-slate-400',
-    bgColor: 'bg-slate-400/10',
-    icon: Medal,
-    minPoints: 500,
+    label: LEVEL_LABELS_GENERIC.silver,
+    color: UP_LEVEL_COLORS.silver.gradient,
+    border: UP_LEVEL_COLORS.silver.border,
+    textColor: UP_LEVEL_COLORS.silver.text,
+    bgColor: UP_LEVEL_COLORS.silver.bg,
+    icon: UP_LEVEL_ICONS.silver,
+    minPoints: thresholds.silver,
   },
   gold: {
-    label: 'Oro',
-    color: 'from-yellow-400 to-amber-500',
-    border: 'border-yellow-500',
-    textColor: 'text-yellow-500',
-    bgColor: 'bg-yellow-500/10',
-    icon: Trophy,
-    minPoints: 2000,
+    label: LEVEL_LABELS_GENERIC.gold,
+    color: UP_LEVEL_COLORS.gold.gradient,
+    border: UP_LEVEL_COLORS.gold.border,
+    textColor: UP_LEVEL_COLORS.gold.text,
+    bgColor: UP_LEVEL_COLORS.gold.bg,
+    icon: UP_LEVEL_ICONS.gold,
+    minPoints: thresholds.gold,
   },
   diamond: {
-    label: 'Diamante',
-    color: 'from-cyan-300 to-blue-500',
-    border: 'border-cyan-400',
-    textColor: 'text-cyan-400',
-    bgColor: 'bg-cyan-400/10',
-    icon: Gem,
-    minPoints: 5000,
+    label: LEVEL_LABELS_GENERIC.diamond,
+    color: UP_LEVEL_COLORS.diamond.gradient,
+    border: UP_LEVEL_COLORS.diamond.border,
+    textColor: UP_LEVEL_COLORS.diamond.text,
+    bgColor: UP_LEVEL_COLORS.diamond.bg,
+    icon: UP_LEVEL_ICONS.diamond,
+    minPoints: thresholds.diamond,
   },
-};
+});
 
 const ORG_BADGE_CONFIG: Record<string, { label: string; icon: React.ComponentType<any>; color: string }> = {
   ambassador: { label: 'Embajador', icon: Crown, color: 'from-purple-500 to-pink-500' },
@@ -126,6 +136,9 @@ export function UnifiedBadgesShowcase({
   const [orgBadges, setOrgBadges] = useState<OrgBadge[]>([]);
   const [upStats, setUpStats] = useState<UPStats | null>(null);
   const [loadingExtra, setLoadingExtra] = useState(true);
+  const [thresholds, setThresholds] = useState<LevelThresholds>(DEFAULT_LEVEL_THRESHOLDS);
+  
+  const LEVEL_CONFIG = getLevelConfig(thresholds);
 
   const { 
     achievements, 
@@ -152,6 +165,18 @@ export function UnifiedBadgesShowcase({
           setOrgBadges(orgBadgesData);
         }
 
+        // Fetch thresholds
+        const { data: settingsData } = await supabase
+          .from('up_settings')
+          .select('value')
+          .eq('key', 'level_thresholds')
+          .maybeSingle();
+        
+        const currentThresholds = settingsData?.value 
+          ? parseThresholdsFromDB(settingsData.value) 
+          : DEFAULT_LEVEL_THRESHOLDS;
+        setThresholds(currentThresholds);
+
         // Fetch UP stats from V2 tables
         const { data: upData } = await supabase
           .from('up_creadores')
@@ -160,17 +185,10 @@ export function UnifiedBadgesShowcase({
 
         // Calculate total UP points
         const totalPoints = (upData || []).reduce((sum: number, r: any) => sum + (r.points || 0), 0);
-        
-        const getLevel = (points: number): string => {
-          if (points >= 5000) return 'diamond';
-          if (points >= 2000) return 'gold';
-          if (points >= 500) return 'silver';
-          return 'bronze';
-        };
 
         setUpStats({
           total_points: totalPoints,
-          current_level: getLevel(totalPoints)
+          current_level: calculateLevel(totalPoints, currentThresholds)
         });
       } catch (error) {
         console.error('Error fetching extra badge data:', error);
