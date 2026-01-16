@@ -27,8 +27,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { 
   Package, FileText, Users, Target, Save, 
   File, FolderOpen, Plus, X, Sparkles, ClipboardList,
-  Globe, Briefcase, Swords, Lightbulb, Brain, Trophy, Gift, Video
+  Globe, Briefcase, Swords, Lightbulb, Brain, Trophy, Gift, Video, Download
 } from "lucide-react";
+import { generateProductResearchPdf } from "./productResearchPdfGenerator";
 
 interface Product {
   id: string;
@@ -517,14 +518,26 @@ export function ProductDetailDialog({
           </div>
         </Tabs>
 
-        {canEdit && (
-          <div className="flex justify-end pt-4 pb-4 border-t mt-4 shrink-0">
+        <div className="flex justify-between items-center pt-4 pb-4 border-t mt-4 shrink-0 px-6">
+          {/* Export PDF Button - Always visible if product exists */}
+          {product && (product.market_research || product.competitor_analysis || product.avatar_profiles || product.sales_angles_data || product.content_strategy) && (
+            <Button 
+              variant="outline" 
+              onClick={() => generateProductResearchPdf({ product: product as any })}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </Button>
+          )}
+          {!product && <div />}
+          
+          {canEdit && (
             <Button onClick={handleSave} disabled={loading}>
               <Save className="h-4 w-4 mr-2" />
               {isNew ? "Crear Producto" : "Guardar Cambios"}
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
