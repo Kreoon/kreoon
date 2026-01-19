@@ -169,11 +169,12 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
           .eq('status_key', 'en_campaa')
           .single();
 
-        // Update content with campaign and status
+        // Update content with campaign and status - MUST update 'status' field for Kanban grouping
         const updateData: Record<string, unknown> = {
           marketing_campaign_id: campaignData.id,
           sphere_phase: formData.sphere_phase,
           strategy_status: 'en_campaña',
+          status: 'en_campaa', // This is the key field that Kanban uses for grouping
         };
 
         // If the status exists, also update the custom_status_id for Kanban sync
