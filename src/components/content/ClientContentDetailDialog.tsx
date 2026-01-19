@@ -239,13 +239,14 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
     
     setLoading(true);
     try {
-      const updates: any = { status: newStatus };
+      // Use centralized status update with UP points integration
+      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+      await updateContentStatusWithUP({
+        contentId: content.id,
+        oldStatus: content.status as ContentStatus,
+        newStatus
+      });
       
-      const { error } = await supabase
-        .from('content')
-        .update(updates)
-        .eq('id', content.id);
-      if (error) throw error;
       setCurrentStatus(newStatus);
       toast({ title: "Estado actualizado", description: `Nuevo estado: ${STATUS_LABELS[newStatus]}` });
       onUpdate?.();

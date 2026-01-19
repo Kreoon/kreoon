@@ -194,24 +194,41 @@ export default function ClientContentBoard() {
 
   // Update content status
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus) => {
-    const updates: any = { status: newStatus };
-    
-    if (newStatus === 'approved') {
-      updates.approved_at = new Date().toISOString();
-      updates.approved_by = user?.id;
-    }
-    
-    if (newStatus === 'script_approved') {
-      updates.script_approved_at = new Date().toISOString();
-      updates.script_approved_by = user?.id;
-    }
-    
-    const { error } = await supabase
+    // Get current status for UP integration
+    const { data: currentContent } = await supabase
       .from('content')
-      .update(updates)
-      .eq('id', contentId);
+      .select('status')
+      .eq('id', contentId)
+      .single();
+    
+    if (!currentContent) throw new Error('Content not found');
+    
+    // Use centralized status update with UP points integration
+    const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+    await updateContentStatusWithUP({
+      contentId,
+      oldStatus: currentContent.status as ContentStatus,
+      newStatus
+    });
+    
+    // Handle additional fields for approval/script approval
+    if (newStatus === 'approved' || newStatus === 'script_approved') {
+      const additionalUpdates: any = {};
+      if (newStatus === 'approved') {
+        additionalUpdates.approved_by = user?.id;
+      }
+      if (newStatus === 'script_approved') {
+        additionalUpdates.script_approved_by = user?.id;
+      }
+      
+      if (Object.keys(additionalUpdates).length > 0) {
+        await supabase
+          .from('content')
+          .update(additionalUpdates)
+          .eq('id', contentId);
+      }
+    }
 
-    if (error) throw error;
     await fetchClientData();
   };
 
@@ -504,12 +521,27 @@ export default function ClientContentBoard() {
             toast({ title: 'Contenido aprobado', description: 'El contenido ha sido aprobado exitosamente' });
           }}
           onReject={async (item, feedback) => {
-            const { error } = await supabase
+            // Get current status for UP integration
+            const { data: currentContent } = await supabase
               .from('content')
-              .update({ status: 'issue' as ContentStatus, notes: feedback })
-              .eq('id', item.id);
+              .select('status')
+              .eq('id', item.id)
+              .single();
             
-            if (!error) {
+            if (currentContent) {
+              const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+              await updateContentStatusWithUP({
+                contentId: item.id,
+                oldStatus: currentContent.status as ContentStatus,
+                newStatus: 'issue' as ContentStatus
+              });
+              
+              // Update notes separately
+              await supabase
+                .from('content')
+                .update({ notes: feedback })
+                .eq('id', item.id);
+              
               await supabase.from('content_comments').insert({
                 content_id: item.id,
                 user_id: user?.id,
