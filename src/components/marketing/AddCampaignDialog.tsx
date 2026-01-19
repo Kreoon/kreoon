@@ -196,7 +196,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
             <Label htmlFor="client">Cliente *</Label>
             <Select
               value={formData.marketing_client_id}
-              onValueChange={(value) => setFormData({ ...formData, marketing_client_id: value })}
+              onValueChange={(value) => setFormData({ ...formData, marketing_client_id: value, content_ids: [] })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar cliente" />
@@ -342,19 +342,21 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
             </div>
           </div>
 
-          {/* Content Selector */}
-          <div className="space-y-2">
-            <Label>Contenido Aprobado (opcional)</Label>
-            <p className="text-xs text-muted-foreground mb-2">
-              Vincula contenido ya aprobado para usar en esta campaña
-            </p>
-            <ContentSelector
-              organizationId={organizationId}
-              clientId={clients.find(c => c.id === formData.marketing_client_id)?.client_id}
-              selectedContentIds={formData.content_ids}
-              onSelectionChange={(ids) => setFormData({ ...formData, content_ids: ids })}
-            />
-          </div>
+          {/* Content Selector - Only show when client is selected */}
+          {formData.marketing_client_id && (
+            <div className="space-y-2">
+              <Label>Contenido Aprobado (opcional)</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Vincula contenido ya aprobado para usar en esta campaña
+              </p>
+              <ContentSelector
+                organizationId={organizationId}
+                clientId={clients.find(c => c.id === formData.marketing_client_id)?.client_id || null}
+                selectedContentIds={formData.content_ids}
+                onSelectionChange={(ids) => setFormData({ ...formData, content_ids: ids })}
+              />
+            </div>
+          )}
 
           <DialogFooter className="flex-shrink-0 pt-4 border-t mt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
