@@ -269,9 +269,10 @@ export const STATUS_ORDER: ContentStatus[] = [
   'paid'
 ];
 
-// Definición de columnas del Kanban (sin "paid" - se quita del flujo de trabajo)
+// Definición de columnas del Kanban - incluye todas las columnas base
+// Las columnas dinámicas de organization_statuses se agregan automáticamente
 export interface KanbanColumnDef {
-  status: ContentStatus;
+  status: ContentStatus | string; // Allow custom status keys
   title: string;
   color: string;
 }
@@ -286,5 +287,6 @@ export const KANBAN_COLUMNS: KanbanColumnDef[] = [
   { status: 'delivered', title: 'Entregado', color: 'bg-emerald-500' },
   { status: 'issue', title: 'Novedad', color: 'bg-destructive' },
   { status: 'corrected', title: 'Corregido', color: 'bg-blue-500' },
-  { status: 'approved', title: 'Aprobado', color: 'bg-success' }
+  { status: 'approved', title: 'Aprobado', color: 'bg-success' },
+  { status: 'paid', title: 'Pagado', color: 'bg-purple-600' }
 ];
