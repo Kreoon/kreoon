@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Clock, Building2, Video, FileText, Star, MoreVertical, Brain, AlertTriangle, Clock4, Zap, Lightbulb, RefreshCw, Heart, Calendar, Crown } from "lucide-react";
+import { Clock, Building2, Video, FileText, Star, MoreVertical, Brain, AlertTriangle, Clock4, Zap, Lightbulb, RefreshCw, Heart, Calendar, Crown, Megaphone, CheckCircle, XCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Content, STATUS_COLORS, STATUS_LABELS, ContentStatus, AppRole } from "@/types/database";
 import { cn } from "@/lib/utils";
@@ -47,6 +47,8 @@ interface EnhancedContentCardProps {
   showStatusControls?: boolean;
   // Ambassador IDs to show badge
   ambassadorIds?: Set<string>;
+  // Marketing panel callback
+  onShowMarketingInfo?: (content: Content) => void;
 }
 
 // Size configurations for different card sizes
@@ -95,6 +97,7 @@ export function EnhancedContentCard({
   onStatusChange,
   showStatusControls = false,
   ambassadorIds = new Set(),
+  onShowMarketingInfo,
 }: EnhancedContentCardProps) {
   // Get size configuration
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
@@ -164,13 +167,35 @@ export function EnhancedContentCard({
   const isAssignedEditor = userId && content.editor_id === userId;
   const isAssignedStrategist = userId && content.strategist_id === userId;
 
-
   const handleAnalyzeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onAnalyzeWithAI) {
       onAnalyzeWithAI(content.id, content.title);
     }
   };
+
+  const handleMarketingClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onShowMarketingInfo) {
+      onShowMarketingInfo(content);
+    }
+  };
+
+  // Marketing status indicator
+  const getMarketingIndicator = () => {
+    if (content.marketing_approved_at) {
+      return { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-100 dark:bg-green-900/50', label: 'Aprobado MKT' };
+    }
+    if (content.marketing_rejected_at) {
+      return { icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/50', label: 'Rechazado MKT' };
+    }
+    if (content.marketing_campaign_id) {
+      return { icon: Megaphone, color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/50', label: 'En Campaña' };
+    }
+    return null;
+  };
+
+  const marketingIndicator = getMarketingIndicator();
 
   return (
     <Card
@@ -214,8 +239,8 @@ export function EnhancedContentCard({
         </div>
       )}
 
-      {/* AI Menu */}
-      {onAnalyzeWithAI && (
+      {/* Actions Menu */}
+      {(onAnalyzeWithAI || onShowMarketingInfo) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -228,10 +253,19 @@ export function EnhancedContentCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleAnalyzeClick} className="gap-2">
-              <Brain className="h-4 w-4 text-primary" />
-              Analizar proyecto
-            </DropdownMenuItem>
+            {onShowMarketingInfo && (
+              <DropdownMenuItem onClick={handleMarketingClick} className="gap-2">
+                <Megaphone className="h-4 w-4 text-blue-500" />
+                Ver info de Marketing
+              </DropdownMenuItem>
+            )}
+            {onShowMarketingInfo && onAnalyzeWithAI && <DropdownMenuSeparator />}
+            {onAnalyzeWithAI && (
+              <DropdownMenuItem onClick={handleAnalyzeClick} className="gap-2">
+                <Brain className="h-4 w-4 text-primary" />
+                Analizar proyecto
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )}
@@ -339,6 +373,33 @@ export function EnhancedContentCard({
               </TooltipContent>
             </Tooltip>
           )}
+
+          {/* Marketing Status Indicator */}
+          {marketingIndicator && (() => {
+            const MarketingIcon = marketingIndicator.icon;
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(
+                      sizeConfig.badgeSize, 
+                      marketingIndicator.bgColor, 
+                      marketingIndicator.color,
+                      "gap-0.5 font-medium cursor-pointer"
+                    )}
+                    onClick={handleMarketingClick}
+                  >
+                    <MarketingIcon className={cn(sizeConfig.iconSize)} />
+                    {cardSize !== 'compact' && marketingIndicator.label}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  <span className="font-medium">Estado Marketing:</span> {marketingIndicator.label}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })()}
         </div>
       )}
 

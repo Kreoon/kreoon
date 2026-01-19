@@ -33,7 +33,8 @@ import {
   BoardListView,
   EnhancedKanbanColumn,
   EnhancedContentCard,
-  BoardAIPanel
+  BoardAIPanel,
+  MarketingInfoPanel
 } from "@/components/board";
 import { useBoardSettings } from "@/hooks/useBoardSettings";
 import { useBoardPersistence } from "@/hooks/useBoardPersistence";
@@ -227,6 +228,10 @@ export default function ContentBoard() {
   const [aiPanelMode, setAIPanelMode] = useState<'card' | 'board'>('board');
   const [aiContentId, setAIContentId] = useState<string | undefined>();
   const [aiContentTitle, setAIContentTitle] = useState<string | undefined>();
+  
+  // Marketing Panel state
+  const [showMarketingPanel, setShowMarketingPanel] = useState(false);
+  const [marketingPanelContent, setMarketingPanelContent] = useState<Content | null>(null);
   
   // Vista actual y configuración del board - using persisted view
   const currentView = persistence.currentView;
@@ -956,6 +961,10 @@ export default function ContentBoard() {
                           setAIContentTitle(title);
                           setShowAIPanel(true);
                         } : undefined}
+                        onShowMarketingInfo={(content) => {
+                          setMarketingPanelContent(content);
+                          setShowMarketingPanel(true);
+                        }}
                       />
                     ))}
                     {columnContent.length === 0 && (
@@ -1045,6 +1054,16 @@ export default function ContentBoard() {
           contentTitle={aiContentTitle}
         />
       )}
+
+      {/* Marketing Info Panel */}
+      <MarketingInfoPanel
+        content={marketingPanelContent}
+        open={showMarketingPanel}
+        onClose={() => {
+          setShowMarketingPanel(false);
+          setMarketingPanelContent(null);
+        }}
+      />
     </div>
   );
 }

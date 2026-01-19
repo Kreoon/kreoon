@@ -168,6 +168,14 @@ export interface Content {
   admin_guidelines: string | null;
   // Sphere phase
   sphere_phase: 'engage' | 'solution' | 'remarketing' | 'fidelize' | null;
+  // Marketing fields
+  marketing_campaign_id: string | null;
+  marketing_approved_at: string | null;
+  marketing_approved_by: string | null;
+  marketing_rejected_at: string | null;
+  marketing_rejected_by: string | null;
+  marketing_rejection_reason: string | null;
+  strategy_status: string | null;
   // Relaciones
   client?: Partial<Client>;
   creator?: Partial<Profile>;
