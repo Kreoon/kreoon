@@ -1,24 +1,14 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   Target,
-  TrendingUp,
   FileVideo,
   CheckCircle,
-  XCircle,
   DollarSign,
-  Megaphone,
-  Layers,
-  Zap,
-  Lightbulb,
-  RefreshCw,
-  Heart
+  Megaphone
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SPHERE_PHASES, SpherePhase, getSpherePhaseConfig } from "./types";
 
 interface ClientMarketingDashboardProps {
   organizationId: string | null | undefined;
@@ -34,20 +24,7 @@ interface DashboardStats {
   inCampaignContent: number;
   activeCampaigns: number;
   totalInvestment: number;
-  sphereCoverage: {
-    engage: number;
-    solution: number;
-    remarketing: number;
-    fidelize: number;
-  };
 }
-
-const SPHERE_ICONS: Record<SpherePhase, React.ReactNode> = {
-  engage: <Zap className="h-4 w-4" />,
-  solution: <Lightbulb className="h-4 w-4" />,
-  remarketing: <RefreshCw className="h-4 w-4" />,
-  fidelize: <Heart className="h-4 w-4" />,
-};
 
 export function ClientMarketingDashboard({ organizationId, clientId }: ClientMarketingDashboardProps) {
   const [loading, setLoading] = useState(true);
@@ -92,12 +69,6 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
       const pending = content.filter(c => c.strategy_status === 'pendiente_validacion').length;
       const inCampaign = content.filter(c => c.strategy_status === 'en_campaña').length;
 
-      // Count by sphere phase
-      const engage = content.filter(c => c.sphere_phase === 'engage').length;
-      const solution = content.filter(c => c.sphere_phase === 'solution').length;
-      const remarketing = content.filter(c => c.sphere_phase === 'remarketing').length;
-      const fidelize = content.filter(c => c.sphere_phase === 'fidelize').length;
-
       // Fetch campaigns
       const { data: campaigns } = await supabase
         .from('marketing_campaigns')
@@ -117,7 +88,6 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
         inCampaignContent: inCampaign,
         activeCampaigns,
         totalInvestment,
-        sphereCoverage: { engage, solution, remarketing, fidelize },
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -153,11 +123,6 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
   }
 
   if (!stats) return null;
-
-  const totalSphere = stats.sphereCoverage.engage + stats.sphereCoverage.solution + 
-                      stats.sphereCoverage.remarketing + stats.sphereCoverage.fidelize;
-  
-  const getPhasePercent = (count: number) => totalSphere > 0 ? (count / totalSphere) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -249,72 +214,6 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
         </Card>
       </div>
 
-      {/* Sphere Coverage - Método Esfera */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Layers className="h-5 w-5" />
-            Cobertura Método Esfera
-          </CardTitle>
-          <CardDescription>
-            Distribución del contenido por fase del Método Esfera
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            {SPHERE_PHASES.map((phase) => {
-              const count = stats.sphereCoverage[phase.value];
-              const percent = getPhasePercent(count);
-              
-              return (
-                <div key={phase.value} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2">
-                      <Badge className={`${phase.bgColor} ${phase.color} gap-1`}>
-                        {SPHERE_ICONS[phase.value]}
-                        {phase.label}
-                      </Badge>
-                      <span className="text-muted-foreground">{phase.objective}</span>
-                    </span>
-                    <span className="font-medium">{count} piezas ({percent.toFixed(0)}%)</span>
-                  </div>
-                  <Progress value={percent} className="h-2" />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Sphere Warnings */}
-          {totalSphere > 0 && (
-            <div className="pt-4 border-t space-y-2">
-              {getPhasePercent(stats.sphereCoverage.solution) < 10 && (
-                <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950 p-2 rounded">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Falta contenido SOLUCIÓN. Crea más demostraciones y casos de uso.</span>
-                </div>
-              )}
-              {getPhasePercent(stats.sphereCoverage.remarketing) < 10 && (
-                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950 p-2 rounded">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Falta contenido REMARKETING. Necesitas más prueba social y manejo de objeciones.</span>
-                </div>
-              )}
-              {getPhasePercent(stats.sphereCoverage.fidelize) < 5 && (
-                <div className="flex items-center gap-2 text-sm text-purple-600 bg-purple-50 dark:bg-purple-950 p-2 rounded">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Sin contenido FIDELIZAR. Considera crear contenido educativo y de comunidad.</span>
-                </div>
-              )}
-              {getPhasePercent(stats.sphereCoverage.engage) > 60 && (
-                <div className="flex items-center gap-2 text-sm text-cyan-600 bg-cyan-50 dark:bg-cyan-950 p-2 rounded">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Exceso de ENGANCHAR. Balancea con contenido de Solución y Remarketing.</span>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
