@@ -34,7 +34,8 @@ import {
   EnhancedKanbanColumn,
   EnhancedContentCard,
   BoardAIPanel,
-  MarketingInfoPanel
+  MarketingInfoPanel,
+  CampaignAssignmentDialog
 } from "@/components/board";
 import { useBoardSettings } from "@/hooks/useBoardSettings";
 import { useBoardPersistence } from "@/hooks/useBoardPersistence";
@@ -232,6 +233,10 @@ export default function ContentBoard() {
   // Marketing Panel state
   const [showMarketingPanel, setShowMarketingPanel] = useState(false);
   const [marketingPanelContent, setMarketingPanelContent] = useState<Content | null>(null);
+  
+  // Campaign Assignment Dialog state (for moving to 'en_campaa')
+  const [showCampaignDialog, setShowCampaignDialog] = useState(false);
+  const [pendingCampaignContent, setPendingCampaignContent] = useState<Content | null>(null);
   
   // Vista actual y configuración del board - using persisted view
   const currentView = persistence.currentView;
@@ -563,6 +568,14 @@ export default function ContentBoard() {
       return;
     }
 
+    // If target is 'en_campaa', show campaign assignment dialog instead of direct update
+    if (targetStatus === 'en_campaa') {
+      setPendingCampaignContent(draggingContent);
+      setShowCampaignDialog(true);
+      setDraggingContent(null);
+      return;
+    }
+
     try {
       await updateContentStatus(draggingContent.id, targetStatus as ContentStatus);
       // Get label from orgStatuses for custom statuses, fallback to STATUS_LABELS
@@ -580,7 +593,7 @@ export default function ContentBoard() {
     }
 
     setDraggingContent(null);
-  }, [draggingContent, user, primaryRole, updateContentStatus, toast]);
+  }, [draggingContent, user, primaryRole, updateContentStatus, toast, orgStatuses, rules]);
 
   const handleDragEnter = useCallback((status: ContentStatus | string) => {
     setDropTarget(status);
@@ -1062,6 +1075,21 @@ export default function ContentBoard() {
         onClose={() => {
           setShowMarketingPanel(false);
           setMarketingPanelContent(null);
+        }}
+      />
+
+      {/* Campaign Assignment Dialog (for moving to 'en_campaa') */}
+      <CampaignAssignmentDialog
+        open={showCampaignDialog}
+        onOpenChange={(open) => {
+          setShowCampaignDialog(open);
+          if (!open) setPendingCampaignContent(null);
+        }}
+        content={pendingCampaignContent}
+        organizationId={currentOrgId}
+        onSuccess={() => {
+          refetch();
+          setPendingCampaignContent(null);
         }}
       />
     </div>
