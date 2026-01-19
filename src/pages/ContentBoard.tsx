@@ -70,8 +70,8 @@ interface OrgStatus {
 // Verificar si un movimiento de estado es válido según el rol y las reglas configuradas
 const canMoveToStatusWithRules = (
   role: string,
-  currentStatus: ContentStatus,
-  targetStatus: ContentStatus,
+  currentStatus: ContentStatus | string,
+  targetStatus: ContentStatus | string,
   content: Content,
   userId: string,
   orgStatuses: OrgStatus[],
@@ -115,13 +115,13 @@ const canMoveToStatusWithRules = (
 // Lógica legacy como fallback
 const canMoveToStatusLegacy = (
   role: string,
-  currentStatus: ContentStatus,
-  targetStatus: ContentStatus,
+  currentStatus: ContentStatus | string,
+  targetStatus: ContentStatus | string,
   content: Content,
   userId: string
 ): boolean => {
-  const currentIndex = STATUS_ORDER.indexOf(currentStatus);
-  const targetIndex = STATUS_ORDER.indexOf(targetStatus);
+  const currentIndex = STATUS_ORDER.indexOf(currentStatus as ContentStatus);
+  const targetIndex = STATUS_ORDER.indexOf(targetStatus as ContentStatus);
 
   if (role === 'admin') return true;
 
@@ -214,7 +214,7 @@ export default function ContentBoard() {
   
   // Estado de drag
   const [draggingContent, setDraggingContent] = useState<Content | null>(null);
-  const [dropTarget, setDropTarget] = useState<ContentStatus | null>(null);
+  const [dropTarget, setDropTarget] = useState<ContentStatus | string | null>(null);
   
   // Dialog para detalle - using persisted selected content
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
@@ -312,6 +312,49 @@ export default function ContentBoard() {
     const effectiveCanViewRoles = canViewRoles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
     return effectiveCanViewRoles.includes(primaryRole);
   }, [primaryRole, orgStatuses, rules, isImpersonating]);
+
+  // Combine base columns with dynamic columns from organization_statuses
+  // This ensures custom columns (like "en_campaa", "pagado") appear in the board
+  const allBoardColumns = useMemo(() => {
+    // Get base columns depending on role
+    let baseColumns = primaryRole === 'admin' && !isImpersonating 
+      ? BOARD_COLUMNS 
+      : (primaryRole === 'creator' ? CREATOR_COLUMNS : primaryRole === 'editor' ? EDITOR_COLUMNS : BOARD_COLUMNS);
+    
+    // If we have org statuses, add any custom ones that aren't in base columns
+    if (orgStatuses.length > 0) {
+      const baseStatusKeys = new Set(baseColumns.map(c => c.status));
+      
+      // Add custom statuses from org config that aren't in base
+      const customColumns = orgStatuses
+        .filter(s => !baseStatusKeys.has(s.status_key))
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map(s => ({
+          status: s.status_key,
+          title: s.label,
+          color: s.color || '#6b7280'
+        }));
+      
+      // Sort all columns by org sort_order if available
+      const allColumns = [...baseColumns.map(col => {
+        const orgStatus = orgStatuses.find(s => s.status_key === col.status);
+        return {
+          ...col,
+          sortOrder: orgStatus?.sort_order ?? 999
+        };
+      }), ...customColumns.map(col => {
+        const orgStatus = orgStatuses.find(s => s.status_key === col.status);
+        return {
+          ...col,
+          sortOrder: orgStatus?.sort_order ?? 999
+        };
+      })];
+      
+      return allColumns.sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+    
+    return baseColumns.map(col => ({ ...col, sortOrder: 0 }));
+  }, [primaryRole, isImpersonating, orgStatuses]);
 
   // Fetch content según rol - use targetUserId for impersonation
   const { content, loading, updateContentStatus, deleteContent, refetch } = useContentWithFilters({
@@ -465,8 +508,8 @@ export default function ContentBoard() {
     return true;
   }), [content, isStatusVisibleForRole, searchTerm, startDateFilter, deadlineFilter, filterProductId, filterCampaignWeek]);
 
-  // Agrupar contenido por estado
-  const getContentByStatus = (status: ContentStatus) => {
+  // Agrupar contenido por estado (soporta status personalizados)
+  const getContentByStatus = (status: ContentStatus | string) => {
     return filteredContent.filter(c => c.status === status);
   };
 
@@ -481,7 +524,7 @@ export default function ContentBoard() {
     e.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const handleDrop = useCallback(async (e: React.DragEvent, targetStatus: ContentStatus) => {
+  const handleDrop = useCallback(async (e: React.DragEvent, targetStatus: ContentStatus | string) => {
     e.preventDefault();
     setDropTarget(null);
 
@@ -516,10 +559,12 @@ export default function ContentBoard() {
     }
 
     try {
-      await updateContentStatus(draggingContent.id, targetStatus);
+      await updateContentStatus(draggingContent.id, targetStatus as ContentStatus);
+      // Get label from orgStatuses for custom statuses, fallback to STATUS_LABELS
+      const statusLabel = orgStatuses.find(s => s.status_key === targetStatus)?.label || STATUS_LABELS[targetStatus as ContentStatus] || targetStatus;
       toast({
         title: 'Estado actualizado',
-        description: `Movido a ${STATUS_LABELS[targetStatus]}`
+        description: `Movido a ${statusLabel}`
       });
     } catch (error) {
       toast({
@@ -532,7 +577,7 @@ export default function ContentBoard() {
     setDraggingContent(null);
   }, [draggingContent, user, primaryRole, updateContentStatus, toast]);
 
-  const handleDragEnter = useCallback((status: ContentStatus) => {
+  const handleDragEnter = useCallback((status: ContentStatus | string) => {
     setDropTarget(status);
   }, []);
 
@@ -843,7 +888,7 @@ export default function ContentBoard() {
           {/* Kanban View */}
           {currentView === 'kanban' && (
             <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0">
-              {(primaryRole === 'admin' && !isImpersonating ? BOARD_COLUMNS : (orgStatuses.length > 0 && rules.length > 0 ? BOARD_COLUMNS : (primaryRole === 'creator' ? CREATOR_COLUMNS : primaryRole === 'editor' ? EDITOR_COLUMNS : BOARD_COLUMNS)))
+              {allBoardColumns
                 // Filter columns by visibility permissions (board config)
                 .filter((column) => isStatusVisibleForRole(column.status))
                 .map(column => {
@@ -862,6 +907,7 @@ export default function ContentBoard() {
                   'bg-muted-foreground': '#6b7280',
                   'bg-info': '#3b82f6',
                   'bg-purple-500': '#8b5cf6',
+                  'bg-purple-600': '#9333ea',
                   'bg-orange-500': '#f97316',
                   'bg-cyan-500': '#06b6d4',
                   'bg-pink-500': '#ec4899',
@@ -870,7 +916,7 @@ export default function ContentBoard() {
                   'bg-blue-500': '#3b82f6',
                   'bg-success': '#22c55e'
                 };
-                const columnColor = orgStatus?.color || fallbackColors[column.color] || '#6b7280';
+                const columnColor = orgStatus?.color || fallbackColors[column.color] || column.color || '#6b7280';
 
                 return (
                   <EnhancedKanbanColumn
