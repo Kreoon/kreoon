@@ -10199,6 +10199,7 @@ export type Database = {
         | "delivered"
         | "issue"
         | "corrected"
+        | "en_campaa"
       currency_type: "COP" | "USD"
       point_transaction_type:
         | "base_completion"
@@ -10416,6 +10417,7 @@ export const Constants = {
         "delivered",
         "issue",
         "corrected",
+        "en_campaa",
       ],
       currency_type: ["COP", "USD"],
       point_transaction_type: [
