@@ -118,6 +118,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     
     const fieldName = type === 'advance' ? 'can_advance_roles' : type === 'retreat' ? 'can_retreat_roles' : 'can_view_roles';
     await updateStatusRule(statusId, { [fieldName]: newRoles });
+    onSettingsChange?.();
   };
 
   const handleCreateStatus = async () => {
@@ -131,6 +132,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     });
     setNewStatusLabel('');
     setNewStatusColor('#6b7280');
+    onSettingsChange?.();
   };
 
   const handleCreateField = async () => {
@@ -148,6 +150,28 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     });
     setNewFieldName('');
     setNewFieldType('text');
+    onSettingsChange?.();
+  };
+
+  // Wrapper functions to ensure parent is notified after changes
+  const handleUpdateStatus = async (statusId: string, updates: Partial<OrganizationStatus>) => {
+    await updateStatus(statusId, updates);
+    onSettingsChange?.();
+  };
+
+  const handleDeleteStatus = async (statusId: string) => {
+    await deleteStatus(statusId);
+    onSettingsChange?.();
+  };
+
+  const handleDeleteCustomField = async (fieldId: string) => {
+    await deleteCustomField(fieldId);
+    onSettingsChange?.();
+  };
+
+  const handleUpdatePermission = async (role: string, updates: Record<string, boolean>) => {
+    await updatePermission(role, updates);
+    onSettingsChange?.();
   };
 
   const toggleVisibleField = async (field: string) => {
@@ -278,7 +302,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                           variant="ghost" 
                           className="h-8 w-8"
                           onClick={() => {
-                            updateStatus(status.id, { label: editingStatus.label, color: editingStatus.color });
+                            handleUpdateStatus(status.id, { label: editingStatus.label, color: editingStatus.color });
                             setEditingStatus(null);
                           }}
                         >
@@ -303,7 +327,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                           size="icon" 
                           variant="ghost" 
                           className="h-8 w-8"
-                          onClick={() => updateStatus(status.id, { is_active: !status.is_active })}
+                          onClick={() => handleUpdateStatus(status.id, { is_active: !status.is_active })}
                         >
                           {status.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         </Button>
@@ -319,7 +343,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                           size="icon" 
                           variant="ghost" 
                           className="h-8 w-8 text-destructive"
-                          onClick={() => deleteStatus(status.id)}
+                          onClick={() => handleDeleteStatus(status.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -683,7 +707,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                       size="icon" 
                       variant="ghost" 
                       className="h-8 w-8 text-destructive"
-                      onClick={() => deleteCustomField(field.id)}
+                      onClick={() => handleDeleteCustomField(field.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -727,37 +751,37 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                         <td className="p-3 text-center">
                           <Checkbox 
                             checked={perm?.can_create_cards ?? false}
-                            onCheckedChange={(checked) => updatePermission(role, { can_create_cards: !!checked })}
+                            onCheckedChange={(checked) => handleUpdatePermission(role, { can_create_cards: !!checked })}
                           />
                         </td>
                         <td className="p-3 text-center">
                           <Checkbox 
                             checked={perm?.can_move_cards ?? true}
-                            onCheckedChange={(checked) => updatePermission(role, { can_move_cards: !!checked })}
+                            onCheckedChange={(checked) => handleUpdatePermission(role, { can_move_cards: !!checked })}
                           />
                         </td>
                         <td className="p-3 text-center">
                           <Checkbox 
                             checked={perm?.can_edit_fields ?? false}
-                            onCheckedChange={(checked) => updatePermission(role, { can_edit_fields: !!checked })}
+                            onCheckedChange={(checked) => handleUpdatePermission(role, { can_edit_fields: !!checked })}
                           />
                         </td>
                         <td className="p-3 text-center">
                           <Checkbox 
                             checked={perm?.can_delete_cards ?? false}
-                            onCheckedChange={(checked) => updatePermission(role, { can_delete_cards: !!checked })}
+                            onCheckedChange={(checked) => handleUpdatePermission(role, { can_delete_cards: !!checked })}
                           />
                         </td>
                         <td className="p-3 text-center">
                           <Checkbox 
                             checked={perm?.can_approve ?? false}
-                            onCheckedChange={(checked) => updatePermission(role, { can_approve: !!checked })}
+                            onCheckedChange={(checked) => handleUpdatePermission(role, { can_approve: !!checked })}
                           />
                         </td>
                         <td className="p-3 text-center">
                           <Checkbox 
                             checked={perm?.can_configure_board ?? false}
-                            onCheckedChange={(checked) => updatePermission(role, { can_configure_board: !!checked })}
+                            onCheckedChange={(checked) => handleUpdatePermission(role, { can_configure_board: !!checked })}
                           />
                         </td>
                       </tr>
