@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Megaphone, Calendar, DollarSign, TrendingUp, MoreHorizontal, Play, Pause, CheckCircle, Eye, Zap, Lightbulb, RefreshCw, Heart } from "lucide-react";
+import { Megaphone, Calendar, DollarSign, TrendingUp, MoreHorizontal, Play, Pause, CheckCircle, Eye, Zap, Lightbulb, RefreshCw, Heart, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { MarketingCampaign, CAMPAIGN_STATUSES, PLATFORMS, SPHERE_PHASES, getSpherePhaseConfig, SpherePhase } from "./types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -13,6 +13,8 @@ import { CampaignDetailDialog } from "./CampaignDetailDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useAuth } from "@/hooks/useAuth";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface MarketingCampaignsProps {
   organizationId: string | null | undefined;
@@ -20,10 +22,14 @@ interface MarketingCampaignsProps {
 }
 
 export function MarketingCampaigns({ organizationId, selectedClientId }: MarketingCampaignsProps) {
+  const { activeRole } = useAuth();
+  const isAdmin = activeRole === 'admin';
+  
   const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCampaign, setSelectedCampaign] = useState<MarketingCampaign | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (organizationId) {
@@ -82,6 +88,30 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
     } catch (error) {
       console.error('Error updating campaign:', error);
       toast.error('Error al actualizar campaña');
+    }
+  };
+
+  const deleteCampaign = async (id: string) => {
+    try {
+      // First, remove campaign reference from content
+      await supabase
+        .from('content')
+        .update({ marketing_campaign_id: null, strategy_status: null })
+        .eq('marketing_campaign_id', id);
+
+      const { error } = await supabase
+        .from('marketing_campaigns')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Campaña eliminada');
+      setDeleteId(null);
+      fetchCampaigns();
+    } catch (error) {
+      console.error('Error deleting campaign:', error);
+      toast.error('Error al eliminar campaña');
     }
   };
 
@@ -261,6 +291,21 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
                             Completar
                           </DropdownMenuItem>
                         )}
+                        {isAdmin && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteId(campaign.id);
+                              }}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -354,7 +399,34 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
         campaign={selectedCampaign}
         open={showDetail}
         onOpenChange={setShowDetail}
+        onDelete={isAdmin ? (id) => {
+          setShowDetail(false);
+          setDeleteId(id);
+        } : undefined}
+        onUpdate={fetchCampaigns}
+        isAdmin={isAdmin}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar campaña?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará la campaña y se desvinculará el contenido asociado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteId && deleteCampaign(deleteId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
