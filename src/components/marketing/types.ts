@@ -135,28 +135,70 @@ export interface MarketingReport {
 }
 
 export const PLATFORMS = [
-  { value: 'facebook', label: 'Facebook', color: 'bg-blue-600' },
-  { value: 'instagram', label: 'Instagram', color: 'bg-gradient-to-r from-purple-500 to-pink-500' },
-  { value: 'tiktok', label: 'TikTok', color: 'bg-black' },
-  { value: 'youtube', label: 'YouTube', color: 'bg-red-600' },
+  { value: 'meta_ads', label: 'Meta Ads', color: 'bg-blue-600' },
   { value: 'google_ads', label: 'Google Ads', color: 'bg-yellow-500' },
-  { value: 'linkedin', label: 'LinkedIn', color: 'bg-blue-700' },
-  { value: 'twitter', label: 'X (Twitter)', color: 'bg-gray-900' },
+  { value: 'tiktok_ads', label: 'TikTok Ads', color: 'bg-black' },
+  { value: 'youtube_ads', label: 'YouTube Ads', color: 'bg-red-600' },
+  { value: 'linkedin_ads', label: 'LinkedIn Ads', color: 'bg-blue-700' },
+  { value: 'twitter_ads', label: 'X Ads', color: 'bg-gray-900' },
 ];
+
+// Tipos de campaña específicos por plataforma de tráfico
+export const PLATFORM_CAMPAIGN_TYPES: Record<string, { value: string; label: string }[]> = {
+  meta_ads: [
+    { value: 'awareness', label: 'Reconocimiento' },
+    { value: 'traffic', label: 'Tráfico' },
+    { value: 'engagement', label: 'Interacción' },
+    { value: 'leads', label: 'Clientes potenciales' },
+    { value: 'app_promotion', label: 'Promoción de app' },
+    { value: 'sales', label: 'Ventas' },
+  ],
+  google_ads: [
+    { value: 'search', label: 'Búsqueda' },
+    { value: 'display', label: 'Display' },
+    { value: 'shopping', label: 'Shopping' },
+    { value: 'video', label: 'Video' },
+    { value: 'performance_max', label: 'Performance Max' },
+    { value: 'demand_gen', label: 'Demand Gen' },
+  ],
+  tiktok_ads: [
+    { value: 'reach', label: 'Alcance' },
+    { value: 'traffic', label: 'Tráfico' },
+    { value: 'video_views', label: 'Reproducciones de video' },
+    { value: 'community', label: 'Interacción con comunidad' },
+    { value: 'conversions', label: 'Conversiones web' },
+    { value: 'lead_gen', label: 'Generación de leads' },
+  ],
+  youtube_ads: [
+    { value: 'video_views', label: 'Visualizaciones de video' },
+    { value: 'brand_awareness', label: 'Conocimiento de marca' },
+    { value: 'reach', label: 'Alcance' },
+    { value: 'consideration', label: 'Consideración' },
+    { value: 'action', label: 'Acción' },
+  ],
+  linkedin_ads: [
+    { value: 'brand_awareness', label: 'Conocimiento de marca' },
+    { value: 'website_visits', label: 'Visitas al sitio web' },
+    { value: 'engagement', label: 'Interacción' },
+    { value: 'video_views', label: 'Visualizaciones de video' },
+    { value: 'lead_gen', label: 'Generación de leads' },
+    { value: 'conversions', label: 'Conversiones' },
+  ],
+  twitter_ads: [
+    { value: 'reach', label: 'Alcance' },
+    { value: 'video_views', label: 'Visualizaciones de video' },
+    { value: 'engagements', label: 'Interacciones' },
+    { value: 'website_traffic', label: 'Tráfico web' },
+    { value: 'conversions', label: 'Conversiones' },
+    { value: 'app_installs', label: 'Instalaciones de app' },
+  ],
+};
 
 export const SERVICE_TYPES = [
   { value: 'full_service', label: 'Servicio Completo', description: 'Estrategia + Tráfico + Contenido' },
   { value: 'strategy_only', label: 'Solo Estrategia', description: 'Planificación y consultoría' },
   { value: 'traffic_only', label: 'Solo Tráfico', description: 'Gestión de pauta publicitaria' },
   { value: 'social_media', label: 'Social Media', description: 'Gestión de redes sociales' },
-];
-
-// MÉTODO ESFERA - Tipos de Campaña (reemplaza TOFU/MOFU/BOFU)
-export const CAMPAIGN_TYPES = [
-  { value: 'engage', label: 'Enganchar', color: 'bg-cyan-500', description: 'Captar atención y clic' },
-  { value: 'solution', label: 'Solución', color: 'bg-emerald-500', description: 'Demostrar que el producto elimina el dolor' },
-  { value: 'remarketing', label: 'Remarketing', color: 'bg-amber-500', description: 'Reimpactar usuarios tibios' },
-  { value: 'fidelize', label: 'Fidelizar', color: 'bg-purple-500', description: 'Aumentar LTV y comunidad' },
 ];
 
 export const CAMPAIGN_STATUSES = [
