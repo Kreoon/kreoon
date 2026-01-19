@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Loader2, Zap, Lightbulb, RefreshCw, Heart } from "lucide-react";
 import { toast } from "sonner";
-import { CAMPAIGN_TYPES, PLATFORMS, MarketingClient, SPHERE_PHASES, SpherePhase } from "./types";
+import { PLATFORMS, PLATFORM_CAMPAIGN_TYPES, MarketingClient, SPHERE_PHASES, SpherePhase } from "./types";
 import { useAuth } from "@/hooks/useAuth";
 import { ContentSelector } from "./ContentSelector";
 
@@ -34,15 +34,20 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
     marketing_client_id: "",
     name: "",
     description: "",
-    campaign_type: "awareness",
+    platform: "", // Single platform selection
+    campaign_type: "", // Depends on platform
     sphere_phase: "engage" as SpherePhase,
     budget: "",
     currency: "COP",
     start_date: "",
     end_date: "",
-    platforms: [] as string[],
     content_ids: [] as string[],
   });
+
+  // Get campaign types for selected platform
+  const campaignTypesForPlatform = formData.platform 
+    ? PLATFORM_CAMPAIGN_TYPES[formData.platform] || []
+    : [];
 
   useEffect(() => {
     if (open && organizationId) {
@@ -107,12 +112,12 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
     }
   };
 
-  const togglePlatform = (platform: string) => {
+  // When platform changes, reset campaign type
+  const handlePlatformChange = (platform: string) => {
     setFormData(prev => ({
       ...prev,
-      platforms: prev.platforms.includes(platform)
-        ? prev.platforms.filter(p => p !== platform)
-        : [...prev.platforms, platform]
+      platform,
+      campaign_type: "" // Reset campaign type when platform changes
     }));
   };
 
@@ -143,7 +148,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
           currency: formData.currency,
           start_date: formData.start_date || null,
           end_date: formData.end_date || null,
-          platforms: formData.platforms,
+          platforms: formData.platform ? [formData.platform] : [],
           content_ids: formData.content_ids,
           objectives: [],
           metrics: {},
@@ -188,13 +193,13 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
         marketing_client_id: "",
         name: "",
         description: "",
-        campaign_type: "awareness",
+        platform: "",
+        campaign_type: "",
         sphere_phase: "engage",
         budget: "",
         currency: "COP",
         start_date: "",
         end_date: "",
-        platforms: [],
         content_ids: [],
       });
       onSuccess();
@@ -265,18 +270,18 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="type">Tipo de campaña</Label>
+              <Label htmlFor="platform">Plataforma de Tráfico *</Label>
               <Select
-                value={formData.campaign_type}
-                onValueChange={(value) => setFormData({ ...formData, campaign_type: value })}
+                value={formData.platform}
+                onValueChange={handlePlatformChange}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Seleccionar plataforma" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CAMPAIGN_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
+                  {PLATFORMS.map((platform) => (
+                    <SelectItem key={platform.value} value={platform.value}>
+                      {platform.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -284,26 +289,47 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sphere">Fase Esfera *</Label>
+              <Label htmlFor="type">Tipo de Campaña {formData.platform && '*'}</Label>
               <Select
-                value={formData.sphere_phase}
-                onValueChange={(value) => setFormData({ ...formData, sphere_phase: value as SpherePhase })}
+                value={formData.campaign_type}
+                onValueChange={(value) => setFormData({ ...formData, campaign_type: value })}
+                disabled={!formData.platform}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={formData.platform ? "Seleccionar tipo" : "Primero selecciona plataforma"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {SPHERE_PHASES.map((phase) => (
-                    <SelectItem key={phase.value} value={phase.value}>
-                      <span className="flex items-center gap-2">
-                        {SPHERE_ICONS[phase.value]}
-                        {phase.label}
-                      </span>
+                  {campaignTypesForPlatform.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="sphere">Fase Esfera (Método Esfera) *</Label>
+            <Select
+              value={formData.sphere_phase}
+              onValueChange={(value) => setFormData({ ...formData, sphere_phase: value as SpherePhase })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SPHERE_PHASES.map((phase) => (
+                  <SelectItem key={phase.value} value={phase.value}>
+                    <span className="flex items-center gap-2">
+                      {SPHERE_ICONS[phase.value]}
+                      {phase.label}
+                      <span className="text-xs text-muted-foreground ml-1">- {phase.objective}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -356,22 +382,6 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Plataformas</Label>
-            <div className="flex flex-wrap gap-2">
-              {PLATFORMS.map((platform) => (
-                <Button
-                  key={platform.value}
-                  type="button"
-                  variant={formData.platforms.includes(platform.value) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => togglePlatform(platform.value)}
-                >
-                  {platform.label}
-                </Button>
-              ))}
-            </div>
-          </div>
 
           {/* Content Selector - Only show when client is selected */}
           {formData.marketing_client_id && (
