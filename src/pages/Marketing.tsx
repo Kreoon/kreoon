@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { MarketingDashboard } from "@/components/marketing/MarketingDashboard";
-import { MarketingStrategy } from "@/components/marketing/MarketingStrategy";
 import { MarketingTraffic } from "@/components/marketing/MarketingTraffic";
 import { MarketingCampaigns } from "@/components/marketing/MarketingCampaigns";
 import { MarketingReports } from "@/components/marketing/MarketingReports";
@@ -83,14 +82,10 @@ export default function Marketing() {
 
         {/* Tabs del módulo */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 gap-1 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 gap-1 h-auto p-1">
             <TabsTrigger value="dashboard" className="gap-2 py-2.5">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
-            </TabsTrigger>
-            <TabsTrigger value="strategy" className="gap-2 py-2.5">
-              <Target className="h-4 w-4" />
-              <span className="hidden sm:inline">Estrategia</span>
             </TabsTrigger>
             <TabsTrigger value="content" className="gap-2 py-2.5">
               <FileVideo className="h-4 w-4" />
@@ -135,12 +130,6 @@ export default function Marketing() {
             />
           </TabsContent>
 
-          <TabsContent value="strategy" className="space-y-4">
-            <MarketingStrategy 
-              organizationId={effectiveOrgId}
-              selectedClientId={selectedClientId}
-            />
-          </TabsContent>
 
           <TabsContent value="traffic" className="space-y-4">
             <MarketingTraffic 
