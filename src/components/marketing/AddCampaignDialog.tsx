@@ -183,15 +183,15 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
           Nueva Campaña
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Nueva Campaña</DialogTitle>
           <DialogDescription>
             Crea una campaña para gestionar publicidad
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 pr-2">
           <div className="space-y-2">
             <Label htmlFor="client">Cliente *</Label>
             <Select
@@ -232,7 +232,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="type">Tipo de campaña</Label>
               <Select
@@ -275,7 +275,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="budget">Presupuesto</Label>
               <div className="flex gap-2">
@@ -291,7 +291,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
                   value={formData.currency}
                   onValueChange={(value) => setFormData({ ...formData, currency: value })}
                 >
-                  <SelectTrigger className="w-24">
+                  <SelectTrigger className="w-20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -313,14 +313,16 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="end">Fecha fin</Label>
-            <Input
-              id="end"
-              type="date"
-              value={formData.end_date}
-              onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="end">Fecha fin</Label>
+              <Input
+                id="end"
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -354,7 +356,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 pt-4 border-t mt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
