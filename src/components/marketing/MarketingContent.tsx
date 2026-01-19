@@ -200,15 +200,30 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
 
     setSaving(true);
     try {
+      // Get the 'en_campaa' status id for the organization
+      const { data: statusData } = await supabase
+        .from('organization_statuses')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('status_key', 'en_campaa')
+        .single();
+
+      const updateData: Record<string, unknown> = {
+        marketing_campaign_id: assignData.campaign_id,
+        sphere_phase: assignData.sphere_phase || null,
+        trafficker_guidelines: assignData.trafficker_guidelines || null,
+        strategist_guidelines: assignData.strategist_guidelines || null,
+        strategy_status: 'en_campaña',
+      };
+
+      // If the status exists, also update the custom_status_id for Kanban sync
+      if (statusData?.id) {
+        updateData.custom_status_id = statusData.id;
+      }
+
       const { error } = await supabase
         .from('content')
-        .update({
-          marketing_campaign_id: assignData.campaign_id,
-          sphere_phase: assignData.sphere_phase || null,
-          trafficker_guidelines: assignData.trafficker_guidelines || null,
-          strategist_guidelines: assignData.strategist_guidelines || null,
-          strategy_status: 'en_campaña',
-        })
+        .update(updateData)
         .eq('id', selectedContent.id);
 
       if (error) throw error;
@@ -650,12 +665,19 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                 <Target className="h-4 w-4 text-emerald-600" />
                 Indicaciones para Estratega
               </Label>
-              <Textarea
-                value={assignData.strategist_guidelines}
-                onChange={(e) => setAssignData(prev => ({ ...prev, strategist_guidelines: e.target.value }))}
-                placeholder="Ángulo de venta, emoción principal, objetivo estratégico..."
-                rows={3}
-              />
+              {assignData.strategist_guidelines ? (
+                <div 
+                  className="prose prose-sm dark:prose-invert max-w-none p-3 border rounded-md bg-muted/50"
+                  dangerouslySetInnerHTML={{ __html: assignData.strategist_guidelines }}
+                />
+              ) : (
+                <Textarea
+                  value={assignData.strategist_guidelines}
+                  onChange={(e) => setAssignData(prev => ({ ...prev, strategist_guidelines: e.target.value }))}
+                  placeholder="Ángulo de venta, emoción principal, objetivo estratégico..."
+                  rows={3}
+                />
+              )}
             </div>
 
             {/* Trafficker Guidelines */}
@@ -664,12 +686,19 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
                 <Megaphone className="h-4 w-4 text-blue-600" />
                 Indicaciones para Trafficker
               </Label>
-              <Textarea
-                value={assignData.trafficker_guidelines}
-                onChange={(e) => setAssignData(prev => ({ ...prev, trafficker_guidelines: e.target.value }))}
-                placeholder="Público objetivo, segmentación sugerida, presupuesto recomendado..."
-                rows={3}
-              />
+              {assignData.trafficker_guidelines ? (
+                <div 
+                  className="prose prose-sm dark:prose-invert max-w-none p-3 border rounded-md bg-muted/50"
+                  dangerouslySetInnerHTML={{ __html: assignData.trafficker_guidelines }}
+                />
+              ) : (
+                <Textarea
+                  value={assignData.trafficker_guidelines}
+                  onChange={(e) => setAssignData(prev => ({ ...prev, trafficker_guidelines: e.target.value }))}
+                  placeholder="Público objetivo, segmentación sugerida, presupuesto recomendado..."
+                  rows={3}
+                />
+              )}
             </div>
           </div>
 

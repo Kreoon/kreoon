@@ -54,7 +54,43 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
     if (!organizationId) return;
 
     try {
-      const { data, error } = await supabase
+      // Fetch clients that have strategy or traffic service enabled
+      const { data: clientsData, error: clientsError } = await supabase
+        .from('clients')
+        .select('id, name, logo_url')
+        .eq('organization_id', organizationId)
+        .or('strategy_service_enabled.eq.true,traffic_service_enabled.eq.true')
+        .order('name');
+
+      if (clientsError) {
+        console.error('Error fetching clients:', clientsError);
+        return;
+      }
+
+      // Get existing marketing_clients to check which already exist
+      const { data: existingMarketingClients } = await supabase
+        .from('marketing_clients')
+        .select('id, client_id')
+        .eq('organization_id', organizationId)
+        .eq('is_active', true);
+
+      const existingClientIds = new Set((existingMarketingClients || []).map(mc => mc.client_id));
+      
+      // Create marketing_client entries for clients that don't have one
+      const clientsToCreate = (clientsData || []).filter(c => !existingClientIds.has(c.id));
+      
+      if (clientsToCreate.length > 0) {
+        await supabase
+          .from('marketing_clients')
+          .insert(clientsToCreate.map(c => ({
+            organization_id: organizationId,
+            client_id: c.id,
+            is_active: true,
+          })));
+      }
+
+      // Refetch marketing_clients with client data
+      const { data: marketingClients } = await supabase
         .from('marketing_clients')
         .select(`
           *,
@@ -63,13 +99,8 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
         .eq('organization_id', organizationId)
         .eq('is_active', true);
 
-      if (error) {
-        console.error('Error fetching clients:', error);
-        return;
-      }
-      
-      if (data) {
-        setClients(data as unknown as MarketingClient[]);
+      if (marketingClients) {
+        setClients(marketingClients as unknown as MarketingClient[]);
       }
     } catch (err) {
       console.error('Error fetching clients:', err);
