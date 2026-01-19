@@ -41,19 +41,35 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
     if (!organizationId) return;
 
     try {
+      // If filtering by client, first get the marketing_client_id for that client
+      let marketingClientId: string | null = null;
+      
+      if (selectedClientId) {
+        const { data: mcData } = await supabase
+          .from('marketing_clients')
+          .select('id')
+          .eq('organization_id', organizationId)
+          .eq('client_id', selectedClientId)
+          .single();
+        
+        marketingClientId = mcData?.id || null;
+      }
+
       let query = supabase
         .from('marketing_campaigns')
         .select(`
           *,
           marketing_client:marketing_clients(
             id,
+            client_id,
             client:clients(id, name, logo_url)
           )
         `)
         .eq('organization_id', organizationId);
       
-      if (selectedClientId) {
-        query = query.eq('marketing_client.client_id', selectedClientId);
+      // Filter by marketing_client_id if we have a selected client
+      if (selectedClientId && marketingClientId) {
+        query = query.eq('marketing_client_id', marketingClientId);
       }
       
       const { data, error } = await query.order('created_at', { ascending: false });
