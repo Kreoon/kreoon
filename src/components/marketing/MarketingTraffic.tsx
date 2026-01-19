@@ -127,14 +127,20 @@ export function MarketingTraffic({ organizationId, selectedClientId }: Marketing
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('traffic_channels')
         .select(`
           *,
           responsible:profiles!traffic_channels_responsible_id_fkey(id, full_name, avatar_url)
         `)
-        .eq('organization_id', organizationId)
-        .order('created_at', { ascending: false });
+        .eq('organization_id', organizationId);
+      
+      // Filter by client if selected
+      if (selectedClientId) {
+        query = query.eq('client_id', selectedClientId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setChannels(data || []);

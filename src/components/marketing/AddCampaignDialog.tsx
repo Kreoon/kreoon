@@ -127,7 +127,8 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Create the campaign
+      const { data: campaignData, error } = await supabase
         .from('marketing_campaigns')
         .insert({
           organization_id: organizationId,
@@ -147,9 +148,39 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
           objectives: [],
           metrics: {},
           created_by: user.id,
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // If content was selected, update their status to "En campaña" in Kanban
+      if (formData.content_ids.length > 0 && campaignData?.id) {
+        // Get the 'en_campaa' status id for the organization
+        const { data: statusData } = await supabase
+          .from('organization_statuses')
+          .select('id')
+          .eq('organization_id', organizationId)
+          .eq('status_key', 'en_campaa')
+          .single();
+
+        // Update content with campaign and status
+        const updateData: Record<string, unknown> = {
+          marketing_campaign_id: campaignData.id,
+          sphere_phase: formData.sphere_phase,
+          strategy_status: 'en_campaña',
+        };
+
+        // If the status exists, also update the custom_status_id for Kanban sync
+        if (statusData?.id) {
+          updateData.custom_status_id = statusData.id;
+        }
+
+        await supabase
+          .from('content')
+          .update(updateData)
+          .in('id', formData.content_ids);
+      }
 
       toast.success('Campaña creada');
       setOpen(false);
