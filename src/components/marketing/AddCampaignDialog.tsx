@@ -219,7 +219,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
           Nueva Campaña
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Nueva Campaña</DialogTitle>
           <DialogDescription>
@@ -227,7 +227,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 pr-2">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
           <div className="space-y-2">
             <Label htmlFor="client">Cliente *</Label>
             <Select
@@ -398,17 +398,17 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
               />
             </div>
           )}
+        </div>
 
-          <DialogFooter className="flex-shrink-0 pt-4 border-t mt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Crear Campaña
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter className="flex-shrink-0 pt-4 border-t mt-4">
+          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Crear Campaña
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
