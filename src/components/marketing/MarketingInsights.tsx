@@ -72,7 +72,7 @@ export function MarketingInsights({ organizationId, selectedClientId }: Marketin
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('marketing_ai_insights')
         .select(`
           *,
@@ -80,7 +80,14 @@ export function MarketingInsights({ organizationId, selectedClientId }: Marketin
           related_campaign:marketing_campaigns(name)
         `)
         .eq('organization_id', organizationId)
-        .eq('is_dismissed', false)
+        .eq('is_dismissed', false);
+      
+      // Filter by client if selected
+      if (selectedClientId) {
+        query = query.eq('client_id', selectedClientId);
+      }
+      
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(20);
 
