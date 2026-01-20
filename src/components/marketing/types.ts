@@ -220,6 +220,66 @@ export const CONTENT_TYPES = [
 ];
 
 // =====================================================
+// CONFIGURACIÓN DE TRAFFICKER - Opciones de Campaña
+// =====================================================
+
+export const BUDGET_OPTIMIZATION_TYPES = [
+  { value: 'cbo', label: 'CBO (Campaign Budget Optimization)', description: 'El presupuesto se distribuye automáticamente entre conjuntos de anuncios' },
+  { value: 'abo', label: 'ABO (Ad Set Budget Optimization)', description: 'Cada conjunto de anuncios tiene su propio presupuesto' },
+];
+
+export const BID_STRATEGIES = [
+  { value: 'lowest_cost', label: 'Menor costo', description: 'Maximizar resultados al menor costo posible' },
+  { value: 'cost_cap', label: 'Límite de costo', description: 'Mantener el costo por resultado bajo un límite' },
+  { value: 'bid_cap', label: 'Límite de puja', description: 'Establecer puja máxima por subasta' },
+  { value: 'target_cost', label: 'Costo objetivo', description: 'Mantener un costo promedio estable' },
+];
+
+export const OPTIMIZATION_GOALS = [
+  { value: 'conversions', label: 'Conversiones' },
+  { value: 'landing_page_views', label: 'Vistas de página destino' },
+  { value: 'link_clicks', label: 'Clics en enlace' },
+  { value: 'impressions', label: 'Impresiones' },
+  { value: 'reach', label: 'Alcance' },
+  { value: 'video_views', label: 'Reproducciones de video' },
+  { value: 'lead_generation', label: 'Generación de leads' },
+  { value: 'app_installs', label: 'Instalaciones de app' },
+  { value: 'purchases', label: 'Compras' },
+];
+
+export const ATTRIBUTION_WINDOWS = [
+  { value: '1d_click', label: '1 día clic' },
+  { value: '7d_click', label: '7 días clic' },
+  { value: '1d_view', label: '1 día visualización' },
+  { value: '7d_click_1d_view', label: '7 días clic, 1 día visualización' },
+  { value: '28d_click', label: '28 días clic' },
+];
+
+export const AUDIENCE_TYPES = [
+  { value: 'broad', label: 'Amplia', description: 'Targeting automático basado en intereses' },
+  { value: 'custom', label: 'Personalizada', description: 'Audiencia basada en datos propios (pixel, listas)' },
+  { value: 'lookalike', label: 'Similar (Lookalike)', description: 'Audiencia similar a clientes existentes' },
+  { value: 'saved', label: 'Guardada', description: 'Audiencia previamente guardada' },
+];
+
+export const SCHEDULE_TYPES = [
+  { value: 'continuous', label: 'Continuo', description: 'Anuncios corren todo el tiempo' },
+  { value: 'scheduled', label: 'Programado', description: 'Anuncios corren en horarios específicos' },
+];
+
+export const AD_PLACEMENTS = [
+  { value: 'feed', label: 'Feed' },
+  { value: 'stories', label: 'Stories' },
+  { value: 'reels', label: 'Reels' },
+  { value: 'explore', label: 'Explorar' },
+  { value: 'search', label: 'Búsqueda' },
+  { value: 'right_column', label: 'Columna derecha' },
+  { value: 'messenger', label: 'Messenger' },
+  { value: 'audience_network', label: 'Audience Network' },
+  { value: 'in_stream', label: 'In-Stream' },
+];
+
+// =====================================================
 // MÉTODO ESFERA - Fases y Configuración
 // =====================================================
 

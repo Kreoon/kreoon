@@ -3901,89 +3901,137 @@ export type Database = {
       marketing_campaigns: {
         Row: {
           actual_result: Json | null
+          ad_schedule: Json | null
+          attribution_window: string | null
+          audience_details: Json | null
+          audience_type: string | null
+          bid_amount: number | null
+          bid_strategy: string | null
           budget: number | null
+          budget_optimization: string | null
+          budget_per_adset: number | null
           campaign_type: string
           channel_id: string | null
           client_id: string | null
           content_ids: string[] | null
+          conversion_event: string | null
           created_at: string
           created_by: string | null
           currency: string | null
+          daily_budget: number | null
           description: string | null
           end_date: string | null
           expected_result: Json | null
           id: string
+          lifetime_budget: number | null
           marketing_client_id: string
           metrics: Json | null
           name: string
           objective_details: string | null
           objectives: Json | null
+          optimization_goal: string | null
           organization_id: string
+          pixel_id: string | null
+          placements: Json | null
           platforms: Json | null
+          schedule_type: string | null
           spent: number | null
           sphere_phase: Database["public"]["Enums"]["sphere_phase"] | null
           start_date: string | null
           status: string
           strategist_id: string | null
           tags: string[] | null
+          trafficker_notes: string | null
           updated_at: string
         }
         Insert: {
           actual_result?: Json | null
+          ad_schedule?: Json | null
+          attribution_window?: string | null
+          audience_details?: Json | null
+          audience_type?: string | null
+          bid_amount?: number | null
+          bid_strategy?: string | null
           budget?: number | null
+          budget_optimization?: string | null
+          budget_per_adset?: number | null
           campaign_type?: string
           channel_id?: string | null
           client_id?: string | null
           content_ids?: string[] | null
+          conversion_event?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string | null
+          daily_budget?: number | null
           description?: string | null
           end_date?: string | null
           expected_result?: Json | null
           id?: string
+          lifetime_budget?: number | null
           marketing_client_id: string
           metrics?: Json | null
           name: string
           objective_details?: string | null
           objectives?: Json | null
+          optimization_goal?: string | null
           organization_id: string
+          pixel_id?: string | null
+          placements?: Json | null
           platforms?: Json | null
+          schedule_type?: string | null
           spent?: number | null
           sphere_phase?: Database["public"]["Enums"]["sphere_phase"] | null
           start_date?: string | null
           status?: string
           strategist_id?: string | null
           tags?: string[] | null
+          trafficker_notes?: string | null
           updated_at?: string
         }
         Update: {
           actual_result?: Json | null
+          ad_schedule?: Json | null
+          attribution_window?: string | null
+          audience_details?: Json | null
+          audience_type?: string | null
+          bid_amount?: number | null
+          bid_strategy?: string | null
           budget?: number | null
+          budget_optimization?: string | null
+          budget_per_adset?: number | null
           campaign_type?: string
           channel_id?: string | null
           client_id?: string | null
           content_ids?: string[] | null
+          conversion_event?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string | null
+          daily_budget?: number | null
           description?: string | null
           end_date?: string | null
           expected_result?: Json | null
           id?: string
+          lifetime_budget?: number | null
           marketing_client_id?: string
           metrics?: Json | null
           name?: string
           objective_details?: string | null
           objectives?: Json | null
+          optimization_goal?: string | null
           organization_id?: string
+          pixel_id?: string | null
+          placements?: Json | null
           platforms?: Json | null
+          schedule_type?: string | null
           spent?: number | null
           sphere_phase?: Database["public"]["Enums"]["sphere_phase"] | null
           start_date?: string | null
           status?: string
           strategist_id?: string | null
           tags?: string[] | null
+          trafficker_notes?: string | null
           updated_at?: string
         }
         Relationships: [
