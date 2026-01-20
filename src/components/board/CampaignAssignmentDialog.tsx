@@ -4,8 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Megaphone, Zap, Lightbulb, RefreshCw, Heart, Target, Send, Loader2 } from "lucide-react";
+
+import { Megaphone, Zap, Lightbulb, RefreshCw, Heart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Content, ContentStatus } from "@/types/database";
 import { SPHERE_PHASES, SpherePhase } from "@/components/marketing/types";
@@ -44,8 +44,6 @@ export function CampaignAssignmentDialog({
   const [formData, setFormData] = useState({
     campaign_id: "",
     sphere_phase: "" as SpherePhase | "",
-    strategist_guidelines: "",
-    trafficker_guidelines: "",
   });
 
   // Fetch campaigns when dialog opens
@@ -61,8 +59,6 @@ export function CampaignAssignmentDialog({
       setFormData({
         campaign_id: "",
         sphere_phase: (content.sphere_phase as SpherePhase) || "",
-        strategist_guidelines: content.strategist_guidelines || "",
-        trafficker_guidelines: content.trafficker_guidelines || "",
       });
     }
   }, [content]);
@@ -123,8 +119,6 @@ export function CampaignAssignmentDialog({
       const updateData: Record<string, unknown> = {
         marketing_campaign_id: formData.campaign_id,
         sphere_phase: formData.sphere_phase || null,
-        strategist_guidelines: formData.strategist_guidelines || null,
-        trafficker_guidelines: formData.trafficker_guidelines || null,
         strategy_status: 'en_campaña',
         status: 'en_campaa' as ContentStatus,
       };
@@ -224,33 +218,6 @@ export function CampaignAssignmentDialog({
             </Select>
           </div>
 
-          {/* Strategist Guidelines */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-emerald-600" />
-              Indicaciones para Estratega
-            </Label>
-            <Textarea
-              value={formData.strategist_guidelines}
-              onChange={(e) => setFormData(prev => ({ ...prev, strategist_guidelines: e.target.value }))}
-              placeholder="Ángulo de venta, emoción principal, objetivo estratégico..."
-              rows={3}
-            />
-          </div>
-
-          {/* Trafficker Guidelines */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Send className="h-4 w-4 text-blue-600" />
-              Indicaciones para Trafficker
-            </Label>
-            <Textarea
-              value={formData.trafficker_guidelines}
-              onChange={(e) => setFormData(prev => ({ ...prev, trafficker_guidelines: e.target.value }))}
-              placeholder="Audiencia target, presupuesto sugerido, objetivos de campaña..."
-              rows={3}
-            />
-          </div>
         </div>
 
         <DialogFooter className="gap-2">
