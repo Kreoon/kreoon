@@ -6,9 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Loader2, Zap, Lightbulb, RefreshCw, Heart } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Plus, Loader2, Zap, Lightbulb, RefreshCw, Heart, ChevronDown, Settings2 } from "lucide-react";
 import { toast } from "sonner";
-import { PLATFORMS, PLATFORM_CAMPAIGN_TYPES, MarketingClient, SPHERE_PHASES, SpherePhase } from "./types";
+import { 
+  PLATFORMS, 
+  PLATFORM_CAMPAIGN_TYPES, 
+  MarketingClient, 
+  SPHERE_PHASES, 
+  SpherePhase,
+  BUDGET_OPTIMIZATION_TYPES,
+  BID_STRATEGIES,
+  OPTIMIZATION_GOALS,
+  ATTRIBUTION_WINDOWS,
+  AUDIENCE_TYPES,
+} from "./types";
 import { useAuth } from "@/hooks/useAuth";
 import { ContentSelector } from "./ContentSelector";
 
@@ -29,19 +41,31 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<MarketingClient[]>([]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   
   const [formData, setFormData] = useState({
     marketing_client_id: "",
     name: "",
     description: "",
-    platform: "", // Single platform selection
-    campaign_type: "", // Depends on platform
+    platform: "",
+    campaign_type: "",
     sphere_phase: "engage" as SpherePhase,
     budget: "",
     currency: "COP",
     start_date: "",
     end_date: "",
     content_ids: [] as string[],
+    // Campos de trafficker
+    budget_optimization: "cbo",
+    daily_budget: "",
+    bid_strategy: "",
+    bid_amount: "",
+    optimization_goal: "",
+    attribution_window: "",
+    audience_type: "",
+    pixel_id: "",
+    conversion_event: "",
+    trafficker_notes: "",
   });
 
   // Get campaign types for selected platform
@@ -132,7 +156,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
 
     setLoading(true);
     try {
-      // Create the campaign
+      // Create the campaign with trafficker fields
       const { data: campaignData, error } = await supabase
         .from('marketing_campaigns')
         .insert({
@@ -153,6 +177,17 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
           objectives: [],
           metrics: {},
           created_by: user.id,
+          // Campos de trafficker
+          budget_optimization: formData.budget_optimization,
+          daily_budget: parseFloat(formData.daily_budget) || 0,
+          bid_strategy: formData.bid_strategy || null,
+          bid_amount: parseFloat(formData.bid_amount) || 0,
+          optimization_goal: formData.optimization_goal || null,
+          attribution_window: formData.attribution_window || null,
+          audience_type: formData.audience_type || null,
+          pixel_id: formData.pixel_id || null,
+          conversion_event: formData.conversion_event || null,
+          trafficker_notes: formData.trafficker_notes || null,
         })
         .select('id')
         .single();
@@ -202,6 +237,16 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
         start_date: "",
         end_date: "",
         content_ids: [],
+        budget_optimization: "cbo",
+        daily_budget: "",
+        bid_strategy: "",
+        bid_amount: "",
+        optimization_goal: "",
+        attribution_window: "",
+        audience_type: "",
+        pixel_id: "",
+        conversion_event: "",
+        trafficker_notes: "",
       });
       onSuccess();
     } catch (error) {
@@ -383,6 +428,186 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
             </div>
           </div>
 
+          {/* Configuración Avanzada para Trafficker */}
+          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced} className="border rounded-lg">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between p-4 h-auto">
+                <span className="flex items-center gap-2 font-medium">
+                  <Settings2 className="h-4 w-4" />
+                  Configuración de Tráfico
+                </span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 pb-4 space-y-4">
+              {/* Budget Optimization */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Optimización de Presupuesto</Label>
+                  <Select
+                    value={formData.budget_optimization}
+                    onValueChange={(value) => setFormData({ ...formData, budget_optimization: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BUDGET_OPTIMIZATION_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <span className="font-medium">{type.label}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {BUDGET_OPTIMIZATION_TYPES.find(t => t.value === formData.budget_optimization)?.description}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Presupuesto Diario</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={formData.daily_budget}
+                      onChange={(e) => setFormData({ ...formData, daily_budget: e.target.value })}
+                      placeholder="0"
+                    />
+                    <span className="flex items-center text-sm text-muted-foreground">{formData.currency}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bid Strategy */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Estrategia de Puja</Label>
+                  <Select
+                    value={formData.bid_strategy}
+                    onValueChange={(value) => setFormData({ ...formData, bid_strategy: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar estrategia" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BID_STRATEGIES.map((strategy) => (
+                        <SelectItem key={strategy.value} value={strategy.value}>
+                          {strategy.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Monto de Puja (opcional)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={formData.bid_amount}
+                      onChange={(e) => setFormData({ ...formData, bid_amount: e.target.value })}
+                      placeholder="0"
+                    />
+                    <span className="flex items-center text-sm text-muted-foreground">{formData.currency}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Optimization Goal & Attribution */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Objetivo de Optimización</Label>
+                  <Select
+                    value={formData.optimization_goal}
+                    onValueChange={(value) => setFormData({ ...formData, optimization_goal: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar objetivo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OPTIMIZATION_GOALS.map((goal) => (
+                        <SelectItem key={goal.value} value={goal.value}>
+                          {goal.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Ventana de Atribución</Label>
+                  <Select
+                    value={formData.attribution_window}
+                    onValueChange={(value) => setFormData({ ...formData, attribution_window: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar ventana" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ATTRIBUTION_WINDOWS.map((window) => (
+                        <SelectItem key={window.value} value={window.value}>
+                          {window.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Audience Type */}
+              <div className="space-y-2">
+                <Label>Tipo de Audiencia</Label>
+                <Select
+                  value={formData.audience_type}
+                  onValueChange={(value) => setFormData({ ...formData, audience_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar tipo de audiencia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AUDIENCE_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        <span>{type.label}</span>
+                        <span className="text-xs text-muted-foreground ml-2">- {type.description}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Pixel & Conversion */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>ID del Pixel</Label>
+                  <Input
+                    value={formData.pixel_id}
+                    onChange={(e) => setFormData({ ...formData, pixel_id: e.target.value })}
+                    placeholder="Ej: 123456789012345"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Evento de Conversión</Label>
+                  <Input
+                    value={formData.conversion_event}
+                    onChange={(e) => setFormData({ ...formData, conversion_event: e.target.value })}
+                    placeholder="Ej: Purchase, Lead, AddToCart"
+                  />
+                </div>
+              </div>
+
+              {/* Trafficker Notes */}
+              <div className="space-y-2">
+                <Label>Notas del Trafficker</Label>
+                <Textarea
+                  value={formData.trafficker_notes}
+                  onChange={(e) => setFormData({ ...formData, trafficker_notes: e.target.value })}
+                  placeholder="Instrucciones específicas, segmentación, exclusiones, etc."
+                  rows={3}
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Content Selector - Only show when client is selected */}
           {formData.marketing_client_id && (
