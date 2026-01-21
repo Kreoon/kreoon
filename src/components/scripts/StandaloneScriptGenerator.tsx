@@ -13,13 +13,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useScriptPrompts, DEFAULT_SCRIPT_PROMPTS } from "@/hooks/useScriptPrompts";
-import { useOrganizationAI, AI_PROVIDERS_CONFIG } from "@/hooks/useOrganizationAI";
 import { ProductResearchSelector } from "./ProductResearchSelector";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
-  MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
-  Video, ChevronDown, CheckCircle2, Bot, RefreshCw, Building2,
-  Package, Lightbulb, Copy, Download, FileJson, AlertCircle, Database
+  Plus, X, Wand2, Settings2,
+  Video, ChevronDown, CheckCircle2, 
+  Package, Lightbulb, Copy, Download, AlertCircle, Database, Webhook
 } from "lucide-react";
 import { sanitizeHTML } from "@/lib/sanitizeHTML";
 
@@ -33,7 +32,6 @@ interface GeneratedContent {
 }
 
 interface StandaloneFormData {
-  // Información del producto/servicio/marca
   product_name: string;
   product_description: string;
   product_strategy: string;
@@ -42,7 +40,6 @@ interface StandaloneFormData {
   sales_angles: string;
   brand_name: string;
   brand_tone: string;
-  // Parámetros del contenido
   cta: string;
   sales_angle: string;
   hooks_count: string;
@@ -50,14 +47,10 @@ interface StandaloneFormData {
   narrative_structure: string;
   additional_instructions: string;
   hooks: string[];
-  // Documentos opcionales
   brief_content: string;
   research_content: string;
   reference_transcription: string;
   video_strategies: string;
-  // Configuración IA
-  ai_provider: "openai" | "gemini" | "anthropic";
-  ai_model: string;
 }
 
 interface GenerationStep {
@@ -66,39 +59,14 @@ interface GenerationStep {
   status: "pending" | "generating" | "done" | "error";
 }
 
-const AI_PROVIDERS = [
-  { 
-    value: "openai", 
-    label: "OpenAI GPT", 
-    description: "Requiere API Key",
-    models: [
-      { value: "gpt-4o", label: "GPT-4o (Recomendado)" },
-      { value: "gpt-4o-mini", label: "GPT-4o Mini (Rápido)" },
-      { value: "gpt-5", label: "GPT-5" },
-      { value: "gpt-5-mini", label: "GPT-5 Mini" },
-    ]
-  },
-  { 
-    value: "gemini", 
-    label: "Google Gemini", 
-    description: "Requiere API Key",
-    models: [
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Recomendado)" },
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-      { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
-    ]
-  },
-  { 
-    value: "anthropic", 
-    label: "Anthropic Claude", 
-    description: "Requiere API Key",
-    models: [
-      { value: "claude-sonnet-4-5", label: "Claude Sonnet 4.5 (Recomendado)" },
-      { value: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet" },
-      { value: "claude-3-5-haiku", label: "Claude 3.5 Haiku (Rápido)" },
-    ]
-  },
-];
+interface WebhookConfig {
+  script: string;
+  editor: string;
+  trafficker: string;
+  strategist: string;
+  designer: string;
+  admin: string;
+}
 
 const NARRATIVE_STRUCTURES = [
   { value: "problema-solucion", label: "Problema → Solución" },
@@ -125,8 +93,6 @@ const BRAND_TONES = [
   { value: "lujo", label: "Premium y exclusivo" },
 ];
 
-const CONTENT_AI_FUNCTION = "content-ai";
-
 export function StandaloneScriptGenerator() {
   const { toast } = useToast();
   const { profile } = useAuth();
@@ -134,22 +100,19 @@ export function StandaloneScriptGenerator() {
   
   const [loading, setLoading] = useState(false);
   const [newHook, setNewHook] = useState("");
-  const [promptsOpen, setPromptsOpen] = useState(false);
   const [activeResultTab, setActiveResultTab] = useState("script");
+  const [webhooks, setWebhooks] = useState<WebhookConfig>({
+    script: '',
+    editor: '',
+    trafficker: '',
+    strategist: '',
+    designer: '',
+    admin: '',
+  });
+  const [webhooksLoaded, setWebhooksLoaded] = useState(false);
   
   // Load custom prompts from organization settings
-  const { prompts: customPrompts, loading: loadingPrompts } = useScriptPrompts(organizationId);
-  
-  // Load enabled AI providers from organization settings
-  const { getEnabledProviders, hasValidApiKey, loading: loadingAI } = useOrganizationAI(organizationId);
-  
-  // Filter AI_PROVIDERS to only show enabled ones (excluding lovable)
-  const enabledProviders = useMemo(() => {
-    const enabled = getEnabledProviders();
-    return AI_PROVIDERS.filter(p => 
-      enabled.some(e => e.key === p.value && p.value !== 'lovable')
-    );
-  }, [getEnabledProviders]);
+  const { prompts: customPrompts } = useScriptPrompts(organizationId);
   
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
 
@@ -182,11 +145,54 @@ export function StandaloneScriptGenerator() {
     research_content: "",
     reference_transcription: "",
     video_strategies: "",
-    ai_provider: "openai",
-    ai_model: "gpt-4o",
   });
 
-  // Producto seleccionado en “Cargar Investigación de Producto”
+  // Load webhook configuration from app_settings
+  useEffect(() => {
+    const fetchWebhooks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('key, value')
+          .in('key', [
+            'kreoon_ia_webhook_script',
+            'kreoon_ia_webhook_editor',
+            'kreoon_ia_webhook_trafficker',
+            'kreoon_ia_webhook_strategist',
+            'kreoon_ia_webhook_designer',
+            'kreoon_ia_webhook_admin',
+          ]);
+
+        if (error) throw error;
+
+        const config: WebhookConfig = {
+          script: '',
+          editor: '',
+          trafficker: '',
+          strategist: '',
+          designer: '',
+          admin: '',
+        };
+
+        data?.forEach(setting => {
+          const key = setting.key.replace('kreoon_ia_webhook_', '') as keyof WebhookConfig;
+          if (key in config) {
+            config[key] = setting.value || '';
+          }
+        });
+
+        setWebhooks(config);
+        setWebhooksLoaded(true);
+      } catch (error) {
+        console.error('Error loading webhooks:', error);
+        setWebhooksLoaded(true);
+      }
+    };
+
+    fetchWebhooks();
+  }, []);
+
+  // Producto seleccionado en "Cargar Investigación de Producto"
   const [researchProduct, setResearchProduct] = useState<any | null>(null);
 
   const extractResearchAvatars = (product: any): any[] => {
@@ -208,36 +214,10 @@ export function StandaloneScriptGenerator() {
   const researchAvatars = useMemo(() => extractResearchAvatars(researchProduct), [researchProduct]);
   const researchAngles = useMemo(() => extractResearchAngles(researchProduct), [researchProduct]);
 
-  const currentProvider = enabledProviders.find(p => p.value === formData.ai_provider) || 
-                         AI_PROVIDERS.find(p => p.value === formData.ai_provider);
-  const availableModels = currentProvider?.models || [];
-
-  // Update provider and model when enabled providers change
-  useEffect(() => {
-    if (!loadingAI && enabledProviders.length > 0) {
-      const isCurrentProviderEnabled = enabledProviders.some(p => p.value === formData.ai_provider);
-      if (!isCurrentProviderEnabled) {
-        const firstEnabled = enabledProviders[0];
-        setFormData(prev => ({
-          ...prev,
-          ai_provider: firstEnabled.value as "openai" | "gemini" | "anthropic",
-          ai_model: firstEnabled.models[0]?.value || ""
-        }));
-      }
-    }
-  }, [loadingAI, enabledProviders, formData.ai_provider]);
-
-  // Update model when provider changes
-  useEffect(() => {
-    const provider = enabledProviders.find(p => p.value === formData.ai_provider) ||
-                    AI_PROVIDERS.find(p => p.value === formData.ai_provider);
-    if (provider && provider.models.length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        ai_model: provider.models[0].value
-      }));
-    }
-  }, [formData.ai_provider, enabledProviders]);
+  // Check if the primary webhook (script) is configured
+  const hasConfiguredWebhook = useMemo(() => {
+    return webhooks.script && webhooks.script.trim() !== '';
+  }, [webhooks]);
 
   const addHook = () => {
     if (newHook.trim() && formData.hooks.length < parseInt(formData.hooks_count)) {
@@ -273,92 +253,69 @@ export function StandaloneScriptGenerator() {
     ]);
   };
 
-  const buildBaseContext = () => {
+  const buildPayload = () => {
     const narrativeLabel = NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure;
     const toneLabel = BRAND_TONES.find(t => t.value === formData.brand_tone)?.label || formData.brand_tone;
     
-    let context = `PRODUCTO/SERVICIO: ${formData.product_name}
-MARCA: ${formData.brand_name || formData.product_name}
-DESCRIPCIÓN: ${formData.product_description || 'No disponible'}
-TONO DE MARCA: ${toneLabel}
-CTA: ${formData.cta}
-ÁNGULO DE VENTA: ${formData.sales_angle}
-ESTRUCTURA NARRATIVA: ${narrativeLabel}
-PAÍS OBJETIVO: ${formData.target_country}
-AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
-
-ESTRATEGIA:
-${formData.product_strategy || 'No disponible'}
-
-INVESTIGACIÓN DE MERCADO:
-${formData.market_research || 'No disponible'}
-
-ÁNGULOS DE VENTA DISPONIBLES:
-${formData.sales_angles || 'No definidos'}
-
-HOOKS SUGERIDOS:
-${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).join('\n') : 'Generar automáticamente'}`;
-
-    if (formData.brief_content) {
-      context += `\n\n--- BRIEF ---\n${formData.brief_content.substring(0, 3000)}`;
-    }
-    if (formData.research_content) {
-      context += `\n\n--- INVESTIGACIÓN ---\n${formData.research_content.substring(0, 3000)}`;
-    }
-    if (formData.reference_transcription) {
-      context += `\n\nTRANSCRIPCIÓN VIDEO DE REFERENCIA:\n${formData.reference_transcription}`;
-    }
-    if (formData.video_strategies) {
-      context += `\n\nESTRATEGIAS/ESTRUCTURAS DE VIDEO:\n${formData.video_strategies}`;
-    }
-    if (formData.additional_instructions) {
-      context += `\n\nINSTRUCCIONES ADICIONALES:\n${formData.additional_instructions}`;
-    }
-
-    return context;
+    return {
+      // Product/Service Info
+      product: {
+        name: formData.product_name,
+        description: formData.product_description,
+        brand: formData.brand_name || formData.product_name,
+        strategy: formData.product_strategy,
+        market_research: formData.market_research,
+        sales_angles: formData.sales_angles,
+      },
+      // Content Parameters
+      content: {
+        cta: formData.cta,
+        sales_angle: formData.sales_angle,
+        narrative_structure: narrativeLabel,
+        brand_tone: toneLabel,
+        target_country: formData.target_country,
+        hooks_count: parseInt(formData.hooks_count),
+        suggested_hooks: formData.hooks,
+      },
+      // Avatar/Audience
+      avatar: {
+        ideal_avatar: formData.ideal_avatar,
+      },
+      // Additional Documents
+      documents: {
+        brief_content: formData.brief_content,
+        research_content: formData.research_content,
+        reference_transcription: formData.reference_transcription,
+        video_strategies: formData.video_strategies,
+        additional_instructions: formData.additional_instructions,
+      },
+      // Organization context
+      organization: {
+        id: organizationId,
+        custom_prompts: customPrompts,
+      },
+      // Research product data if selected
+      research_data: researchProduct ? {
+        avatars: researchAvatars,
+        angles: researchAngles,
+        full_research: researchProduct.market_research,
+      } : null,
+    };
   };
 
-  const generateContent = async (
-    type: "script" | "editor" | "strategist" | "trafficker" | "designer" | "admin",
-    previousScript?: string
-  ): Promise<string> => {
-    const baseContext = buildBaseContext();
-    
-    // Use the prompts from the hook (which already has defaults), or fall back to DEFAULT_SCRIPT_PROMPTS
-    const promptKey = type === "script" ? "script" : type;
-    const customPrompt = customPrompts?.[promptKey] || DEFAULT_SCRIPT_PROMPTS[promptKey as keyof typeof DEFAULT_SCRIPT_PROMPTS] || "";
-    
-    let fullPrompt = `${customPrompt}\n\n---\nCONTEXTO:\n${baseContext}`;
-    
-    if (previousScript && type !== "script") {
-      fullPrompt += `\n\n---\nGUIÓN GENERADO:\n${previousScript}`;
-    }
-
-    const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
+  const callWebhook = async (webhookUrl: string, payload: any): Promise<any> => {
+    const { data, error } = await supabase.functions.invoke('n8n-proxy', {
       body: {
-        action: "generate_script",
-        organizationId,
-        prompt: fullPrompt,
-        product: {
-          id: null,
-          name: formData.product_name,
-          description: formData.product_description,
-          strategy: formData.product_strategy,
-          market_research: formData.market_research,
-          ideal_avatar: formData.ideal_avatar,
-          sales_angles: formData.sales_angles.split(',').map(s => s.trim()),
-        },
-        generation_type: type,
-        ai_provider: formData.ai_provider,
-        ai_model: formData.ai_model,
+        webhookUrl,
+        payload,
       },
     });
 
     if (error) throw new Error(error.message);
-    if (!data) throw new Error("Respuesta vacía de la IA");
+    if (!data) throw new Error("Respuesta vacía del webhook");
     if (data.error) throw new Error(data.error);
 
-    return data.script || data.result || "";
+    return data;
   };
 
   const handleGenerate = async () => {
@@ -380,6 +337,15 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       return;
     }
 
+    if (!hasConfiguredWebhook) {
+      toast({
+        title: "Webhook no configurado",
+        description: "Configura al menos el webhook de guión en Configuración de Plataforma → Webhooks",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     resetSteps();
     setGeneratedContent(null);
@@ -393,46 +359,117 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       admin_guidelines: "",
     };
 
+    const payload = buildPayload();
+
     try {
-      // Step 1: Generate Script (Bloque Creador)
-      updateStepStatus("script", "generating");
-      content.script = await generateContent("script");
-      updateStepStatus("script", "done");
-      setGeneratedContent({ ...content });
+      // Call each webhook that is configured
+      const webhookCalls: { key: keyof GeneratedContent; webhookKey: keyof WebhookConfig; stepKey: GenerationStep['key'] }[] = [
+        { key: 'script', webhookKey: 'script', stepKey: 'script' },
+        { key: 'editor_guidelines', webhookKey: 'editor', stepKey: 'editor' },
+        { key: 'trafficker_guidelines', webhookKey: 'trafficker', stepKey: 'trafficker' },
+        { key: 'strategist_guidelines', webhookKey: 'strategist', stepKey: 'strategist' },
+        { key: 'designer_guidelines', webhookKey: 'designer', stepKey: 'designer' },
+        { key: 'admin_guidelines', webhookKey: 'admin', stepKey: 'admin' },
+      ];
 
-      // Step 2: Generate Editor Guidelines
-      updateStepStatus("editor", "generating");
-      content.editor_guidelines = await generateContent("editor", content.script);
-      updateStepStatus("editor", "done");
-      setGeneratedContent({ ...content });
+      // Mark all configured webhooks as generating
+      for (const call of webhookCalls) {
+        if (webhooks[call.webhookKey]) {
+          updateStepStatus(call.stepKey, "generating");
+        }
+      }
 
-      // Step 3: Generate Trafficker Guidelines
-      updateStepStatus("trafficker", "generating");
-      content.trafficker_guidelines = await generateContent("trafficker", content.script);
-      updateStepStatus("trafficker", "done");
-      setGeneratedContent({ ...content });
+      // Try to get all blocks from the script webhook (single request returning all blocks)
+      if (webhooks.script) {
+        try {
+          const response = await callWebhook(webhooks.script, payload);
+          
+          // Handle response format: { bloques_html: { guion, pautas_editor, ... } }
+          // Or handle array response like the project webhook
+          const responseData = Array.isArray(response) ? response[0] : response;
+          
+          if (responseData?.bloques_html) {
+            const blocks = responseData.bloques_html;
+            
+            // Map response blocks to content
+            if (blocks.guion) {
+              content.script = blocks.guion;
+              updateStepStatus("script", "done");
+            }
+            if (blocks.pautas_editor) {
+              content.editor_guidelines = blocks.pautas_editor;
+              updateStepStatus("editor", "done");
+            }
+            if (blocks.pautas_trafficker) {
+              content.trafficker_guidelines = blocks.pautas_trafficker;
+              updateStepStatus("trafficker", "done");
+            }
+            if (blocks.pautas_estratega) {
+              content.strategist_guidelines = blocks.pautas_estratega;
+              updateStepStatus("strategist", "done");
+            }
+            if (blocks.pautas_disenador) {
+              content.designer_guidelines = blocks.pautas_disenador;
+              updateStepStatus("designer", "done");
+            }
+            if (blocks.pautas_admin) {
+              content.admin_guidelines = blocks.pautas_admin;
+              updateStepStatus("admin", "done");
+            }
+          } else if (responseData?.script || responseData?.result || responseData?.guion) {
+            // Fallback: single block response
+            content.script = responseData.script || responseData.result || responseData.guion || '';
+            updateStepStatus("script", "done");
+          }
 
-      // Step 4: Generate Strategist Guidelines
-      updateStepStatus("strategist", "generating");
-      content.strategist_guidelines = await generateContent("strategist", content.script);
-      updateStepStatus("strategist", "done");
-      setGeneratedContent({ ...content });
+          setGeneratedContent({ ...content });
+        } catch (scriptError) {
+          console.error("Error calling script webhook:", scriptError);
+          updateStepStatus("script", "error");
+          throw scriptError;
+        }
+      }
 
-      // Step 5: Generate Designer Guidelines
-      updateStepStatus("designer", "generating");
-      content.designer_guidelines = await generateContent("designer", content.script);
-      updateStepStatus("designer", "done");
-      setGeneratedContent({ ...content });
+      // If we didn't get all blocks from the script webhook, call individual webhooks
+      const needsIndividualCalls = [
+        { key: 'editor_guidelines', webhookKey: 'editor', stepKey: 'editor' },
+        { key: 'trafficker_guidelines', webhookKey: 'trafficker', stepKey: 'trafficker' },
+        { key: 'strategist_guidelines', webhookKey: 'strategist', stepKey: 'strategist' },
+        { key: 'designer_guidelines', webhookKey: 'designer', stepKey: 'designer' },
+        { key: 'admin_guidelines', webhookKey: 'admin', stepKey: 'admin' },
+      ] as const;
 
-      // Step 6: Generate Admin/PM Guidelines
-      updateStepStatus("admin", "generating");
-      content.admin_guidelines = await generateContent("admin", content.script);
-      updateStepStatus("admin", "done");
-      setGeneratedContent({ ...content });
+      for (const call of needsIndividualCalls) {
+        const webhookUrl = webhooks[call.webhookKey];
+        const contentKey = call.key as keyof GeneratedContent;
+        
+        // Only call if webhook is configured and we don't already have content
+        if (webhookUrl && !content[contentKey]) {
+          try {
+            updateStepStatus(call.stepKey, "generating");
+            const response = await callWebhook(webhookUrl, {
+              ...payload,
+              script_generated: content.script, // Include generated script as context
+              generation_type: call.webhookKey,
+            });
+            
+            const responseData = Array.isArray(response) ? response[0] : response;
+            content[contentKey] = responseData?.result || responseData?.content || responseData?.html || '';
+            updateStepStatus(call.stepKey, "done");
+            setGeneratedContent({ ...content });
+          } catch (error) {
+            console.error(`Error calling ${call.webhookKey} webhook:`, error);
+            updateStepStatus(call.stepKey, "error");
+          }
+        } else if (!webhookUrl) {
+          // No webhook configured, skip
+          updateStepStatus(call.stepKey, "done");
+        }
+      }
 
       toast({
         title: "Contenido generado exitosamente",
-        description: "Guión y pautas generados con IA",
+        description: "Guión y pautas generados via n8n",
       });
     } catch (error) {
       console.error("Error:", error);
@@ -534,7 +571,6 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                   ...prev,
                   product_name: product.name || prev.product_name,
                   product_description: product.description || prev.product_description,
-                  // Guardamos todos los ángulos como texto (para contexto) y dejamos el selector para escoger 1 en “Ángulo de Venta”
                   sales_angles: angles.length ? angles.join(", ") : prev.sales_angles,
                 }));
               }}
@@ -923,77 +959,33 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </CardContent>
         </Card>
 
-        {/* AI Configuration */}
+        {/* Webhook Status & Generate Button */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-primary" />
-              Configuración IA
+              <Webhook className="h-5 w-5 text-primary" />
+              Generación via n8n
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {enabledProviders.length === 0 && !loadingAI ? (
+            {!webhooksLoaded ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Cargando configuración...
+              </div>
+            ) : !hasConfiguredWebhook ? (
               <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 <span>
-                  No hay proveedores de IA activos. Configura al menos un proveedor en la configuración de IA de la organización.
+                  No hay webhooks configurados. Configúralos en{' '}
+                  <strong>Configuración → Plataforma → Webhooks</strong>
                 </span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Proveedor</Label>
-                  <Select
-                    value={formData.ai_provider}
-                    onValueChange={(value: "openai" | "gemini" | "anthropic") => 
-                      setFormData({ ...formData, ai_provider: value })
-                    }
-                    disabled={enabledProviders.length === 0}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar proveedor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {enabledProviders.map(provider => (
-                        <SelectItem key={provider.value} value={provider.value}>
-                          <div className="flex items-center gap-2">
-                            <span>{provider.label}</span>
-                            {!hasValidApiKey(provider.value) && (
-                              <AlertCircle className="h-3 w-3 text-amber-500" />
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Modelo</Label>
-                  <Select
-                    value={formData.ai_model}
-                    onValueChange={(value) => setFormData({ ...formData, ai_model: value })}
-                    disabled={enabledProviders.length === 0}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar modelo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableModels.map(model => (
-                        <SelectItem key={model.value} value={model.value}>
-                          {model.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-            
-            {formData.ai_provider && !hasValidApiKey(formData.ai_provider) && enabledProviders.length > 0 && (
-              <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded">
-                <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
                 <span>
-                  Configura la API Key de {currentProvider?.label} en la configuración de IA
+                  Webhook de guión configurado. Listo para generar.
                 </span>
               </div>
             )}
@@ -1001,7 +993,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             {/* Generation Steps Progress */}
             {loading && (
               <div className="space-y-2 p-4 rounded-lg bg-muted/50">
-                <p className="text-sm font-medium mb-3">Generando contenido...</p>
+                <p className="text-sm font-medium mb-3">Generando contenido via n8n...</p>
                 {generationSteps.map(step => (
                   <div key={step.key} className="flex items-center gap-2 text-sm">
                     {step.status === "pending" && <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />}
@@ -1018,7 +1010,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
             <Button 
               onClick={handleGenerate} 
-              disabled={loading || !formData.product_name}
+              disabled={loading || !formData.product_name || !hasConfiguredWebhook}
               className="w-full gap-2"
               size="lg"
             >

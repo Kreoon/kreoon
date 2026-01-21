@@ -1,10 +1,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings2, Palette, Globe, Coins, BarChart3 } from 'lucide-react';
+import { Settings2, Palette, Globe, Coins, BarChart3, Webhook } from 'lucide-react';
 import { AppSettingsManagement } from '@/components/settings/AppSettingsManagement';
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
 import { TokenGiftingPanel } from '@/components/settings/TokenGiftingPanel';
 import { PlatformMetricsPanel } from '@/components/settings/PlatformMetricsPanel';
+import { KreoonIAWebhooksSettings } from '@/components/settings/KreoonIAWebhooksSettings';
 
 export default function PlatformConfigSection() {
   return (
@@ -17,10 +18,14 @@ export default function PlatformConfigSection() {
       </div>
 
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="settings" className="gap-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Ajustes</span>
+          </TabsTrigger>
+          <TabsTrigger value="webhooks" className="gap-2">
+            <Webhook className="h-4 w-4" />
+            <span className="hidden sm:inline">Webhooks</span>
           </TabsTrigger>
           <TabsTrigger value="metrics" className="gap-2">
             <BarChart3 className="h-4 w-4" />
@@ -42,6 +47,10 @@ export default function PlatformConfigSection() {
 
         <TabsContent value="settings">
           <AppSettingsManagement />
+        </TabsContent>
+
+        <TabsContent value="webhooks">
+          <KreoonIAWebhooksSettings />
         </TabsContent>
 
         <TabsContent value="metrics">
