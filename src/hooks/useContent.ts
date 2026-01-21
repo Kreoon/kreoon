@@ -142,13 +142,26 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   };
 
   const approveContent = async (contentId: string, approverId: string) => {
+    // First, fetch current status for UP integration
+    const { data: currentContent } = await supabase
+      .from('content')
+      .select('status')
+      .eq('id', contentId)
+      .single();
+    
+    if (currentContent) {
+      // Use UP-aware status change
+      await updateContentStatusWithUP({
+        contentId,
+        oldStatus: currentContent.status as ContentStatus,
+        newStatus: 'approved'
+      });
+    }
+    
+    // Update approved_by separately
     const { error } = await supabase
       .from('content')
-      .update({ 
-        status: 'approved' as ContentStatus,
-        approved_at: new Date().toISOString(),
-        approved_by: approverId
-      })
+      .update({ approved_by: approverId })
       .eq('id', contentId);
 
     if (error) throw error;

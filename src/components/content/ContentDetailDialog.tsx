@@ -307,15 +307,18 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     if (!content) return;
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('content')
-        .update({ status: newStatus })
-        .eq('id', content.id);
-      if (error) throw error;
+      // Use centralized UP-aware status change
+      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+      await updateContentStatusWithUP({
+        contentId: content.id,
+        oldStatus: content.status as ContentStatus,
+        newStatus
+      });
       setCurrentStatus(newStatus);
       toast({ title: "Estado actualizado", description: `Nuevo estado: ${STATUS_LABELS[newStatus]}` });
       onUpdate?.();
     } catch (error) {
+      console.error('Error updating content status:', error);
       toast({ title: "Error al actualizar estado", variant: "destructive" });
     } finally {
       setLoading(false);

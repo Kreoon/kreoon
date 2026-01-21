@@ -165,13 +165,18 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
     if (!userId) return;
     setSubmitting(true);
     try {
+      // Use centralized UP-aware status change
+      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+      await updateContentStatusWithUP({
+        contentId: content.id,
+        oldStatus: content.status as ContentStatus,
+        newStatus: 'approved'
+      });
+      
+      // Update approved_by separately (UP handler doesn't set this)
       await supabase
         .from('content')
-        .update({ 
-          status: 'approved' as ContentStatus,
-          approved_at: new Date().toISOString(),
-          approved_by: userId
-        })
+        .update({ approved_by: userId })
         .eq('id', content.id);
 
       if (feedback) {
@@ -190,6 +195,7 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
       onApprove?.();
       onUpdate?.();
     } catch (error) {
+      console.error('Error approving content:', error);
       toast({ title: 'Error al aprobar', variant: 'destructive' });
     } finally {
       setSubmitting(false);
@@ -203,10 +209,13 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
     }
     setSubmitting(true);
     try {
-      await supabase
-        .from('content')
-        .update({ status: 'issue' as ContentStatus })
-        .eq('id', content.id);
+      // Use centralized UP-aware status change (delivered -> issue triggers penalty)
+      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+      await updateContentStatusWithUP({
+        contentId: content.id,
+        oldStatus: content.status as ContentStatus,
+        newStatus: 'issue'
+      });
 
       await supabase
         .from('content_comments')
@@ -222,6 +231,7 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
       onReject?.();
       onUpdate?.();
     } catch (error) {
+      console.error('Error rejecting content:', error);
       toast({ title: 'Error al enviar corrección', variant: 'destructive' });
     } finally {
       setSubmitting(false);
