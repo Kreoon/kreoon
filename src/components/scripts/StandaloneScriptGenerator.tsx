@@ -580,68 +580,6 @@ export function StandaloneScriptGenerator() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Webhook configuration warning */}
-      {webhooksLoaded && !hasConfiguredWebhook && (
-        <div className="lg:col-span-2">
-          <Card className="border-amber-500/50 bg-amber-500/5">
-            <CardContent className="flex items-start gap-4 py-4">
-              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="font-medium text-amber-700 dark:text-amber-400">
-                  Webhooks no configurados
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Para generar contenido, configura las URLs de los webhooks de n8n en{' '}
-                  <strong>Configuración de Plataforma → Webhooks</strong>.
-                  Cada workflow debe incluir un nodo "Respond to Webhook" para devolver la respuesta.
-                </p>
-                <a 
-                  href="/settings/platform" 
-                  className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                >
-                  <Settings2 className="h-4 w-4" />
-                  Ir a configuración
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* n8n configuration help when errors occur */}
-      {hasStepErrors && (
-        <div className="lg:col-span-2">
-          <Card className="border-destructive/50 bg-destructive/5">
-            <CardContent className="flex items-start gap-4 py-4">
-              <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="font-medium text-destructive">
-                  Error en la generación
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Hubo un problema al conectar con n8n. Verifica que:
-                </p>
-                <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                  <li>El workflow en n8n esté <strong>activo</strong></li>
-                  <li>El nodo Webhook esté configurado para recibir <strong>POST</strong></li>
-                  <li>Exista un nodo <strong>"Respond to Webhook"</strong> al final del flujo</li>
-                  <li>La URL del webhook sea correcta y accesible</li>
-                </ul>
-                <a 
-                  href="https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.respondtowebhook/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                >
-                  <Webhook className="h-4 w-4" />
-                  Ver documentación de n8n
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       {/* Left: Form */}
       <div className="space-y-6">
         {/* Product Research Selector */}
@@ -1058,54 +996,36 @@ export function StandaloneScriptGenerator() {
           </CardContent>
         </Card>
 
-        {/* Webhook Status & Generate Button */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Webhook className="h-5 w-5 text-primary" />
-              Generación via n8n
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!webhooksLoaded ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Cargando configuración...
-              </div>
-            ) : !hasConfiguredWebhook ? (
-              <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <span>
-                  No hay webhooks configurados. Configúralos en{' '}
-                  <strong>Configuración → Plataforma → Webhooks</strong>
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
-                <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                <span>
-                  Webhook de guión configurado. Listo para generar.
-                </span>
+        {/* Generate Button */}
+        <Card className="sticky bottom-4 shadow-lg border-primary/20">
+          <CardContent className="pt-4 pb-4 space-y-4">
+            {/* Generation Steps Progress */}
+            {loading && (
+              <div className="space-y-2 p-3 rounded-lg bg-muted/50">
+                <p className="text-sm font-medium mb-2">Generando contenido...</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {generationSteps.map(step => (
+                    <div key={step.key} className="flex items-center gap-2 text-xs">
+                      {step.status === "pending" && <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30" />}
+                      {step.status === "generating" && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
+                      {step.status === "done" && <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                      {step.status === "error" && <X className="h-3 w-3 text-destructive" />}
+                      <span className={step.status === "generating" ? "text-primary font-medium" : "text-muted-foreground"}>
+                        {step.label.replace(/^[^\s]+\s/, '')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Generation Steps Progress */}
-            {loading && (
-              <div className="space-y-2 p-4 rounded-lg bg-muted/50">
-                <p className="text-sm font-medium mb-3">Generando contenido via n8n...</p>
-                {generationSteps.map(step => (
-                  <div key={step.key} className="flex items-center gap-2 text-sm">
-                    {step.status === "pending" && <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />}
-                    {step.status === "generating" && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-                    {step.status === "done" && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                    {step.status === "error" && <X className="h-4 w-4 text-destructive" />}
-                    <span className={step.status === "generating" ? "text-primary font-medium" : ""}>
-                      {step.label}
-                    </span>
-                  </div>
-                ))}
+            {hasStepErrors && !loading && (
+              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>Error en la generación. Contacta al administrador.</span>
               </div>
             )}
+
 
             <Button 
               onClick={handleGenerate} 
