@@ -303,6 +303,32 @@ export function StandaloneScriptGenerator() {
     };
   };
 
+  const parseN8nError = (error: any): string => {
+    const errorStr = typeof error === 'string' ? error : error?.message || JSON.stringify(error);
+    
+    // Common n8n errors with user-friendly messages
+    if (errorStr.includes('No Respond to Webhook node found')) {
+      return 'El workflow de n8n necesita un nodo "Respond to Webhook" para devolver respuestas. Configúralo en tu flujo de n8n.';
+    }
+    if (errorStr.includes('not registered for POST')) {
+      return 'El webhook no acepta solicitudes POST. Verifica que el nodo Webhook en n8n esté configurado para recibir POST.';
+    }
+    if (errorStr.includes('404')) {
+      return 'Webhook no encontrado. Verifica que la URL sea correcta y el workflow esté activo en n8n.';
+    }
+    if (errorStr.includes('401') || errorStr.includes('403')) {
+      return 'Acceso denegado. Verifica la autenticación del webhook en n8n.';
+    }
+    if (errorStr.includes('500')) {
+      return 'Error interno en n8n. Revisa los logs del workflow para más detalles.';
+    }
+    if (errorStr.includes('timeout') || errorStr.includes('ETIMEDOUT')) {
+      return 'Tiempo de espera agotado. El workflow de n8n tardó demasiado en responder.';
+    }
+    
+    return errorStr;
+  };
+
   const callWebhook = async (webhookUrl: string, payload: any): Promise<any> => {
     const { data, error } = await supabase.functions.invoke('n8n-proxy', {
       body: {
@@ -311,9 +337,12 @@ export function StandaloneScriptGenerator() {
       },
     });
 
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(parseN8nError(error.message));
     if (!data) throw new Error("Respuesta vacía del webhook");
-    if (data.error) throw new Error(data.error);
+    if (data.error) {
+      const details = data.details ? ` - ${parseN8nError(data.details)}` : '';
+      throw new Error(parseN8nError(data.error) + details);
+    }
 
     return data;
   };
@@ -477,10 +506,15 @@ export function StandaloneScriptGenerator() {
       if (currentStep) {
         updateStepStatus(currentStep.key, "error");
       }
+      
+      const errorMessage = error instanceof Error ? error.message : "No se pudo generar el contenido";
+      const isN8nConfigError = errorMessage.includes('n8n') || errorMessage.includes('workflow') || errorMessage.includes('Webhook');
+      
       toast({
-        title: "Error al generar",
-        description: error instanceof Error ? error.message : "No se pudo generar el contenido",
+        title: isN8nConfigError ? "Error de configuración n8n" : "Error al generar",
+        description: errorMessage,
         variant: "destructive",
+        duration: isN8nConfigError ? 10000 : 5000, // Show longer for config errors
       });
     } finally {
       setLoading(false);
@@ -541,8 +575,73 @@ export function StandaloneScriptGenerator() {
     { key: "admin", label: "Admin", icon: Users, content: generatedContent?.admin_guidelines },
   ];
 
+  // Check if any webhook has issues (we can detect this from step errors)
+  const hasStepErrors = generationSteps.some(step => step.status === 'error');
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Webhook configuration warning */}
+      {webhooksLoaded && !hasConfiguredWebhook && (
+        <div className="lg:col-span-2">
+          <Card className="border-amber-500/50 bg-amber-500/5">
+            <CardContent className="flex items-start gap-4 py-4">
+              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="font-medium text-amber-700 dark:text-amber-400">
+                  Webhooks no configurados
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Para generar contenido, configura las URLs de los webhooks de n8n en{' '}
+                  <strong>Configuración de Plataforma → Webhooks</strong>.
+                  Cada workflow debe incluir un nodo "Respond to Webhook" para devolver la respuesta.
+                </p>
+                <a 
+                  href="/settings/platform" 
+                  className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                >
+                  <Settings2 className="h-4 w-4" />
+                  Ir a configuración
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* n8n configuration help when errors occur */}
+      {hasStepErrors && (
+        <div className="lg:col-span-2">
+          <Card className="border-destructive/50 bg-destructive/5">
+            <CardContent className="flex items-start gap-4 py-4">
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="font-medium text-destructive">
+                  Error en la generación
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Hubo un problema al conectar con n8n. Verifica que:
+                </p>
+                <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                  <li>El workflow en n8n esté <strong>activo</strong></li>
+                  <li>El nodo Webhook esté configurado para recibir <strong>POST</strong></li>
+                  <li>Exista un nodo <strong>"Respond to Webhook"</strong> al final del flujo</li>
+                  <li>La URL del webhook sea correcta y accesible</li>
+                </ul>
+                <a 
+                  href="https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.respondtowebhook/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                >
+                  <Webhook className="h-4 w-4" />
+                  Ver documentación de n8n
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Left: Form */}
       <div className="space-y-6">
         {/* Product Research Selector */}
