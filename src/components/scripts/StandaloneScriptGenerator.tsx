@@ -667,64 +667,14 @@ export function StandaloneScriptGenerator() {
               <Label htmlFor="ideal_avatar">Avatar / Cliente Ideal *</Label>
               <Textarea
                 id="ideal_avatar"
-                placeholder="Describe a tu cliente ideal: edad, género, problemas, deseos..."
+                placeholder="Describe a tu cliente ideal: edad, género, problemas, deseos... (Selecciona un producto con investigación para autocompletar)"
                 value={formData.ideal_avatar}
                 onChange={(e) => setFormData({ ...formData, ideal_avatar: e.target.value })}
                 rows={3}
+                className={formData.ideal_avatar ? "border-green-500/30 bg-green-500/5" : ""}
               />
-
-              {researchAvatars.length > 0 && (
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <Button type="button" variant="outline" size="sm" className="w-full justify-between">
-                      <span className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-primary" />
-                        Elegir avatar de la investigación ({Math.min(5, researchAvatars.length)})
-                      </span>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-2">
-                    <div className="space-y-2">
-                      {researchAvatars.slice(0, 5).map((a: any, idx: number) => {
-                        const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
-                        const situation = a?.situation || a?.currentSituation || "";
-                        const awareness = a?.awarenessLevel || a?.awareness || "";
-                        const drivers = Array.isArray(a?.drivers) ? a.drivers.join(", ") : (a?.drivers || a?.emotionalDrivers || "");
-                        const objections = Array.isArray(a?.objections) ? a.objections.join(", ") : (a?.objections || a?.mainObjections || "");
-                        const phrases = Array.isArray(a?.phrases) ? a.phrases : (Array.isArray(a?.typicalPhrases) ? a.typicalPhrases : []);
-
-                        const formatted = [
-                          `AVATAR: ${name}`,
-                          situation ? `SITUACIÓN: ${situation}` : "",
-                          awareness ? `NIVEL DE CONSCIENCIA: ${awareness}` : "",
-                          drivers ? `DRIVERS: ${drivers}` : "",
-                          objections ? `OBJECIONES: ${objections}` : "",
-                          phrases?.length ? `FRASES TEXTUALES: ${phrases.join(" | ")}` : "",
-                        ].filter(Boolean).join("\n");
-
-                        return (
-                          <button
-                            key={idx}
-                            type="button"
-                            className="w-full text-left p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                            onClick={() => setFormData(prev => ({ ...prev, ideal_avatar: formatted }))}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="font-medium text-sm">{name}</span>
-                              <Badge variant="secondary" className="text-xs">Usar</Badge>
-                            </div>
-                            {(situation || awareness) && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                {situation || awareness}
-                              </p>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
+              {formData.ideal_avatar && (
+                <p className="text-xs text-green-600 dark:text-green-400">✓ Avatar cargado</p>
               )}
             </div>
 
@@ -735,10 +685,10 @@ export function StandaloneScriptGenerator() {
                   value={formData.target_country}
                   onValueChange={(value) => setFormData({ ...formData, target_country: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Seleccionar país" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
                     {COUNTRIES.map(country => (
                       <SelectItem key={country} value={country}>{country}</SelectItem>
                     ))}
@@ -751,10 +701,10 @@ export function StandaloneScriptGenerator() {
                   value={formData.brand_tone}
                   onValueChange={(value) => setFormData({ ...formData, brand_tone: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Seleccionar tono" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
                     {BRAND_TONES.map(tone => (
                       <SelectItem key={tone.value} value={tone.value}>{tone.label}</SelectItem>
                     ))}
@@ -828,50 +778,13 @@ export function StandaloneScriptGenerator() {
                 <Label htmlFor="sales_angle">Ángulo de Venta *</Label>
                 <Input
                   id="sales_angle"
-                  placeholder="Ej: Transformación de vida"
+                  placeholder="Ej: Transformación de vida (selecciona desde investigación)"
                   value={formData.sales_angle}
                   onChange={(e) => setFormData({ ...formData, sales_angle: e.target.value })}
+                  className={formData.sales_angle ? "border-green-500/30 bg-green-500/5" : ""}
                 />
-
-                {researchAngles.length > 0 && (
-                  <Collapsible>
-                    <CollapsibleTrigger asChild>
-                      <Button type="button" variant="outline" size="sm" className="w-full justify-between">
-                        <span className="flex items-center gap-2">
-                          <Sparkles className="h-4 w-4 text-primary" />
-                          Elegir ángulo de venta ({researchAngles.length})
-                        </span>
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pt-2">
-                      <ScrollArea className="max-h-60">
-                        <div className="space-y-2 p-1">
-                          {researchAngles.map((a: any, idx: number) => {
-                            const angleText = a?.angle || a?.salesAngle || a?.name || "";
-                            if (!angleText) return null;
-                            const avatar = a?.avatar || a?.targetAvatar;
-                            const type = a?.type || a?.category;
-
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                className="w-full text-left p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                                onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
-                              >
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  {type && <Badge variant="outline" className="text-xs">{type}</Badge>}
-                                  {avatar && <Badge variant="secondary" className="text-xs">{avatar}</Badge>}
-                                </div>
-                                <p className="text-sm font-medium mt-1">{angleText}</p>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </ScrollArea>
-                    </CollapsibleContent>
-                  </Collapsible>
+                {formData.sales_angle && (
+                  <p className="text-xs text-green-600 dark:text-green-400">✓ Ángulo seleccionado</p>
                 )}
               </div>
             </div>
@@ -883,10 +796,10 @@ export function StandaloneScriptGenerator() {
                   value={formData.narrative_structure}
                   onValueChange={(value) => setFormData({ ...formData, narrative_structure: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Seleccionar estructura" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
                     {NARRATIVE_STRUCTURES.map(structure => (
                       <SelectItem key={structure.value} value={structure.value}>
                         {structure.label}
@@ -901,10 +814,10 @@ export function StandaloneScriptGenerator() {
                   value={formData.hooks_count}
                   onValueChange={(value) => setFormData({ ...formData, hooks_count: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
                     {[1, 2, 3, 4, 5].map(n => (
                       <SelectItem key={n} value={String(n)}>{n}</SelectItem>
                     ))}
