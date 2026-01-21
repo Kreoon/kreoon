@@ -62,11 +62,16 @@ serve(async (req) => {
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      console.error("Failed to parse n8n response as JSON:", e);
-      return new Response(
-        JSON.stringify({ error: "n8n response is not valid JSON", raw: responseText.substring(0, 1000) }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log("Response is not JSON, wrapping as text result");
+      // If not JSON, wrap the text response in a structured format
+      // This allows n8n workflows to return plain text and still work
+      data = {
+        bloques_html: {
+          guion: responseText.trim()
+        },
+        raw_text: responseText.trim(),
+        is_text_response: true
+      };
     }
 
     console.log("=== n8n Proxy Success ===");
