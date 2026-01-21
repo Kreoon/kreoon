@@ -525,13 +525,18 @@ export default function ClientDashboard() {
     setSubmitting(true);
 
     try {
+      // Use centralized UP-aware status change
+      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+      await updateContentStatusWithUP({
+        contentId: selectedContent.id,
+        oldStatus: selectedContent.status as ContentStatus,
+        newStatus: 'approved'
+      });
+      
+      // Update approved_by separately (UP handler doesn't set this)
       await supabase
         .from('content')
-        .update({ 
-          status: 'approved' as ContentStatus,
-          approved_at: new Date().toISOString(),
-          approved_by: user.id
-        })
+        .update({ approved_by: user.id })
         .eq('id', selectedContent.id);
 
       if (feedback) {
@@ -549,6 +554,7 @@ export default function ClientDashboard() {
       setFeedback('');
       if (selectedClientId) fetchClientData(selectedClientId);
     } catch (error) {
+      console.error('Error approving content:', error);
       toast({ title: 'Error', description: 'No se pudo aprobar el contenido', variant: 'destructive' });
     } finally {
       setSubmitting(false);
@@ -563,9 +569,18 @@ export default function ClientDashboard() {
     setSubmitting(true);
 
     try {
+      // Use centralized UP-aware status change (delivered -> issue triggers penalty)
+      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+      await updateContentStatusWithUP({
+        contentId: selectedContent.id,
+        oldStatus: selectedContent.status as ContentStatus,
+        newStatus: 'issue'
+      });
+      
+      // Update notes separately
       await supabase
         .from('content')
-        .update({ status: 'editing' as ContentStatus, notes: feedback })
+        .update({ notes: feedback })
         .eq('id', selectedContent.id);
 
       await supabase.from('content_comments').insert({
@@ -579,6 +594,7 @@ export default function ClientDashboard() {
       setFeedback('');
       if (selectedClientId) fetchClientData(selectedClientId);
     } catch (error) {
+      console.error('Error rejecting content:', error);
       toast({ title: 'Error', description: 'No se pudo enviar a corrección', variant: 'destructive' });
     } finally {
       setSubmitting(false);
@@ -589,33 +605,53 @@ export default function ClientDashboard() {
   const handleQuickStatusChange = async (contentId: string, newStatus: ContentStatus, notes?: string) => {
     if (!user) return;
     
-    const updateData: any = { status: newStatus };
-    
-    if (newStatus === 'approved') {
-      updateData.approved_at = new Date().toISOString();
-      updateData.approved_by = user.id;
-    }
-    
-    if (newStatus === 'script_approved') {
-      updateData.script_approved_at = new Date().toISOString();
-      updateData.script_approved_by = user.id;
-    }
-    
-    const { error } = await supabase
-      .from('content')
-      .update(updateData)
-      .eq('id', contentId);
+    try {
+      // Get current status for UP integration
+      const { data: currentContent } = await supabase
+        .from('content')
+        .select('status')
+        .eq('id', contentId)
+        .single();
       
-    if (error) throw error;
-    
-    // Log the change as a comment
-    await supabase.from('content_comments').insert({
-      content_id: contentId,
-      user_id: user.id,
-      comment: `Estado cambiado a: ${STATUS_LABELS[newStatus]}`
-    });
-    
-    if (selectedClientId) fetchClientData(selectedClientId);
+      if (currentContent) {
+        // Use centralized UP-aware status change
+        const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+        await updateContentStatusWithUP({
+          contentId,
+          oldStatus: currentContent.status as ContentStatus,
+          newStatus
+        });
+        
+        // Update additional fields that UP handler doesn't set
+        const updateData: any = {};
+        if (newStatus === 'approved') {
+          updateData.approved_by = user.id;
+        }
+        if (newStatus === 'script_approved') {
+          updateData.script_approved_at = new Date().toISOString();
+          updateData.script_approved_by = user.id;
+        }
+        
+        if (Object.keys(updateData).length > 0) {
+          await supabase
+            .from('content')
+            .update(updateData)
+            .eq('id', contentId);
+        }
+      }
+      
+      // Log the change as a comment
+      await supabase.from('content_comments').insert({
+        content_id: contentId,
+        user_id: user.id,
+        comment: `Estado cambiado a: ${STATUS_LABELS[newStatus]}`
+      });
+      
+      if (selectedClientId) fetchClientData(selectedClientId);
+    } catch (error) {
+      console.error('Error changing content status:', error);
+      throw error;
+    }
   };
 
   const getContentByStatus = (statuses: ContentStatus[]) => content.filter(c => statuses.includes(c.status));
@@ -1850,13 +1886,18 @@ export default function ClientDashboard() {
           initialIndex={fullscreenStartIndex}
           onClose={() => setShowFullscreenReview(false)}
           onApprove={async (item, feedbackText) => {
+            // Use centralized UP-aware status change
+            const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+            await updateContentStatusWithUP({
+              contentId: item.id,
+              oldStatus: item.status as ContentStatus,
+              newStatus: 'approved'
+            });
+            
+            // Update approved_by separately
             await supabase
               .from('content')
-              .update({ 
-                status: 'approved' as ContentStatus,
-                approved_at: new Date().toISOString(),
-                approved_by: user?.id
-              })
+              .update({ approved_by: user?.id })
               .eq('id', item.id);
             
             if (feedbackText) {
@@ -1871,9 +1912,18 @@ export default function ClientDashboard() {
             if (selectedClientId) fetchClientData(selectedClientId);
           }}
           onReject={async (item, feedbackText) => {
+            // Use centralized UP-aware status change
+            const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+            await updateContentStatusWithUP({
+              contentId: item.id,
+              oldStatus: item.status as ContentStatus,
+              newStatus: 'issue'
+            });
+            
+            // Update notes separately
             await supabase
               .from('content')
-              .update({ status: 'issue' as ContentStatus, notes: feedbackText })
+              .update({ notes: feedbackText })
               .eq('id', item.id);
             
             await supabase.from('content_comments').insert({

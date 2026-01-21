@@ -292,9 +292,17 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange, sh
       if (onStatusChange) {
         await onStatusChange(content.id, status);
       } else {
-        const updateData: any = { status };
+        // Use centralized UP-aware status change
+        const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
+        await updateContentStatusWithUP({
+          contentId: content.id,
+          oldStatus: content.status as ContentStatus,
+          newStatus: status
+        });
+        
+        // Update additional fields that UP handler doesn't set
+        const updateData: any = {};
         if (status === 'approved') {
-          updateData.approved_at = new Date().toISOString();
           updateData.approved_by = userId;
         }
         if (status === 'script_approved') {
@@ -302,10 +310,12 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange, sh
           updateData.script_approved_by = userId;
         }
         
-        await supabase
-          .from('content')
-          .update(updateData)
-          .eq('id', content.id);
+        if (Object.keys(updateData).length > 0) {
+          await supabase
+            .from('content')
+            .update(updateData)
+            .eq('id', content.id);
+        }
       }
 
       if (feedback) {
@@ -323,6 +333,7 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange, sh
       setShowFeedback(false);
       onUpdate?.();
     } catch (error) {
+      console.error('Error updating content status:', error);
       toast({ title: 'Error', variant: 'destructive' });
     } finally {
       setSubmitting(false);
