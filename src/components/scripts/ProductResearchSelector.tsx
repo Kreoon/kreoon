@@ -328,25 +328,19 @@ Frases: ${avatar.phrases?.join('; ') || ''}
     <div className="space-y-4">
       {/* Product Selector */}
       <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <Package className="h-4 w-4 text-primary" />
-          Cargar desde Producto con Investigación
-        </Label>
         <Select
           value={selectedProduct?.id || ""}
           onValueChange={handleProductChange}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccionar producto..." />
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Seleccionar producto con investigación..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
             {products.map(product => {
-              // Count avatars from multiple sources
               const avatarCount = 
                 product.avatar_profiles?.profiles?.length || 
                 product.market_research?.strategicAvatars?.length || 0;
               
-              // Count angles from multiple sources
               const anglesCount = 
                 product.sales_angles_data?.angles?.length || 
                 product.market_research?.salesAngles?.length ||
@@ -355,17 +349,16 @@ Frases: ${avatar.phrases?.join('; ') || ''}
               return (
                 <SelectItem key={product.id} value={product.id}>
                   <div className="flex items-center gap-2">
-                    {product.name}
+                    <Package className="h-4 w-4 text-primary" />
+                    <span>{product.name}</span>
                     {avatarCount > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        <Users className="h-3 w-3 mr-1" />
-                        {avatarCount}
+                      <Badge variant="secondary" className="text-xs ml-auto">
+                        {avatarCount} avatares
                       </Badge>
                     )}
                     {anglesCount > 0 && (
                       <Badge variant="outline" className="text-xs">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        {anglesCount}
+                        {anglesCount} ángulos
                       </Badge>
                     )}
                   </div>
@@ -377,85 +370,72 @@ Frases: ${avatar.phrases?.join('; ') || ''}
       </div>
 
       {selectedProduct && (
-        <div className="space-y-3">
-          {/* Debug info - shows data availability */}
+        <div className="space-y-2 pt-2 border-t">
+          {/* Quick info bar */}
           {avatarProfiles.length === 0 && salesAngles.length === 0 && (
-            <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-sm text-yellow-700 dark:text-yellow-400">
-              <p className="font-medium">Este producto no tiene investigación de mercado completa.</p>
-              <p className="text-xs mt-1">Genera el Brief IA para obtener avatares y ángulos de venta.</p>
+            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-sm text-amber-700 dark:text-amber-400">
+              <p className="font-medium">Sin investigación completa</p>
+              <p className="text-xs mt-1">Genera el Brief IA en este producto.</p>
             </div>
           )}
           
           {/* Avatars Collapsible */}
-          {avatarProfiles.length > 0 ? (
+          {avatarProfiles.length > 0 && (
             <Collapsible open={avatarsOpen} onOpenChange={setAvatarsOpen}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-between">
-                  <span className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-purple-500" />
-                    Avatares Estratégicos ({avatarProfiles.length})
-                  </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${avatarsOpen ? 'rotate-180' : ''}`} />
-                </Button>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-background hover:bg-accent/50 transition-colors">
+                <span className="flex items-center gap-2 font-medium text-sm">
+                  <Users className="h-4 w-4 text-purple-500" />
+                  Avatares Estratégicos ({avatarProfiles.length})
+                </span>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${avatarsOpen ? 'rotate-180' : ''}`} />
               </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2">
-                <ScrollArea className="max-h-60">
-                  <div className="space-y-2 p-1">
-                    {avatarProfiles.map((avatar, idx) => (
-                      <div
-                        key={idx}
-                        className="p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                        onClick={() => handleSelectAvatar(avatar)}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-sm">{avatar.name || `Avatar ${idx + 1}`}</span>
-                          <Badge variant="secondary" className="text-xs">
-                            {avatar.awarenessLevel?.substring(0, 20) || 'N/A'}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {avatar.situation}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSelectAvatar(avatar);
-                            }}
-                          >
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Usar este avatar
-                          </Button>
-                        </div>
+              <CollapsibleContent className="pt-2 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {avatarProfiles.map((avatar, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 border rounded-lg bg-card hover:bg-accent/30 cursor-pointer transition-colors group"
+                      onClick={() => handleSelectAvatar(avatar)}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <span className="font-medium text-sm">{avatar.name || `Avatar ${idx + 1}`}</span>
+                        <Badge variant="secondary" className="text-xs shrink-0">
+                          {avatar.awarenessLevel?.substring(0, 15) || 'N/A'}
+                        </Badge>
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                        {avatar.situation}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs w-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectAvatar(avatar);
+                        }}
+                      >
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Usar este avatar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </CollapsibleContent>
             </Collapsible>
-          ) : (
-            <div className="p-2 border border-dashed rounded-lg text-center text-muted-foreground text-sm">
-              <Users className="h-4 w-4 mx-auto mb-1 opacity-50" />
-              Sin avatares disponibles
-            </div>
           )}
 
           {/* Sales Angles Collapsible */}
-          {salesAngles.length > 0 ? (
+          {salesAngles.length > 0 && (
             <Collapsible open={anglesOpen} onOpenChange={setAnglesOpen}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-between">
-                  <span className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-amber-500" />
-                    Ángulos de Venta ({salesAngles.length})
-                  </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${anglesOpen ? 'rotate-180' : ''}`} />
-                </Button>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-background hover:bg-accent/50 transition-colors">
+                <span className="flex items-center gap-2 font-medium text-sm">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  Ángulos de Venta ({salesAngles.length})
+                </span>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${anglesOpen ? 'rotate-180' : ''}`} />
               </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2">
+              <CollapsibleContent className="pt-2 data-[state=open]:animate-in data-[state=closed]:animate-out">
                 <div className="flex justify-end mb-2">
                   <Button
                     size="sm"
@@ -467,83 +447,52 @@ Frases: ${avatar.phrases?.join('; ') || ''}
                     Usar primeros 5 como hooks
                   </Button>
                 </div>
-                <ScrollArea className="max-h-60">
-                  <div className="space-y-2 p-1">
-                    {salesAngles.map((angle, idx) => (
-                      <div
-                        key={idx}
-                        className="p-2 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors flex items-center justify-between"
-                        onClick={() => handleSelectAngle(angle)}
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            {angle.type && (
-                              <Badge variant="outline" className="text-xs capitalize">
-                                {angle.type}
-                              </Badge>
-                            )}
-                            {angle.emotion && (
-                              <Badge variant="secondary" className="text-xs">
-                                {angle.emotion}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm font-medium">{angle.angle}</p>
-                          {(angle.avatar || angle.contentType) && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {angle.avatar && `Avatar: ${angle.avatar}`}
-                              {angle.avatar && angle.contentType && ' • '}
-                              {angle.contentType && `Formato: ${angle.contentType}`}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 shrink-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectAngle(angle);
-                          }}
-                        >
-                          <CheckCircle2 className="h-3 w-3" />
-                        </Button>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {salesAngles.map((angle, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 border rounded-lg bg-card hover:bg-accent/30 cursor-pointer transition-colors group"
+                      onClick={() => handleSelectAngle(angle)}
+                    >
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        {angle.type && (
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {angle.type}
+                          </Badge>
+                        )}
+                        {angle.avatar && (
+                          <Badge variant="secondary" className="text-xs">
+                            {angle.avatar}
+                          </Badge>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                      <p className="text-sm">{angle.angle}</p>
+                    </div>
+                  ))}
+                </div>
               </CollapsibleContent>
             </Collapsible>
-          ) : (
-            <div className="p-2 border border-dashed rounded-lg text-center text-muted-foreground text-sm">
-              <Sparkles className="h-4 w-4 mx-auto mb-1 opacity-50" />
-              Sin ángulos de venta disponibles
-            </div>
           )}
 
-          {/* Market Insights Collapsible */}
+          {/* Insights Collapsible */}
           {contentStrategy?.executiveSummary?.keyInsights?.length > 0 && (
             <Collapsible open={insightsOpen} onOpenChange={setInsightsOpen}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-between">
-                  <span className="flex items-center gap-2">
-                    <Brain className="h-4 w-4 text-blue-500" />
-                    Insights Clave ({contentStrategy.executiveSummary.keyInsights.length})
-                  </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${insightsOpen ? 'rotate-180' : ''}`} />
-                </Button>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-background hover:bg-accent/50 transition-colors">
+                <span className="flex items-center gap-2 font-medium text-sm">
+                  <Brain className="h-4 w-4 text-blue-500" />
+                  Insights Clave ({contentStrategy.executiveSummary.keyInsights.length})
+                </span>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${insightsOpen ? 'rotate-180' : ''}`} />
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2">
-                <ScrollArea className="max-h-40">
-                  <div className="space-y-2 p-1">
-                    {contentStrategy.executiveSummary.keyInsights.map((insight: any, idx: number) => (
-                      <div key={idx} className="p-2 border rounded-lg text-sm">
-                        <p className="font-medium">{insight.insight}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{insight.action}</p>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {contentStrategy.executiveSummary.keyInsights.map((insight: any, idx: number) => (
+                    <div key={idx} className="p-2 border rounded-lg bg-card text-sm">
+                      <p className="font-medium">{insight.insight}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{insight.action}</p>
+                    </div>
+                  ))}
+                </div>
               </CollapsibleContent>
             </Collapsible>
           )}
@@ -551,34 +500,25 @@ Frases: ${avatar.phrases?.join('; ') || ''}
           {/* Competition Collapsible */}
           {competitors.length > 0 && (
             <Collapsible open={competitionOpen} onOpenChange={setCompetitionOpen}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-between">
-                  <span className="flex items-center gap-2">
-                    <Swords className="h-4 w-4 text-red-500" />
-                    Competencia ({competitors.length})
-                  </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${competitionOpen ? 'rotate-180' : ''}`} />
-                </Button>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-background hover:bg-accent/50 transition-colors">
+                <span className="flex items-center gap-2 font-medium text-sm">
+                  <Swords className="h-4 w-4 text-red-500" />
+                  Competencia ({competitors.length})
+                </span>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${competitionOpen ? 'rotate-180' : ''}`} />
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2">
-                <ScrollArea className="max-h-40">
-                  <div className="space-y-2 p-1">
-                    {competitors.map((comp: any, idx: number) => (
-                      <div key={idx} className="p-2 border rounded-lg text-sm">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{comp.name}</span>
-                          <Badge variant="outline" className="text-xs">{comp.price || 'N/A'}</Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{comp.differentiator}</p>
-                        {comp.weaknesses && (
-                          <p className="text-xs text-amber-600 mt-1">
-                            Debilidades: {Array.isArray(comp.weaknesses) ? comp.weaknesses.join(', ') : comp.weaknesses}
-                          </p>
-                        )}
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {competitors.map((comp: any, idx: number) => (
+                    <div key={idx} className="p-2 border rounded-lg bg-card text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{comp.name}</span>
+                        <Badge variant="outline" className="text-xs">{comp.price || 'N/A'}</Badge>
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                      <p className="text-xs text-muted-foreground mt-1">{comp.differentiator}</p>
+                    </div>
+                  ))}
+                </div>
               </CollapsibleContent>
             </Collapsible>
           )}
