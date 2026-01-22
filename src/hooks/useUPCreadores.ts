@@ -37,26 +37,26 @@ export interface UPCreadorTotals {
   updated_at: string;
 }
 
-// Event types for creators
+// Event types for creators - MUST match database event_type values
 export type CreatorEventType = 
-  | 'delivery_on_time'      // +70 UP (Día 1-2)
-  | 'delivery_day3'         // +50 UP (Día 3)
-  | 'late_day4'             // -30 UP (Día 4)
-  | 'late_day5'             // -30 UP (Día 5)
+  | 'early_delivery'        // +15 UP (Día 0-2: antes o a tiempo)
+  | 'on_time_delivery'      // +10 UP (Día 3-4: entrega normal)
+  | 'slight_delay'          // +5 UP (Día 5: ligero retraso)
+  | 'late_delivery'         // -30 UP (Día 6+: tarde)
   | 'issue_penalty'         // -10 UP (Novedad)
   | 'issue_recovery'        // +10 UP (Recuperación)
-  | 'clean_approval_bonus'  // +10 UP (Aprobación limpia)
-  | 'reassignment';         // Sin puntos (Reasignación día 6)
+  | 'clean_approval_bonus'  // +5 UP (Aprobación limpia)
+  | 'reassignment';         // Sin puntos (Reasignación)
 
-// Points configuration for creators
+// Points configuration for creators - aligned with database
 export const CREATOR_POINTS_CONFIG = {
-  delivery_on_time: 70,    // Día 1-2
-  delivery_day3: 50,       // Día 3
-  late_day4: -30,          // Día 4
-  late_day5: -30,          // Día 5
+  early_delivery: 15,      // Día 0-2
+  on_time_delivery: 10,    // Día 3-4
+  slight_delay: 5,         // Día 5
+  late_delivery: -30,      // Día 6+
   issue_penalty: -10,      // Novedad
   issue_recovery: 10,      // Recuperación de novedad
-  clean_approval_bonus: 10,// Aprobación limpia
+  clean_approval_bonus: 5, // Aprobación limpia
   reassignment: 0          // Reasignación
 };
 
@@ -82,18 +82,23 @@ export function calculateDaysInColombia(startDate: Date, endDate: Date): number 
 
 /**
  * Determine points for creator based on delivery day
+ * Aligned with database event_type values
  */
 export function calculateCreatorPoints(daysToDeliver: number): { eventType: CreatorEventType; points: number } {
   if (daysToDeliver <= 2) {
-    return { eventType: 'delivery_on_time', points: CREATOR_POINTS_CONFIG.delivery_on_time };
-  } else if (daysToDeliver === 3) {
-    return { eventType: 'delivery_day3', points: CREATOR_POINTS_CONFIG.delivery_day3 };
-  } else if (daysToDeliver === 4) {
-    return { eventType: 'late_day4', points: CREATOR_POINTS_CONFIG.late_day4 };
+    // Día 0-2: Entrega temprana o a tiempo
+    return { eventType: 'early_delivery', points: CREATOR_POINTS_CONFIG.early_delivery };
+  } else if (daysToDeliver <= 4) {
+    // Día 3-4: Entrega normal
+    return { eventType: 'on_time_delivery', points: CREATOR_POINTS_CONFIG.on_time_delivery };
   } else if (daysToDeliver === 5) {
-    return { eventType: 'late_day5', points: CREATOR_POINTS_CONFIG.late_day5 };
+    // Día 5: Ligero retraso
+    return { eventType: 'slight_delay', points: CREATOR_POINTS_CONFIG.slight_delay };
+  } else if (daysToDeliver <= 7) {
+    // Día 6-7: Tarde
+    return { eventType: 'late_delivery', points: CREATOR_POINTS_CONFIG.late_delivery };
   } else {
-    // Día 6+ - reasignación automática
+    // Día 8+ - reasignación automática
     return { eventType: 'reassignment', points: CREATOR_POINTS_CONFIG.reassignment };
   }
 }

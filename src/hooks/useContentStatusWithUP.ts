@@ -14,6 +14,8 @@ interface StatusChangeParams {
 export async function updateContentStatusWithUP(params: StatusChangeParams) {
   const { contentId, oldStatus, newStatus } = params;
   
+  console.log('[ContentStatusWithUP] Starting status change:', { contentId, oldStatus, newStatus });
+  
   // First, fetch the content to get all required data
   const { data: content, error: fetchError } = await supabase
     .from('content')
@@ -27,15 +29,23 @@ export async function updateContentStatusWithUP(params: StatusChangeParams) {
       editing_at,
       delivered_at,
       issue_at,
-      approved_at
+      approved_at,
+      corrected_at
     `)
     .eq('id', contentId)
     .single();
 
   if (fetchError || !content) {
-    console.error('Error fetching content for UP:', fetchError);
+    console.error('[ContentStatusWithUP] Error fetching content for UP:', fetchError);
     throw fetchError;
   }
+
+  console.log('[ContentStatusWithUP] Content fetched:', {
+    creator_id: content.creator_id,
+    editor_id: content.editor_id,
+    recording_at: content.recording_at,
+    editing_at: content.editing_at
+  });
 
   // Build update object based on the new status
   const updates: Record<string, any> = {
@@ -79,30 +89,48 @@ export async function updateContentStatusWithUP(params: StatusChangeParams) {
     .eq('id', contentId);
 
   if (updateError) {
+    console.error('[ContentStatusWithUP] Error updating content:', updateError);
     throw updateError;
   }
+
+  console.log('[ContentStatusWithUP] Content status updated to:', newStatus);
 
   // Handle UP points
   if (content.organization_id) {
     try {
-      await handleUPStatusChange({
+      // Build the parameters with the updated timestamps
+      const upParams = {
         contentId,
         organizationId: content.organization_id,
         oldStatus,
         newStatus,
         creatorId: content.creator_id,
         editorId: content.editor_id,
-        recordingAt: content.recording_at || updates.recording_at,
-        recordedAt: updates.recorded_at || content.recorded_at,
-        editingAt: content.editing_at || updates.editing_at,
-        deliveredAt: updates.delivered_at || content.delivered_at,
-        issueAt: updates.issue_at || content.issue_at,
-        approvedAt: updates.approved_at || content.approved_at
-      });
+        // For recording_at: use existing or new value
+        recordingAt: newStatus === 'recording' ? now : content.recording_at,
+        // For recorded_at: use new value if transitioning to recorded, else existing
+        recordedAt: newStatus === 'recorded' ? now : content.recorded_at,
+        // For editing_at: use existing or new value
+        editingAt: newStatus === 'editing' ? now : content.editing_at,
+        // For delivered_at: use new value if transitioning to delivered, else existing
+        deliveredAt: newStatus === 'delivered' ? now : content.delivered_at,
+        // For issue_at: use new value if transitioning to issue, else existing
+        issueAt: newStatus === 'issue' ? now : content.issue_at,
+        // For approved_at: use new value if transitioning to approved, else existing
+        approvedAt: newStatus === 'approved' ? now : content.approved_at
+      };
+
+      console.log('[ContentStatusWithUP] Calling handleUPStatusChange with:', upParams);
+      
+      await handleUPStatusChange(upParams);
+      
+      console.log('[ContentStatusWithUP] UP points handled successfully');
     } catch (upError) {
       // Log but don't fail the status change
-      console.error('Error handling UP points:', upError);
+      console.error('[ContentStatusWithUP] Error handling UP points:', upError);
     }
+  } else {
+    console.log('[ContentStatusWithUP] No organization_id, skipping UP points');
   }
 
   return { success: true };

@@ -37,86 +37,169 @@ export async function handleUPStatusChange(params: {
 
   const now = new Date();
 
+  console.log('[UP Handler] Status change:', { contentId, oldStatus, newStatus, creatorId, editorId });
+
   try {
     // ============================================
-    // CREATOR POINTS: En grabación → Grabado
+    // CREATOR POINTS: recording → recorded OR assigned → recorded
+    // Also handle cases where recording_at might be null
     // ============================================
-    if (oldStatus === 'recording' && newStatus === 'recorded' && creatorId && recordingAt) {
-      const recordingStartDate = new Date(recordingAt);
-      const recordedDate = recordedAt ? new Date(recordedAt) : now;
-      const daysToDeliver = calculateDaysInColombia(recordingStartDate, recordedDate);
-      const { eventType, points } = calculateCreatorPoints(daysToDeliver);
+    if ((oldStatus === 'recording' || oldStatus === 'assigned') && newStatus === 'recorded' && creatorId) {
+      // Check if we already recorded points for this content+creator
+      const { data: existingCreatorPoints } = await supabase
+        .from('up_creadores')
+        .select('id')
+        .eq('content_id', contentId)
+        .eq('user_id', creatorId)
+        .in('event_type', ['early_delivery', 'on_time_delivery', 'slight_delay', 'late_delivery'])
+        .limit(1)
+        .maybeSingle();
 
-      if (eventType !== 'reassignment') {
-        await supabase.from('up_creadores').insert({
-          user_id: creatorId,
-          content_id: contentId,
-          organization_id: organizationId,
-          event_type: eventType,
-          points,
-          description: `Entrega en ${daysToDeliver} día(s)`,
-          recording_started_at: recordingAt,
-          recorded_at: recordedDate.toISOString(),
-          days_to_deliver: daysToDeliver
-        });
+      if (existingCreatorPoints) {
+        console.log('[UP Handler] Creator points already exist for this content, skipping');
+      } else {
+        // Use recording_at if available, otherwise use a default (today - 1 day as fallback)
+        const startDate = recordingAt ? new Date(recordingAt) : new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const recordedDate = recordedAt ? new Date(recordedAt) : now;
+        const daysToDeliver = calculateDaysInColombia(startDate, recordedDate);
+        const { eventType, points } = calculateCreatorPoints(daysToDeliver);
+
+        console.log('[UP Handler] Creator delivery:', { daysToDeliver, eventType, points });
+
+        if (eventType !== 'reassignment') {
+          const { error } = await supabase.from('up_creadores').insert({
+            user_id: creatorId,
+            content_id: contentId,
+            organization_id: organizationId,
+            event_type: eventType,
+            points,
+            description: `Entrega en ${daysToDeliver} día(s)`,
+            recording_started_at: recordingAt || startDate.toISOString(),
+            recorded_at: recordedDate.toISOString(),
+            days_to_deliver: daysToDeliver
+          });
+
+          if (error) {
+            console.error('[UP Handler] Error inserting creator points:', error);
+          } else {
+            console.log('[UP Handler] Creator points inserted successfully');
+          }
+        }
       }
     }
 
     // ============================================
-    // EDITOR POINTS: En edición → Entregado
+    // EDITOR POINTS: editing → delivered
+    // Also handle cases where editing_at might be null
     // ============================================
-    if (oldStatus === 'editing' && newStatus === 'delivered' && editorId && editingAt) {
-      const editingStartDate = new Date(editingAt);
-      const deliveredDate = deliveredAt ? new Date(deliveredAt) : now;
-      const daysToDeliver = calculateDaysInColombia(editingStartDate, deliveredDate);
-      const { eventType, points } = calculateEditorPoints(daysToDeliver);
+    if (oldStatus === 'editing' && newStatus === 'delivered' && editorId) {
+      // Check if we already recorded points for this content+editor
+      const { data: existingEditorPoints } = await supabase
+        .from('up_editores')
+        .select('id')
+        .eq('content_id', contentId)
+        .eq('user_id', editorId)
+        .in('event_type', ['early_delivery', 'on_time_delivery', 'slight_delay', 'late_delivery'])
+        .limit(1)
+        .maybeSingle();
 
-      if (eventType !== 'reassignment') {
-        await supabase.from('up_editores').insert({
-          user_id: editorId,
-          content_id: contentId,
-          organization_id: organizationId,
-          event_type: eventType,
-          points,
-          description: `Entrega en ${daysToDeliver} día(s)`,
-          editing_started_at: editingAt,
-          delivered_at: deliveredDate.toISOString(),
-          days_to_deliver: daysToDeliver
-        });
+      if (existingEditorPoints) {
+        console.log('[UP Handler] Editor points already exist for this content, skipping');
+      } else {
+        // Use editing_at if available, otherwise use a default
+        const startDate = editingAt ? new Date(editingAt) : new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const deliveredDate = deliveredAt ? new Date(deliveredAt) : now;
+        const daysToDeliver = calculateDaysInColombia(startDate, deliveredDate);
+        const { eventType, points } = calculateEditorPoints(daysToDeliver);
+
+        console.log('[UP Handler] Editor delivery:', { daysToDeliver, eventType, points });
+
+        if (eventType !== 'reassignment') {
+          const { error } = await supabase.from('up_editores').insert({
+            user_id: editorId,
+            content_id: contentId,
+            organization_id: organizationId,
+            event_type: eventType,
+            points,
+            description: `Entrega en ${daysToDeliver} día(s)`,
+            editing_started_at: editingAt || startDate.toISOString(),
+            delivered_at: deliveredDate.toISOString(),
+            days_to_deliver: daysToDeliver
+          });
+
+          if (error) {
+            console.error('[UP Handler] Error inserting editor points:', error);
+          } else {
+            console.log('[UP Handler] Editor points inserted successfully');
+          }
+        }
       }
     }
 
     // ============================================
-    // NOVEDAD PENALTY: Entregado → Novedad
+    // NOVEDAD PENALTY: Entregado/Corregido → Novedad
     // Penaliza tanto al creador como al editor
     // ============================================
     if ((oldStatus === 'delivered' || oldStatus === 'corrected') && newStatus === 'issue') {
       const issueDate = issueAt ? new Date(issueAt) : now;
+      console.log('[UP Handler] Issue penalty triggered');
 
-      // Penalty for creator
+      // Check if creator already has penalty for this content
       if (creatorId) {
-        await supabase.from('up_creadores').insert({
-          user_id: creatorId,
-          content_id: contentId,
-          organization_id: organizationId,
-          event_type: 'issue_penalty',
-          points: CREATOR_POINTS_CONFIG.issue_penalty,
-          description: 'Penalización por novedad',
-          issue_at: issueDate.toISOString()
-        });
+        const { data: existingCreatorPenalty } = await supabase
+          .from('up_creadores')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('user_id', creatorId)
+          .eq('event_type', 'issue_penalty')
+          .eq('is_recovered', false)
+          .limit(1)
+          .maybeSingle();
+
+        if (!existingCreatorPenalty) {
+          const { error } = await supabase.from('up_creadores').insert({
+            user_id: creatorId,
+            content_id: contentId,
+            organization_id: organizationId,
+            event_type: 'issue_penalty',
+            points: CREATOR_POINTS_CONFIG.issue_penalty,
+            description: 'Penalización por novedad',
+            issue_at: issueDate.toISOString()
+          });
+
+          if (error) {
+            console.error('[UP Handler] Error inserting creator issue penalty:', error);
+          }
+        }
       }
 
-      // Penalty for editor
+      // Check if editor already has penalty for this content
       if (editorId) {
-        await supabase.from('up_editores').insert({
-          user_id: editorId,
-          content_id: contentId,
-          organization_id: organizationId,
-          event_type: 'issue_penalty',
-          points: EDITOR_POINTS_CONFIG.issue_penalty,
-          description: 'Penalización por novedad',
-          issue_at: issueDate.toISOString()
-        });
+        const { data: existingEditorPenalty } = await supabase
+          .from('up_editores')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('user_id', editorId)
+          .eq('event_type', 'issue_penalty')
+          .eq('is_recovered', false)
+          .limit(1)
+          .maybeSingle();
+
+        if (!existingEditorPenalty) {
+          const { error } = await supabase.from('up_editores').insert({
+            user_id: editorId,
+            content_id: contentId,
+            organization_id: organizationId,
+            event_type: 'issue_penalty',
+            points: EDITOR_POINTS_CONFIG.issue_penalty,
+            description: 'Penalización por novedad',
+            issue_at: issueDate.toISOString()
+          });
+
+          if (error) {
+            console.error('[UP Handler] Error inserting editor issue penalty:', error);
+          }
+        }
       }
     }
 
@@ -128,6 +211,8 @@ export async function handleUPStatusChange(params: {
       const issueDateParsed = new Date(issueAt);
       const approvedDate = approvedAt ? new Date(approvedAt) : now;
       const daysSinceIssue = calculateDaysInColombia(issueDateParsed, approvedDate);
+
+      console.log('[UP Handler] Issue recovery check:', { daysSinceIssue });
 
       if (daysSinceIssue <= 2) {
         // Find and recover creator penalty
@@ -201,25 +286,36 @@ export async function handleUPStatusChange(params: {
     }
 
     // ============================================
-    // CLEAN APPROVAL BONUS: Entregado → Aprobado (sin pasar por Novedad)
-    // +10 UP para ambos
+    // CLEAN APPROVAL BONUS: Entregado/Corregido → Aprobado (sin pasar por Novedad)
+    // +5 UP para ambos
     // ============================================
-    if (oldStatus === 'delivered' && newStatus === 'approved') {
+    if ((oldStatus === 'delivered' || oldStatus === 'corrected') && newStatus === 'approved') {
       const approvedDate = approvedAt ? new Date(approvedAt) : now;
 
-      // Check if there was any issue for this content
-      const { data: hadIssue } = await supabase
-        .from('up_creadores')
-        .select('id')
-        .eq('content_id', contentId)
-        .eq('event_type', 'issue_penalty')
-        .limit(1)
-        .maybeSingle();
+      console.log('[UP Handler] Clean approval check');
 
-      if (!hadIssue) {
-        // Clean approval - no issues found
-        if (creatorId) {
-          await supabase.from('up_creadores').insert({
+      // Check if there was any issue for this content (for creator)
+      if (creatorId) {
+        const { data: hadCreatorIssue } = await supabase
+          .from('up_creadores')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('event_type', 'issue_penalty')
+          .limit(1)
+          .maybeSingle();
+
+        // Check if bonus already exists
+        const { data: existingCreatorBonus } = await supabase
+          .from('up_creadores')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('user_id', creatorId)
+          .eq('event_type', 'clean_approval_bonus')
+          .limit(1)
+          .maybeSingle();
+
+        if (!hadCreatorIssue && !existingCreatorBonus) {
+          const { error } = await supabase.from('up_creadores').insert({
             user_id: creatorId,
             content_id: contentId,
             organization_id: organizationId,
@@ -228,10 +324,37 @@ export async function handleUPStatusChange(params: {
             description: 'Bonus por aprobación limpia',
             approved_at: approvedDate.toISOString()
           });
-        }
 
-        if (editorId) {
-          await supabase.from('up_editores').insert({
+          if (error) {
+            console.error('[UP Handler] Error inserting creator clean approval bonus:', error);
+          } else {
+            console.log('[UP Handler] Creator clean approval bonus inserted');
+          }
+        }
+      }
+
+      // Check for editor clean approval
+      if (editorId) {
+        const { data: hadEditorIssue } = await supabase
+          .from('up_editores')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('event_type', 'issue_penalty')
+          .limit(1)
+          .maybeSingle();
+
+        // Check if bonus already exists
+        const { data: existingEditorBonus } = await supabase
+          .from('up_editores')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('user_id', editorId)
+          .eq('event_type', 'clean_approval_bonus')
+          .limit(1)
+          .maybeSingle();
+
+        if (!hadEditorIssue && !existingEditorBonus) {
+          const { error } = await supabase.from('up_editores').insert({
             user_id: editorId,
             content_id: contentId,
             organization_id: organizationId,
@@ -240,13 +363,19 @@ export async function handleUPStatusChange(params: {
             description: 'Bonus por aprobación limpia',
             approved_at: approvedDate.toISOString()
           });
+
+          if (error) {
+            console.error('[UP Handler] Error inserting editor clean approval bonus:', error);
+          } else {
+            console.log('[UP Handler] Editor clean approval bonus inserted');
+          }
         }
       }
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Error handling UP status change:', error);
+    console.error('[UP Handler] Error handling UP status change:', error);
     return { success: false, error };
   }
 }
@@ -259,12 +388,12 @@ export function checkCreatorReassignmentNeeded(recordingAt: string): boolean {
   const recordingStartDate = new Date(recordingAt);
   const now = new Date();
   const days = calculateDaysInColombia(recordingStartDate, now);
-  return days >= 6;
+  return days >= 8;
 }
 
 export function checkEditorReassignmentNeeded(editingAt: string): boolean {
   const editingStartDate = new Date(editingAt);
   const now = new Date();
   const days = calculateDaysInColombia(editingStartDate, now);
-  return days >= 5;
+  return days >= 6;
 }
