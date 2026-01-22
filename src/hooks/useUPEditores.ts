@@ -38,43 +38,48 @@ export interface UPEditorTotals {
   updated_at: string;
 }
 
-// Event types for editors
+// Event types for editors - MUST match database event_type values
 export type EditorEventType = 
-  | 'delivery_on_time'      // +70 UP (Día 1)
-  | 'delivery_day2'         // +50 UP (Día 2)
-  | 'late_day3'             // -30 UP (Día 3)
-  | 'late_day4'             // -30 UP (Día 4)
+  | 'early_delivery'        // +15 UP (Día 0-1: antes o a tiempo)
+  | 'on_time_delivery'      // +10 UP (Día 2: entrega normal)
+  | 'slight_delay'          // +5 UP (Día 3: ligero retraso)
+  | 'late_delivery'         // -30 UP (Día 4+: tarde)
   | 'issue_penalty'         // -10 UP (Novedad)
   | 'issue_recovery'        // +10 UP (Recuperación)
-  | 'clean_approval_bonus'  // +10 UP (Aprobación limpia)
-  | 'reassignment';         // Sin puntos (Reasignación día 5)
+  | 'clean_approval_bonus'  // +5 UP (Aprobación limpia)
+  | 'reassignment';         // Sin puntos (Reasignación)
 
-// Points configuration for editors (different from creators)
+// Points configuration for editors - aligned with database
 export const EDITOR_POINTS_CONFIG = {
-  delivery_on_time: 70,    // Día 1
-  delivery_day2: 50,       // Día 2
-  late_day3: -30,          // Día 3
-  late_day4: -30,          // Día 4
+  early_delivery: 15,      // Día 0-1
+  on_time_delivery: 10,    // Día 2
+  slight_delay: 5,         // Día 3
+  late_delivery: -30,      // Día 4+
   issue_penalty: -10,      // Novedad
   issue_recovery: 10,      // Recuperación de novedad
-  clean_approval_bonus: 10,// Aprobación limpia
+  clean_approval_bonus: 5, // Aprobación limpia
   reassignment: 0          // Reasignación
 };
 
 /**
  * Determine points for editor based on delivery day
+ * Aligned with database event_type values
  */
 export function calculateEditorPoints(daysToDeliver: number): { eventType: EditorEventType; points: number } {
-  if (daysToDeliver === 1) {
-    return { eventType: 'delivery_on_time', points: EDITOR_POINTS_CONFIG.delivery_on_time };
+  if (daysToDeliver <= 1) {
+    // Día 0-1: Entrega temprana o a tiempo
+    return { eventType: 'early_delivery', points: EDITOR_POINTS_CONFIG.early_delivery };
   } else if (daysToDeliver === 2) {
-    return { eventType: 'delivery_day2', points: EDITOR_POINTS_CONFIG.delivery_day2 };
+    // Día 2: Entrega normal
+    return { eventType: 'on_time_delivery', points: EDITOR_POINTS_CONFIG.on_time_delivery };
   } else if (daysToDeliver === 3) {
-    return { eventType: 'late_day3', points: EDITOR_POINTS_CONFIG.late_day3 };
-  } else if (daysToDeliver === 4) {
-    return { eventType: 'late_day4', points: EDITOR_POINTS_CONFIG.late_day4 };
+    // Día 3: Ligero retraso
+    return { eventType: 'slight_delay', points: EDITOR_POINTS_CONFIG.slight_delay };
+  } else if (daysToDeliver <= 5) {
+    // Día 4-5: Tarde
+    return { eventType: 'late_delivery', points: EDITOR_POINTS_CONFIG.late_delivery };
   } else {
-    // Día 5+ - reasignación automática
+    // Día 6+ - reasignación automática
     return { eventType: 'reassignment', points: EDITOR_POINTS_CONFIG.reassignment };
   }
 }
