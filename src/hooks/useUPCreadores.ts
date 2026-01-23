@@ -39,24 +39,23 @@ export interface UPCreadorTotals {
 
 // Event types for creators - MUST match database event_type values
 export type CreatorEventType = 
-  | 'early_delivery'        // +15 UP (Día 0-2: antes o a tiempo)
-  | 'on_time_delivery'      // +10 UP (Día 3-4: entrega normal)
-  | 'slight_delay'          // +5 UP (Día 5: ligero retraso)
-  | 'late_delivery'         // -30 UP (Día 6+: tarde)
+  | 'early_delivery'        // +70 UP (Día 1-2: entrega temprana)
+  | 'on_time_delivery'      // +50 UP (Día 3: a tiempo)
+  | 'late_delivery'         // 0 UP (Día 4+: tarde, sin puntos)
   | 'issue_penalty'         // -10 UP (Novedad)
-  | 'issue_recovery'        // +10 UP (Recuperación)
-  | 'clean_approval_bonus'  // +5 UP (Aprobación limpia)
+  | 'issue_recovery'        // +10 UP (Recuperación en máx 2 días)
+  | 'clean_approval_bonus'  // +10 UP (Aprobación limpia)
   | 'reassignment';         // Sin puntos (Reasignación)
 
 // Points configuration for creators - aligned with database
+// Creators have 3 days: Day 1-2 = early (+70), Day 3 = on_time (+50)
 export const CREATOR_POINTS_CONFIG = {
-  early_delivery: 15,      // Día 0-2
-  on_time_delivery: 10,    // Día 3-4
-  slight_delay: 5,         // Día 5
-  late_delivery: -30,      // Día 6+
+  early_delivery: 70,      // Día 1-2: Entrega temprana
+  on_time_delivery: 50,    // Día 3: Entrega a tiempo
+  late_delivery: 0,        // Día 4+: Sin puntos por entrega
   issue_penalty: -10,      // Novedad
-  issue_recovery: 10,      // Recuperación de novedad
-  clean_approval_bonus: 5, // Aprobación limpia
+  issue_recovery: 10,      // Recuperación de novedad (máx 2 días)
+  clean_approval_bonus: 10, // Aprobación limpia (entregado → aprobado directo)
   reassignment: 0          // Reasignación
 };
 
@@ -82,24 +81,21 @@ export function calculateDaysInColombia(startDate: Date, endDate: Date): number 
 
 /**
  * Determine points for creator based on delivery day
- * Aligned with database event_type values
+ * Creators have 3 days to deliver (recording → recorded)
+ * Day 1-2: +70 UP (early_delivery)
+ * Day 3: +50 UP (on_time_delivery)
+ * Day 4+: 0 UP (late_delivery - no bonus)
  */
 export function calculateCreatorPoints(daysToDeliver: number): { eventType: CreatorEventType; points: number } {
   if (daysToDeliver <= 2) {
-    // Día 0-2: Entrega temprana o a tiempo
+    // Día 1-2: Entrega temprana (+70 UP)
     return { eventType: 'early_delivery', points: CREATOR_POINTS_CONFIG.early_delivery };
-  } else if (daysToDeliver <= 4) {
-    // Día 3-4: Entrega normal
+  } else if (daysToDeliver === 3) {
+    // Día 3: Entrega a tiempo (+50 UP)
     return { eventType: 'on_time_delivery', points: CREATOR_POINTS_CONFIG.on_time_delivery };
-  } else if (daysToDeliver === 5) {
-    // Día 5: Ligero retraso
-    return { eventType: 'slight_delay', points: CREATOR_POINTS_CONFIG.slight_delay };
-  } else if (daysToDeliver <= 7) {
-    // Día 6-7: Tarde
-    return { eventType: 'late_delivery', points: CREATOR_POINTS_CONFIG.late_delivery };
   } else {
-    // Día 8+ - reasignación automática
-    return { eventType: 'reassignment', points: CREATOR_POINTS_CONFIG.reassignment };
+    // Día 4+: Entrega tardía (sin puntos)
+    return { eventType: 'late_delivery', points: CREATOR_POINTS_CONFIG.late_delivery };
   }
 }
 
