@@ -48,75 +48,56 @@ export function TalentRanking() {
     setLoading(true);
 
     try {
-      // Get all creators and editors in org
-      const { data: memberRoles } = await supabase
-        .from('organization_member_roles')
-        .select('user_id, role')
-        .eq('organization_id', currentOrgId)
-        .in('role', ['creator', 'editor']);
+      // Fetch directly from UP V2 tables
+      const [{ data: creatorTotals }, { data: editorTotals }] = await Promise.all([
+        supabase
+          .from('up_creadores_totals')
+          .select('user_id, total_points, current_level, on_time_deliveries, late_deliveries, total_deliveries')
+          .eq('organization_id', currentOrgId),
+        supabase
+          .from('up_editores_totals')
+          .select('user_id, total_points, current_level, on_time_deliveries, late_deliveries, total_deliveries')
+          .eq('organization_id', currentOrgId)
+      ]);
 
-      if (!memberRoles?.length) {
+      // Collect all user IDs from both tables
+      const creatorUserIds = creatorTotals?.map(t => t.user_id) || [];
+      const editorUserIds = editorTotals?.map(t => t.user_id) || [];
+      const allUserIds = [...new Set([...creatorUserIds, ...editorUserIds])];
+
+      if (allUserIds.length === 0) {
         setTalents([]);
         setLoading(false);
         return;
       }
 
-      const userIds = [...new Set(memberRoles.map(r => r.user_id))];
-      const roleMap = new Map(memberRoles.map(r => [r.user_id, r.role]));
-
-      // Get profiles
+      // Get profiles for all users
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name, avatar_url')
-        .in('id', userIds);
+        .in('id', allUserIds);
 
-      // Get UP creator totals
-      const { data: creatorTotals } = await supabase
-        .from('up_creadores_totals')
-        .select('user_id, total_points, current_level, on_time_deliveries, late_deliveries, total_deliveries')
-        .eq('organization_id', currentOrgId)
-        .in('user_id', userIds);
+      // Get ratings from content
+      const [{ data: creatorContent }, { data: editorContent }] = await Promise.all([
+        supabase
+          .from('content')
+          .select('creator_id, creator_rating')
+          .eq('organization_id', currentOrgId)
+          .in('creator_id', creatorUserIds)
+          .not('creator_rating', 'is', null),
+        supabase
+          .from('content')
+          .select('editor_id, editor_rating')
+          .eq('organization_id', currentOrgId)
+          .in('editor_id', editorUserIds)
+          .not('editor_rating', 'is', null)
+      ]);
 
-      // Get UP editor totals
-      const { data: editorTotals } = await supabase
-        .from('up_editores_totals')
-        .select('user_id, total_points, current_level, on_time_deliveries, late_deliveries, total_deliveries')
-        .eq('organization_id', currentOrgId)
-        .in('user_id', userIds);
-
-      // Get content with ratings
-      const { data: creatorContent } = await supabase
-        .from('content')
-        .select('creator_id, creator_rating')
-        .eq('organization_id', currentOrgId)
-        .in('creator_id', userIds)
-        .not('creator_rating', 'is', null);
-
-      const { data: editorContent } = await supabase
-        .from('content')
-        .select('editor_id, editor_rating')
-        .eq('organization_id', currentOrgId)
-        .in('editor_id', userIds)
-        .not('editor_rating', 'is', null);
-
-      // Get all content counts
-      const { data: allCreatorContent } = await supabase
-        .from('content')
-        .select('creator_id')
-        .eq('organization_id', currentOrgId)
-        .in('creator_id', userIds);
-
-      const { data: allEditorContent } = await supabase
-        .from('content')
-        .select('editor_id')
-        .eq('organization_id', currentOrgId)
-        .in('editor_id', userIds);
-
-      // Build maps
+      // Build maps from V2 tables
       const creatorUpMap = new Map(creatorTotals?.map(t => [t.user_id, t]) || []);
       const editorUpMap = new Map(editorTotals?.map(t => [t.user_id, t]) || []);
 
-      // Calculate creator ratings
+      // Calculate ratings
       const creatorRatings = new Map<string, { sum: number; count: number }>();
       creatorContent?.forEach(c => {
         if (c.creator_id && c.creator_rating !== null) {
@@ -128,7 +109,6 @@ export function TalentRanking() {
         }
       });
 
-      // Calculate editor ratings
       const editorRatings = new Map<string, { sum: number; count: number }>();
       editorContent?.forEach(c => {
         if (c.editor_id && c.editor_rating !== null) {
@@ -140,35 +120,52 @@ export function TalentRanking() {
         }
       });
 
-      // Content counts
-      const contentCountMap = new Map<string, number>();
-      allCreatorContent?.forEach(c => {
-        if (c.creator_id) contentCountMap.set(c.creator_id, (contentCountMap.get(c.creator_id) || 0) + 1);
-      });
-      allEditorContent?.forEach(c => {
-        if (c.editor_id) contentCountMap.set(c.editor_id, (contentCountMap.get(c.editor_id) || 0) + 1);
-      });
+      // Build ranked talents - one entry per user per role
+      const ranked: RankedTalent[] = [];
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
-      // Build ranked talents
-      const ranked: RankedTalent[] = (profiles || []).map(p => {
-        const role = roleMap.get(p.id) as 'creator' | 'editor';
-        const upData = role === 'creator' ? creatorUpMap.get(p.id) : editorUpMap.get(p.id);
-        const ratingData = role === 'creator' ? creatorRatings.get(p.id) : editorRatings.get(p.id);
-
-        return {
-          id: p.id,
-          full_name: p.full_name || 'Sin nombre',
-          avatar_url: p.avatar_url,
-          role,
-          up_points: upData?.total_points || 0,
-          up_level: upData?.current_level || 'bronze',
-          on_time_deliveries: upData?.on_time_deliveries || 0,
-          late_deliveries: upData?.late_deliveries || 0,
-          total_deliveries: upData?.total_deliveries || 0,
+      // Add creators
+      creatorTotals?.forEach(ct => {
+        const profile = profileMap.get(ct.user_id);
+        if (!profile) return;
+        const ratingData = creatorRatings.get(ct.user_id);
+        
+        ranked.push({
+          id: ct.user_id,
+          full_name: profile.full_name || 'Sin nombre',
+          avatar_url: profile.avatar_url,
+          role: 'creator',
+          up_points: ct.total_points || 0,
+          up_level: ct.current_level || 'bronze',
+          on_time_deliveries: ct.on_time_deliveries || 0,
+          late_deliveries: ct.late_deliveries || 0,
+          total_deliveries: ct.total_deliveries || 0,
           avg_rating: ratingData ? ratingData.sum / ratingData.count : 0,
           rated_content_count: ratingData?.count || 0,
-          content_count: contentCountMap.get(p.id) || 0,
-        };
+          content_count: ct.total_deliveries || 0,
+        });
+      });
+
+      // Add editors
+      editorTotals?.forEach(et => {
+        const profile = profileMap.get(et.user_id);
+        if (!profile) return;
+        const ratingData = editorRatings.get(et.user_id);
+        
+        ranked.push({
+          id: `${et.user_id}_editor`, // Unique key for editor entry
+          full_name: profile.full_name || 'Sin nombre',
+          avatar_url: profile.avatar_url,
+          role: 'editor',
+          up_points: et.total_points || 0,
+          up_level: et.current_level || 'bronze',
+          on_time_deliveries: et.on_time_deliveries || 0,
+          late_deliveries: et.late_deliveries || 0,
+          total_deliveries: et.total_deliveries || 0,
+          avg_rating: ratingData ? ratingData.sum / ratingData.count : 0,
+          rated_content_count: ratingData?.count || 0,
+          content_count: et.total_deliveries || 0,
+        });
       });
 
       // Sort by UP points descending
