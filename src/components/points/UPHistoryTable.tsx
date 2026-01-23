@@ -14,16 +14,18 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
+// Event types aligned with V2 UP system (up_creadores / up_editores tables)
 const EVENT_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  delivery_on_time: { label: 'Entrega a tiempo', icon: TrendingUp, color: 'text-green-500 bg-green-500/10' },
-  delivery_day3: { label: 'Entrega día 3', icon: Clock, color: 'text-yellow-500 bg-yellow-500/10' },
-  delivery_day2: { label: 'Entrega día 2', icon: Clock, color: 'text-yellow-500 bg-yellow-500/10' },
-  late_day4: { label: 'Retraso día 4', icon: TrendingDown, color: 'text-red-500 bg-red-500/10' },
-  late_day5: { label: 'Retraso día 5', icon: TrendingDown, color: 'text-red-500 bg-red-500/10' },
-  late_day3: { label: 'Retraso día 3', icon: TrendingDown, color: 'text-red-500 bg-red-500/10' },
-  issue_penalty: { label: 'Penalización novedad', icon: AlertCircle, color: 'text-orange-500 bg-orange-500/10' },
+  // Delivery events
+  early_delivery: { label: 'Entrega temprana', icon: TrendingUp, color: 'text-emerald-500 bg-emerald-500/10' },
+  on_time_delivery: { label: 'Entrega a tiempo', icon: CheckCircle, color: 'text-green-500 bg-green-500/10' },
+  late_delivery: { label: 'Entrega tardía', icon: Clock, color: 'text-yellow-500 bg-yellow-500/10' },
+  // Issue events
+  issue_penalty: { label: 'Penalización novedad', icon: AlertCircle, color: 'text-red-500 bg-red-500/10' },
   issue_recovery: { label: 'Recuperación', icon: RefreshCw, color: 'text-blue-500 bg-blue-500/10' },
-  clean_approval_bonus: { label: 'Aprobación limpia', icon: Award, color: 'text-emerald-500 bg-emerald-500/10' },
+  // Bonus events
+  clean_approval_bonus: { label: 'Aprobación limpia', icon: Award, color: 'text-primary bg-primary/10' },
+  // Other
   reassignment: { label: 'Reasignación', icon: RefreshCw, color: 'text-muted-foreground bg-muted' }
 };
 
