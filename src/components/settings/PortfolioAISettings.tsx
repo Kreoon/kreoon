@@ -19,24 +19,24 @@ const AI_FEATURES: { key: keyof PortfolioAIFeatures; label: string; description:
 ];
 
 const PROVIDERS = [
-  { value: 'lovable', label: 'IA Interna (Recomendado)' },
+  { value: 'gemini', label: 'Google Gemini (Recomendado)' },
   { value: 'openai', label: 'OpenAI' },
-  { value: 'gemini', label: 'Google Gemini' },
+  { value: 'anthropic', label: 'Anthropic Claude' },
 ];
 
 const MODELS: Record<string, { value: string; label: string }[]> = {
-  lovable: [
-    { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (Rápido)' },
-    { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro (Avanzado)' },
-    { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini' },
+  gemini: [
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Rápido)' },
+    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Avanzado)' },
   ],
   openai: [
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-    { value: 'gpt-4o', label: 'GPT-4o' },
+    { value: 'gpt-4o', label: 'GPT-4o (Recomendado)' },
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Rápido)' },
+    { value: 'gpt-5', label: 'GPT-5' },
   ],
-  gemini: [
-    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+  anthropic: [
+    { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
+    { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
   ],
 };
 
@@ -105,7 +105,7 @@ export function PortfolioAISettings() {
               <Label>Proveedor</Label>
               <Select
                 value={localConfig.provider}
-                onValueChange={(provider: 'lovable' | 'openai' | 'gemini') => 
+                onValueChange={(provider: 'gemini' | 'openai' | 'anthropic') => 
                   setLocalConfig(prev => ({ ...prev, provider, model: MODELS[provider][0].value }))
                 }
               >

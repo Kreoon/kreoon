@@ -141,11 +141,14 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                   Este modelo se usará en todas las funciones de IA de la organización
                 </p>
                 <Select
-                  value={defaults?.default_model || 'google/gemini-2.5-flash'}
+                  value={defaults?.default_model || 'gemini-2.5-flash'}
                   onValueChange={async (value) => {
+                    // Determine provider from model value
+                    const provider = value.startsWith('gpt') ? 'openai' : 
+                                     value.startsWith('claude') ? 'anthropic' : 'gemini';
                     try {
                       await updateDefaults({ 
-                        default_provider: 'lovable', 
+                        default_provider: provider, 
                         default_model: value 
                       });
                       toast.success('Modelo predeterminado actualizado');
@@ -159,11 +162,21 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                     <SelectValue placeholder="Seleccionar modelo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">IA Interna (Sin API Key)</div>
-                    {AI_PROVIDERS_CONFIG.lovable.models.map((model) => (
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Google Gemini (API Directa)</div>
+                    {AI_PROVIDERS_CONFIG.gemini.models.map((model) => (
                       <SelectItem key={model.value} value={model.value}>
                         <div className="flex items-center gap-2">
-                          <Sparkles className="h-3 w-3 text-purple-500" />
+                          <Sparkles className="h-3 w-3 text-blue-500" />
+                          {model.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                    <Separator className="my-1" />
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">OpenAI (API Directa)</div>
+                    {AI_PROVIDERS_CONFIG.openai.models.map((model) => (
+                      <SelectItem key={model.value} value={model.value}>
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-3 w-3 text-green-500" />
                           {model.label}
                         </div>
                       </SelectItem>
@@ -172,7 +185,11 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                 </Select>
                 <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
                   <Check className="h-3 w-3 text-green-500" />
-                  Modelo actual: {AI_PROVIDERS_CONFIG.lovable.models.find(m => m.value === (defaults?.default_model || 'google/gemini-2.5-flash'))?.label || defaults?.default_model}
+                  Modelo actual: {
+                    AI_PROVIDERS_CONFIG.gemini.models.find(m => m.value === defaults?.default_model)?.label ||
+                    AI_PROVIDERS_CONFIG.openai.models.find(m => m.value === defaults?.default_model)?.label ||
+                    defaults?.default_model || 'Gemini 2.5 Flash'
+                  }
                 </div>
               </div>
 
@@ -188,7 +205,7 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                 <div className="space-y-3">
                   {Object.values(AI_PROVIDERS_CONFIG).map((config) => {
                     const providerData = providers.find(p => p.provider_key === config.key);
-                    const isEnabled = config.key === 'lovable' || providerData?.is_enabled;
+                    const isEnabled = providerData?.is_enabled;
                     const hasKey = hasValidApiKey(config.key);
 
                     return (
@@ -205,12 +222,7 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm">{config.label}</span>
-                              {config.key === 'lovable' && (
-                                <Badge className="text-xs bg-gradient-to-r from-purple-500 to-pink-500">
-                                  Incluido
-                                </Badge>
-                              )}
-                              {isEnabled && config.key !== 'lovable' && (
+                              {isEnabled && (
                                 <Badge variant="outline" className="text-xs">
                                   <Check className="h-3 w-3 mr-1" />
                                   Activo
@@ -238,13 +250,11 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                           </div>
                         </div>
 
-                        {config.key !== 'lovable' && (
-                          <Switch
-                            checked={isEnabled}
-                            onCheckedChange={(checked) => handleToggleProvider(config.key, checked)}
-                            disabled={saving}
-                          />
-                        )}
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={(checked) => handleToggleProvider(config.key, checked)}
+                          disabled={saving}
+                        />
                       </div>
                     );
                   })}
@@ -277,7 +287,7 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
           <TabsContent value="providers" className="space-y-4 mt-4">
             {Object.values(AI_PROVIDERS_CONFIG).map((config) => {
               const providerData = providers.find(p => p.provider_key === config.key);
-              const isEnabled = config.key === 'lovable' || providerData?.is_enabled;
+              const isEnabled = providerData?.is_enabled;
               const hasKey = hasValidApiKey(config.key);
 
               return (
@@ -295,11 +305,6 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                               <Badge variant="outline" className="text-xs">
                                 <Check className="h-3 w-3 mr-1" />
                                 Activo
-                              </Badge>
-                            )}
-                            {config.key === 'lovable' && (
-                              <Badge className="text-xs bg-gradient-to-r from-purple-500 to-pink-500">
-                                Incluido
                               </Badge>
                             )}
                           </div>
@@ -321,13 +326,11 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                         </div>
                       </div>
 
-                      {config.key !== 'lovable' && (
-                        <Switch
-                          checked={isEnabled}
-                          onCheckedChange={(checked) => handleToggleProvider(config.key, checked)}
-                          disabled={saving}
-                        />
-                      )}
+                      <Switch
+                        checked={isEnabled}
+                        onCheckedChange={(checked) => handleToggleProvider(config.key, checked)}
+                        disabled={saving}
+                      />
                     </div>
 
                     {/* API Key section */}
