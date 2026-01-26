@@ -15,8 +15,9 @@ import { useOrganizationAI } from "@/hooks/useOrganizationAI";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
-  Video, ChevronDown, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle
+  Video, ChevronDown, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle, Search
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 import { parseProductResearch, formatResearchForPrompt } from "@/lib/productResearchParser";
 
@@ -85,6 +86,7 @@ interface ScriptFormData {
   ai_model: string;
   video_duration: string;
   target_platform: string;
+  use_perplexity: boolean;
 }
 
 interface GenerationStep {
@@ -1179,6 +1181,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     ai_model: "google/gemini-3-flash-preview",
     video_duration: "",
     target_platform: "",
+    use_perplexity: false,
   });
 
   // Update prompts when custom prompts are loaded
@@ -1626,7 +1629,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
     const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
       body: {
-        action: "generate_script",
+        action: formData.use_perplexity ? "research_and_generate" : "generate_script",
         organizationId,
         prompt: fullPrompt,
         product: {
@@ -1639,8 +1642,26 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           sales_angles: product?.sales_angles,
         },
         generation_type: type,
-        ai_provider: "lovable",
+        ai_provider: "gemini",
         ai_model: formData.ai_model,
+        use_perplexity: formData.use_perplexity,
+        script_params: {
+          cta: formData.cta,
+          sales_angle: formData.sales_angle,
+          hooks_count: formData.hooks_count,
+          target_country: formData.target_country,
+          narrative_structure: formData.narrative_structure,
+          video_duration: formData.video_duration,
+          target_platform: formData.target_platform,
+          ideal_avatar: formData.ideal_avatar,
+          video_strategies: formData.video_strategies,
+          reference_transcription: formData.reference_transcription,
+          hooks: formData.hooks,
+          additional_instructions: formData.additional_instructions,
+          document_brief: documentContent.brief,
+          document_onboarding: documentContent.onboarding,
+          document_research: documentContent.research,
+        },
       },
     });
 
@@ -1981,6 +2002,27 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Toggle Perplexity Research */}
+        <div className="space-y-2 md:col-span-2">
+          <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Search className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Pre-investigación con Perplexity</Label>
+                <p className="text-xs text-muted-foreground">
+                  Busca tendencias y datos actuales antes de generar el guión
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={formData.use_perplexity}
+              onCheckedChange={(checked) => setFormData({ ...formData, use_perplexity: checked })}
+            />
+          </div>
         </div>
 
         {/* Estructura Narrativa */}

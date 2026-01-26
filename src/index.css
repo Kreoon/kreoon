@@ -545,3 +545,82 @@
     transform: scale(0.98);
   }
 }
+
+/* ============= SCRIPT BLOCKS STYLING ============= */
+@layer components {
+  .script-block {
+    @apply mb-6 rounded-xl border border-border bg-card overflow-hidden;
+  }
+  
+  .script-block .block-header {
+    @apply flex items-center justify-between px-4 py-3 bg-muted/50 border-b border-border;
+  }
+  
+  .script-block .block-title {
+    @apply text-lg font-semibold text-foreground m-0;
+  }
+  
+  .script-block .block-badge {
+    @apply px-2.5 py-1 text-xs font-medium rounded-full bg-primary/20 text-primary;
+  }
+  
+  .script-block .block-content {
+    @apply p-4 space-y-3;
+  }
+  
+  .script-block[data-type="hooks"] .block-header {
+    @apply bg-amber-500/10 border-amber-500/20;
+  }
+  .script-block[data-type="hooks"] .block-badge {
+    @apply bg-amber-500/20 text-amber-400;
+  }
+  
+  .script-block[data-type="script"] .block-header {
+    @apply bg-blue-500/10 border-blue-500/20;
+  }
+  .script-block[data-type="script"] .block-badge {
+    @apply bg-blue-500/20 text-blue-400;
+  }
+  
+  .script-block[data-type="visuals"] .block-header {
+    @apply bg-purple-500/10 border-purple-500/20;
+  }
+  .script-block[data-type="visuals"] .block-badge {
+    @apply bg-purple-500/20 text-purple-400;
+  }
+  
+  .script-block[data-type="cta"] .block-header {
+    @apply bg-emerald-500/10 border-emerald-500/20;
+  }
+  .script-block[data-type="cta"] .block-badge {
+    @apply bg-emerald-500/20 text-emerald-400;
+  }
+  
+  .script-block .hook-list {
+    @apply space-y-2 list-none p-0 m-0;
+  }
+  
+  .script-block .hook-list li {
+    @apply p-3 rounded-lg bg-muted/50 border border-border/50;
+  }
+  
+  .script-block .scene {
+    @apply p-4 rounded-lg bg-muted/30 border-l-4 border-primary mb-4;
+  }
+  
+  .script-block .dialogue {
+    @apply italic text-foreground/90 pl-4 border-l-2 border-muted-foreground/30;
+  }
+  
+  .script-block .action {
+    @apply text-muted-foreground text-sm uppercase tracking-wide;
+  }
+  
+  .script-block .cta-text {
+    @apply text-lg font-bold text-primary p-4 rounded-lg bg-primary/10 border border-primary/30 not-italic m-0;
+  }
+  
+  .script-block .timestamp {
+    @apply inline-block px-2 py-0.5 text-xs font-mono rounded bg-muted text-muted-foreground mr-2;
+  }
+}
