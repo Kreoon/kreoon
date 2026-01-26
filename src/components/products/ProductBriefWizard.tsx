@@ -38,6 +38,9 @@ import { toast } from 'sonner';
 
 // Comprehensive brief data structure
 interface BriefData {
+  // Section 0: Business Type
+  businessType: 'product_service' | 'personal_brand';
+  
   // Section 1: Product Basics
   productName: string;
   category: string;
@@ -237,6 +240,7 @@ const TARGET_MARKETS = [
 ];
 
 const DEFAULT_BRIEF: BriefData = {
+  businessType: 'product_service',
   productName: '',
   category: '',
   customCategory: '',
@@ -306,6 +310,7 @@ export function ProductBriefWizard({
           brief_data: JSON.parse(JSON.stringify(briefData)),
           brief_status: isAllStepsComplete() ? 'completed' : 'in_progress',
           brief_completed_at: isAllStepsComplete() ? new Date().toISOString() : null,
+          business_type: briefData.businessType,
           updated_at: new Date().toISOString()
         })
         .eq('id', productId);
@@ -621,13 +626,67 @@ Escribe 1-2 frases de complemento para agregar al final.`
       case 0: // Basics
         return (
           <div className="space-y-5">
+            {/* Business Type Selector */}
+            <div className="p-4 bg-muted/50 rounded-lg border">
+              <Label className="text-base font-semibold">¿Qué tipo de negocio es? *</Label>
+              <p className="text-sm text-muted-foreground mb-3">Esto nos ayuda a personalizar los guiones</p>
+              <RadioGroup 
+                value={briefData.businessType} 
+                onValueChange={(v: 'product_service' | 'personal_brand') => updateField('businessType', v)}
+                className="grid grid-cols-1 md:grid-cols-2 gap-3"
+              >
+                <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  briefData.businessType === 'product_service' 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border hover:border-primary/50'
+                }`}>
+                  <RadioGroupItem value="product_service" id="edit_product_service" className="mt-1" />
+                  <div className="flex-1">
+                    <Label htmlFor="edit_product_service" className="text-base font-medium cursor-pointer flex items-center gap-2">
+                      <Package className="h-5 w-5 text-primary" />
+                      Producto o Servicio
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Vendes un producto físico, digital, curso, mentoría, servicio, etc.
+                      <br />
+                      <span className="text-xs">Los creadores externos crearán el contenido.</span>
+                    </p>
+                  </div>
+                </div>
+                <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  briefData.businessType === 'personal_brand' 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border hover:border-primary/50'
+                }`}>
+                  <RadioGroupItem value="personal_brand" id="edit_personal_brand" className="mt-1" />
+                  <div className="flex-1">
+                    <Label htmlFor="edit_personal_brand" className="text-base font-medium cursor-pointer flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      Marca Personal
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Tú eres la marca. Coach, influencer, experto, profesional.
+                      <br />
+                      <span className="text-xs">Tú mismo crearás el contenido.</span>
+                    </p>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="productName">Nombre del producto o servicio *</Label>
+              <Label htmlFor="productName">
+                {briefData.businessType === 'personal_brand' 
+                  ? '¿Cuál es tu nombre o el de tu marca personal? *' 
+                  : 'Nombre del producto o servicio *'}
+              </Label>
               <Input
                 id="productName"
                 value={briefData.productName}
                 onChange={(e) => updateField('productName', e.target.value)}
-                placeholder="Ej: Método de Ventas High Ticket"
+                placeholder={briefData.businessType === 'personal_brand' 
+                  ? 'Ej: María García, Coach María, Dr. García...' 
+                  : 'Ej: Método de Ventas High Ticket'}
               />
             </div>
 

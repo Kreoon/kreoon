@@ -48,6 +48,7 @@ interface Product {
   research_file_url: string | null;
   brief_status?: string | null;
   brief_data?: any;
+  business_type?: 'product_service' | 'personal_brand' | null;
   competitor_analysis?: any | null;
   avatar_profiles?: any | null;
   sales_angles_data?: any | null;
@@ -309,7 +310,11 @@ export function ProductDetailDialog({
               <ProductBriefWizard
                 productId={product.id}
                 productName={formData.name}
-                existingBrief={product.brief_data as any}
+                existingBrief={{
+                  ...(product.brief_data as any || {}),
+                  // Ensure businessType from product takes precedence
+                  businessType: product.business_type || (product.brief_data as any)?.businessType || 'product_service'
+                }}
                 onComplete={() => {
                   toast({ title: "Investigación generada", description: "Los datos del producto han sido actualizados con IA" });
                   onSave?.();
