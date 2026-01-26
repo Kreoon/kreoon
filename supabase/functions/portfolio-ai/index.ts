@@ -17,9 +17,12 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    // Try Gemini first, then OpenAI
+    const GOOGLE_AI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    
+    if (!GOOGLE_AI_API_KEY && !OPENAI_API_KEY) {
+      throw new Error('No AI API keys configured. Set GOOGLE_AI_API_KEY or OPENAI_API_KEY');
     }
 
     const { action, payload, organizationId } = await req.json() as AIRequest;
@@ -97,40 +100,68 @@ Suggest optimal profile blocks. Return JSON with suggested_blocks array containi
         throw new Error(`Unknown action: ${action}`);
     }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        response_format: { type: 'json_object' }
-      }),
-    });
+    let response;
+    let usedProvider = '';
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[portfolio-ai] AI gateway error:', response.status, errorText);
+    // Try Gemini first
+    if (GOOGLE_AI_API_KEY) {
+      response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${GOOGLE_AI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          response_format: { type: 'json_object' }
+        }),
+      });
+      usedProvider = 'gemini';
+    }
+
+    // Fallback to OpenAI if Gemini failed or not available
+    if ((!response || !response.ok) && OPENAI_API_KEY) {
+      console.log('[portfolio-ai] Falling back to OpenAI');
+      response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          response_format: { type: 'json_object' }
+        }),
+      });
+      usedProvider = 'openai';
+    }
+
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : 'No response';
+      console.error('[portfolio-ai] AI error:', response?.status, errorText);
       
-      if (response.status === 429) {
+      if (response?.status === 429) {
         return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (response.status === 402) {
+      if (response?.status === 402) {
         return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits.' }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       
-      throw new Error(`AI gateway error: ${response.status}`);
+      throw new Error(`AI error: ${response?.status}`);
     }
 
     const data = await response.json();
@@ -144,9 +175,9 @@ Suggest optimal profile blocks. Return JSON with suggested_blocks array containi
       result = { raw: content };
     }
 
-    console.log(`[portfolio-ai] Success for action: ${action}`);
+    console.log(`[portfolio-ai] Success for action: ${action} using ${usedProvider}`);
 
-    return new Response(JSON.stringify({ success: true, data: result }), {
+    return new Response(JSON.stringify({ success: true, data: result, provider: usedProvider }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

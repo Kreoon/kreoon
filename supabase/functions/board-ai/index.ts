@@ -31,16 +31,16 @@ interface AIProviderConfig {
 }
 
 const AI_PROVIDERS: Record<string, AIProviderConfig> = {
-  lovable: {
-    // Lovable AI Gateway (compatible with OpenAI chat.completions)
-    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+  gemini: {
+    // Gemini API directo (proveedor predeterminado)
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     getHeaders: (apiKey: string) => ({
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     }),
     getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
       const body: any = {
-        model,
+        model: model || "gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -71,7 +71,7 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
       const isNewOpenAIModel = model.startsWith("gpt-5") || model.startsWith("o3") || model.startsWith("o4");
 
       const body: any = {
-        model,
+        model: model || "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -94,17 +94,20 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
       return data.choices?.[0]?.message?.content || "";
     }
   },
-  gemini: {
-    url: "https://generativelanguage.googleapis.com/v1beta/models",
+  anthropic: {
+    url: "https://api.anthropic.com/v1/messages",
     getHeaders: (apiKey: string) => ({
+      "x-api-key": apiKey,
       "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
     }),
     getBody: (model: string, systemPrompt: string, userPrompt: string) => ({
-      contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 2000 },
+      model: model || "claude-sonnet-4-20250514",
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
     }),
-    extractContent: (data: any) => data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+    extractContent: (data: any) => data.content?.[0]?.text || ""
   }
 };
 
@@ -131,7 +134,8 @@ async function isModuleActive(supabase: any, organizationId: string, moduleKey: 
 
 // Get module-specific configuration (provider & model)
 async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  const googleApiKey = Deno.env.get("GOOGLE_AI_API_KEY");
+  const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
   
   // First check if module is active
   const { data: moduleData } = await supabase
@@ -146,11 +150,23 @@ async function getModuleAIConfig(supabase: any, organizationId: string, moduleKe
   }
   
   // Get the provider configuration from the module or fall back to org defaults
-  let provider = moduleData?.provider || "lovable";
-  let model = moduleData?.model || "google/gemini-2.5-flash";
+  let provider = moduleData?.provider || "gemini";
+  let model = moduleData?.model || "gemini-2.5-flash";
+  
+  // Map old lovable provider to gemini
+  if (provider === "lovable") {
+    provider = "gemini";
+    // Map lovable models to gemini models
+    if (model.startsWith("google/")) {
+      model = model.replace("google/", "");
+    } else if (model.startsWith("openai/")) {
+      provider = "openai";
+      model = model.replace("openai/", "").replace("gpt-5", "gpt-4o").replace("gpt-5-mini", "gpt-4o-mini");
+    }
+  }
   
   // If provider is external, get API key
-  if (provider !== "lovable") {
+  if (provider !== "gemini" && provider !== "openai") {
     const { data: providerData } = await supabase
       .from("organization_ai_providers")
       .select("api_key_encrypted")
@@ -162,21 +178,38 @@ async function getModuleAIConfig(supabase: any, organizationId: string, moduleKe
     if (providerData?.api_key_encrypted) {
       return { provider, model, apiKey: providerData.api_key_encrypted };
     }
-    // Fall back to lovable if no API key
-    provider = "lovable";
-    model = "google/gemini-2.5-flash";
+    // Fall back to gemini if no API key
+    provider = "gemini";
+    model = "gemini-2.5-flash";
   }
   
-  if (!lovableApiKey) {
-    throw new Error("LOVABLE_API_KEY no está configurada");
+  // Get API key based on provider
+  let apiKey = provider === "openai" ? openaiApiKey : googleApiKey;
+  
+  // Fallback chain: if preferred provider has no key, try the other
+  if (!apiKey) {
+    if (googleApiKey) {
+      provider = "gemini";
+      model = "gemini-2.5-flash";
+      apiKey = googleApiKey;
+    } else if (openaiApiKey) {
+      provider = "openai";
+      model = "gpt-4o-mini";
+      apiKey = openaiApiKey;
+    }
   }
   
-  return { provider, model, apiKey: lovableApiKey };
+  if (!apiKey) {
+    throw new Error("No hay API keys de IA configuradas. Configura GOOGLE_AI_API_KEY o OPENAI_API_KEY");
+  }
+  
+  return { provider, model, apiKey };
 }
 
 // Get all available AI configurations for an organization (for fallback)
 async function getAllAIConfigs(supabase: any, organizationId: string) {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  const googleApiKey = Deno.env.get("GOOGLE_AI_API_KEY");
+  const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
   
   const { data: defaults } = await supabase
     .from("organization_ai_defaults")
@@ -201,11 +234,23 @@ async function getAllAIConfigs(supabase: any, organizationId: string) {
     ((enabledProviders as OrgProviderRow[] | null) || []).map((p) => [p.provider_key, p])
   );
 
-  const preferredProvider = defaults?.tablero_provider || defaults?.default_provider || "lovable";
-  const preferredModel = defaults?.tablero_model || defaults?.default_model || "google/gemini-2.5-flash";
+  let preferredProvider = defaults?.tablero_provider || defaults?.default_provider || "gemini";
+  let preferredModel = defaults?.tablero_model || defaults?.default_model || "gemini-2.5-flash";
+
+  // Map lovable to gemini
+  if (preferredProvider === "lovable") {
+    preferredProvider = "gemini";
+    if (preferredModel.startsWith("google/")) {
+      preferredModel = preferredModel.replace("google/", "");
+    }
+  }
 
   // Add preferred provider first if it has API key
-  if (preferredProvider !== "lovable") {
+  if (preferredProvider === "gemini" && googleApiKey) {
+    configs.push({ provider: "gemini", model: preferredModel || "gemini-2.5-flash", apiKey: googleApiKey });
+  } else if (preferredProvider === "openai" && openaiApiKey) {
+    configs.push({ provider: "openai", model: preferredModel || "gpt-4o-mini", apiKey: openaiApiKey });
+  } else if (preferredProvider !== "gemini" && preferredProvider !== "openai") {
     const orgProvider = providerByKey.get(preferredProvider);
     if (orgProvider?.api_key_encrypted) {
       const model = preferredModel || (
@@ -217,30 +262,30 @@ async function getAllAIConfigs(supabase: any, organizationId: string) {
     }
   }
 
-  // Add other external providers as fallbacks
-  const externalProviders = ["openai", "gemini"];
+  // Add Gemini as fallback
+  if (googleApiKey && !configs.some(c => c.provider === "gemini")) {
+    configs.push({ provider: "gemini", model: "gemini-2.5-flash", apiKey: googleApiKey });
+  }
+
+  // Add OpenAI as fallback
+  if (openaiApiKey && !configs.some(c => c.provider === "openai")) {
+    configs.push({ provider: "openai", model: "gpt-4o-mini", apiKey: openaiApiKey });
+  }
+
+  // Add external providers from organization config
+  const externalProviders = ["anthropic"];
   for (const key of externalProviders) {
-    if (key === preferredProvider) continue; // Already added
     const p = providerByKey.get(key);
-    if (p?.api_key_encrypted) {
+    if (p?.api_key_encrypted && !configs.some(c => c.provider === key)) {
       const fallbackModel = Array.isArray(p.available_models) && p.available_models.length
         ? p.available_models[0]
-        : key === "openai" ? "gpt-4o" : "gemini-2.5-flash";
+        : "claude-sonnet-4-20250514";
       configs.push({ provider: key, model: fallbackModel, apiKey: p.api_key_encrypted });
     }
   }
 
-  // Add Lovable AI as final fallback
-  if (lovableApiKey) {
-    configs.push({ 
-      provider: "lovable", 
-      model: preferredModel || "google/gemini-2.5-flash", 
-      apiKey: lovableApiKey 
-    });
-  }
-
   if (configs.length === 0) {
-    throw new Error("No hay proveedores de IA configurados. Contacta al soporte.");
+    throw new Error("No hay proveedores de IA configurados. Configura GOOGLE_AI_API_KEY o OPENAI_API_KEY.");
   }
 
   return configs;
