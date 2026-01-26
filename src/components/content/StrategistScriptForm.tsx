@@ -83,6 +83,8 @@ interface ScriptFormData {
   reference_transcription: string;
   video_strategies: string;
   ai_model: string;
+  video_duration: string;
+  target_platform: string;
 }
 
 interface GenerationStep {
@@ -126,6 +128,26 @@ const NARRATIVE_STRUCTURES = [
 
 const COUNTRIES = [
   "México", "Colombia", "Argentina", "España", "Chile", "Perú", "Estados Unidos (Latino)", "Otro",
+];
+
+// Video duration options
+const VIDEO_DURATIONS = [
+  { value: "15-30s", label: "15-30 segundos (Story/Reel)" },
+  { value: "30-60s", label: "30-60 segundos (Short-form)" },
+  { value: "1-3min", label: "1-3 minutos (Medio)" },
+  { value: "3-5min", label: "3-5 minutos (Largo)" },
+  { value: "5-10min", label: "5-10 minutos (YouTube)" },
+];
+
+// Target platform options
+const TARGET_PLATFORMS = [
+  { value: "instagram", label: "Instagram (Reels/Stories)" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "youtube_shorts", label: "YouTube Shorts" },
+  { value: "youtube", label: "YouTube" },
+  { value: "facebook", label: "Facebook" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "multi", label: "Multi-plataforma" },
 ];
 
 // Sphere phase info for AI context - Aligned with Método Esfera
@@ -1155,6 +1177,8 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     reference_transcription: "",
     video_strategies: "",
     ai_model: "google/gemini-3-flash-preview",
+    video_duration: "",
+    target_platform: "",
   });
 
   // Update prompts when custom prompts are loaded
@@ -1481,15 +1505,41 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       ? formatResearchForPrompt(researchData, businessType)
       : '';
     
+    // Get duration and platform labels
+    const durationLabel = VIDEO_DURATIONS.find(d => d.value === formData.video_duration)?.label || formData.video_duration;
+    const platformLabel = TARGET_PLATFORMS.find(p => p.value === formData.target_platform)?.label || formData.target_platform;
+    
     let context = `${isPersonalBrand ? '🎯 MARCA PERSONAL' : '📦 PRODUCTO/SERVICIO'}: ${product?.name}
 DESCRIPCIÓN: ${product?.description || 'No disponible'}
 CTA: ${formData.cta}
 ÁNGULO DE VENTA: ${formData.sales_angle}
 ESTRUCTURA NARRATIVA: ${narrativeLabel}
 PAÍS OBJETIVO: ${formData.target_country}
+${formData.video_duration ? `DURACIÓN DEL VIDEO: ${durationLabel}` : ''}
+${formData.target_platform ? `PLATAFORMA DESTINO: ${platformLabel}` : ''}
 AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
 
 `;
+
+    // Add research variables if selected
+    if (formData.selected_pain || formData.selected_desire || formData.selected_objection) {
+      context += `=== VARIABLES DE INVESTIGACIÓN SELECCIONADAS ===
+`;
+      if (formData.selected_pain) {
+        context += `😰 DOLOR A EXPLOTAR: ${formData.selected_pain}
+`;
+      }
+      if (formData.selected_desire) {
+        context += `✨ DESEO A ACTIVAR: ${formData.selected_desire}
+`;
+      }
+      if (formData.selected_objection) {
+        context += `🚫 OBJECIÓN A ROMPER: ${formData.selected_objection}
+`;
+      }
+      context += `
+`;
+    }
 
     // Add personal brand context
     if (isPersonalBrand) {
@@ -1892,6 +1942,42 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             <SelectContent>
               {COUNTRIES.map((country) => (
                 <SelectItem key={country} value={country}>{country}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Duración del Video */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Video className="h-4 w-4" /> Duración del Video
+          </Label>
+          <Select 
+            value={formData.video_duration} 
+            onValueChange={(v) => setFormData({ ...formData, video_duration: v })}
+          >
+            <SelectTrigger><SelectValue placeholder="Seleccionar duración..." /></SelectTrigger>
+            <SelectContent>
+              {VIDEO_DURATIONS.map((duration) => (
+                <SelectItem key={duration.value} value={duration.value}>{duration.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Plataforma Destino */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Target className="h-4 w-4" /> Plataforma Destino
+          </Label>
+          <Select 
+            value={formData.target_platform} 
+            onValueChange={(v) => setFormData({ ...formData, target_platform: v })}
+          >
+            <SelectTrigger><SelectValue placeholder="Seleccionar plataforma..." /></SelectTrigger>
+            <SelectContent>
+              {TARGET_PLATFORMS.map((platform) => (
+                <SelectItem key={platform.value} value={platform.value}>{platform.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
