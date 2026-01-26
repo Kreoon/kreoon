@@ -7,10 +7,11 @@ const corsHeaders = {
 };
 
 interface ContentAIRequest {
-  action: "generate_script" | "analyze_content" | "chat" | "improve_script";
+  action: "generate_script" | "analyze_content" | "chat" | "improve_script" | "research_and_generate";
   organizationId: string;
-  ai_provider?: "lovable" | "openai" | "anthropic";
+  ai_provider?: "gemini" | "openai" | "anthropic";
   ai_model?: string;
+  use_perplexity?: boolean; // Enable pre-research with Perplexity
   data?: {
     client_name?: string;
     product?: string;
@@ -448,6 +449,132 @@ Mantén la esencia del mensaje original mientras optimizas:
 Devuelve el guion mejorado en formato HTML estructurado.`,
 };
 
+// ============= PERPLEXITY PRE-RESEARCH =============
+async function runPerplexityResearch(
+  productName: string,
+  productDescription: string,
+  salesAngle: string,
+  targetCountry: string
+): Promise<{ success: boolean; research?: string; error?: string }> {
+  const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+  
+  if (!perplexityApiKey) {
+    console.log("[Perplexity] No API key configured, skipping research");
+    return { success: false, error: "Perplexity API key not configured" };
+  }
+  
+  const prompt = `Investiga información actualizada sobre "${productName}" para crear contenido publicitario:
+
+PRODUCTO: ${productName}
+DESCRIPCIÓN: ${productDescription || 'No disponible'}
+ÁNGULO DE VENTA: ${salesAngle || 'General'}
+PAÍS OBJETIVO: ${targetCountry || 'Latinoamérica'}
+
+NECESITO:
+1. Tendencias actuales del mercado relacionadas
+2. Estadísticas o datos recientes que respalden el ángulo de venta
+3. Puntos de dolor comunes de la audiencia objetivo
+4. Frases o expresiones populares en ${targetCountry || 'el mercado latino'}
+5. Competidores principales y cómo se diferencian
+
+Responde de forma concisa y directa, máximo 500 palabras.`;
+
+  try {
+    console.log("[Perplexity] Starting research for:", productName);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'sonar',
+        max_tokens: 1500,
+        temperature: 0.2,
+        messages: [
+          { role: 'system', content: 'Eres un investigador de mercado experto. Responde en español con datos actuales y verificables.' },
+          { role: 'user', content: prompt }
+        ],
+      }),
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[Perplexity] API error:", response.status, errorText);
+      return { success: false, error: `Perplexity error: ${response.status}` };
+    }
+    
+    const data = await response.json();
+    const research = data.choices?.[0]?.message?.content || "";
+    
+    console.log("[Perplexity] Research completed, length:", research.length);
+    
+    return { success: true, research };
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.error("[Perplexity] Request timeout");
+      return { success: false, error: "Research timeout" };
+    }
+    console.error("[Perplexity] Error:", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============= IMPROVED HTML BLOCK FORMAT =============
+const BLOCK_FORMAT_INSTRUCTIONS = `
+🎨 FORMATO DE BLOQUES HTML (OBLIGATORIO):
+
+Estructura cada bloque con estas clases CSS para mejor organización:
+
+<div class="script-block" data-type="{tipo}">
+  <div class="block-header">
+    <h2 class="block-title">{Emoji} {Título del Bloque}</h2>
+    <span class="block-badge">{Tipo}</span>
+  </div>
+  <div class="block-content">
+    {Contenido estructurado}
+  </div>
+</div>
+
+TIPOS DE BLOQUE:
+- hooks: Para los ganchos/hooks del video
+- script: Para el guion principal
+- visuals: Para indicaciones visuales
+- audio: Para indicaciones de audio/música
+- cta: Para el llamado a la acción
+- notes: Para notas adicionales
+
+ESTRUCTURA INTERNA:
+- Usa <ul class="hook-list"> para listas de hooks
+- Usa <div class="scene"> para separar escenas
+- Usa <p class="dialogue"> para diálogos
+- Usa <p class="action"> para acciones/visuales
+- Usa <blockquote class="cta-text"> para el CTA destacado
+- Usa <div class="timestamp">[00:00]</div> para marcas de tiempo
+
+EJEMPLO:
+<div class="script-block" data-type="hooks">
+  <div class="block-header">
+    <h2 class="block-title">🎣 HOOKS</h2>
+    <span class="block-badge">Ganchos Iniciales</span>
+  </div>
+  <div class="block-content">
+    <ul class="hook-list">
+      <li><strong>Hook 1:</strong> "¿Sabías que el 80% de las personas...?"</li>
+      <li><strong>Hook 2:</strong> "Esto me cambió la vida..."</li>
+    </ul>
+  </div>
+</div>
+`;
+
+
 // Helper function to sleep for a given number of milliseconds
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -690,8 +817,35 @@ serve(async (req) => {
     let result: string;
 
     switch (action) {
+      case "research_and_generate":
       case "generate_script": {
         if (prompt && product) {
+          // Check if Perplexity research is requested
+          const usePerplexity = body.use_perplexity === true;
+          let perplexityResearch = "";
+          
+          if (usePerplexity) {
+            console.log("[content-ai] Running Perplexity pre-research...");
+            const researchResult = await runPerplexityResearch(
+              product.name || "",
+              product.description || "",
+              body.script_params?.sales_angle || "",
+              body.script_params?.target_country || "México"
+            );
+            
+            if (researchResult.success && researchResult.research) {
+              perplexityResearch = `
+📊 INVESTIGACIÓN DE MERCADO EN TIEMPO REAL (Perplexity):
+${researchResult.research}
+
+⚠️ USA ESTA INFORMACIÓN para hacer el contenido más relevante y actual.
+`;
+              console.log("[content-ai] Perplexity research added, length:", perplexityResearch.length);
+            } else {
+              console.log("[content-ai] Perplexity research skipped:", researchResult.error);
+            }
+          }
+          
           // Get custom prompts from organization if available
           const customPrompts = await getOrganizationPrompts(supabase, organizationId);
           
@@ -732,6 +886,7 @@ serve(async (req) => {
             rolePrompt = getGenerationTypePrompt(generation_type);
           }
           
+          // Include block format instructions for better output
           const fullSystemPrompt = customPrompts 
             ? `${masterPrompt}
 
@@ -739,30 +894,36 @@ ${criticalRules}
 
 ${formatRules}
 
+${BLOCK_FORMAT_INSTRUCTIONS}
+
 ${rolePrompt}
 
 ${productContext}
-
+${perplexityResearch}
 IMPORTANTE:
 - Analiza toda la información del producto proporcionada arriba
 - La cantidad de hooks debe ser EXACTAMENTE la que se indica en el prompt del usuario
 - Usa expresiones y modismos del país objetivo cuando sea apropiado
-- El resultado debe ser HTML limpio, sin markdown, listo para renderizar`
+- El resultado debe ser HTML limpio, sin markdown, listo para renderizar
+- ORGANIZA el contenido usando la estructura de bloques indicada`
             : `${MASTER_SYSTEM_PROMPT}
 
+${BLOCK_FORMAT_INSTRUCTIONS}
+
 ${rolePrompt}
 
 ${productContext}
-
+${perplexityResearch}
 IMPORTANTE:
 - Analiza toda la información del producto proporcionada arriba
 - La cantidad de hooks debe ser EXACTAMENTE la que se indica en el prompt del usuario
 - Usa expresiones y modismos del país objetivo cuando sea apropiado
-- El resultado debe ser HTML limpio, sin markdown, listo para renderizar`;
+- El resultado debe ser HTML limpio, sin markdown, listo para renderizar
+- ORGANIZA el contenido usando la estructura de bloques indicada`;
 
           console.log("[content-ai] Product context length:", productContext.length);
           console.log("[content-ai] Full system prompt length:", fullSystemPrompt.length);
-          console.log("[content-ai] Template variables replaced in custom prompts");
+          console.log("[content-ai] Template variables replaced, Perplexity:", usePerplexity);
 
           result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
 
@@ -771,12 +932,18 @@ IMPORTANTE:
             userId: "system",
             provider: aiConfig.provider,
             model: aiConfig.model,
-            action: "generate_script",
+            action: usePerplexity ? "generate_script_with_research" : "generate_script",
             success: true
           });
 
           return new Response(
-            JSON.stringify({ success: true, script: result, ai_provider: aiConfig.provider, ai_model: aiConfig.model }),
+            JSON.stringify({ 
+              success: true, 
+              script: result, 
+              ai_provider: aiConfig.provider, 
+              ai_model: aiConfig.model,
+              used_perplexity: usePerplexity && perplexityResearch.length > 0
+            }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
