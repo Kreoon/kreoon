@@ -82,7 +82,6 @@ interface ScriptFormData {
   admin_prompt: string;
   reference_transcription: string;
   video_strategies: string;
-  ai_provider: "lovable" | "openai" | "gemini" | "anthropic";
   ai_model: string;
 }
 
@@ -92,54 +91,14 @@ interface GenerationStep {
   status: "pending" | "generating" | "done" | "error";
 }
 
-const AI_PROVIDERS = [
-  { 
-    value: "lovable", 
-    label: "IA Interna", 
-    description: "Sin API Key requerida",
-    requiresApiKey: false,
-    models: [
-      { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash (Recomendado)" },
-      { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-      { value: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite (Rápido)" },
-      { value: "openai/gpt-5", label: "GPT-5" },
-      { value: "openai/gpt-5-mini", label: "GPT-5 Mini" },
-    ]
-  },
-  { 
-    value: "openai", 
-    label: "OpenAI GPT", 
-    description: "Requiere API Key",
-    requiresApiKey: true,
-    models: [
-      { value: "gpt-4o", label: "GPT-4o (Recomendado)" },
-      { value: "gpt-4o-mini", label: "GPT-4o Mini (Rápido)" },
-      { value: "gpt-5", label: "GPT-5" },
-      { value: "gpt-5-mini", label: "GPT-5 Mini" },
-    ]
-  },
-  { 
-    value: "gemini", 
-    label: "Google Gemini", 
-    description: "Requiere API Key",
-    requiresApiKey: true,
-    models: [
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Recomendado)" },
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-      { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
-    ]
-  },
-  { 
-    value: "anthropic", 
-    label: "Anthropic Claude", 
-    description: "Requiere API Key",
-    requiresApiKey: true,
-    models: [
-      { value: "claude-sonnet-4-5", label: "Claude Sonnet 4.5 (Recomendado)" },
-      { value: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet" },
-      { value: "claude-3-5-haiku", label: "Claude 3.5 Haiku (Rápido)" },
-    ]
-  },
+// AI Models available via Lovable AI Gateway - no external API key required
+const AI_MODELS = [
+  { value: "google/gemini-3-flash-preview", label: "Gemini 3 Flash (Recomendado)" },
+  { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro (Avanzado)" },
+  { value: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite (Rápido)" },
+  { value: "openai/gpt-5", label: "GPT-5" },
+  { value: "openai/gpt-5-mini", label: "GPT-5 Mini (Rápido)" },
 ];
 
 const NARRATIVE_STRUCTURES = [
@@ -1195,8 +1154,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     admin_prompt: DEFAULT_PROMPTS.admin,
     reference_transcription: "",
     video_strategies: "",
-    ai_provider: "lovable",
-    ai_model: "google/gemini-2.5-flash",
+    ai_model: "google/gemini-3-flash-preview",
   });
 
   // Update prompts when custom prompts are loaded
@@ -1214,22 +1172,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     }
   }, [customPrompts, loadingPrompts]);
 
-  const currentProvider = AI_PROVIDERS.find(p => p.value === formData.ai_provider);
-  const availableModels = currentProvider?.models || [];
-
-  // Update model when provider changes
-  useEffect(() => {
-    const provider = AI_PROVIDERS.find(p => p.value === formData.ai_provider);
-    if (provider && provider.models.length > 0) {
-      const currentModelExists = provider.models.some(m => m.value === formData.ai_model);
-      if (!currentModelExists) {
-        setFormData(prev => ({
-          ...prev,
-          ai_model: provider.models[0].value
-        }));
-      }
-    }
-  }, [formData.ai_provider]);
+  // No provider selection needed - using Lovable AI gateway
 
   // Pre-fill avatar from product if available
   useEffect(() => {
@@ -1646,7 +1589,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           sales_angles: product?.sales_angles,
         },
         generation_type: type,
-        ai_provider: formData.ai_provider,
+        ai_provider: "lovable",
         ai_model: formData.ai_model,
       },
     });
@@ -1779,7 +1722,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           Formulario de Guión
         </h4>
         <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-          {currentProvider?.label}
+          {AI_MODELS.find(m => m.value === formData.ai_model)?.label || "IA"}
         </Badge>
       </div>
 
@@ -1837,77 +1780,24 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       <div className="p-4 rounded-lg bg-muted/50 border space-y-4">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
-          <Label className="text-sm font-medium">Seleccionar IA</Label>
+          <Label className="text-sm font-medium">Modelo IA</Label>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Proveedor</Label>
-            <Select 
-              value={formData.ai_provider} 
-              onValueChange={(v: "lovable" | "openai" | "gemini" | "anthropic") => setFormData({ ...formData, ai_provider: v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar proveedor" />
-              </SelectTrigger>
-              <SelectContent>
-                {AI_PROVIDERS.map((provider) => {
-                  const isEnabled = isProviderEnabled(provider.value);
-                  const needsApiKey = provider.requiresApiKey && !hasValidApiKey(provider.value);
-                  return (
-                    <SelectItem 
-                      key={provider.value} 
-                      value={provider.value}
-                      disabled={!isEnabled}
-                      className={!isEnabled ? "opacity-50" : ""}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>{provider.label}</span>
-                        {!isEnabled && (
-                          <Badge variant="outline" className="text-xs text-muted-foreground">Desactivado</Badge>
-                        )}
-                        {isEnabled && needsApiKey && (
-                          <AlertCircle className="h-3 w-3 text-amber-500" />
-                        )}
-                        {provider.value === 'lovable' && (
-                          <Badge variant="secondary" className="text-xs">Sin API Key</Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Modelo</Label>
-            <Select 
-              value={formData.ai_model} 
-              onValueChange={(v) => setFormData({ ...formData, ai_model: v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar modelo" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableModels.map((model) => (
-                  <SelectItem key={model.value} value={model.value}>
-                    {model.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        {formData.ai_provider !== 'lovable' && currentProvider?.requiresApiKey && !hasValidApiKey(formData.ai_provider) && (
-          <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded mt-2">
-            <AlertCircle className="h-3 w-3 flex-shrink-0" />
-            <span>
-              Configura la API Key de {currentProvider?.label} en la configuración de IA
-            </span>
-          </div>
-        )}
+        <Select 
+          value={formData.ai_model} 
+          onValueChange={(v) => setFormData({ ...formData, ai_model: v })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Seleccionar modelo" />
+          </SelectTrigger>
+          <SelectContent>
+            {AI_MODELS.map((model) => (
+              <SelectItem key={model.value} value={model.value}>
+                {model.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2408,7 +2298,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       {/* Generation Progress */}
       {loading && (
         <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
-          <p className="text-sm font-medium mb-3">Progreso ({currentProvider?.label}):</p>
+          <p className="text-sm font-medium mb-3">Progreso (IA):</p>
           {generationSteps.map((step) => (
             <div key={step.key} className="flex items-center gap-3">
               {step.status === "pending" && <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />}
@@ -2428,7 +2318,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Generando con {currentProvider?.label}...
+            Generando con IA...
           </>
         ) : (
           <>
