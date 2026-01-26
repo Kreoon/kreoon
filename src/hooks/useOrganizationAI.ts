@@ -45,25 +45,24 @@ export interface AIUsageLog {
   created_at: string;
 }
 
-// Available providers with their models
+// Available providers with their models (Direct API - No Lovable Gateway)
 export const AI_PROVIDERS_CONFIG = {
-  lovable: {
-    key: 'lovable',
-    label: 'IA Interna',
-    description: 'Sin API Key requerida',
-    requiresApiKey: false,
+  gemini: {
+    key: 'gemini',
+    label: 'Google Gemini',
+    description: 'Gemini Pro, Flash - API Directa',
+    requiresApiKey: true,
     models: [
-      { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (Recomendado)', default: true },
-      { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
-      { value: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite (Rápido)' },
-      { value: 'openai/gpt-5', label: 'GPT-5' },
-      { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini' },
+      { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Recomendado)', default: true },
+      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+      { value: 'gemini-2.0-pro', label: 'Gemini 2.0 Pro' },
+      { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
     ]
   },
   openai: {
     key: 'openai',
     label: 'OpenAI',
-    description: 'GPT-4o, GPT-5, DALL-E',
+    description: 'GPT-4o, GPT-5, DALL-E - API Directa',
     requiresApiKey: true,
     models: [
       { value: 'gpt-4o', label: 'GPT-4o (Recomendado)', default: true },
@@ -71,18 +70,6 @@ export const AI_PROVIDERS_CONFIG = {
       { value: 'gpt-5', label: 'GPT-5' },
       { value: 'gpt-5-mini', label: 'GPT-5 Mini' },
       { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-    ]
-  },
-  gemini: {
-    key: 'gemini',
-    label: 'Google Gemini',
-    description: 'Gemini Pro, Flash',
-    requiresApiKey: true,
-    models: [
-      { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Recomendado)', default: true },
-      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
-      { value: 'gemini-2.0-pro', label: 'Gemini 2.0 Pro' },
-      { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
     ]
   },
   anthropic: {
@@ -275,25 +262,24 @@ export function useOrganizationAI(organizationId?: string) {
   // Get effective provider/model for a module
   const getModuleConfig = (module: string): { provider: string; model: string } => {
     if (!defaults) {
-      return { provider: 'lovable', model: 'google/gemini-2.5-flash' };
+      return { provider: 'gemini', model: 'gemini-2.5-flash' };
     }
 
     const moduleProvider = defaults[`${module}_provider` as keyof AIDefaults] as string | null;
     const moduleModel = defaults[`${module}_model` as keyof AIDefaults] as string | null;
 
     return {
-      provider: moduleProvider || defaults.default_provider,
-      model: moduleModel || defaults.default_model
+      provider: moduleProvider || defaults.default_provider || 'gemini',
+      model: moduleModel || defaults.default_model || 'gemini-2.5-flash'
     };
   };
 
   // Get available (enabled) providers
   const getEnabledProviders = () => {
-    // Lovable AI is always available
-    const enabled = [AI_PROVIDERS_CONFIG.lovable];
+    const enabled: typeof AI_PROVIDERS_CONFIG[keyof typeof AI_PROVIDERS_CONFIG][] = [];
     
     providers.forEach(p => {
-      if (p.is_enabled && p.provider_key !== 'lovable') {
+      if (p.is_enabled) {
         const config = AI_PROVIDERS_CONFIG[p.provider_key as keyof typeof AI_PROVIDERS_CONFIG];
         if (config) {
           enabled.push(config);
@@ -301,12 +287,16 @@ export function useOrganizationAI(organizationId?: string) {
       }
     });
 
+    // If no providers enabled, default to gemini
+    if (enabled.length === 0) {
+      enabled.push(AI_PROVIDERS_CONFIG.gemini);
+    }
+
     return enabled;
   };
 
   // Check if a provider has a valid API key configured
   const hasValidApiKey = (providerKey: string): boolean => {
-    if (providerKey === 'lovable') return true; // No key needed
     const provider = providers.find(p => p.provider_key === providerKey);
     return !!(provider?.api_key_encrypted);
   };

@@ -15,15 +15,15 @@ export interface PortfolioAIFeatures {
 
 export interface PortfolioAIConfig {
   enabled: boolean;
-  provider: 'lovable' | 'openai' | 'gemini';
+  provider: 'gemini' | 'openai' | 'anthropic';
   model: string;
   features: PortfolioAIFeatures;
 }
 
 const DEFAULT_CONFIG: PortfolioAIConfig = {
   enabled: false,
-  provider: 'lovable',
-  model: 'google/gemini-2.5-flash',
+  provider: 'gemini',
+  model: 'gemini-2.5-flash',
   features: {
     ai_search: false,
     ai_feed_ranking: false,
@@ -79,8 +79,8 @@ export function usePortfolioAIConfig(): PortfolioAIConfigHook {
         
         setConfig({
           enabled: data.enabled ?? false,
-          provider: (data.provider as PortfolioAIConfig['provider']) ?? 'lovable',
-          model: data.model ?? 'google/gemini-2.5-flash',
+          provider: (data.provider as PortfolioAIConfig['provider']) ?? 'gemini',
+          model: data.model ?? 'gemini-2.5-flash',
           features: parsedFeatures,
         });
       } else {
