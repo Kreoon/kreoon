@@ -14,11 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useScriptPrompts, DEFAULT_SCRIPT_PROMPTS } from "@/hooks/useScriptPrompts";
 import { ProductResearchSelector } from "./ProductResearchSelector";
+import { parseProductResearch, ParsedResearchData } from "@/lib/productResearchParser";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   Plus, X, Wand2, Settings2,
   Video, ChevronDown, CheckCircle2, 
-  Package, Lightbulb, Copy, Download, AlertCircle, Database, Webhook
+  Package, Lightbulb, Copy, Download, AlertCircle, Database, Webhook,
+  Clock, Monitor, Heart, Zap, ShieldX, Check
 } from "lucide-react";
 import { sanitizeHTML } from "@/lib/sanitizeHTML";
 
@@ -30,6 +32,26 @@ interface GeneratedContent {
   designer_guidelines?: string;
   admin_guidelines?: string;
 }
+
+// Video duration options
+const VIDEO_DURATIONS = [
+  { value: "15-30s", label: "15-30 segundos (Story/Reel)" },
+  { value: "30-60s", label: "30-60 segundos (Short-form)" },
+  { value: "1-3min", label: "1-3 minutos (Medio)" },
+  { value: "3-5min", label: "3-5 minutos (Largo)" },
+  { value: "5-10min", label: "5-10 minutos (YouTube)" },
+];
+
+// Target platform options
+const TARGET_PLATFORMS = [
+  { value: "instagram", label: "Instagram (Reels/Stories)" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "youtube_shorts", label: "YouTube Shorts" },
+  { value: "youtube", label: "YouTube" },
+  { value: "facebook", label: "Facebook" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "multi", label: "Multi-plataforma" },
+];
 
 interface StandaloneFormData {
   product_name: string;
@@ -51,6 +73,12 @@ interface StandaloneFormData {
   research_content: string;
   reference_transcription: string;
   video_strategies: string;
+  // New fields for research variables
+  selected_pain: string;
+  selected_desire: string;
+  selected_objection: string;
+  video_duration: string;
+  target_platform: string;
 }
 
 interface GenerationStep {
@@ -145,7 +173,29 @@ export function StandaloneScriptGenerator() {
     research_content: "",
     reference_transcription: "",
     video_strategies: "",
+    selected_pain: "",
+    selected_desire: "",
+    selected_objection: "",
+    video_duration: "",
+    target_platform: "",
   });
+
+
+  // Producto seleccionado en "Cargar Investigación de Producto"
+  const [researchProduct, setResearchProduct] = useState<any | null>(null);
+
+  // Parsed research data from selected product
+  const parsedResearch = useMemo<ParsedResearchData | null>(() => {
+    if (!researchProduct) return null;
+    return parseProductResearch({
+      market_research: researchProduct.market_research,
+      avatar_profiles: researchProduct.avatar_profiles,
+      sales_angles: researchProduct.sales_angles,
+      sales_angles_data: researchProduct.sales_angles_data,
+      competitor_analysis: researchProduct.competitor_analysis,
+      brief_data: researchProduct.brief_data,
+    });
+  }, [researchProduct]);
 
   // Load webhook configuration from app_settings
   useEffect(() => {
@@ -191,9 +241,6 @@ export function StandaloneScriptGenerator() {
 
     fetchWebhooks();
   }, []);
-
-  // Producto seleccionado en "Cargar Investigación de Producto"
-  const [researchProduct, setResearchProduct] = useState<any | null>(null);
 
   const extractResearchAvatars = (product: any): any[] => {
     if (!product) return [];
@@ -256,6 +303,8 @@ export function StandaloneScriptGenerator() {
   const buildPayload = () => {
     const narrativeLabel = NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure;
     const toneLabel = BRAND_TONES.find(t => t.value === formData.brand_tone)?.label || formData.brand_tone;
+    const durationLabel = VIDEO_DURATIONS.find(d => d.value === formData.video_duration)?.label || formData.video_duration;
+    const platformLabel = TARGET_PLATFORMS.find(p => p.value === formData.target_platform)?.label || formData.target_platform;
     
     return {
       // Product/Service Info
@@ -276,10 +325,21 @@ export function StandaloneScriptGenerator() {
         target_country: formData.target_country,
         hooks_count: parseInt(formData.hooks_count),
         suggested_hooks: formData.hooks,
+        video_duration: durationLabel,
+        target_platform: platformLabel,
       },
       // Avatar/Audience
       avatar: {
         ideal_avatar: formData.ideal_avatar,
+      },
+      // Research variables (pains, desires, objections)
+      research_variables: {
+        selected_pain: formData.selected_pain,
+        selected_desire: formData.selected_desire,
+        selected_objection: formData.selected_objection,
+        all_pains: parsedResearch?.pains || [],
+        all_desires: parsedResearch?.desires || [],
+        all_objections: parsedResearch?.objections || [],
       },
       // Additional Documents
       documents: {
@@ -299,6 +359,7 @@ export function StandaloneScriptGenerator() {
         avatars: researchAvatars,
         angles: researchAngles,
         full_research: researchProduct.market_research,
+        parsed: parsedResearch,
       } : null,
     };
   };
@@ -756,6 +817,136 @@ export function StandaloneScriptGenerator() {
           </CardContent>
         </Card>
 
+        {/* Research Variables Section - Only visible when product with research is selected */}
+        {parsedResearch && (parsedResearch.pains.length > 0 || parsedResearch.desires.length > 0 || parsedResearch.objections.length > 0) && (
+          <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Zap className="h-5 w-5 text-amber-500" />
+                Variables de Investigación
+              </CardTitle>
+              <CardDescription>
+                Selecciona insights del research para enfocar el guión
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Pains / Dolores */}
+              {parsedResearch.pains.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    Dolor/Problema principal
+                  </Label>
+                  <Select
+                    value={formData.selected_pain}
+                    onValueChange={(value) => setFormData({ ...formData, selected_pain: value })}
+                  >
+                    <SelectTrigger className={`bg-background ${formData.selected_pain ? 'border-red-500/30 bg-red-500/5' : ''}`}>
+                      <SelectValue placeholder="Seleccionar un dolor..." />
+                    </SelectTrigger>
+                    <SelectContent className="z-[100] bg-popover max-h-[300px]" position="popper" sideOffset={4}>
+                      {parsedResearch.pains.map((pain, idx) => (
+                        <SelectItem key={idx} value={pain} className="py-2">
+                          <span className="line-clamp-2">{pain}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.selected_pain && (
+                    <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                      <Check className="h-3 w-3" /> Dolor seleccionado
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Desires / Deseos */}
+              {parsedResearch.desires.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-emerald-500" />
+                    Deseo/Aspiración principal
+                  </Label>
+                  <Select
+                    value={formData.selected_desire}
+                    onValueChange={(value) => setFormData({ ...formData, selected_desire: value })}
+                  >
+                    <SelectTrigger className={`bg-background ${formData.selected_desire ? 'border-emerald-500/30 bg-emerald-500/5' : ''}`}>
+                      <SelectValue placeholder="Seleccionar un deseo..." />
+                    </SelectTrigger>
+                    <SelectContent className="z-[100] bg-popover max-h-[300px]" position="popper" sideOffset={4}>
+                      {parsedResearch.desires.map((desire, idx) => (
+                        <SelectItem key={idx} value={desire} className="py-2">
+                          <span className="line-clamp-2">{desire}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.selected_desire && (
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <Check className="h-3 w-3" /> Deseo seleccionado
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Objections / Objeciones */}
+              {parsedResearch.objections.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <ShieldX className="h-4 w-4 text-orange-500" />
+                    Objeción a romper
+                  </Label>
+                  <Select
+                    value={formData.selected_objection}
+                    onValueChange={(value) => setFormData({ ...formData, selected_objection: value })}
+                  >
+                    <SelectTrigger className={`bg-background ${formData.selected_objection ? 'border-orange-500/30 bg-orange-500/5' : ''}`}>
+                      <SelectValue placeholder="Seleccionar una objeción..." />
+                    </SelectTrigger>
+                    <SelectContent className="z-[100] bg-popover max-h-[300px]" position="popper" sideOffset={4}>
+                      {parsedResearch.objections.map((objection, idx) => (
+                        <SelectItem key={idx} value={objection} className="py-2">
+                          <span className="line-clamp-2">{objection}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.selected_objection && (
+                    <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                      <Check className="h-3 w-3" /> Objeción seleccionada
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Show summary of selected variables */}
+              {(formData.selected_pain || formData.selected_desire || formData.selected_objection) && (
+                <div className="p-3 rounded-lg bg-muted/50 border border-muted">
+                  <p className="text-xs font-medium mb-2">Variables seleccionadas:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {formData.selected_pain && (
+                      <Badge variant="outline" className="text-xs bg-red-500/10 border-red-500/30">
+                        😰 Dolor
+                      </Badge>
+                    )}
+                    {formData.selected_desire && (
+                      <Badge variant="outline" className="text-xs bg-emerald-500/10 border-emerald-500/30">
+                        ✨ Deseo
+                      </Badge>
+                    )}
+                    {formData.selected_objection && (
+                      <Badge variant="outline" className="text-xs bg-orange-500/10 border-orange-500/30">
+                        🚫 Objeción
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -820,6 +1011,52 @@ export function StandaloneScriptGenerator() {
                   <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
                     {[1, 2, 3, 4, 5].map(n => (
                       <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* New: Duration and Platform */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  Duración del video
+                </Label>
+                <Select
+                  value={formData.video_duration}
+                  onValueChange={(value) => setFormData({ ...formData, video_duration: value })}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Seleccionar duración" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
+                    {VIDEO_DURATIONS.map(duration => (
+                      <SelectItem key={duration.value} value={duration.value}>
+                        {duration.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Monitor className="h-4 w-4 text-muted-foreground" />
+                  Plataforma destino
+                </Label>
+                <Select
+                  value={formData.target_platform}
+                  onValueChange={(value) => setFormData({ ...formData, target_platform: value })}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Seleccionar plataforma" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
+                    {TARGET_PLATFORMS.map(platform => (
+                      <SelectItem key={platform.value} value={platform.value}>
+                        {platform.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
