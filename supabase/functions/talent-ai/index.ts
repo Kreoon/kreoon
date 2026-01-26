@@ -16,14 +16,14 @@ interface AIProviderConfig {
 }
 
 const AI_PROVIDERS: Record<string, AIProviderConfig> = {
-  lovable: {
-    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+  gemini: {
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     getHeaders: (apiKey: string) => ({
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      "Authorization": `Bearer ${apiKey}`,
     }),
     formatBody: (messages: any[], tools?: any[]) => ({
-      model: "google/gemini-2.5-flash",
+      model: "gemini-2.5-flash",
       messages,
       ...(tools ? { tools, tool_choice: { type: "function", function: { name: tools[0].function.name } } } : {}),
     }),
@@ -38,7 +38,7 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
     url: "https://api.openai.com/v1/chat/completions",
     getHeaders: (apiKey: string) => ({
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      "Authorization": `Bearer ${apiKey}`,
     }),
     formatBody: (messages: any[], tools?: any[]) => ({
       model: "gpt-4o-mini",
@@ -52,20 +52,23 @@ const AI_PROVIDERS: Record<string, AIProviderConfig> = {
       return response.choices[0].message.content;
     },
   },
-  gemini: {
-    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+  anthropic: {
+    url: "https://api.anthropic.com/v1/messages",
     getHeaders: (apiKey: string) => ({
       "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
     }),
-    formatBody: (messages: any[], tools?: any[]) => ({
-      contents: messages.map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
+    formatBody: (messages: any[]) => ({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4096,
+      messages: messages.map((m) => ({
+        role: m.role === "system" ? "user" : m.role,
+        content: m.content,
       })),
     }),
     extractContent: (response: any) => {
-      return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      return response.content?.[0]?.text || "";
     },
   },
 };
@@ -108,6 +111,9 @@ interface TalentAmbassadorRequest {
 type RequestBody = TalentMatchingRequest | TalentQualityRequest | TalentRiskRequest | TalentReputationRequest | TalentAmbassadorRequest;
 
 async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
+  const googleApiKey = Deno.env.get("GOOGLE_AI_API_KEY");
+  const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+
   // First try to get module-specific config
   const { data: moduleData } = await supabase
     .from("organization_ai_modules")
@@ -125,25 +131,50 @@ async function getModuleAIConfig(supabase: any, organizationId: string, moduleKe
     .single();
 
   // Use module config if available, otherwise use org defaults
-  const provider = moduleData?.provider || defaults?.default_provider || "lovable";
-  const model = moduleData?.model || defaults?.default_model || "google/gemini-2.5-flash";
+  let provider = moduleData?.provider || defaults?.default_provider || "gemini";
+  let model = moduleData?.model || defaults?.default_model || "gemini-2.5-flash";
+
+  // Map lovable provider to gemini
+  if (provider === "lovable") {
+    provider = "gemini";
+    if (model.startsWith("google/")) {
+      model = model.replace("google/", "");
+    } else if (model.startsWith("openai/")) {
+      provider = "openai";
+      model = model.replace("openai/", "").replace("gpt-5", "gpt-4o").replace("gpt-5-mini", "gpt-4o-mini");
+    }
+  }
 
   // Get the appropriate API key based on provider
   let apiKey = "";
   switch (provider) {
     case "openai":
-      apiKey = Deno.env.get("OPENAI_API_KEY") || "";
+      apiKey = openaiApiKey || "";
       break;
     case "gemini":
-      apiKey = Deno.env.get("GEMINI_API_KEY") || "";
+      apiKey = googleApiKey || "";
       break;
     case "anthropic":
       apiKey = Deno.env.get("ANTHROPIC_API_KEY") || "";
       break;
-    case "lovable":
     default:
-      apiKey = Deno.env.get("LOVABLE_API_KEY") || "";
+      apiKey = googleApiKey || "";
+      provider = "gemini";
+      model = "gemini-2.5-flash";
       break;
+  }
+
+  // Fallback if no API key for selected provider
+  if (!apiKey) {
+    if (googleApiKey) {
+      provider = "gemini";
+      model = "gemini-2.5-flash";
+      apiKey = googleApiKey;
+    } else if (openaiApiKey) {
+      provider = "openai";
+      model = "gpt-4o-mini";
+      apiKey = openaiApiKey;
+    }
   }
 
   console.log(`AI Config for module ${moduleKey}: provider=${provider}, model=${model}, hasKey=${!!apiKey}`);

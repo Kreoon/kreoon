@@ -18,35 +18,33 @@ interface AIResponse {
 }
 
 interface ProviderStatus {
-  lovable: boolean;
+  gemini: boolean;
+  openai: boolean;
   anthropic: boolean;
-  openrouter: boolean;
-  google_drive: boolean;
 }
 
 // Verificar qué APIs están disponibles
 function getAvailableProviders(): ProviderStatus {
   return {
-    lovable: !!Deno.env.get("LOVABLE_API_KEY"),
+    gemini: !!Deno.env.get("GOOGLE_AI_API_KEY"),
+    openai: !!Deno.env.get("OPENAI_API_KEY"),
     anthropic: !!Deno.env.get("ANTHROPIC_API_KEY"),
-    openrouter: !!Deno.env.get("OPENROUTER_API_KEY"),
-    google_drive: !!(Deno.env.get("GOOGLE_DRIVE_CLIENT_ID") && Deno.env.get("GOOGLE_DRIVE_CLIENT_SECRET")),
   };
 }
 
-// Llamar a Lovable AI (Gemini, GPT)
-async function callLovableAI(messages: Message[], model: string): Promise<AIResponse> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+// Llamar a Gemini directamente
+async function callGemini(messages: Message[], model: string = "gemini-2.5-flash"): Promise<AIResponse> {
+  const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
   
-  if (!LOVABLE_API_KEY) {
-    return { model, content: "", success: false, error: "LOVABLE_API_KEY not configured" };
+  if (!GOOGLE_AI_API_KEY) {
+    return { model, content: "", success: false, error: "GOOGLE_AI_API_KEY not configured" };
   }
 
   try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${GOOGLE_AI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -57,17 +55,55 @@ async function callLovableAI(messages: Message[], model: string): Promise<AIResp
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Error with ${model}:`, errorText);
+      console.error(`Error with Gemini ${model}:`, errorText);
       return { model, content: "", success: false, error: `HTTP ${response.status}` };
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
     
-    return { model, content, success: true };
+    return { model: `gemini/${model}`, content, success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error(`Error calling ${model}:`, error);
+    console.error(`Error calling Gemini ${model}:`, error);
+    return { model, content: "", success: false, error: errorMessage };
+  }
+}
+
+// Llamar a OpenAI directamente
+async function callOpenAI(messages: Message[], model: string = "gpt-4o-mini"): Promise<AIResponse> {
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  
+  if (!OPENAI_API_KEY) {
+    return { model, content: "", success: false, error: "OPENAI_API_KEY not configured" };
+  }
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Error with OpenAI ${model}:`, errorText);
+      return { model, content: "", success: false, error: `HTTP ${response.status}` };
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "";
+    
+    return { model: `openai/${model}`, content, success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error(`Error calling OpenAI ${model}:`, error);
     return { model, content: "", success: false, error: errorMessage };
   }
 }
@@ -119,49 +155,9 @@ async function callClaude(messages: Message[]): Promise<AIResponse> {
   }
 }
 
-// Llamar a OpenRouter (cualquier LLM)
-async function callOpenRouter(messages: Message[], model: string): Promise<AIResponse> {
-  const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
-  
-  if (!OPENROUTER_API_KEY) {
-    return { model: `openrouter/${model}`, content: "", success: false, error: "OPENROUTER_API_KEY not configured" };
-  }
-
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://lovable.dev",
-        "X-Title": "Creartor Studio",
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Error with OpenRouter (${model}):`, errorText);
-      return { model: `openrouter/${model}`, content: "", success: false, error: `HTTP ${response.status}` };
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "";
-    
-    return { model: `openrouter/${model}`, content, success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error(`Error calling OpenRouter (${model}):`, error);
-    return { model: `openrouter/${model}`, content: "", success: false, error: errorMessage };
-  }
-}
-
-// Combinar respuestas de múltiples IAs
+// Combinar respuestas de múltiples IAs usando Gemini
 async function combineResponses(responses: AIResponse[], originalPrompt: string): Promise<string> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
   
   const successfulResponses = responses.filter(r => r.success);
   
@@ -173,8 +169,8 @@ async function combineResponses(responses: AIResponse[], originalPrompt: string)
     return successfulResponses[0].content;
   }
 
-  if (!LOVABLE_API_KEY) {
-    // Si no hay Lovable AI, concatenar las respuestas
+  if (!GOOGLE_AI_API_KEY) {
+    // Si no hay Gemini API, concatenar las respuestas
     return successfulResponses.map(r => `**${r.model}:**\n${r.content}`).join("\n\n---\n\n");
   }
 
@@ -197,14 +193,14 @@ INSTRUCCIONES:
 Proporciona la respuesta sintetizada:`;
 
   try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${GOOGLE_AI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gemini-2.5-flash",
         messages: [
           { role: "user", content: synthesisPrompt }
         ],
@@ -233,7 +229,6 @@ serve(async (req) => {
       messages, 
       models, 
       mode = "combine",
-      openRouterModel, // Modelo específico de OpenRouter (ej: "anthropic/claude-3-opus", "meta-llama/llama-3-70b")
       action // "status" para obtener estado de proveedores
     } = await req.json();
 
@@ -244,9 +239,9 @@ serve(async (req) => {
         JSON.stringify({ 
           providers,
           availableModels: {
-            lovable: providers.lovable ? ["gemini", "gemini-pro", "gpt", "gpt-pro"] : [],
-            anthropic: providers.anthropic ? ["claude"] : [],
-            openrouter: providers.openrouter ? ["any model from openrouter.ai"] : [],
+            gemini: providers.gemini ? ["gemini-2.5-flash", "gemini-2.5-pro"] : [],
+            openai: providers.openai ? ["gpt-4o", "gpt-4o-mini"] : [],
+            anthropic: providers.anthropic ? ["claude-sonnet-4"] : [],
           }
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -264,14 +259,14 @@ serve(async (req) => {
     let selectedModels = models || [];
     
     if (selectedModels.length === 0) {
-      if (providers.lovable) {
-        selectedModels.push("gemini", "gpt");
+      if (providers.gemini) {
+        selectedModels.push("gemini", "gemini-pro");
+      }
+      if (providers.openai) {
+        selectedModels.push("gpt");
       }
       if (providers.anthropic) {
         selectedModels.push("claude");
-      }
-      if (providers.openrouter && openRouterModel) {
-        selectedModels.push("openrouter");
       }
     }
     
@@ -284,23 +279,23 @@ serve(async (req) => {
     for (const model of selectedModels) {
       switch (model) {
         case "gemini":
-          if (providers.lovable) {
-            promises.push(callLovableAI(messages, "google/gemini-2.5-flash"));
+          if (providers.gemini) {
+            promises.push(callGemini(messages, "gemini-2.5-flash"));
           }
           break;
         case "gemini-pro":
-          if (providers.lovable) {
-            promises.push(callLovableAI(messages, "google/gemini-2.5-pro"));
+          if (providers.gemini) {
+            promises.push(callGemini(messages, "gemini-2.5-pro"));
           }
           break;
         case "gpt":
-          if (providers.lovable) {
-            promises.push(callLovableAI(messages, "openai/gpt-5-mini"));
+          if (providers.openai) {
+            promises.push(callOpenAI(messages, "gpt-4o-mini"));
           }
           break;
         case "gpt-pro":
-          if (providers.lovable) {
-            promises.push(callLovableAI(messages, "openai/gpt-5"));
+          if (providers.openai) {
+            promises.push(callOpenAI(messages, "gpt-4o"));
           }
           break;
         case "claude":
@@ -308,24 +303,13 @@ serve(async (req) => {
             promises.push(callClaude(messages));
           }
           break;
-        case "openrouter":
-          if (providers.openrouter && openRouterModel) {
-            promises.push(callOpenRouter(messages, openRouterModel));
-          }
-          break;
-        default:
-          // Si el modelo empieza con "openrouter:", usar OpenRouter
-          if (model.startsWith("openrouter:") && providers.openrouter) {
-            const orModel = model.replace("openrouter:", "");
-            promises.push(callOpenRouter(messages, orModel));
-          }
       }
     }
 
     if (promises.length === 0) {
       return new Response(
         JSON.stringify({ 
-          error: "No AI providers available or configured. Add API keys in the backend settings.",
+          error: "No AI providers available. Configure GOOGLE_AI_API_KEY or OPENAI_API_KEY.",
           providers
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

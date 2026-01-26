@@ -13,11 +13,13 @@ serve(async (req) => {
   try {
     const { messages, currentScript, productName, spherePhase } = await req.json();
     
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    // Try Gemini first, then OpenAI
+    const GOOGLE_AI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     
-    if (!lovableApiKey) {
+    if (!GOOGLE_AI_API_KEY && !OPENAI_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }),
+        JSON.stringify({ error: 'No AI API keys configured. Set GOOGLE_AI_API_KEY or OPENAI_API_KEY' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -44,47 +46,76 @@ INSTRUCCIONES CRÍTICAS:
 
 IMPORTANTE: Tu respuesta debe ser ÚNICAMENTE el guión completo modificado, sin comentarios ni explicaciones antes o después.`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages
-        ],
-      }),
-    });
+    let response;
+    let usedProvider = '';
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
+    // Try Gemini first
+    if (GOOGLE_AI_API_KEY) {
+      response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${GOOGLE_AI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...messages
+          ],
+        }),
+      });
+      usedProvider = 'gemini';
+    }
+
+    // Fallback to OpenAI
+    if ((!response || !response.ok) && OPENAI_API_KEY) {
+      console.log('[script-chat] Falling back to OpenAI');
+      response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...messages
+          ],
+        }),
+      });
+      usedProvider = 'openai';
+    }
+
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : 'No response';
+      console.error('AI error:', response?.status, errorText);
       
-      if (response.status === 429) {
+      if (response?.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
-      if (response.status === 402) {
+      if (response?.status === 402) {
         return new Response(
           JSON.stringify({ error: 'Payment required. Please add credits to your workspace.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
-      throw new Error(`AI Gateway error: ${response.status}`);
+      throw new Error(`AI error: ${response?.status}`);
     }
 
     const data = await response.json();
     const assistantContent = data.choices?.[0]?.message?.content || 'No se pudo generar una respuesta';
 
+    console.log(`[script-chat] Success using ${usedProvider}`);
+
     return new Response(
-      JSON.stringify({ content: assistantContent }),
+      JSON.stringify({ content: assistantContent, provider: usedProvider }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
