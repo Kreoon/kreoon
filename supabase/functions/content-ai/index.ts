@@ -143,8 +143,8 @@ function buildProductContext(product?: ContentAIRequest['product']): string {
   return sections.join('\n');
 }
 
-// AI Provider configurations
-type AIProvider = "lovable" | "openai" | "anthropic";
+// AI Provider configurations - Direct APIs only (no Lovable Gateway)
+type AIProvider = "gemini" | "openai" | "anthropic";
 
 interface AIConfig {
   url: string;
@@ -154,14 +154,14 @@ interface AIConfig {
 }
 
 const AI_PROVIDERS: Record<AIProvider, AIConfig> = {
-  lovable: {
-    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+  gemini: {
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     getHeaders: (apiKey) => ({
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     }),
     getBody: (model, systemPrompt, userPrompt) => ({
-      model: model || "google/gemini-2.5-flash",
+      model: model || "gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -201,6 +201,41 @@ const AI_PROVIDERS: Record<AIProvider, AIConfig> = {
   },
 };
 
+// Map of model names to their provider
+const MODEL_PROVIDER_MAP: Record<string, AIProvider> = {
+  // Gemini models
+  "gemini-2.5-flash": "gemini",
+  "gemini-2.5-pro": "gemini",
+  "gemini-2.0-flash": "gemini",
+  // OpenAI models  
+  "gpt-4o": "openai",
+  "gpt-4o-mini": "openai",
+  "gpt-4-turbo": "openai",
+  // Legacy mappings (from Lovable naming)
+  "google/gemini-2.5-flash": "gemini",
+  "google/gemini-2.5-pro": "gemini",
+  "google/gemini-3-flash-preview": "gemini",
+  "openai/gpt-5": "openai",
+  "openai/gpt-5-mini": "openai",
+};
+
+// Get the actual model name for the provider
+function normalizeModelName(model: string): string {
+  // Strip provider prefix if present
+  if (model.startsWith("google/")) {
+    const stripped = model.replace("google/", "");
+    if (stripped === "gemini-3-flash-preview") return "gemini-2.5-flash";
+    return stripped;
+  }
+  if (model.startsWith("openai/")) {
+    const stripped = model.replace("openai/", "");
+    if (stripped === "gpt-5") return "gpt-4o";
+    if (stripped === "gpt-5-mini") return "gpt-4o-mini";
+    return stripped;
+  }
+  return model;
+}
+
 // Map action to module key
 const ACTION_TO_MODULE: Record<string, string> = {
   generate_script: "scripts",
@@ -209,9 +244,17 @@ const ACTION_TO_MODULE: Record<string, string> = {
   improve_script: "scripts",
 };
 
-// Get module AI configuration with validation
-async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+// Get module AI configuration with validation and fallback chain
+async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string): Promise<{
+  provider: AIProvider;
+  model: string;
+  apiKey: string;
+  fallbackProvider: AIProvider | null;
+  fallbackModel: string | null;
+  fallbackApiKey: string | null;
+}> {
+  const googleApiKey = Deno.env.get("GOOGLE_AI_API_KEY");
+  const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
   
   // Check if module is active
   const { data: moduleData } = await supabase
@@ -225,37 +268,75 @@ async function getModuleAIConfig(supabase: any, organizationId: string, moduleKe
     throw new Error(`MODULE_INACTIVE:${moduleKey}`);
   }
   
-  let provider = moduleData?.provider || "lovable";
-  let model = moduleData?.model || "google/gemini-2.5-flash";
-  let apiKey: string | null = null;
+  let configuredProvider = moduleData?.provider || "gemini";
+  let configuredModel = moduleData?.model || "gemini-2.5-flash";
   
-  if (provider !== "lovable") {
+  // Normalize provider name (convert "lovable" to "gemini")
+  if (configuredProvider === "lovable") {
+    configuredProvider = "gemini";
+  }
+  
+  // Normalize model name
+  configuredModel = normalizeModelName(configuredModel);
+  
+  // Check for organization-specific API keys first
+  if (configuredProvider !== "gemini" && configuredProvider !== "openai") {
     const { data: providerData } = await supabase
       .from("organization_ai_providers")
       .select("api_key_encrypted")
       .eq("organization_id", organizationId)
-      .eq("provider_key", provider)
+      .eq("provider_key", configuredProvider)
       .eq("is_enabled", true)
       .maybeSingle();
     
     if (providerData?.api_key_encrypted) {
-      apiKey = providerData.api_key_encrypted;
-    } else {
-      // Fallback to lovable
-      provider = "lovable";
-      model = "google/gemini-2.5-flash";
+      const fallbackProv: AIProvider | null = googleApiKey ? "gemini" : (openaiApiKey ? "openai" : null);
+      return { 
+        provider: configuredProvider as AIProvider, 
+        model: configuredModel, 
+        apiKey: providerData.api_key_encrypted,
+        fallbackProvider: fallbackProv,
+        fallbackModel: fallbackProv === "gemini" ? "gemini-2.5-flash" : (fallbackProv === "openai" ? "gpt-4o-mini" : null),
+        fallbackApiKey: googleApiKey || openaiApiKey || null
+      };
     }
   }
   
-  if (provider === "lovable") {
-    apiKey = lovableApiKey || null;
+  // Build fallback chain: Gemini -> OpenAI
+  const providers: Array<{ provider: AIProvider; model: string; apiKey: string }> = [];
+  
+  if (googleApiKey) {
+    providers.push({ 
+      provider: "gemini", 
+      model: configuredProvider === "gemini" ? configuredModel : "gemini-2.5-flash", 
+      apiKey: googleApiKey 
+    });
   }
   
-  if (!apiKey) {
-    throw new Error("No hay API key configurada para el proveedor de IA");
+  if (openaiApiKey) {
+    providers.push({ 
+      provider: "openai", 
+      model: configuredProvider === "openai" ? configuredModel : "gpt-4o-mini", 
+      apiKey: openaiApiKey 
+    });
   }
   
-  return { provider: provider as AIProvider, model, apiKey };
+  if (providers.length === 0) {
+    throw new Error("No hay API keys configuradas. Configura GOOGLE_AI_API_KEY o OPENAI_API_KEY");
+  }
+  
+  // Return primary with fallback info
+  const primary = providers[0];
+  const fallback = providers[1] || null;
+  
+  return { 
+    provider: primary.provider, 
+    model: primary.model, 
+    apiKey: primary.apiKey,
+    fallbackProvider: fallback?.provider || null,
+    fallbackModel: fallback?.model || null,
+    fallbackApiKey: fallback?.apiKey || null
+  };
 }
 
 // Log AI usage
@@ -372,38 +453,40 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Fallback to Lovable AI Gateway when other providers fail
-async function callWithLovableFallback(
+// Fallback between Gemini and OpenAI when one fails
+async function callWithFallback(
   primaryConfig: AIConfig,
   primaryApiKey: string,
   primaryModel: string,
   systemPrompt: string,
-  userPrompt: string
-): Promise<{ content: string; usedFallback: boolean }> {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  userPrompt: string,
+  fallbackProvider?: AIProvider | null,
+  fallbackApiKey?: string | null,
+  fallbackModel?: string | null
+): Promise<{ content: string; usedFallback: boolean; provider: string }> {
   
   // Try primary provider first
   try {
     const content = await callAISingle(primaryConfig, primaryApiKey, primaryModel, systemPrompt, userPrompt);
-    return { content, usedFallback: false };
+    return { content, usedFallback: false, provider: Object.keys(AI_PROVIDERS).find(k => AI_PROVIDERS[k as AIProvider] === primaryConfig) || "unknown" };
   } catch (error: any) {
     console.warn(`[callAI] Primary provider failed: ${error.message}`);
     
-    // If Lovable API key available and primary wasn't lovable, try fallback
-    if (lovableApiKey && primaryConfig.url !== AI_PROVIDERS.lovable.url) {
-      console.log("[callAI] Attempting fallback to Lovable AI Gateway...");
+    // If fallback available, try it
+    if (fallbackProvider && fallbackApiKey && AI_PROVIDERS[fallbackProvider]) {
+      console.log(`[callAI] Attempting fallback to ${fallbackProvider}...`);
       try {
         const content = await callAISingle(
-          AI_PROVIDERS.lovable, 
-          lovableApiKey, 
-          "google/gemini-2.5-flash", 
+          AI_PROVIDERS[fallbackProvider], 
+          fallbackApiKey, 
+          fallbackModel || (fallbackProvider === "gemini" ? "gemini-2.5-flash" : "gpt-4o-mini"), 
           systemPrompt, 
           userPrompt
         );
-        console.log("[callAI] Fallback to Lovable AI successful");
-        return { content, usedFallback: true };
+        console.log(`[callAI] Fallback to ${fallbackProvider} successful`);
+        return { content, usedFallback: true, provider: fallbackProvider };
       } catch (fallbackError: any) {
-        console.error("[callAI] Lovable fallback also failed:", fallbackError.message);
+        console.error(`[callAI] Fallback to ${fallbackProvider} also failed:`, fallbackError.message);
         throw fallbackError;
       }
     }
@@ -489,9 +572,11 @@ async function callAI(
   model: string,
   systemPrompt: string,
   userPrompt: string,
-  maxRetries: number = 3
+  fallbackProvider?: AIProvider | null,
+  fallbackApiKey?: string | null,
+  fallbackModel?: string | null
 ): Promise<string> {
-  const { content } = await callWithLovableFallback(config, apiKey, model, systemPrompt, userPrompt);
+  const { content } = await callWithFallback(config, apiKey, model, systemPrompt, userPrompt, fallbackProvider, fallbackApiKey, fallbackModel);
   return content;
 }
 
@@ -679,7 +764,7 @@ IMPORTANTE:
           console.log("[content-ai] Full system prompt length:", fullSystemPrompt.length);
           console.log("[content-ai] Template variables replaced in custom prompts");
 
-          result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt);
+          result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
 
           await logAIUsage(supabase, {
             organizationId,
@@ -706,7 +791,7 @@ TONO: ${data?.tone || "Profesional y dinámico"}
 
 Genera un guion completo con timestamps, descripciones visuales y sugerencias de audio.`;
 
-        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.generate_script, legacyPrompt);
+        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.generate_script, legacyPrompt, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
         break;
       }
 
@@ -718,7 +803,7 @@ ${data?.video_url ? `VIDEO URL: ${data.video_url}` : ""}
 
 Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y sugerencias específicas de mejora.`;
 
-        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.analyze_content, analyzePrompt);
+        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.analyze_content, analyzePrompt, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
         break;
       }
 
@@ -729,7 +814,7 @@ Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y s
 
         // For chat, build the full conversation
         const userMessage = data.messages[data.messages.length - 1]?.content || "";
-        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.chat, userMessage);
+        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.chat, userMessage, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
         break;
       }
 
@@ -744,7 +829,7 @@ ${data?.feedback || "Hazlo más dinámico y atractivo"}
 
 Devuelve el guion mejorado manteniendo el formato HTML estructurado.`;
 
-        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.improve_script, improvePrompt);
+        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.improve_script, improvePrompt, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
         break;
       }
 
