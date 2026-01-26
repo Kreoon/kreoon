@@ -18,27 +18,15 @@ const AI_FEATURES: { key: keyof PortfolioAIFeatures; label: string; description:
   { key: 'ai_recommendations', label: 'Recomendaciones', description: 'Sugerir creadores y contenido', icon: <Users className="h-4 w-4" /> },
 ];
 
-const PROVIDERS = [
-  { value: 'gemini', label: 'Google Gemini (Recomendado)' },
-  { value: 'openai', label: 'OpenAI' },
-  { value: 'anthropic', label: 'Anthropic Claude' },
+// AI Models available via Lovable AI Gateway - no external API key required
+const AI_MODELS = [
+  { value: 'google/gemini-3-flash-preview', label: 'Gemini 3 Flash (Recomendado)' },
+  { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+  { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro (Avanzado)' },
+  { value: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite (Rápido)' },
+  { value: 'openai/gpt-5', label: 'GPT-5' },
+  { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini (Rápido)' },
 ];
-
-const MODELS: Record<string, { value: string; label: string }[]> = {
-  gemini: [
-    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Rápido)' },
-    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Avanzado)' },
-  ],
-  openai: [
-    { value: 'gpt-4o', label: 'GPT-4o (Recomendado)' },
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Rápido)' },
-    { value: 'gpt-5', label: 'GPT-5' },
-  ],
-  anthropic: [
-    { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
-    { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
-  ],
-};
 
 export function PortfolioAISettings() {
   const { config, loading, saving, updateConfig, toggleFeature } = usePortfolioAIConfig();
@@ -100,41 +88,21 @@ export function PortfolioAISettings() {
 
         {/* Provider & Model */}
         {localConfig.enabled && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Proveedor</Label>
-              <Select
-                value={localConfig.provider}
-                onValueChange={(provider: 'gemini' | 'openai' | 'anthropic') => 
-                  setLocalConfig(prev => ({ ...prev, provider, model: MODELS[provider][0].value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROVIDERS.map(p => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Modelo</Label>
-              <Select
-                value={localConfig.model}
-                onValueChange={(model) => setLocalConfig(prev => ({ ...prev, model }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MODELS[localConfig.provider]?.map(m => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Modelo IA</Label>
+            <Select
+              value={localConfig.model}
+              onValueChange={(model) => setLocalConfig(prev => ({ ...prev, model, provider: 'gemini' }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {AI_MODELS.map(m => (
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
 
