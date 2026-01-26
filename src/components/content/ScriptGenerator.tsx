@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 
 
+import { parseProductResearch, formatResearchForPrompt } from "@/lib/productResearchParser";
+
 interface Product {
   id: string;
   name: string;
@@ -45,6 +47,12 @@ interface Product {
   brief_url?: string | null;
   onboarding_url?: string | null;
   research_url?: string | null;
+  // Extended research fields
+  avatar_profiles?: unknown;
+  sales_angles_data?: unknown;
+  competitor_analysis?: unknown;
+  brief_data?: unknown;
+  business_type?: 'product_service' | 'personal_brand' | null;
 }
 
 interface GeneratedContent {
@@ -883,7 +891,26 @@ Responde SOLO en formato JSON con esta estructura exacta:
     // Determine sphere phase info
     const sphereInfo = spherePhase ? getSpherePhaseInfo(spherePhase) : null;
     
-    let context = `PRODUCTO: ${product?.name}
+    // Get business type
+    const businessType = (product?.business_type as 'product_service' | 'personal_brand') || 'product_service';
+    const isPersonalBrand = businessType === 'personal_brand';
+    
+    // Parse structured research data
+    const researchData = product ? parseProductResearch({
+      market_research: product.market_research,
+      avatar_profiles: product.avatar_profiles,
+      sales_angles: product.sales_angles,
+      sales_angles_data: product.sales_angles_data,
+      competitor_analysis: product.competitor_analysis,
+      brief_data: product.brief_data,
+    }) : null;
+    
+    // Format research for prompt
+    const formattedResearch = researchData 
+      ? formatResearchForPrompt(researchData, businessType)
+      : '';
+    
+    let context = `${isPersonalBrand ? '🎯 MARCA PERSONAL' : '📦 PRODUCTO/SERVICIO'}: ${product?.name}
 DESCRIPCIÓN: ${product?.description || 'No disponible'}
 CTA: ${formData.cta}
 ÁNGULO DE VENTA: ${formData.sales_angle}
@@ -891,7 +918,13 @@ ESTRUCTURA NARRATIVA: ${narrativeLabel}
 PAÍS OBJETIVO: ${formData.target_country}
 AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
 
-${sphereInfo ? `FASE DEL MÉTODO ESFERA: ${sphereInfo.label}
+${isPersonalBrand ? `⚠️ IMPORTANTE - MARCA PERSONAL:
+- El dueño de la marca será quien grabe el contenido (NO un creador externo)
+- Los guiones deben estar en PRIMERA PERSONA ("Yo te enseño", "Mi método", etc.)
+- El tono debe ser personal, auténtico y cercano
+- Incluir referencias a la experiencia y trayectoria personal
+
+` : ''}${sphereInfo ? `FASE DEL MÉTODO ESFERA: ${sphereInfo.label}
 OBJETIVO DE FASE: ${sphereInfo.objective}
 TIPO DE AUDIENCIA: ${sphereInfo.audience}
 TONO RECOMENDADO: ${sphereInfo.tone}
@@ -899,10 +932,13 @@ TONO RECOMENDADO: ${sphereInfo.tone}
 ` : ''}ESTRATEGIA DEL PRODUCTO:
 ${product?.strategy || 'No disponible'}
 
-INVESTIGACIÓN DE MERCADO:
+${formattedResearch ? `=== INVESTIGACIÓN DE MERCADO DETALLADA ===
+${formattedResearch}
+
+` : `INVESTIGACIÓN DE MERCADO:
 ${product?.market_research || 'No disponible'}
 
-ÁNGULOS DE VENTA DISPONIBLES:
+`}ÁNGULOS DE VENTA DISPONIBLES:
 ${product?.sales_angles?.join(', ') || 'No definidos'}
 
 HOOKS SUGERIDOS:

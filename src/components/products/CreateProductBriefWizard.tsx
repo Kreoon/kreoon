@@ -46,6 +46,9 @@ interface PhaseDistribution {
 
 // Comprehensive brief data structure
 interface BriefData {
+  // Section 0: Business Type
+  businessType: 'product_service' | 'personal_brand';
+  
   // Section 1: Product Basics
   productName: string;
   category: string;
@@ -294,6 +297,7 @@ const DEFAULT_PHASE_DISTRIBUTION: PhaseDistribution = {
 };
 
 const DEFAULT_BRIEF: BriefData = {
+  businessType: 'product_service',
   productName: '',
   category: '',
   customCategory: '',
@@ -665,6 +669,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
           name: briefData.productName,
           brief_data: JSON.parse(JSON.stringify(briefData)),
           brief_status: 'in_progress',
+          business_type: briefData.businessType,
         })
         .select('id')
         .single();
@@ -793,13 +798,67 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
       case 0:
         return (
           <div className="space-y-4">
+            {/* Business Type Selector */}
+            <div className="p-4 bg-muted/50 rounded-lg border">
+              <Label className="text-base font-semibold">¿Qué tipo de negocio es? *</Label>
+              <p className="text-sm text-muted-foreground mb-3">Esto nos ayuda a personalizar los guiones</p>
+              <RadioGroup 
+                value={briefData.businessType} 
+                onValueChange={(v: 'product_service' | 'personal_brand') => updateField('businessType', v)}
+                className="grid grid-cols-1 md:grid-cols-2 gap-3"
+              >
+                <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  briefData.businessType === 'product_service' 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border hover:border-primary/50'
+                }`}>
+                  <RadioGroupItem value="product_service" id="product_service" className="mt-1" />
+                  <div className="flex-1">
+                    <Label htmlFor="product_service" className="text-base font-medium cursor-pointer flex items-center gap-2">
+                      <Package className="h-5 w-5 text-primary" />
+                      Producto o Servicio
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Vendes un producto físico, digital, curso, mentoría, servicio, etc.
+                      <br />
+                      <span className="text-xs">Los creadores externos crearán el contenido.</span>
+                    </p>
+                  </div>
+                </div>
+                <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  briefData.businessType === 'personal_brand' 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border hover:border-primary/50'
+                }`}>
+                  <RadioGroupItem value="personal_brand" id="personal_brand" className="mt-1" />
+                  <div className="flex-1">
+                    <Label htmlFor="personal_brand" className="text-base font-medium cursor-pointer flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      Marca Personal
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Tú eres la marca. Coach, influencer, experto, profesional.
+                      <br />
+                      <span className="text-xs">Tú mismo crearás el contenido.</span>
+                    </p>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+
             <div>
-              <Label htmlFor="productName">¿Cómo se llama tu producto o servicio? *</Label>
+              <Label htmlFor="productName">
+                {briefData.businessType === 'personal_brand' 
+                  ? '¿Cuál es tu nombre o el de tu marca personal? *' 
+                  : '¿Cómo se llama tu producto o servicio? *'}
+              </Label>
               <Input
                 id="productName"
                 value={briefData.productName}
                 onChange={(e) => updateField('productName', e.target.value)}
-                placeholder="Ej: Curso de Marketing Digital, Crema Antiedad, Mentoría de Negocios..."
+                placeholder={briefData.businessType === 'personal_brand' 
+                  ? 'Ej: María García, Coach María, Dr. García...' 
+                  : 'Ej: Curso de Marketing Digital, Crema Antiedad, Mentoría de Negocios...'}
                 className="mt-1"
               />
             </div>
@@ -847,7 +906,11 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
 
             <div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="slogan">¿Tienes una frase que represente tu producto? *</Label>
+                <Label htmlFor="slogan">
+                  {briefData.businessType === 'personal_brand' 
+                    ? '¿Tienes una frase que te represente? *' 
+                    : '¿Tienes una frase que represente tu producto? *'}
+                </Label>
                 {renderEnhanceButton('slogan')}
               </div>
               <p className="text-sm text-muted-foreground mb-1">Una frase corta que la gente recuerde</p>
@@ -855,7 +918,9 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                 id="slogan"
                 value={briefData.slogan}
                 onChange={(e) => updateField('slogan', e.target.value)}
-                placeholder="Ej: Transforma tu vida en 90 días, Belleza que se nota, El método que sí funciona..."
+                placeholder={briefData.businessType === 'personal_brand'
+                  ? 'Ej: Tu mejor versión te espera, Creando líderes, Transformo vidas...'
+                  : 'Ej: Transforma tu vida en 90 días, Belleza que se nota, El método que sí funciona...'}
                 className="mt-1"
                 rows={2}
               />

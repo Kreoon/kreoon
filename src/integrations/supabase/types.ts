@@ -5916,6 +5916,7 @@ export type Database = {
           brief_file_url: string | null
           brief_status: string | null
           brief_url: string | null
+          business_type: string | null
           client_id: string
           competitor_analysis: Json | null
           content_strategy: Json | null
@@ -5943,6 +5944,7 @@ export type Database = {
           brief_file_url?: string | null
           brief_status?: string | null
           brief_url?: string | null
+          business_type?: string | null
           client_id: string
           competitor_analysis?: Json | null
           content_strategy?: Json | null
@@ -5970,6 +5972,7 @@ export type Database = {
           brief_file_url?: string | null
           brief_status?: string | null
           brief_url?: string | null
+          business_type?: string | null
           client_id?: string
           competitor_analysis?: Json | null
           content_strategy?: Json | null
