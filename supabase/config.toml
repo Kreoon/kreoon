@@ -1,5 +1,8 @@
 project_id = "hfooshsteglylhvrpuka"
 
+[functions.migrate-to-kreoon]
+verify_jwt = false
+
 [functions.multi-ai]
 verify_jwt = false
 
