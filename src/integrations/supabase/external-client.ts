@@ -8,7 +8,7 @@ import type { Database } from './types';
 
 // External Supabase project credentials (Kreoon)
 const EXTERNAL_SUPABASE_URL = 'https://wjkbqcrxwsmvtxmqgiqc.supabase.co';
-const EXTERNAL_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indqa2JxY3J4d3NtdnR4bXFnaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc0MjI2NzMsImV4cCI6MjA1Mjk5ODY3M30.sb_publishable_6-4kXBtRoxpLWMhRr3fZcQ__QJ_LmTL';
+const EXTERNAL_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indqa2JxY3J4d3NtdnR4bXFnaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NDQwNTYsImV4cCI6MjA4NTAyMDA1Nn0.BorqcEBToDVeFBDQktZoCjCndYwB0bc6jlKmSJn-Wi8';
 
 // Create the external Supabase client
 export const supabaseExternal = createClient<Database>(
