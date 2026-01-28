@@ -12,21 +12,37 @@ serve(async (req) => {
   }
 
   try {
+    // Lovable Cloud (source)
+    const sourceUrl = Deno.env.get('SUPABASE_URL');
+    const sourceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    // Kreoon (destination)
     const kreoonUrl = Deno.env.get('KREOON_SUPABASE_URL');
     const kreoonServiceKey = Deno.env.get('KREOON_SERVICE_ROLE_KEY');
 
     if (!kreoonUrl || !kreoonServiceKey) {
-      return new Response(JSON.stringify({ error: 'Credenciales no configuradas' }), {
+      return new Response(JSON.stringify({ error: 'Credenciales Kreoon no configuradas' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const supabaseAdmin = createClient(kreoonUrl, kreoonServiceKey, {
+    if (!sourceUrl || !sourceKey) {
+      return new Response(JSON.stringify({ error: 'Credenciales Lovable Cloud no configuradas' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const sourceClient = createClient(sourceUrl, sourceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { email, password, secret, action } = await req.json();
+    const kreoonClient = createClient(kreoonUrl, kreoonServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { email, password, secret, action, newAuthId } = await req.json();
 
     if (secret !== 'kreoon-emergency-2026') {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -35,106 +51,257 @@ serve(async (req) => {
       });
     }
 
-    if (email !== 'jacsolucionesgraficas@gmail.com') {
-      return new Response(JSON.stringify({ error: 'Email no autorizado' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // ACTION: full_sync - Complete sync for admin user to Kreoon
+    if (action === 'full_sync') {
+      const oldId = '06aa55b0-61ea-41f0-9708-7a3d322b6795'; // Legacy ID in Lovable Cloud
+      const targetAuthId = newAuthId || '577c72dc-f088-4e99-a109-e88e035a0540'; // Kreoon Auth ID
+      
+      console.log(`[full_sync] Source: Lovable Cloud, Dest: Kreoon`);
+      console.log(`[full_sync] Mapping ${oldId} -> ${targetAuthId}`);
+      
+      const results: Record<string, unknown> = {};
 
-    // Find user by email in auth
-    const { data: users, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
-    if (listErr) throw listErr;
-
-    const targetUser = users.users.find(u => u.email === email);
-    if (!targetUser) {
-      return new Response(JSON.stringify({ error: "Usuario no encontrado en auth" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-
-    if (action === 'sync_profile') {
-      const oldId = '06aa55b0-61ea-41f0-9708-7a3d322b6795';
-      const newId = targetUser.id;
-
-      console.log(`[v2] Syncing from ${oldId} to ${newId}`);
-
-      // Step 1: Clear username from OLD profile to release constraint
-      console.log('Step 1: Clear old profile username');
-      await supabaseAdmin
-        .from('profiles')
-        .update({ username: null })
-        .eq('id', oldId);
-
-      // Step 2: Get old profile data
-      console.log('Step 2: Get old profile');
-      const { data: oldProfile, error: oldErr } = await supabaseAdmin
+      // Step 1: Get admin profile from Lovable Cloud
+      console.log('Step 1: Reading admin profile from Lovable Cloud');
+      const { data: sourceProfile, error: profileErr } = await sourceClient
         .from('profiles')
         .select('*')
         .eq('id', oldId)
         .single();
 
-      if (oldErr || !oldProfile) {
-        return new Response(JSON.stringify({ error: "Old profile not found", details: oldErr }), {
+      if (profileErr || !sourceProfile) {
+        return new Response(JSON.stringify({ 
+          error: 'Admin profile not found in source', 
+          details: profileErr 
+        }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      results.sourceProfile = { found: true, email: sourceProfile.email };
+
+      // Step 2: Check if profile exists in Kreoon with new ID
+      console.log('Step 2: Checking Kreoon for existing profile');
+      const { data: existingProfile } = await kreoonClient
+        .from('profiles')
+        .select('id, email')
+        .eq('id', targetAuthId)
+        .single();
+
+      if (existingProfile) {
+        console.log('Profile already exists, will update');
+        results.existingProfile = existingProfile;
+      }
+
+      // Step 3: Upsert profile to Kreoon with new ID
+      console.log('Step 3: Upserting profile to Kreoon');
+      const { id: _id, created_at: _created, username: oldUsername, ...profileData } = sourceProfile;
+      
+      // Clear any conflicting username first
+      await kreoonClient
+        .from('profiles')
+        .update({ username: null })
+        .eq('username', oldUsername || 'alexemprendee');
+      
+      const { error: upsertProfileErr } = await kreoonClient
+        .from('profiles')
+        .upsert({
+          ...profileData,
+          id: targetAuthId,
+          username: oldUsername || 'alexemprendee',
+          active_role: 'admin',
+        }, { onConflict: 'id' });
+
+      results.profileUpsert = { error: upsertProfileErr?.message };
+
+      // Step 4: Read and migrate user_roles
+      console.log('Step 4: Migrating user_roles');
+      const { data: sourceRoles } = await sourceClient
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', oldId);
+
+      if (sourceRoles && sourceRoles.length > 0) {
+        // Delete any existing roles for target ID to avoid conflicts
+        await kreoonClient
+          .from('user_roles')
+          .delete()
+          .eq('user_id', targetAuthId);
+
+        for (const role of sourceRoles) {
+          const { error: roleErr } = await kreoonClient
+            .from('user_roles')
+            .insert({ 
+              user_id: targetAuthId, 
+              role: role.role 
+            });
+          results[`role_${role.role}`] = { error: roleErr?.message };
+        }
+      } else {
+        // Ensure at least admin role exists
+        const { error: roleErr } = await kreoonClient
+          .from('user_roles')
+          .upsert({ user_id: targetAuthId, role: 'admin' }, { onConflict: 'user_id,role' });
+        results.role_admin = { error: roleErr?.message };
+      }
+
+      // Step 5: Read and migrate organization_members
+      console.log('Step 5: Migrating organization_members');
+      const { data: sourceMembers } = await sourceClient
+        .from('organization_members')
+        .select('*')
+        .eq('user_id', oldId);
+
+      if (sourceMembers && sourceMembers.length > 0) {
+        for (const member of sourceMembers) {
+          const { id: _memberId, user_id: _userId, ...memberData } = member;
+          
+          // Check if entry already exists
+          const { data: existingMember } = await kreoonClient
+            .from('organization_members')
+            .select('id')
+            .eq('user_id', targetAuthId)
+            .eq('organization_id', member.organization_id)
+            .single();
+
+          if (existingMember) {
+            const { error: updateErr } = await kreoonClient
+              .from('organization_members')
+              .update({ ...memberData, user_id: targetAuthId })
+              .eq('id', existingMember.id);
+            results[`member_${member.organization_id}`] = { action: 'update', error: updateErr?.message };
+          } else {
+            const { error: insertErr } = await kreoonClient
+              .from('organization_members')
+              .insert({ ...memberData, user_id: targetAuthId });
+            results[`member_${member.organization_id}`] = { action: 'insert', error: insertErr?.message };
+          }
+        }
+      }
+
+      // Step 6: Read and migrate organization_member_roles
+      console.log('Step 6: Migrating organization_member_roles');
+      const { data: sourceMemberRoles } = await sourceClient
+        .from('organization_member_roles')
+        .select('*')
+        .eq('user_id', oldId);
+
+      if (sourceMemberRoles && sourceMemberRoles.length > 0) {
+        for (const memberRole of sourceMemberRoles) {
+          const { id: _mrId, user_id: _mrUserId, ...memberRoleData } = memberRole;
+          
+          const { data: existingMemberRole } = await kreoonClient
+            .from('organization_member_roles')
+            .select('id')
+            .eq('user_id', targetAuthId)
+            .eq('organization_id', memberRole.organization_id)
+            .eq('role', memberRole.role)
+            .single();
+
+          if (!existingMemberRole) {
+            const { error: insertErr } = await kreoonClient
+              .from('organization_member_roles')
+              .insert({ ...memberRoleData, user_id: targetAuthId });
+            results[`memberRole_${memberRole.organization_id}_${memberRole.role}`] = { error: insertErr?.message };
+          }
+        }
+      }
+
+      console.log('[full_sync] Complete');
+      return new Response(JSON.stringify({ 
+        success: true, 
+        action: 'full_sync',
+        oldId,
+        newId: targetAuthId,
+        results
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // ACTION: sync_profile - Legacy sync within same database
+    if (action === 'sync_profile') {
+      if (email !== 'jacsolucionesgraficas@gmail.com') {
+        return new Response(JSON.stringify({ error: 'Email no autorizado' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Find user by email in Kreoon auth
+      const { data: users, error: listErr } = await kreoonClient.auth.admin.listUsers();
+      if (listErr) throw listErr;
+
+      const targetUser = users.users.find(u => u.email === email);
+      if (!targetUser) {
+        return new Response(JSON.stringify({ error: "Usuario no encontrado en auth" }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
 
-      // Step 3: Delete old profile  
-      console.log('Step 3: Delete old profile');
-      await supabaseAdmin.from('profiles').delete().eq('id', oldId);
+      const oldId = '06aa55b0-61ea-41f0-9708-7a3d322b6795';
+      const newId = targetUser.id;
 
-      // Step 4: Update or insert new profile
-      console.log('Step 4: Upsert new profile');
-      const { id: _id, created_at: _created, ...profileData } = oldProfile;
-      
-      const { error: upsertErr } = await supabaseAdmin
-        .from('profiles')
-        .upsert({
-          ...profileData,
-          id: newId,
-          username: 'alexemprendee', // restore username
-        });
+      console.log(`[sync_profile] Syncing from ${oldId} to ${newId}`);
 
-      if (upsertErr) throw upsertErr;
-
-      // Step 5: Update references - use admin RPC to bypass triggers
-      console.log('Step 5: Update references');
-      
-      // Direct SQL for user_roles (bypasses RLS)
-      const { error: sqlErr } = await supabaseAdmin.rpc('update_user_id_references', {
-        old_user_id: oldId,
-        new_user_id: newId
+      // This action now just calls full_sync internally
+      // Re-parse the request with full_sync action
+      const fullSyncBody = JSON.stringify({ secret, action: 'full_sync', newAuthId: newId });
+      const fullSyncReq = new Request(req.url, {
+        method: 'POST',
+        headers: req.headers,
+        body: fullSyncBody
       });
       
-      if (sqlErr) {
-        console.log('RPC not available, trying direct updates');
-      }
+      // Recursive call simulation - just do the work here
+      const results: Record<string, unknown> = {};
       
-      // Also try direct updates
-      const tables = [
-        { t: 'organization_members', c: 'user_id' },
-        { t: 'organization_member_roles', c: 'user_id' },
-      ];
+      // Get profile from source
+      const { data: sourceProfile } = await sourceClient
+        .from('profiles')
+        .select('*')
+        .eq('id', oldId)
+        .single();
 
-      const results = [];
-      for (const item of tables) {
-        const { error } = await supabaseAdmin
-          .from(item.t)
-          .update({ [item.c]: newId })
-          .eq(item.c, oldId);
-        results.push({ table: item.t, col: item.c, error: error?.message });
+      if (sourceProfile) {
+        const { id: _id, created_at: _created, username: oldUsername, ...profileData } = sourceProfile;
+        
+        await kreoonClient.from('profiles').update({ username: null }).eq('username', oldUsername || 'alexemprendee');
+        
+        const { error: upsertErr } = await kreoonClient
+          .from('profiles')
+          .upsert({
+            ...profileData,
+            id: newId,
+            username: oldUsername || 'alexemprendee',
+            active_role: 'admin',
+          }, { onConflict: 'id' });
+        results.profileUpsert = { error: upsertErr?.message };
       }
-      
-      // Insert into user_roles directly since old one might be blocked by RLS
-      const { error: roleErr } = await supabaseAdmin
-        .from('user_roles')
-        .upsert({ user_id: newId, role: 'admin' }, { onConflict: 'user_id,role' });
-      results.push({ table: 'user_roles', action: 'upsert admin', error: roleErr?.message });
 
-      console.log('Sync complete');
+      // Migrate roles
+      const { data: sourceRoles } = await sourceClient.from('user_roles').select('*').eq('user_id', oldId);
+      if (sourceRoles) {
+        await kreoonClient.from('user_roles').delete().eq('user_id', newId);
+        for (const role of sourceRoles) {
+          await kreoonClient.from('user_roles').insert({ user_id: newId, role: role.role });
+        }
+      }
+      await kreoonClient.from('user_roles').upsert({ user_id: newId, role: 'admin' }, { onConflict: 'user_id,role' });
+
+      // Migrate org members
+      const { data: sourceMembers } = await sourceClient.from('organization_members').select('*').eq('user_id', oldId);
+      if (sourceMembers) {
+        for (const member of sourceMembers) {
+          const { id: _id, user_id: _uid, ...data } = member;
+          await kreoonClient.from('organization_members').upsert({ 
+            ...data, 
+            user_id: newId 
+          }, { onConflict: 'user_id,organization_id' });
+        }
+      }
+
       return new Response(JSON.stringify({ 
         success: true, 
         oldId,
@@ -145,8 +312,78 @@ serve(async (req) => {
       });
     }
 
-    // Default: set password
-    const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(targetUser.id, {
+    // ACTION: check_status - Diagnostic check
+    if (action === 'check_status') {
+      const targetId = newAuthId || '577c72dc-f088-4e99-a109-e88e035a0540';
+      
+      // Check source (Lovable Cloud)
+      const { data: sourceProfile } = await sourceClient
+        .from('profiles')
+        .select('id, email, active_role')
+        .eq('email', 'jacsolucionesgraficas@gmail.com')
+        .single();
+
+      const { data: sourceRoles } = await sourceClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', '06aa55b0-61ea-41f0-9708-7a3d322b6795');
+
+      // Check destination (Kreoon)
+      const { data: destProfile, error: destProfileErr } = await kreoonClient
+        .from('profiles')
+        .select('id, email, active_role')
+        .eq('id', targetId)
+        .single();
+
+      const { data: destRoles, error: destRolesErr } = await kreoonClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', targetId);
+
+      const { data: destMembers, error: destMembersErr } = await kreoonClient
+        .from('organization_members')
+        .select('organization_id, role, is_owner')
+        .eq('user_id', targetId);
+
+      return new Response(JSON.stringify({
+        source: {
+          profile: sourceProfile,
+          roles: sourceRoles,
+        },
+        destination: {
+          targetId,
+          profile: destProfile,
+          profileError: destProfileErr?.message,
+          roles: destRoles,
+          rolesError: destRolesErr?.message,
+          members: destMembers,
+          membersError: destMembersErr?.message,
+        }
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // Default: password reset
+    if (email !== 'jacsolucionesgraficas@gmail.com') {
+      return new Response(JSON.stringify({ error: 'Email no autorizado' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { data: users, error: listErr } = await kreoonClient.auth.admin.listUsers();
+    if (listErr) throw listErr;
+
+    const targetUser = users.users.find(u => u.email === email);
+    if (!targetUser) {
+      return new Response(JSON.stringify({ error: "Usuario no encontrado en auth" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const { error: updateErr } = await kreoonClient.auth.admin.updateUserById(targetUser.id, {
       password: password,
     });
     
