@@ -92,7 +92,6 @@ const TABLES_TO_SYNC = [
   // Notifications and tracking
   'notifications',
   'tracking_events',
-  'user_activity',
   'user_presence',
   
   // Marketing
