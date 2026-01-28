@@ -151,6 +151,39 @@ serve(async (req) => {
         });
       }
 
+      case "set_password": {
+        // Directly set a password for a user (bypasses email rate limits)
+        const { password: newPassword } = body;
+        if (!email || !newPassword) {
+          return new Response(JSON.stringify({ error: "Email and password required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Find user by email
+        const { data: users, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
+        if (listErr) throw listErr;
+
+        const targetUser = users.users.find(u => u.email === email);
+        if (!targetUser) {
+          return new Response(JSON.stringify({ error: "User not found" }), {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(targetUser.id, {
+          password: newPassword,
+        });
+        if (updateErr) throw updateErr;
+
+        console.log(`Password set for ${email}`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
       case "toggle_ban": {
         if (!userId) {
           return new Response(JSON.stringify({ error: "User ID required" }), {
