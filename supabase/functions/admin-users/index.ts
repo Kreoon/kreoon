@@ -108,7 +108,7 @@ serve(async (req) => {
         }
 
         // Always redirect password recovery to the primary domain.
-        const redirectTo = 'https://kreoon.com/auth';
+        const redirectTo = 'https://kreoon.com/reset-password';
 
         // Generate link; if user does not exist in Kreoon auth yet, create it and retry.
         let resetError: any = null;

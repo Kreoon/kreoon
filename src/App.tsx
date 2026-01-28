@@ -49,6 +49,7 @@ import Register from "./pages/Register";
 import OrgRegister from "./pages/auth/OrgRegister";
 import Live from "./pages/Live";
 import Marketing from "./pages/Marketing";
+import ResetPassword from "./pages/ResetPassword";
 import { MainLayout } from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient({
@@ -93,6 +94,7 @@ function AppRoutes() {
       <Route path="/profile/:userId" element={<PublicProfilePage />} />
       <Route path="/profile" element={<ProfileRedirect />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/no-company" element={<NoCompany />} />
       <Route path="/no-organization" element={<NoOrganization />} />
       <Route path="/pending-access" element={<PendingAccess />} />
