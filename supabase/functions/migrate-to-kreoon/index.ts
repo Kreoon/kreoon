@@ -31,6 +31,11 @@ serve(async (req) => {
     const kreoonUrl = Deno.env.get('KREOON_SUPABASE_URL');
     const kreoonKey = Deno.env.get('KREOON_SERVICE_ROLE_KEY');
 
+    // Debug: Log first 20 chars of URL and last 10 of key
+    console.log('Kreoon URL:', kreoonUrl?.substring(0, 40));
+    console.log('Kreoon Key ends with:', kreoonKey?.substring(kreoonKey.length - 10));
+    console.log('Key contains service_role:', kreoonKey?.includes('service_role'));
+
     if (!kreoonUrl || !kreoonKey) {
       return new Response(JSON.stringify({ error: 'Credenciales de Kreoon no configuradas' }), {
         status: 500,
