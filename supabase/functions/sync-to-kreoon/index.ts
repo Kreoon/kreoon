@@ -245,18 +245,43 @@ serve(async (req) => {
       const batchSize = 100;
       let successCount = 0;
       let errorCount = 0;
+      let skippedCount = 0;
       const errors: string[] = [];
 
       for (let i = 0; i < sourceData.length; i += batchSize) {
         const batch = sourceData.slice(i, i + batchSize);
         
+        // First try upsert on id
         const { error: writeError } = await kreoonClient
           .from(tableName)
-          .upsert(batch, { onConflict: 'id', ignoreDuplicates: false });
+          .upsert(batch, { onConflict: 'id', ignoreDuplicates: true });
 
         if (writeError) {
-          errorCount += batch.length;
-          errors.push(`Batch ${i / batchSize}: ${writeError.message}`);
+          // If failed, try row by row to identify problematic rows
+          for (const row of batch) {
+            const { error: rowError } = await kreoonClient
+              .from(tableName)
+              .upsert(row, { onConflict: 'id', ignoreDuplicates: true });
+            
+            if (rowError) {
+              // Try update instead of upsert
+              const { error: updateError } = await kreoonClient
+                .from(tableName)
+                .update(row)
+                .eq('id', row.id);
+              
+              if (updateError) {
+                errorCount++;
+                if (errors.length < 5) {
+                  errors.push(`Row ${row.id}: ${updateError.message}`);
+                }
+              } else {
+                successCount++;
+              }
+            } else {
+              successCount++;
+            }
+          }
         } else {
           successCount += batch.length;
         }
