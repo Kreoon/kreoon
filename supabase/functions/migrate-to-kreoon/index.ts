@@ -31,10 +31,19 @@ serve(async (req) => {
     const kreoonUrl = Deno.env.get('KREOON_SUPABASE_URL');
     const kreoonKey = Deno.env.get('KREOON_SERVICE_ROLE_KEY');
 
-    // Debug: Log first 20 chars of URL and last 10 of key
-    console.log('Kreoon URL:', kreoonUrl?.substring(0, 40));
-    console.log('Kreoon Key ends with:', kreoonKey?.substring(kreoonKey.length - 10));
-    console.log('Key contains service_role:', kreoonKey?.includes('service_role'));
+    // Debug: Decode JWT payload to verify role
+    let keyRole = 'unknown';
+    try {
+      const parts = kreoonKey?.split('.');
+      if (parts && parts[1]) {
+        const payload = JSON.parse(atob(parts[1]));
+        keyRole = payload.role || 'no role in payload';
+      }
+    } catch (e) {
+      keyRole = 'decode error: ' + e;
+    }
+    console.log('Kreoon URL:', kreoonUrl);
+    console.log('Key role from JWT:', keyRole);
 
     if (!kreoonUrl || !kreoonKey) {
       return new Response(JSON.stringify({ error: 'Credenciales de Kreoon no configuradas' }), {
