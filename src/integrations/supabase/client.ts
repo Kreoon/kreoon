@@ -17,14 +17,5 @@ export const supabase = createClient<Database>(KREOON_SUPABASE_URL, KREOON_SUPAB
   }
 });
 
-// Legacy Lovable Cloud client (for edge functions that still need it)
-const LOVABLE_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const LOVABLE_SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-export const supabaseLovable = createClient<Database>(LOVABLE_SUPABASE_URL, LOVABLE_SUPABASE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-  }
-});
+// IMPORTANT: We intentionally do NOT initialize a secondary client pointing to the legacy backend.
+// Doing so would auto-refresh old sessions in the background and can break login/password recovery.

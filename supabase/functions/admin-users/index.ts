@@ -2,8 +2,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
@@ -14,12 +15,19 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
-    // Create admin client
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
+    // IMPORTANT: This function must operate on Kreoon (external backend), not the legacy backend.
+    const kreoonUrl = Deno.env.get('KREOON_SUPABASE_URL');
+    const kreoonServiceKey = Deno.env.get('KREOON_SERVICE_ROLE_KEY');
+
+    if (!kreoonUrl || !kreoonServiceKey) {
+      return new Response(JSON.stringify({ error: 'Credenciales de Kreoon no configuradas' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabaseAdmin = createClient(kreoonUrl, kreoonServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
     // Verify the caller is the root user
@@ -99,17 +107,42 @@ serve(async (req) => {
           });
         }
 
-        const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-          type: "recovery",
-          email,
-          options: {
-            redirectTo: `${req.headers.get("origin") || "https://creartorstudio.com"}/auth`
-          }
-        });
+        // Always redirect password recovery to the primary domain.
+        const redirectTo = 'https://kreoon.com/auth';
+
+        // Generate link; if user does not exist in Kreoon auth yet, create it and retry.
+        let resetError: any = null;
+        {
+          const res = await supabaseAdmin.auth.admin.generateLink({
+            type: 'recovery',
+            email,
+            options: { redirectTo },
+          });
+          resetError = res.error;
+        }
 
         if (resetError) {
-          console.error("Error sending reset:", resetError);
-          throw resetError;
+          const msg = String(resetError.message || resetError);
+          const isNotFound = /user\s*not\s*found|not\s*found|no\s*user/i.test(msg);
+          if (isNotFound) {
+            const tempPassword = crypto.randomUUID();
+            const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+              email,
+              password: tempPassword,
+              email_confirm: true,
+            });
+            if (createError) throw createError;
+
+            const { error: retryError } = await supabaseAdmin.auth.admin.generateLink({
+              type: 'recovery',
+              email,
+              options: { redirectTo },
+            });
+            if (retryError) throw retryError;
+          } else {
+            console.error('Error sending reset:', resetError);
+            throw resetError;
+          }
         }
 
         console.log(`Password reset sent to ${email}`);
