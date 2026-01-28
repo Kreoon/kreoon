@@ -1,5 +1,8 @@
 project_id = "hfooshsteglylhvrpuka"
 
+[functions.sync-to-kreoon]
+verify_jwt = false
+
 [functions.migrate-to-kreoon]
 verify_jwt = false
 
