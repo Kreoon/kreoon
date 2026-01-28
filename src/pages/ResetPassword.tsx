@@ -37,6 +37,16 @@ export default function ResetPassword() {
     // The session is established via the recovery link. We just verify it's present.
     (async () => {
       try {
+        // Newer auth flows may deliver a `code` query param (PKCE). Exchange it for a session.
+        const searchParams = new URLSearchParams(window.location.search);
+        const code = searchParams.get('code');
+        if (code) {
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) {
+            console.warn('[reset-password] exchangeCodeForSession failed:', exchangeError);
+          }
+        }
+
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
 
