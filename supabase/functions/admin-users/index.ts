@@ -15,12 +15,20 @@ serve(async (req) => {
   }
 
   try {
-    // Use the current project's Supabase for authentication validation
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    // Use Kreoon as the primary database
+    const kreoonUrl = Deno.env.get('KREOON_SUPABASE_URL');
+    const kreoonServiceKey = Deno.env.get('KREOON_SERVICE_ROLE_KEY');
+    const kreoonAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indqa2JxY3J4d3NtdnR4bXFnaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NDQwNTYsImV4cCI6MjA4NTAyMDA1Nn0.BorqcEBToDVeFBDQktZoCjCndYwB0bc6jlKmSJn-Wi8';
 
-    // Verify the caller is the root user using the current project's auth
+    if (!kreoonUrl || !kreoonServiceKey) {
+      console.error("Kreoon credentials not configured");
+      return new Response(JSON.stringify({ error: "Database credentials not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // Verify the caller is the root user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: "No authorization header" }), {
@@ -32,7 +40,7 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     
     // Create a client with the user's token to validate their identity
-    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+    const supabaseAuth = createClient(kreoonUrl, kreoonAnonKey, {
       global: { headers: { Authorization: authHeader } },
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -60,8 +68,8 @@ serve(async (req) => {
       });
     }
 
-    // Create admin client with service role for database operations
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    // Create admin client with service role for database operations on Kreoon
+    const supabaseAdmin = createClient(kreoonUrl, kreoonServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
