@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Users, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { CreatorCard, type CreatorData } from '@/components/portfolio/creators/CreatorCard';
 import { CreatorsFilters, type CreatorsFiltersState } from '@/components/portfolio/creators/CreatorsFilters';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,6 +15,7 @@ interface CreatorWithPoints extends CreatorData {
 
 export default function CreatorsPortfolioPage() {
   const navigate = useNavigate();
+  const { isClient } = useAuth();
   
   const [filters, setFilters] = useState<CreatorsFiltersState>({
     niche: 'all',
@@ -146,8 +148,12 @@ export default function CreatorsPortfolioPage() {
   }, []);
 
   const handleCreatorClick = useCallback((creatorId: string) => {
+    // Clients cannot navigate to creator profiles - silently ignore
+    if (isClient) {
+      return;
+    }
     navigate(`/p/${creatorId}`);
-  }, [navigate]);
+  }, [navigate, isClient]);
 
   return (
     <ScrollArea className="h-full">
