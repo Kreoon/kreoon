@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 export type PortfolioPermission = 
   | 'portfolio.feed.view'
   | 'portfolio.explore.view'
+  | 'portfolio.creators.view'
   | 'portfolio.videos.view'
   | 'portfolio.profile.view'
   | 'portfolio.profile.edit'
@@ -40,6 +41,7 @@ export interface PortfolioPermissions {
 const DEFAULT_PERMISSIONS: Record<PortfolioPermission, boolean> = {
   'portfolio.feed.view': true,
   'portfolio.explore.view': true,
+  'portfolio.creators.view': true,
   'portfolio.videos.view': true,
   'portfolio.profile.view': true,
   'portfolio.profile.edit': false,
@@ -53,6 +55,7 @@ const DEFAULT_PERMISSIONS: Record<PortfolioPermission, boolean> = {
 const ADMIN_PERMISSIONS: Record<PortfolioPermission, boolean> = {
   'portfolio.feed.view': true,
   'portfolio.explore.view': true,
+  'portfolio.creators.view': true,
   'portfolio.videos.view': true,
   'portfolio.profile.view': true,
   'portfolio.profile.edit': true,
@@ -66,6 +69,7 @@ const ADMIN_PERMISSIONS: Record<PortfolioPermission, boolean> = {
 const CREATOR_PERMISSIONS: Record<PortfolioPermission, boolean> = {
   'portfolio.feed.view': true,
   'portfolio.explore.view': true,
+  'portfolio.creators.view': true,
   'portfolio.videos.view': true,
   'portfolio.profile.view': true,
   'portfolio.profile.edit': true,

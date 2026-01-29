@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Play, User, Bookmark, Compass } from 'lucide-react';
+import { Home, Play, User, Bookmark, Compass, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,19 +15,21 @@ const VideosPage = lazy(() => import('./VideosPage'));
 const ProfilePage = lazy(() => import('./ProfilePage'));
 const SavedPage = lazy(() => import('./SavedPage'));
 const ExplorePage = lazy(() => import('./ExplorePage'));
+const CreatorsPortfolioPage = lazy(() => import('./CreatorsPortfolioPage'));
 
-type TabKey = 'feed' | 'explore' | 'videos' | 'profile' | 'saved';
+type TabKey = 'feed' | 'explore' | 'creators' | 'videos' | 'profile' | 'saved';
 
 interface TabConfig {
   key: TabKey;
   label: string;
   icon: typeof Home;
-  permission: 'portfolio.feed.view' | 'portfolio.videos.view' | 'portfolio.profile.view' | 'portfolio.saved.view' | 'portfolio.explore.view';
+  permission: 'portfolio.feed.view' | 'portfolio.videos.view' | 'portfolio.profile.view' | 'portfolio.saved.view' | 'portfolio.explore.view' | 'portfolio.creators.view';
 }
 
 const TABS: TabConfig[] = [
   { key: 'feed', label: 'Feed', icon: Home, permission: 'portfolio.feed.view' },
   { key: 'explore', label: 'Explorar', icon: Compass, permission: 'portfolio.explore.view' },
+  { key: 'creators', label: 'Creadores', icon: Users, permission: 'portfolio.creators.view' },
   { key: 'videos', label: 'Videos', icon: Play, permission: 'portfolio.videos.view' },
   { key: 'profile', label: 'Mi Perfil', icon: User, permission: 'portfolio.profile.view' },
   { key: 'saved', label: 'Guardados', icon: Bookmark, permission: 'portfolio.saved.view' },
@@ -67,6 +69,7 @@ export default function PortfolioShell() {
   const [tabStates, setTabStates] = useState<Record<TabKey, boolean>>({
     feed: false,
     explore: false,
+    creators: false,
     videos: false,
     profile: false,
     saved: false,
@@ -105,6 +108,9 @@ export default function PortfolioShell() {
         </div>
         <div className={cn(activeTab === 'explore' ? 'block' : 'hidden', 'h-full')}>
           {tabStates.explore && <ExplorePage />}
+        </div>
+        <div className={cn(activeTab === 'creators' ? 'block' : 'hidden', 'h-full')}>
+          {tabStates.creators && <CreatorsPortfolioPage />}
         </div>
         <div className={cn(activeTab === 'videos' ? 'block' : 'hidden', 'h-full')}>
           {tabStates.videos && <VideosPage />}
