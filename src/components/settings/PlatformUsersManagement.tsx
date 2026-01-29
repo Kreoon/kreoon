@@ -107,11 +107,18 @@ export function PlatformUsersManagement() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch users
-      const { data: usersData, error: usersError } = await supabase.functions.invoke("admin-users", {
-        body: { action: "list_users" }
-      });
-      if (usersError) throw usersError;
+      // Fetch all profiles directly (no edge function needed)
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, avatar_url, current_organization_id, created_at, active_role')
+        .order('full_name');
+      
+      if (profilesError) throw profilesError;
+
+      // Fetch all user roles
+      const { data: userRolesData } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
 
       // Fetch organizations
       const { data: orgsData } = await supabase
@@ -121,47 +128,49 @@ export function PlatformUsersManagement() {
       
       setOrganizations(orgsData || []);
 
-      // Fetch org memberships for each user
-      const userIds = usersData.users?.map((u: any) => u.id) || [];
+      // Fetch org memberships
+      const userIds = profilesData?.map(p => p.id) || [];
       const { data: membersData } = await supabase
         .from('organization_members')
         .select('user_id, organization_id, role')
         .in('user_id', userIds);
 
-      // Fetch profiles for org info
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, current_organization_id')
-        .in('id', userIds);
-
-      // Fetch platform admin roles from user_roles table
-      const { data: platformRolesData } = await supabase
-        .from('user_roles')
-        .select('user_id, role')
-        .eq('role', 'admin')
-        .in('user_id', userIds);
-
-      const platformAdminIds = new Set(platformRolesData?.map(r => r.user_id) || []);
-
-      // Build org names map
+      // Build maps
       const orgNamesMap = new Map(orgsData?.map(o => [o.id, o.name]) || []);
+      const platformAdminIds = new Set(
+        userRolesData?.filter(r => r.role === 'admin').map(r => r.user_id) || []
+      );
 
-      // Enhance users with org data
-      const enhancedUsers = (usersData.users || []).map((user: any) => {
-        const userProfile = profilesData?.find(p => p.id === user.id);
-        const userMember = membersData?.find(m => m.user_id === user.id && m.organization_id === userProfile?.current_organization_id);
+      // Build enhanced users from profiles
+      const enhancedUsers: UserData[] = (profilesData || []).map((profile) => {
+        const userMember = membersData?.find(
+          m => m.user_id === profile.id && m.organization_id === profile.current_organization_id
+        );
+        const userRoles = userRolesData?.filter(r => r.user_id === profile.id).map(r => r.role) || [];
         
-        // Check if user is platform admin - either by user_roles table OR by being the root email
-        const isAdminByRole = platformAdminIds.has(user.id);
-        const isRootUser = user.email === ROOT_EMAIL;
+        // Check if user is platform admin
+        const isAdminByRole = platformAdminIds.has(profile.id);
+        const isRootUser = profile.email === ROOT_EMAIL;
         
         return {
-          ...user,
-          current_organization_id: userProfile?.current_organization_id || null,
-          organization_name: userProfile?.current_organization_id 
-            ? orgNamesMap.get(userProfile.current_organization_id) || null 
+          id: profile.id,
+          email: profile.email || '',
+          full_name: profile.full_name || 'Sin nombre',
+          avatar_url: profile.avatar_url,
+          active_role: profile.active_role as AppRole | null,
+          roles: userMember?.role 
+            ? [userMember.role as AppRole] 
+            : userRoles.length > 0 
+              ? userRoles as AppRole[]
+              : [],
+          created_at: profile.created_at,
+          last_sign_in_at: null, // Not available from profiles
+          email_confirmed_at: profile.created_at, // Assume confirmed if profile exists
+          banned: false, // Not tracking this in profiles
+          current_organization_id: profile.current_organization_id || null,
+          organization_name: profile.current_organization_id 
+            ? orgNamesMap.get(profile.current_organization_id) || null 
             : null,
-          roles: userMember?.role ? [userMember.role] : user.roles || [],
           isPlatformAdmin: isAdminByRole || isRootUser
         };
       });
