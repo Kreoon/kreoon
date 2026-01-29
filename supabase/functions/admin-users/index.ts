@@ -85,6 +85,9 @@ serve(async (req) => {
         const { data: profiles } = await supabaseAdmin.from("profiles").select("*");
         const { data: userRoles } = await supabaseAdmin.from("user_roles").select("*");
 
+        // Build list of auth user emails to check for missing root
+        const authUserEmails = new Set(authUsers.users.map(u => u.email?.toLowerCase()));
+
         const users = authUsers.users.map(u => {
           const profile = profiles?.find(p => p.id === u.id);
           const roles = userRoles?.filter(r => r.user_id === u.id).map(r => r.role) || [];
@@ -101,6 +104,26 @@ serve(async (req) => {
             banned: userAny.banned_until ? new Date(userAny.banned_until) > new Date() : false
           };
         });
+
+        // Check if root user is missing from auth.users but exists in profiles
+        if (!authUserEmails.has(ROOT_EMAIL.toLowerCase())) {
+          const rootProfile = profiles?.find(p => p.email?.toLowerCase() === ROOT_EMAIL.toLowerCase());
+          if (rootProfile) {
+            const rootRoles = userRoles?.filter(r => r.user_id === rootProfile.id).map(r => r.role) || [];
+            users.unshift({
+              id: rootProfile.id,
+              email: rootProfile.email || ROOT_EMAIL,
+              full_name: rootProfile.full_name || "Root Admin",
+              avatar_url: rootProfile.avatar_url,
+              roles: rootRoles.length > 0 ? rootRoles : ['admin'],
+              created_at: rootProfile.created_at,
+              last_sign_in_at: undefined,
+              email_confirmed_at: rootProfile.created_at,
+              banned: false
+            });
+            console.log(`Added root user from profiles: ${ROOT_EMAIL}`);
+          }
+        }
 
         return new Response(JSON.stringify({ users }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
