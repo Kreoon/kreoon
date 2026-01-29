@@ -86,15 +86,13 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
     <motion.div
       ref={cardRef}
       className={cn(
-        "relative bg-social-card rounded-xl overflow-hidden cursor-pointer",
+        "relative bg-social-card rounded-xl overflow-hidden",
         "border border-social-border/50 transition-all duration-300",
         "hover:border-social-accent/30 hover:shadow-xl hover:shadow-social-accent/10"
       )}
-      onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
     >
       {/* Video Container - 9:16 aspect ratio */}
       <div className="relative aspect-[9/16] bg-social-muted overflow-hidden">
@@ -195,17 +193,17 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
           </div>
         )}
 
-        {/* CTA Button - Visual only */}
+        {/* CTA Button - Visual only, no interaction */}
         <Button
           variant="outline"
           size="sm"
           className={cn(
             "w-full mt-2 border-social-accent/30 text-social-accent",
             "hover:bg-social-accent/10 hover:border-social-accent/50",
-            "transition-all duration-200 pointer-events-none"
+            "transition-all duration-200 pointer-events-none text-xs px-2"
           )}
         >
-          Este es el creador para tu campaña
+          ¿Este es el creador para tu campaña?
         </Button>
       </div>
     </motion.div>
