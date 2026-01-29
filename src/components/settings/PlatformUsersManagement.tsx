@@ -151,6 +151,10 @@ export function PlatformUsersManagement() {
         const userProfile = profilesData?.find(p => p.id === user.id);
         const userMember = membersData?.find(m => m.user_id === user.id && m.organization_id === userProfile?.current_organization_id);
         
+        // Check if user is platform admin - either by user_roles table OR by being the root email
+        const isAdminByRole = platformAdminIds.has(user.id);
+        const isRootUser = user.email === ROOT_EMAIL;
+        
         return {
           ...user,
           current_organization_id: userProfile?.current_organization_id || null,
@@ -158,7 +162,7 @@ export function PlatformUsersManagement() {
             ? orgNamesMap.get(userProfile.current_organization_id) || null 
             : null,
           roles: userMember?.role ? [userMember.role] : user.roles || [],
-          isPlatformAdmin: platformAdminIds.has(user.id)
+          isPlatformAdmin: isAdminByRole || isRootUser
         };
       });
 
