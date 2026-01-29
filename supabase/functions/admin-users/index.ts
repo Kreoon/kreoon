@@ -15,24 +15,14 @@ serve(async (req) => {
   }
 
   try {
-    // IMPORTANT: This function must operate on Kreoon (external backend), not the legacy backend.
-    const kreoonUrl = Deno.env.get('KREOON_SUPABASE_URL');
-    const kreoonServiceKey = Deno.env.get('KREOON_SERVICE_ROLE_KEY');
+    // Use the current project's Supabase for authentication validation
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    if (!kreoonUrl || !kreoonServiceKey) {
-      return new Response(JSON.stringify({ error: 'Credenciales de Kreoon no configuradas' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const supabaseAdmin = createClient(kreoonUrl, kreoonServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    // Verify the caller is the root user
+    // Verify the caller is the root user using the current project's auth
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: "No authorization header" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -40,28 +30,46 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
-    if (authError || !caller) {
-      console.error("Auth error:", authError);
+    // Create a client with the user's token to validate their identity
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Use getClaims to validate the JWT locally
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Auth error:", claimsError);
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
+    const callerEmail = claimsData.claims.email as string;
+    const callerId = claimsData.claims.sub as string;
+
     // Check if caller is the root user
-    if (caller.email !== ROOT_EMAIL) {
-      console.warn(`Unauthorized access attempt by ${caller.email}`);
+    if (callerEmail !== ROOT_EMAIL) {
+      console.warn(`Unauthorized access attempt by ${callerEmail}`);
       return new Response(JSON.stringify({ error: "Unauthorized - Root access required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
+    // Create admin client with service role for database operations
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    console.log(`Admin action authorized for ${callerEmail}`);
+
     const body = await req.json();
     const { action, userId, email, role, clientId, contentId, conversationId, productId, notificationId, postId, referralId } = body;
-    console.log(`Admin action: ${action} by ${caller.email}`);
+    console.log(`Admin action: ${action} by ${callerEmail}`);
 
     switch (action) {
       case "list_users": {
