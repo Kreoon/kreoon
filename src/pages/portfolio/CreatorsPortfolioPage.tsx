@@ -149,7 +149,7 @@ export default function CreatorsPortfolioPage() {
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-20">
         {/* Header */}
         <div className="space-y-2">
           <div className="flex items-center gap-3">
