@@ -35,17 +35,22 @@ serve(async (req) => {
       throw new Error("Email y rol son requeridos");
     }
 
-    // Create Supabase admin client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Use Kreoon as the primary database
+    const kreoonUrl = Deno.env.get("KREOON_SUPABASE_URL");
+    const kreoonServiceKey = Deno.env.get("KREOON_SERVICE_ROLE_KEY");
+    
+    if (!kreoonUrl || !kreoonServiceKey) {
+      throw new Error("Database credentials not configured");
+    }
+    
+    const supabase = createClient(kreoonUrl, kreoonServiceKey);
 
-    // Generate magic link for signup
+    // Generate magic link for signup - redirect to kreoon.com
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
       email,
       options: {
-        redirectTo: `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/auth?role=${role}${client_id ? `&client_id=${client_id}` : ''}`,
+        redirectTo: `https://kreoon.com/auth?role=${role}${client_id ? `&client_id=${client_id}` : ''}`,
       },
     });
 
@@ -54,13 +59,13 @@ serve(async (req) => {
       throw new Error("No se pudo generar el enlace de invitación");
     }
 
-    const inviteLink = linkData.properties?.action_link || `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/auth`;
+    const inviteLink = linkData.properties?.action_link || `https://kreoon.com/auth`;
 
     // Send email with Resend
     const emailResponse = await resend.emails.send({
-      from: "Creartor Studio <noreply@creatorstudio.com>",
+      from: "KREOON <noreply@kreoon.com>",
       to: [email],
-      subject: `Invitación a Creartor Studio - ${ROLE_LABELS[role]}`,
+      subject: `Invitación a KREOON - ${ROLE_LABELS[role]}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -79,15 +84,15 @@ serve(async (req) => {
         </head>
         <body>
           <div class="container">
-            <div class="logo">🎬 Creartor Studio</div>
+            <div class="logo">🎬 KREOON</div>
             <h1>¡Has sido invitado!</h1>
-            <p><strong>${inviter_name}</strong> te ha invitado a unirte a Creartor Studio como <span class="role-badge">${ROLE_LABELS[role]}</span></p>
-            <p>Creartor Studio es una plataforma profesional para la gestión de contenido de video, donde podrás colaborar con creadores y editores en proyectos de alto impacto.</p>
+            <p><strong>${inviter_name}</strong> te ha invitado a unirte a KREOON como <span class="role-badge">${ROLE_LABELS[role]}</span></p>
+            <p>KREOON es una plataforma profesional para la gestión de contenido de video, donde podrás colaborar con creadores y editores en proyectos de alto impacto.</p>
             <a href="${inviteLink}" class="button">Aceptar Invitación</a>
             <p style="font-size: 14px;">O copia este enlace: <br/><code style="background: #1a1a1a; padding: 8px 12px; border-radius: 4px; display: block; margin-top: 8px; word-break: break-all;">${inviteLink}</code></p>
             <div class="footer">
               <p>Si no esperabas esta invitación, puedes ignorar este correo.</p>
-              <p>© 2024 Creartor Studio. Todos los derechos reservados.</p>
+              <p>© 2026 KREOON. Todos los derechos reservados.</p>
             </div>
           </div>
         </body>
