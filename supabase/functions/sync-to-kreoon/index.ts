@@ -118,6 +118,27 @@ const TABLES_TO_SYNC = [
   'user_referral_tracking',
 ];
 
+// Tables that should be scoped by organization in the app UI
+const ORG_SCOPED_TABLES = [
+  // Organization-scoped
+  'clients',
+  'content',
+  'client_packages',
+  'client_strategists',
+  'organization_members',
+  'organization_member_roles',
+  'board_custom_fields',
+  'board_permissions',
+  'board_settings',
+  'board_status_rules',
+  // Social/feed (often org-scoped by current org)
+  'portfolio_posts',
+  'portfolio_post_likes',
+  'portfolio_post_comments',
+  'portfolio_stories',
+  'social_notifications',
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -154,7 +175,7 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { action, tables, secret } = await req.json();
+    const { action, tables, secret, orgId } = await req.json();
 
     // Simple auth check
     if (secret !== 'kreoon-sync-2026') {
@@ -199,6 +220,93 @@ serve(async (req) => {
       }
       
       return new Response(JSON.stringify({ counts }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ACTION: diagnose_org - Diagnose organization scoping issues (null/mismatched org ids)
+    // This is used when the UI appears empty but raw table counts exist.
+    if (action === 'diagnose_org') {
+      if (!orgId) {
+        return new Response(JSON.stringify({ error: 'orgId required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const tablesToCheck: string[] = Array.isArray(tables) && tables.length > 0
+        ? tables
+        : ORG_SCOPED_TABLES;
+
+      const report: Record<string, any> = {
+        orgId,
+        tables: {},
+        notes: [
+          'If org-scoped counts are 0 but total counts are >0, the app will look empty because it always filters by current organization.',
+          'If null counts are high, data likely needs organization_id backfill during/after migration.'
+        ]
+      };
+
+      // Special: profiles uses current_organization_id
+      const profileStats: Record<string, any> = {};
+      try {
+        const { count: total } = await kreoonClient
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        const { count: inOrg } = await kreoonClient
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('current_organization_id', orgId);
+        const { count: nullOrg } = await kreoonClient
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .is('current_organization_id', null);
+        profileStats.total = total ?? 0;
+        profileStats.inOrg = inOrg ?? 0;
+        profileStats.nullOrg = nullOrg ?? 0;
+      } catch (e) {
+        profileStats.error = String(e);
+      }
+      report.tables.profiles = profileStats;
+
+      for (const tableName of tablesToCheck) {
+        // Skip profiles (handled above)
+        if (tableName === 'profiles') continue;
+
+        const stats: Record<string, any> = {};
+        try {
+          const { count: total } = await kreoonClient
+            .from(tableName)
+            .select('*', { count: 'exact', head: true });
+
+          // Not all tables have organization_id; guard by trying the filters.
+          const { count: inOrg, error: inOrgError } = await kreoonClient
+            .from(tableName)
+            .select('*', { count: 'exact', head: true })
+            .eq('organization_id', orgId);
+
+          const { count: nullOrg, error: nullOrgError } = await kreoonClient
+            .from(tableName)
+            .select('*', { count: 'exact', head: true })
+            .is('organization_id', null);
+
+          stats.total = total ?? 0;
+          if (!inOrgError) stats.inOrg = inOrg ?? 0;
+          if (!nullOrgError) stats.nullOrg = nullOrg ?? 0;
+
+          if (inOrgError || nullOrgError) {
+            stats.note = 'Table may not have organization_id column (or lacks permissions).';
+            if (inOrgError) stats.inOrgError = inOrgError.message;
+            if (nullOrgError) stats.nullOrgError = nullOrgError.message;
+          }
+        } catch (e) {
+          stats.error = String(e);
+        }
+
+        report.tables[tableName] = stats;
+      }
+
+      return new Response(JSON.stringify(report), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -355,7 +463,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       error: 'Invalid action',
-      validActions: ['list_tables', 'check_counts', 'sync_table', 'sync_all']
+      validActions: ['list_tables', 'check_counts', 'diagnose_org', 'sync_table', 'sync_all']
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
