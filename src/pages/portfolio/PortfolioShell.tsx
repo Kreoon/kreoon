@@ -135,8 +135,8 @@ export default function PortfolioShell() {
         </div>
       </header>
 
-      {/* Main content area */}
-      <main className="flex-1 overflow-hidden pt-14 md:pt-0">
+      {/* Main content area - with left margin for desktop sidebar */}
+      <main className="flex-1 overflow-hidden pt-14 md:pt-0 md:ml-20 lg:ml-64">
         {renderTabContent()}
       </main>
 
@@ -224,9 +224,6 @@ export default function PortfolioShell() {
 
       {/* Spacer for mobile bottom nav */}
       <div className="h-16 md:hidden" />
-      
-      {/* Spacer for desktop sidebar */}
-      <div className="hidden md:block w-20 lg:w-64 flex-shrink-0" />
     </div>
   );
 }
