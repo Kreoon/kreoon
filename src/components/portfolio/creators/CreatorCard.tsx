@@ -11,6 +11,7 @@ export interface CreatorData {
   id: string;
   full_name: string;
   avatar_url?: string;
+  city?: string;
   country?: string;
   content_categories?: string[];
   industries?: string[];
@@ -146,16 +147,6 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
 
-        {/* UP Points Badge */}
-        {creator.total_points !== undefined && creator.total_points > 0 && (
-          <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md bg-orange-500/20 border border-orange-400/30">
-            <Flame className="h-3.5 w-3.5 text-orange-400" />
-            <span className="text-xs font-bold text-orange-300">
-              {creator.total_points.toLocaleString()} UP
-            </span>
-          </div>
-        )}
-
         {/* Play indicator on hover */}
         <motion.div
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -170,27 +161,37 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
       </div>
 
       {/* Creator Info */}
-      <div className="p-4 space-y-3">
-        {/* Name and Country */}
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-social-foreground line-clamp-1 flex-1">
-            {creator.full_name}
-          </h3>
-          {creator.country && (
-            <div className="flex items-center gap-1 text-social-muted-foreground shrink-0">
-              <MapPin className="h-3.5 w-3.5" />
-              <span className="text-xs">{creator.country}</span>
-            </div>
-          )}
-        </div>
+      <div className="p-4 space-y-2">
+        {/* Name - Full, not truncated */}
+        <h3 className="font-semibold text-social-foreground text-base leading-tight">
+          {creator.full_name}
+        </h3>
+
+        {/* Location */}
+        {(creator.city || creator.country) && (
+          <div className="flex items-center gap-1.5 text-social-muted-foreground">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            <span className="text-sm">
+              {[creator.city, creator.country].filter(Boolean).join(', ')}
+            </span>
+          </div>
+        )}
 
         {/* Niche/Category */}
         {primaryNiche && (
           <div className="flex items-center gap-1.5">
-            <Tag className="h-3.5 w-3.5 text-social-muted-foreground" />
-            <Badge variant="secondary" className="text-xs bg-social-muted/50 text-social-muted-foreground border-0">
-              {primaryNiche}
-            </Badge>
+            <Tag className="h-3.5 w-3.5 text-social-muted-foreground shrink-0" />
+            <span className="text-sm text-social-muted-foreground">{primaryNiche}</span>
+          </div>
+        )}
+
+        {/* UP Points - Below name section */}
+        {creator.total_points !== undefined && creator.total_points > 0 && (
+          <div className="flex items-center gap-1.5 pt-1">
+            <Flame className="h-4 w-4 text-orange-400" />
+            <span className="text-sm font-bold text-orange-400">
+              {creator.total_points.toLocaleString()} UP
+            </span>
           </div>
         )}
 
