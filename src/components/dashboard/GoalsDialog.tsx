@@ -1,5 +1,5 @@
 import { useState, useEffect, forwardRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -179,6 +179,9 @@ export const GoalsDialog = forwardRef<HTMLDivElement, GoalsDialogProps>(
             <Target className="h-5 w-5 text-primary" />
             Configurar Metas
           </DialogTitle>
+          <DialogDescription>
+            Define las metas de ingresos, contenido y clientes para el periodo seleccionado
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
