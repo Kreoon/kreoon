@@ -59,13 +59,6 @@ export function DashboardKpiCard({
         transition={{ duration: 3, repeat: Infinity }}
       />
 
-      {/* Scanning line */}
-      <motion.div
-        className="absolute left-0 right-0 h-px opacity-30"
-        style={{ background: `linear-gradient(90deg, transparent, ${iconColor}, transparent)` }}
-        animate={{ top: ["0%", "100%"] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-      />
 
       {/* Content */}
       <div className="relative z-10">
