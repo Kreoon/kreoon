@@ -956,7 +956,7 @@ export default function ContentBoard() {
                         key={item.id}
                         content={item}
                         cardSize={settings?.card_size || 'normal'}
-                        visibleFields={settings?.visible_fields || ['title', 'status', 'client', 'deadline', 'responsible']}
+                        visibleFields={settings?.visible_fields || ['title', 'status', 'client', 'deadline', 'creator', 'editor']}
                         onClick={() => setSelectedContent(item)}
                         onDragStart={(e) => handleDragStart(e, item)}
                         isDragging={draggingContent?.id === item.id}
@@ -999,7 +999,7 @@ export default function ContentBoard() {
               content={filteredContent} 
               onContentClick={setSelectedContent}
               cardSize={settings?.card_size || 'normal'}
-              visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
+              visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'creator', 'editor', 'deadline']}
               organizationStatuses={orgStatuses}
               ambassadorIds={ambassadorIds}
             />
@@ -1013,7 +1013,7 @@ export default function ContentBoard() {
               onDateChange={setCalendarDate}
               onContentClick={setSelectedContent}
               cardSize={settings?.card_size || 'normal'}
-              visibleFields={settings?.visible_fields || ['title', 'status', 'responsible']}
+              visibleFields={settings?.visible_fields || ['title', 'status', 'creator', 'editor']}
               organizationStatuses={orgStatuses}
               ambassadorIds={ambassadorIds}
             />
@@ -1024,7 +1024,7 @@ export default function ContentBoard() {
             <BoardTableView 
               content={filteredContent} 
               onContentClick={setSelectedContent}
-              visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
+              visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'creator', 'editor', 'deadline']}
               organizationStatuses={orgStatuses}
               ambassadorIds={ambassadorIds}
             />
