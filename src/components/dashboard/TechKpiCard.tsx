@@ -303,13 +303,6 @@ export function TechKpiCard({
         transition={{ duration: 3, repeat: Infinity }}
       />
 
-      {/* Scanning line */}
-      <motion.div
-        className="absolute left-0 right-0 h-px opacity-50"
-        style={{ background: `linear-gradient(90deg, transparent, ${colorValue}, transparent)` }}
-        animate={{ top: ["0%", "100%"] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-      />
 
       {/* Grid pattern */}
       <div 
