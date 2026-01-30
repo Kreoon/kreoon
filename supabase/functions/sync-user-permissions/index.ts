@@ -185,6 +185,143 @@ serve(async (req) => {
       });
     }
 
+    // ACTION: cleanup_to_single_org_and_role - Ensure each user has only 1 org and 1 role
+    if (action === 'cleanup_to_single_org_and_role') {
+      const results: Record<string, unknown> = {};
+      const ROOT_ADMIN_EMAIL = 'jacsolucionesgraficas@gmail.com';
+      const ROOT_ADMIN_ID = '577c72dc-f088-4e99-a109-e88e035a0540'; // Known Kreoon ID for root admin
+      const DEFAULT_ORG_ID = 'c8ae6c6d-a15d-46d9-b69e-465f7371595e'; // UGC Colombia
+      
+      const rootAdminId = ROOT_ADMIN_ID;
+      results.rootAdminId = rootAdminId;
+      results.rootAdminEmail = ROOT_ADMIN_EMAIL;
+
+      // Step 1: Ensure root admin has admin role
+      if (rootAdminId) {
+        // Delete all existing roles for root admin
+        await kreoonClient.from('user_roles').delete().eq('user_id', rootAdminId);
+        // Insert admin role
+        const { error: adminRoleErr } = await kreoonClient.from('user_roles').insert({
+          user_id: rootAdminId,
+          role: 'admin'
+        });
+        results.rootAdminRoleSet = !adminRoleErr;
+        if (adminRoleErr) results.rootAdminRoleError = adminRoleErr.message;
+
+        // Update profile active_role
+        await kreoonClient.from('profiles').update({ 
+          active_role: 'admin',
+          current_organization_id: DEFAULT_ORG_ID
+        }).eq('id', rootAdminId);
+      }
+
+      // Step 2: Get source data to determine primary role for each user
+      const [sourceUserRoles, sourceOrgMembers] = await Promise.all([
+        sourceClient.from('user_roles').select('*'),
+        sourceClient.from('organization_members').select('*'),
+      ]);
+
+      // Build map of user's primary role (first one found)
+      const userPrimaryRole: Record<string, string> = {};
+      for (const role of sourceUserRoles.data || []) {
+        if (!userPrimaryRole[role.user_id]) {
+          userPrimaryRole[role.user_id] = role.role;
+        }
+      }
+
+      // Step 3: For each Kreoon user (except root admin), keep only one role
+      const { data: currentUserRoles } = await kreoonClient.from('user_roles').select('*');
+      const userRolesMap: Record<string, any[]> = {};
+      for (const role of currentUserRoles || []) {
+        if (!userRolesMap[role.user_id]) userRolesMap[role.user_id] = [];
+        userRolesMap[role.user_id].push(role);
+      }
+
+      let rolesDeleted = 0;
+      for (const userId in userRolesMap) {
+        if (userId === rootAdminId) continue; // Skip root admin
+        const roles = userRolesMap[userId];
+        if (roles.length > 1) {
+          // Keep only the first role, delete the rest
+          const [keepRole, ...deleteRoles] = roles;
+          for (const roleToDelete of deleteRoles) {
+            const { error } = await kreoonClient.from('user_roles').delete().eq('id', roleToDelete.id);
+            if (!error) rolesDeleted++;
+          }
+        }
+      }
+      results.duplicateRolesDeleted = rolesDeleted;
+
+      // Step 4: Delete ALL organization_member_roles first
+      const { error: deleteAllMemberRoles } = await kreoonClient
+        .from('organization_member_roles')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      results.allMemberRolesDeleted = !deleteAllMemberRoles;
+
+      // Step 5: Delete ALL organization_members 
+      const { error: deleteAllMembers } = await kreoonClient
+        .from('organization_members')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      results.allMembersDeleted = !deleteAllMembers;
+
+      // Step 6: Create fresh membership for each profile in UGC Colombia
+      const { data: kreoonProfiles } = await kreoonClient.from('profiles').select('id');
+      let orgMembersCreated = 0;
+      let memberRolesCreated = 0;
+      
+      for (const profile of kreoonProfiles || []) {
+        const userId = profile.id;
+        
+        // Get user's role
+        const { data: userRole } = await kreoonClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .limit(1)
+          .single();
+        const role = userRole?.role || 'creator';
+        
+        // Create organization_member
+        const { error: memberErr } = await kreoonClient.from('organization_members').insert({
+          user_id: userId,
+          organization_id: DEFAULT_ORG_ID,
+          role: role
+        });
+        if (!memberErr) {
+          orgMembersCreated++;
+        } else {
+          if (!results.memberErrors) results.memberErrors = [];
+          (results.memberErrors as string[]).push(`${userId}: ${memberErr.message}`);
+        }
+        
+        // Create organization_member_role
+        const { error: roleErr } = await kreoonClient.from('organization_member_roles').insert({
+          user_id: userId,
+          organization_id: DEFAULT_ORG_ID,
+          role: role
+        });
+        if (!roleErr) memberRolesCreated++;
+        
+        // Update profile's current_organization_id
+        await kreoonClient.from('profiles').update({
+          current_organization_id: DEFAULT_ORG_ID
+        }).eq('id', userId);
+      }
+      results.orgMembersCreated = orgMembersCreated;
+      results.memberRolesCreated = memberRolesCreated;
+      results.profilesProcessed = kreoonProfiles?.length || 0;
+
+      return new Response(JSON.stringify({
+        success: true,
+        action: 'cleanup_to_single_org_and_role',
+        results
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // ACTION: cleanup_duplicate_profiles - Remove profiles with old IDs that have duplicates with new auth IDs
     if (action === 'cleanup_duplicate_profiles') {
       const { data: kreoonAuthUsers } = await kreoonClient.auth.admin.listUsers();
