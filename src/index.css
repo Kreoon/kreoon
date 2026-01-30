@@ -4,83 +4,90 @@
 
 @layer base {
   :root {
-    /* KREOON_OS Theme - Dark Mode First */
-    /* Base Colors */
-    --background: 240 10% 4%; /* #0B0B0F */
-    --foreground: 0 0% 100%; /* #FFFFFF */
+    /* KREOON TECH Theme - Inspired by futuristic AI/Tech aesthetics */
+    /* Deep dark base for maximum contrast */
+    --background: 240 15% 3%; /* #050508 - Near black with blue tint */
+    --foreground: 0 0% 98%; /* Almost white */
 
-    --card: 240 12% 8%; /* #12121A */
-    --card-foreground: 0 0% 100%;
+    --card: 240 15% 6%; /* #0d0d14 */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 240 14% 10%; /* #181826 */
-    --popover-foreground: 0 0% 100%;
+    --popover: 240 15% 8%; /* #111118 */
+    --popover-foreground: 0 0% 98%;
 
-    /* KREOON Purple - Primary (configurable via BrandingProvider) */
-    --primary: 282 100% 36%; /* #7700b8 - Base value, overridden dynamically */
+    /* KREOON Violet/Purple - Primary Tech Color */
+    --primary: 270 100% 60%; /* #8c00ff - Vibrant purple */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary Surface */
-    --secondary: 240 12% 12%;
-    --secondary-foreground: 240 10% 80%;
+    /* Secondary - Darker purple tones */
+    --secondary: 270 50% 12%;
+    --secondary-foreground: 270 20% 85%;
 
-    /* Muted */
-    --muted: 240 10% 14%;
-    --muted-foreground: 240 10% 70%; /* #B3B3C6 */
+    /* Muted - Subtle grays with purple tint */
+    --muted: 240 15% 10%;
+    --muted-foreground: 240 10% 60%; /* #8e8ea3 */
 
-    /* Accent */
-    --accent: 252 60% 50%;
+    /* Accent - Lighter purple for highlights */
+    --accent: 270 80% 65%;
     --accent-foreground: 0 0% 100%;
 
-    /* Destructive */
-    --destructive: 0 70% 50%;
+    /* Destructive - Red with purple undertone */
+    --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Success */
-    --success: 142 70% 45%;
+    /* Success - Cyan/Teal for tech feel */
+    --success: 160 90% 45%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning */
-    --warning: 38 92% 50%;
+    /* Warning - Orange */
+    --warning: 35 95% 55%;
     --warning-foreground: 0 0% 0%;
 
-    /* Info */
-    --info: 200 100% 50%;
+    /* Info - Bright cyan */
+    --info: 195 100% 55%;
     --info-foreground: 0 0% 100%;
 
-    --border: 240 10% 18%;
-    --input: 240 10% 16%;
-    --ring: 282 100% 36%;
+    --border: 240 15% 15%;
+    --input: 240 15% 12%;
+    --ring: 270 100% 60%;
 
     --radius: 0.75rem;
 
-    /* Sidebar - Dark */
-    --sidebar-background: 240 10% 4%;
-    --sidebar-foreground: 240 10% 80%;
-    --sidebar-primary: 282 100% 36%;
+    /* Sidebar - Deep dark with purple accents */
+    --sidebar-background: 240 15% 4%;
+    --sidebar-foreground: 240 10% 75%;
+    --sidebar-primary: 270 100% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 12% 12%;
+    --sidebar-accent: 270 50% 15%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 10% 15%;
-    --sidebar-ring: 282 100% 36%;
+    --sidebar-border: 240 15% 12%;
+    --sidebar-ring: 270 100% 60%;
 
-    /* KREOON Tokens - Purple Theme */
-    --violet: 282 100% 36%;
-    --violet-light: 282 90% 50%;
-    --violet-dark: 282 100% 28%;
-    --violet-glow: 282 100% 36%;
+    /* KREOON Tech Tokens */
+    --violet: 270 100% 60%;
+    --violet-light: 270 100% 70%;
+    --violet-dark: 270 100% 45%;
+    --violet-glow: 270 100% 60%;
+    --purple-neon: 280 100% 65%;
+    --blue-tech: 220 100% 60%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(282 100% 36%) 0%, hsl(282 90% 50%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(240 12% 8%) 0%, hsl(240 10% 6%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(240 12% 10%) 0%, hsl(240 12% 8%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(282 100% 36% / 0.15) 0%, transparent 70%);
+    /* Tech Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(280 100% 55%) 0%, hsl(260 100% 65%) 50%, hsl(220 100% 60%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(240 15% 6%) 0%, hsl(240 15% 4%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(240 15% 8%) 0%, hsl(240 15% 5%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(270 100% 60% / 0.15) 0%, transparent 60%);
+    --gradient-tech: linear-gradient(135deg, hsl(280 100% 50% / 0.2) 0%, hsl(220 100% 60% / 0.1) 100%);
+    --gradient-mesh: radial-gradient(at 40% 20%, hsl(280 100% 50% / 0.15) 0%, transparent 50%),
+                     radial-gradient(at 80% 0%, hsl(220 100% 60% / 0.1) 0%, transparent 40%),
+                     radial-gradient(at 0% 50%, hsl(270 100% 60% / 0.1) 0%, transparent 50%);
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.3);
-    --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.4);
-    --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 40px hsl(282 100% 36% / 0.25);
-    --shadow-violet: 0 4px 20px hsl(282 100% 36% / 0.3);
+    /* Tech Shadows */
+    --shadow-sm: 0 2px 4px hsl(0 0% 0% / 0.4);
+    --shadow-md: 0 4px 16px hsl(0 0% 0% / 0.5);
+    --shadow-lg: 0 8px 32px hsl(0 0% 0% / 0.6);
+    --shadow-glow: 0 0 50px hsl(270 100% 60% / 0.3);
+    --shadow-violet: 0 4px 30px hsl(270 100% 60% / 0.35);
+    --shadow-neon: 0 0 20px hsl(270 100% 60% / 0.5), 0 0 40px hsl(270 100% 60% / 0.3), 0 0 60px hsl(270 100% 60% / 0.1);
 
     /* Level Colors */
     --level-bronze: 30 60% 45%;
@@ -88,34 +95,34 @@
     --level-gold: 45 90% 55%;
     --level-diamond: 200 80% 60%;
 
-    /* Social Theme - Glassmorphism Enhanced */
-    --social-background: 0 0% 0%;
+    /* Social Theme - Tech Glassmorphism */
+    --social-background: 240 15% 2%;
     --social-foreground: 0 0% 98%;
-    --social-card: 0 0% 7%;
+    --social-card: 240 15% 5%;
     --social-card-foreground: 0 0% 98%;
-    --social-muted: 0 0% 12%;
-    --social-muted-foreground: 0 0% 60%;
-    --social-accent: 282 100% 50%;
+    --social-muted: 240 15% 10%;
+    --social-muted-foreground: 0 0% 55%;
+    --social-accent: 270 100% 60%;
     --social-accent-foreground: 0 0% 100%;
-    --social-border: 0 0% 18%;
-    --social-input: 0 0% 12%;
+    --social-border: 240 15% 15%;
+    --social-input: 240 15% 10%;
     
-    /* Glassmorphism tokens */
-    --glass-bg: 0 0% 100% / 0.05;
-    --glass-border: 0 0% 100% / 0.1;
-    --glass-blur: 20px;
+    /* Glassmorphism tokens - Enhanced */
+    --glass-bg: 0 0% 100% / 0.03;
+    --glass-border: 0 0% 100% / 0.08;
+    --glass-blur: 24px;
     
-    /* Social Gradients */
-    --social-gradient-accent: linear-gradient(135deg, hsl(282 100% 50%) 0%, hsl(320 100% 50%) 100%);
-    --social-gradient-card: linear-gradient(180deg, hsl(0 0% 10% / 0.8) 0%, hsl(0 0% 5% / 0.9) 100%);
-    --social-gradient-hover: linear-gradient(135deg, hsl(282 100% 50% / 0.2) 0%, hsl(320 100% 50% / 0.1) 100%);
+    /* Social Gradients - Tech Enhanced */
+    --social-gradient-accent: linear-gradient(135deg, hsl(280 100% 55%) 0%, hsl(320 100% 50%) 100%);
+    --social-gradient-card: linear-gradient(180deg, hsl(240 15% 8% / 0.9) 0%, hsl(240 15% 4% / 0.95) 100%);
+    --social-gradient-hover: linear-gradient(135deg, hsl(270 100% 60% / 0.15) 0%, hsl(280 100% 50% / 0.08) 100%);
     
-    /* Social Shadows */
-    --social-shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.3);
-    --social-shadow-md: 0 8px 24px hsl(0 0% 0% / 0.4);
-    --social-shadow-lg: 0 16px 48px hsl(0 0% 0% / 0.5);
-    --social-shadow-glow: 0 0 40px hsl(282 100% 50% / 0.3);
-    --social-shadow-accent: 0 4px 20px hsl(282 100% 50% / 0.4);
+    /* Social Shadows - Neon Enhanced */
+    --social-shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.4);
+    --social-shadow-md: 0 8px 24px hsl(0 0% 0% / 0.5);
+    --social-shadow-lg: 0 16px 48px hsl(0 0% 0% / 0.6);
+    --social-shadow-glow: 0 0 50px hsl(270 100% 60% / 0.35);
+    --social-shadow-accent: 0 4px 30px hsl(270 100% 60% / 0.45);
     
     /* Reaction colors */
     --reaction-love: 0 100% 60%;
