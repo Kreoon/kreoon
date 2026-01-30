@@ -104,7 +104,7 @@ const STRATEGIST_ACCESSIBLE_SECTIONS: SettingsSectionKey[] = [
 ];
 
 export function useSettingsPermissions(): SettingsPermissions {
-  const { profile, isAdmin, roles, activeRole, isStrategist } = useAuth();
+  const { user, profile, isAdmin, roles, activeRole, isStrategist } = useAuth();
   const { isOrgOwner, isPlatformRoot: isPlatformRootFromHook, currentOrgId, loading: orgLoading } = useOrgOwner();
   
   const [orgPermissions, setOrgPermissions] = useState<Record<string, { can_view: boolean; can_create: boolean; can_modify: boolean }>>({});
@@ -112,8 +112,10 @@ export function useSettingsPermissions(): SettingsPermissions {
 
   // Determine if user is platform root
   const isPlatformRoot = useMemo(() => {
-    return (profile?.email && ROOT_EMAILS.includes(profile.email)) || isPlatformRootFromHook;
-  }, [profile?.email, isPlatformRootFromHook]);
+    // IMPORTANT: during migrations profile can fail to load by auth.uid();
+    // use auth user email as the source of truth.
+    return (user?.email && ROOT_EMAILS.includes(user.email)) || isPlatformRootFromHook;
+  }, [user?.email, isPlatformRootFromHook]);
 
   // Determine if user is org admin (uses activeRole for current context)
   const isOrgAdmin = useMemo(() => {

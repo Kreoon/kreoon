@@ -47,7 +47,10 @@ export function useOrgOwner(): OrgOwnerStatus {
   const [currentOrgName, setCurrentOrgName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isPlatformRoot = profile?.email ? ROOT_EMAILS.includes(profile.email) : false;
+  // IMPORTANT: during migrations the profile row might not match auth.uid().
+  // Root checks must rely on the authenticated user's email (authoritative),
+  // not only on the profile record.
+  const isPlatformRoot = user?.email ? ROOT_EMAILS.includes(user.email) : false;
 
   useEffect(() => {
     let cancelled = false;
