@@ -122,16 +122,12 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      console.log('[UPSystemKPIs] Fetching stats for organizationId:', organizationId);
-      
       // Fetch creator totals from V2 system only (without embedded joins for Kreoon compatibility)
       const { data: creatorTotalsRaw, error: creatorError } = await supabase
         .from('up_creadores_totals')
         .select('*')
         .eq('organization_id', organizationId)
         .order('total_points', { ascending: false });
-      
-      console.log('[UPSystemKPIs] Creator totals:', creatorTotalsRaw?.length || 0, 'rows', creatorError ? `Error: ${creatorError.message}` : '');
 
       // Fetch editor totals
       const { data: editorTotalsRaw, error: editorError } = await supabase
@@ -139,8 +135,11 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
         .select('*')
         .eq('organization_id', organizationId)
         .order('total_points', { ascending: false });
-      
-      console.log('[UPSystemKPIs] Editor totals:', editorTotalsRaw?.length || 0, 'rows', editorError ? `Error: ${editorError.message}` : '');
+
+      // Log errors if any (helpful for debugging RLS issues)
+      if (creatorError || editorError) {
+        console.warn('[UPSystemKPIs] Error fetching data:', { creatorError, editorError });
+      }
       // Fetch recent creator events for avg delivery days
       const { data: creatorEvents } = await supabase
         .from('up_creadores')
