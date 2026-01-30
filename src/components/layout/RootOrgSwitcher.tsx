@@ -65,25 +65,43 @@ export function RootOrgSwitcher() {
     try {
       setSwitching(true);
 
+      // Get current auth user for debugging
+      const { data: authRes } = await supabase.auth.getUser();
+      const authUserId = authRes.user?.id;
+      const authEmail = authRes.user?.email;
+      
+      console.log('[RootOrgSwitcher] Auth user:', { authUserId, authEmail });
+      console.log('[RootOrgSwitcher] Profile from context:', { profileId: profile?.id, profileEmail: profile?.email });
+      console.log('[RootOrgSwitcher] User from context:', { userId: user?.id, userEmail: user?.email });
+
       // In migration scenarios, the in-memory profile can briefly be null (or the profile id
       // differs from auth.uid()). Resolve a safe profile id before updating.
-      let profileId = profile?.id || user?.id;
+      let profileId = profile?.id || user?.id || authUserId;
 
-      if (!profileId) {
-        const { data: authRes } = await supabase.auth.getUser();
-        const email = authRes.user?.email;
-
-        if (email) {
+      // If still no profileId OR if IDs mismatch, try to find the actual profile by email
+      if (!profileId || (profile?.id && profile.id !== authUserId)) {
+        console.log('[RootOrgSwitcher] ID mismatch or missing, looking up by email:', authEmail);
+        
+        if (authEmail) {
           const { data: profileByEmail, error: profileByEmailError } = await supabase
             .from('profiles')
             .select('id')
-            .eq('email', email)
+            .eq('email', authEmail)
             .maybeSingle();
 
-          if (profileByEmailError) throw profileByEmailError;
-          profileId = profileByEmail?.id;
+          console.log('[RootOrgSwitcher] Profile by email lookup:', { profileByEmail, error: profileByEmailError });
+
+          if (profileByEmailError) {
+            console.error('[RootOrgSwitcher] Error looking up profile by email:', profileByEmailError);
+          }
+          
+          if (profileByEmail?.id) {
+            profileId = profileByEmail.id;
+          }
         }
       }
+
+      console.log('[RootOrgSwitcher] Final profileId to update:', profileId);
 
       if (!profileId) {
         toast({
