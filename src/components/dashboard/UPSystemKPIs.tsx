@@ -122,20 +122,25 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
   const fetchStats = async () => {
     setLoading(true);
     try {
+      console.log('[UPSystemKPIs] Fetching stats for organizationId:', organizationId);
+      
       // Fetch creator totals from V2 system only (without embedded joins for Kreoon compatibility)
-      const { data: creatorTotalsRaw } = await supabase
+      const { data: creatorTotalsRaw, error: creatorError } = await supabase
         .from('up_creadores_totals')
         .select('*')
         .eq('organization_id', organizationId)
         .order('total_points', { ascending: false });
+      
+      console.log('[UPSystemKPIs] Creator totals:', creatorTotalsRaw?.length || 0, 'rows', creatorError ? `Error: ${creatorError.message}` : '');
 
       // Fetch editor totals
-      const { data: editorTotalsRaw } = await supabase
+      const { data: editorTotalsRaw, error: editorError } = await supabase
         .from('up_editores_totals')
         .select('*')
         .eq('organization_id', organizationId)
         .order('total_points', { ascending: false });
-
+      
+      console.log('[UPSystemKPIs] Editor totals:', editorTotalsRaw?.length || 0, 'rows', editorError ? `Error: ${editorError.message}` : '');
       // Fetch recent creator events for avg delivery days
       const { data: creatorEvents } = await supabase
         .from('up_creadores')
