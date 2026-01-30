@@ -13,19 +13,6 @@ export function TechGrid({ className }: { className?: string }) {
         </defs>
         <rect width="100%" height="100%" fill="url(#tech-grid)" />
       </svg>
-      {/* Scanning line effect */}
-      <motion.div
-        className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(270,100%,60%,0.5)] to-transparent"
-        animate={{
-          top: ["0%", "100%"],
-          opacity: [0, 1, 0],
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      />
     </div>
   );
 }
