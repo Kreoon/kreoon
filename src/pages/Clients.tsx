@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Building2, Video, Calendar, Trash2, Users, Mail, Phone, MapPin, UserCircle, Crown, Shield, Eye, Castle, Medal, UserCog, Lightbulb } from "lucide-react";
+import { UnassignedClientUsersAlert } from "@/components/clients/UnassignedClientUsersAlert";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { VipBadge } from "@/components/ui/vip-badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +76,13 @@ interface ClientUser {
   linked_clients: Array<{ id: string; name: string; role: string }>;
 }
 
+interface UnassignedUser {
+  id: string;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
 const Clients = () => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
@@ -82,6 +90,7 @@ const Clients = () => {
   const { guardAction, isReadOnly } = useTrialGuard();
   const [clients, setClients] = useState<Client[]>([]);
   const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
+  const [unassignedClientUsers, setUnassignedClientUsers] = useState<UnassignedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -107,6 +116,7 @@ const Clients = () => {
     // Clear previous org data immediately to avoid "bleed" while loading
     setClients([]);
     setClientUsers([]);
+    setUnassignedClientUsers([]);
 
     try {
       // Fetch company clients - always scoped to selected organization (including for root)
@@ -174,6 +184,34 @@ const Clients = () => {
       }
 
       setClientUsers(clientUsersList);
+
+      // Fetch users with "client" role in organization who are NOT linked to any company
+      if (currentOrgId) {
+        const { data: orgMembers } = await supabase
+          .from('organization_members')
+          .select('user_id')
+          .eq('organization_id', currentOrgId)
+          .eq('role', 'client');
+
+        if (orgMembers && orgMembers.length > 0) {
+          const orgClientUserIds = orgMembers.map(m => m.user_id);
+          
+          // Filter out users who already have a client_users association
+          const unassignedUserIds = orgClientUserIds.filter(
+            uid => !clientUserIds.includes(uid)
+          );
+
+          if (unassignedUserIds.length > 0) {
+            const { data: unassignedProfiles } = await supabase
+              .from('profiles')
+              .select('id, full_name, email, avatar_url')
+              .in('id', unassignedUserIds)
+              .order('full_name');
+
+            setUnassignedClientUsers(unassignedProfiles || []);
+          }
+        }
+      }
 
       if (!clientsData?.length) {
         setClients([]);
@@ -427,6 +465,15 @@ const Clients = () => {
               <Badge variant="secondary">Org actual: {currentOrgName || '—'}</Badge>
               {currentOrgId && <Badge variant="outline" className="font-mono text-xs">{currentOrgId}</Badge>}
             </div>
+          )}
+
+          {/* Alert for unassigned client users */}
+          {isAdmin && unassignedClientUsers.length > 0 && (
+            <UnassignedClientUsersAlert
+              unassignedUsers={unassignedClientUsers}
+              clients={clients}
+              onRefresh={fetchClients}
+            />
           )}
 
           {/* Tabs */}
