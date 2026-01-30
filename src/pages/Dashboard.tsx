@@ -453,38 +453,55 @@ export default function Dashboard() {
           client: (clientById.get(p.client_id) as Client | undefined)
         })) as (ClientPackage & { client?: Client })[];
         
-        // Filter packages by date range
-        const filteredPackages = mappedPackages.filter(p => {
+        // Filter packages by date range (created_at for "vendido")
+        const filteredPackagesByCreated = mappedPackages.filter(p => {
           const packageDate = p.created_at ? new Date(p.created_at) : null;
           if (startDateFilter && packageDate && packageDate < startDateFilter) return false;
           if (endDateFilter && packageDate && packageDate > endDateFilter) return false;
           return true;
         });
         
-        setPackages(filteredPackages);
-
-        // Calculate billing - separated by currency (using filtered packages)
-        const packagesWithValues = filteredPackages.filter(p => (p.total_value || 0) > 0);
+        // Filter packages by paid_at for "Recaudado" (what was actually collected in this period)
+        const filteredPackagesByPaid = mappedPackages.filter(p => {
+          const paidDate = p.paid_at ? new Date(p.paid_at) : null;
+          if (!paidDate) return false; // Only count packages that have been paid
+          if (startDateFilter && paidDate < startDateFilter) return false;
+          if (endDateFilter && paidDate > endDateFilter) return false;
+          return true;
+        });
         
-        // COP packages
-        const copPackages = packagesWithValues.filter(p => (p as any).currency === 'COP' || !(p as any).currency);
-        const totalBilledCOP = copPackages.reduce((sum, p) => sum + (p.total_value || 0), 0);
-        const totalPaidCOP = copPackages.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
-        const totalPendingCOP = totalBilledCOP - totalPaidCOP;
-        
-        // USD packages
-        const usdPackages = packagesWithValues.filter(p => (p as any).currency === 'USD');
-        const totalBilledUSD = usdPackages.reduce((sum, p) => sum + (p.total_value || 0), 0);
-        const totalPaidUSD = usdPackages.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
-        const totalPendingUSD = totalBilledUSD - totalPaidUSD;
+        setPackages(filteredPackagesByCreated);
 
-        // Total for backward compatibility (keep as COP equivalent for now)
+        // Calculate billing - separated by currency
+        // "Facturado" = total_value of packages created in period
+        // "Recaudado" = paid_amount of packages paid in period
+        // "Por Cobrar" = pending from packages created in period
+        
+        // COP - Facturado (created in period)
+        const copPackagesCreated = filteredPackagesByCreated.filter(p => (p as any).currency === 'COP' || !(p as any).currency);
+        const totalBilledCOP = copPackagesCreated.reduce((sum, p) => sum + (p.total_value || 0), 0);
+        const totalPendingCOP = copPackagesCreated.reduce((sum, p) => sum + ((p.total_value || 0) - (p.paid_amount || 0)), 0);
+        
+        // COP - Recaudado (paid in period)
+        const copPackagesPaid = filteredPackagesByPaid.filter(p => (p as any).currency === 'COP' || !(p as any).currency);
+        const totalPaidCOP = copPackagesPaid.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+        
+        // USD - Facturado (created in period)
+        const usdPackagesCreated = filteredPackagesByCreated.filter(p => (p as any).currency === 'USD');
+        const totalBilledUSD = usdPackagesCreated.reduce((sum, p) => sum + (p.total_value || 0), 0);
+        const totalPendingUSD = usdPackagesCreated.reduce((sum, p) => sum + ((p.total_value || 0) - (p.paid_amount || 0)), 0);
+        
+        // USD - Recaudado (paid in period)
+        const usdPackagesPaid = filteredPackagesByPaid.filter(p => (p as any).currency === 'USD');
+        const totalPaidUSD = usdPackagesPaid.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+
+        // Total for backward compatibility
         const totalBilled = totalBilledCOP + totalBilledUSD;
         const totalPaid = totalPaidCOP + totalPaidUSD;
-        const totalPending = totalBilled - totalPaid;
+        const totalPending = totalPendingCOP + totalPendingUSD;
         
         // Content owed = total content promised in filtered packages - delivered/approved content in range
-        const totalContentPromised = filteredPackages.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
+        const totalContentPromised = filteredPackagesByCreated.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
         const deliveredContent = content.filter(c => ['approved', 'delivered'].includes(c.status)).length;
         const contentOwed = Math.max(0, totalContentPromised - deliveredContent);
 
@@ -710,6 +727,10 @@ export default function Dashboard() {
   // Unpaid editor content: approved content where editor hasn't been paid AND has a payment value assigned
   const unpaidEditorContent = content.filter(c => c.status === 'approved' && !c.editor_paid && (c.editor_payment || 0) > 0);
   
+  // Paid content (already paid to team)
+  const paidCreatorContent = content.filter(c => c.creator_paid === true && (c.creator_payment || 0) > 0);
+  const paidEditorContent = content.filter(c => c.editor_paid === true && (c.editor_payment || 0) > 0);
+  
   // Calculate pending amounts to pay team - separated by currency
   const pendingCreatorPaymentCOP = unpaidCreatorContent
     .filter(c => (c as any).creator_payment_currency !== 'USD')
@@ -724,9 +745,19 @@ export default function Dashboard() {
     .filter(c => (c as any).editor_payment_currency === 'USD')
     .reduce((sum, c) => sum + (c.editor_payment || 0), 0);
   
-  // Total for backwards compat
-  const pendingCreatorPayment = pendingCreatorPaymentCOP + pendingCreatorPaymentUSD;
-  const pendingEditorPayment = pendingEditorPaymentCOP + pendingEditorPaymentUSD;
+  // Calculate PAID amounts to team - separated by currency
+  const paidCreatorPaymentCOP = paidCreatorContent
+    .filter(c => (c as any).creator_payment_currency !== 'USD')
+    .reduce((sum, c) => sum + (c.creator_payment || 0), 0);
+  const paidCreatorPaymentUSD = paidCreatorContent
+    .filter(c => (c as any).creator_payment_currency === 'USD')
+    .reduce((sum, c) => sum + (c.creator_payment || 0), 0);
+  const paidEditorPaymentCOP = paidEditorContent
+    .filter(c => (c as any).editor_payment_currency !== 'USD')
+    .reduce((sum, c) => sum + (c.editor_payment || 0), 0);
+  const paidEditorPaymentUSD = paidEditorContent
+    .filter(c => (c as any).editor_payment_currency === 'USD')
+    .reduce((sum, c) => sum + (c.editor_payment || 0), 0);
 
   const openKpiDialog = (title: string, contentList: Content[]) => {
     setKpiDialog({ open: true, title, content: contentList });
@@ -1208,15 +1239,26 @@ export default function Dashboard() {
                   <span className="text-[10px] text-muted-foreground">COP</span>
                 </div>
                 <div className="space-y-1">
+                  <div onClick={() => openKpiDialog('Pagado a Creadores (COP)', paidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
+                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">✓ Creadores</span>
+                    <span className="text-xs font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentCOP} currency="COP" size="sm" /></span>
+                  </div>
+                  <div onClick={() => openKpiDialog('Pagado a Editores (COP)', paidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
+                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">✓ Editores</span>
+                    <span className="text-xs font-bold text-success"><CurrencyDisplay value={paidEditorPaymentCOP} currency="COP" size="sm" /></span>
+                  </div>
+                  <div className="border-t border-border/30 my-1" />
                   <div onClick={() => openKpiDialog('Por Pagar a Creadores (COP)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
                     className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded px-1 -mx-1">
-                    <span className="text-[10px] text-muted-foreground">Creadores</span>
+                    <span className="text-[10px] text-muted-foreground">⏳ Creadores</span>
                     <span className="text-xs font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentCOP} currency="COP" size="sm" /></span>
                   </div>
                   <div onClick={() => openKpiDialog('Por Pagar a Editores (COP)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
-                    className="flex justify-between items-center cursor-pointer hover:bg-info/10 rounded px-1 -mx-1">
-                    <span className="text-[10px] text-muted-foreground">Editores</span>
-                    <span className="text-xs font-bold text-info"><CurrencyDisplay value={pendingEditorPaymentCOP} currency="COP" size="sm" /></span>
+                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">⏳ Editores</span>
+                    <span className="text-xs font-bold text-warning"><CurrencyDisplay value={pendingEditorPaymentCOP} currency="COP" size="sm" /></span>
                   </div>
                 </div>
               </div>
@@ -1227,15 +1269,26 @@ export default function Dashboard() {
                   <span className="text-[10px] text-muted-foreground">USD</span>
                 </div>
                 <div className="space-y-1">
+                  <div onClick={() => openKpiDialog('Pagado a Creadores (USD)', paidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
+                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">✓ Creadores</span>
+                    <span className="text-xs font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentUSD} currency="USD" size="sm" /></span>
+                  </div>
+                  <div onClick={() => openKpiDialog('Pagado a Editores (USD)', paidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
+                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">✓ Editores</span>
+                    <span className="text-xs font-bold text-success"><CurrencyDisplay value={paidEditorPaymentUSD} currency="USD" size="sm" /></span>
+                  </div>
+                  <div className="border-t border-border/30 my-1" />
                   <div onClick={() => openKpiDialog('Por Pagar a Creadores (USD)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
                     className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded px-1 -mx-1">
-                    <span className="text-[10px] text-muted-foreground">Creadores</span>
+                    <span className="text-[10px] text-muted-foreground">⏳ Creadores</span>
                     <span className="text-xs font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentUSD} currency="USD" size="sm" /></span>
                   </div>
                   <div onClick={() => openKpiDialog('Por Pagar a Editores (USD)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
-                    className="flex justify-between items-center cursor-pointer hover:bg-info/10 rounded px-1 -mx-1">
-                    <span className="text-[10px] text-muted-foreground">Editores</span>
-                    <span className="text-xs font-bold text-info"><CurrencyDisplay value={pendingEditorPaymentUSD} currency="USD" size="sm" /></span>
+                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded px-1 -mx-1">
+                    <span className="text-[10px] text-muted-foreground">⏳ Editores</span>
+                    <span className="text-xs font-bold text-warning"><CurrencyDisplay value={pendingEditorPaymentUSD} currency="USD" size="sm" /></span>
                   </div>
                 </div>
               </div>
