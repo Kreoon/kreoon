@@ -560,12 +560,36 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated, organiz
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, avatar_profiles, sales_angles_data, market_research")
+          .select("id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar")
           .eq("id", product.id)
           .maybeSingle();
 
         if (error) throw error;
-        if (!cancelled) setResearchProduct(data ?? null);
+        
+        // Parse JSON strings if needed
+        const normalized = (() => {
+          if (!data) return null;
+          let result = { ...(data as any) };
+          
+          // Parse market_research if it's a string
+          if (typeof result.market_research === "string") {
+            try { result.market_research = JSON.parse(result.market_research); } catch {}
+          }
+          
+          // Parse sales_angles_data if it's a string
+          if (typeof result.sales_angles_data === "string") {
+            try { result.sales_angles_data = JSON.parse(result.sales_angles_data); } catch {}
+          }
+          
+          // Parse avatar_profiles if it's a string
+          if (typeof result.avatar_profiles === "string") {
+            try { result.avatar_profiles = JSON.parse(result.avatar_profiles); } catch {}
+          }
+          
+          return result;
+        })();
+        
+        if (!cancelled) setResearchProduct(normalized);
       } catch (e) {
         console.error("[ScriptGenerator] Error fetching product research", e);
         if (!cancelled) setResearchProduct(null);
@@ -595,6 +619,46 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated, organiz
 
     return [];
   }, [researchProduct, product?.sales_angles]);
+
+  // Auto-fill sales_angle and narrative_structure from research when available
+  useEffect(() => {
+    if (!researchProduct) return;
+    
+    setFormData(prev => {
+      const updates: Partial<typeof prev> = {};
+      
+      // Auto-fill first sales angle if empty
+      if (!prev.sales_angle) {
+        const angles = researchProduct?.sales_angles_data?.angles;
+        if (Array.isArray(angles) && angles.length > 0) {
+          const firstAngle = angles[0];
+          const angleText = firstAngle?.angle || firstAngle?.salesAngle || firstAngle?.name || "";
+          if (angleText) updates.sales_angle = angleText;
+        }
+      }
+      
+      // Auto-fill narrative structure if empty
+      if (!prev.narrative_structure) {
+        const angles = researchProduct?.sales_angles_data?.angles;
+        if (Array.isArray(angles) && angles.length > 0) {
+          const type = (angles[0]?.type || "").toLowerCase();
+          if (type.includes("problema") || type.includes("dolor")) updates.narrative_structure = "problema-solucion";
+          else if (type.includes("transform")) updates.narrative_structure = "antes-despues";
+          else if (type.includes("testimon")) updates.narrative_structure = "testimonio";
+          else updates.narrative_structure = "problema-solucion";
+        }
+      }
+      
+      // Auto-suggest CTA if empty
+      if (!prev.cta) {
+        const puv = researchProduct?.sales_angles_data?.puv;
+        if (puv?.tangibleResult) updates.cta = "Descubre cómo lograrlo";
+      }
+      
+      if (Object.keys(updates).length === 0) return prev;
+      return { ...prev, ...updates };
+    });
+  }, [researchProduct]);
 
   const formatAvatarForField = (a: any, index: number) => {
     const name = a?.name || a?.avatarName || `Avatar ${index + 1}`;

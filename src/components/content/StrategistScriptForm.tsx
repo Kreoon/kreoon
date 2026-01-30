@@ -1235,15 +1235,39 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
         const normalized = (() => {
           if (!data) return null;
-          const mr = (data as any).market_research;
+          let result = { ...(data as any) };
+          
+          // Parse market_research if it's a string
+          const mr = result.market_research;
           if (typeof mr === "string") {
             try {
-              return { ...(data as any), market_research: JSON.parse(mr) };
+              result.market_research = JSON.parse(mr);
             } catch {
-              return data as any;
+              // Keep as string if parse fails
             }
           }
-          return data as any;
+          
+          // Parse sales_angles_data if it's a string
+          const sad = result.sales_angles_data;
+          if (typeof sad === "string") {
+            try {
+              result.sales_angles_data = JSON.parse(sad);
+            } catch {
+              // Keep as string if parse fails
+            }
+          }
+          
+          // Parse avatar_profiles if it's a string
+          const ap = result.avatar_profiles;
+          if (typeof ap === "string") {
+            try {
+              result.avatar_profiles = JSON.parse(ap);
+            } catch {
+              // Keep as string if parse fails
+            }
+          }
+          
+          return result;
         })();
 
         if (!cancelled) setResearchProduct(normalized);
@@ -1345,7 +1369,66 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     return [];
   }, [researchProduct, parsedIdealAvatar]);
 
-  // Fetch document from URL - returns { content, warning }
+  // Auto-fill sales_angle and narrative_structure from research when available
+  useEffect(() => {
+    // Only auto-fill if fields are empty and we have research data
+    if (!researchProduct) return;
+    
+    setFormData(prev => {
+      const updates: Partial<ScriptFormData> = {};
+      
+      // Auto-fill first sales angle if empty
+      if (!prev.sales_angle) {
+        const angles = researchProduct?.sales_angles_data?.angles;
+        if (Array.isArray(angles) && angles.length > 0) {
+          const firstAngle = angles[0];
+          const angleText = firstAngle?.angle || firstAngle?.salesAngle || firstAngle?.name || "";
+          if (angleText) {
+            updates.sales_angle = angleText;
+          }
+        }
+      }
+      
+      // Auto-fill narrative structure based on sales angle type if empty
+      if (!prev.narrative_structure) {
+        const angles = researchProduct?.sales_angles_data?.angles;
+        if (Array.isArray(angles) && angles.length > 0) {
+          const firstAngle = angles[0];
+          const type = firstAngle?.type?.toLowerCase() || "";
+          
+          // Map angle type to narrative structure
+          if (type.includes("problema") || type.includes("dolor")) {
+            updates.narrative_structure = "problema-solucion";
+          } else if (type.includes("transform") || type.includes("antes")) {
+            updates.narrative_structure = "antes-despues";
+          } else if (type.includes("testimon")) {
+            updates.narrative_structure = "testimonio";
+          } else if (type.includes("tutorial") || type.includes("educa")) {
+            updates.narrative_structure = "tutorial";
+          } else if (type.includes("urgencia") || type.includes("escasez")) {
+            updates.narrative_structure = "urgencia";
+          } else if (type.includes("prueba") || type.includes("social")) {
+            updates.narrative_structure = "testimonio";
+          } else {
+            // Default to problema-solucion as it's most versatile
+            updates.narrative_structure = "problema-solucion";
+          }
+        }
+      }
+      
+      // Auto-suggest CTA from sales_angles_data.puv if empty
+      if (!prev.cta) {
+        const puv = researchProduct?.sales_angles_data?.puv;
+        if (puv?.tangibleResult) {
+          // Use tangible result as a suggestion for CTA
+          updates.cta = "Descubre cómo lograrlo";
+        }
+      }
+      
+      if (Object.keys(updates).length === 0) return prev;
+      return { ...prev, ...updates };
+    });
+  }, [researchProduct]);
   const fetchDocument = async (url: string): Promise<{ content: string; warning?: string }> => {
     if (!url) return { content: "" };
     

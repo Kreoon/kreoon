@@ -261,6 +261,46 @@ export function StandaloneScriptGenerator() {
   const researchAvatars = useMemo(() => extractResearchAvatars(researchProduct), [researchProduct]);
   const researchAngles = useMemo(() => extractResearchAngles(researchProduct), [researchProduct]);
 
+  // Auto-fill sales_angle and narrative_structure from research when available
+  useEffect(() => {
+    if (!researchProduct) return;
+    
+    setFormData(prev => {
+      const updates: Partial<typeof prev> = {};
+      
+      // Auto-fill first sales angle if empty
+      if (!prev.sales_angle) {
+        const angles = researchProduct?.sales_angles_data?.angles;
+        if (Array.isArray(angles) && angles.length > 0) {
+          const firstAngle = angles[0];
+          const angleText = firstAngle?.angle || firstAngle?.salesAngle || firstAngle?.name || "";
+          if (angleText) updates.sales_angle = angleText;
+        }
+      }
+      
+      // Auto-fill narrative structure if empty
+      if (!prev.narrative_structure) {
+        const angles = researchProduct?.sales_angles_data?.angles;
+        if (Array.isArray(angles) && angles.length > 0) {
+          const type = (angles[0]?.type || "").toLowerCase();
+          if (type.includes("problema") || type.includes("dolor")) updates.narrative_structure = "problema-solucion";
+          else if (type.includes("transform")) updates.narrative_structure = "antes-despues";
+          else if (type.includes("testimon")) updates.narrative_structure = "testimonio";
+          else updates.narrative_structure = "problema-solucion";
+        }
+      }
+      
+      // Auto-suggest CTA if empty
+      if (!prev.cta) {
+        const puv = researchProduct?.sales_angles_data?.puv;
+        if (puv?.tangibleResult) updates.cta = "Descubre cómo lograrlo";
+      }
+      
+      if (Object.keys(updates).length === 0) return prev;
+      return { ...prev, ...updates };
+    });
+  }, [researchProduct]);
+
   // Check if the primary webhook (script) is configured
   const hasConfiguredWebhook = useMemo(() => {
     return webhooks.script && webhooks.script.trim() !== '';
