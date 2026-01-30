@@ -1098,380 +1098,218 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="px-4 py-2 lg:px-6 space-y-3">
-        {/* Row 1: Main KPIs - Compact */}
-        <div data-tour="stats-section" className="grid grid-cols-3 gap-3">
-          {/* Total Contenidos - Compact */}
-          <div 
-            onClick={() => openKpiDialog('Todos los Contenidos', content)}
-            className="group relative overflow-hidden rounded-xl border border-border/50 p-3 bg-gradient-to-br from-card to-muted/10 cursor-pointer hover:shadow-lg transition-all"
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <div className="p-1.5 rounded-lg bg-primary/10">
-                <Video className="h-4 w-4 text-primary" />
-              </div>
-              <span className="text-xs text-muted-foreground">Contenidos</span>
-            </div>
-            <p className="text-2xl font-bold"><AnimatedNumber value={totalContent} /></p>
-            {currentGoal?.content_goal && currentGoal.content_goal > 0 && (
-              <div className="mt-1">
-                <Progress value={Math.min((totalContent / currentGoal.content_goal) * 100, 100)} className="h-1" />
-                <span className="text-[10px] text-muted-foreground">Meta: {currentGoal.content_goal}</span>
-              </div>
-            )}
-          </div>
+      <div className="px-4 py-2 lg:px-6">
+        {/* Main Dashboard Tabs */}
+        <Tabs defaultValue="principal" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 h-10 mb-4">
+            <TabsTrigger value="principal" className="text-xs gap-1">
+              <BarChart3 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Principal</span>
+            </TabsTrigger>
+            <TabsTrigger value="financiero" className="text-xs gap-1">
+              <DollarSign className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Financiero</span>
+            </TabsTrigger>
+            <TabsTrigger value="up" className="text-xs gap-1">
+              <Zap className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">UP System</span>
+            </TabsTrigger>
+            <TabsTrigger value="usuarios" className="text-xs gap-1">
+              <Users className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Usuarios</span>
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Ingresos COP */}
-          <div 
-            onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
-            className="group relative overflow-hidden rounded-xl border border-yellow-500/30 p-3 bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 cursor-pointer hover:shadow-lg transition-all"
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span>🇨🇴</span>
-              <span className="text-xs text-muted-foreground">Ingresos COP</span>
-            </div>
-            <p className="text-xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" /></p>
-            {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
-              <div className="mt-1">
-                <Progress value={Math.min((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100, 100)} className="h-1" />
-                <span className="text-[10px] text-muted-foreground">{Math.round((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100)}%</span>
+          {/* TAB 1: PRINCIPAL - KPIs de la Organización */}
+          <TabsContent value="principal" className="space-y-3 mt-0">
+            {/* Row 1: Main KPIs - Compact */}
+            <div data-tour="stats-section" className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* Total Contenidos */}
+              <div 
+                onClick={() => openKpiDialog('Todos los Contenidos', content)}
+                className="group relative overflow-hidden rounded-xl border border-border/50 p-4 bg-gradient-to-br from-card to-muted/10 cursor-pointer hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Video className="h-5 w-5 text-primary" />
+                  </div>
+                  <span className="text-sm text-muted-foreground">Total Contenidos</span>
+                </div>
+                <p className="text-3xl font-bold"><AnimatedNumber value={totalContent} /></p>
+                {currentGoal?.content_goal && currentGoal.content_goal > 0 && (
+                  <div className="mt-2">
+                    <Progress value={Math.min((totalContent / currentGoal.content_goal) * 100, 100)} className="h-1.5" />
+                    <span className="text-xs text-muted-foreground">Meta: {currentGoal.content_goal}</span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Ingresos USD */}
-          <div 
-            onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
-            className="group relative overflow-hidden rounded-xl border border-green-500/30 p-3 bg-gradient-to-br from-green-500/10 to-green-500/5 cursor-pointer hover:shadow-lg transition-all"
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span>🇺🇸</span>
-              <span className="text-xs text-muted-foreground">Ingresos USD</span>
-            </div>
-            <p className="text-xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" /></p>
-            <div className="mt-1">
-              <span className="text-[10px] text-muted-foreground">Completados: {Math.round((completed / totalContent) * 100) || 0}%</span>
-            </div>
-          </div>
-        </div>
+              {/* Ingresos Totales COP */}
+              <div 
+                onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
+                className="group relative overflow-hidden rounded-xl border border-yellow-500/30 p-4 bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 cursor-pointer hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🇨🇴</span>
+                  <span className="text-sm text-muted-foreground">Ingresos COP</span>
+                </div>
+                <p className="text-2xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" /></p>
+                {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
+                  <div className="mt-2">
+                    <Progress value={Math.min((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100, 100)} className="h-1.5" />
+                    <span className="text-xs text-muted-foreground">{Math.round((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100)}% de meta</span>
+                  </div>
+                )}
+              </div>
 
-        {/* Row 2: Team KPIs - Creadores, Editores, Clientes */}
-        <div className="grid grid-cols-3 gap-2">
-          <div onClick={() => openListDialog('Creadores Activos', 'creators', { profiles: activeCreators })}
-            className="p-2 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
-            <Users className="h-3 w-3 mx-auto text-info mb-0.5" />
-            <p className="text-lg font-bold text-info">{activeCreators.length}</p>
-            <p className="text-[10px] text-muted-foreground">Creadores</p>
-          </div>
-          <div onClick={() => openListDialog('Editores Activos', 'editors', { profiles: activeEditors })}
-            className="p-2 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
-            <Scissors className="h-3 w-3 mx-auto text-warning mb-0.5" />
-            <p className="text-lg font-bold text-warning">{activeEditors.length}</p>
-            <p className="text-[10px] text-muted-foreground">Editores</p>
-          </div>
-          <div onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
-            className="p-2 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
-            <Building2 className="h-3 w-3 mx-auto text-primary mb-0.5" />
-            <p className="text-lg font-bold text-primary">{activeClients.length}</p>
-            <p className="text-[10px] text-muted-foreground">Clientes</p>
-          </div>
-        </div>
-
-        {/* Row 3: Status KPIs - In order: Pendientes → Grabación → Edición → Entregados → Novedad → Corregidos → Aprobados */}
-        <div className="grid grid-cols-7 gap-2">
-          <div onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
-            className="p-2 rounded-lg bg-muted/50 border border-border cursor-pointer hover:bg-muted transition-colors text-center">
-            <Calendar className="h-3 w-3 mx-auto text-muted-foreground mb-0.5" />
-            <p className="text-lg font-bold">{pending}</p>
-            <p className="text-[10px] text-muted-foreground">Pendientes</p>
-          </div>
-          <div onClick={() => openKpiDialog('En Grabación', content.filter(c => c.status === 'recording'))}
-            className="p-2 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
-            <Video className="h-3 w-3 mx-auto text-info mb-0.5" />
-            <p className="text-lg font-bold text-info">{content.filter(c => c.status === 'recording').length}</p>
-            <p className="text-[10px] text-muted-foreground">Grabación</p>
-          </div>
-          <div onClick={() => openKpiDialog('En Edición', content.filter(c => c.status === 'editing'))}
-            className="p-2 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
-            <Scissors className="h-3 w-3 mx-auto text-warning mb-0.5" />
-            <p className="text-lg font-bold text-warning">{content.filter(c => c.status === 'editing').length}</p>
-            <p className="text-[10px] text-muted-foreground">Edición</p>
-          </div>
-          <div onClick={() => openKpiDialog('Entregados', content.filter(c => c.status === 'delivered'))}
-            className="p-2 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
-            <Play className="h-3 w-3 mx-auto text-primary mb-0.5" />
-            <p className="text-lg font-bold text-primary">{content.filter(c => c.status === 'delivered').length}</p>
-            <p className="text-[10px] text-muted-foreground">Entregados</p>
-          </div>
-          <div onClick={() => openKpiDialog('Con Novedad', content.filter(c => c.status === 'issue'))}
-            className="p-2 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors text-center">
-            <Activity className="h-3 w-3 mx-auto text-destructive mb-0.5" />
-            <p className="text-lg font-bold text-destructive">{content.filter(c => c.status === 'issue').length}</p>
-            <p className="text-[10px] text-muted-foreground">Novedad</p>
-          </div>
-          <div onClick={() => openKpiDialog('Corregidos', content.filter(c => c.status === 'corrected'))}
-            className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition-colors text-center">
-            <TrendingUp className="h-3 w-3 mx-auto text-amber-500 mb-0.5" />
-            <p className="text-lg font-bold text-amber-500">{content.filter(c => c.status === 'corrected').length}</p>
-            <p className="text-[10px] text-muted-foreground">Corregidos</p>
-          </div>
-          <div onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
-            className="p-2 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors text-center">
-            <CheckCircle className="h-3 w-3 mx-auto text-success mb-0.5" />
-            <p className="text-lg font-bold text-success">{completed}</p>
-            <p className="text-[10px] text-muted-foreground">Aprobados</p>
-          </div>
-        </div>
-
-        {/* Row 3: Payments & Billing - Separate cards per currency */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {/* PAGOS EQUIPO - COP */}
-          <div className="rounded-xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-yellow-500/10 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🇨🇴</span>
-                <h3 className="text-sm font-semibold">Pagos Equipo COP</h3>
+              {/* Ingresos Totales USD */}
+              <div 
+                onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
+                className="group relative overflow-hidden rounded-xl border border-green-500/30 p-4 bg-gradient-to-br from-green-500/10 to-green-500/5 cursor-pointer hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🇺🇸</span>
+                  <span className="text-sm text-muted-foreground">Ingresos USD</span>
+                </div>
+                <p className="text-2xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" /></p>
+                <div className="mt-2">
+                  <span className="text-xs text-muted-foreground">Recaudado: <CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></span>
+                </div>
               </div>
-              <Banknote className="h-4 w-4 text-yellow-600" />
+
+              {/* Clientes Activos */}
+              <div 
+                onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
+                className="group relative overflow-hidden rounded-xl border border-primary/30 p-4 bg-gradient-to-br from-primary/10 to-primary/5 cursor-pointer hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <span className="text-sm text-muted-foreground">Clientes</span>
+                </div>
+                <p className="text-3xl font-bold text-primary">{activeClients.length}</p>
+                {currentGoal?.new_clients_goal && currentGoal.new_clients_goal > 0 && (
+                  <div className="mt-2">
+                    <Progress value={Math.min((activeClients.length / currentGoal.new_clients_goal) * 100, 100)} className="h-1.5" />
+                    <span className="text-xs text-muted-foreground">Meta: {currentGoal.new_clients_goal}</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              {/* Pagado */}
-              <div className="p-2 rounded-lg bg-success/10 border border-success/20">
-                <div className="flex items-center gap-1 mb-2">
-                  <CheckCircle className="h-3 w-3 text-success" />
-                  <span className="text-xs font-medium text-success">Pagado</span>
+
+            {/* Row 2: Content Status Pipeline */}
+            <div className="rounded-xl border border-border/50 bg-card p-4">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                Pipeline de Contenidos
+              </h3>
+              <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+                <div onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
+                  className="p-3 rounded-lg bg-muted/50 border border-border cursor-pointer hover:bg-muted transition-colors text-center">
+                  <Calendar className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
+                  <p className="text-xl font-bold">{pending}</p>
+                  <p className="text-[10px] text-muted-foreground">Pendientes</p>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div onClick={() => openKpiDialog('Pagado a Creadores (COP)', paidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
-                    className="flex flex-col cursor-pointer hover:bg-success/20 rounded p-1 -m-1 transition-colors">
-                    <span className="text-[10px] text-muted-foreground">Creadores</span>
-                    <span className="text-sm font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentCOP} currency="COP" size="sm" /></span>
-                  </div>
-                  <div onClick={() => openKpiDialog('Pagado a Editores (COP)', paidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
-                    className="flex flex-col cursor-pointer hover:bg-success/20 rounded p-1 -m-1 transition-colors">
-                    <span className="text-[10px] text-muted-foreground">Editores</span>
-                    <span className="text-sm font-bold text-success"><CurrencyDisplay value={paidEditorPaymentCOP} currency="COP" size="sm" /></span>
-                  </div>
+                <div onClick={() => openKpiDialog('En Grabación', content.filter(c => c.status === 'recording'))}
+                  className="p-3 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
+                  <Video className="h-4 w-4 mx-auto text-info mb-1" />
+                  <p className="text-xl font-bold text-info">{content.filter(c => c.status === 'recording').length}</p>
+                  <p className="text-[10px] text-muted-foreground">Grabación</p>
                 </div>
-                <div className="border-t border-success/30 mt-2 pt-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-medium">Total Pagado</span>
-                    <span className="text-base font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentCOP + paidEditorPaymentCOP} currency="COP" size="sm" /></span>
-                  </div>
+                <div onClick={() => openKpiDialog('En Edición', content.filter(c => c.status === 'editing'))}
+                  className="p-3 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
+                  <Scissors className="h-4 w-4 mx-auto text-warning mb-1" />
+                  <p className="text-xl font-bold text-warning">{content.filter(c => c.status === 'editing').length}</p>
+                  <p className="text-[10px] text-muted-foreground">Edición</p>
                 </div>
-              </div>
-              {/* Por Pagar */}
-              <div className="p-2 rounded-lg bg-warning/10 border border-warning/20">
-                <div className="flex items-center gap-1 mb-2">
-                  <Clock className="h-3 w-3 text-warning" />
-                  <span className="text-xs font-medium text-warning">Por Pagar</span>
+                <div onClick={() => openKpiDialog('Entregados', content.filter(c => c.status === 'delivered'))}
+                  className="p-3 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
+                  <Play className="h-4 w-4 mx-auto text-primary mb-1" />
+                  <p className="text-xl font-bold text-primary">{content.filter(c => c.status === 'delivered').length}</p>
+                  <p className="text-[10px] text-muted-foreground">Entregados</p>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div onClick={() => openKpiDialog('Por Pagar a Creadores (COP)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
-                    className="flex flex-col cursor-pointer hover:bg-warning/20 rounded p-1 -m-1 transition-colors">
-                    <span className="text-[10px] text-muted-foreground">Creadores</span>
-                    <span className="text-sm font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentCOP} currency="COP" size="sm" /></span>
-                  </div>
-                  <div onClick={() => openKpiDialog('Por Pagar a Editores (COP)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
-                    className="flex flex-col cursor-pointer hover:bg-warning/20 rounded p-1 -m-1 transition-colors">
-                    <span className="text-[10px] text-muted-foreground">Editores</span>
-                    <span className="text-sm font-bold text-warning"><CurrencyDisplay value={pendingEditorPaymentCOP} currency="COP" size="sm" /></span>
-                  </div>
+                <div onClick={() => openKpiDialog('Con Novedad', content.filter(c => c.status === 'issue'))}
+                  className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors text-center">
+                  <Activity className="h-4 w-4 mx-auto text-destructive mb-1" />
+                  <p className="text-xl font-bold text-destructive">{content.filter(c => c.status === 'issue').length}</p>
+                  <p className="text-[10px] text-muted-foreground">Novedad</p>
                 </div>
-                <div className="border-t border-warning/30 mt-2 pt-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-medium">Total Por Pagar</span>
-                    <span className="text-base font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentCOP + pendingEditorPaymentCOP} currency="COP" size="sm" /></span>
-                  </div>
+                <div onClick={() => openKpiDialog('Corregidos', content.filter(c => c.status === 'corrected'))}
+                  className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition-colors text-center">
+                  <TrendingUp className="h-4 w-4 mx-auto text-amber-500 mb-1" />
+                  <p className="text-xl font-bold text-amber-500">{content.filter(c => c.status === 'corrected').length}</p>
+                  <p className="text-[10px] text-muted-foreground">Corregidos</p>
+                </div>
+                <div onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
+                  className="p-3 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors text-center">
+                  <CheckCircle className="h-4 w-4 mx-auto text-success mb-1" />
+                  <p className="text-xl font-bold text-success">{completed}</p>
+                  <p className="text-[10px] text-muted-foreground">Aprobados</p>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* PAGOS EQUIPO - USD */}
-          <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/5 to-green-500/10 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🇺🇸</span>
-                <h3 className="text-sm font-semibold">Pagos Equipo USD</h3>
+            {/* Row 3: Videos Adeudados + Quick Financial Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
+                className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="h-5 w-5 text-destructive" />
+                    <span className="text-sm font-medium">Videos Adeudados</span>
+                  </div>
+                  <span className="text-2xl font-bold text-destructive">{clientsBilling.contentOwed}</span>
+                </div>
               </div>
-              <Banknote className="h-4 w-4 text-green-600" />
-            </div>
-            <div className="space-y-2">
-              {/* Pagado */}
-              <div className="p-2 rounded-lg bg-success/10 border border-success/20">
-                <div className="flex items-center gap-1 mb-2">
-                  <CheckCircle className="h-3 w-3 text-success" />
-                  <span className="text-xs font-medium text-success">Pagado</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div onClick={() => openKpiDialog('Pagado a Creadores (USD)', paidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
-                    className="flex flex-col cursor-pointer hover:bg-success/20 rounded p-1 -m-1 transition-colors">
-                    <span className="text-[10px] text-muted-foreground">Creadores</span>
-                    <span className="text-sm font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentUSD} currency="USD" size="sm" /></span>
+              
+              <div className="p-4 rounded-xl bg-success/10 border border-success/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span className="text-sm font-medium">Total Recaudado</span>
                   </div>
-                  <div onClick={() => openKpiDialog('Pagado a Editores (USD)', paidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
-                    className="flex flex-col cursor-pointer hover:bg-success/20 rounded p-1 -m-1 transition-colors">
-                    <span className="text-[10px] text-muted-foreground">Editores</span>
-                    <span className="text-sm font-bold text-success"><CurrencyDisplay value={paidEditorPaymentUSD} currency="USD" size="sm" /></span>
-                  </div>
-                </div>
-                <div className="border-t border-success/30 mt-2 pt-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-medium">Total Pagado</span>
-                    <span className="text-base font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentUSD + paidEditorPaymentUSD} currency="USD" size="sm" /></span>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" /></p>
+                    <p className="text-xs text-success/70"><CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></p>
                   </div>
                 </div>
               </div>
-              {/* Por Pagar */}
-              <div className="p-2 rounded-lg bg-warning/10 border border-warning/20">
-                <div className="flex items-center gap-1 mb-2">
-                  <Clock className="h-3 w-3 text-warning" />
-                  <span className="text-xs font-medium text-warning">Por Pagar</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div onClick={() => openKpiDialog('Por Pagar a Creadores (USD)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
-                    className="flex flex-col cursor-pointer hover:bg-warning/20 rounded p-1 -m-1 transition-colors">
-                    <span className="text-[10px] text-muted-foreground">Creadores</span>
-                    <span className="text-sm font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentUSD} currency="USD" size="sm" /></span>
+              
+              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-warning" />
+                    <span className="text-sm font-medium">Total Por Cobrar</span>
                   </div>
-                  <div onClick={() => openKpiDialog('Por Pagar a Editores (USD)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
-                    className="flex flex-col cursor-pointer hover:bg-warning/20 rounded p-1 -m-1 transition-colors">
-                    <span className="text-[10px] text-muted-foreground">Editores</span>
-                    <span className="text-sm font-bold text-warning"><CurrencyDisplay value={pendingEditorPaymentUSD} currency="USD" size="sm" /></span>
-                  </div>
-                </div>
-                <div className="border-t border-warning/30 mt-2 pt-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-medium">Total Por Pagar</span>
-                    <span className="text-base font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentUSD + pendingEditorPaymentUSD} currency="USD" size="sm" /></span>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingCOP} currency="COP" size="sm" /></p>
+                    <p className="text-xs text-warning/70"><CurrencyDisplay value={clientsBilling.totalPendingUSD} currency="USD" size="sm" /></p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Row 4: Facturación - Separate cards per currency */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {/* FACTURACIÓN - COP */}
-          <div className="rounded-xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-yellow-500/10 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🇨🇴</span>
-                <h3 className="text-sm font-semibold">Facturación COP</h3>
-              </div>
-              <BarChart3 className="h-4 w-4 text-yellow-600" />
-            </div>
-            <div className="space-y-3">
-              <div onClick={() => openListDialog('Facturado COP', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
-                className="flex justify-between items-center cursor-pointer hover:bg-yellow-500/10 rounded p-2 -m-1 transition-colors border border-yellow-500/10">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm text-muted-foreground">Facturado</span>
+            {/* Row 4: Goals Chart */}
+            {allGoals.length > 0 && (
+              <div className="rounded-xl border border-border/50 bg-card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" />
+                    Metas vs Real
+                  </h3>
+                  <Button variant="outline" size="sm" onClick={() => setGoalsDialogOpen(true)} className="h-7 px-2 text-xs">
+                    <Settings className="h-3 w-3 mr-1" />
+                    Configurar
+                  </Button>
                 </div>
-                <span className="text-lg font-bold"><CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" /></span>
-              </div>
-              <div onClick={() => openListDialog('Recaudado COP', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && ((p as any).currency === 'COP' || !(p as any).currency)) })}
-                className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded p-2 -m-1 transition-colors border border-success/20 bg-success/5">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-success" />
-                  <span className="text-sm text-muted-foreground">Recaudado</span>
-                </div>
-                <span className="text-lg font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" /></span>
-              </div>
-              <div onClick={() => openListDialog('Por Cobrar COP', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && ((p as any).currency === 'COP' || !(p as any).currency)) })}
-                className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded p-2 -m-1 transition-colors border border-warning/20 bg-warning/5">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-warning" />
-                  <span className="text-sm text-muted-foreground">Por Cobrar</span>
-                </div>
-                <span className="text-lg font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingCOP} currency="COP" size="sm" /></span>
-              </div>
-            </div>
-          </div>
-
-          {/* FACTURACIÓN - USD */}
-          <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/5 to-green-500/10 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🇺🇸</span>
-                <h3 className="text-sm font-semibold">Facturación USD</h3>
-              </div>
-              <BarChart3 className="h-4 w-4 text-green-600" />
-            </div>
-            <div className="space-y-3">
-              <div onClick={() => openListDialog('Facturado USD', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
-                className="flex justify-between items-center cursor-pointer hover:bg-green-500/10 rounded p-2 -m-1 transition-colors border border-green-500/10">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-green-600" />
-                  <span className="text-sm text-muted-foreground">Facturado</span>
-                </div>
-                <span className="text-lg font-bold"><CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" /></span>
-              </div>
-              <div onClick={() => openListDialog('Recaudado USD', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency === 'USD') })}
-                className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded p-2 -m-1 transition-colors border border-success/20 bg-success/5">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-success" />
-                  <span className="text-sm text-muted-foreground">Recaudado</span>
-                </div>
-                <span className="text-lg font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></span>
-              </div>
-              <div onClick={() => openListDialog('Por Cobrar USD', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency === 'USD') })}
-                className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded p-2 -m-1 transition-colors border border-warning/20 bg-warning/5">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-warning" />
-                  <span className="text-sm text-muted-foreground">Por Cobrar</span>
-                </div>
-                <span className="text-lg font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingUSD} currency="USD" size="sm" /></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Row 4: Videos Adeudados - Compact */}
-        <div onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
-          className="p-2 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Video className="h-4 w-4 text-destructive" />
-            <span className="text-sm font-medium">Videos Adeudados a Clientes</span>
-          </div>
-          <span className="text-lg font-bold text-destructive">{clientsBilling.contentOwed}</span>
-        </div>
-
-        {/* Active Season Banner - visible for all users */}
-        {currentOrgId && (
-          <ActiveSeasonBanner />
-        )}
-
-        {/* Row 5: UP System KPIs - Separated by Creators/Editors */}
-        {isAdmin && currentOrgId && (
-          <UPSystemKPIs organizationId={currentOrgId} />
-        )}
-
-        {/* Row 7: Tabs for Charts, Leaderboard, Referrals */}
-        {isAdmin && (
-          <Tabs defaultValue="goals" className="rounded-xl border border-border/50 bg-card p-3">
-            <TabsList className="grid w-full grid-cols-2 h-8">
-              <TabsTrigger value="goals" className="text-xs h-7">
-                <Target className="h-3 w-3 mr-1" />
-                Metas
-              </TabsTrigger>
-              <TabsTrigger value="referrals" className="text-xs h-7">
-                <Users className="h-3 w-3 mr-1" />
-                Referidos
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="goals" className="mt-2">
-              {allGoals.length > 0 ? (
                 <Tabs defaultValue="revenue" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 h-7 mb-2">
-                    <TabsTrigger value="revenue" className="text-[10px] h-6">Ingresos</TabsTrigger>
-                    <TabsTrigger value="content" className="text-[10px] h-6">Contenidos</TabsTrigger>
-                    <TabsTrigger value="clients" className="text-[10px] h-6">Clientes</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-3 h-8 mb-2">
+                    <TabsTrigger value="revenue" className="text-xs h-7">Ingresos</TabsTrigger>
+                    <TabsTrigger value="content" className="text-xs h-7">Contenidos</TabsTrigger>
+                    <TabsTrigger value="clients" className="text-xs h-7">Clientes</TabsTrigger>
                   </TabsList>
-                  <div className="h-48">
+                  <div className="h-52">
                     <TabsContent value="revenue" className="h-full m-0">
                       <GoalsChart 
                         goals={allGoals} 
@@ -1507,18 +1345,415 @@ export default function Dashboard() {
                     </TabsContent>
                   </div>
                 </Tabs>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  No hay metas configuradas. <button onClick={() => setGoalsDialogOpen(true)} className="text-primary underline">Configurar</button>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* TAB 2: FINANCIERO - Todo lo financiero */}
+          <TabsContent value="financiero" className="space-y-4 mt-0">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="p-4 rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border border-yellow-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🇨🇴</span>
+                  <span className="text-sm font-medium">Total Facturado COP</span>
                 </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="referrals" className="mt-2">
+                <p className="text-2xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" /></p>
+              </div>
+              <div className="p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🇺🇸</span>
+                  <span className="text-sm font-medium">Total Facturado USD</span>
+                </div>
+                <p className="text-2xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" /></p>
+              </div>
+              <div className="p-4 rounded-xl bg-gradient-to-br from-success/10 to-success/5 border border-success/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="h-4 w-4 text-success" />
+                  <span className="text-sm font-medium">Total Recaudado</span>
+                </div>
+                <p className="text-lg font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidCOP + clientsBilling.totalPaidUSD * 4000} currency="COP" size="sm" /></p>
+              </div>
+              <div className="p-4 rounded-xl bg-gradient-to-br from-warning/10 to-warning/5 border border-warning/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-warning" />
+                  <span className="text-sm font-medium">Total Por Cobrar</span>
+                </div>
+                <p className="text-lg font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingCOP + clientsBilling.totalPendingUSD * 4000} currency="COP" size="sm" /></p>
+              </div>
+            </div>
+
+            {/* Facturación Detailed - By Currency */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* FACTURACIÓN - COP */}
+              <div className="rounded-xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-yellow-500/10 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🇨🇴</span>
+                    <h3 className="text-base font-semibold">Facturación COP</h3>
+                  </div>
+                  <BarChart3 className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div className="space-y-3">
+                  <div onClick={() => openListDialog('Facturado COP', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
+                    className="flex justify-between items-center cursor-pointer hover:bg-yellow-500/10 rounded-lg p-3 transition-colors border border-yellow-500/20">
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="h-5 w-5 text-yellow-600" />
+                      <span className="font-medium">Facturado</span>
+                    </div>
+                    <span className="text-xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" /></span>
+                  </div>
+                  <div onClick={() => openListDialog('Recaudado COP', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && ((p as any).currency === 'COP' || !(p as any).currency)) })}
+                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded-lg p-3 transition-colors border border-success/20 bg-success/5">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5 text-success" />
+                      <span className="font-medium">Recaudado</span>
+                    </div>
+                    <span className="text-xl font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" /></span>
+                  </div>
+                  <div onClick={() => openListDialog('Por Cobrar COP', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && ((p as any).currency === 'COP' || !(p as any).currency)) })}
+                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded-lg p-3 transition-colors border border-warning/20 bg-warning/5">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-5 w-5 text-warning" />
+                      <span className="font-medium">Por Cobrar</span>
+                    </div>
+                    <span className="text-xl font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingCOP} currency="COP" size="sm" /></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* FACTURACIÓN - USD */}
+              <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/5 to-green-500/10 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🇺🇸</span>
+                    <h3 className="text-base font-semibold">Facturación USD</h3>
+                  </div>
+                  <BarChart3 className="h-5 w-5 text-green-600" />
+                </div>
+                <div className="space-y-3">
+                  <div onClick={() => openListDialog('Facturado USD', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
+                    className="flex justify-between items-center cursor-pointer hover:bg-green-500/10 rounded-lg p-3 transition-colors border border-green-500/20">
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="h-5 w-5 text-green-600" />
+                      <span className="font-medium">Facturado</span>
+                    </div>
+                    <span className="text-xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" /></span>
+                  </div>
+                  <div onClick={() => openListDialog('Recaudado USD', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency === 'USD') })}
+                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded-lg p-3 transition-colors border border-success/20 bg-success/5">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5 text-success" />
+                      <span className="font-medium">Recaudado</span>
+                    </div>
+                    <span className="text-xl font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></span>
+                  </div>
+                  <div onClick={() => openListDialog('Por Cobrar USD', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency === 'USD') })}
+                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded-lg p-3 transition-colors border border-warning/20 bg-warning/5">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-5 w-5 text-warning" />
+                      <span className="font-medium">Por Cobrar</span>
+                    </div>
+                    <span className="text-xl font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingUSD} currency="USD" size="sm" /></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pagos Equipo - By Currency */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* PAGOS EQUIPO - COP */}
+              <div className="rounded-xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-yellow-500/10 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🇨🇴</span>
+                    <h3 className="text-base font-semibold">Pagos Equipo COP</h3>
+                  </div>
+                  <Banknote className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div className="space-y-3">
+                  {/* Pagado */}
+                  <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle className="h-4 w-4 text-success" />
+                      <span className="text-sm font-semibold text-success">Pagado</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div onClick={() => openKpiDialog('Pagado a Creadores (COP)', paidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
+                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-lg p-2 transition-colors">
+                        <span className="text-xs text-muted-foreground">Creadores</span>
+                        <span className="text-lg font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentCOP} currency="COP" size="sm" /></span>
+                      </div>
+                      <div onClick={() => openKpiDialog('Pagado a Editores (COP)', paidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
+                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-lg p-2 transition-colors">
+                        <span className="text-xs text-muted-foreground">Editores</span>
+                        <span className="text-lg font-bold text-success"><CurrencyDisplay value={paidEditorPaymentCOP} currency="COP" size="sm" /></span>
+                      </div>
+                    </div>
+                    <div className="border-t border-success/30 mt-3 pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Total Pagado</span>
+                        <span className="text-xl font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentCOP + paidEditorPaymentCOP} currency="COP" size="sm" /></span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Por Pagar */}
+                  <div className="p-3 rounded-lg bg-warning/10 border border-warning/20">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="h-4 w-4 text-warning" />
+                      <span className="text-sm font-semibold text-warning">Por Pagar</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div onClick={() => openKpiDialog('Por Pagar a Creadores (COP)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
+                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-lg p-2 transition-colors">
+                        <span className="text-xs text-muted-foreground">Creadores</span>
+                        <span className="text-lg font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentCOP} currency="COP" size="sm" /></span>
+                      </div>
+                      <div onClick={() => openKpiDialog('Por Pagar a Editores (COP)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
+                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-lg p-2 transition-colors">
+                        <span className="text-xs text-muted-foreground">Editores</span>
+                        <span className="text-lg font-bold text-warning"><CurrencyDisplay value={pendingEditorPaymentCOP} currency="COP" size="sm" /></span>
+                      </div>
+                    </div>
+                    <div className="border-t border-warning/30 mt-3 pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Total Por Pagar</span>
+                        <span className="text-xl font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentCOP + pendingEditorPaymentCOP} currency="COP" size="sm" /></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* PAGOS EQUIPO - USD */}
+              <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/5 to-green-500/10 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🇺🇸</span>
+                    <h3 className="text-base font-semibold">Pagos Equipo USD</h3>
+                  </div>
+                  <Banknote className="h-5 w-5 text-green-600" />
+                </div>
+                <div className="space-y-3">
+                  {/* Pagado */}
+                  <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle className="h-4 w-4 text-success" />
+                      <span className="text-sm font-semibold text-success">Pagado</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div onClick={() => openKpiDialog('Pagado a Creadores (USD)', paidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
+                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-lg p-2 transition-colors">
+                        <span className="text-xs text-muted-foreground">Creadores</span>
+                        <span className="text-lg font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentUSD} currency="USD" size="sm" /></span>
+                      </div>
+                      <div onClick={() => openKpiDialog('Pagado a Editores (USD)', paidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
+                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-lg p-2 transition-colors">
+                        <span className="text-xs text-muted-foreground">Editores</span>
+                        <span className="text-lg font-bold text-success"><CurrencyDisplay value={paidEditorPaymentUSD} currency="USD" size="sm" /></span>
+                      </div>
+                    </div>
+                    <div className="border-t border-success/30 mt-3 pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Total Pagado</span>
+                        <span className="text-xl font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentUSD + paidEditorPaymentUSD} currency="USD" size="sm" /></span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Por Pagar */}
+                  <div className="p-3 rounded-lg bg-warning/10 border border-warning/20">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="h-4 w-4 text-warning" />
+                      <span className="text-sm font-semibold text-warning">Por Pagar</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div onClick={() => openKpiDialog('Por Pagar a Creadores (USD)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
+                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-lg p-2 transition-colors">
+                        <span className="text-xs text-muted-foreground">Creadores</span>
+                        <span className="text-lg font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentUSD} currency="USD" size="sm" /></span>
+                      </div>
+                      <div onClick={() => openKpiDialog('Por Pagar a Editores (USD)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
+                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-lg p-2 transition-colors">
+                        <span className="text-xs text-muted-foreground">Editores</span>
+                        <span className="text-lg font-bold text-warning"><CurrencyDisplay value={pendingEditorPaymentUSD} currency="USD" size="sm" /></span>
+                      </div>
+                    </div>
+                    <div className="border-t border-warning/30 mt-3 pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Total Por Pagar</span>
+                        <span className="text-xl font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentUSD + pendingEditorPaymentUSD} currency="USD" size="sm" /></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Margen / Utilidad Estimada */}
+            <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Resumen de Utilidad
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-3 rounded-lg bg-card/50">
+                  <p className="text-xs text-muted-foreground mb-1">Ingresos COP</p>
+                  <p className="text-lg font-bold"><CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" /></p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-card/50">
+                  <p className="text-xs text-muted-foreground mb-1">Costos COP</p>
+                  <p className="text-lg font-bold text-destructive"><CurrencyDisplay value={paidCreatorPaymentCOP + paidEditorPaymentCOP} currency="COP" size="sm" /></p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-card/50">
+                  <p className="text-xs text-muted-foreground mb-1">Ingresos USD</p>
+                  <p className="text-lg font-bold"><CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-card/50">
+                  <p className="text-xs text-muted-foreground mb-1">Costos USD</p>
+                  <p className="text-lg font-bold text-destructive"><CurrencyDisplay value={paidCreatorPaymentUSD + paidEditorPaymentUSD} currency="USD" size="sm" /></p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-primary/20">
+                <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
+                  <p className="text-xs text-muted-foreground mb-1">Utilidad COP</p>
+                  <p className="text-xl font-bold text-success">
+                    <CurrencyDisplay value={clientsBilling.totalPaidCOP - (paidCreatorPaymentCOP + paidEditorPaymentCOP)} currency="COP" size="sm" />
+                  </p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
+                  <p className="text-xs text-muted-foreground mb-1">Utilidad USD</p>
+                  <p className="text-xl font-bold text-success">
+                    <CurrencyDisplay value={clientsBilling.totalPaidUSD - (paidCreatorPaymentUSD + paidEditorPaymentUSD)} currency="USD" size="sm" />
+                  </p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* TAB 3: UP SYSTEM */}
+          <TabsContent value="up" className="space-y-4 mt-0">
+            {/* Active Season Banner */}
+            {currentOrgId && (
+              <ActiveSeasonBanner />
+            )}
+
+            {/* UP System KPIs */}
+            {currentOrgId && (
+              <UPSystemKPIs organizationId={currentOrgId} />
+            )}
+
+            {/* Placeholder for future UP features */}
+            <div className="rounded-xl border border-border/50 bg-card p-6 text-center">
+              <Zap className="h-12 w-12 mx-auto text-primary/50 mb-3" />
+              <h3 className="text-lg font-semibold mb-2">Sistema UP Activo</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                El sistema de puntos UP está funcionando. Los creadores y editores ganan puntos basados en su desempeño y tiempos de entrega.
+              </p>
+            </div>
+          </TabsContent>
+
+          {/* TAB 4: USUARIOS Y REFERIDOS */}
+          <TabsContent value="usuarios" className="space-y-4 mt-0">
+            {/* Team Summary */}
+            <div className="grid grid-cols-3 gap-4">
+              <div onClick={() => openListDialog('Creadores Activos', 'creators', { profiles: activeCreators })}
+                className="p-5 rounded-xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
+                <Users className="h-8 w-8 mx-auto text-info mb-2" />
+                <p className="text-3xl font-bold text-info">{activeCreators.length}</p>
+                <p className="text-sm text-muted-foreground">Creadores Activos</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {content.filter(c => c.creator_id).length} contenidos asignados
+                </p>
+              </div>
+              <div onClick={() => openListDialog('Editores Activos', 'editors', { profiles: activeEditors })}
+                className="p-5 rounded-xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
+                <Scissors className="h-8 w-8 mx-auto text-warning mb-2" />
+                <p className="text-3xl font-bold text-warning">{activeEditors.length}</p>
+                <p className="text-sm text-muted-foreground">Editores Activos</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {content.filter(c => c.editor_id).length} contenidos asignados
+                </p>
+              </div>
+              <div onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
+                className="p-5 rounded-xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
+                <Building2 className="h-8 w-8 mx-auto text-primary mb-2" />
+                <p className="text-3xl font-bold text-primary">{activeClients.length}</p>
+                <p className="text-sm text-muted-foreground">Clientes Activos</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {packages.length} paquetes activos
+                </p>
+              </div>
+            </div>
+
+            {/* Team Performance Summary */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Top Creators */}
+              <div className="rounded-xl border border-border/50 bg-card p-5">
+                <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-info" />
+                  Top Creadores
+                </h3>
+                <div className="space-y-2">
+                  {activeCreators.slice(0, 5).map((creator, index) => (
+                    <div key={creator.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-muted-foreground w-6">{index + 1}</span>
+                        <div>
+                          <p className="font-medium text-sm">{creator.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{creator.content_count || 0} contenidos</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-bold text-success">
+                        <CurrencyDisplay value={creator.total_payment || 0} currency="COP" size="sm" />
+                      </span>
+                    </div>
+                  ))}
+                  {activeCreators.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No hay creadores activos en este período</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Top Editors */}
+              <div className="rounded-xl border border-border/50 bg-card p-5">
+                <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-warning" />
+                  Top Editores
+                </h3>
+                <div className="space-y-2">
+                  {activeEditors.slice(0, 5).map((editor, index) => (
+                    <div key={editor.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-muted-foreground w-6">{index + 1}</span>
+                        <div>
+                          <p className="font-medium text-sm">{editor.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{editor.content_count || 0} contenidos</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-bold text-success">
+                        <CurrencyDisplay value={editor.total_payment || 0} currency="COP" size="sm" />
+                      </span>
+                    </div>
+                  ))}
+                  {activeEditors.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No hay editores activos en este período</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Referral Stats */}
+            <div className="rounded-xl border border-border/50 bg-card p-5">
+              <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-primary" />
+                Programa de Referidos
+              </h3>
               <ReferralStats />
-            </TabsContent>
-          </Tabs>
-        )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Dialogs */}
