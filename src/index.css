@@ -4,137 +4,109 @@
 
 @layer base {
   :root {
-    /* KREOON TECH Theme - Inspired by futuristic AI/Tech aesthetics */
-    /* Deep dark base for maximum contrast */
-    --background: 240 15% 3%; /* #050508 - Near black with blue tint */
-    --foreground: 0 0% 98%; /* Almost white */
+    /* KREOON ULTRA TECH Theme - Monochromatic Violet/Purple */
+    /* Ultra dark base */
+    --background: 250 20% 2%; /* #030305 - Almost pure black */
+    --foreground: 0 0% 95%;
 
-    --card: 240 15% 6%; /* #0d0d14 */
-    --card-foreground: 0 0% 98%;
+    --card: 250 20% 4%; /* #08080d */
+    --card-foreground: 0 0% 95%;
 
-    --popover: 240 15% 8%; /* #111118 */
-    --popover-foreground: 0 0% 98%;
+    --popover: 250 20% 5%;
+    --popover-foreground: 0 0% 95%;
 
-    /* KREOON Violet/Purple - Primary Tech Color */
-    --primary: 270 100% 60%; /* #8c00ff - Vibrant purple */
+    /* Primary Violet - The ONLY accent color */
+    --primary: 270 100% 60%; /* #8c00ff - Vibrant violet */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Darker purple tones */
-    --secondary: 270 50% 12%;
-    --secondary-foreground: 270 20% 85%;
+    /* Secondary - Muted violet */
+    --secondary: 270 40% 8%;
+    --secondary-foreground: 270 20% 80%;
 
-    /* Muted - Subtle grays with purple tint */
-    --muted: 240 15% 10%;
-    --muted-foreground: 240 10% 60%; /* #8e8ea3 */
+    /* Muted - Very subtle grays with violet tint */
+    --muted: 250 15% 8%;
+    --muted-foreground: 250 10% 50%;
 
-    /* Accent - Lighter purple for highlights */
-    --accent: 270 80% 65%;
+    /* Accent - Lighter violet */
+    --accent: 270 60% 50%;
     --accent-foreground: 0 0% 100%;
 
-    /* Destructive - Red with purple undertone */
-    --destructive: 0 75% 55%;
+    /* Semantic colors - All violet-based for cohesion */
+    --destructive: 350 80% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Success - Cyan/Teal for tech feel */
-    --success: 160 90% 45%;
+    --success: 270 80% 65%; /* Violet-tinted success */
     --success-foreground: 0 0% 100%;
 
-    /* Warning - Orange */
-    --warning: 35 95% 55%;
-    --warning-foreground: 0 0% 0%;
+    --warning: 280 70% 55%; /* Purple-magenta warning */
+    --warning-foreground: 0 0% 100%;
 
-    /* Info - Bright cyan */
-    --info: 195 100% 55%;
+    --info: 260 80% 60%; /* Blue-violet info */
     --info-foreground: 0 0% 100%;
 
-    --border: 240 15% 15%;
-    --input: 240 15% 12%;
+    --border: 250 15% 12%;
+    --input: 250 15% 8%;
     --ring: 270 100% 60%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Sidebar - Deep dark with purple accents */
-    --sidebar-background: 240 15% 4%;
-    --sidebar-foreground: 240 10% 75%;
+    /* Sidebar */
+    --sidebar-background: 250 20% 3%;
+    --sidebar-foreground: 250 10% 70%;
     --sidebar-primary: 270 100% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 270 50% 15%;
+    --sidebar-accent: 270 40% 12%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 15% 12%;
+    --sidebar-border: 250 15% 10%;
     --sidebar-ring: 270 100% 60%;
 
-    /* KREOON Tech Tokens */
-    --violet: 270 100% 60%;
-    --violet-light: 270 100% 70%;
-    --violet-dark: 270 100% 45%;
-    --violet-glow: 270 100% 60%;
-    --purple-neon: 280 100% 65%;
-    --blue-tech: 220 100% 60%;
+    /* Violet Spectrum */
+    --violet-50: 270 100% 95%;
+    --violet-100: 270 100% 85%;
+    --violet-200: 270 100% 75%;
+    --violet-300: 270 100% 65%;
+    --violet-400: 270 100% 60%;
+    --violet-500: 270 100% 55%;
+    --violet-600: 270 100% 45%;
+    --violet-700: 270 100% 35%;
+    --violet-800: 270 80% 25%;
+    --violet-900: 270 60% 15%;
 
-    /* Tech Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(280 100% 55%) 0%, hsl(260 100% 65%) 50%, hsl(220 100% 60%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(240 15% 6%) 0%, hsl(240 15% 4%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(240 15% 8%) 0%, hsl(240 15% 5%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(270 100% 60% / 0.15) 0%, transparent 60%);
-    --gradient-tech: linear-gradient(135deg, hsl(280 100% 50% / 0.2) 0%, hsl(220 100% 60% / 0.1) 100%);
-    --gradient-mesh: radial-gradient(at 40% 20%, hsl(280 100% 50% / 0.15) 0%, transparent 50%),
-                     radial-gradient(at 80% 0%, hsl(220 100% 60% / 0.1) 0%, transparent 40%),
-                     radial-gradient(at 0% 50%, hsl(270 100% 60% / 0.1) 0%, transparent 50%);
+    /* Tech Gradients - All violet-based */
+    --gradient-primary: linear-gradient(135deg, hsl(280 100% 55%) 0%, hsl(260 100% 60%) 50%, hsl(270 100% 65%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(250 20% 5%) 0%, hsl(250 20% 3%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(250 20% 6%) 0%, hsl(250 20% 3%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(270 100% 60% / 0.2) 0%, transparent 70%);
+    --gradient-tech: linear-gradient(135deg, hsl(270 100% 50% / 0.15) 0%, hsl(280 100% 55% / 0.05) 100%);
+    --gradient-mesh: radial-gradient(at 40% 20%, hsl(280 100% 50% / 0.12) 0%, transparent 50%),
+                     radial-gradient(at 80% 0%, hsl(260 100% 60% / 0.08) 0%, transparent 40%),
+                     radial-gradient(at 0% 50%, hsl(270 100% 60% / 0.08) 0%, transparent 50%);
+    --gradient-neon: linear-gradient(90deg, transparent, hsl(270 100% 60% / 0.5), transparent);
 
-    /* Tech Shadows */
-    --shadow-sm: 0 2px 4px hsl(0 0% 0% / 0.4);
-    --shadow-md: 0 4px 16px hsl(0 0% 0% / 0.5);
-    --shadow-lg: 0 8px 32px hsl(0 0% 0% / 0.6);
-    --shadow-glow: 0 0 50px hsl(270 100% 60% / 0.3);
-    --shadow-violet: 0 4px 30px hsl(270 100% 60% / 0.35);
-    --shadow-neon: 0 0 20px hsl(270 100% 60% / 0.5), 0 0 40px hsl(270 100% 60% / 0.3), 0 0 60px hsl(270 100% 60% / 0.1);
+    /* Tech Shadows - Violet neon */
+    --shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.5);
+    --shadow-md: 0 4px 20px hsl(0 0% 0% / 0.6);
+    --shadow-lg: 0 8px 40px hsl(0 0% 0% / 0.7);
+    --shadow-glow: 0 0 60px hsl(270 100% 60% / 0.25);
+    --shadow-glow-lg: 0 0 100px hsl(270 100% 60% / 0.35);
+    --shadow-violet: 0 4px 40px hsl(270 100% 60% / 0.3);
+    --shadow-neon: 0 0 20px hsl(270 100% 60% / 0.4), 
+                   0 0 40px hsl(270 100% 60% / 0.2), 
+                   0 0 80px hsl(270 100% 60% / 0.1);
+    --shadow-inner-glow: inset 0 1px 0 hsl(270 100% 60% / 0.1);
 
-    /* Level Colors */
-    --level-bronze: 30 60% 45%;
-    --level-silver: 220 10% 65%;
-    --level-gold: 45 90% 55%;
-    --level-diamond: 200 80% 60%;
-
-    /* Social Theme - Tech Glassmorphism */
-    --social-background: 240 15% 2%;
-    --social-foreground: 0 0% 98%;
-    --social-card: 240 15% 5%;
-    --social-card-foreground: 0 0% 98%;
-    --social-muted: 240 15% 10%;
-    --social-muted-foreground: 0 0% 55%;
-    --social-accent: 270 100% 60%;
-    --social-accent-foreground: 0 0% 100%;
-    --social-border: 240 15% 15%;
-    --social-input: 240 15% 10%;
-    
-    /* Glassmorphism tokens - Enhanced */
-    --glass-bg: 0 0% 100% / 0.03;
-    --glass-border: 0 0% 100% / 0.08;
+    /* Glass */
+    --glass-bg: 0 0% 100% / 0.02;
+    --glass-border: 270 100% 60% / 0.1;
     --glass-blur: 24px;
     
-    /* Social Gradients - Tech Enhanced */
-    --social-gradient-accent: linear-gradient(135deg, hsl(280 100% 55%) 0%, hsl(320 100% 50%) 100%);
-    --social-gradient-card: linear-gradient(180deg, hsl(240 15% 8% / 0.9) 0%, hsl(240 15% 4% / 0.95) 100%);
-    --social-gradient-hover: linear-gradient(135deg, hsl(270 100% 60% / 0.15) 0%, hsl(280 100% 50% / 0.08) 100%);
-    
-    /* Social Shadows - Neon Enhanced */
-    --social-shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.4);
-    --social-shadow-md: 0 8px 24px hsl(0 0% 0% / 0.5);
-    --social-shadow-lg: 0 16px 48px hsl(0 0% 0% / 0.6);
-    --social-shadow-glow: 0 0 50px hsl(270 100% 60% / 0.35);
-    --social-shadow-accent: 0 4px 30px hsl(270 100% 60% / 0.45);
-    
-    /* Reaction colors */
-    --reaction-love: 0 100% 60%;
-    --reaction-fire: 25 100% 55%;
-    --reaction-clap: 45 100% 50%;
-    --reaction-wow: 200 100% 55%;
-    --reaction-sad: 210 50% 50%;
+    /* Social Gradients */
+    --social-gradient-accent: linear-gradient(135deg, hsl(270 100% 55%) 0%, hsl(290 100% 50%) 100%);
+    --social-gradient-card: linear-gradient(180deg, hsl(250 20% 6% / 0.95) 0%, hsl(250 20% 3%) 100%);
   }
 
-  /* No light mode - dark mode is default */
   .dark {
-    /* Same as root for now */
+    /* Same as root - dark only */
   }
 }
 

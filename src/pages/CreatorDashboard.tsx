@@ -123,11 +123,10 @@ export default function CreatorDashboard() {
         <div className="space-y-6">
           {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-            <TechStatsCard
+          <TechStatsCard
               title="Total Asignados"
               value={content.length}
               icon={Video}
-              color="primary"
               onClick={() => openKpiDialog('Total Asignados', content)}
               size="sm"
             />
@@ -135,31 +134,30 @@ export default function CreatorDashboard() {
               title="En Progreso"
               value={inProgressContent.length}
               icon={Clock}
-              color="info"
               onClick={() => openKpiDialog('En Progreso', inProgressContent)}
               size="sm"
+              variant="glass"
             />
             <TechStatsCard
               title="Aprobados"
               value={approvedContent.length}
               icon={CheckCircle2}
-              color="success"
               onClick={() => openKpiDialog('Aprobados', approvedContent)}
               size="sm"
+              variant="glow"
             />
             <TechStatsCard
               title="Embajador"
               value={ambassadorContent.length}
               icon={Star}
-              color="violet"
               onClick={() => openKpiDialog('Contenido Embajador', ambassadorContent)}
               size="sm"
+              variant="neon"
             />
             <TechStatsCard
               title="Por Pagar"
               value={unpaidContent.length}
               icon={DollarSign}
-              color="warning"
               subtitle={`$${pendingPayment.toLocaleString()}`}
               onClick={() => openKpiDialog('Por Pagar', unpaidContent)}
               size="sm"
@@ -168,10 +166,10 @@ export default function CreatorDashboard() {
               title="Pagados"
               value={paidContent.length}
               icon={CreditCard}
-              color="success"
               subtitle={`$${totalPaid.toLocaleString()}`}
               onClick={() => openKpiDialog('Pagados', paidContent)}
               size="sm"
+              variant="glass"
             />
           </div>
 
@@ -210,22 +208,22 @@ export default function CreatorDashboard() {
 
           {/* Pending Work Alert */}
           {inProgressContent.length > 0 && (
-            <TechCard variant="glow" glowColor="info" className="border-info/30">
+            <TechCard variant="neon" className="border-[hsl(260,80%,60%,0.3)]">
               <TechCardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-info/20 border border-info/30">
-                      <Clock className="h-5 w-5 text-info" />
+                    <div className="p-2.5 rounded-xl bg-[hsl(270,100%,60%,0.15)] border border-[hsl(270,100%,60%,0.25)]">
+                      <Clock className="h-5 w-5 text-[hsl(270,100%,70%)]" />
                     </div>
                     <div>
                       <p className="font-medium text-sm">Tienes {inProgressContent.length} proyecto(s) en progreso</p>
-                      <p className="text-xs text-muted-foreground">Continúa con tus grabaciones</p>
+                      <p className="text-xs text-[hsl(270,30%,55%)]">Continúa con tus grabaciones</p>
                     </div>
                   </div>
                   <Button 
                     size="sm" 
                     onClick={() => navigate('/board')}
-                    className="bg-info/20 hover:bg-info/30 text-info border border-info/30"
+                    className="bg-[hsl(270,100%,60%,0.15)] hover:bg-[hsl(270,100%,60%,0.25)] text-[hsl(270,100%,75%)] border border-[hsl(270,100%,60%,0.3)] hover:border-[hsl(270,100%,60%,0.5)]"
                   >
                     Ver tablero
                     <ArrowRight className="w-4 h-4 ml-1" />
