@@ -45,14 +45,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 // Columnas base del Kanban
 const BOARD_COLUMNS = KANBAN_COLUMNS;
 
-// Columnas para editores: desde 'recorded' + draft para ver contenido asignado
+// Columnas para editores: grabado, en edición, entregado, novedad, corregido, aprobado, pagado
 const EDITOR_COLUMNS = KANBAN_COLUMNS.filter(col => 
-  ['draft', 'recorded', 'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'].includes(col.status)
+  ['recorded', 'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'].includes(col.status)
 );
 
-// Columnas para creadores: desde 'assigned' + draft para ver contenido asignado
+// Columnas para creadores: asignado, en grabación, grabado, novedad, aprobado, pagado
 const CREATOR_COLUMNS = KANBAN_COLUMNS.filter(col => 
-  ['draft', 'script_approved', 'assigned', 'recording', 'recorded', 'issue', 'approved', 'paid'].includes(col.status)
+  ['assigned', 'recording', 'recorded', 'issue', 'approved', 'paid'].includes(col.status)
 );
 
 // Helper types for movement rules
@@ -300,13 +300,11 @@ export default function ContentBoard() {
     : (activeRole ||
        (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client'));
   
-  // Define role-specific allowed statuses
-  // Creators see their workflow from assignment to completion
-  // Include 'draft' so they see content assigned to them before status changes to 'assigned'
-  const CREATOR_ALLOWED_STATUSES = ['draft', 'script_approved', 'assigned', 'recording', 'recorded', 'issue', 'approved', 'paid'];
-  // Editors see their workflow from recorded content onwards
-  // Include 'draft' so they see content assigned to them before status changes
-  const EDITOR_ALLOWED_STATUSES = ['draft', 'recorded', 'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid', 'en_campaa'];
+  // Define role-specific allowed statuses (as requested by user)
+  // Creators: asignado, en grabación, grabado, novedad, aprobado, pagado
+  const CREATOR_ALLOWED_STATUSES = ['assigned', 'recording', 'recorded', 'issue', 'approved', 'paid'];
+  // Editors: grabado, en edición, entregado, novedad, corregido, aprobado, pagado
+  const EDITOR_ALLOWED_STATUSES = ['recorded', 'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'];
 
   // Helper function to check if a status is visible for the current role
   const isStatusVisibleForRole = useCallback((statusKey: string): boolean => {
