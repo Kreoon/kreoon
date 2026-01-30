@@ -12,7 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    // Kreoon credentials
+    // Lovable Cloud (source)
+    const sourceUrl = Deno.env.get('SUPABASE_URL');
+    const sourceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    // Kreoon (destination)
     const kreoonUrl = Deno.env.get('KREOON_SUPABASE_URL');
     const kreoonServiceKey = Deno.env.get('KREOON_SERVICE_ROLE_KEY');
 
@@ -22,6 +26,17 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    if (!sourceUrl || !sourceKey) {
+      return new Response(JSON.stringify({ error: 'Credenciales Lovable Cloud no configuradas' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const sourceClient = createClient(sourceUrl, sourceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     const kreoonClient = createClient(kreoonUrl, kreoonServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -36,28 +51,115 @@ serve(async (req) => {
       });
     }
 
-    // ACTION: list_users - List all users in Kreoon
+    // ACTION: list_users - List all users in both systems
     if (action === 'list_users') {
-      const { data: users, error } = await kreoonClient.auth.admin.listUsers();
+      const { data: sourceUsers, error: sourceErr } = await sourceClient.auth.admin.listUsers();
+      const { data: kreoonUsers, error: kreoonErr } = await kreoonClient.auth.admin.listUsers();
       
-      if (error) throw error;
+      if (sourceErr) throw sourceErr;
+      if (kreoonErr) throw kreoonErr;
 
-      const userList = users.users.map(u => ({
+      const kreoonEmails = new Set(kreoonUsers.users.map(u => u.email?.toLowerCase()));
+      
+      const sourceList = sourceUsers.users.map(u => ({
         id: u.id,
         email: u.email,
-        created_at: u.created_at,
-        last_sign_in_at: u.last_sign_in_at,
+        exists_in_kreoon: kreoonEmails.has(u.email?.toLowerCase()),
       }));
 
       return new Response(JSON.stringify({ 
-        total: userList.length,
-        users: userList 
+        source_total: sourceList.length,
+        kreoon_total: kreoonUsers.users.length,
+        to_migrate: sourceList.filter(u => !u.exists_in_kreoon).length,
+        users: sourceList 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // ACTION: set_all_passwords - Set same password for all users
+    // ACTION: migrate_all_users - Create all users from source in Kreoon with temp password
+    if (action === 'migrate_all_users') {
+      const tempPassword = password || 'Kreoon2026!';
+      
+      // Get all users from source
+      const { data: sourceUsers, error: sourceErr } = await sourceClient.auth.admin.listUsers();
+      if (sourceErr) throw sourceErr;
+
+      // Get existing users in Kreoon
+      const { data: kreoonUsers, error: kreoonErr } = await kreoonClient.auth.admin.listUsers();
+      if (kreoonErr) throw kreoonErr;
+
+      const kreoonEmails = new Set(kreoonUsers.users.map(u => u.email?.toLowerCase()));
+      
+      const results: { email: string; action: string; success: boolean; newId?: string; error?: string }[] = [];
+      
+      for (const user of sourceUsers.users) {
+        const email = user.email?.toLowerCase();
+        if (!email) continue;
+
+        try {
+          if (kreoonEmails.has(email)) {
+            // User exists, just update password
+            const existingUser = kreoonUsers.users.find(u => u.email?.toLowerCase() === email);
+            if (existingUser) {
+              const { error: updateErr } = await kreoonClient.auth.admin.updateUserById(existingUser.id, {
+                password: tempPassword,
+              });
+              
+              results.push({
+                email,
+                action: 'password_updated',
+                success: !updateErr,
+                error: updateErr?.message,
+              });
+            }
+          } else {
+            // Create new user in Kreoon
+            const { data: newUser, error: createErr } = await kreoonClient.auth.admin.createUser({
+              email,
+              password: tempPassword,
+              email_confirm: true, // Auto-confirm email
+              user_metadata: user.user_metadata,
+            });
+            
+            results.push({
+              email,
+              action: 'created',
+              success: !createErr,
+              newId: newUser?.user?.id,
+              error: createErr?.message,
+            });
+            
+            console.log(`User ${email}: ${createErr ? 'FAILED' : 'CREATED'}`);
+          }
+        } catch (err) {
+          results.push({
+            email,
+            action: 'error',
+            success: false,
+            error: err instanceof Error ? err.message : 'Unknown error',
+          });
+        }
+      }
+
+      const created = results.filter(r => r.action === 'created' && r.success).length;
+      const updated = results.filter(r => r.action === 'password_updated' && r.success).length;
+      const failed = results.filter(r => !r.success).length;
+
+      return new Response(JSON.stringify({ 
+        action: 'migrate_all_users',
+        total_source: sourceUsers.users.length,
+        created,
+        updated,
+        failed,
+        temp_password: tempPassword,
+        results 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ACTION: set_all_passwords - Set same password for all existing Kreoon users
     if (action === 'set_all_passwords') {
       if (!password) {
         return new Response(JSON.stringify({ error: 'Password is required' }), {
@@ -82,8 +184,6 @@ serve(async (req) => {
             success: !updateErr,
             error: updateErr?.message,
           });
-          
-          console.log(`Password updated for ${user.email}: ${updateErr ? 'FAILED' : 'SUCCESS'}`);
         } catch (err) {
           results.push({
             email: user.email || 'unknown',
@@ -107,7 +207,7 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: 'Invalid action' }), {
+    return new Response(JSON.stringify({ error: 'Invalid action. Use: list_users, migrate_all_users, set_all_passwords' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
