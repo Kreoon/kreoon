@@ -82,6 +82,41 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
   useEffect(() => {
     if (!organizationId) return;
     fetchStats();
+
+    // Realtime subscription for UP tables
+    const channel = supabase
+      .channel('up-kpis-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'up_creadores_totals',
+          filter: `organization_id=eq.${organizationId}`
+        },
+        () => {
+          console.log('[Realtime] UP Creators totals changed');
+          fetchStats();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'up_editores_totals',
+          filter: `organization_id=eq.${organizationId}`
+        },
+        () => {
+          console.log('[Realtime] UP Editors totals changed');
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [organizationId]);
 
   const fetchStats = async () => {
