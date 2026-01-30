@@ -7,7 +7,7 @@ import { useContent } from '@/hooks/useContent';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Content, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
-import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
+import { TechKpiDialog } from '@/components/dashboard/TechKpiDialog';
 import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/index';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
@@ -15,7 +15,7 @@ import { RoleUPWidget } from '@/components/points/RoleUPWidget';
 import { RoleLeaderboard } from '@/components/points/RoleLeaderboard';
 import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
-import { TechStatsCard } from '@/components/dashboard/TechStatsCard';
+import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
 import { TechPageHeader } from '@/components/layout/TechPageHeader';
 import { TechCard, TechCardContent } from '@/components/ui/tech-card';
 import { 
@@ -150,66 +150,82 @@ export default function CreatorDashboard() {
 
         {/* Dashboard Content */}
         <div className="space-y-6">
-          {/* Stats Grid with Stagger Animation */}
-          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3" staggerDelay={0.08}>
+          {/* Stats Grid with Charts */}
+          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-3 gap-4" staggerDelay={0.08}>
             <StaggerItem>
-              <TechStatsCard
+              <TechKpiCard
                 title="Total Asignados"
                 value={content.length}
                 icon={Video}
                 onClick={() => openKpiDialog('Total Asignados', content)}
-                size="sm"
+                chartType="sparkline"
+                chartData={[12, 18, 15, 22, 19, 28, content.length]}
+                color="violet"
+                size="md"
               />
             </StaggerItem>
             <StaggerItem>
-              <TechStatsCard
+              <TechKpiCard
                 title="En Progreso"
                 value={inProgressContent.length}
                 icon={Clock}
                 onClick={() => openKpiDialog('En Progreso', inProgressContent)}
-                size="sm"
-                variant="glass"
+                chartType="bar"
+                chartData={[3, 5, 2, 7, 4, 6, inProgressContent.length]}
+                color="amber"
+                size="md"
               />
             </StaggerItem>
             <StaggerItem>
-              <TechStatsCard
+              <TechKpiCard
                 title="Aprobados"
                 value={approvedContent.length}
                 icon={CheckCircle2}
                 onClick={() => openKpiDialog('Aprobados', approvedContent)}
-                size="sm"
-                variant="glow"
+                chartType="radial"
+                goalValue={content.length || 1}
+                goalLabel="Del total"
+                color="emerald"
+                size="md"
               />
             </StaggerItem>
             <StaggerItem>
-              <TechStatsCard
+              <TechKpiCard
                 title="Embajador"
                 value={ambassadorContent.length}
                 icon={Star}
                 onClick={() => openKpiDialog('Contenido Embajador', ambassadorContent)}
-                size="sm"
-                variant="neon"
+                chartType="sparkline"
+                chartData={[1, 2, 1, 3, 2, 4, ambassadorContent.length]}
+                color="rose"
+                size="md"
               />
             </StaggerItem>
             <StaggerItem>
-              <TechStatsCard
+              <TechKpiCard
                 title="Por Pagar"
                 value={unpaidContent.length}
                 icon={DollarSign}
                 subtitle={`$${pendingPayment.toLocaleString()}`}
                 onClick={() => openKpiDialog('Por Pagar', unpaidContent)}
-                size="sm"
+                chartType="bar"
+                chartData={[5, 8, 4, 10, 6, 9, unpaidContent.length]}
+                color="cyan"
+                size="md"
               />
             </StaggerItem>
             <StaggerItem>
-              <TechStatsCard
+              <TechKpiCard
                 title="Pagados"
                 value={paidContent.length}
                 icon={CreditCard}
                 subtitle={`$${totalPaid.toLocaleString()}`}
                 onClick={() => openKpiDialog('Pagados', paidContent)}
-                size="sm"
-                variant="glass"
+                chartType="radial"
+                goalValue={approvedContent.length + paidContent.length || 1}
+                goalLabel="Completados"
+                color="violet"
+                size="md"
               />
             </StaggerItem>
           </StaggerContainer>
@@ -476,8 +492,8 @@ export default function CreatorDashboard() {
           }}
         />
 
-        {/* KPI Content Dialog */}
-        <KpiContentDialog
+        {/* KPI Content Dialog - New Tech Version */}
+        <TechKpiDialog
           title={kpiDialog.title}
           content={kpiDialog.content}
           open={kpiDialog.open}
