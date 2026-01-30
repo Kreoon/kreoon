@@ -226,6 +226,38 @@ serve(async (req) => {
         });
       }
 
+      case "confirm_email": {
+        // Manually confirm a user's email
+        if (!email) {
+          return new Response(JSON.stringify({ error: "Email required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Find user by email
+        const { data: users, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
+        if (listErr) throw listErr;
+
+        const targetUser = users.users.find(u => u.email === email);
+        if (!targetUser) {
+          return new Response(JSON.stringify({ error: "User not found" }), {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(targetUser.id, {
+          email_confirm: true,
+        });
+        if (updateErr) throw updateErr;
+
+        console.log(`Email confirmed for ${email}`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
       case "toggle_ban": {
         if (!userId) {
           return new Response(JSON.stringify({ error: "User ID required" }), {
