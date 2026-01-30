@@ -324,22 +324,48 @@ export function useUPEditores(userId?: string) {
 }
 
 /**
- * Hook for editor leaderboard
+ * Hook for editor leaderboard - filters by active season
  */
 export function useEditorLeaderboard() {
   const { currentOrgId } = useOrgOwner();
   const [leaderboard, setLeaderboard] = useState<(UPEditorTotals & { profile?: { full_name: string; avatar_url: string | null } })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
+
+  // Fetch active season
+  useEffect(() => {
+    const fetchActiveSeason = async () => {
+      if (!currentOrgId) return;
+      
+      const { data } = await supabase
+        .from('up_seasons')
+        .select('id')
+        .eq('organization_id', currentOrgId)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      setActiveSeasonId(data?.id || null);
+    };
+    
+    fetchActiveSeason();
+  }, [currentOrgId]);
 
   const fetchLeaderboard = useCallback(async () => {
     if (!currentOrgId) return;
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('up_editores_totals')
         .select('*')
         .eq('organization_id', currentOrgId)
         .order('total_points', { ascending: false });
+
+      // Filter by active season if exists
+      if (activeSeasonId) {
+        query = query.eq('season_id', activeSeasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -367,7 +393,7 @@ export function useEditorLeaderboard() {
     } finally {
       setLoading(false);
     }
-  }, [currentOrgId]);
+  }, [currentOrgId, activeSeasonId]);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -390,5 +416,5 @@ export function useEditorLeaderboard() {
     };
   }, [fetchLeaderboard]);
 
-  return { leaderboard, loading, refetch: fetchLeaderboard };
+  return { leaderboard, loading, activeSeasonId, refetch: fetchLeaderboard };
 }

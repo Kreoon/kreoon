@@ -68,6 +68,103 @@ export function useUPSeasons() {
   }, [fetchSeasons]);
 
   /**
+   * Create a new season and optionally close the current one
+   */
+  const createSeason = async (data: {
+    name: string;
+    mode: 'monthly' | 'quarterly' | 'yearly' | 'custom' | 'permanent';
+    starts_at: string;
+    ends_at: string;
+    reset_points?: boolean;
+    reset_ranking?: boolean;
+    closeCurrentSeason?: boolean;
+  }) => {
+    if (!currentOrgId) return null;
+
+    try {
+      // If requested, create snapshot and close current active season
+      if (data.closeCurrentSeason && activeSeason) {
+        await createSeasonSnapshot(activeSeason.id);
+        await supabase
+          .from('up_seasons')
+          .update({ is_active: false })
+          .eq('id', activeSeason.id);
+      }
+
+      // Create new season
+      const insertData = {
+        organization_id: currentOrgId,
+        name: data.name,
+        mode: data.mode as 'monthly' | 'quarterly' | 'custom' | 'permanent',
+        starts_at: data.starts_at,
+        ends_at: data.ends_at,
+        reset_points: data.reset_points ?? true,
+        reset_ranking: data.reset_ranking ?? true,
+        reset_streaks: false,
+        is_active: true
+      };
+
+      const { data: newSeason, error } = await supabase
+        .from('up_seasons')
+        .insert(insertData as any)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: 'Temporada creada',
+        description: `La temporada "${data.name}" ha sido creada exitosamente`
+      });
+
+      await fetchSeasons();
+      return newSeason;
+    } catch (error) {
+      console.error('Error creating season:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo crear la temporada',
+        variant: 'destructive'
+      });
+      return null;
+    }
+  };
+
+  /**
+   * Close a season (deactivate it and create snapshot)
+   */
+  const closeSeason = async (seasonId: string) => {
+    try {
+      // Create snapshot first
+      await createSeasonSnapshot(seasonId);
+
+      // Deactivate season
+      const { error } = await supabase
+        .from('up_seasons')
+        .update({ is_active: false })
+        .eq('id', seasonId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Temporada cerrada',
+        description: 'La temporada ha sido cerrada y los rankings guardados'
+      });
+
+      await fetchSeasons();
+      return true;
+    } catch (error) {
+      console.error('Error closing season:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo cerrar la temporada',
+        variant: 'destructive'
+      });
+      return false;
+    }
+  };
+
+  /**
    * Create a snapshot of the current season's rankings
    */
   const createSeasonSnapshot = async (seasonId: string) => {
@@ -219,6 +316,8 @@ export function useUPSeasons() {
     activeSeason,
     loading,
     refetch: fetchSeasons,
+    createSeason,
+    closeSeason,
     createSeasonSnapshot,
     getSeasonSnapshots,
     getFinishedSeasonsWithResults
