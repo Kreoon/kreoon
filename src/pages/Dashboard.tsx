@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { motion } from "framer-motion";
 import { 
   Video, Users, CheckCircle, Clock, DollarSign, TrendingUp, 
   Activity, Target, BarChart3, ArrowUpRight, ArrowDownRight,
@@ -18,10 +19,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog/index";
-import { KpiContentDialog } from "@/components/dashboard/KpiContentDialog";
+import { TechKpiDialog } from "@/components/dashboard/TechKpiDialog";
 import { KpiListDialog } from "@/components/dashboard/KpiListDialog";
 import { GoalsDialog } from "@/components/dashboard/GoalsDialog";
 import { GoalsChart } from "@/components/dashboard/GoalsChart";
+import { DashboardKpiCard, TechProgress, PipelineItem, TechSectionHeader } from "@/components/dashboard/TechDashboardCards";
+import { TechGrid, TechParticles, TechOrb, StaggerContainer, StaggerItem } from "@/components/ui/tech-effects";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -826,18 +829,39 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-40 rounded-2xl" />
-          ))}
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="relative">
+          <motion.div 
+            className="absolute inset-0 rounded-full bg-[hsl(270,100%,60%,0.3)] blur-xl"
+            animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+          <motion.div
+            className="w-12 h-12 rounded-full border-2 border-t-[hsl(270,100%,60%)] border-[hsl(270,100%,60%,0.2)]"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          />
+          <motion.p
+            className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-[hsl(270,100%,70%)] whitespace-nowrap"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            Cargando dashboard...
+          </motion.p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Animated Tech Background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <TechGrid className="absolute inset-0" />
+        <TechParticles count={20} />
+        <TechOrb size="lg" position="top-right" delay={0} />
+        <TechOrb size="md" position="bottom-left" delay={1} />
+      </div>
       {/* Page Header */}
       <div className="p-4 md:p-6">
         <PageHeader
@@ -1122,133 +1146,143 @@ export default function Dashboard() {
 
           {/* TAB 1: PRINCIPAL - KPIs de la Organización */}
           <TabsContent value="principal" className="space-y-3 mt-0">
-            {/* Row 1: Main KPIs - Compact */}
-            <div data-tour="stats-section" className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Row 1: Main KPIs - Tech Style */}
+            <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-3" staggerDelay={0.1}>
               {/* Total Contenidos */}
-              <div 
-                onClick={() => openKpiDialog('Todos los Contenidos', content)}
-                className="group relative overflow-hidden rounded-xl border border-border/50 p-4 bg-gradient-to-br from-card to-muted/10 cursor-pointer hover:shadow-lg transition-all"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Video className="h-5 w-5 text-primary" />
-                  </div>
-                  <span className="text-sm text-muted-foreground">Total Contenidos</span>
-                </div>
-                <p className="text-3xl font-bold"><AnimatedNumber value={totalContent} /></p>
-                {currentGoal?.content_goal && currentGoal.content_goal > 0 && (
-                  <div className="mt-2">
-                    <Progress value={Math.min((totalContent / currentGoal.content_goal) * 100, 100)} className="h-1.5" />
-                    <span className="text-xs text-muted-foreground">Meta: {currentGoal.content_goal}</span>
-                  </div>
-                )}
-              </div>
+              <StaggerItem>
+                <DashboardKpiCard
+                  title="Total Contenidos"
+                  value={<AnimatedNumber value={totalContent} />}
+                  icon={Video}
+                  iconColor="hsl(270 100% 60%)"
+                  onClick={() => openKpiDialog('Todos los Contenidos', content)}
+                >
+                  {currentGoal?.content_goal && currentGoal.content_goal > 0 && (
+                    <TechProgress 
+                      value={totalContent} 
+                      max={currentGoal.content_goal} 
+                      color="hsl(270 100% 60%)"
+                      label="Meta"
+                    />
+                  )}
+                </DashboardKpiCard>
+              </StaggerItem>
 
-              {/* Ingresos Totales COP */}
-              <div 
-                onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
-                className="group relative overflow-hidden rounded-xl border border-yellow-500/30 p-4 bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 cursor-pointer hover:shadow-lg transition-all"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">🇨🇴</span>
-                  <span className="text-sm text-muted-foreground">Ingresos COP</span>
-                </div>
-                <p className="text-2xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" /></p>
-                {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
-                  <div className="mt-2">
-                    <Progress value={Math.min((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100, 100)} className="h-1.5" />
-                    <span className="text-xs text-muted-foreground">{Math.round((clientsBilling.totalBilledCOP / currentGoal.revenue_goal) * 100)}% de meta</span>
-                  </div>
-                )}
-              </div>
+              {/* Ingresos COP */}
+              <StaggerItem>
+                <DashboardKpiCard
+                  title="Ingresos COP"
+                  value={<CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" />}
+                  icon={DollarSign}
+                  iconColor="hsl(45 100% 50%)"
+                  borderColor="hsl(45 100% 50% / 0.3)"
+                  onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
+                >
+                  {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
+                    <TechProgress 
+                      value={clientsBilling.totalBilledCOP} 
+                      max={currentGoal.revenue_goal} 
+                      color="hsl(45 100% 50%)"
+                      label="Meta"
+                    />
+                  )}
+                </DashboardKpiCard>
+              </StaggerItem>
 
-              {/* Ingresos Totales USD */}
-              <div 
-                onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
-                className="group relative overflow-hidden rounded-xl border border-green-500/30 p-4 bg-gradient-to-br from-green-500/10 to-green-500/5 cursor-pointer hover:shadow-lg transition-all"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">🇺🇸</span>
-                  <span className="text-sm text-muted-foreground">Ingresos USD</span>
-                </div>
-                <p className="text-2xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" /></p>
-                <div className="mt-2">
-                  <span className="text-xs text-muted-foreground">Recaudado: <CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></span>
-                </div>
-              </div>
+              {/* Ingresos USD */}
+              <StaggerItem>
+                <DashboardKpiCard
+                  title="Ingresos USD"
+                  value={<CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" />}
+                  icon={DollarSign}
+                  iconColor="hsl(160 100% 45%)"
+                  borderColor="hsl(160 100% 45% / 0.3)"
+                  onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
+                  subtitle={<span>Recaudado: <CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></span>}
+                />
+              </StaggerItem>
 
               {/* Clientes Activos */}
-              <div 
-                onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
-                className="group relative overflow-hidden rounded-xl border border-primary/30 p-4 bg-gradient-to-br from-primary/10 to-primary/5 cursor-pointer hover:shadow-lg transition-all"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Building2 className="h-5 w-5 text-primary" />
-                  </div>
-                  <span className="text-sm text-muted-foreground">Clientes</span>
-                </div>
-                <p className="text-3xl font-bold text-primary">{activeClients.length}</p>
-                {currentGoal?.new_clients_goal && currentGoal.new_clients_goal > 0 && (
-                  <div className="mt-2">
-                    <Progress value={Math.min((activeClients.length / currentGoal.new_clients_goal) * 100, 100)} className="h-1.5" />
-                    <span className="text-xs text-muted-foreground">Meta: {currentGoal.new_clients_goal}</span>
-                  </div>
-                )}
-              </div>
-            </div>
+              <StaggerItem>
+                <DashboardKpiCard
+                  title="Clientes"
+                  value={activeClients.length}
+                  icon={Building2}
+                  iconColor="hsl(270 100% 60%)"
+                  onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
+                >
+                  {currentGoal?.new_clients_goal && currentGoal.new_clients_goal > 0 && (
+                    <TechProgress 
+                      value={activeClients.length} 
+                      max={currentGoal.new_clients_goal} 
+                      color="hsl(270 100% 60%)"
+                      label="Meta"
+                    />
+                  )}
+                </DashboardKpiCard>
+              </StaggerItem>
+            </StaggerContainer>
 
-            {/* Row 2: Content Status Pipeline */}
-            <div className="rounded-xl border border-border/50 bg-card p-4">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <Activity className="h-4 w-4 text-primary" />
-                Pipeline de Contenidos
-              </h3>
+            {/* Row 2: Content Status Pipeline - Tech Style */}
+            <motion.div 
+              className="rounded-xl border border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-[hsl(250,20%,7%)] to-[hsl(250,20%,5%)] p-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <TechSectionHeader icon={Activity} title="Pipeline de Contenidos" />
               <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
-                <div onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
-                  className="p-3 rounded-lg bg-muted/50 border border-border cursor-pointer hover:bg-muted transition-colors text-center">
-                  <Calendar className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-                  <p className="text-xl font-bold">{pending}</p>
-                  <p className="text-[10px] text-muted-foreground">Pendientes</p>
-                </div>
-                <div onClick={() => openKpiDialog('En Grabación', content.filter(c => c.status === 'recording'))}
-                  className="p-3 rounded-lg bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
-                  <Video className="h-4 w-4 mx-auto text-info mb-1" />
-                  <p className="text-xl font-bold text-info">{content.filter(c => c.status === 'recording').length}</p>
-                  <p className="text-[10px] text-muted-foreground">Grabación</p>
-                </div>
-                <div onClick={() => openKpiDialog('En Edición', content.filter(c => c.status === 'editing'))}
-                  className="p-3 rounded-lg bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
-                  <Scissors className="h-4 w-4 mx-auto text-warning mb-1" />
-                  <p className="text-xl font-bold text-warning">{content.filter(c => c.status === 'editing').length}</p>
-                  <p className="text-[10px] text-muted-foreground">Edición</p>
-                </div>
-                <div onClick={() => openKpiDialog('Entregados', content.filter(c => c.status === 'delivered'))}
-                  className="p-3 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
-                  <Play className="h-4 w-4 mx-auto text-primary mb-1" />
-                  <p className="text-xl font-bold text-primary">{content.filter(c => c.status === 'delivered').length}</p>
-                  <p className="text-[10px] text-muted-foreground">Entregados</p>
-                </div>
-                <div onClick={() => openKpiDialog('Con Novedad', content.filter(c => c.status === 'issue'))}
-                  className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors text-center">
-                  <Activity className="h-4 w-4 mx-auto text-destructive mb-1" />
-                  <p className="text-xl font-bold text-destructive">{content.filter(c => c.status === 'issue').length}</p>
-                  <p className="text-[10px] text-muted-foreground">Novedad</p>
-                </div>
-                <div onClick={() => openKpiDialog('Corregidos', content.filter(c => c.status === 'corrected'))}
-                  className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition-colors text-center">
-                  <TrendingUp className="h-4 w-4 mx-auto text-amber-500 mb-1" />
-                  <p className="text-xl font-bold text-amber-500">{content.filter(c => c.status === 'corrected').length}</p>
-                  <p className="text-[10px] text-muted-foreground">Corregidos</p>
-                </div>
-                <div onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
-                  className="p-3 rounded-lg bg-success/10 border border-success/20 cursor-pointer hover:bg-success/20 transition-colors text-center">
-                  <CheckCircle className="h-4 w-4 mx-auto text-success mb-1" />
-                  <p className="text-xl font-bold text-success">{completed}</p>
-                  <p className="text-[10px] text-muted-foreground">Aprobados</p>
-                </div>
+                <PipelineItem
+                  icon={Calendar}
+                  value={pending}
+                  label="Pendientes"
+                  color="hsl(270 30% 55%)"
+                  onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
+                />
+                <PipelineItem
+                  icon={Video}
+                  value={content.filter(c => c.status === 'recording').length}
+                  label="Grabación"
+                  color="hsl(200 100% 50%)"
+                  onClick={() => openKpiDialog('En Grabación', content.filter(c => c.status === 'recording'))}
+                />
+                <PipelineItem
+                  icon={Scissors}
+                  value={content.filter(c => c.status === 'editing').length}
+                  label="Edición"
+                  color="hsl(45 100% 50%)"
+                  onClick={() => openKpiDialog('En Edición', content.filter(c => c.status === 'editing'))}
+                />
+                <PipelineItem
+                  icon={Play}
+                  value={content.filter(c => c.status === 'delivered').length}
+                  label="Entregados"
+                  color="hsl(270 100% 60%)"
+                  onClick={() => openKpiDialog('Entregados', content.filter(c => c.status === 'delivered'))}
+                />
+                <PipelineItem
+                  icon={Activity}
+                  value={content.filter(c => c.status === 'issue').length}
+                  label="Novedad"
+                  color="hsl(0 80% 55%)"
+                  onClick={() => openKpiDialog('Con Novedad', content.filter(c => c.status === 'issue'))}
+                />
+                <PipelineItem
+                  icon={TrendingUp}
+                  value={content.filter(c => c.status === 'corrected').length}
+                  label="Corregidos"
+                  color="hsl(35 100% 50%)"
+                  onClick={() => openKpiDialog('Corregidos', content.filter(c => c.status === 'corrected'))}
+                />
+                <PipelineItem
+                  icon={CheckCircle}
+                  value={completed}
+                  label="Aprobados"
+                  color="hsl(160 100% 45%)"
+                  onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
+                />
               </div>
-            </div>
+            </motion.div>
 
             {/* Row 3: Videos Adeudados + Quick Financial Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1833,7 +1867,7 @@ export default function Dashboard() {
         onDelete={handleDeleteContent}
       />
 
-      <KpiContentDialog
+      <TechKpiDialog
         title={kpiDialog.title}
         content={kpiDialog.content}
         open={kpiDialog.open}
