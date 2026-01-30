@@ -103,11 +103,30 @@ export function AmbassadorCelebration() {
     if (!user?.id) return;
 
     const checkCelebration = async () => {
-      const { data: profile } = await supabase
+      const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
+
+      // Prefer lookup by auth user id
+      let { data: profile } = await supabase
         .from('profiles')
-        .select('ambassador_celebration_pending')
+        .select('id, ambassador_celebration_pending')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
+
+      // If not found, try email lookup for root admins (migration ID mismatch)
+      if (!profile) {
+        const { data: authRes } = await supabase.auth.getUser();
+        const email = authRes.user?.email;
+
+        if (email && ROOT_EMAILS.includes(email)) {
+          const emailRes = await supabase
+            .from('profiles')
+            .select('id, ambassador_celebration_pending')
+            .eq('email', email)
+            .maybeSingle();
+
+          profile = emailRes.data as any;
+        }
+      }
 
       if (profile?.ambassador_celebration_pending) {
         setShowCelebration(true);
@@ -117,7 +136,7 @@ export function AmbassadorCelebration() {
         await supabase
           .from('profiles')
           .update({ ambassador_celebration_pending: false })
-          .eq('id', user.id);
+          .eq('id', profile.id);
       }
     };
 

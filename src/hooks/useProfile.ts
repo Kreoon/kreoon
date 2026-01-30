@@ -156,11 +156,31 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
+
+      // Prefer lookup by auth user id
+      let { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
+
+      // If not found, try email lookup for root admins (migration ID mismatch)
+      if (!data) {
+        const { data: authRes } = await supabase.auth.getUser();
+        const email = authRes.user?.email;
+
+        if (email && ROOT_EMAILS.includes(email)) {
+          const emailRes = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('email', email)
+            .maybeSingle();
+
+          data = emailRes.data as any;
+          error = emailRes.error as any;
+        }
+      }
 
       if (error) throw error;
 
@@ -360,7 +380,8 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
           is_public: profile.is_public,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id);
+        // Use loaded profile id (can differ from auth id in migration scenarios)
+        .eq('id', profile.id);
 
       if (error) throw error;
 
@@ -372,7 +393,7 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
       showToast('Perfil actualizado', 'Tus cambios se han guardado correctamente');
 
       // Trigger AI token evaluation in the background (don't await to not block UI)
-      triggerTokenEvaluation(user.id);
+      triggerTokenEvaluation(profile.id);
 
       return true;
     } catch (error) {
