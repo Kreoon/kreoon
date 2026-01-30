@@ -45,14 +45,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 // Columnas base del Kanban
 const BOARD_COLUMNS = KANBAN_COLUMNS;
 
-// Columnas para editores: solo desde 'recorded' en adelante
+// Columnas para editores: desde 'recorded' + draft para ver contenido asignado
 const EDITOR_COLUMNS = KANBAN_COLUMNS.filter(col => 
-  ['recorded', 'editing', 'delivered', 'issue', 'approved'].includes(col.status)
+  ['draft', 'recorded', 'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'].includes(col.status)
 );
 
-// Columnas para creadores: solo desde 'assigned' en adelante
+// Columnas para creadores: desde 'assigned' + draft para ver contenido asignado
 const CREATOR_COLUMNS = KANBAN_COLUMNS.filter(col => 
-  ['assigned', 'recording', 'recorded', 'editing', 'delivered', 'approved', 'paid'].includes(col.status)
+  ['draft', 'script_approved', 'assigned', 'recording', 'recorded', 'issue', 'approved', 'paid'].includes(col.status)
 );
 
 // Helper types for movement rules
@@ -301,8 +301,12 @@ export default function ContentBoard() {
        (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client'));
   
   // Define role-specific allowed statuses
-  const CREATOR_ALLOWED_STATUSES = ['assigned', 'recording', 'recorded', 'issue', 'approved', 'paid'];
-  const EDITOR_ALLOWED_STATUSES = ['recorded', 'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'];
+  // Creators see their workflow from assignment to completion
+  // Include 'draft' so they see content assigned to them before status changes to 'assigned'
+  const CREATOR_ALLOWED_STATUSES = ['draft', 'script_approved', 'assigned', 'recording', 'recorded', 'issue', 'approved', 'paid'];
+  // Editors see their workflow from recorded content onwards
+  // Include 'draft' so they see content assigned to them before status changes
+  const EDITOR_ALLOWED_STATUSES = ['draft', 'recorded', 'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid', 'en_campaa'];
 
   // Helper function to check if a status is visible for the current role
   const isStatusVisibleForRole = useCallback((statusKey: string): boolean => {

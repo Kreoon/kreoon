@@ -262,12 +262,15 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
         query = query.eq('editor_id', options.editorId);
       }
 
-      // Filtro por rol
+      // Filtro por rol - only filter for creator/editor roles
+      // Admin, strategist, and other roles rely on RLS to see all org content
       if (options.role === 'creator' && options.userId) {
         query = query.eq('creator_id', options.userId);
       } else if (options.role === 'editor' && options.userId) {
         query = query.eq('editor_id', options.userId);
       }
+      // Note: 'admin', 'strategist', 'trafficker', 'team_leader' do NOT add user filters
+      // They see all content in their organization (controlled by RLS)
 
       const { data, error: queryError } = await query;
 
