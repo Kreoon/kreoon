@@ -242,79 +242,39 @@ export default function OrgRegister() {
     const roleToAssign = selectedRole as 'creator' | 'editor' | 'client' | 'admin' | 'strategist' | 'ambassador';
     
     try {
-      // Create user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName.trim(),
-          }
-        }
+      // Use edge function that creates user with auto-confirmed email
+      const LOVABLE_FUNCTIONS_URL = 'https://hfooshsteglylhvrpuka.supabase.co/functions/v1';
+      
+      const signupResponse = await fetch(`${LOVABLE_FUNCTIONS_URL}/org-confirm-signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          fullName: fullName.trim(),
+          organizationId: organization.id,
+          role: roleToAssign,
+          inviteCode: organization.registration_require_invite ? inviteCode : undefined,
+        }),
       });
 
-      if (authError) {
-        if (authError.message.includes('already registered')) {
+      const signupData = await signupResponse.json();
+
+      if (!signupResponse.ok) {
+        if (signupData.error === 'already_exists') {
           toast.error('Este email ya está registrado. Intenta iniciar sesión.');
         } else {
-          toast.error('Error al crear la cuenta: ' + authError.message);
+          toast.error(signupData.error || 'Error al crear la cuenta');
         }
         return;
       }
 
-      if (!authData.user) {
-        toast.error('Error al crear la cuenta');
-        return;
-      }
-
-      const userId = authData.user.id;
-
-      // Wait for the profile trigger to complete (it fires on auth.users insert)
-      // We need to poll until the profile exists
-      let profileExists = false;
-      for (let i = 0; i < 10; i++) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', userId)
-          .single();
-        
-        if (profile) {
-          profileExists = true;
-          break;
-        }
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-
-      if (!profileExists) {
-        console.error('Profile was not created after 5 seconds');
-        toast.error('Error: El perfil no se creó correctamente. Por favor contacta soporte.');
-        // Don't continue - user account exists but profile doesn't
-        return;
-      }
-
-      // Now register to organization with the selected role
-      // This function now raises exceptions on failure instead of returning FALSE
-      const { data, error: regError } = await supabase
-        .rpc('register_user_to_organization', {
-          p_organization_id: organization.id,
-          p_user_id: userId,
-          p_role: roleToAssign
-        });
-      
-      if (regError) {
-        console.error('Error registering user to organization:', regError);
-        toast.error('Error al asignar tu rol en la organización. Por favor contacta soporte.');
-        return;
-      }
-
-      console.log('User successfully registered to organization with role:', roleToAssign);
-      
       // Send email notification to admins (fire and forget)
       supabase.functions.invoke('notify-new-member', {
         body: {
-          user_id: userId,
+          user_id: signupData.userId,
           organization_id: organization.id,
           role: roleToAssign,
           user_name: fullName,
@@ -324,10 +284,10 @@ export default function OrgRegister() {
         console.error('Error invoking notify-new-member:', err);
       });
 
-      toast.success('¡Cuenta creada exitosamente!');
+      toast.success('¡Cuenta creada exitosamente! Ya puedes iniciar sesión.');
       
-      // Redirect to welcome page with role info
-      navigate(`/welcome?role=${roleToAssign}`);
+      // Redirect to login page
+      navigate(`/auth/org/${slug}?registered=true`);
     } catch (err) {
       console.error('Registration error:', err);
       toast.error('Error durante el registro');
