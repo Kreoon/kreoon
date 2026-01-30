@@ -249,7 +249,7 @@ const LargeKpiCard = ({
 };
 
 export default function Dashboard() {
-  const { user, isAdmin, isCreator, isEditor, isStrategist, activeRole, profile } = useAuth();
+  const { user, isAdmin, profile } = useAuth();
   const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
   
@@ -265,14 +265,10 @@ export default function Dashboard() {
   const [creators, setCreators] = useState<{id: string; name: string}[]>([]);
   const [editors, setEditors] = useState<{id: string; name: string}[]>([]);
   
-  // Determine the role to use for content filtering
-  // Admins and strategists see all content, creators/editors see only their assigned content
-  const effectiveRole = isAdmin ? 'admin' : isStrategist ? 'strategist' : activeRole || 'client';
-  
   // Only fetch content once org context is loaded
   const { content: allContent, loading: contentLoading, refetch, deleteContent } = useContentWithFilters({
     userId: user?.id,
-    role: effectiveRole as any,
+    role: 'admin',
     clientId: filterClientId !== 'all' ? filterClientId : undefined,
     creatorId: filterCreatorId !== 'all' ? filterCreatorId : undefined,
     editorId: filterEditorId !== 'all' ? filterEditorId : undefined,

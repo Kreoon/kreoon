@@ -105,33 +105,13 @@ export default function OrgRegister() {
 
   const fetchOrganization = async () => {
     try {
-      // Call edge function directly (hosted on Lovable Cloud, reads from Kreoon backend)
-      const LOVABLE_FUNCTIONS_URL = 'https://hfooshsteglylhvrpuka.supabase.co/functions/v1';
-      
-      const fnResponse = await fetch(`${LOVABLE_FUNCTIONS_URL}/org-public-info`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ slug }),
-      });
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, name, slug, logo_url, description, is_registration_open, registration_require_invite, default_role, registration_page_config')
+        .eq('slug', slug)
+        .single();
 
-      if (!fnResponse.ok) {
-        const errorData = await fnResponse.json().catch(() => ({}));
-        console.error('OrgRegister: org-public-info failed', fnResponse.status, errorData);
-        
-        if (fnResponse.status === 404 || errorData?.error === 'not_found') {
-          setError('Organización no encontrada');
-        } else {
-          setError('Error al cargar la organización');
-        }
-        return;
-      }
-
-      const result = await fnResponse.json();
-      const data = result?.organization as Organization | undefined;
-
-      if (!data) {
+      if (error || !data) {
         setError('Organización no encontrada');
         return;
       }
@@ -141,14 +121,13 @@ export default function OrgRegister() {
         return;
       }
 
-      setOrganization(data);
+      setOrganization(data as Organization);
 
       // If no invite code required, mark as verified
       if (!data.registration_require_invite) {
         setCodeVerified(true);
       }
     } catch (err) {
-      console.error('OrgRegister: Error al cargar la organización', err);
       setError('Error al cargar la organización');
     } finally {
       setLoading(false);
@@ -242,39 +221,79 @@ export default function OrgRegister() {
     const roleToAssign = selectedRole as 'creator' | 'editor' | 'client' | 'admin' | 'strategist' | 'ambassador';
     
     try {
-      // Use edge function that creates user with auto-confirmed email
-      const LOVABLE_FUNCTIONS_URL = 'https://hfooshsteglylhvrpuka.supabase.co/functions/v1';
-      
-      const signupResponse = await fetch(`${LOVABLE_FUNCTIONS_URL}/org-confirm-signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-          fullName: fullName.trim(),
-          organizationId: organization.id,
-          role: roleToAssign,
-          inviteCode: organization.registration_require_invite ? inviteCode : undefined,
-        }),
+      // Create user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: fullName.trim(),
+          }
+        }
       });
 
-      const signupData = await signupResponse.json();
-
-      if (!signupResponse.ok) {
-        if (signupData.error === 'already_exists') {
+      if (authError) {
+        if (authError.message.includes('already registered')) {
           toast.error('Este email ya está registrado. Intenta iniciar sesión.');
         } else {
-          toast.error(signupData.error || 'Error al crear la cuenta');
+          toast.error('Error al crear la cuenta: ' + authError.message);
         }
         return;
       }
 
+      if (!authData.user) {
+        toast.error('Error al crear la cuenta');
+        return;
+      }
+
+      const userId = authData.user.id;
+
+      // Wait for the profile trigger to complete (it fires on auth.users insert)
+      // We need to poll until the profile exists
+      let profileExists = false;
+      for (let i = 0; i < 10; i++) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', userId)
+          .single();
+        
+        if (profile) {
+          profileExists = true;
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      if (!profileExists) {
+        console.error('Profile was not created after 5 seconds');
+        toast.error('Error: El perfil no se creó correctamente. Por favor contacta soporte.');
+        // Don't continue - user account exists but profile doesn't
+        return;
+      }
+
+      // Now register to organization with the selected role
+      // This function now raises exceptions on failure instead of returning FALSE
+      const { data, error: regError } = await supabase
+        .rpc('register_user_to_organization', {
+          p_organization_id: organization.id,
+          p_user_id: userId,
+          p_role: roleToAssign
+        });
+      
+      if (regError) {
+        console.error('Error registering user to organization:', regError);
+        toast.error('Error al asignar tu rol en la organización. Por favor contacta soporte.');
+        return;
+      }
+
+      console.log('User successfully registered to organization with role:', roleToAssign);
+      
       // Send email notification to admins (fire and forget)
       supabase.functions.invoke('notify-new-member', {
         body: {
-          user_id: signupData.userId,
+          user_id: userId,
           organization_id: organization.id,
           role: roleToAssign,
           user_name: fullName,
@@ -284,10 +303,10 @@ export default function OrgRegister() {
         console.error('Error invoking notify-new-member:', err);
       });
 
-      toast.success('¡Cuenta creada exitosamente! Ya puedes iniciar sesión.');
+      toast.success('¡Cuenta creada exitosamente!');
       
-      // Redirect to login page
-      navigate(`/auth/org/${slug}?registered=true`);
+      // Redirect to welcome page with role info
+      navigate(`/welcome?role=${roleToAssign}`);
     } catch (err) {
       console.error('Registration error:', err);
       toast.error('Error durante el registro');

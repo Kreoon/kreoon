@@ -1,241 +1,140 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Source: Lovable Cloud
-const LOVABLE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-const LOVABLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-
-// Target: Kreoon
-const KREOON_URL = Deno.env.get('KREOON_SUPABASE_URL') ?? 'https://wjkbqcrxwsmvtxmqgiqc.supabase.co';
-const KREOON_KEY = Deno.env.get('KREOON_SERVICE_ROLE_KEY') ?? '';
-
-interface MigrationResult {
-  table: string;
-  source_count: number;
-  target_before: number;
-  upserted: number;
-  target_after: number;
-  errors: string[];
-}
-
-// Helper to get record timestamp for comparison
-function getRecordTimestamp(record: Record<string, unknown>): number {
-  const updated = record.updated_at as string | undefined;
-  const created = record.created_at as string | undefined;
-  const timestamp = updated || created;
-  if (!timestamp) return 0;
-  return new Date(timestamp).getTime();
-}
-
-// Merge two records, preferring the more recent one for each field
-function mergeRecords(
-  source: Record<string, unknown>,
-  target: Record<string, unknown> | null
-): Record<string, unknown> {
-  if (!target) return source;
-  
-  const sourceTime = getRecordTimestamp(source);
-  const targetTime = getRecordTimestamp(target);
-  
-  // If source is more recent, use source entirely
-  if (sourceTime >= targetTime) {
-    return source;
-  }
-  
-  // If target is more recent, keep target but fill in nulls from source
-  const merged = { ...target };
-  for (const key of Object.keys(source)) {
-    if (merged[key] === null || merged[key] === undefined) {
-      merged[key] = source[key];
-    }
-  }
-  return merged;
-}
-
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting full migration from Lovable Cloud to Kreoon...');
-    
-    const lovableClient = createClient(LOVABLE_URL, LOVABLE_KEY);
-    const kreoonClient = createClient(KREOON_URL, KREOON_KEY);
+    // Verificar autenticación
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'No autorizado' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    const results: MigrationResult[] = [];
-    const globalErrors: string[] = [];
+    // Cliente origen (Lovable Cloud)
+    const sourceClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
 
-    // Tables to migrate in dependency order
-    const tablesToMigrate = [
+    // Cliente destino (Kreoon)
+    const kreoonUrl = Deno.env.get('KREOON_SUPABASE_URL');
+    const kreoonKey = Deno.env.get('KREOON_SERVICE_ROLE_KEY');
+
+    // Debug: Decode JWT payload to verify role
+    let keyRole = 'unknown';
+    try {
+      const parts = kreoonKey?.split('.');
+      if (parts && parts[1]) {
+        const payload = JSON.parse(atob(parts[1]));
+        keyRole = payload.role || 'no role in payload';
+      }
+    } catch (e) {
+      keyRole = 'decode error: ' + e;
+    }
+    console.log('Kreoon URL:', kreoonUrl);
+    console.log('Key role from JWT:', keyRole);
+
+    if (!kreoonUrl || !kreoonKey) {
+      return new Response(JSON.stringify({ error: 'Credenciales de Kreoon no configuradas' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const destClient = createClient(kreoonUrl, kreoonKey);
+
+    const { tables } = await req.json();
+    const tablesToMigrate = tables || ['organizations', 'profiles', 'clients', 'products', 'content', 'organization_members', 'organization_member_roles'];
+
+    const results: Record<string, { success: boolean; count?: number; error?: string }> = {};
+
+    // Migrar en orden de dependencias
+    const orderedTables = [
       'organizations',
-      'profiles',
+      'profiles', 
       'clients',
       'products',
-      'client_packages',
       'content',
       'organization_members',
       'organization_member_roles',
-      'organization_member_badges',
-      'chat_conversations',
-      'chat_participants',
-      'chat_messages',
-      'notifications',
-      'payments',
-      'content_history',
-      'content_comments',
-      'ai_assistant_config',
-      'ai_assistant_knowledge',
-      'board_settings',
-      'board_permissions',
+      'client_packages',
       'up_creadores',
       'up_creadores_totals',
       'up_editores',
       'up_editores_totals',
     ];
 
-    for (const table of tablesToMigrate) {
-      console.log(`\n=== Migrating table: ${table} ===`);
-      const tableResult: MigrationResult = {
-        table,
-        source_count: 0,
-        target_before: 0,
-        upserted: 0,
-        target_after: 0,
-        errors: [],
-      };
+    for (const table of orderedTables) {
+      if (!tablesToMigrate.includes(table)) continue;
 
+      console.log(`Migrando tabla: ${table}`);
+      
       try {
-        // Get source data from Lovable
-        const { data: sourceData, error: sourceError } = await lovableClient
+        // Leer datos del origen
+        const { data: sourceData, error: readError } = await sourceClient
           .from(table)
           .select('*');
 
-        if (sourceError) {
-          tableResult.errors.push(`Source read error: ${sourceError.message}`);
-          results.push(tableResult);
+        if (readError) {
+          results[table] = { success: false, error: readError.message };
           continue;
         }
-
-        tableResult.source_count = sourceData?.length ?? 0;
-        console.log(`  Source records: ${tableResult.source_count}`);
 
         if (!sourceData || sourceData.length === 0) {
-          results.push(tableResult);
+          results[table] = { success: true, count: 0 };
           continue;
         }
 
-        // Get target data from Kreoon for comparison
-        const { data: targetData, error: targetError } = await kreoonClient
-          .from(table)
-          .select('*');
-
-        if (targetError) {
-          tableResult.errors.push(`Target read error: ${targetError.message}`);
-          results.push(tableResult);
-          continue;
-        }
-
-        tableResult.target_before = targetData?.length ?? 0;
-        console.log(`  Target records before: ${tableResult.target_before}`);
-
-        // Create a map of target records by ID for quick lookup
-        const targetMap = new Map<string, Record<string, unknown>>();
-        (targetData || []).forEach((record: Record<string, unknown>) => {
-          if (record.id) {
-            targetMap.set(record.id as string, record);
-          }
-        });
-
-        // Process records and merge
-        const recordsToUpsert: Record<string, unknown>[] = [];
-        
-        for (const sourceRecord of sourceData) {
-          const targetRecord = targetMap.get(sourceRecord.id as string) ?? null;
-          const merged = mergeRecords(
-            sourceRecord as Record<string, unknown>,
-            targetRecord
-          );
-          
-          // Replace Lovable storage URLs with Kreoon URLs
-          for (const key of Object.keys(merged)) {
-            if (typeof merged[key] === 'string') {
-              merged[key] = (merged[key] as string).replace(
-                /hfooshsteglylhvrpuka/g,
-                'wjkbqcrxwsmvtxmqgiqc'
-              );
+        // Reemplazar URLs de storage
+        const migratedData = sourceData.map((row: Record<string, unknown>) => {
+          const newRow = { ...row };
+          for (const key of Object.keys(newRow)) {
+            if (typeof newRow[key] === 'string' && (newRow[key] as string).includes('hfooshsteglylhvrpuka')) {
+              newRow[key] = (newRow[key] as string).replace(/hfooshsteglylhvrpuka/g, kreoonUrl.split('//')[1].split('.')[0]);
             }
           }
-          
-          recordsToUpsert.push(merged);
-        }
+          return newRow;
+        });
 
-        // Upsert in batches
-        const batchSize = 100;
-        for (let i = 0; i < recordsToUpsert.length; i += batchSize) {
-          const batch = recordsToUpsert.slice(i, i + batchSize);
-          
-          const { error: upsertError } = await kreoonClient
-            .from(table)
-            .upsert(batch, { 
-              onConflict: 'id',
-              ignoreDuplicates: false 
-            });
-
-          if (upsertError) {
-            tableResult.errors.push(`Upsert batch ${i}-${i + batch.length} error: ${upsertError.message}`);
-          } else {
-            tableResult.upserted += batch.length;
-          }
-        }
-
-        console.log(`  Upserted: ${tableResult.upserted}`);
-
-        // Get final count
-        const { count: finalCount } = await kreoonClient
+        // Insertar en destino con upsert
+        const { error: writeError } = await destClient
           .from(table)
-          .select('*', { count: 'exact', head: true });
-        
-        tableResult.target_after = finalCount ?? 0;
-        console.log(`  Target records after: ${tableResult.target_after}`);
+          .upsert(migratedData, { onConflict: 'id' });
 
+        if (writeError) {
+          results[table] = { success: false, error: writeError.message };
+        } else {
+          results[table] = { success: true, count: migratedData.length };
+        }
       } catch (tableError) {
-        tableResult.errors.push(`Table error: ${String(tableError)}`);
+        results[table] = { success: false, error: String(tableError) };
       }
-
-      results.push(tableResult);
     }
 
-    // Summary
-    const summary = {
-      total_tables: results.length,
-      successful: results.filter(r => r.errors.length === 0).length,
-      with_errors: results.filter(r => r.errors.length > 0).length,
-      total_records_migrated: results.reduce((sum, r) => sum + r.upserted, 0),
-    };
-
-    console.log('\n=== Migration Complete ===');
-    console.log(`Tables processed: ${summary.total_tables}`);
-    console.log(`Successful: ${summary.successful}`);
-    console.log(`With errors: ${summary.with_errors}`);
-    console.log(`Total records migrated: ${summary.total_records_migrated}`);
+    const successCount = Object.values(results).filter(r => r.success).length;
+    const failCount = Object.values(results).filter(r => !r.success).length;
 
     return new Response(JSON.stringify({
-      summary,
+      message: `Migración completada: ${successCount} tablas exitosas, ${failCount} con errores`,
       results,
-      global_errors: globalErrors,
-    }, null, 2), {
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('Migration failed:', message);
-    return new Response(JSON.stringify({ error: message }), {
+  } catch (error) {
+    console.error('Error en migración:', error);
+    return new Response(JSON.stringify({ error: String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

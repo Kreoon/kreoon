@@ -45,14 +45,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 // Columnas base del Kanban
 const BOARD_COLUMNS = KANBAN_COLUMNS;
 
-// Columnas para editores: grabado, en edición, entregado, novedad, corregido, aprobado, pagado
+// Columnas para editores: solo desde 'recorded' en adelante
 const EDITOR_COLUMNS = KANBAN_COLUMNS.filter(col => 
-  ['recorded', 'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'].includes(col.status)
+  ['recorded', 'editing', 'delivered', 'issue', 'approved'].includes(col.status)
 );
 
-// Columnas para creadores: asignado, en grabación, grabado, novedad, aprobado, pagado
+// Columnas para creadores: solo desde 'assigned' en adelante
 const CREATOR_COLUMNS = KANBAN_COLUMNS.filter(col => 
-  ['assigned', 'recording', 'recorded', 'issue', 'approved', 'paid'].includes(col.status)
+  ['assigned', 'recording', 'recorded', 'editing', 'delivered', 'approved', 'paid'].includes(col.status)
 );
 
 // Helper types for movement rules
@@ -300,30 +300,28 @@ export default function ContentBoard() {
     : (activeRole ||
        (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client'));
   
-  // Define role-specific allowed statuses (as requested by user)
-  // Creators: asignado, en grabación, grabado, novedad, aprobado, pagado
-  const CREATOR_ALLOWED_STATUSES = ['assigned', 'recording', 'recorded', 'issue', 'approved', 'paid'];
-  // Editors: grabado, en edición, entregado, novedad, corregido, aprobado, pagado
-  const EDITOR_ALLOWED_STATUSES = ['recorded', 'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'];
-
   // Helper function to check if a status is visible for the current role
   const isStatusVisibleForRole = useCallback((statusKey: string): boolean => {
     // Admin always sees everything (but NOT when impersonating as non-admin)
     if (primaryRole === 'admin' && !isImpersonating) return true;
 
-    // For creators: only show their specific stages
-    if (primaryRole === 'creator') {
-      return CREATOR_ALLOWED_STATUSES.includes(statusKey);
-    }
-    
-    // For editors: only show their specific stages
-    if (primaryRole === 'editor') {
-      return EDITOR_ALLOWED_STATUSES.includes(statusKey);
-    }
+    // Find the org status for this status key
+    const orgStatus = orgStatuses.find(s => s.status_key === statusKey);
+    if (!orgStatus) return true; // If no org status config, show by default
 
-    // For other roles (strategist, trafficker, etc.): show all
-    return true;
-  }, [primaryRole, isImpersonating]);
+    // Find the rule for this status
+    const rule = rules.find(r => r.status_id === orgStatus.id);
+    if (!rule) return true; // If no rule, show by default
+
+    // Check if user's role can view this status
+    const canViewRoles = (rule as any).can_view_roles as string[] | undefined;
+
+    // If explicitly configured empty => nobody sees this status
+    if (Array.isArray(canViewRoles) && canViewRoles.length === 0) return false;
+
+    const effectiveCanViewRoles = canViewRoles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
+    return effectiveCanViewRoles.includes(primaryRole);
+  }, [primaryRole, orgStatuses, rules, isImpersonating]);
 
   // Combine base columns with dynamic columns from organization_statuses
   // This ensures custom columns (like "en_campaa", "pagado") appear in the board
@@ -956,7 +954,7 @@ export default function ContentBoard() {
                         key={item.id}
                         content={item}
                         cardSize={settings?.card_size || 'normal'}
-                        visibleFields={settings?.visible_fields || ['title', 'status', 'client', 'deadline', 'creator', 'editor']}
+                        visibleFields={settings?.visible_fields || ['title', 'status', 'client', 'deadline', 'responsible']}
                         onClick={() => setSelectedContent(item)}
                         onDragStart={(e) => handleDragStart(e, item)}
                         isDragging={draggingContent?.id === item.id}
@@ -999,7 +997,7 @@ export default function ContentBoard() {
               content={filteredContent} 
               onContentClick={setSelectedContent}
               cardSize={settings?.card_size || 'normal'}
-              visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'creator', 'editor', 'deadline']}
+              visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
               organizationStatuses={orgStatuses}
               ambassadorIds={ambassadorIds}
             />
@@ -1013,7 +1011,7 @@ export default function ContentBoard() {
               onDateChange={setCalendarDate}
               onContentClick={setSelectedContent}
               cardSize={settings?.card_size || 'normal'}
-              visibleFields={settings?.visible_fields || ['title', 'status', 'creator', 'editor']}
+              visibleFields={settings?.visible_fields || ['title', 'status', 'responsible']}
               organizationStatuses={orgStatuses}
               ambassadorIds={ambassadorIds}
             />
@@ -1024,7 +1022,7 @@ export default function ContentBoard() {
             <BoardTableView 
               content={filteredContent} 
               onContentClick={setSelectedContent}
-              visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'creator', 'editor', 'deadline']}
+              visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
               organizationStatuses={orgStatuses}
               ambassadorIds={ambassadorIds}
             />

@@ -226,38 +226,6 @@ serve(async (req) => {
         });
       }
 
-      case "confirm_email": {
-        // Manually confirm a user's email
-        if (!email) {
-          return new Response(JSON.stringify({ error: "Email required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        }
-
-        // Find user by email
-        const { data: users, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
-        if (listErr) throw listErr;
-
-        const targetUser = users.users.find(u => u.email === email);
-        if (!targetUser) {
-          return new Response(JSON.stringify({ error: "User not found" }), {
-            status: 404,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        }
-
-        const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(targetUser.id, {
-          email_confirm: true,
-        });
-        if (updateErr) throw updateErr;
-
-        console.log(`Email confirmed for ${email}`);
-        return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      }
-
       case "toggle_ban": {
         if (!userId) {
           return new Response(JSON.stringify({ error: "User ID required" }), {
@@ -502,139 +470,10 @@ serve(async (req) => {
         });
       }
 
-      case "create_client_account": {
-        // Create auth account for an existing client that doesn't have one
-        const { clientId: targetClientId, password: clientPassword, organizationId } = body;
-        
-        if (!targetClientId || !email) {
-          return new Response(JSON.stringify({ error: "Client ID and email required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        }
-
-        // Verify client exists
-        const { data: client, error: clientErr } = await supabaseAdmin
-          .from("clients")
-          .select("id, name, contact_email, user_id, organization_id")
-          .eq("id", targetClientId)
-          .single();
-
-        if (clientErr || !client) {
-          return new Response(JSON.stringify({ error: "Client not found" }), {
-            status: 404,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        }
-
-        if (client.user_id) {
-          return new Response(JSON.stringify({ error: "Client already has an account linked" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        }
-
-        // Check if user already exists in auth
-        const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-        const existingUser = existingUsers?.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-
-        let newUserId: string;
-        const finalPassword = clientPassword || 'Kreoon2026!';
-
-        if (existingUser) {
-          // User exists in auth, just link them
-          newUserId = existingUser.id;
-          console.log(`User ${email} already exists, linking to client`);
-          
-          // Make sure email is confirmed
-          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-            email_confirm: true,
-          });
-        } else {
-          // Create new auth user
-          const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-            email,
-            password: finalPassword,
-            email_confirm: true,
-            user_metadata: { full_name: client.name }
-          });
-
-          if (createErr) {
-            console.error("Error creating user:", createErr);
-            return new Response(JSON.stringify({ error: createErr.message }), {
-              status: 400,
-              headers: { ...corsHeaders, "Content-Type": "application/json" }
-            });
-          }
-
-          newUserId = newUser.user.id;
-          console.log(`Created new user ${email} with id ${newUserId}`);
-        }
-
-        // Create/update profile
-        await supabaseAdmin
-          .from("profiles")
-          .upsert({
-            id: newUserId,
-            email,
-            full_name: client.name,
-            current_organization_id: client.organization_id || organizationId,
-          }, { onConflict: 'id' });
-
-        // Link user to client
-        await supabaseAdmin
-          .from("clients")
-          .update({ user_id: newUserId })
-          .eq("id", targetClientId);
-
-        // Add to client_users
-        await supabaseAdmin
-          .from("client_users")
-          .upsert({
-            client_id: targetClientId,
-            user_id: newUserId,
-            role: 'owner',
-            created_by: callerId,
-          }, { onConflict: 'client_id,user_id' });
-
-        // Add to organization_members if organization exists
-        const orgId = client.organization_id || organizationId;
-        if (orgId) {
-          await supabaseAdmin
-            .from("organization_members")
-            .upsert({
-              organization_id: orgId,
-              user_id: newUserId,
-              role: 'client',
-            }, { onConflict: 'organization_id,user_id' });
-
-          await supabaseAdmin
-            .from("organization_member_roles")
-            .upsert({
-              organization_id: orgId,
-              user_id: newUserId,
-              role: 'client',
-            }, { onConflict: 'organization_id,user_id,role' });
-        }
-
-        console.log(`Client account created/linked for ${email} -> client ${targetClientId}`);
-        
-        return new Response(JSON.stringify({ 
-          success: true, 
-          userId: newUserId,
-          password: existingUser ? null : finalPassword,
-          message: existingUser 
-            ? `Usuario existente vinculado al cliente. Ya puede iniciar sesión.`
-            : `Cuenta creada con contraseña temporal: ${finalPassword}`
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      }
-
       case "list_all_entities": {
         // Get counts of all entities for the admin dashboard
         const [clients, content, conversations, products, notifications, portfolioPosts, referrals] = await Promise.all([
-          supabaseAdmin.from("clients").select("id, name, user_id, contact_email, created_at").order("created_at", { ascending: false }),
+          supabaseAdmin.from("clients").select("id, name, user_id, created_at").order("created_at", { ascending: false }),
           supabaseAdmin.from("content").select("id, title, client_id, creator_id, status, created_at").order("created_at", { ascending: false }),
           supabaseAdmin.from("chat_conversations").select("id, name, is_group, created_at, created_by").order("created_at", { ascending: false }),
           supabaseAdmin.from("products").select("id, name, client_id, created_at").order("created_at", { ascending: false }),
