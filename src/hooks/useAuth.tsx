@@ -277,6 +277,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // If the user has no current organization selected, try to restore it automatically.
+      // This is essential because many queries + RLS policies are scoped by current_organization_id;
+      // when it's null, creators/editors often only see globally-visible items (e.g. paid/public).
+      // NOTE: This does NOT grant any role/permission; it only restores org context.
+      const ensureCurrentOrganization = async () => {
+        if (!userProfile) return;
+        if (userProfile.current_organization_id) return;
+
+        try {
+          // Prefer an owner org if exists, otherwise the most recent membership.
+          const { data: memberships, error: membershipsError } = await withTimeout(
+            () =>
+              supabase
+                .from('organization_members')
+                .select('organization_id, is_owner')
+                .eq('user_id', userProfile.id)
+                .order('is_owner', { ascending: false })
+                .limit(1),
+            8000
+          );
+
+          if (membershipsError) {
+            console.warn('[auth] organization_members lookup error', membershipsError);
+            return;
+          }
+
+          const inferredOrgId = memberships?.[0]?.organization_id ?? null;
+          if (!inferredOrgId) return;
+
+          const { error: updateError } = await withTimeout(
+            () =>
+              supabase
+                .from('profiles')
+                .update({ current_organization_id: inferredOrgId })
+                .eq('id', userProfile.id),
+            8000
+          );
+
+          if (updateError) {
+            console.warn('[auth] Failed to auto-set current_organization_id', updateError);
+            return;
+          }
+
+          // Keep local state consistent for downstream hooks (useOrgOwner/useContent).
+          userProfile = { ...userProfile, current_organization_id: inferredOrgId } as Profile;
+        } catch (e) {
+          console.warn('[auth] ensureCurrentOrganization error', e);
+        }
+      };
+
+      await ensureCurrentOrganization();
+
       // IMPORTANT: On silent refresh (tab focus / token refresh), do not clear existing
       // profile/roles if the fetch returns null or errors. This prevents visible UI flicker.
       if (!silent || userProfile) {
