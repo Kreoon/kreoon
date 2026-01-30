@@ -78,6 +78,7 @@ serve(async (req) => {
     }
 
     // ACTION: migrate_all_users - Create all users from source in Kreoon with temp password
+    // Also creates users from profiles that exist in Kreoon DB but not in Auth
     if (action === 'migrate_all_users') {
       const tempPassword = password || 'Kreoon2026!';
       
@@ -142,7 +143,46 @@ serve(async (req) => {
         }
       }
 
+      // Also check for profiles in Kreoon DB that don't have auth accounts
+      const { data: kreoonProfiles } = await kreoonClient.from('profiles').select('id, email, full_name');
+      if (kreoonProfiles) {
+        for (const profile of kreoonProfiles) {
+          const email = profile.email?.toLowerCase();
+          if (!email) continue;
+          
+          // Check if user already exists in Kreoon auth
+          const existingKreoon = kreoonUsers.users.find(u => u.email?.toLowerCase() === email);
+          if (!existingKreoon) {
+            try {
+              const { data: newUser, error: createErr } = await kreoonClient.auth.admin.createUser({
+                email,
+                password: tempPassword,
+                email_confirm: true,
+              });
+              
+              results.push({
+                email,
+                action: 'created_from_profile',
+                success: !createErr,
+                newId: newUser?.user?.id,
+                error: createErr?.message,
+              });
+              
+              console.log(`User ${email} created from profile: ${createErr ? 'FAILED' : 'SUCCESS'}`);
+            } catch (err) {
+              results.push({
+                email,
+                action: 'error',
+                success: false,
+                error: err instanceof Error ? err.message : 'Unknown error',
+              });
+            }
+          }
+        }
+      }
+
       const created = results.filter(r => r.action === 'created' && r.success).length;
+      const createdFromProfile = results.filter(r => r.action === 'created_from_profile' && r.success).length;
       const updated = results.filter(r => r.action === 'password_updated' && r.success).length;
       const failed = results.filter(r => !r.success).length;
 
@@ -150,6 +190,7 @@ serve(async (req) => {
         action: 'migrate_all_users',
         total_source: sourceUsers.users.length,
         created,
+        created_from_profiles: createdFromProfile,
         updated,
         failed,
         temp_password: tempPassword,
