@@ -65,6 +65,42 @@ DO $$
 DECLARE
   tbl text;
 BEGIN
+  -- Si ejecutas solo este bloque (paso 3) sin haber corrido el paso 2,
+  -- la tabla temporal no existe y el DELETE dinámico falla.
+  -- Este guard la crea automáticamente en pg_temp.
+  IF to_regclass('pg_temp.perfiles_a_eliminar') IS NULL THEN
+    CREATE TEMP TABLE perfiles_a_eliminar AS
+    WITH dup AS (
+      SELECT email
+      FROM public.profiles
+      WHERE current_organization_id = 'c8ae6c6d-a15d-46d9-b69e-465f7371595e'
+      GROUP BY email
+      HAVING COUNT(*) > 1
+    ),
+    scored AS (
+      SELECT
+        p.id,
+        p.email,
+        p.created_at,
+        (
+          (SELECT COUNT(*) FROM public.content c WHERE c.creator_id = p.id) +
+          (SELECT COUNT(*) FROM public.content c WHERE c.editor_id = p.id) +
+          (SELECT COUNT(*) FROM public.content c WHERE c.strategist_id = p.id)
+        ) AS total_proyectos
+      FROM public.profiles p
+      JOIN dup d ON d.email = p.email
+    ),
+    keep AS (
+      SELECT DISTINCT ON (email)
+        id
+      FROM scored
+      ORDER BY email, total_proyectos DESC, created_at ASC
+    )
+    SELECT s.id
+    FROM scored s
+    WHERE s.id NOT IN (SELECT id FROM keep);
+  END IF;
+
   FOREACH tbl IN ARRAY ARRAY[
     'organization_member_badges',
     'organization_member_roles',
