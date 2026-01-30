@@ -316,10 +316,13 @@ export default function ContentBoard() {
     // Check if user's role can view this status
     const canViewRoles = (rule as any).can_view_roles as string[] | undefined;
 
-    // If explicitly configured empty => nobody sees this status
-    if (Array.isArray(canViewRoles) && canViewRoles.length === 0) return false;
-
-    const effectiveCanViewRoles = canViewRoles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
+    // IMPORTANT: Treat empty arrays as "not configured" (legacy behavior).
+    // During migration, many rules were created with empty arrays which would
+    // otherwise hide all columns/content for creators/editors.
+    const effectiveCanViewRoles =
+      Array.isArray(canViewRoles) && canViewRoles.length > 0
+        ? canViewRoles
+        : ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
     return effectiveCanViewRoles.includes(primaryRole);
   }, [primaryRole, orgStatuses, rules, isImpersonating]);
 
