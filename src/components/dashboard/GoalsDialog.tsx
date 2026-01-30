@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,8 +34,7 @@ const MONTHS = [
 
 const QUARTERS = ['Q1 (Ene-Mar)', 'Q2 (Abr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Oct-Dic)'];
 
-export const GoalsDialog = forwardRef<HTMLDivElement, GoalsDialogProps>(
-  function GoalsDialog({ open, onOpenChange, onSave }, ref) {
+export function GoalsDialog({ open, onOpenChange, onSave }: GoalsDialogProps) {
     const { toast } = useToast();
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
@@ -318,4 +317,4 @@ export const GoalsDialog = forwardRef<HTMLDivElement, GoalsDialogProps>(
       </DialogContent>
     </Dialog>
   );
-});
+}
