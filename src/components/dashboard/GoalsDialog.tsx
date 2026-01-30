@@ -82,7 +82,6 @@ export const GoalsDialog = forwardRef<HTMLDivElement, GoalsDialogProps>(
         .eq('period_type', goal.period_type)
         .eq('period_value', goal.period_value)
         .eq('year', goal.year)
-        .eq('organization_id', currentOrgId)
         .maybeSingle();
 
       if (data) {

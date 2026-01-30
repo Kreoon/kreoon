@@ -509,7 +509,7 @@ export default function Dashboard() {
                          currentYear;
       
       // Fetch current month/quarter goal - check both current year and filter year
-      // Always filter goals by organization
+      // NOTE: Do NOT client-filter by organization_id; rely on RLS to scope rows.
       let goalQuery = supabase
         .from('goals')
         .select('*')
@@ -518,10 +518,6 @@ export default function Dashboard() {
         .in('year', [currentYear, currentYear + 1, filterYear])
         .order('year', { ascending: false })
         .limit(1);
-      
-      if (currentOrgId) {
-        goalQuery = goalQuery.eq('organization_id', currentOrgId);
-      }
       
       const { data: goalData } = await goalQuery.maybeSingle();
 
@@ -540,10 +536,6 @@ export default function Dashboard() {
         .select('*')
         .in('year', yearsToFetch)
         .eq('period_type', 'month');
-      
-      if (currentOrgId) {
-        allGoalsQuery = allGoalsQuery.eq('organization_id', currentOrgId);
-      }
       
       const { data: allGoalsData } = await allGoalsQuery;
       
