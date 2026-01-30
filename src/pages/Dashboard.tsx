@@ -1423,9 +1423,6 @@ export default function Dashboard() {
               .eq('period_value', currentMonth)
               .eq('year', currentYear);
             
-            if (currentOrgId) {
-              goalQuery = goalQuery.eq('organization_id', currentOrgId);
-            }
             const { data } = await goalQuery.maybeSingle();
             if (data) {
               setCurrentGoal({
