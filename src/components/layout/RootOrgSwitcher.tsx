@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface Organization {
   id: string;
@@ -24,6 +25,7 @@ interface Organization {
 export function RootOrgSwitcher() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [open, setOpen] = useState(false);
@@ -124,8 +126,15 @@ export function RootOrgSwitcher() {
       localStorage.setItem('currentOrganizationId', org.id);
       setOpen(false);
       
-      // Reload to apply org context
-      window.location.reload();
+      toast({
+        title: 'Organización seleccionada',
+        description: `Ahora estás viendo: ${org.name}`,
+      });
+      
+      // Navigate to dashboard instead of just reloading
+      navigate('/dashboard');
+      // Also reload to ensure all context is refreshed
+      setTimeout(() => window.location.reload(), 100);
     } catch (error) {
       console.error('Error switching organization:', error);
       toast({
