@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface Organization {
@@ -22,11 +23,13 @@ interface Organization {
 
 export function RootOrgSwitcher() {
   const { profile } = useAuth();
+  const { toast } = useToast();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     fetchOrganizations();
@@ -57,12 +60,45 @@ export function RootOrgSwitcher() {
   };
 
   const handleSwitchOrg = async (org: Organization) => {
+    if (!org?.id) return;
+
     try {
+      setSwitching(true);
+
+      // In migration scenarios, the in-memory profile can briefly be null (or the profile id
+      // differs from auth.uid()). Resolve a safe profile id before updating.
+      let profileId = profile?.id;
+
+      if (!profileId) {
+        const { data: authRes } = await supabase.auth.getUser();
+        const email = authRes.user?.email;
+
+        if (email) {
+          const { data: profileByEmail, error: profileByEmailError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', email)
+            .maybeSingle();
+
+          if (profileByEmailError) throw profileByEmailError;
+          profileId = profileByEmail?.id;
+        }
+      }
+
+      if (!profileId) {
+        toast({
+          title: 'No se pudo cambiar de organización',
+          description: 'Tu perfil aún no está listo. Espera 2–3 segundos y vuelve a intentar.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Update current_organization_id in profile
       const { error } = await supabase
         .from('profiles')
         .update({ current_organization_id: org.id })
-        .eq('id', profile?.id);
+        .eq('id', profileId);
 
       if (error) throw error;
 
@@ -74,6 +110,13 @@ export function RootOrgSwitcher() {
       window.location.reload();
     } catch (error) {
       console.error('Error switching organization:', error);
+      toast({
+        title: 'Error cambiando organización',
+        description: 'No se pudo guardar la organización seleccionada. Intenta de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSwitching(false);
     }
   };
 
@@ -142,10 +185,12 @@ export function RootOrgSwitcher() {
                 <button
                   key={org.id}
                   onClick={() => handleSwitchOrg(org)}
+                  disabled={switching}
                   className={cn(
                     "w-full flex items-center gap-3 p-2 rounded-md text-left transition-colors",
                     "hover:bg-accent",
-                    currentOrg?.id === org.id && "bg-accent"
+                    currentOrg?.id === org.id && "bg-accent",
+                    switching && "opacity-60 pointer-events-none"
                   )}
                 >
                   <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center overflow-hidden shrink-0">
