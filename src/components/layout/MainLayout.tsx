@@ -246,7 +246,14 @@ export function MainLayout({
   
   // Default admin/other layout
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Tech ambient background effects */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/[0.03] rounded-full blur-[200px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-violet-500/[0.02] rounded-full blur-[180px]" />
+        <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-primary/[0.02] rounded-full blur-[150px]" />
+      </div>
+      
       {/* Trial Banner - Shows when billing is enabled and trial is expiring/expired */}
       <TrialBanner 
         organizationId={profile?.current_organization_id || null} 
