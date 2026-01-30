@@ -1351,7 +1351,7 @@ export default function Dashboard() {
 
           {/* TAB 2: FINANCIERO - Todo lo financiero */}
           <TabsContent value="financiero" className="space-y-4 mt-0">
-            {/* Summary Cards */}
+            {/* Summary Cards - Row 1: Ingresos */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="p-4 rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border border-yellow-500/30">
                 <div className="flex items-center gap-2 mb-2">
@@ -1372,14 +1372,82 @@ export default function Dashboard() {
                   <CheckCircle className="h-4 w-4 text-success" />
                   <span className="text-sm font-medium">Total Recaudado</span>
                 </div>
-                <p className="text-lg font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidCOP + clientsBilling.totalPaidUSD * 4000} currency="COP" size="sm" /></p>
+                <div>
+                  <p className="text-lg font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" /></p>
+                  <p className="text-xs text-success/70"><CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></p>
+                </div>
               </div>
               <div className="p-4 rounded-xl bg-gradient-to-br from-warning/10 to-warning/5 border border-warning/30">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-4 w-4 text-warning" />
                   <span className="text-sm font-medium">Total Por Cobrar</span>
                 </div>
-                <p className="text-lg font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingCOP + clientsBilling.totalPendingUSD * 4000} currency="COP" size="sm" /></p>
+                <div>
+                  <p className="text-lg font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingCOP} currency="COP" size="sm" /></p>
+                  <p className="text-xs text-warning/70"><CurrencyDisplay value={clientsBilling.totalPendingUSD} currency="USD" size="sm" /></p>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Cards - Row 2: Egresos y Utilidad */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* Total Por Pagar al Equipo */}
+              <div className="p-4 rounded-xl bg-gradient-to-br from-destructive/10 to-destructive/5 border border-destructive/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Banknote className="h-4 w-4 text-destructive" />
+                  <span className="text-sm font-medium">Total Por Pagar</span>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-destructive"><CurrencyDisplay value={pendingCreatorPaymentCOP + pendingEditorPaymentCOP} currency="COP" size="sm" /></p>
+                  <p className="text-xs text-destructive/70"><CurrencyDisplay value={pendingCreatorPaymentUSD + pendingEditorPaymentUSD} currency="USD" size="sm" /></p>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Creadores + Editores</p>
+              </div>
+
+              {/* Total Pagado al Equipo */}
+              <div className="p-4 rounded-xl bg-gradient-to-br from-info/10 to-info/5 border border-info/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="h-4 w-4 text-info" />
+                  <span className="text-sm font-medium">Total Pagado Equipo</span>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-info"><CurrencyDisplay value={paidCreatorPaymentCOP + paidEditorPaymentCOP} currency="COP" size="sm" /></p>
+                  <p className="text-xs text-info/70"><CurrencyDisplay value={paidCreatorPaymentUSD + paidEditorPaymentUSD} currency="USD" size="sm" /></p>
+                </div>
+              </div>
+
+              {/* Utilidad Real (ya cobrado - ya pagado) */}
+              <div className="p-4 rounded-xl bg-gradient-to-br from-success/10 to-success/5 border border-success/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="h-4 w-4 text-success" />
+                  <span className="text-sm font-medium">Utilidad Real</span>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-success">
+                    <CurrencyDisplay value={clientsBilling.totalPaidCOP - (paidCreatorPaymentCOP + paidEditorPaymentCOP)} currency="COP" size="sm" />
+                  </p>
+                  <p className="text-xs text-success/70">
+                    <CurrencyDisplay value={clientsBilling.totalPaidUSD - (paidCreatorPaymentUSD + paidEditorPaymentUSD)} currency="USD" size="sm" />
+                  </p>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Recaudado - Pagado</p>
+              </div>
+
+              {/* Posible Utilidad (por cobrar - por pagar) */}
+              <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Posible Utilidad</span>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-primary">
+                    <CurrencyDisplay value={clientsBilling.totalPendingCOP - (pendingCreatorPaymentCOP + pendingEditorPaymentCOP)} currency="COP" size="sm" />
+                  </p>
+                  <p className="text-xs text-primary/70">
+                    <CurrencyDisplay value={clientsBilling.totalPendingUSD - (pendingCreatorPaymentUSD + pendingEditorPaymentUSD)} currency="USD" size="sm" />
+                  </p>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Por Cobrar - Por Pagar</p>
               </div>
             </div>
 
