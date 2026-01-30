@@ -429,7 +429,9 @@ export default function Dashboard() {
       const { data: clientsList } = await clientsQuery;
       setClients(clientsList?.map(c => ({ id: c.id, name: c.name })) || []);
 
-      // Fetch packages with client info - filter by org (via client)
+      // Fetch packages (do NOT embed clients). The external DB may not expose FK metadata
+      // for PostgREST embedding, which causes a 400 and zeroes all finance KPIs.
+      // We'll attach client info locally from the already-fetched clientsList.
       // Get client IDs for this org first
       const orgClientIds = clientsList?.map(c => c.id) || [];
       
@@ -438,16 +440,17 @@ export default function Dashboard() {
       if (orgClientIds.length > 0) {
         const { data } = await supabase
           .from('client_packages')
-          .select('*, clients(*)')
+          .select('*')
           .eq('is_active', true)
           .in('client_id', orgClientIds);
         packagesData = data || [];
       }
 
       if (packagesData) {
+        const clientById = new Map((clientsList || []).map(c => [c.id, c]));
         const mappedPackages = packagesData.map(p => ({
           ...p,
-          client: p.clients as Client
+          client: (clientById.get(p.client_id) as Client | undefined)
         })) as (ClientPackage & { client?: Client })[];
         
         // Filter packages by date range
