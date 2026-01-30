@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   Video, Users, CheckCircle, Clock, DollarSign, TrendingUp, 
   Activity, Target, BarChart3, ArrowUpRight, ArrowDownRight,
@@ -663,6 +663,44 @@ export default function Dashboard() {
 
     calculateActiveUsers();
   }, [content]);
+
+  // Realtime subscription for clients and packages
+  useEffect(() => {
+    if (!currentOrgId) return;
+
+    const channel = supabase
+      .channel('dashboard-data-sync')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'clients',
+          filter: `organization_id=eq.${currentOrgId}`
+        },
+        () => {
+          console.log('[Realtime] Clients changed, refetching...');
+          refetch();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'client_packages'
+        },
+        () => {
+          console.log('[Realtime] Packages changed, refetching...');
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentOrgId, refetch]);
 
   // Stats calculations
   const totalContent = content.length;
