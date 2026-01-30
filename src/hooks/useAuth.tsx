@@ -65,6 +65,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (dbRole && roles.includes(dbRole)) {
         setActiveRoleState(dbRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, dbRole);
+      } else if (roles.includes('admin')) {
+        // IMPORTANT: Admin users must default to admin to avoid accidentally loading
+        // scoped views (e.g. creator/editor) due to stale localStorage.
+        // If they intentionally want another view, they can change it and it will
+        // persist via profile.active_role.
+        setActiveRoleState('admin');
+        localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, 'admin');
       } else if (storedRole && roles.includes(storedRole)) {
         setActiveRoleState(storedRole);
       } else {
