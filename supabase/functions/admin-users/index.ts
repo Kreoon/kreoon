@@ -39,25 +39,31 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     
-    // Create a client with the user's token to validate their identity
+    // Create admin client with service role to get the current user
+    // This avoids JWT validation issues between Lovable Cloud and Kreoon
+    const supabaseAdmin = createClient(kreoonUrl, kreoonServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Create a client with the user's token to get their identity from Kreoon
     const supabaseAuth = createClient(kreoonUrl, kreoonAnonKey, {
       global: { headers: { Authorization: authHeader } },
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Use getClaims to validate the JWT locally
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    // Try to get the user from Kreoon directly
+    const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
-      console.error("Auth error:", claimsError);
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
+    if (userError || !userData?.user) {
+      console.error("Auth error:", userError);
+      return new Response(JSON.stringify({ error: "Invalid or expired token - please log in again" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    const callerEmail = claimsData.claims.email as string;
-    const callerId = claimsData.claims.sub as string;
+    const callerEmail = userData.user.email as string;
+    const callerId = userData.user.id as string;
 
     // Check if caller is the root user
     if (callerEmail !== ROOT_EMAIL) {
@@ -68,10 +74,7 @@ serve(async (req) => {
       });
     }
 
-    // Create admin client with service role for database operations on Kreoon
-    const supabaseAdmin = createClient(kreoonUrl, kreoonServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    // supabaseAdmin is already defined above, reuse it
 
     console.log(`Admin action authorized for ${callerEmail}`);
 
