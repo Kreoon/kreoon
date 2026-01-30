@@ -231,9 +231,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
     };
 
+    // Root admin emails for fallback lookup
+    const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
+    
     try {
       // First fetch profile to get current_organization_id (with 10s timeout)
-      const profileResult = await withTimeout(
+      let profileResult = await withTimeout(
         () =>
           supabase
             .from('profiles')
@@ -247,7 +250,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('[auth] profile fetch error', profileResult.error);
       }
 
-      const userProfile = profileResult.data as Profile | null;
+      let userProfile = profileResult.data as Profile | null;
+
+      // FALLBACK: If profile not found by ID, check if this is a root admin by email
+      // This handles ID mismatch issues from project migrations
+      if (!userProfile) {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const userEmail = authUser?.email;
+        
+        if (userEmail && ROOT_EMAILS.includes(userEmail)) {
+          console.log('[auth] Profile not found by ID, trying email lookup for root admin');
+          const emailProfileResult = await withTimeout(
+            () =>
+              supabase
+                .from('profiles')
+                .select('*')
+                .eq('email', userEmail)
+                .maybeSingle(),
+            10000
+          );
+          
+          if (emailProfileResult.data) {
+            userProfile = emailProfileResult.data as Profile;
+            console.log('[auth] Found root admin profile by email');
+          }
+        }
+      }
 
       // IMPORTANT: On silent refresh (tab focus / token refresh), do not clear existing
       // profile/roles if the fetch returns null or errors. This prevents visible UI flicker.
@@ -261,11 +289,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // so multi-role users can still switch roles.
       let userRoles: AppRole[] = [];
 
+      // IMPORTANT: Use profile ID for role lookups if profile was found by email (ID mismatch scenario)
+      const roleUserId = userProfile?.id || userId;
+
       const fetchOrgRoles = async (organizationId?: string) => {
         const q = supabase
           .from('organization_member_roles')
           .select('role')
-          .eq('user_id', userId);
+          .eq('user_id', roleUserId);
 
         return organizationId ? q.eq('organization_id', organizationId) : q;
       };
@@ -289,7 +320,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               supabase
                 .from('organization_members')
                 .select('role')
-                .eq('user_id', userId)
+                .eq('user_id', roleUserId)
                 .eq('organization_id', userProfile.current_organization_id)
                 .maybeSingle(),
             8000
@@ -321,7 +352,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               supabase
                 .from('organization_members')
                 .select('role')
-                .eq('user_id', userId)
+                .eq('user_id', roleUserId)
                 .limit(50),
             8000
           );
@@ -350,7 +381,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               supabase
                 .from('client_users')
                 .select('id')
-                .eq('user_id', userId)
+                .eq('user_id', roleUserId)
                 .limit(1),
             8000
           );
@@ -377,11 +408,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             supabase
               .from('user_roles')
               .select('role')
-              .eq('user_id', userId),
+              .eq('user_id', roleUserId),
           8000
         );
 
         userRoles = (rolesResult.data || []).map((r) => r.role as AppRole);
+      }
+      
+      // FINAL FALLBACK: If still no roles and this is a root admin, grant admin role
+      if (userRoles.length === 0 && userProfile?.email && ROOT_EMAILS.includes(userProfile.email)) {
+        console.log('[auth] Root admin detected with no roles, granting admin role');
+        userRoles = ['admin'];
       }
 
       if (!silent || userRoles.length > 0) {
