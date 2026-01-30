@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useContent } from '@/hooks/useContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
+import { Content, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
+import { TechKpiDialog } from '@/components/dashboard/TechKpiDialog';
 import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/index';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
@@ -19,6 +18,8 @@ import { RoleUPWidget } from '@/components/points/RoleUPWidget';
 import { RoleLeaderboard } from '@/components/points/RoleLeaderboard';
 import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
+import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
+import { TechGrid, TechParticles, TechOrb } from '@/components/ui/tech-effects';
 import { 
   Scissors, 
   Clock, 
@@ -29,82 +30,17 @@ import {
   CreditCard,
   TrendingUp,
   Play,
-  Star,
   ArrowRight,
   Hammer
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
 
-// Premium Stats Card Component
-const StatsCard = ({ 
-  title, 
-  value, 
-  icon: Icon, 
-  color = "primary",
-  onClick,
-  subtitle,
-  prefix = "",
-  suffix = ""
-}: { 
-  title: string; 
-  value: number; 
-  icon: any; 
-  color?: "primary" | "success" | "warning" | "info" | "destructive" | "purple";
-  onClick?: () => void;
-  subtitle?: string;
-  prefix?: string;
-  suffix?: string;
-}) => {
-  const colorClasses = {
-    primary: "from-primary/20 to-primary/5 border-primary/30",
-    success: "from-success/20 to-success/5 border-success/30",
-    warning: "from-warning/20 to-warning/5 border-warning/30",
-    info: "from-info/20 to-info/5 border-info/30",
-    destructive: "from-destructive/20 to-destructive/5 border-destructive/30",
-    purple: "from-purple-500/20 to-purple-500/5 border-purple-500/30",
-  };
-
-  const iconColors = {
-    primary: "text-primary",
-    success: "text-success",
-    warning: "text-warning",
-    info: "text-info",
-    destructive: "text-destructive",
-    purple: "text-purple-500",
-  };
-
-  return (
-    <div 
-      onClick={onClick}
-      className={cn(
-        "group relative overflow-hidden rounded-2xl border-2 p-4",
-        "bg-gradient-to-br backdrop-blur-xl",
-        "transition-all duration-300 hover:scale-[1.02] hover:shadow-lg",
-        colorClasses[color],
-        onClick && "cursor-pointer"
-      )}
-    >
-      <div className="flex items-center gap-3">
-        <div className={cn("p-2 rounded-lg bg-background/50", iconColors[color])}>
-          <Icon className="w-5 h-5" />
-        </div>
-        <div>
-          <p className="text-2xl font-bold">{prefix}{value.toLocaleString()}{suffix}</p>
-          <p className="text-sm text-muted-foreground">{title}</p>
-          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export default function EditorDashboard() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { effectiveUserId, isImpersonating } = useImpersonation();
   
-  // Use effective user ID for impersonation, otherwise real user ID
   const targetUserId = isImpersonating ? effectiveUserId : user?.id;
   
   const { content: allContent, loading, refetch } = useContent(targetUserId, 'editor');
@@ -117,7 +53,6 @@ export default function EditorDashboard() {
     content: Content[];
   }>({ open: false, title: '', content: [] });
 
-  // Filtrar por mes actual
   const content = useThisMonthFilter(allContent, thisMonthActive);
 
   const openKpiDialog = (title: string, contentList: Content[]) => {
@@ -144,202 +79,374 @@ export default function EditorDashboard() {
   const completedCount = content.filter(c => ['approved', 'paid', 'delivered'].includes(c.status)).length;
   const progressPercent = totalAssigned > 0 ? (completedCount / totalAssigned) * 100 : 0;
 
+  // Chart data for sparklines
+  const chartData = [totalAssigned, toEditContent.length, editingContent.length, approvedContent.length, paidContent.length];
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+        <TechGrid className="absolute inset-0" />
+        <TechParticles count={15} />
+        <motion.div
+          className="flex flex-col items-center gap-4"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          >
+            <Loader2 className="w-10 h-10 text-[hsl(270,100%,60%)]" />
+          </motion.div>
+          <motion.span
+            className="text-[hsl(270,100%,70%)] text-sm font-medium"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            Cargando panel...
+          </motion.span>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
-      {/* Page Header */}
-      <PageHeader
-        icon={Hammer}
-        title="KREOON Board"
-        subtitle={`Bienvenido, ${profile?.full_name}`}
-        action={
-          <div className="flex flex-wrap items-center gap-3">
-            <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
-            {profile?.is_ambassador && (
-              <AmbassadorBadge size="md" variant="glow" />
-            )}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-              <DollarSign className="w-4 h-4 text-success" />
-              <span className="font-semibold text-success text-sm">
-                ${pendingPayment.toLocaleString()}
-              </span>
-              <span className="text-xs text-muted-foreground hidden sm:inline">pendiente</span>
-            </div>
-            {user && <PortfolioButton userId={user.id} />}
-          </div>
-        }
-      />
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-        <StatsCard
-          title="Total Asignados"
-          value={content.length}
-          icon={Scissors}
-          color="purple"
-          onClick={() => openKpiDialog('Total Asignados', content)}
-        />
-        <StatsCard
-          title="Por Editar"
-          value={toEditContent.length}
-          icon={Clock}
-          color="info"
-          onClick={() => openKpiDialog('Por Editar', toEditContent)}
-        />
-        <StatsCard
-          title="En Edición"
-          value={editingContent.length}
-          icon={Video}
-          color="warning"
-          onClick={() => openKpiDialog('En Edición', editingContent)}
-        />
-        <StatsCard
-          title="Aprobados"
-          value={approvedContent.length}
-          icon={CheckCircle2}
-          color="success"
-          onClick={() => openKpiDialog('Aprobados', approvedContent)}
-        />
-        <StatsCard
-          title="Por Pagar"
-          value={unpaidContent.length}
-          icon={DollarSign}
-          color="warning"
-          subtitle={`$${pendingPayment.toLocaleString()}`}
-          onClick={() => openKpiDialog('Por Pagar', unpaidContent)}
-        />
-        <StatsCard
-          title="Pagados"
-          value={paidContent.length}
-          icon={CreditCard}
-          color="success"
-          subtitle={`$${totalPaid.toLocaleString()}`}
-          onClick={() => openKpiDialog('Pagados', paidContent)}
-        />
+    <div className="relative min-h-screen">
+      {/* Tech Background Effects */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <TechGrid className="absolute inset-0" />
+        <TechParticles count={25} />
+        <TechOrb size="lg" position="top-right" />
+        <TechOrb size="md" position="bottom-left" delay={1} />
       </div>
 
-      {/* UGC Points Widget */}
-      {targetUserId && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <RoleUPWidget userId={targetUserId} role="editor" />
-          <div className="lg:col-span-2">
-            <Card className="border-border/50 h-full">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-primary" />
-                    <h3 className="font-semibold text-sm">Progreso General</h3>
+      <div className="relative z-10 space-y-4 p-4 md:p-6">
+        {/* Page Header */}
+        <PageHeader
+          icon={Hammer}
+          title="KREOON Board"
+          subtitle={`Bienvenido, ${profile?.full_name}`}
+          action={
+            <div className="flex flex-wrap items-center gap-3">
+              <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
+              {profile?.is_ambassador && (
+                <AmbassadorBadge size="md" variant="glow" />
+              )}
+              <motion.div 
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border backdrop-blur-xl"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(160 100% 45% / 0.15), hsl(160 100% 45% / 0.05))',
+                  borderColor: 'hsl(160 100% 45% / 0.3)',
+                  boxShadow: '0 0 20px hsl(160 100% 45% / 0.2)',
+                }}
+                whileHover={{ scale: 1.02 }}
+              >
+                <DollarSign className="w-5 h-5 text-emerald-400" />
+                <span className="font-bold text-emerald-400 text-lg">
+                  ${pendingPayment.toLocaleString()}
+                </span>
+                <span className="text-xs text-emerald-400/70 hidden sm:inline">pendiente</span>
+              </motion.div>
+              {user && <PortfolioButton userId={user.id} />}
+            </div>
+          }
+        />
+
+        {/* Stats Grid - Tech Style */}
+        <motion.div 
+          className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ staggerChildren: 0.1 }}
+        >
+          <TechKpiCard
+            title="Total Asignados"
+            value={content.length}
+            icon={Scissors}
+            color="violet"
+            chartType="sparkline"
+            chartData={chartData}
+            onClick={() => openKpiDialog('Total Asignados', content)}
+            size="sm"
+          />
+          <TechKpiCard
+            title="Por Editar"
+            value={toEditContent.length}
+            icon={Clock}
+            color="cyan"
+            chartType="radial"
+            goalValue={content.length}
+            onClick={() => openKpiDialog('Por Editar', toEditContent)}
+            size="sm"
+          />
+          <TechKpiCard
+            title="En Edición"
+            value={editingContent.length}
+            icon={Video}
+            color="amber"
+            chartType="bar"
+            onClick={() => openKpiDialog('En Edición', editingContent)}
+            size="sm"
+          />
+          <TechKpiCard
+            title="Aprobados"
+            value={approvedContent.length}
+            icon={CheckCircle2}
+            color="emerald"
+            chartType="radial"
+            goalValue={content.length}
+            onClick={() => openKpiDialog('Aprobados', approvedContent)}
+            size="sm"
+          />
+          <TechKpiCard
+            title="Por Pagar"
+            value={unpaidContent.length}
+            icon={DollarSign}
+            color="amber"
+            subtitle={`$${pendingPayment.toLocaleString()}`}
+            chartType="bar"
+            onClick={() => openKpiDialog('Por Pagar', unpaidContent)}
+            size="sm"
+          />
+          <TechKpiCard
+            title="Pagados"
+            value={paidContent.length}
+            icon={CreditCard}
+            color="emerald"
+            subtitle={`$${totalPaid.toLocaleString()}`}
+            chartType="sparkline"
+            onClick={() => openKpiDialog('Pagados', paidContent)}
+            size="sm"
+          />
+        </motion.div>
+
+        {/* UGC Points Widget + Progress */}
+        {targetUserId && (
+          <motion.div 
+            className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <RoleUPWidget userId={targetUserId} role="editor" />
+            <div className="lg:col-span-2">
+              <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-[hsl(250,20%,6%)] to-[hsl(250,20%,4%)] h-full overflow-hidden relative">
+                {/* Card glow effect */}
+                <motion.div
+                  className="absolute inset-0 opacity-30"
+                  style={{
+                    background: 'radial-gradient(circle at 50% 0%, hsl(270 100% 60% / 0.1), transparent 50%)',
+                  }}
+                />
+                <CardContent className="p-4 relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <motion.div
+                        className="p-2 rounded-lg"
+                        style={{
+                          background: 'hsl(270 100% 60% / 0.15)',
+                          border: '1px solid hsl(270 100% 60% / 0.3)',
+                        }}
+                        animate={{
+                          boxShadow: [
+                            '0 0 10px hsl(270 100% 60% / 0.2)',
+                            '0 0 20px hsl(270 100% 60% / 0.4)',
+                            '0 0 10px hsl(270 100% 60% / 0.2)',
+                          ],
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <TrendingUp className="w-4 h-4 text-[hsl(270,100%,60%)]" />
+                      </motion.div>
+                      <h3 className="font-semibold text-sm text-[hsl(270,100%,70%)]">Progreso General</h3>
+                    </div>
+                    <span className="text-xs text-[hsl(270,30%,60%)]">
+                      {completedCount} de {totalAssigned} completados
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {completedCount} de {totalAssigned} completados
-                  </span>
-                </div>
-                <Progress value={progressPercent} className="h-2" />
-                <p className="text-xs text-muted-foreground mt-2">
-                  {progressPercent.toFixed(0)}% de tu contenido ha sido aprobado o entregado
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
-      {toEditContent.length > 0 && (
-        <Card className="border-info/30 bg-info/5">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-info/20">
-                  <Clock className="h-5 w-5 text-info" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Tienes {toEditContent.length} video(s) por editar</p>
-                  <p className="text-xs text-muted-foreground">Revisa tu cola de edición</p>
-                </div>
-              </div>
-              <Button size="sm" onClick={() => navigate('/board')}>
-                Ver tablero
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
+                  
+                  {/* Custom Tech Progress Bar */}
+                  <div className="h-3 bg-[hsl(250,20%,10%)] rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
+                    <motion.div
+                      className="h-full relative overflow-hidden"
+                      style={{
+                        background: 'linear-gradient(90deg, hsl(270 100% 60%), hsl(300 100% 60%))',
+                        boxShadow: '0 0 20px hsl(270 100% 60% / 0.5)',
+                      }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 1.5, ease: "easeOut" }}
+                    >
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                    </motion.div>
+                  </div>
+                  
+                  <p className="text-xs text-[hsl(270,30%,60%)] mt-3">
+                    <span className="text-[hsl(270,100%,70%)] font-bold">{progressPercent.toFixed(0)}%</span> de tu contenido ha sido aprobado o entregado
+                  </p>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </motion.div>
+        )}
 
-      {/* Recent Content */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold">Contenido Reciente</h3>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/board')}>
-            Ver todo
-          </Button>
-        </div>
-        <div className="space-y-2">
-          {content.slice(0, 5).map(item => (
-            <Card key={item.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedContent(item)}>
-              <CardContent className="p-3 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                  {item.thumbnail_url ? (
-                    <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
-                  ) : (
-                    <Play className="h-4 w-4 text-muted-foreground" />
-                  )}
+        {/* Pending Edit Alert */}
+        {toEditContent.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="border-[hsl(190,100%,50%,0.3)] bg-gradient-to-r from-[hsl(190,100%,50%,0.1)] to-transparent overflow-hidden relative">
+              <motion.div
+                className="absolute inset-0"
+                style={{
+                  background: 'linear-gradient(90deg, hsl(190 100% 50% / 0.05), transparent)',
+                }}
+              />
+              <CardContent className="p-4 relative z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <motion.div 
+                      className="p-3 rounded-xl"
+                      style={{
+                        background: 'hsl(190 100% 50% / 0.15)',
+                        border: '1px solid hsl(190 100% 50% / 0.3)',
+                      }}
+                      animate={{
+                        boxShadow: [
+                          '0 0 10px hsl(190 100% 50% / 0.3)',
+                          '0 0 25px hsl(190 100% 50% / 0.5)',
+                          '0 0 10px hsl(190 100% 50% / 0.3)',
+                        ],
+                      }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <Clock className="h-5 w-5 text-cyan-400" />
+                    </motion.div>
+                    <div>
+                      <p className="font-semibold text-cyan-300">Tienes {toEditContent.length} video(s) por editar</p>
+                      <p className="text-xs text-cyan-400/70">Revisa tu cola de edición</p>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    onClick={() => navigate('/board')}
+                    className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30"
+                  >
+                    Ver tablero
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">{item.creator?.full_name || 'Sin creador'}</p>
-                </div>
-                <Badge className={`text-xs ${STATUS_COLORS[item.status]}`} variant="secondary">
-                  {STATUS_LABELS[item.status]}
-                </Badge>
               </CardContent>
             </Card>
-          ))}
-          {content.length === 0 && (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Scissors className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h4 className="font-semibold mb-2">Sin proyectos asignados</h4>
-                <p className="text-sm text-muted-foreground">Cuando te asignen proyectos aparecerán aquí</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+          </motion.div>
+        )}
+
+        {/* Recent Content */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-[hsl(270,100%,70%)]">Contenido Reciente</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/board')}
+              className="text-[hsl(270,100%,60%)] hover:text-[hsl(270,100%,70%)] hover:bg-[hsl(270,100%,60%,0.1)]"
+            >
+              Ver todo
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {content.slice(0, 5).map((item, index) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + index * 0.1 }}
+              >
+                <Card 
+                  className="hover:border-[hsl(270,100%,60%,0.3)] transition-all cursor-pointer group"
+                  onClick={() => setSelectedContent(item)}
+                >
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-[hsl(250,20%,10%)] flex items-center justify-center flex-shrink-0 overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
+                      {item.thumbnail_url ? (
+                        <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <Play className="h-4 w-4 text-[hsl(270,100%,60%)]" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate text-white group-hover:text-[hsl(270,100%,70%)] transition-colors">{item.title}</p>
+                      <p className="text-xs text-[hsl(270,30%,50%)]">{item.creator?.full_name || 'Sin creador'}</p>
+                    </div>
+                    <Badge className={cn("text-xs", STATUS_COLORS[item.status])} variant="secondary">
+                      {STATUS_LABELS[item.status]}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+            {content.length === 0 && (
+              <Card className="border-[hsl(270,100%,60%,0.2)]">
+                <CardContent className="p-8 text-center">
+                  <motion.div
+                    animate={{
+                      rotate: [0, 10, -10, 0],
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <Scissors className="w-12 h-12 mx-auto text-[hsl(270,100%,60%)] mb-4" />
+                  </motion.div>
+                  <h4 className="font-semibold mb-2 text-white">Sin proyectos asignados</h4>
+                  <p className="text-sm text-[hsl(270,30%,60%)]">Cuando te asignen proyectos aparecerán aquí</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Ranking y Historial de Puntos */}
+        {targetUserId && (
+          <motion.div 
+            className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <RoleLeaderboard role="editor" currentUserId={targetUserId} maxItems={5} />
+            <UPHistoryTable userId={targetUserId} />
+          </motion.div>
+        )}
+
+        {/* Content Detail Dialog */}
+        <ContentDetailDialog
+          content={selectedContent}
+          open={!!selectedContent}
+          onOpenChange={(open) => !open && setSelectedContent(null)}
+          onUpdate={() => {
+            refetch();
+            setSelectedContent(null);
+          }}
+        />
+
+        {/* KPI Content Dialog - Now using TechKpiDialog */}
+        <TechKpiDialog
+          title={kpiDialog.title}
+          content={kpiDialog.content}
+          open={kpiDialog.open}
+          onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
+          onSelectContent={setSelectedContent}
+        />
       </div>
-
-      {/* Ranking y Historial de Puntos */}
-      {targetUserId && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <RoleLeaderboard role="editor" currentUserId={targetUserId} maxItems={5} />
-          <UPHistoryTable userId={targetUserId} />
-        </div>
-      )}
-
-      {/* Content Detail Dialog */}
-      <ContentDetailDialog
-        content={selectedContent}
-        open={!!selectedContent}
-        onOpenChange={(open) => !open && setSelectedContent(null)}
-        onUpdate={() => {
-          refetch();
-          setSelectedContent(null);
-        }}
-      />
-
-      {/* KPI Content Dialog */}
-      <KpiContentDialog
-        title={kpiDialog.title}
-        content={kpiDialog.content}
-        open={kpiDialog.open}
-        onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
-        onSelectContent={setSelectedContent}
-      />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,8 @@ import { ScriptReviewCard } from '@/components/content/ScriptReviewCard';
 import { useClientRealtimeContent } from '@/hooks/useClientRealtimeContent';
 import { CreateProductBriefWizard } from '@/components/products/CreateProductBriefWizard';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
+import { TechGrid, TechParticles, TechOrb } from '@/components/ui/tech-effects';
+import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
 import { 
   LogOut, 
   Video, 
@@ -733,8 +736,28 @@ export default function ClientDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+        <TechGrid className="absolute inset-0" />
+        <TechParticles count={15} />
+        <motion.div
+          className="flex flex-col items-center gap-4"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          >
+            <Loader2 className="w-10 h-10 text-[hsl(270,100%,60%)]" />
+          </motion.div>
+          <motion.span
+            className="text-[hsl(270,100%,70%)] text-sm font-medium"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            Cargando portal...
+          </motion.span>
+        </motion.div>
       </div>
     );
   }
@@ -796,9 +819,17 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <div className="min-h-screen relative">
+      {/* Tech Background Effects */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <TechGrid className="absolute inset-0" />
+        <TechParticles count={20} />
+        <TechOrb size="lg" position="top-right" />
+        <TechOrb size="md" position="bottom-left" delay={1} />
+      </div>
+
+      {/* Header - Tech Style */}
+      <header className="sticky top-0 z-30 border-b border-[hsl(270,100%,60%,0.15)] bg-[hsl(250,20%,5%,0.9)] backdrop-blur-xl relative overflow-hidden">
         <div className="flex h-14 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3">
             {clientInfo.logo_url ? (
@@ -938,107 +969,192 @@ export default function ClientDashboard() {
         </div>
       </header>
 
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="relative z-10 p-4 md:p-6 space-y-6">
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Welcome */}
-            <div>
-              <h2 className="text-xl font-bold">Hola, {profile?.full_name?.split(' ')[0] || 'Cliente'} 👋</h2>
-              <p className="text-sm text-muted-foreground">Aquí está el resumen de tu cuenta</p>
-            </div>
+            {/* Welcome - Tech Style */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <h2 className="text-xl font-bold text-white">Hola, {profile?.full_name?.split(' ')[0] || 'Cliente'} 👋</h2>
+              <p className="text-sm text-[hsl(270,30%,60%)]">Aquí está el resumen de tu cuenta</p>
+            </motion.div>
 
-            {/* Main KPIs */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <PremiumStatsCard
+            {/* Main KPIs - Tech Style */}
+            <motion.div 
+              className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <TechKpiCard
                 title="Inversión Total"
                 value={totalInvested}
                 prefix="$"
                 icon={DollarSign}
-                color="success"
+                color="emerald"
                 subtitle={`de $${totalValue.toLocaleString()}`}
+                chartType="radial"
+                goalValue={totalValue}
+                size="sm"
               />
-              <PremiumStatsCard
+              <TechKpiCard
                 title="Videos"
                 value={content.length}
                 icon={Video}
-                color="primary"
+                color="violet"
                 subtitle={`${deliveredContentCount} aprobados`}
+                chartType="bar"
+                chartData={[inProgressContent.length, approvedContent.length, content.length]}
+                size="sm"
               />
-              <PremiumStatsCard
+              <TechKpiCard
                 title="Vistas Totales"
                 value={totalViews}
                 icon={TrendingUp}
-                color="info"
+                color="cyan"
+                chartType="sparkline"
+                size="sm"
               />
-              <PremiumStatsCard
+              <TechKpiCard
                 title="Likes"
                 value={totalLikes}
                 icon={Heart}
-                color="destructive"
+                color="rose"
+                chartType="sparkline"
+                size="sm"
               />
-            </div>
+            </motion.div>
 
-            {/* Overall Progress Bar */}
-            <Card className="border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Target className="h-5 w-5 text-primary" />
+            {/* Overall Progress Bar - Tech Style */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-[hsl(250,20%,6%)] to-[hsl(250,20%,4%)] overflow-hidden relative">
+                <motion.div
+                  className="absolute inset-0 opacity-30"
+                  style={{
+                    background: 'radial-gradient(circle at 50% 0%, hsl(270 100% 60% / 0.1), transparent 50%)',
+                  }}
+                />
+                <CardContent className="p-4 md:p-6 relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <motion.div 
+                        className="p-2 rounded-lg"
+                        style={{
+                          background: 'hsl(270 100% 60% / 0.15)',
+                          border: '1px solid hsl(270 100% 60% / 0.3)',
+                        }}
+                        animate={{
+                          boxShadow: [
+                            '0 0 10px hsl(270 100% 60% / 0.2)',
+                            '0 0 20px hsl(270 100% 60% / 0.4)',
+                            '0 0 10px hsl(270 100% 60% / 0.2)',
+                          ],
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Target className="h-5 w-5 text-[hsl(270,100%,60%)]" />
+                      </motion.div>
+                      <div>
+                        <h3 className="font-semibold text-white">Progreso General</h3>
+                        <p className="text-xs text-[hsl(270,30%,60%)]">
+                          {content.length} contenidos en proceso
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold">Progreso General</h3>
-                      <p className="text-xs text-muted-foreground">
-                        {content.length} contenidos en proceso
-                      </p>
+                    <div className="text-right">
+                      <motion.span 
+                        className="text-3xl font-bold"
+                        style={{ 
+                          color: 'hsl(270 100% 60%)',
+                          textShadow: '0 0 20px hsl(270 100% 60% / 0.4)',
+                        }}
+                      >
+                        {overallProgress}%
+                      </motion.span>
+                      <p className="text-xs text-[hsl(270,30%,60%)]">completado</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-3xl font-bold text-primary">{overallProgress}%</span>
-                    <p className="text-xs text-muted-foreground">completado</p>
-                  </div>
-                </div>
-                <Progress value={overallProgress} className="h-3" />
-                <div className="flex justify-between mt-3 gap-1">
-                  {[
-                    { id: 'inicio', label: 'Inicio', statuses: ['draft', 'script_pending'], count: content.filter(c => ['draft', 'script_pending'].includes(c.status)).length },
-                    { id: 'guion', label: 'Guión', statuses: ['script_approved', 'assigned'], count: content.filter(c => ['script_approved', 'assigned'].includes(c.status)).length },
-                    { id: 'grabacion', label: 'Grabación', statuses: ['recording', 'recorded'], count: content.filter(c => ['recording', 'recorded'].includes(c.status)).length },
-                    { id: 'edicion', label: 'Edición', statuses: ['editing', 'review'], count: content.filter(c => ['editing', 'review'].includes(c.status)).length },
-                    { id: 'correccion', label: 'Corrección', statuses: ['issue'], count: content.filter(c => ['issue'].includes(c.status)).length },
-                    { id: 'entrega', label: 'Entrega', statuses: ['delivered', 'corrected'], count: content.filter(c => ['delivered', 'corrected'].includes(c.status)).length },
-                    { id: 'aprobado', label: 'Aprobado', statuses: ['approved', 'paid'], count: content.filter(c => ['approved', 'paid'].includes(c.status)).length },
-                  ].map((stage) => (
-                    <button
-                      key={stage.id}
-                      onClick={() => {
-                        if (stage.count > 0) {
-                          setStageFilter(stageFilter === stage.id ? null : stage.id);
-                          setActiveTab('content');
-                        }
+                  
+                  {/* Tech Progress Bar */}
+                  <div className="h-3 bg-[hsl(250,20%,10%)] rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
+                    <motion.div
+                      className="h-full relative overflow-hidden"
+                      style={{
+                        background: 'linear-gradient(90deg, hsl(270 100% 60%), hsl(300 100% 60%))',
+                        boxShadow: '0 0 20px hsl(270 100% 60% / 0.5)',
                       }}
-                      disabled={stage.count === 0}
-                      className={cn(
-                        "flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-all text-xs",
-                        stage.count > 0 && "hover:bg-primary/10 cursor-pointer",
-                        stage.count === 0 && "opacity-50 cursor-not-allowed",
-                        stageFilter === stage.id && "bg-primary/20 text-primary font-medium"
-                      )}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${overallProgress}%` }}
+                      transition={{ duration: 1.5, ease: "easeOut" }}
                     >
-                      <span className={stageFilter === stage.id ? "text-primary" : "text-muted-foreground"}>
-                        {stage.label}
-                      </span>
-                      {stage.count > 0 && (
-                        <Badge variant={stageFilter === stage.id ? "default" : "secondary"} className="h-5 text-[10px]">
-                          {stage.count}
-                        </Badge>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                    </motion.div>
+                  </div>
+                  
+                  {/* Stage Buttons */}
+                  <div className="flex justify-between mt-4 gap-1 flex-wrap">
+                    {[
+                      { id: 'inicio', label: 'Inicio', statuses: ['draft', 'script_pending'], count: content.filter(c => ['draft', 'script_pending'].includes(c.status)).length },
+                      { id: 'guion', label: 'Guión', statuses: ['script_approved', 'assigned'], count: content.filter(c => ['script_approved', 'assigned'].includes(c.status)).length },
+                      { id: 'grabacion', label: 'Grabación', statuses: ['recording', 'recorded'], count: content.filter(c => ['recording', 'recorded'].includes(c.status)).length },
+                      { id: 'edicion', label: 'Edición', statuses: ['editing', 'review'], count: content.filter(c => ['editing', 'review'].includes(c.status)).length },
+                      { id: 'correccion', label: 'Corrección', statuses: ['issue'], count: content.filter(c => ['issue'].includes(c.status)).length },
+                      { id: 'entrega', label: 'Entrega', statuses: ['delivered', 'corrected'], count: content.filter(c => ['delivered', 'corrected'].includes(c.status)).length },
+                      { id: 'aprobado', label: 'Aprobado', statuses: ['approved', 'paid'], count: content.filter(c => ['approved', 'paid'].includes(c.status)).length },
+                    ].map((stage) => (
+                      <motion.button
+                        key={stage.id}
+                        onClick={() => {
+                          if (stage.count > 0) {
+                            setStageFilter(stageFilter === stage.id ? null : stage.id);
+                            setActiveTab('content');
+                          }
+                        }}
+                        disabled={stage.count === 0}
+                        className={cn(
+                          "flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-all text-xs",
+                          "border backdrop-blur-sm",
+                          stage.count > 0 && "cursor-pointer",
+                          stage.count === 0 && "opacity-40 cursor-not-allowed",
+                          stageFilter === stage.id 
+                            ? "bg-[hsl(270,100%,60%,0.2)] border-[hsl(270,100%,60%,0.5)] text-[hsl(270,100%,70%)]" 
+                            : "border-[hsl(270,100%,60%,0.1)] hover:border-[hsl(270,100%,60%,0.3)] text-[hsl(270,30%,60%)]"
+                        )}
+                        whileHover={stage.count > 0 ? { scale: 1.05 } : {}}
+                        whileTap={stage.count > 0 ? { scale: 0.95 } : {}}
+                      >
+                        <span className={stageFilter === stage.id ? "text-[hsl(270,100%,70%)]" : ""}>
+                          {stage.label}
+                        </span>
+                        {stage.count > 0 && (
+                          <Badge 
+                            className={cn(
+                              "h-5 text-[10px] border",
+                              stageFilter === stage.id 
+                                ? "bg-[hsl(270,100%,60%,0.3)] border-[hsl(270,100%,60%,0.5)] text-white" 
+                                : "bg-[hsl(250,20%,15%)] border-[hsl(270,100%,60%,0.2)] text-[hsl(270,30%,70%)]"
+                            )}
+                          >
+                            {stage.count}
+                          </Badge>
+                        )}
+                      </motion.button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
             {/* Charts Row */}
             <div className="grid md:grid-cols-2 gap-4">
