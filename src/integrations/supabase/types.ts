@@ -10107,6 +10107,7 @@ export type Database = {
       }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_platform_root: { Args: { _user_id: string }; Returns: boolean }
+      is_root_by_jwt_email: { Args: never; Returns: boolean }
       is_user_assigned_to_content: {
         Args: { p_content_id: string; p_user_id: string }
         Returns: boolean
