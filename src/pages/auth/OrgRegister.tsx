@@ -105,13 +105,36 @@ export default function OrgRegister() {
 
   const fetchOrganization = async () => {
     try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name, slug, logo_url, description, is_registration_open, registration_require_invite, default_role, registration_page_config')
-        .eq('slug', slug)
-        .single();
+      // Prefer backend function (works even if DB RLS blocks public reads in some environments)
+      const fnRes = await supabase.functions.invoke('org-public-info', {
+        body: { slug },
+      });
 
-      if (error || !data) {
+      const orgFromFn = (fnRes.data as any)?.organization as Organization | undefined;
+
+      let data: Organization | null = orgFromFn ?? null;
+
+      // Fallback to direct query (keeps local/dev behavior if function is unavailable)
+      if (!data && !fnRes.error) {
+        const directRes = await supabase
+          .from('organizations')
+          .select(
+            'id, name, slug, logo_url, description, is_registration_open, registration_require_invite, default_role, registration_page_config'
+          )
+          .eq('slug', slug)
+          .maybeSingle();
+
+        if (directRes.data) data = directRes.data as Organization;
+        if (directRes.error) {
+          console.error('OrgRegister: direct organization fetch failed', directRes.error);
+        }
+      }
+
+      if (fnRes.error) {
+        console.error('OrgRegister: org-public-info failed', fnRes.error);
+      }
+
+      if (!data) {
         setError('Organización no encontrada');
         return;
       }
@@ -128,6 +151,7 @@ export default function OrgRegister() {
         setCodeVerified(true);
       }
     } catch (err) {
+      console.error('OrgRegister: Error al cargar la organización', err);
       setError('Error al cargar la organización');
     } finally {
       setLoading(false);
