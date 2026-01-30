@@ -22,7 +22,7 @@ interface Organization {
 }
 
 export function RootOrgSwitcher() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
@@ -67,7 +67,7 @@ export function RootOrgSwitcher() {
 
       // In migration scenarios, the in-memory profile can briefly be null (or the profile id
       // differs from auth.uid()). Resolve a safe profile id before updating.
-      let profileId = profile?.id;
+      let profileId = profile?.id || user?.id;
 
       if (!profileId) {
         const { data: authRes } = await supabase.auth.getUser();
