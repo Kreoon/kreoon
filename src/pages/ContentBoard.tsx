@@ -300,31 +300,28 @@ export default function ContentBoard() {
     : (activeRole ||
        (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client'));
   
+  // Define role-specific allowed statuses
+  const CREATOR_ALLOWED_STATUSES = ['assigned', 'recording', 'recorded', 'issue', 'approved', 'paid'];
+  const EDITOR_ALLOWED_STATUSES = ['recorded', 'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'];
+
   // Helper function to check if a status is visible for the current role
   const isStatusVisibleForRole = useCallback((statusKey: string): boolean => {
     // Admin always sees everything (but NOT when impersonating as non-admin)
     if (primaryRole === 'admin' && !isImpersonating) return true;
 
-    // Find the org status for this status key
-    const orgStatus = orgStatuses.find(s => s.status_key === statusKey);
-    if (!orgStatus) return true; // If no org status config, show by default
+    // For creators: only show their specific stages
+    if (primaryRole === 'creator') {
+      return CREATOR_ALLOWED_STATUSES.includes(statusKey);
+    }
+    
+    // For editors: only show their specific stages
+    if (primaryRole === 'editor') {
+      return EDITOR_ALLOWED_STATUSES.includes(statusKey);
+    }
 
-    // Find the rule for this status
-    const rule = rules.find(r => r.status_id === orgStatus.id);
-    if (!rule) return true; // If no rule, show by default
-
-    // Check if user's role can view this status
-    const canViewRoles = (rule as any).can_view_roles as string[] | undefined;
-
-    // IMPORTANT: Treat empty arrays as "not configured" (legacy behavior).
-    // During migration, many rules were created with empty arrays which would
-    // otherwise hide all columns/content for creators/editors.
-    const effectiveCanViewRoles =
-      Array.isArray(canViewRoles) && canViewRoles.length > 0
-        ? canViewRoles
-        : ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
-    return effectiveCanViewRoles.includes(primaryRole);
-  }, [primaryRole, orgStatuses, rules, isImpersonating]);
+    // For other roles (strategist, trafficker, etc.): show all
+    return true;
+  }, [primaryRole, isImpersonating]);
 
   // Combine base columns with dynamic columns from organization_statuses
   // This ensures custom columns (like "en_campaa", "pagado") appear in the board
