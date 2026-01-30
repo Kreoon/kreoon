@@ -87,17 +87,17 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      // Fetch creator totals from V2 system only
-      const { data: creatorTotals } = await supabase
+      // Fetch creator totals from V2 system only (without embedded joins for Kreoon compatibility)
+      const { data: creatorTotalsRaw } = await supabase
         .from('up_creadores_totals')
-        .select('*, profiles(full_name)')
+        .select('*')
         .eq('organization_id', organizationId)
         .order('total_points', { ascending: false });
 
       // Fetch editor totals
-      const { data: editorTotals } = await supabase
+      const { data: editorTotalsRaw } = await supabase
         .from('up_editores_totals')
-        .select('*, profiles(full_name)')
+        .select('*')
         .eq('organization_id', organizationId)
         .order('total_points', { ascending: false });
 
@@ -115,8 +115,35 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
         .eq('organization_id', organizationId)
         .not('days_to_deliver', 'is', null);
 
+      // Fetch profiles separately for Kreoon compatibility (no FK relations)
+      const allUserIds = [
+        ...(creatorTotalsRaw || []).map(c => c.user_id),
+        ...(editorTotalsRaw || []).map(e => e.user_id)
+      ].filter(Boolean);
+
+      let profilesMap = new Map<string, { full_name: string }>();
+      if (allUserIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', allUserIds);
+
+        profilesMap = new Map((profilesData || []).map(p => [p.id, { full_name: p.full_name }]));
+      }
+
+      // Merge profiles into totals
+      const creatorTotals = (creatorTotalsRaw || []).map(c => ({
+        ...c,
+        profiles: profilesMap.get(c.user_id) || null
+      }));
+
+      const editorTotals = (editorTotalsRaw || []).map(e => ({
+        ...e,
+        profiles: profilesMap.get(e.user_id) || null
+      }));
+
       // Calculate creator stats from V2 only
-      if (creatorTotals) {
+      if (creatorTotals.length > 0) {
         const totals = creatorTotals.reduce((acc, ct) => ({
           totalPoints: acc.totalPoints + (ct.total_points || 0),
           totalDeliveries: acc.totalDeliveries + (ct.total_deliveries || 0),
@@ -138,7 +165,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
           ...totals,
           avgDeliveryDays: Math.round(avgDays * 10) / 10,
           topPerformers: creatorTotals.slice(0, 5).map(ct => ({
-            name: (ct.profiles as any)?.full_name || 'Sin nombre',
+            name: ct.profiles?.full_name || 'Sin nombre',
             points: ct.total_points || 0,
             level: ct.current_level || 'bronze',
           })),
@@ -146,7 +173,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
       }
 
       // Calculate editor stats
-      if (editorTotals) {
+      if (editorTotals.length > 0) {
         const totals = editorTotals.reduce((acc, et) => ({
           totalPoints: acc.totalPoints + (et.total_points || 0),
           totalDeliveries: acc.totalDeliveries + (et.total_deliveries || 0),
@@ -168,7 +195,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
           ...totals,
           avgDeliveryDays: Math.round(avgDays * 10) / 10,
           topPerformers: editorTotals.slice(0, 5).map(et => ({
-            name: (et.profiles as any)?.full_name || 'Sin nombre',
+            name: et.profiles?.full_name || 'Sin nombre',
             points: et.total_points || 0,
             level: et.current_level || 'bronze',
           })),
