@@ -15,6 +15,7 @@ import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/in
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { RoleUPWidget } from '@/components/points/RoleUPWidget';
+import { SeasonUrgencyBanner } from '@/components/points/SeasonUrgencyBanner';
 import { RoleLeaderboard } from '@/components/points/RoleLeaderboard';
 import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
@@ -151,6 +152,9 @@ export default function EditorDashboard() {
             </div>
           }
         />
+
+        {/* Season Urgency Banner */}
+        <SeasonUrgencyBanner />
 
         {/* Stats Grid - Tech Style */}
         <motion.div 
