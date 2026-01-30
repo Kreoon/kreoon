@@ -21,94 +21,109 @@ interface SectionProps {
   onRegister: () => void;
 }
 
-// Section 1: Hero - Mejorado
+// Section 1: Hero - Tech Futuristic Style
 export function HeroSection({ onRegister }: SectionProps) {
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <section id="inicio" className="relative min-h-screen flex items-center justify-center pt-20 pb-16 px-4 overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/3 rounded-full blur-[150px]" />
-      
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 opacity-[0.015]" style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)`,
-        backgroundSize: '80px 80px'
-      }} />
+    <section id="inicio" className="relative min-h-screen flex items-center justify-center pt-20 pb-16 px-4 overflow-hidden bg-[hsl(240,15%,3%)]">
+      {/* Tech Background Effects */}
+      <div className="absolute inset-0">
+        {/* Gradient mesh */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(270,100%,15%,0.3)_0%,transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,hsl(220,100%,20%,0.2)_0%,transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(280,100%,15%,0.15)_0%,transparent_40%)]" />
+        
+        {/* Animated glow orbs */}
+        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/15 rounded-full blur-[150px] animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[hsl(220,100%,50%)]/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+        
+        {/* Grid Pattern - Subtle tech grid */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: `linear-gradient(rgba(139,92,246,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,.5) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px'
+        }} />
+        
+        {/* Scan line effect */}
+        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_4px] pointer-events-none opacity-20" />
+      </div>
 
-      {/* Floating Elements */}
-      <div className="absolute top-1/3 left-[10%] w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDuration: '3s' }} />
-      <div className="absolute top-1/2 right-[15%] w-3 h-3 bg-primary/30 rounded-full animate-bounce" style={{ animationDuration: '4s', animationDelay: '0.5s' }} />
-      <div className="absolute bottom-1/3 left-[20%] w-2 h-2 bg-primary/20 rounded-full animate-bounce" style={{ animationDuration: '3.5s', animationDelay: '1s' }} />
+      {/* Floating tech particles */}
+      <div className="absolute top-1/3 left-[10%] w-1.5 h-1.5 bg-primary rounded-full animate-float shadow-lg shadow-primary/50" style={{ animationDuration: '4s' }} />
+      <div className="absolute top-1/2 right-[15%] w-2 h-2 bg-[hsl(220,100%,60%)]/60 rounded-full animate-float" style={{ animationDuration: '5s', animationDelay: '0.5s' }} />
+      <div className="absolute bottom-1/3 left-[20%] w-1 h-1 bg-primary/40 rounded-full animate-float" style={{ animationDuration: '3.5s', animationDelay: '1s' }} />
+      <div className="absolute top-1/4 right-[25%] w-1.5 h-1.5 bg-primary/50 rounded-full animate-float" style={{ animationDuration: '4.5s', animationDelay: '2s' }} />
 
-      <div className="relative max-w-5xl mx-auto text-center">
+      <div className="relative max-w-5xl mx-auto text-center z-10">
+        {/* Badge with glow */}
         <div className="animate-fade-in">
-          <Badge variant="outline" className="mb-6 px-4 py-2 text-sm border-primary/30 text-primary bg-primary/5 backdrop-blur-sm">
-            <Sparkles className="h-3 w-3 mr-2" />
-            Creative Operating System
-          </Badge>
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-xl text-primary text-sm font-medium shadow-lg shadow-primary/10">
+            <Sparkles className="h-4 w-4" />
+            <span>Creative Operating System</span>
+            <span className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse" />
+          </div>
         </div>
         
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight tracking-tight mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        {/* Main Title with gradient */}
+        <h1 className="mt-8 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.1] tracking-tight animate-fade-in" style={{ animationDelay: '0.1s' }}>
           El sistema donde se construyen{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary to-primary/50">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-[hsl(270,100%,70%)] to-[hsl(220,100%,60%)]">
             imperios creativos
           </span>
         </h1>
         
-        <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          Gestión integral de contenido, IA, talento, pagos, live streaming y más. Todo en un ecosistema diseñado para escalar tu operación creativa.
+        <p className="mt-6 text-lg sm:text-xl text-white/60 max-w-3xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          Gestión integral de contenido, <span className="text-primary">IA</span>, talento, pagos, live streaming y más. 
+          Todo en un ecosistema diseñado para <span className="text-white">escalar tu operación creativa</span>.
         </p>
         
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+        {/* CTA Buttons - Neon style */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10 animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <Button 
             size="lg" 
             onClick={onRegister}
-            className="w-full sm:w-auto text-lg px-8 py-6 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300 hover:-translate-y-0.5"
+            className="relative w-full sm:w-auto text-lg px-8 py-6 bg-gradient-to-r from-primary via-primary to-[hsl(260,100%,60%)] hover:opacity-90 shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all duration-300 hover:-translate-y-1 border border-primary/50 overflow-hidden group"
           >
-            Empezar gratis
-            <ArrowRight className="ml-2 h-5 w-5" />
+            <span className="relative z-10 flex items-center">
+              Empezar gratis
+              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
           </Button>
           <Button 
             size="lg" 
             variant="outline"
             onClick={() => scrollToSection('modulos')}
-            className="w-full sm:w-auto text-lg px-8 py-6 border-border/50 hover:bg-muted/50 hover:border-primary/30 transition-all duration-300"
+            className="w-full sm:w-auto text-lg px-8 py-6 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/10 hover:border-primary/30 transition-all duration-300"
           >
             Explorar módulos
           </Button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 sm:gap-8 mt-16 pt-16 border-t border-border/30 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          <div className="text-center group">
-            <div className="text-2xl sm:text-4xl font-bold text-foreground group-hover:text-primary transition-colors">8+</div>
-            <div className="text-xs sm:text-sm text-muted-foreground mt-1">Módulos</div>
-          </div>
-          <div className="text-center group">
-            <div className="text-2xl sm:text-4xl font-bold text-foreground group-hover:text-primary transition-colors">100%</div>
-            <div className="text-xs sm:text-sm text-muted-foreground mt-1">Control</div>
-          </div>
-          <div className="text-center group">
-            <div className="text-2xl sm:text-4xl font-bold text-foreground group-hover:text-primary transition-colors">IA</div>
-            <div className="text-xs sm:text-sm text-muted-foreground mt-1">Integrada</div>
-          </div>
-          <div className="text-center group">
-            <div className="text-2xl sm:text-4xl font-bold text-foreground group-hover:text-primary transition-colors">∞</div>
-            <div className="text-xs sm:text-sm text-muted-foreground mt-1">Escalable</div>
-          </div>
+        {/* Stats - Tech glassmorphism */}
+        <div className="grid grid-cols-4 gap-4 sm:gap-8 mt-20 pt-10 border-t border-white/10 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          {[
+            { value: '8+', label: 'Módulos' },
+            { value: '100%', label: 'Control' },
+            { value: 'IA', label: 'Integrada' },
+            { value: '∞', label: 'Escalable' },
+          ].map((stat, i) => (
+            <div key={i} className="text-center group">
+              <div className="text-2xl sm:text-4xl font-bold text-white group-hover:text-primary transition-colors duration-300">
+                {stat.value}
+              </div>
+              <div className="text-xs sm:text-sm text-white/40 mt-1 uppercase tracking-wider">{stat.label}</div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Scroll Indicator */}
+      {/* Scroll Indicator - Tech style */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-2">
-          <div className="w-1 h-2 bg-muted-foreground/50 rounded-full animate-pulse" />
+        <div className="w-6 h-10 rounded-full border-2 border-primary/30 flex items-start justify-center p-2 bg-primary/5 backdrop-blur">
+          <div className="w-1 h-2 bg-primary rounded-full animate-pulse" />
         </div>
       </div>
     </section>

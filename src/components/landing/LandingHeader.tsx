@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, Sparkles } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,34 +55,38 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
         isScrolled 
-          ? "bg-background/90 backdrop-blur-xl border-b border-border/30 shadow-2xl shadow-black/10" 
+          ? "bg-[hsl(240,15%,4%)]/95 backdrop-blur-2xl border-b border-primary/10 shadow-2xl shadow-primary/5" 
           : "bg-transparent"
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
+          {/* Logo with glow */}
           <button 
             onClick={() => handleNavClick('inicio')}
             className="flex items-center gap-3 group"
           >
-            <div className="h-10 w-10 rounded-xl overflow-hidden shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow">
+            <div className="relative h-10 w-10 rounded-xl overflow-hidden bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/30 shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all">
               <img src="/favicon.png" alt="KREOON" className="h-10 w-10 object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent" />
             </div>
-            <span className="text-foreground font-bold text-xl tracking-tight">KREOON</span>
+            <div className="flex flex-col">
+              <span className="text-foreground font-bold text-xl tracking-tight">KREOON</span>
+              <span className="text-[9px] uppercase tracking-[0.2em] text-primary/60 font-medium">AI Platform</span>
+            </div>
           </button>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          {/* Desktop Navigation - Tech Style */}
+          <nav className="hidden lg:flex items-center gap-1 bg-white/5 backdrop-blur-xl rounded-full px-2 py-1.5 border border-white/10">
             {MAIN_NAV.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
                 className={cn(
-                  "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                  "px-4 py-2 text-sm font-medium rounded-full transition-all duration-300",
                   activeSection === item.id
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    ? "text-white bg-primary shadow-lg shadow-primary/30"
+                    : "text-white/60 hover:text-white hover:bg-white/5"
                 )}
               >
                 {item.label}
@@ -94,17 +98,17 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1",
+                    "px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 flex items-center gap-1",
                     isMoreActive
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      ? "text-white bg-primary shadow-lg shadow-primary/30"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
                   )}
                 >
                   Más
                   <ChevronDown className="h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-48 bg-[hsl(240,15%,8%)]/95 backdrop-blur-xl border-primary/20">
                 {MORE_NAV.map((item) => (
                   <DropdownMenuItem
                     key={item.id}
@@ -121,27 +125,30 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
             </DropdownMenu>
           </nav>
 
-          {/* Actions */}
+          {/* Actions - Neon style */}
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
               onClick={onLogin}
-              className="hidden sm:flex text-muted-foreground hover:text-foreground"
+              className="hidden sm:flex text-white/60 hover:text-white hover:bg-white/5"
             >
               Iniciar sesión
             </Button>
             <Button 
               onClick={onRegister}
-              className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
+              className="relative overflow-hidden bg-gradient-to-r from-primary via-primary to-[hsl(260,100%,60%)] text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all hover:-translate-y-0.5 border border-primary/50"
             >
-              Crear cuenta
+              <Sparkles className="h-4 w-4 mr-2" />
+              Comenzar
+              {/* Shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-shimmer" />
             </Button>
             
             {/* Mobile Menu Toggle */}
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden text-white/60 hover:text-white hover:bg-white/10"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -150,32 +157,32 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Tech Style */}
       <div className={cn(
         "lg:hidden overflow-hidden transition-all duration-300",
         mobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
       )}>
-        <div className="bg-background/98 backdrop-blur-xl border-b border-border">
+        <div className="bg-[hsl(240,15%,4%)]/98 backdrop-blur-2xl border-b border-primary/10">
           <nav className="max-w-7xl mx-auto px-4 py-4 space-y-1">
             {[...MAIN_NAV, ...MORE_NAV].map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
                 className={cn(
-                  "w-full text-left px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200",
+                  "w-full text-left px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
                   activeSection === item.id
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    ? "text-white bg-primary/20 border border-primary/30"
+                    : "text-white/60 hover:text-white hover:bg-white/5"
                 )}
               >
                 {item.label}
               </button>
             ))}
-            <div className="pt-4 border-t border-border mt-4">
+            <div className="pt-4 border-t border-primary/10 mt-4">
               <Button 
                 variant="ghost" 
                 onClick={() => { onLogin(); setMobileMenuOpen(false); }}
-                className="w-full justify-start text-muted-foreground"
+                className="w-full justify-start text-white/60 hover:text-white hover:bg-white/5"
               >
                 Iniciar sesión
               </Button>
