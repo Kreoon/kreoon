@@ -52,28 +52,16 @@ export function UPAnalytics({ organizationId }: UPAnalyticsProps) {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      // Fetch from V2 tables
+      // Fetch from V2 tables (without embedded profile joins for Kreoon compatibility)
       const [creatorsResult, editorsResult, eventsResult] = await Promise.all([
         supabase
           .from('up_creadores_totals')
-          .select(`
-            *,
-            profiles:user_id (
-              full_name,
-              avatar_url
-            )
-          `)
+          .select('*')
           .eq('organization_id', organizationId)
           .order('total_points', { ascending: false }),
         supabase
           .from('up_editores_totals')
-          .select(`
-            *,
-            profiles:user_id (
-              full_name,
-              avatar_url
-            )
-          `)
+          .select('*')
           .eq('organization_id', organizationId)
           .order('total_points', { ascending: false }),
         supabase
@@ -84,9 +72,34 @@ export function UPAnalytics({ organizationId }: UPAnalyticsProps) {
           .limit(500)
       ]);
 
-      const creators = creatorsResult.data || [];
-      const editors = editorsResult.data || [];
+      let creators = creatorsResult.data || [];
+      let editors = editorsResult.data || [];
       const events = eventsResult.data || [];
+
+      // Fetch profiles separately for compatibility with Kreoon DB (no FK relations)
+      const allUserIds = [
+        ...creators.map(c => c.user_id),
+        ...editors.map(e => e.user_id)
+      ].filter(Boolean);
+
+      if (allUserIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', allUserIds);
+
+        const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
+
+        // Merge profiles into creators and editors
+        creators = creators.map(c => ({
+          ...c,
+          profiles: profilesMap.get(c.user_id) || null
+        }));
+        editors = editors.map(e => ({
+          ...e,
+          profiles: profilesMap.get(e.user_id) || null
+        }));
+      }
 
       // Calculate creator stats
       const totalCreatorPoints = creators.reduce((sum, c) => sum + (c.total_points || 0), 0);
