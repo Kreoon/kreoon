@@ -186,6 +186,32 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     fetchContent();
   }, [fetchContent]);
 
+  // Realtime subscription for automatic sync
+  useEffect(() => {
+    if (!currentOrgId) return;
+
+    const channel = supabase
+      .channel('content-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'content',
+          filter: `organization_id=eq.${currentOrgId}`
+        },
+        (payload) => {
+          console.log('[Realtime] Content change detected:', payload.eventType);
+          fetchContent();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentOrgId, fetchContent]);
+
   return {
     content,
     loading,
@@ -337,6 +363,32 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
   useEffect(() => {
     fetchContent();
   }, [fetchContent]);
+
+  // Realtime subscription for automatic sync
+  useEffect(() => {
+    if (!currentOrgId) return;
+
+    const channel = supabase
+      .channel('content-changes-filtered')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'content',
+          filter: `organization_id=eq.${currentOrgId}`
+        },
+        (payload) => {
+          console.log('[Realtime] Content change detected (filtered):', payload.eventType);
+          fetchContent();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentOrgId, fetchContent]);
 
   return {
     content,
