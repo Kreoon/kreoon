@@ -198,7 +198,7 @@ serve(async (req) => {
         }
       }
       
-      // Find profiles with old IDs where a profile with new auth ID exists for same email
+      // Find ALL profiles that don't match any auth ID
       const profilesToDelete: string[] = [];
       const profilesByEmail: Record<string, any[]> = {};
       
@@ -209,32 +209,40 @@ serve(async (req) => {
         profilesByEmail[email].push(profile);
       }
       
-      // For each email with multiple profiles, keep only the one matching auth ID
+      // For each email, delete profiles that don't match the auth ID
       for (const email in profilesByEmail) {
         const profiles = profilesByEmail[email];
-        if (profiles.length <= 1) continue;
-        
         const correctAuthId = authEmailToId[email];
-        if (!correctAuthId) continue;
         
         for (const profile of profiles) {
-          if (profile.id !== correctAuthId) {
+          // Delete if profile ID doesn't match auth ID
+          if (correctAuthId && profile.id !== correctAuthId) {
+            profilesToDelete.push(profile.id);
+          }
+          // Also delete if no auth user exists for this email
+          if (!correctAuthId && !authIds.has(profile.id)) {
             profilesToDelete.push(profile.id);
           }
         }
       }
 
-      // Delete duplicate profiles
+      // Delete orphan profiles
       let deleted = 0;
+      const deleteErrors: string[] = [];
       for (const profileId of profilesToDelete) {
         const { error } = await kreoonClient.from('profiles').delete().eq('id', profileId);
-        if (!error) deleted++;
+        if (!error) {
+          deleted++;
+        } else {
+          deleteErrors.push(`${profileId}: ${error.message}`);
+        }
       }
 
       return new Response(JSON.stringify({
         action: 'cleanup_duplicate_profiles',
         duplicatesFound: profilesToDelete.length,
         deleted,
+        errors: deleteErrors.length > 0 ? deleteErrors : undefined,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
