@@ -105,34 +105,31 @@ export default function OrgRegister() {
 
   const fetchOrganization = async () => {
     try {
-      // Prefer backend function (works even if DB RLS blocks public reads in some environments)
-      const fnRes = await supabase.functions.invoke('org-public-info', {
-        body: { slug },
+      // Call edge function directly (hosted on Lovable Cloud, reads from Kreoon backend)
+      const LOVABLE_FUNCTIONS_URL = 'https://hfooshsteglylhvrpuka.supabase.co/functions/v1';
+      
+      const fnResponse = await fetch(`${LOVABLE_FUNCTIONS_URL}/org-public-info`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ slug }),
       });
 
-      const orgFromFn = (fnRes.data as any)?.organization as Organization | undefined;
-
-      let data: Organization | null = orgFromFn ?? null;
-
-      // Fallback to direct query (keeps local/dev behavior if function is unavailable)
-      if (!data && !fnRes.error) {
-        const directRes = await supabase
-          .from('organizations')
-          .select(
-            'id, name, slug, logo_url, description, is_registration_open, registration_require_invite, default_role, registration_page_config'
-          )
-          .eq('slug', slug)
-          .maybeSingle();
-
-        if (directRes.data) data = directRes.data as Organization;
-        if (directRes.error) {
-          console.error('OrgRegister: direct organization fetch failed', directRes.error);
+      if (!fnResponse.ok) {
+        const errorData = await fnResponse.json().catch(() => ({}));
+        console.error('OrgRegister: org-public-info failed', fnResponse.status, errorData);
+        
+        if (fnResponse.status === 404 || errorData?.error === 'not_found') {
+          setError('Organización no encontrada');
+        } else {
+          setError('Error al cargar la organización');
         }
+        return;
       }
 
-      if (fnRes.error) {
-        console.error('OrgRegister: org-public-info failed', fnRes.error);
-      }
+      const result = await fnResponse.json();
+      const data = result?.organization as Organization | undefined;
 
       if (!data) {
         setError('Organización no encontrada');
@@ -144,7 +141,7 @@ export default function OrgRegister() {
         return;
       }
 
-      setOrganization(data as Organization);
+      setOrganization(data);
 
       // If no invite code required, mark as verified
       if (!data.registration_require_invite) {

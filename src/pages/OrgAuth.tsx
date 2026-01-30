@@ -36,20 +36,41 @@ const OrgAuth = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("id, name, logo_url, description, is_registration_open, default_role")
-        .eq("slug", slug)
-        .single();
+      try {
+        // Call edge function directly (hosted on Lovable Cloud, reads from Kreoon backend)
+        const LOVABLE_FUNCTIONS_URL = 'https://hfooshsteglylhvrpuka.supabase.co/functions/v1';
+        
+        const fnResponse = await fetch(`${LOVABLE_FUNCTIONS_URL}/org-public-info`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ slug }),
+        });
 
-      if (error || !data) {
-        toast.error("Organización no encontrada");
+        if (!fnResponse.ok) {
+          console.error('OrgAuth: org-public-info failed', fnResponse.status);
+          toast.error("Organización no encontrada");
+          navigate("/auth");
+          return;
+        }
+
+        const result = await fnResponse.json();
+        const data = result?.organization;
+
+        if (!data) {
+          toast.error("Organización no encontrada");
+          navigate("/auth");
+          return;
+        }
+
+        setOrganization(data);
+        setCheckingOrg(false);
+      } catch (err) {
+        console.error('OrgAuth: Error fetching organization', err);
+        toast.error("Error al cargar la organización");
         navigate("/auth");
-        return;
       }
-
-      setOrganization(data);
-      setCheckingOrg(false);
     };
 
     fetchOrganization();
