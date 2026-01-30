@@ -86,6 +86,17 @@ const SettingsPage = memo(() => {
     sectionFromUrl && permissions.canAccess(sectionFromUrl) ? sectionFromUrl : null
   );
 
+  // If the page booted before permissions finished loading (common on refresh),
+  // re-apply the URL section once permissions are available.
+  useEffect(() => {
+    if (permissions.loading) return;
+    if (!sectionFromUrl) return;
+
+    if (permissions.canAccess(sectionFromUrl)) {
+      setActiveSection(sectionFromUrl);
+    }
+  }, [permissions.loading, permissions.canAccess, sectionFromUrl]);
+
   // Update URL when section changes
   useEffect(() => {
     if (activeSection) {

@@ -9,9 +9,10 @@ import { Loader2 } from 'lucide-react';
 const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
 
 export default function PermissionsUnifiedSection() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { isPlatformRoot: isPlatformRootFromHook } = useOrgOwner();
-  const isPlatformRoot = (profile?.email && ROOT_EMAILS.includes(profile.email)) || isPlatformRootFromHook;
+  // IMPORTANT: profile can fail to load by auth uid after migrations; rely on auth email.
+  const isPlatformRoot = (user?.email && ROOT_EMAILS.includes(user.email)) || isPlatformRootFromHook;
   
   if (!profile?.current_organization_id) {
     return (
