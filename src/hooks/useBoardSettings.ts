@@ -132,7 +132,10 @@ export function useBoardSettings(organizationId: string | null) {
         auto_actions: r.auto_actions as any[],
         can_advance_roles: (r as any).can_advance_roles || [],
         can_retreat_roles: (r as any).can_retreat_roles || [],
-        can_view_roles: (r as any).can_view_roles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client']
+        // Treat empty arrays as "not configured" (legacy behavior)
+        can_view_roles: (Array.isArray((r as any).can_view_roles) && (r as any).can_view_roles.length > 0)
+          ? (r as any).can_view_roles
+          : ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client']
       })));
       setCustomFields((fieldsRes.data || []).map(f => ({
         ...f,
