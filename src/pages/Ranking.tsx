@@ -19,6 +19,7 @@ import { UPUserStats } from '@/components/points/UPUserStats';
 import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { UPBadgeHolders } from '@/components/points/UPBadgeHolders';
 import { UPSeasonHistory } from '@/components/points/UPSeasonHistory';
+import { SeasonManager } from '@/components/points/SeasonManager';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -265,7 +266,12 @@ export default function RankingPage() {
           </TabsContent>
 
           <TabsContent value="seasons" className="space-y-6">
-            <UPSeasonHistory />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <SeasonManager showCreateButton={true} />
+              <div className="lg:col-span-2">
+                <UPSeasonHistory />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="manage" className="space-y-6">
