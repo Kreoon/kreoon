@@ -60,6 +60,10 @@ export function useUPPermissions() {
   const [permissions, setPermissions] = useState<UPPermissions>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(true);
 
+  // IMPORTANT: never rely only on profiles.active_role for security decisions.
+  // activeRole can be null while roles[] is already loaded.
+  const isAdminRole = (activeRole === 'admin') || roles.includes('admin');
+
   useEffect(() => {
     if (user && currentOrgId) {
       fetchPermissions();
@@ -74,10 +78,7 @@ export function useUPPermissions() {
     setLoading(true);
     try {
       // Check if user is admin or org owner - they get full permissions
-      // Use activeRole to determine current context
-      const isAdmin = activeRole === 'admin';
-      
-      if (isAdmin || isOrgOwner) {
+      if (isAdminRole || isOrgOwner) {
         setPermissions(ADMIN_PERMISSIONS);
         setLoading(false);
         return;
@@ -163,7 +164,7 @@ export function useUPPermissions() {
     permissions,
     loading,
     refetch: fetchPermissions,
-    isAdmin: activeRole === 'admin' || isOrgOwner,
+    isAdmin: isAdminRole || isOrgOwner,
     activeRole,
   };
 }
