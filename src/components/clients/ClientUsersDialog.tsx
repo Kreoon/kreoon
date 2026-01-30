@@ -56,6 +56,7 @@ interface AvailableUser {
 interface Props {
   clientId: string;
   clientName: string;
+  organizationId: string | null | undefined;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate?: () => void;
@@ -73,7 +74,7 @@ const ROLE_ICONS: Record<string, any> = {
   viewer: Eye
 };
 
-export function ClientUsersDialog({ clientId, clientName, open, onOpenChange, onUpdate }: Props) {
+export function ClientUsersDialog({ clientId, clientName, organizationId, open, onOpenChange, onUpdate }: Props) {
   const { toast } = useToast();
   const { isAdmin } = useAuth();
   const [users, setUsers] = useState<ClientUser[]>([]);
@@ -132,34 +133,48 @@ export function ClientUsersDialog({ clientId, clientName, open, onOpenChange, on
   };
 
   const fetchAvailableUsers = async () => {
+    if (!organizationId) {
+      setAvailableUsers([]);
+      return;
+    }
+
     try {
-      // Get users that are already linked to any client via client_users
-      const { data: existingClientUsers } = await supabase
-        .from('client_users')
-        .select('user_id');
+      // Get users with "client" role in the current organization
+      const { data: orgMembers } = await supabase
+        .from('organization_members')
+        .select('user_id')
+        .eq('organization_id', organizationId)
+        .eq('role', 'client');
 
-      const existingUserIds = existingClientUsers?.map(r => r.user_id) || [];
-
-      // Also get current users of this client to exclude them
-      const currentUserIds = users.map(u => u.user_id);
-      const excludeIds = [...new Set([...existingUserIds, ...currentUserIds])];
-
-      // Fetch all profiles that are not already linked to a client
-      let query = supabase
-        .from('profiles')
-        .select('id, full_name, email, avatar_url');
-      
-      if (excludeIds.length > 0) {
-        // Get profiles NOT in the exclude list
-        const { data: profiles } = await query;
-        const availableProfiles = profiles?.filter(p => !excludeIds.includes(p.id)) || [];
-        setAvailableUsers(availableProfiles);
-      } else {
-        const { data: profiles } = await query;
-        setAvailableUsers(profiles || []);
+      if (!orgMembers || orgMembers.length === 0) {
+        setAvailableUsers([]);
+        return;
       }
+
+      const clientRoleUserIds = orgMembers.map(m => m.user_id);
+
+      // Get current users of this client to exclude them
+      const currentUserIds = users.map(u => u.user_id);
+
+      // Filter to only include client-role users not already linked to this company
+      const availableUserIds = clientRoleUserIds.filter(id => !currentUserIds.includes(id));
+
+      if (availableUserIds.length === 0) {
+        setAvailableUsers([]);
+        return;
+      }
+
+      // Fetch profiles for available users
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url')
+        .in('id', availableUserIds)
+        .order('full_name');
+
+      setAvailableUsers(profiles || []);
     } catch (error) {
       console.error('Error fetching available users:', error);
+      setAvailableUsers([]);
     }
   };
 

@@ -825,6 +825,7 @@ const Clients = () => {
         <ClientUsersDialog
           clientId={selectedClientForUsers.id}
           clientName={selectedClientForUsers.name}
+          organizationId={currentOrgId}
           open={clientUsersDialogOpen}
           onOpenChange={(open) => {
             setClientUsersDialogOpen(open);
