@@ -1,6 +1,19 @@
-import { Calendar, User, GripVertical, DollarSign, CheckCircle, Video, FileVideo, Crown, Circle, Clock, Tag } from "lucide-react";
+import { useState } from "react";
+import {
+  Calendar,
+  User,
+  GripVertical,
+  CheckCircle,
+  Video,
+  FileVideo,
+  Crown,
+  Circle,
+  Clock,
+  Tag,
+  Play,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Content, STATUS_LABELS, STATUS_COLORS } from "@/types/database";
+import { Content, STATUS_LABELS } from "@/types/database";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -9,7 +22,13 @@ import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { CurrencyDisplay, CurrencyBadge, type CurrencyType } from "@/components/ui/currency-input";
+import {
+  CurrencyDisplay,
+  type CurrencyType,
+} from "@/components/ui/currency-input";
+import { motion } from "framer-motion";
+import { KanbanVideoModal } from "@/components/board/KanbanVideoModal";
+import { getStatusNeonStyle, TECH_COLORS } from "@/components/board/kanbanTechStyles";
 
 interface DraggableContentCardProps {
   content: Content;
@@ -20,121 +39,101 @@ interface DraggableContentCardProps {
   onStatusChange?: (contentId: string, newStatus: string) => void;
 }
 
-export function DraggableContentCard({ 
-  content, 
+function getPrimaryVideoUrl(content: Content): string | null {
+  const urls = (content as any).video_urls;
+  if (urls?.length > 0) {
+    const first = urls.find((u: string) => u?.trim());
+    if (first) return first;
+  }
+  return (content as any).video_url || (content as any).bunny_embed_url || null;
+}
+
+export function DraggableContentCard({
+  content,
   onDragStart,
   onClick,
   isDragging,
   onPaymentUpdate,
-  onStatusChange
+  onStatusChange,
 }: DraggableContentCardProps) {
   const { isAdmin, isCreator, isEditor, isClient, user } = useAuth();
-  const { isImpersonating, effectiveRoles, impersonationTarget } = useImpersonation();
+  const { isImpersonating, effectiveRoles, impersonationTarget } =
+    useImpersonation();
   const { toast } = useToast();
 
-  // Determine effective role for display logic
-  const effectiveIsClient = isImpersonating 
-    ? effectiveRoles.includes('client') || impersonationTarget?.role === 'client'
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const effectiveIsClient =
+    isImpersonating ?
+      effectiveRoles.includes("client") || impersonationTarget?.role === "client"
     : isClient;
-  
-  const effectiveIsAdmin = isImpersonating 
-    ? effectiveRoles.includes('admin') || impersonationTarget?.role === 'admin'
+  const effectiveIsAdmin =
+    isImpersonating ?
+      effectiveRoles.includes("admin") || impersonationTarget?.role === "admin"
     : isAdmin;
-
-  const effectiveIsCreator = isImpersonating
-    ? effectiveRoles.includes('creator') || impersonationTarget?.role === 'creator'
+  const effectiveIsCreator =
+    isImpersonating ?
+      effectiveRoles.includes("creator") || impersonationTarget?.role === "creator"
     : isCreator;
-
-  const effectiveIsEditor = isImpersonating
-    ? effectiveRoles.includes('editor') || impersonationTarget?.role === 'editor'
+  const effectiveIsEditor =
+    isImpersonating ?
+      effectiveRoles.includes("editor") || impersonationTarget?.role === "editor"
     : isEditor;
 
-  // Determine what payment to show based on user role
-  // CLIENTS SHOULD NEVER SEE PAYMENT INFORMATION
   const isUserCreator = user?.id === content.creator_id;
   const isUserEditor = user?.id === content.editor_id;
-  
+
   const getDisplayPayment = () => {
-    // Clients never see payments
     if (effectiveIsClient) return null;
-    
     if (effectiveIsAdmin) {
-      // Admin sees total
       return {
         value: (content.creator_payment || 0) + (content.editor_payment || 0),
-        currency: ((content as any).creator_payment_currency as CurrencyType) || 'COP'
+        currency:
+          ((content as any).creator_payment_currency as CurrencyType) || "COP",
       };
     }
     if (isUserCreator && effectiveIsCreator) {
-      // Creator sees their payment
       return {
         value: content.creator_payment || 0,
-        currency: ((content as any).creator_payment_currency as CurrencyType) || 'COP'
+        currency:
+          ((content as any).creator_payment_currency as CurrencyType) || "COP",
       };
     }
     if (isUserEditor && effectiveIsEditor) {
-      // Editor sees their payment
       return {
         value: content.editor_payment || 0,
-        currency: ((content as any).editor_payment_currency as CurrencyType) || 'COP'
+        currency:
+          ((content as any).editor_payment_currency as CurrencyType) || "COP",
       };
     }
-    // Others don't see payment
     return null;
   };
-  
-  const displayPayment = getDisplayPayment();
 
-  const statusInfo = {
-    label: STATUS_LABELS[content.status],
-    className: STATUS_COLORS[content.status]
-  };
+  const displayPayment = getDisplayPayment();
+  const statusNeon = getStatusNeonStyle(content.status);
+  const primaryVideoUrl = getPrimaryVideoUrl(content);
 
   const formatDate = (date: string | null) => {
-    if (!date) return 'Sin fecha';
-    return format(new Date(date), 'd MMM', { locale: es });
-  };
-
-  const getPriorityClass = () => {
-    if (!content.deadline) return 'border-l-muted';
-    const deadline = new Date(content.deadline);
-    const now = new Date();
-    const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) return 'border-l-destructive';
-    if (diffDays <= 2) return 'border-l-warning';
-    return 'border-l-success';
+    if (!date) return "Sin fecha";
+    return format(new Date(date), "d MMM", { locale: es });
   };
 
   const handleMarkCreatorPaid = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       const updates: any = { creator_paid: true };
-      
       if (content.editor_paid) {
-        updates.status = 'paid';
+        updates.status = "paid";
         updates.paid_at = new Date().toISOString();
       }
-
       const { error } = await supabase
-        .from('content')
+        .from("content")
         .update(updates)
-        .eq('id', content.id);
-
+        .eq("id", content.id);
       if (error) throw error;
-
-      toast({
-        title: "Pago registrado",
-        description: `Creador pagado - $${content.creator_payment}`
-      });
-      
+      toast({ title: "Pago registrado", description: `Creador pagado` });
       onPaymentUpdate?.();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo registrar el pago",
-        variant: "destructive"
-      });
+    } catch {
+      toast({ title: "Error", description: "No se pudo registrar el pago", variant: "destructive" });
     }
   };
 
@@ -142,156 +141,225 @@ export function DraggableContentCard({
     e.stopPropagation();
     try {
       const updates: any = { editor_paid: true };
-      
       if (content.creator_paid) {
-        updates.status = 'paid';
+        updates.status = "paid";
         updates.paid_at = new Date().toISOString();
       }
-
       const { error } = await supabase
-        .from('content')
+        .from("content")
         .update(updates)
-        .eq('id', content.id);
-
+        .eq("id", content.id);
       if (error) throw error;
-
-      toast({
-        title: "Pago registrado",
-        description: `Editor pagado - $${content.editor_payment}`
-      });
-      
+      toast({ title: "Pago registrado", description: `Editor pagado` });
       onPaymentUpdate?.();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo registrar el pago",
-        variant: "destructive"
-      });
+    } catch {
+      toast({ title: "Error", description: "No se pudo registrar el pago", variant: "destructive" });
     }
   };
 
-  // Show pay buttons only for admin on approved content - NEVER for clients
-  const showPayButtons = effectiveIsAdmin && !effectiveIsClient && content.status === 'approved' && (!content.creator_paid || !content.editor_paid);
+  const showPayButtons =
+    effectiveIsAdmin &&
+    !effectiveIsClient &&
+    content.status === "approved" &&
+    (!content.creator_paid || !content.editor_paid);
 
-  // Check if current user is the creator and can change status - NOT when impersonating client
-  const isCreatorOfContent = effectiveIsCreator && !effectiveIsClient && content.creator_id === user?.id;
-  const canStartRecording = isCreatorOfContent && content.status === 'assigned';
-  const canMarkRecorded = isCreatorOfContent && content.status === 'recording';
+  const isCreatorOfContent =
+    effectiveIsCreator && !effectiveIsClient && content.creator_id === user?.id;
+  const canStartRecording = isCreatorOfContent && content.status === "assigned";
+  const canMarkRecorded = isCreatorOfContent && content.status === "recording";
 
-  // Check if current user is the editor and can change status - NOT when impersonating client
-  const isEditorOfContent = effectiveIsEditor && !effectiveIsClient && content.editor_id === user?.id;
-  const canStartEditing = isEditorOfContent && content.status === 'recorded';
-  const canMarkDelivered = isEditorOfContent && content.status === 'editing';
+  const isEditorOfContent =
+    effectiveIsEditor && !effectiveIsClient && content.editor_id === user?.id;
+  const canStartEditing = isEditorOfContent && content.status === "recorded";
+  const canMarkDelivered = isEditorOfContent && content.status === "editing";
 
-  // Check if current user is a client and can approve/reject
-  const canClientApprove = effectiveIsClient && (content.status === 'delivered' || content.status === 'corrected');
+  const canClientApprove =
+    effectiveIsClient &&
+    (content.status === "delivered" || content.status === "corrected");
+
+  const handleVideoClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (primaryVideoUrl) {
+      setShowVideoModal(true);
+    } else {
+      onClick?.(content);
+    }
+  };
+
+  const cardBaseStyle = {
+    background: TECH_COLORS.card,
+    backdropFilter: "blur(16px) saturate(180%)",
+    border: `1px solid ${TECH_COLORS.border}`,
+    boxShadow: `0 0 20px rgba(139, 92, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05)`,
+  };
 
   return (
-    <div
-      draggable
-      onDragStart={(e) => onDragStart(e, content)}
-      onClick={() => onClick?.(content)}
-      className={cn(
-        "group relative overflow-hidden rounded-lg border-l-4 bg-card border border-border p-4 transition-all duration-200 hover:shadow-md hover:border-primary/20 cursor-grab active:cursor-grabbing",
-        getPriorityClass(),
-        isDragging && "opacity-50 scale-95"
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <span className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-              statusInfo.className
-            )}>
-              {statusInfo.label}
-            </span>
-            {/* Ambassador badge - only show to non-clients */}
-            {!effectiveIsClient && content.is_ambassador_content && (
-              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-sm">
-                <Crown className="h-3 w-3" />
-                Embajador
-              </span>
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        draggable
+        onDragStart={(e) => onDragStart(e, content)}
+        onClick={() => onClick?.(content)}
+        className={cn(
+          "group relative overflow-hidden rounded-xl cursor-grab active:cursor-grabbing",
+          "transition-all duration-300 ease-out",
+          "hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]",
+          "hover:border-[rgba(168,85,247,0.5)]",
+          isDragging && "opacity-70 scale-[0.98] shadow-[0_0_25px_rgba(168,85,247,0.3)]"
+        )}
+        style={cardBaseStyle}
+      >
+        <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          <GripVertical className="h-4 w-4 text-[#cbd5e1]" />
+        </div>
+
+        {/* 1. VIDEO THUMBNAIL HEADER */}
+        {(content.thumbnail_url || primaryVideoUrl) && (
+          <div
+            onClick={handleVideoClick}
+            className="relative h-[200px] overflow-hidden"
+          >
+            {content.thumbnail_url ? (
+              <img
+                src={content.thumbnail_url}
+                alt={content.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-[#1a0a2e] to-[#0a0118] flex items-center justify-center" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            {primaryVideoUrl && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div
+                  className="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110"
+                  style={{
+                    background: "rgba(255,255,255,0.1)",
+                    backdropFilter: "blur(8px)",
+                    boxShadow: "0 0 20px rgba(168,85,247,0.6)",
+                  }}
+                >
+                  <Play className="h-6 w-6 text-[#a855f7] fill-[#a855f7] ml-1" />
+                </div>
+              </div>
             )}
           </div>
-          
-          <h3 className="font-semibold text-card-foreground truncate mb-1">
+        )}
+
+        {/* 2. BODY */}
+        <div
+          className="p-3"
+          style={{ background: TECH_COLORS.cardBody }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Badge
+              className="text-xs px-2 py-0.5 font-medium shrink-0"
+              style={{
+                background: statusNeon.bg,
+                border: `1px solid ${statusNeon.border}`,
+                color: statusNeon.text,
+                boxShadow: statusNeon.glow,
+              }}
+            >
+              {STATUS_LABELS[content.status]}
+            </Badge>
+            {!effectiveIsClient && content.is_ambassador_content && (
+              <Badge
+                variant="outline"
+                className="text-xs border-amber-500/50 text-amber-400"
+                style={{ boxShadow: "0 0 10px rgba(245,158,11,0.3)" }}
+              >
+                <Crown className="h-3 w-3 mr-0.5" />
+                Embajador
+              </Badge>
+            )}
+          </div>
+
+          <h3
+            className="font-semibold truncate mb-1.5 text-sm"
+            style={{
+              background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
             {content.title}
           </h3>
-          
-          {/* For clients: show product info instead of internal client name */}
+
           {effectiveIsClient ? (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {(content as any).product?.name && (
-                <Badge variant="outline" className="text-xs gap-1">
-                  <Tag className="h-3 w-3" />
-                  {(content as any).product.name}
-                </Badge>
-              )}
-            </div>
+            (content as any).product?.name && (
+              <Badge
+                variant="outline"
+                className="text-xs gap-1 mb-2 border-white/20 text-[#cbd5e1]"
+              >
+                <Tag className="h-3 w-3" />
+                {(content as any).product.name}
+              </Badge>
+            )
           ) : (
-            <p className="text-sm text-muted-foreground mb-3 truncate">
-              {content.client?.name || 'Sin cliente'}
+            <p className="text-xs text-[#cbd5e1] mb-2 truncate">
+              {content.client?.name || "Sin cliente"}
             </p>
           )}
 
-          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-            {/* Creator info - only for non-clients */}
+          <div className="flex flex-wrap gap-3 text-xs text-[#cbd5e1]">
             {!effectiveIsClient && content.creator && (
               <div className="flex items-center gap-1">
-                <User className="h-3 w-3" />
+                <User className="h-3 w-3 text-[#8b5cf6]" />
                 <span className="truncate max-w-[100px]">{content.creator.full_name}</span>
               </div>
             )}
             <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
+              <Calendar className="h-3 w-3 text-[#8b5cf6]" />
               <span>{formatDate(content.deadline)}</span>
             </div>
-            {/* Payment info - never for clients */}
             {!effectiveIsClient && displayPayment && displayPayment.value > 0 && (
-              <div className="flex items-center gap-1 text-success">
-                <CurrencyDisplay 
-                  value={displayPayment.value} 
+              <div className="flex items-center gap-1 text-emerald-400">
+                <CurrencyDisplay
+                  value={displayPayment.value}
                   currency={displayPayment.currency}
                   size="sm"
                   showFlag
                 />
               </div>
             )}
-            {/* For clients: show creation date */}
             {effectiveIsClient && content.created_at && (
               <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
+                <Clock className="h-3 w-3 text-[#8b5cf6]" />
                 <span>Creado {formatDate(content.created_at)}</span>
               </div>
             )}
           </div>
 
-          {/* Video Variants Info - simplified for clients */}
           <div className="flex flex-wrap gap-2 mt-2">
-            {/* Show hooks/variables count - for clients show as "versions" */}
             {(content as any).hooks_count > 1 && (
-              <Badge variant="outline" className="text-xs gap-1">
+              <Badge
+                variant="outline"
+                className="text-xs gap-1 border-white/20 text-[#cbd5e1]"
+              >
                 <Video className="h-3 w-3" />
-                {(content as any).hooks_count} {effectiveIsClient ? 'versiones' : 'variables'}
+                {(content as any).hooks_count}{" "}
+                {effectiveIsClient ? "versiones" : "variables"}
               </Badge>
             )}
-            
-            {/* Show uploaded videos count */}
             {(() => {
               const videoUrls = (content as any).video_urls || [];
-              const uploadedCount = videoUrls.filter((url: string) => url && url.trim() !== '').length;
+              const uploadedCount = videoUrls.filter(
+                (url: string) => url?.trim() !== ""
+              ).length;
               const totalCount = (content as any).hooks_count || 1;
-              
               if (uploadedCount > 0) {
                 return (
-                  <Badge 
-                    variant={uploadedCount === totalCount ? "default" : "secondary"} 
+                  <Badge
+                    variant="outline"
                     className={cn(
                       "text-xs gap-1",
-                      uploadedCount === totalCount 
-                        ? "bg-green-500/10 text-green-600 border-green-500/20" 
-                        : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                      uploadedCount === totalCount
+                        ? "border-emerald-500/50 text-emerald-400"
+                        : "border-amber-500/50 text-amber-400"
                     )}
                   >
                     <FileVideo className="h-3 w-3" />
@@ -301,152 +369,170 @@ export function DraggableContentCard({
               }
               return null;
             })()}
-            
-            {/* Show raw material status - only for internal team, not clients */}
             {!effectiveIsClient && (content as any).drive_url && (
-              <Badge variant="outline" className="text-xs gap-1 bg-blue-500/10 text-blue-600 border-blue-500/20">
+              <Badge
+                variant="outline"
+                className="text-xs gap-1 border-blue-500/50 text-blue-400"
+              >
                 <FileVideo className="h-3 w-3" />
                 Material crudo
               </Badge>
             )}
           </div>
-
-          {/* Quick Pay Buttons for Admin */}
-          {showPayButtons && (
-            <div className="flex gap-2 mt-3 pt-3 border-t border-border">
-              {!content.creator_paid && content.creator_payment > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleMarkCreatorPaid}
-                  className="h-7 px-2 text-xs border-warning/50 text-warning hover:bg-warning/10 hover:text-warning"
-                >
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Creador <CurrencyDisplay value={content.creator_payment} currency={((content as any).creator_payment_currency as CurrencyType) || 'COP'} size="sm" />
-                </Button>
-              )}
-              {!content.editor_paid && content.editor_payment > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleMarkEditorPaid}
-                  className="h-7 px-2 text-xs border-info/50 text-info hover:bg-info/10 hover:text-info"
-                >
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Editor <CurrencyDisplay value={content.editor_payment} currency={((content as any).editor_payment_currency as CurrencyType) || 'COP'} size="sm" />
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Creator Status Change Buttons */}
-          {(canStartRecording || canMarkRecorded) && onStatusChange && (
-            <div className="flex gap-2 mt-3 pt-3 border-t border-border">
-              {canStartRecording && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStatusChange(content.id, 'recording');
-                  }}
-                  className="h-7 px-2 text-xs border-blue-500/50 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400"
-                >
-                  <Circle className="h-3 w-3 mr-1 fill-current animate-pulse" />
-                  Iniciar Grabación
-                </Button>
-              )}
-              {canMarkRecorded && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStatusChange(content.id, 'recorded');
-                  }}
-                  className="h-7 px-2 text-xs border-green-500/50 text-green-500 hover:bg-green-500/10 hover:text-green-400"
-                >
-                  <Video className="h-3 w-3 mr-1" />
-                  Marcar Grabado
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Editor Status Change Buttons */}
-          {(canStartEditing || canMarkDelivered) && onStatusChange && (
-            <div className="flex gap-2 mt-3 pt-3 border-t border-border">
-              {canStartEditing && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStatusChange(content.id, 'editing');
-                  }}
-                  className="h-8 px-3 text-xs bg-pink-500 text-white hover:bg-pink-600"
-                >
-                  ✂️ Iniciar Edición
-                </Button>
-              )}
-              {canMarkDelivered && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStatusChange(content.id, 'delivered');
-                  }}
-                  className="h-8 px-3 text-xs bg-emerald-500 text-white hover:bg-emerald-600"
-                >
-                  📤 Entregar
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Client Approve/Reject Buttons */}
-          {canClientApprove && onStatusChange && (
-            <div className="flex gap-2 mt-3 pt-3 border-t border-border">
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStatusChange(content.id, 'approved');
-                }}
-                className="h-8 px-3 text-xs bg-green-500 text-white hover:bg-green-600 flex-1"
-              >
-                ✅ Aprobar
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStatusChange(content.id, 'issue');
-                }}
-                className="h-8 px-3 text-xs border-red-500 text-red-500 hover:bg-red-500/10"
-              >
-                ❌ Novedad
-              </Button>
-            </div>
-          )}
         </div>
 
-        {content.thumbnail_url && (
-          <div className="h-16 w-16 rounded-md overflow-hidden bg-muted shrink-0">
-            <img 
-              src={content.thumbnail_url} 
-              alt={content.title} 
-              className="h-full w-full object-cover"
-            />
+        {/* 3. FOOTER - Action Buttons */}
+        {(showPayButtons ||
+          (canStartRecording || canMarkRecorded) ||
+          (canStartEditing || canMarkDelivered) ||
+          canClientApprove) && (
+          <div
+            className="px-3 py-2 border-t border-white/5 flex flex-wrap gap-2"
+            style={{
+              background: "rgba(255,255,255,0.02)",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            {showPayButtons && (
+              <>
+                {!content.creator_paid && content.creator_payment > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleMarkCreatorPaid}
+                    className="h-7 px-2 text-xs border-amber-500/50 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+                  >
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Creador{" "}
+                    <CurrencyDisplay
+                      value={content.creator_payment}
+                      currency={
+                        ((content as any).creator_payment_currency as CurrencyType) ||
+                        "COP"
+                      }
+                      size="sm"
+                    />
+                  </Button>
+                )}
+                {!content.editor_paid && content.editor_payment > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleMarkEditorPaid}
+                    className="h-7 px-2 text-xs border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300"
+                  >
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Editor{" "}
+                    <CurrencyDisplay
+                      value={content.editor_payment}
+                      currency={
+                        ((content as any).editor_payment_currency as CurrencyType) ||
+                        "COP"
+                      }
+                      size="sm"
+                    />
+                  </Button>
+                )}
+              </>
+            )}
+            {(canStartRecording || canMarkRecorded) && onStatusChange && (
+              <>
+                {canStartRecording && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStatusChange(content.id, "recording");
+                    }}
+                    className="h-7 px-2 text-xs border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+                  >
+                    <Circle className="h-3 w-3 mr-1 fill-current animate-pulse" />
+                    Iniciar Grabación
+                  </Button>
+                )}
+                {canMarkRecorded && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStatusChange(content.id, "recorded");
+                    }}
+                    className="h-7 px-2 text-xs border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                  >
+                    <Video className="h-3 w-3 mr-1" />
+                    Marcar Grabado
+                  </Button>
+                )}
+              </>
+            )}
+            {(canStartEditing || canMarkDelivered) && onStatusChange && (
+              <>
+                {canStartEditing && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStatusChange(content.id, "editing");
+                    }}
+                    className="h-7 px-2 text-xs border-pink-500/50 text-pink-400 hover:bg-pink-500/10"
+                  >
+                    ✂️ Iniciar Edición
+                  </Button>
+                )}
+                {canMarkDelivered && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStatusChange(content.id, "delivered");
+                    }}
+                    className="h-7 px-2 text-xs border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                  >
+                    📤 Entregar
+                  </Button>
+                )}
+              </>
+            )}
+            {canClientApprove && onStatusChange && (
+              <div className="flex gap-2 w-full">
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(content.id, "approved");
+                  }}
+                  className="flex-1 h-8 text-xs bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30"
+                >
+                  ✅ Aprobar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(content.id, "issue");
+                  }}
+                  className="flex-1 h-8 text-xs border-red-500/50 text-red-400 hover:bg-red-500/10"
+                >
+                  ❌ Novedad
+                </Button>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </motion.div>
 
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <GripVertical className="h-4 w-4 text-muted-foreground" />
-      </div>
-    </div>
+      <KanbanVideoModal
+        open={showVideoModal}
+        onClose={() => setShowVideoModal(false)}
+        videoUrl={primaryVideoUrl}
+        posterUrl={content.thumbnail_url}
+        title={content.title}
+      />
+    </>
   );
 }

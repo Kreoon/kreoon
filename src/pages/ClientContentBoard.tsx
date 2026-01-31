@@ -407,8 +407,8 @@ export default function ClientContentBoard() {
         </Card>
       </div>
 
-      {/* Kanban Board */}
-      <div className="p-4 md:p-6">
+      {/* Kanban Board - Tech/IA aesthetic */}
+      <div className="p-4 md:p-6 rounded-xl" style={{ background: "linear-gradient(180deg, #0a0118 0%, #0d0220 100%)" }}>
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 md:gap-4">
           {CLIENT_COLUMNS.map((status) => {
             const colorMap: Record<string, string> = {
