@@ -393,6 +393,51 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground));
   }
+
+  /* Kanban column scrollbar - glassmorphism style */
+  .scrollbar-kanban {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.4) rgba(255, 255, 255, 0.05);
+  }
+
+  .scrollbar-kanban::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-kanban::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+  }
+
+  .scrollbar-kanban::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 4px;
+    backdrop-filter: blur(8px);
+  }
+
+  .scrollbar-kanban::-webkit-scrollbar-thumb:hover {
+    background: rgba(168, 85, 247, 0.5);
+  }
+
+  /* Kanban column cards container - specific scrollbar */
+  .kanban-column-cards::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .kanban-column-cards::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 3px;
+  }
+
+  .kanban-column-cards::-webkit-scrollbar-thumb {
+    background: rgba(168, 85, 247, 0.3);
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+
+  .kanban-column-cards::-webkit-scrollbar-thumb:hover {
+    background: rgba(168, 85, 247, 0.6);
+  }
 }
 
 @keyframes fadeIn {

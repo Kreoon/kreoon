@@ -29,7 +29,7 @@ export function EnhancedKanbanColumn({
   return (
     <div
       className={cn(
-        "flex flex-col min-w-[280px] md:min-w-[300px] max-w-[320px] rounded-xl",
+        "flex flex-col shrink-0 w-[350px] h-full rounded-xl",
         "transition-all duration-300 ease-out",
         "backdrop-blur-xl border",
         isDropTarget && canDrop && "ring-2 ring-[#a855f7]/60 shadow-[0_0_30px_rgba(168,85,247,0.15)]",
@@ -44,8 +44,8 @@ export function EnhancedKanbanColumn({
       onDrop={onDrop}
       onDragEnter={onDragEnter}
     >
-      {/* Column Header */}
-      <div className="flex items-center justify-between p-3 pb-2">
+      {/* Column Header - fixed 60px */}
+      <div className="flex items-center justify-between h-[60px] shrink-0 p-4">
         <div className="flex items-center gap-2.5">
           <div
             className="h-3 w-3 rounded-full"
@@ -68,8 +68,8 @@ export function EnhancedKanbanColumn({
         </span>
       </div>
 
-      {/* Column Content */}
-      <div className="flex flex-col gap-2 flex-1 overflow-y-auto px-2 pb-3 min-h-[200px] max-h-[calc(100vh-280px)]">
+      {/* Cards container - scrollable */}
+      <div className="kanban-column-cards flex flex-col flex-1 overflow-y-auto overflow-x-hidden pt-0 px-4 pb-4 gap-4 min-h-0 scroll-smooth">
         {children}
       </div>
     </div>

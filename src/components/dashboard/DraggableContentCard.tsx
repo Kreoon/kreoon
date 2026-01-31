@@ -203,7 +203,8 @@ export function DraggableContentCard({
         onDragStart={(e) => onDragStart(e, content)}
         onClick={() => onClick?.(content)}
         className={cn(
-          "group relative overflow-hidden rounded-xl cursor-grab active:cursor-grabbing",
+          "group relative overflow-visible rounded-xl cursor-grab active:cursor-grabbing",
+          "w-full min-h-[420px] flex flex-col shrink-0",
           "transition-all duration-300 ease-out",
           "hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]",
           "hover:border-[rgba(168,85,247,0.5)]",
@@ -215,11 +216,12 @@ export function DraggableContentCard({
           <GripVertical className="h-4 w-4 text-[#cbd5e1]" />
         </div>
 
-        {/* 1. VIDEO THUMBNAIL HEADER */}
-        {(content.thumbnail_url || primaryVideoUrl) && (
+        {/* 1. VIDEO THUMBNAIL - 9:16 vertical, centered, 280px */}
+        <div className="flex justify-center p-4 pt-4 pb-0">
           <div
             onClick={handleVideoClick}
-            className="relative h-[200px] overflow-hidden"
+            className="relative overflow-hidden rounded-xl shrink-0 cursor-pointer w-[157px] h-[280px] aspect-[9/16]"
+            style={{ minWidth: 157 }}
           >
             {content.thumbnail_url ? (
               <img
@@ -228,9 +230,11 @@ export function DraggableContentCard({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#1a0a2e] to-[#0a0118] flex items-center justify-center" />
+              <div className="w-full h-full bg-gradient-to-br from-[#1a0a2e] to-[#0a0118] flex items-center justify-center">
+                <Video className="h-12 w-12 text-[#8b5cf6]/40" />
+              </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
             {primaryVideoUrl && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div
@@ -246,14 +250,26 @@ export function DraggableContentCard({
               </div>
             )}
           </div>
-        )}
+        </div>
 
         {/* 2. BODY */}
         <div
-          className="p-3"
+          className="flex-1 flex flex-col p-4 pt-3 mt-3"
           style={{ background: TECH_COLORS.cardBody }}
         >
-          <div className="flex items-center gap-2 mb-2">
+          <h3
+            className="font-semibold line-clamp-2 break-words text-sm"
+            style={{
+              background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            {content.title}
+          </h3>
+
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
             <Badge
               className="text-xs px-2 py-0.5 font-medium shrink-0"
               style={{
@@ -277,35 +293,23 @@ export function DraggableContentCard({
             )}
           </div>
 
-          <h3
-            className="font-semibold truncate mb-1.5 text-sm"
-            style={{
-              background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            {content.title}
-          </h3>
-
           {effectiveIsClient ? (
             (content as any).product?.name && (
               <Badge
                 variant="outline"
-                className="text-xs gap-1 mb-2 border-white/20 text-[#cbd5e1]"
+                className="text-xs gap-1 mt-3 border-white/20 text-[#cbd5e1]"
               >
                 <Tag className="h-3 w-3" />
                 {(content as any).product.name}
               </Badge>
             )
           ) : (
-            <p className="text-xs text-[#cbd5e1] mb-2 truncate">
+            <p className="text-xs text-[#cbd5e1] mt-3 truncate">
               {content.client?.name || "Sin cliente"}
             </p>
           )}
 
-          <div className="flex flex-wrap gap-3 text-xs text-[#cbd5e1]">
+          <div className="flex flex-wrap gap-3 text-xs text-[#cbd5e1] mt-3">
             {!effectiveIsClient && content.creator && (
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3 text-[#8b5cf6]" />
@@ -334,7 +338,7 @@ export function DraggableContentCard({
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 mt-3">
             {(content as any).hooks_count > 1 && (
               <Badge
                 variant="outline"
@@ -387,7 +391,7 @@ export function DraggableContentCard({
           (canStartEditing || canMarkDelivered) ||
           canClientApprove) && (
           <div
-            className="px-3 py-2 border-t border-white/5 flex flex-wrap gap-2"
+            className="px-4 py-3 mt-auto border-t border-white/5 flex flex-wrap gap-2"
             style={{
               background: "rgba(255,255,255,0.02)",
               backdropFilter: "blur(8px)",

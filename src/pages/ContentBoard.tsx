@@ -903,9 +903,15 @@ export default function ContentBoard() {
             </div>
           </div>
           
-          {/* Kanban View - Tech/IA aesthetic */}
+          {/* Kanban View - Tech/IA aesthetic - Hierarchical layout */}
           {currentView === 'kanban' && (
-            <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 rounded-xl p-4 min-h-[calc(100vh-220px)]" style={{ background: "linear-gradient(180deg, #0a0118 0%, #0d0220 100%)" }}>
+            <div 
+              className="flex overflow-x-auto gap-4 p-5 rounded-xl"
+              style={{ 
+                background: "linear-gradient(180deg, #0a0118 0%, #0d0220 100%)",
+                height: "calc(100vh - 180px)",
+              }}
+            >
               {allBoardColumns
                 // Filter columns by visibility permissions (board config)
                 .filter((column) => isStatusVisibleForRole(column.status))

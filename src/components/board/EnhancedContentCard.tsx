@@ -93,18 +93,18 @@ const SIZE_CONFIG = {
     iconSize: "h-2.5 w-2.5",
   },
   normal: {
-    padding: "p-0",
+    padding: "p-4",
     titleSize: "text-sm",
-    thumbnailHeight: "h-[200px]",
+    thumbnailHeight: "h-[280px]",
     avatarSize: "h-6 w-6",
     badgeSize: "text-xs px-2 py-0.5",
     spacing: "gap-2",
     iconSize: "h-3 w-3",
   },
   large: {
-    padding: "p-0",
+    padding: "p-4",
     titleSize: "text-base",
-    thumbnailHeight: "h-[200px]",
+    thumbnailHeight: "h-[280px]",
     avatarSize: "h-8 w-8",
     badgeSize: "text-sm px-2.5 py-0.5",
     spacing: "gap-3",
@@ -246,14 +246,15 @@ export function EnhancedContentCard({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
         className={cn(
-          "group cursor-pointer relative rounded-xl overflow-hidden cursor-grab active:cursor-grabbing",
+          "group cursor-pointer relative rounded-xl overflow-visible cursor-grab active:cursor-grabbing",
+          "w-full min-h-[420px] flex flex-col shrink-0",
           "transition-all duration-300 ease-out",
           "hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]",
           "hover:border-[rgba(168,85,247,0.5)]",
           isDragging && "opacity-70 scale-[0.98] shadow-[0_0_25px_rgba(168,85,247,0.3)]",
           isOverdue && "border-l-4 border-l-[#ef4444]",
           isStale && !isOverdue && "border-l-4 border-l-[#f59e0b]",
-          cardSize === "compact" && "rounded-lg"
+          cardSize === "compact" && "rounded-lg min-h-0"
         )}
         style={cardBaseStyle}
         draggable
@@ -330,82 +331,91 @@ export function EnhancedContentCard({
           </DropdownMenu>
         )}
 
-        {/* 1. VIDEO THUMBNAIL HEADER - Always show when thumbnail/video exists */}
-        {(content.thumbnail_url || hasVideo) && cardSize !== "compact" && (
-          <div
-            data-video-trigger
-            onClick={handleVideoClick}
-            className={cn(
-              "relative overflow-hidden",
-              sizeConfig.thumbnailHeight
-            )}
-          >
-            {content.thumbnail_url ? (
-              <img
-                src={content.thumbnail_url}
-                alt={content.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#1a0a2e] to-[#0a0118] flex items-center justify-center" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-            {primaryVideoUrl && (
-              <div className="absolute inset-0 flex items-center justify-center">
+        {/* 1. VIDEO THUMBNAIL - 9:16 vertical, centered, 280px height (placeholder when no media) */}
+        {cardSize !== "compact" && (
+          <div className="flex justify-center p-4 pt-4 pb-0">
+            <div
+              data-video-trigger
+              onClick={handleVideoClick}
+              className={cn(
+                "relative overflow-hidden rounded-xl shrink-0 cursor-pointer",
+                "w-[157px] h-[280px]",
+                "aspect-[9/16]"
+              )}
+              style={{ minWidth: 157 }}
+            >
+              {content.thumbnail_url ? (
+                <img
+                  src={content.thumbnail_url}
+                  alt={content.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#1a0a2e] to-[#0a0118] flex items-center justify-center">
+                  <Video className="h-12 w-12 text-[#8b5cf6]/40" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
+              {primaryVideoUrl && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110"
+                    style={{
+                      background: "rgba(255,255,255,0.1)",
+                      backdropFilter: "blur(8px)",
+                      boxShadow: "0 0 20px rgba(168,85,247,0.6)",
+                    }}
+                  >
+                    <Play className="h-6 w-6 text-[#a855f7] fill-[#a855f7] ml-1" />
+                  </div>
+                </div>
+              )}
+              {(content as any).hooks_count > 1 && (
                 <div
-                  className="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110"
+                  className="absolute top-2 right-2 px-2 py-0.5 rounded-lg text-xs font-medium"
                   style={{
                     background: "rgba(255,255,255,0.1)",
                     backdropFilter: "blur(8px)",
-                    boxShadow: "0 0 20px rgba(168,85,247,0.6)",
+                    color: TECH_COLORS.text,
                   }}
                 >
-                  <Play className="h-6 w-6 text-[#a855f7] fill-[#a855f7] ml-1" />
+                  {(content as any).hooks_count} hooks
                 </div>
-              </div>
-            )}
-            {(content as any).hooks_count > 1 && (
-              <div
-                className="absolute top-2 right-2 px-2 py-0.5 rounded-md text-xs font-medium"
-                style={{
-                  background: "rgba(255,255,255,0.1)",
-                  backdropFilter: "blur(8px)",
-                  color: TECH_COLORS.text,
-                }}
-              >
-                {(content as any).hooks_count} hooks
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
-        {/* 2. BODY */}
+        {/* 2. Separator + BODY */}
         <div
           className={cn(
-            "p-3",
-            sizeConfig.spacing
+            "flex-1 flex flex-col p-4",
+            cardSize !== "compact" && "pt-3 mt-3"
           )}
           style={{ background: TECH_COLORS.cardBody }}
         >
-          <div className={cn("flex items-start justify-between", sizeConfig.spacing)}>
-            {showField("title") && (
-              <h4
-                className={cn(
-                  "font-medium flex-1 line-clamp-2",
-                  sizeConfig.titleSize
-                )}
-                style={{
-                  background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                {content.title}
-              </h4>
-            )}
-            {showField("status") &&
-              (showStatusControls && onStatusChange && userRole ? (
+          {/* Title - 2 lines max with ellipsis */}
+          {showField("title") && (
+            <h4
+              className={cn(
+                "font-medium line-clamp-2 break-words",
+                sizeConfig.titleSize
+              )}
+              style={{
+                background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              {content.title}
+            </h4>
+          )}
+
+          {/* Status badge - margin-top 8px */}
+          {showField("status") && (
+            <div className="mt-2">
+              {showStatusControls && onStatusChange && userRole ? (
                 <StatusChangeDropdown
                   currentStatus={content.status as ContentStatus}
                   contentId={content.id}
@@ -428,11 +438,12 @@ export function EnhancedContentCard({
                 >
                   {cardSize === "compact" ? statusLabel?.slice(0, 3) : statusLabel}
                 </Badge>
-              ))}
-          </div>
+              )}
+            </div>
+          )}
 
           {(content.sphere_phase || content.campaign_week || marketingIndicator) && (
-            <div className={cn("flex flex-wrap items-center mt-2", sizeConfig.spacing)}>
+            <div className={cn("flex flex-wrap items-center mt-3", sizeConfig.spacing)}>
               {content.sphere_phase && SPHERE_PHASE_DISPLAY[content.sphere_phase] && (() => {
                 const phase = SPHERE_PHASE_DISPLAY[content.sphere_phase];
                 const Icon = phase.icon;
@@ -474,7 +485,7 @@ export function EnhancedContentCard({
           )}
 
           {showField("client") && content.client?.name && (
-            <div className={cn("flex items-center mt-1.5 text-[#cbd5e1]", sizeConfig.spacing)}>
+            <div className={cn("flex items-center mt-3 text-[#cbd5e1]", sizeConfig.spacing)}>
               <Building2 className={cn(sizeConfig.iconSize, "text-[#8b5cf6]")} />
               <span className={cn("truncate text-xs")}>{content.client.name}</span>
             </div>
@@ -583,7 +594,7 @@ export function EnhancedContentCard({
         </div>
 
         {showField("progress") && (
-          <div className="px-3 pb-2">
+          <div className="px-4 pb-3">
             <Progress
               value={getProgress()}
               className="h-1.5 bg-white/5 [&>div]:bg-gradient-to-r [&>div]:from-[#8b5cf6] [&>div]:to-[#ec4899]"
@@ -605,7 +616,7 @@ export function EnhancedContentCard({
         )}
 
         {showStatusControls && onStatusChange && userRole && cardSize !== "compact" && (
-          <div className="p-3 pt-0">
+          <div className="p-4 pt-0">
             <QuickStatusButtons
               currentStatus={content.status as ContentStatus}
               contentId={content.id}

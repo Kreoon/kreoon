@@ -40,7 +40,7 @@ export function DroppableKanbanColumn({
   return (
     <div 
       className={cn(
-        "flex flex-col min-w-[240px] md:min-w-[280px] max-w-[280px] rounded-xl",
+        "flex flex-col shrink-0 w-[350px] h-full rounded-xl",
         "transition-all duration-300 ease-out backdrop-blur-xl border",
         isDropTarget && canDrop && "ring-2 ring-[#a855f7]/60 shadow-[0_0_30px_rgba(168,85,247,0.15)]",
         isDropTarget && !canDrop && "ring-2 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)]"
@@ -53,7 +53,8 @@ export function DroppableKanbanColumn({
       onDragOver={onDragOver}
       onDrop={(e) => onDrop(e, status)}
     >
-      <div className="flex items-center justify-between mb-3 md:mb-4 px-2 pt-2">
+      {/* Column Header - fixed 60px */}
+      <div className="flex items-center justify-between h-[60px] shrink-0 p-4">
         <div className="flex items-center gap-1.5 md:gap-2">
           <div
             className="h-2.5 w-2.5 rounded-full"
@@ -76,7 +77,8 @@ export function DroppableKanbanColumn({
         </div>
       </div>
       
-      <div className="flex flex-col gap-2 md:gap-3 flex-1 overflow-y-auto px-2 pr-2 pb-4 min-h-[150px] md:min-h-[200px]">
+      {/* Cards container - scrollable */}
+      <div className="kanban-column-cards flex flex-col flex-1 overflow-y-auto overflow-x-hidden pt-0 px-4 pb-4 gap-4 min-h-0 scroll-smooth">
         {children}
       </div>
     </div>
