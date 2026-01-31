@@ -287,11 +287,14 @@ export default function OrgRegister() {
 
       // If email confirmation is required, Supabase returns a user but no session.
       // In that case we must NOT proceed with DB writes (RLS) nor redirect as logged-in.
+      // Note: If auto-confirm is enabled, session will be available immediately.
       if (!authData.session) {
         toast.success('Cuenta creada. Revisa tu correo para confirmar tu email y luego inicia sesión.');
         navigate('/auth', { replace: true });
         return;
       }
+      
+      console.log('[OrgRegister] Session available, proceeding with org registration...');
 
       const userId = authData.user.id;
 
