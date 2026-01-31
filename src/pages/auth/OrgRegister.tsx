@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseLovable } from '@/integrations/supabase/lovable-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -74,7 +75,8 @@ export default function OrgRegister() {
     
     setLoadingSuggestion(true);
     try {
-      const response = await supabase.functions.invoke('suggest-role', {
+      // Use supabaseLovable for edge functions
+      const response = await supabaseLovable.functions.invoke('suggest-role', {
         body: { 
           fullName: fullName.trim(),
           email: email.trim(),
@@ -105,29 +107,64 @@ export default function OrgRegister() {
 
   const fetchOrganization = async () => {
     try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name, slug, logo_url, description, is_registration_open, registration_require_invite, default_role, registration_page_config')
-        .eq('slug', slug)
-        .single();
+      console.log('[OrgRegister] Fetching organization with slug:', slug);
+      
+      // Try using the edge function for public access (bypasses RLS)
+      // Use supabaseLovable since edge functions are hosted on Lovable Cloud
+      const { data: edgeData, error: edgeError } = await supabaseLovable.functions.invoke('org-public-info', {
+        body: { slug }
+      });
 
-      if (error || !data) {
+      if (edgeError) {
+        console.error('[OrgRegister] Edge function error:', edgeError);
+        // Fallback to direct query
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('id, name, slug, logo_url, description, is_registration_open, registration_require_invite, default_role, registration_page_config')
+          .eq('slug', slug)
+          .single();
+
+        console.log('[OrgRegister] Direct query result:', { data, error });
+
+        if (error || !data) {
+          console.error('[OrgRegister] Organization not found. Error:', error);
+          setError('Organización no encontrada');
+          return;
+        }
+
+        if (!data.is_registration_open) {
+          setError('El registro no está habilitado para esta organización');
+          return;
+        }
+
+        setOrganization(data as Organization);
+
+        if (!data.registration_require_invite) {
+          setCodeVerified(true);
+        }
+        return;
+      }
+
+      console.log('[OrgRegister] Edge function result:', edgeData);
+
+      if (!edgeData || edgeData.error) {
+        console.error('[OrgRegister] Organization not found via edge function:', edgeData?.error);
         setError('Organización no encontrada');
         return;
       }
 
-      if (!data.is_registration_open) {
+      if (!edgeData.is_registration_open) {
         setError('El registro no está habilitado para esta organización');
         return;
       }
 
-      setOrganization(data as Organization);
+      setOrganization(edgeData as Organization);
 
-      // If no invite code required, mark as verified
-      if (!data.registration_require_invite) {
+      if (!edgeData.registration_require_invite) {
         setCodeVerified(true);
       }
     } catch (err) {
+      console.error('[OrgRegister] Error loading organization:', err);
       setError('Error al cargar la organización');
     } finally {
       setLoading(false);
