@@ -18,6 +18,10 @@ function mapAuthErrorMessage(message?: string) {
   return message;
 }
 
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
 const OrgAuth = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -93,8 +97,9 @@ const OrgAuth = () => {
 
     setLoading(true);
     try {
+      const email = normalizeEmail(loginEmail);
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
+        email,
         password: loginPassword,
       });
 
@@ -141,8 +146,9 @@ const OrgAuth = () => {
 
     setLoading(true);
     try {
+      const email = normalizeEmail(signupEmail);
       const { data, error } = await supabase.auth.signUp({
-        email: signupEmail,
+        email,
         password: signupPassword,
         options: {
           emailRedirectTo: `${window.location.origin}/org/${slug}`,

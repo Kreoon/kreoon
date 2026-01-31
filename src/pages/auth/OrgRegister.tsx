@@ -259,8 +259,9 @@ export default function OrgRegister() {
     
     try {
       // Create user
+      const normalizedEmail = email.trim().toLowerCase();
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: normalizedEmail,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
@@ -317,7 +318,7 @@ export default function OrgRegister() {
           .from('profiles')
           .upsert({
             id: userId,
-            email: email.trim(),
+            email: normalizedEmail,
             full_name: fullName.trim(),
           }, { onConflict: 'id' });
 
@@ -353,7 +354,7 @@ export default function OrgRegister() {
           organization_id: organization.id,
           role: roleToAssign,
           user_name: fullName,
-          user_email: email
+          user_email: normalizedEmail
         }
       }).catch(err => {
         console.error('Error invoking notify-new-member:', err);
