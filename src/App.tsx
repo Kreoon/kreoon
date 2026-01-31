@@ -100,8 +100,11 @@ function AppRoutes() {
       <Route path="/pending-access" element={<PendingAccess />} />
       <Route path="/welcome" element={<WelcomeNewMember />} />
       <Route path="/up-documentation" element={<UPDocumentation />} />
-      <Route path="/org/:slug" element={<OrgAuth />} />
-      <Route path="/auth/org/:slug" element={<OrgRegister />} />
+      {/* Public org registration (official) */}
+      <Route path="/org/:slug" element={<OrgRegister />} />
+
+      {/* Backwards-compat: redirect old route to the official one */}
+      <Route path="/auth/org/:slug" element={<Navigate to="/org/:slug" replace />} />
       <Route path="/register" element={<Register />} />
       <Route path="/register/:slug" element={<Register />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
