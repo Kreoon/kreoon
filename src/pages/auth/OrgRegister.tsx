@@ -347,7 +347,7 @@ export default function OrgRegister() {
       console.log('User successfully registered to organization with role:', roleToAssign);
       
       // Send email notification to admins (fire and forget)
-      supabase.functions.invoke('notify-new-member', {
+      supabaseLovable.functions.invoke('notify-new-member', {
         body: {
           user_id: userId,
           organization_id: organization.id,
