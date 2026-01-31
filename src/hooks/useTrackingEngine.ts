@@ -1,6 +1,6 @@
 import { useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthSafe } from '@/hooks/useAuth';
 
 // Event Categories
 export type EventCategory = 
@@ -114,7 +114,8 @@ const configCache = new Map<string, { config: TrackingConfig; timestamp: number 
 const CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export function useTrackingEngine() {
-  const { user } = useAuth();
+  const auth = useAuthSafe();
+  const user = auth?.user ?? null;
   const eventQueue = useRef<QueuedEvent[]>([]);
   const flushTimer = useRef<NodeJS.Timeout | null>(null);
   const viewTimers = useRef<Map<string, number>>(new Map());
