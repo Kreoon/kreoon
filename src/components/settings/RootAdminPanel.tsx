@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseLovable } from "@/integrations/supabase/lovable-client";
 import { toast } from "sonner";
 import { 
   Trash2, Search, Building2, FileVideo, MessageSquare, 
@@ -53,7 +54,7 @@ export function RootAdminPanel() {
   const fetchEntities = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-users", {
+      const { data, error } = await supabaseLovable.functions.invoke("admin-users", {
         body: { action: "list_all_entities" }
       });
 
@@ -88,7 +89,7 @@ export function RootAdminPanel() {
     setActionLoading(deleteConfirm.id);
 
     try {
-      const { error } = await supabase.functions.invoke("admin-users", {
+      const { error } = await supabaseLovable.functions.invoke("admin-users", {
         body: { action: config.action, [config.idKey]: deleteConfirm.id }
       });
 
