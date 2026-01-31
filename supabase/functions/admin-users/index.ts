@@ -15,13 +15,14 @@ serve(async (req) => {
   }
 
   try {
-    // Use Kreoon as the primary database
-    const kreoonUrl = Deno.env.get('KREOON_SUPABASE_URL');
-    const kreoonServiceKey = Deno.env.get('KREOON_SERVICE_ROLE_KEY');
-    const kreoonAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indqa2JxY3J4d3NtdnR4bXFnaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NDQwNTYsImV4cCI6MjA4NTAyMDA1Nn0.BorqcEBToDVeFBDQktZoCjCndYwB0bc6jlKmSJn-Wi8';
+    // Use native Supabase env vars when deployed to Kreoon directly
+    // Falls back to KREOON_* vars for backwards compatibility
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || Deno.env.get('KREOON_SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('KREOON_SERVICE_ROLE_KEY');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indqa2JxY3J4d3NtdnR4bXFnaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NDQwNTYsImV4cCI6MjA4NTAyMDA1Nn0.BorqcEBToDVeFBDQktZoCjCndYwB0bc6jlKmSJn-Wi8';
 
-    if (!kreoonUrl || !kreoonServiceKey) {
-      console.error("Kreoon credentials not configured");
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("Database credentials not configured");
       return new Response(JSON.stringify({ error: "Database credentials not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -37,21 +38,18 @@ serve(async (req) => {
       });
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    
-    // Create admin client with service role to get the current user
-    // This avoids JWT validation issues between Lovable Cloud and Kreoon
-    const supabaseAdmin = createClient(kreoonUrl, kreoonServiceKey, {
+    // Create admin client with service role
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Create a client with the user's token to get their identity from Kreoon
-    const supabaseAuth = createClient(kreoonUrl, kreoonAnonKey, {
+    // Create a client with the user's token to get their identity
+    const supabaseAuth = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Try to get the user from Kreoon directly
+    // Get the user from auth
     const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
     
     if (userError || !userData?.user) {
@@ -73,8 +71,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
-
-    // supabaseAdmin is already defined above, reuse it
 
     console.log(`Admin action authorized for ${callerEmail}`);
 
@@ -152,7 +148,7 @@ serve(async (req) => {
         // Always redirect password recovery to the primary domain.
         const redirectTo = 'https://kreoon.com/reset-password';
 
-        // Generate link; if user does not exist in Kreoon auth yet, create it and retry.
+        // Generate link; if user does not exist in auth yet, create it and retry.
         let resetError: any = null;
         {
           const res = await supabaseAdmin.auth.admin.generateLink({
