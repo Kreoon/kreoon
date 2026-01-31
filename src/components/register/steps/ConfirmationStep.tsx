@@ -66,6 +66,17 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
         throw new Error('No se pudo crear el usuario');
       }
 
+      // If email confirmation is required, there will be no session.
+      // Avoid doing any post-signup DB writes (they will fail under RLS) and guide the user.
+      if (!authData.session) {
+        toast({
+          title: 'Confirma tu correo',
+          description: 'Te enviamos un email de verificación. Confírmalo y luego inicia sesión para continuar.',
+        });
+        navigate('/auth');
+        return;
+      }
+
       if (isOrgFlow) {
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')

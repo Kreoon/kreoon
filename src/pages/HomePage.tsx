@@ -62,6 +62,15 @@ function getDashboardPath(roles: string[], activeRole?: string | null): string {
   return '/pending-access';
 }
 
+function mapAuthErrorMessage(message?: string) {
+  if (!message) return 'Error';
+  if (message === 'Invalid login credentials') return 'Credenciales inválidas';
+  if (message.includes('Email not confirmed')) {
+    return 'Debes confirmar tu correo. Revisa tu bandeja de entrada (y spam) y vuelve a intentar.';
+  }
+  return message;
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { user, loading: authLoading, rolesLoaded, signIn, roles, activeRole } = useAuth();
@@ -126,7 +135,7 @@ export default function HomePage() {
       if (error) {
         toast({
           title: 'Error al iniciar sesión',
-          description: error.message === 'Invalid login credentials' ? 'Credenciales inválidas' : error.message,
+          description: mapAuthErrorMessage(error.message),
           variant: 'destructive',
         });
         return;

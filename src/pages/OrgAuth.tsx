@@ -9,6 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Building2 } from "lucide-react";
 
+function mapAuthErrorMessage(message?: string) {
+  if (!message) return "Error";
+  if (message === "Invalid login credentials") return "Credenciales inválidas";
+  if (message.includes("Email not confirmed")) {
+    return "Debes confirmar tu correo. Revisa tu bandeja de entrada (y spam) y vuelve a intentar.";
+  }
+  return message;
+}
+
 const OrgAuth = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -115,7 +124,7 @@ const OrgAuth = () => {
         }
       }
     } catch (error: any) {
-      toast.error(error.message || "Error al iniciar sesión");
+      toast.error(mapAuthErrorMessage(error.message) || "Error al iniciar sesión");
     } finally {
       setLoading(false);
     }
@@ -148,6 +157,16 @@ const OrgAuth = () => {
       if (error) throw error;
 
       if (data.user) {
+        // If email confirmation is required, there is no session yet.
+        // Avoid DB writes and guide the user to confirm their email.
+        if (!data.session) {
+          toast.success(
+            "Cuenta creada. Revisa tu correo para confirmar tu email y luego inicia sesión para continuar."
+          );
+          navigate("/auth", { replace: true });
+          return;
+        }
+
         // The profile and org membership will be created by triggers
         // But we'll add org membership manually just in case
         await supabase.from("organization_members").insert({
@@ -177,7 +196,7 @@ const OrgAuth = () => {
       if (error.message?.includes("already registered")) {
         toast.error("Este correo ya está registrado. Intenta iniciar sesión.");
       } else {
-        toast.error(error.message || "Error al registrarse");
+        toast.error(mapAuthErrorMessage(error.message) || "Error al registrarse");
       }
     } finally {
       setLoading(false);
