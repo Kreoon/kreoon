@@ -19,7 +19,6 @@ import {
   Megaphone,
   CheckCircle,
   XCircle,
-  Play,
   GripVertical,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +41,7 @@ import {
 } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { StatusChangeDropdown, QuickStatusButtons } from "./StatusChangeDropdown";
-import { KanbanVideoModal } from "./KanbanVideoModal";
+import { KanbanCardVideoPreview } from "./KanbanCardVideoPreview";
 import { TECH_COLORS, getStatusNeonStyle } from "./kanbanTechStyles";
 import { motion } from "framer-motion";
 
@@ -138,7 +137,6 @@ export function EnhancedContentCard({
   ambassadorIds = new Set(),
   onShowMarketingInfo,
 }: EnhancedContentCardProps) {
-  const [showVideoModal, setShowVideoModal] = useState(false);
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
 
   const currentStatusConfig = useMemo(
@@ -213,15 +211,6 @@ export function EnhancedContentCard({
     onShowMarketingInfo?.(content);
   };
 
-  const handleVideoClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (primaryVideoUrl) {
-      setShowVideoModal(true);
-    } else {
-      onClick?.();
-    }
-  };
-
   const marketingIndicator = (() => {
     if (content.marketing_approved_at)
       return { icon: CheckCircle, color: "#4ade80", label: "Aprobado MKT" };
@@ -261,8 +250,7 @@ export function EnhancedContentCard({
         onDragStart={onDragStart}
         onClick={(e) => {
           if ((e.target as HTMLElement).closest("[data-no-click]")) return;
-          if (primaryVideoUrl && (e.target as HTMLElement).closest("[data-video-trigger]"))
-            return;
+          if ((e.target as HTMLElement).closest("[data-video-trigger]")) return;
           onClick?.();
         }}
       >
@@ -331,59 +319,13 @@ export function EnhancedContentCard({
           </DropdownMenu>
         )}
 
-        {/* 1. VIDEO THUMBNAIL - 9:16 vertical, centered, 280px height (placeholder when no media) */}
+        {/* 1. VIDEO PREVIEW - Inline, conditional by status, Bunny iframe */}
         {cardSize !== "compact" && (
-          <div className="flex justify-center p-4 pt-4 pb-0">
-            <div
-              data-video-trigger
-              onClick={handleVideoClick}
-              className={cn(
-                "relative overflow-hidden rounded-xl shrink-0 cursor-pointer",
-                "w-[157px] h-[280px]",
-                "aspect-[9/16]"
-              )}
-              style={{ minWidth: 157 }}
-            >
-              {content.thumbnail_url ? (
-                <img
-                  src={content.thumbnail_url}
-                  alt={content.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#1a0a2e] to-[#0a0118] flex items-center justify-center">
-                  <Video className="h-12 w-12 text-[#8b5cf6]/40" />
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
-              {primaryVideoUrl && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div
-                    className="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110"
-                    style={{
-                      background: "rgba(255,255,255,0.1)",
-                      backdropFilter: "blur(8px)",
-                      boxShadow: "0 0 20px rgba(168,85,247,0.6)",
-                    }}
-                  >
-                    <Play className="h-6 w-6 text-[#a855f7] fill-[#a855f7] ml-1" />
-                  </div>
-                </div>
-              )}
-              {(content as any).hooks_count > 1 && (
-                <div
-                  className="absolute top-2 right-2 px-2 py-0.5 rounded-lg text-xs font-medium"
-                  style={{
-                    background: "rgba(255,255,255,0.1)",
-                    backdropFilter: "blur(8px)",
-                    color: TECH_COLORS.text,
-                  }}
-                >
-                  {(content as any).hooks_count} hooks
-                </div>
-              )}
-            </div>
-          </div>
+          <KanbanCardVideoPreview
+            content={content}
+            cardSize={cardSize}
+            hooksCount={(content as any).hooks_count}
+          />
         )}
 
         {/* 2. Separator + BODY */}
@@ -628,14 +570,6 @@ export function EnhancedContentCard({
           </div>
         )}
       </motion.div>
-
-      <KanbanVideoModal
-        open={showVideoModal}
-        onClose={() => setShowVideoModal(false)}
-        videoUrl={primaryVideoUrl}
-        posterUrl={content.thumbnail_url}
-        title={content.title}
-      />
     </>
   );
 }

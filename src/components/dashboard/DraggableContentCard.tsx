@@ -10,7 +10,6 @@ import {
   Circle,
   Clock,
   Tag,
-  Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Content, STATUS_LABELS } from "@/types/database";
@@ -27,7 +26,7 @@ import {
   type CurrencyType,
 } from "@/components/ui/currency-input";
 import { motion } from "framer-motion";
-import { KanbanVideoModal } from "@/components/board/KanbanVideoModal";
+import { KanbanCardVideoPreview } from "@/components/board/KanbanCardVideoPreview";
 import { getStatusNeonStyle, TECH_COLORS } from "@/components/board/kanbanTechStyles";
 
 interface DraggableContentCardProps {
@@ -37,15 +36,6 @@ interface DraggableContentCardProps {
   isDragging?: boolean;
   onPaymentUpdate?: () => void;
   onStatusChange?: (contentId: string, newStatus: string) => void;
-}
-
-function getPrimaryVideoUrl(content: Content): string | null {
-  const urls = (content as any).video_urls;
-  if (urls?.length > 0) {
-    const first = urls.find((u: string) => u?.trim());
-    if (first) return first;
-  }
-  return (content as any).video_url || (content as any).bunny_embed_url || null;
 }
 
 export function DraggableContentCard({
@@ -61,7 +51,6 @@ export function DraggableContentCard({
     useImpersonation();
   const { toast } = useToast();
 
-  const [showVideoModal, setShowVideoModal] = useState(false);
   const effectiveIsClient =
     isImpersonating ?
       effectiveRoles.includes("client") || impersonationTarget?.role === "client"
@@ -110,7 +99,6 @@ export function DraggableContentCard({
 
   const displayPayment = getDisplayPayment();
   const statusNeon = getStatusNeonStyle(content.status);
-  const primaryVideoUrl = getPrimaryVideoUrl(content);
 
   const formatDate = (date: string | null) => {
     if (!date) return "Sin fecha";
@@ -177,15 +165,6 @@ export function DraggableContentCard({
     effectiveIsClient &&
     (content.status === "delivered" || content.status === "corrected");
 
-  const handleVideoClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (primaryVideoUrl) {
-      setShowVideoModal(true);
-    } else {
-      onClick?.(content);
-    }
-  };
-
   const cardBaseStyle = {
     background: TECH_COLORS.card,
     backdropFilter: "blur(16px) saturate(180%)",
@@ -201,7 +180,10 @@ export function DraggableContentCard({
         transition={{ duration: 0.2 }}
         draggable
         onDragStart={(e) => onDragStart(e, content)}
-        onClick={() => onClick?.(content)}
+        onClick={(e) => {
+          if ((e.target as HTMLElement).closest("[data-video-trigger]")) return;
+          onClick?.(content);
+        }}
         className={cn(
           "group relative overflow-visible rounded-xl cursor-grab active:cursor-grabbing",
           "w-full min-h-[420px] flex flex-col shrink-0",
@@ -216,41 +198,11 @@ export function DraggableContentCard({
           <GripVertical className="h-4 w-4 text-[#cbd5e1]" />
         </div>
 
-        {/* 1. VIDEO THUMBNAIL - 9:16 vertical, centered, 280px */}
-        <div className="flex justify-center p-4 pt-4 pb-0">
-          <div
-            onClick={handleVideoClick}
-            className="relative overflow-hidden rounded-xl shrink-0 cursor-pointer w-[157px] h-[280px] aspect-[9/16]"
-            style={{ minWidth: 157 }}
-          >
-            {content.thumbnail_url ? (
-              <img
-                src={content.thumbnail_url}
-                alt={content.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#1a0a2e] to-[#0a0118] flex items-center justify-center">
-                <Video className="h-12 w-12 text-[#8b5cf6]/40" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
-            {primaryVideoUrl && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110"
-                  style={{
-                    background: "rgba(255,255,255,0.1)",
-                    backdropFilter: "blur(8px)",
-                    boxShadow: "0 0 20px rgba(168,85,247,0.6)",
-                  }}
-                >
-                  <Play className="h-6 w-6 text-[#a855f7] fill-[#a855f7] ml-1" />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* 1. VIDEO PREVIEW - Inline, conditional by status, Bunny iframe */}
+        <KanbanCardVideoPreview
+          content={content}
+          hooksCount={(content as any).hooks_count}
+        />
 
         {/* 2. BODY */}
         <div
@@ -529,14 +481,6 @@ export function DraggableContentCard({
           </div>
         )}
       </motion.div>
-
-      <KanbanVideoModal
-        open={showVideoModal}
-        onClose={() => setShowVideoModal(false)}
-        videoUrl={primaryVideoUrl}
-        posterUrl={content.thumbnail_url}
-        title={content.title}
-      />
     </>
   );
 }
