@@ -33,8 +33,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    // Use Kreoon database
+    const supabaseUrl = Deno.env.get("KREOON_SUPABASE_URL") || "https://wjkbqcrxwsmvtxmqgiqc.supabase.co";
+    const supabaseServiceKey = Deno.env.get("KREOON_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const payload: NewMemberPayload = await req.json();
