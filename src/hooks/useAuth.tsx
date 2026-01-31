@@ -472,15 +472,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const normalizedEmail = email.trim().toLowerCase();
+    const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
     return { error };
   };
 
   const signUp = async (email: string, password: string, fullName: string, role: AppRole, companyName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
+
+    const normalizedEmail = email.trim().toLowerCase();
     
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
         emailRedirectTo: redirectUrl,
@@ -500,7 +503,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: clientData } = await supabase.from('clients').insert({
           name: companyName,
           user_id: data.user.id,
-          contact_email: email,
+          contact_email: normalizedEmail,
           created_by: data.user.id
         }).select('id').single();
 

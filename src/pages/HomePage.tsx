@@ -71,6 +71,10 @@ function mapAuthErrorMessage(message?: string) {
   return message;
 }
 
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { user, loading: authLoading, rolesLoaded, signIn, roles, activeRole } = useAuth();
@@ -130,7 +134,7 @@ export default function HomePage() {
     setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(normalizeEmail(email), password);
 
       if (error) {
         toast({
@@ -180,7 +184,7 @@ export default function HomePage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email), {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
