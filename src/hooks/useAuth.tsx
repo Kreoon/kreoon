@@ -569,3 +569,8 @@ export function useAuth() {
   }
   return context;
 }
+
+// Safe version that returns null if outside AuthProvider (for tracking, etc.)
+export function useAuthSafe() {
+  return useContext(AuthContext) ?? null;
+}
