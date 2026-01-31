@@ -138,8 +138,11 @@ export function useOrganizationAI(organizationId?: string) {
       if (logsError) throw logsError;
       setUsageLogs((logsData as any[]) || []);
 
-    } catch (error) {
-      console.error('Error fetching AI config:', error);
+    } catch (error: any) {
+      // Silently handle permission errors - use defaults
+      if (error?.code !== '42501') {
+        console.error('Error fetching AI config:', error);
+      }
     } finally {
       setLoading(false);
     }

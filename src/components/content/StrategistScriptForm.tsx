@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseLovable } from "@/integrations/supabase/lovable-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1710,7 +1711,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       fullPrompt += `\n\n---\nGUIÓN GENERADO:\n${previousScript}`;
     }
 
-    const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
+    const { data, error } = await supabaseLovable.functions.invoke(CONTENT_AI_FUNCTION, {
       body: {
         action: formData.use_perplexity ? "research_and_generate" : "generate_script",
         organizationId,

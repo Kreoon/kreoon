@@ -246,7 +246,8 @@ const ACTION_TO_MODULE: Record<string, string> = {
 };
 
 // Get module AI configuration with validation and fallback chain
-async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string): Promise<{
+// IMPORTANT: This function now allows bypass when module config is not accessible
+async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string, requestedModel?: string): Promise<{
   provider: AIProvider;
   model: string;
   apiKey: string;
@@ -257,50 +258,77 @@ async function getModuleAIConfig(supabase: any, organizationId: string, moduleKe
   const googleApiKey = Deno.env.get("GOOGLE_AI_API_KEY");
   const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
   
-  // Check if module is active
-  const { data: moduleData } = await supabase
-    .from("organization_ai_modules")
-    .select("is_active, provider, model")
-    .eq("organization_id", organizationId)
-    .eq("module_key", moduleKey)
-    .maybeSingle();
+  let configuredProvider: AIProvider = "gemini";
+  let configuredModel = requestedModel || "gemini-2.5-flash";
   
-  if (!moduleData?.is_active) {
-    throw new Error(`MODULE_INACTIVE:${moduleKey}`);
+  // Try to check if module is active (but don't fail if we can't access it)
+  try {
+    const { data: moduleData, error: moduleError } = await supabase
+      .from("organization_ai_modules")
+      .select("is_active, provider, model")
+      .eq("organization_id", organizationId)
+      .eq("module_key", moduleKey)
+      .maybeSingle();
+    
+    // Only enforce module check if we successfully queried the table
+    if (!moduleError && moduleData !== null) {
+      if (!moduleData.is_active) {
+        throw new Error(`MODULE_INACTIVE:${moduleKey}`);
+      }
+      configuredProvider = (moduleData.provider || "gemini") as AIProvider;
+      configuredModel = moduleData.model || configuredModel;
+    } else {
+      // Can't access module config - use defaults with API keys
+      console.log(`[content-ai] Could not access module config for ${moduleKey}, using defaults`);
+    }
+  } catch (checkError: any) {
+    // If error is MODULE_INACTIVE, re-throw it
+    if (checkError?.message?.includes("MODULE_INACTIVE")) {
+      throw checkError;
+    }
+    // Otherwise, proceed with defaults
+    console.log(`[content-ai] Module check failed: ${checkError?.message}, proceeding with defaults`);
   }
   
-  let configuredProvider = moduleData?.provider || "gemini";
-  let configuredModel = moduleData?.model || "gemini-2.5-flash";
-  
   // Normalize provider name (convert "lovable" to "gemini")
-  if (configuredProvider === "lovable") {
+  if (configuredProvider === "lovable" as any) {
     configuredProvider = "gemini";
   }
   
   // Normalize model name
   configuredModel = normalizeModelName(configuredModel);
   
-  // Check for organization-specific API keys first
-  if (configuredProvider !== "gemini" && configuredProvider !== "openai") {
-    const { data: providerData } = await supabase
-      .from("organization_ai_providers")
-      .select("api_key_encrypted")
-      .eq("organization_id", organizationId)
-      .eq("provider_key", configuredProvider)
-      .eq("is_enabled", true)
-      .maybeSingle();
-    
-    if (providerData?.api_key_encrypted) {
-      const fallbackProv: AIProvider | null = googleApiKey ? "gemini" : (openaiApiKey ? "openai" : null);
-      return { 
-        provider: configuredProvider as AIProvider, 
-        model: configuredModel, 
-        apiKey: providerData.api_key_encrypted,
-        fallbackProvider: fallbackProv,
-        fallbackModel: fallbackProv === "gemini" ? "gemini-2.5-flash" : (fallbackProv === "openai" ? "gpt-4o-mini" : null),
-        fallbackApiKey: googleApiKey || openaiApiKey || null
-      };
+  // Determine provider from model if not already set
+  const modelProvider = MODEL_PROVIDER_MAP[configuredModel] || MODEL_PROVIDER_MAP[requestedModel || ""];
+  if (modelProvider) {
+    configuredProvider = modelProvider;
+  }
+  
+  // Check for organization-specific API keys first (optional - don't fail)
+  try {
+    if (configuredProvider !== "gemini" && configuredProvider !== "openai") {
+      const { data: providerData } = await supabase
+        .from("organization_ai_providers")
+        .select("api_key_encrypted")
+        .eq("organization_id", organizationId)
+        .eq("provider_key", configuredProvider)
+        .eq("is_enabled", true)
+        .maybeSingle();
+      
+      if (providerData?.api_key_encrypted) {
+        const fallbackProv: AIProvider | null = googleApiKey ? "gemini" : (openaiApiKey ? "openai" : null);
+        return { 
+          provider: configuredProvider, 
+          model: configuredModel, 
+          apiKey: providerData.api_key_encrypted,
+          fallbackProvider: fallbackProv,
+          fallbackModel: fallbackProv === "gemini" ? "gemini-2.5-flash" : (fallbackProv === "openai" ? "gpt-4o-mini" : null),
+          fallbackApiKey: googleApiKey || openaiApiKey || null
+        };
+      }
     }
+  } catch (provError) {
+    console.log(`[content-ai] Could not check org providers: ${provError}`);
   }
   
   // Build fallback chain: Gemini -> OpenAI
@@ -795,9 +823,10 @@ serve(async (req) => {
     const moduleKey = ACTION_TO_MODULE[action] || "content_detail";
 
     // Get AI configuration (validates module is active)
+    // Pass requested model from body for fallback if module config is not accessible
     let aiConfig;
     try {
-      aiConfig = await getModuleAIConfig(supabase, organizationId, moduleKey);
+      aiConfig = await getModuleAIConfig(supabase, organizationId, moduleKey, body.ai_model);
     } catch (error: any) {
       if (error.message?.startsWith("MODULE_INACTIVE:")) {
         const module = error.message.split(":")[1];

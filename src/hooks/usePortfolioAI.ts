@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseLovable } from '@/integrations/supabase/lovable-client';
 import { usePortfolioAIConfig } from './usePortfolioAIConfig';
 import { toast } from 'sonner';
 
@@ -31,7 +32,7 @@ export function usePortfolioAI(): UsePortfolioAIResult {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('portfolio-ai', {
+      const { data, error } = await supabaseLovable.functions.invoke('portfolio-ai', {
         body: { action, payload }
       });
 

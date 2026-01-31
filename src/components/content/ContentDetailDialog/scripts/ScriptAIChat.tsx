@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseLovable } from '@/integrations/supabase/lovable-client';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Send, 
@@ -82,7 +83,7 @@ export function ScriptAIChat({
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('script-chat', {
+      const { data, error } = await supabaseLovable.functions.invoke('script-chat', {
         body: {
           messages: [
             ...messages.map(m => ({ role: m.role, content: m.content })),

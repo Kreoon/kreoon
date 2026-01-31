@@ -62,7 +62,10 @@ export function useScriptPermissions(
           .maybeSingle();
 
         if (error) {
-          console.error('Error fetching script permissions:', error);
+          // Silently handle permission errors - use defaults
+          if (error.code !== '42501') {
+            console.error('Error fetching script permissions:', error);
+          }
         } else if (data) {
           setDbPermissions(data as ScriptPermissionRow);
         }
