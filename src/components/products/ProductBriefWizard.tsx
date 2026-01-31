@@ -34,6 +34,7 @@ import {
   Save,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseLovable } from '@/integrations/supabase/lovable-client';
 import { toast } from 'sonner';
 
 // Comprehensive brief data structure
@@ -537,7 +538,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
         })
         .eq('id', productId);
 
-      const { data, error } = await supabase.functions.invoke('product-research', {
+      const { data, error } = await supabaseLovable.functions.invoke('product-research', {
         body: { productId, briefData }
       });
 

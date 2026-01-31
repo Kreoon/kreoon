@@ -546,8 +546,11 @@ export function useScriptPrompts(organizationId: string | undefined) {
           setIsCustom(true);
         }
       }
-    } catch (error) {
-      console.error('Error fetching script prompts:', error);
+    } catch (error: any) {
+      // Silently handle permission errors - use defaults instead
+      if (error?.code !== '42501') {
+        console.error('Error fetching script prompts:', error);
+      }
     } finally {
       setLoading(false);
     }
