@@ -42,11 +42,12 @@ const ROLE_LABELS: Record<AppRole, string> = {
   editor: 'Editor',
   client: 'Cliente',
   trafficker: 'Trafficker',
-  team_leader: 'Líder de Equipo'
+  team_leader: 'Líder de Equipo',
+  ambassador: 'Embajador'
 };
 
 // Roles that can be assigned in org management
-const ASSIGNABLE_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
+const ASSIGNABLE_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor', 'client'];
 
 const ROLE_COLORS: Record<AppRole, string> = {
   admin: 'bg-red-500/10 text-red-500 border-red-500/20',
@@ -55,7 +56,8 @@ const ROLE_COLORS: Record<AppRole, string> = {
   editor: 'bg-green-500/10 text-green-500 border-green-500/20',
   client: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
   trafficker: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20',
-  team_leader: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20'
+  team_leader: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
+  ambassador: 'bg-amber-500/10 text-amber-500 border-amber-500/20'
 };
 
 export function OrganizationManagement() {

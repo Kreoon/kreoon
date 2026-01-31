@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronDown, Shield, Users, Edit3, Building2, Star, Lightbulb, User, Briefcase, Radio, UserCog } from "lucide-react";
+import { Check, ChevronDown, Shield, Users, Edit3, Building2, Star, Lightbulb, User, Briefcase, Radio, UserCog, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const ROLE_ICONS: Record<AppRole, React.ComponentType<{ className?: string }>> = {
@@ -22,6 +22,7 @@ const ROLE_ICONS: Record<AppRole, React.ComponentType<{ className?: string }>> =
   strategist: Lightbulb,
   trafficker: Radio,
   team_leader: UserCog,
+  ambassador: Crown,
 };
 
 // Dashboard routes for each role
@@ -33,10 +34,11 @@ const ROLE_DASHBOARDS: Record<AppRole, string> = {
   client: '/client-dashboard',
   trafficker: '/marketing',
   team_leader: '/dashboard',
+  ambassador: '/creator-dashboard',
 };
 
 // Classify roles into personal vs company context
-const PERSONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor'];
+const PERSONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor'];
 const COMPANY_ROLES: AppRole[] = ['client'];
 
 // Role descriptions for better UX
@@ -48,6 +50,7 @@ const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   client: 'Vista de empresa y aprobaciones',
   trafficker: 'Gestión de tráfico y campañas',
   team_leader: 'Liderazgo y supervisión del equipo',
+  ambassador: 'Referidos y bonificaciones de red',
 };
 
 interface RoleSwitcherProps {

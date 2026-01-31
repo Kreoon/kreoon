@@ -44,6 +44,7 @@ const ROLE_ALLOWED_STATUSES: Record<AppRole, ContentStatus[]> = {
   editor: ['editing', 'delivered', 'issue', 'corrected'],
   client: ['approved', 'issue'],
   trafficker: ['approved'],
+  ambassador: ['recording', 'recorded', 'issue'],
 };
 
 // Define which statuses each role can move FROM
@@ -64,6 +65,7 @@ const ROLE_CAN_MOVE_FROM: Record<AppRole, ContentStatus[]> = {
   editor: ['recorded', 'editing', 'issue', 'corrected'],
   client: ['delivered', 'corrected'],
   trafficker: ['approved'],
+  ambassador: ['assigned', 'recording', 'recorded', 'issue'],
 };
 
 export function StatusChangeDropdown({
