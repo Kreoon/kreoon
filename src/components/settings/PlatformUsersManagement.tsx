@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { supabaseLovable } from "@/integrations/supabase/lovable-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -291,7 +290,7 @@ export function PlatformUsersManagement() {
   const handleToggleRole = async (userId: string, role: AppRole) => {
     setActionLoading(userId);
     try {
-      const { data, error } = await supabaseLovable.functions.invoke("admin-users", {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
         body: { action: "toggle_role", userId, role }
       });
       if (error) throw error;
@@ -334,7 +333,7 @@ export function PlatformUsersManagement() {
   const handleResetPassword = async (user: UserData) => {
     setActionLoading(user.id);
     try {
-      const { error } = await supabaseLovable.functions.invoke("admin-users", {
+      const { error } = await supabase.functions.invoke("admin-users", {
         body: { action: "reset_password", userId: user.id }
       });
       if (error) throw error;
@@ -350,7 +349,7 @@ export function PlatformUsersManagement() {
     if (!deleteConfirm) return;
     setActionLoading(deleteConfirm.id);
     try {
-      const { error } = await supabaseLovable.functions.invoke("admin-users", {
+      const { error } = await supabase.functions.invoke("admin-users", {
         body: { action: "delete_user", userId: deleteConfirm.id }
       });
       if (error) throw error;

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { supabaseLovable } from "@/integrations/supabase/lovable-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -96,7 +95,7 @@ export function UserManagement() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabaseLovable.functions.invoke("admin-users", {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
         body: { action: "list_users" }
       });
 
@@ -119,7 +118,7 @@ export function UserManagement() {
   const handleSendPasswordReset = async (email: string) => {
     setActionLoading(`reset-${email}`);
     try {
-      const { error } = await supabaseLovable.functions.invoke("admin-users", {
+      const { error } = await supabase.functions.invoke("admin-users", {
         body: { action: "send_password_reset", email }
       });
 
@@ -135,7 +134,7 @@ export function UserManagement() {
   const handleToggleBan = async (userId: string, currentlyBanned: boolean) => {
     setActionLoading(`ban-${userId}`);
     try {
-      const { data, error } = await supabaseLovable.functions.invoke("admin-users", {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
         body: { action: "toggle_ban", userId }
       });
 
@@ -156,7 +155,7 @@ export function UserManagement() {
   const handleToggleRole = async (userId: string, role: AppRole) => {
     setActionLoading(`role-${userId}-${role}`);
     try {
-      const { data, error } = await supabaseLovable.functions.invoke("admin-users", {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
         body: { action: "update_role", userId, role }
       });
 
@@ -185,7 +184,7 @@ export function UserManagement() {
     
     setActionLoading(`delete-${deleteConfirm.id}`);
     try {
-      const { error } = await supabaseLovable.functions.invoke("admin-users", {
+      const { error } = await supabase.functions.invoke("admin-users", {
         body: { action: "delete_user", userId: deleteConfirm.id }
       });
 
