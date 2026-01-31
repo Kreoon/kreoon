@@ -18,10 +18,6 @@ function mapAuthErrorMessage(message?: string) {
   return message;
 }
 
-function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
-}
-
 const OrgAuth = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -97,9 +93,8 @@ const OrgAuth = () => {
 
     setLoading(true);
     try {
-      const email = normalizeEmail(loginEmail);
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: loginEmail,
         password: loginPassword,
       });
 
@@ -146,9 +141,8 @@ const OrgAuth = () => {
 
     setLoading(true);
     try {
-      const email = normalizeEmail(signupEmail);
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: signupEmail,
         password: signupPassword,
         options: {
           emailRedirectTo: `${window.location.origin}/org/${slug}`,
@@ -165,7 +159,6 @@ const OrgAuth = () => {
       if (data.user) {
         // If email confirmation is required, there is no session yet.
         // Avoid DB writes and guide the user to confirm their email.
-        // Note: If auto-confirm is enabled, session will be available immediately.
         if (!data.session) {
           toast.success(
             "Cuenta creada. Revisa tu correo para confirmar tu email y luego inicia sesión para continuar."
@@ -173,8 +166,6 @@ const OrgAuth = () => {
           navigate("/auth", { replace: true });
           return;
         }
-        
-        console.log('[OrgAuth] Session available, proceeding with org registration...');
 
         // The profile and org membership will be created by triggers
         // But we'll add org membership manually just in case

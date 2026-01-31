@@ -15,8 +15,6 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
   const isOrgFlow = data.registrationMode === 'create_org';
   const isJoinFlow = data.registrationMode === 'join_org';
 
-  const normalizedEmail = data.email.trim().toLowerCase();
-
   const getOrgTypeLabel = () => {
     switch (data.organizationType) {
       case 'agency': return 'Agencia';
@@ -49,7 +47,7 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
 
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: normalizedEmail,
+        email: data.email,
         password: data.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
@@ -87,7 +85,7 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
             slug: data.organizationUsername,
             organization_type: data.organizationType,
             admin_name: data.fullName,
-            admin_email: normalizedEmail,
+            admin_email: data.email,
             is_registration_open: false,
             created_by: authData.user.id,
             selected_plan: data.selectedPlan,
