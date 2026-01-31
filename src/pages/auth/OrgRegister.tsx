@@ -249,10 +249,9 @@ export default function OrgRegister() {
 
       const userId = authData.user.id;
 
-      // Wait for the profile trigger to complete (it fires on auth.users insert)
-      // We need to poll until the profile exists
+      // Wait for the profile trigger to complete OR create profile manually if trigger doesn't exist
       let profileExists = false;
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 5; i++) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('id')
@@ -263,14 +262,26 @@ export default function OrgRegister() {
           profileExists = true;
           break;
         }
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
 
+      // If profile doesn't exist after waiting, create it manually (fallback for missing trigger)
       if (!profileExists) {
-        console.error('Profile was not created after 5 seconds');
-        toast.error('Error: El perfil no se creó correctamente. Por favor contacta soporte.');
-        // Don't continue - user account exists but profile doesn't
-        return;
+        console.log('Profile not created by trigger, creating manually...');
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: userId,
+            email: email.trim(),
+            full_name: fullName.trim(),
+          }, { onConflict: 'id' });
+
+        if (profileError) {
+          console.error('Error creating profile manually:', profileError);
+          toast.error('Error: No se pudo crear tu perfil. Por favor contacta soporte.');
+          return;
+        }
+        console.log('Profile created manually');
       }
 
       // Now register to organization with the selected role
