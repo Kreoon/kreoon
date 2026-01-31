@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setActiveRoleState(storedRole);
       } else {
         // Default to first role by priority
-        const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
+        const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor', 'client'];
         const primaryRole = priority.find((r) => roles.includes(r)) || roles[0];
         setActiveRoleState(primaryRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, primaryRole);

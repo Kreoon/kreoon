@@ -1,6 +1,6 @@
 // AppRole - Defines all available user roles in the system
-// Note: Ambassador is a BADGE (not a role) - use organization_member_badges table
-export type AppRole = 'admin' | 'creator' | 'editor' | 'client' | 'strategist' | 'trafficker' | 'team_leader';
+// Note: Ambassador can also exist as a badge via is_ambassador flag on profiles
+export type AppRole = 'admin' | 'creator' | 'editor' | 'client' | 'strategist' | 'trafficker' | 'team_leader' | 'ambassador';
 
 // Ambassador badge levels (badge system - not a role)
 export type AmbassadorLevel = 'bronze' | 'silver' | 'gold';

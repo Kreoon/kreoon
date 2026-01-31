@@ -14,14 +14,14 @@ export default function Auth() {
         navigate('/pending-access', { replace: true });
       } else if (roles.includes('admin')) {
         navigate('/dashboard', { replace: true });
-      } else if (roles.includes('creator')) {
+      } else if (roles.includes('strategist')) {
+        navigate('/strategist-dashboard', { replace: true });
+      } else if (roles.includes('creator') || roles.includes('ambassador')) {
         navigate('/creator-dashboard', { replace: true });
       } else if (roles.includes('editor')) {
         navigate('/editor-dashboard', { replace: true });
       } else if (roles.includes('client')) {
         navigate('/client-dashboard', { replace: true });
-      } else if (roles.includes('strategist')) {
-        navigate('/strategist-dashboard', { replace: true });
       } else {
         navigate('/pending-access', { replace: true });
       }
