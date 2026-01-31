@@ -279,7 +279,7 @@ export function OrgRegistrationSettings() {
 
   const copyLink = () => {
     if (config?.slug) {
-      const link = `${BASE_URL}/auth/org/${config.slug}`;
+      const link = `${BASE_URL}/org/${config.slug}`;
       navigator.clipboard.writeText(link);
       toast.success('Link copiado');
     }
@@ -323,7 +323,7 @@ export function OrgRegistrationSettings() {
     );
   }
 
-  const registrationUrl = `${BASE_URL}/auth/org/${config.slug}`;
+  const registrationUrl = `${BASE_URL}/org/${config.slug}`;
 
   return (
     <div className="space-y-6">
