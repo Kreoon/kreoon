@@ -284,6 +284,14 @@ export default function OrgRegister() {
         return;
       }
 
+      // If email confirmation is required, Supabase returns a user but no session.
+      // In that case we must NOT proceed with DB writes (RLS) nor redirect as logged-in.
+      if (!authData.session) {
+        toast.success('Cuenta creada. Revisa tu correo para confirmar tu email y luego inicia sesión.');
+        navigate('/auth', { replace: true });
+        return;
+      }
+
       const userId = authData.user.id;
 
       // Wait for the profile trigger to complete OR create profile manually if trigger doesn't exist
