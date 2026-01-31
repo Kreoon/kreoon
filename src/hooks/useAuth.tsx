@@ -58,26 +58,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // When roles change, set activeRole from profile DB, localStorage, or default
   useEffect(() => {
     if (roles.length > 0) {
-      // Priority: 1) profile.active_role from DB, 2) localStorage, 3) default by priority
+      // Priority: 1) profile.active_role from DB (ALWAYS trust this first), 2) admin check, 3) localStorage, 4) default
       const dbRole = (profile as any)?.active_role as AppRole | null;
       const storedRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY) as AppRole | null;
 
+      // CRITICAL FIX: Always prioritize the DB role if it exists and is valid.
+      // This ensures that when a creator logs in, they see the creator view
+      // even if localStorage has 'admin' from a previous session.
       if (dbRole && roles.includes(dbRole)) {
         setActiveRoleState(dbRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, dbRole);
       } else if (roles.includes('admin')) {
-        // IMPORTANT: Admin users must default to admin to avoid accidentally loading
-        // scoped views (e.g. creator/editor) due to stale localStorage.
-        // If they intentionally want another view, they can change it and it will
-        // persist via profile.active_role.
+        // Admin users default to admin to avoid accidentally loading scoped views.
         setActiveRoleState('admin');
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, 'admin');
       } else if (storedRole && roles.includes(storedRole)) {
+        // Only use localStorage if it matches a valid role for this user
         setActiveRoleState(storedRole);
       } else {
-        // Default to first role (priority: admin > strategist > creator > editor > client)
-        // NOTE: 'ambassador' is a legacy role; ambassadors should be handled via badge system.
-        const priority: AppRole[] = ['admin', 'strategist', 'creator', 'editor', 'client'];
+        // Default to first role by priority
+        const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
         const primaryRole = priority.find((r) => roles.includes(r)) || roles[0];
         setActiveRoleState(primaryRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, primaryRole);
@@ -427,6 +427,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('[auth] Root admin detected with no roles, granting admin role');
         userRoles = ['admin'];
       }
+
+      // CRITICAL FALLBACK: If still no roles but profile has active_role, use that
+      // This handles cases where RLS queries fail but the profile was loaded successfully
+      const profileActiveRole = (userProfile as any)?.active_role as AppRole | null;
+      if (userRoles.length === 0 && profileActiveRole) {
+        console.log('[auth] No roles found from org tables, using profile.active_role:', profileActiveRole);
+        userRoles = [profileActiveRole];
+      }
+
+      console.log('[auth] Final roles for user:', userRoles, 'Profile active_role:', profileActiveRole);
 
       if (!silent || userRoles.length > 0) {
         setRoles(userRoles);
