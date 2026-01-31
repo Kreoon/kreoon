@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getKreoonClient, isKreoonConfigured, validateKreoonAuth } from "../_shared/kreoon-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -805,10 +806,17 @@ serve(async (req) => {
   try {
     const body: RequestBody = await req.json();
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    // Use Kreoon (external) database if configured
+    let supabase;
+    if (isKreoonConfigured()) {
+      console.log("[talent-ai] Using Kreoon database");
+      supabase = getKreoonClient();
+    } else {
+      supabase = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+    }
 
     // Get AI config based on action
     const moduleKeyMap: Record<string, string> = {
@@ -847,8 +855,17 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     let userId = "system";
     if (authHeader) {
-      const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-      if (user) userId = user.id;
+      if (isKreoonConfigured()) {
+        try {
+          const auth = await validateKreoonAuth(authHeader);
+          userId = auth.user.id;
+        } catch (e) {
+          // Silently continue with system user
+        }
+      } else {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+        if (user) userId = user.id;
+      }
     }
 
     await supabase.from("ai_usage_logs").insert({

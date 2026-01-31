@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getKreoonClient, isKreoonConfigured, validateKreoonAuth } from "../_shared/kreoon-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -881,17 +882,35 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Get user from auth header
-    const authHeader = req.headers.get("Authorization");
+    // Use Kreoon (external) database if configured
+    let supabase;
     let userId = "system";
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data: { user } } = await supabase.auth.getUser(token);
-      if (user) userId = user.id;
+    
+    if (isKreoonConfigured()) {
+      console.log("[board-ai] Using Kreoon database");
+      supabase = getKreoonClient();
+      
+      // Get user from auth header
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader) {
+        try {
+          const auth = await validateKreoonAuth(authHeader);
+          userId = auth.user.id;
+        } catch (e) {
+          // Silently continue with system user
+        }
+      }
+    } else {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader) {
+        const token = authHeader.replace("Bearer ", "");
+        const { data: { user } } = await supabase.auth.getUser(token);
+        if (user) userId = user.id;
+      }
     }
 
     const body: RequestBody = await req.json();
