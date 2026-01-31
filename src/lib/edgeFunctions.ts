@@ -1,10 +1,12 @@
 /**
  * Edge Functions Helper
  * 
- * Centralizes all edge function calls to use the correct Supabase client.
- * Edge functions are hosted on Lovable Cloud, while the database is on Kreoon.
+ * ARCHITECTURE NOTE:
+ * - Edge Functions are hosted on Lovable Cloud (hfooshsteglylhvrpuka)
+ * - Database operations are on Kreoon (wjkbqcrxwsmvtxmqgiqc)
+ * - Edge Functions internally connect to Kreoon for database operations
  * 
- * This helper ensures we always call the Lovable Cloud edge functions.
+ * This helper ensures we call the correct Edge Functions endpoint.
  */
 import { supabaseLovable } from '@/integrations/supabase/lovable-client';
 
@@ -20,7 +22,9 @@ interface InvokeResult<T = unknown> {
 
 /**
  * Invoke a Lovable Cloud edge function
- * Always use this for edge function calls to ensure correct routing
+ * 
+ * Edge Functions are hosted on Lovable Cloud but connect to Kreoon database internally.
+ * Always use this for edge function calls to ensure correct routing.
  */
 export async function invokeEdgeFunction<T = unknown>(
   functionName: string,
@@ -48,10 +52,13 @@ export async function invokeEdgeFunction<T = unknown>(
 }
 
 /**
- * Common edge functions used throughout the app
+ * Edge Functions Registry
+ * 
+ * All edge functions are hosted on Lovable Cloud
+ * but internally connect to Kreoon for database operations
  */
 export const EdgeFunctions = {
-  // AI Functions
+  // AI Functions (connect to Kreoon for org config, use direct AI APIs)
   CONTENT_AI: 'content-ai',
   AI_ASSISTANT: 'ai-assistant',
   STREAMING_AI: 'streaming-ai-generate',
@@ -59,6 +66,10 @@ export const EdgeFunctions = {
   TALENT_AI: 'talent-ai',
   BOARD_AI: 'board-ai',
   MULTI_AI: 'multi-ai',
+  
+  // Script Functions
+  GENERATE_SCRIPT: 'generate-script',
+  SCRIPT_CHAT: 'script-chat',
   
   // Document Functions
   FETCH_DOCUMENT: 'fetch-document',
@@ -85,9 +96,11 @@ export const EdgeFunctions = {
   
   // Utility Functions
   GENERATE_ACHIEVEMENT_ICON: 'generate-achievement-icon',
-  SCRIPT_CHAT: 'script-chat',
-  GENERATE_SCRIPT: 'generate-script',
   PRODUCT_RESEARCH: 'product-research',
+  
+  // Admin Functions (connect to Kreoon for all operations)
+  ADMIN_USERS: 'admin-users',
+  API: 'api',
 } as const;
 
 export type EdgeFunctionName = typeof EdgeFunctions[keyof typeof EdgeFunctions];
