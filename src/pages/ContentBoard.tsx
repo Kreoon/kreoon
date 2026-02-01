@@ -294,7 +294,7 @@ export default function ContentBoard() {
   
   // Board settings hook
   const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings } = useBoardSettings(currentOrgId);
-  const { creators, editors, refetch: refetchAssignable } = useOrgAssignableUsers(currentOrgId);
+  const { creators: assignableCreators, editors: assignableEditors, refetch: refetchAssignable } = useOrgAssignableUsers(currentOrgId);
 
   // Rol efectivo para permisos del board - use impersonated role if active
   const primaryRole = isImpersonating && impersonationTarget.role
@@ -1024,8 +1024,8 @@ export default function ContentBoard() {
                           setMarketingPanelContent(content);
                           setShowMarketingPanel(true);
                         }}
-                        creators={creators}
-                        editors={editors}
+                        creators={assignableCreators}
+                        editors={assignableEditors}
                         onAssignCreator={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignCreator : undefined}
                         onAssignEditor={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignEditor : undefined}
                         onUpdate={refetch}
