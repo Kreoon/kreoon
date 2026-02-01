@@ -6,8 +6,8 @@ import { Content, ContentStatus } from "@/types/database";
 import { TECH_COLORS } from "./kanbanTechStyles";
 import { cn } from "@/lib/utils";
 
-/** Estados que permiten mostrar preview de video (Entregado/Completado) */
-const VIDEO_READY_STATUSES: ContentStatus[] = ["delivered", "approved", "paid", "corrected"];
+/** Estados que permiten mostrar área de video: Entregado, Completado, Grabado */
+const VIDEO_AREA_STATUSES: ContentStatus[] = ["delivered", "approved", "recorded"];
 
 function getPrimaryVideoUrl(content: Content): string | null {
   const urls = (content as any).video_urls;
@@ -16,6 +16,12 @@ function getPrimaryVideoUrl(content: Content): string | null {
     if (first) return first;
   }
   return (content as any).video_url || (content as any).bunny_embed_url || null;
+}
+
+/** Si debe mostrarse el área de video (sin placeholder cuando es false) */
+export function shouldShowVideoArea(content: Content): boolean {
+  const hasVideoUrl = !!getPrimaryVideoUrl(content)?.trim();
+  return hasVideoUrl && VIDEO_AREA_STATUSES.includes(content.status);
 }
 
 function isBunnyUrl(url: string): boolean {
@@ -45,6 +51,8 @@ export interface KanbanCardVideoPreviewProps {
   className?: string;
   /** Badge "X hooks" overlay */
   hooksCount?: number;
+  /** Orientación del video (default vertical para TikTok/Reels) */
+  isVertical?: boolean;
 }
 
 export function KanbanCardVideoPreview({
@@ -52,13 +60,12 @@ export function KanbanCardVideoPreview({
   cardSize = "normal",
   className,
   hooksCount,
+  isVertical = true,
 }: KanbanCardVideoPreviewProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
   const primaryVideoUrl = getPrimaryVideoUrl(content);
-  const hasVideoReady =
-    !!primaryVideoUrl &&
-    VIDEO_READY_STATUSES.includes(content.status);
+  const showVideoArea = shouldShowVideoArea(content);
   const isBunny = primaryVideoUrl ? isBunnyUrl(primaryVideoUrl) : false;
 
   const bunnyIds = useMemo(
@@ -70,51 +77,39 @@ export function KanbanCardVideoPreview({
     [primaryVideoUrl]
   );
 
-  const canPlayInline = hasVideoReady && isBunny && !!bunnyIds;
+  const canPlayInline = showVideoArea && isBunny && !!bunnyIds;
   const embedUrl = canPlayInline
     ? buildBunnyEmbedUrl(bunnyIds!.libraryId, bunnyIds!.videoId, true)
     : null;
 
+  const containerStyle = {
+    width: "100%",
+    maxWidth: isVertical ? 280 : "100%",
+    aspectRatio: isVertical ? "9/16" : "16/9",
+    margin: "0 auto",
+    borderRadius: 12,
+    overflow: "hidden" as const,
+  };
+
   const containerClass = cn(
-    "relative overflow-hidden rounded-xl shrink-0 w-[157px] h-[280px] aspect-[9/16] cursor-pointer",
+    "relative shrink-0 cursor-pointer",
     "transition-all duration-300 ease-out",
     "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]",
     className
   );
 
-  const placeholderStyle = {
-    background: "rgba(255, 255, 255, 0.04)",
-    backdropFilter: "blur(16px) saturate(180%)",
-    border: `1px solid ${TECH_COLORS.border}`,
-    boxShadow: "0 0 20px rgba(139, 92, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
-  };
-
   if (cardSize === "compact") return null;
 
-  // Estado 1: Sin video final - placeholder (mismo tamaño y estilo que thumbnail)
-  if (!hasVideoReady) {
-    return (
-      <div className="flex justify-center p-4 pt-4 pb-0">
-        <div
-          className={cn(containerClass, "flex items-center justify-center")}
-          style={placeholderStyle}
-        >
-          <div className="flex flex-col items-center gap-2 text-center px-4">
-            <Video className="h-12 w-12 text-[#8b5cf6]/40" />
-            <span className="text-xs text-[#94a3b8]">Video pendiente</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Si no debe mostrarse área de video: no renderizar nada (sin placeholder ni espacio vacío)
+  if (!showVideoArea) return null;
 
-  // Estado 2 y 3: Thumbnail o Reproduciendo
+  // Thumbnail o Reproduciendo (contenedor dinámico por orientación)
   return (
     <div className="flex justify-center p-4 pt-4 pb-0">
       <div
         data-video-trigger
         className={containerClass}
-        style={{ minWidth: 157 }}
+        style={containerStyle}
       >
         <AnimatePresence mode="wait">
           {!isPlaying ? (
@@ -193,7 +188,7 @@ export function KanbanCardVideoPreview({
                 <iframe
                   src={embedUrl}
                   title={content.title}
-                  className="absolute inset-0 w-full h-full border-0 rounded-xl"
+                  className="absolute top-0 left-0 w-full h-full border-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />

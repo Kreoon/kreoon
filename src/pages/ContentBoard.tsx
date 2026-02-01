@@ -39,6 +39,7 @@ import {
 } from "@/components/board";
 import { useBoardSettings } from "@/hooks/useBoardSettings";
 import { useBoardPersistence } from "@/hooks/useBoardPersistence";
+import { useOrgAssignableUsers } from "@/hooks/useOrgAssignableUsers";
 import { AutoSaveIndicator } from "@/components/ui/autosave-indicator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -293,6 +294,7 @@ export default function ContentBoard() {
   
   // Board settings hook
   const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings } = useBoardSettings(currentOrgId);
+  const { creators, editors, refetch: refetchAssignable } = useOrgAssignableUsers(currentOrgId);
 
   // Rol efectivo para permisos del board - use impersonated role if active
   const primaryRole = isImpersonating && impersonationTarget.role
@@ -639,6 +641,44 @@ export default function ContentBoard() {
     }
   }, [refetch, toast]);
 
+  const handleAssignCreator = useCallback(
+    async (contentId: string, userId: string) => {
+      try {
+        const { error } = await supabase
+          .from("content")
+          .update({ creator_id: userId, updated_at: new Date().toISOString() })
+          .eq("id", contentId);
+        if (error) throw error;
+        refetch();
+        refetchAssignable();
+        toast({ title: "Creador asignado" });
+      } catch (err) {
+        console.error("Error assigning creator:", err);
+        toast({ title: "Error al asignar", variant: "destructive" });
+      }
+    },
+    [refetch, refetchAssignable, toast]
+  );
+
+  const handleAssignEditor = useCallback(
+    async (contentId: string, userId: string) => {
+      try {
+        const { error } = await supabase
+          .from("content")
+          .update({ editor_id: userId, updated_at: new Date().toISOString() })
+          .eq("id", contentId);
+        if (error) throw error;
+        refetch();
+        refetchAssignable();
+        toast({ title: "Editor asignado" });
+      } catch (err) {
+        console.error("Error assigning editor:", err);
+        toast({ title: "Error al asignar", variant: "destructive" });
+      }
+    },
+    [refetch, refetchAssignable, toast]
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen p-6 space-y-6">
@@ -984,6 +1024,11 @@ export default function ContentBoard() {
                           setMarketingPanelContent(content);
                           setShowMarketingPanel(true);
                         }}
+                        creators={creators}
+                        editors={editors}
+                        onAssignCreator={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignCreator : undefined}
+                        onAssignEditor={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignEditor : undefined}
+                        onUpdate={refetch}
                       />
                     ))}
                     {columnContent.length === 0 && (

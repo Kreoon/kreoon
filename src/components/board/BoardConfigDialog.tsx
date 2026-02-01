@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
-import { Settings, Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, Check, X, ArrowUp, ArrowDown, Palette, ChevronRight, ChevronLeft, Lock, FileText } from "lucide-react";
+import { Settings, Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, Check, X, ArrowUp, ArrowDown, Palette, ChevronRight, ChevronLeft, Lock, FileText, Zap, Filter, Workflow } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,9 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useBoardSettings, OrganizationStatus, BoardCustomField } from "@/hooks/useBoardSettings";
+import { useBoardSettings, OrganizationStatus, BoardCustomField, StatePermission } from "@/hooks/useBoardSettings";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScriptPermissionsEditor } from "@/components/settings/ScriptPermissionsEditor";
 
 interface BoardConfigDialogProps {
@@ -25,21 +27,23 @@ interface BoardConfigDialogProps {
 
 const STATUS_COLORS = [
   { value: '#6b7280', label: 'Gris' },
-  { value: '#ef4444', label: 'Rojo' },
-  { value: '#f97316', label: 'Naranja' },
-  { value: '#eab308', label: 'Amarillo' },
-  { value: '#22c55e', label: 'Verde' },
-  { value: '#06b6d4', label: 'Cyan' },
-  { value: '#3b82f6', label: 'Azul' },
   { value: '#8b5cf6', label: 'Violeta' },
+  { value: '#a855f7', label: 'Púrpura' },
   { value: '#ec4899', label: 'Rosa' },
+  { value: '#06b6d4', label: 'Cyan' },
+  { value: '#22d3ee', label: 'Cian claro' },
+  { value: '#3b82f6', label: 'Azul' },
+  { value: '#22c55e', label: 'Verde' },
+  { value: '#eab308', label: 'Amarillo' },
+  { value: '#f97316', label: 'Naranja' },
+  { value: '#ef4444', label: 'Rojo' },
 ];
 
 const FIELD_TYPES = [
-  { value: 'text', label: 'Texto' },
+  { value: 'text', label: 'Texto corto' },
   { value: 'number', label: 'Número' },
   { value: 'date', label: 'Fecha' },
-  { value: 'select', label: 'Selector' },
+  { value: 'select', label: 'Lista desplegable' },
   { value: 'multiselect', label: 'Multi-selector' },
   { value: 'checkbox', label: 'Checkbox' },
   { value: 'currency', label: 'Moneda' },
@@ -78,8 +82,11 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
   const [editingStatus, setEditingStatus] = useState<OrganizationStatus | null>(null);
   const [newStatusLabel, setNewStatusLabel] = useState('');
   const [newStatusColor, setNewStatusColor] = useState('#6b7280');
+  const [newStatusDescription, setNewStatusDescription] = useState('');
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldType, setNewFieldType] = useState<BoardCustomField['field_type']>('text');
+
+  const [statusToDelete, setStatusToDelete] = useState<OrganizationStatus | null>(null);
 
   const {
     loading,
@@ -88,14 +95,20 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     rules,
     customFields,
     permissions,
+    statePermissions,
     updateSettings,
     createStatus,
     updateStatus,
     deleteStatus,
     createCustomField,
+    updateCustomField,
     deleteCustomField,
     updatePermission,
-    updateStatusRule
+    updateStatusRule,
+    reorderStatuses,
+    upsertStatePermission,
+    kanbanConfigJson,
+    updateKanbanConfig,
   } = useBoardSettings(organizationId);
 
   // Get rule for a status
@@ -128,10 +141,13 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     await createStatus({
       label: newStatusLabel,
       color: newStatusColor,
-      status_key: statusKey
+      status_key: statusKey,
+      icon: null,
+      description: newStatusDescription.trim() || null,
     });
     setNewStatusLabel('');
     setNewStatusColor('#6b7280');
+    setNewStatusDescription('');
     onSettingsChange?.();
   };
 
@@ -161,6 +177,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
 
   const handleDeleteStatus = async (statusId: string) => {
     await deleteStatus(statusId);
+    setStatusToDelete(null);
     onSettingsChange?.();
   };
 
@@ -208,12 +225,14 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
         </DialogHeader>
 
         <Tabs defaultValue="statuses" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-1">
             <TabsTrigger value="statuses">Estados</TabsTrigger>
-            <TabsTrigger value="rules">Reglas</TabsTrigger>
+            <TabsTrigger value="state-permissions">Matriz Permisos</TabsTrigger>
+            <TabsTrigger value="rules">Transiciones</TabsTrigger>
             <TabsTrigger value="cards">Tarjetas</TabsTrigger>
             <TabsTrigger value="fields">Campos</TabsTrigger>
-            <TabsTrigger value="permissions">Permisos</TabsTrigger>
+            <TabsTrigger value="permissions">Permisos Rol</TabsTrigger>
+            <TabsTrigger value="visibility">Visibilidad</TabsTrigger>
             <TabsTrigger value="scripts">Scripts</TabsTrigger>
           </TabsList>
 
@@ -225,35 +244,43 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="space-y-2">
+              <div className="flex gap-2 flex-wrap">
+                <Input
+                  placeholder="Nombre del estado"
+                  value={newStatusLabel}
+                  onChange={(e) => setNewStatusLabel(e.target.value)}
+                  className="flex-1 min-w-[180px]"
+                />
+                <Select value={newStatusColor} onValueChange={setNewStatusColor}>
+                  <SelectTrigger className="w-36">
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded-full" style={{ backgroundColor: newStatusColor }} />
+                      Color
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_COLORS.map(color => (
+                      <SelectItem key={color.value} value={color.value}>
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 rounded-full" style={{ backgroundColor: color.value }} />
+                          {color.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleCreateStatus} disabled={!newStatusLabel.trim()}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Agregar estado
+                </Button>
+              </div>
               <Input
-                placeholder="Nombre del estado"
-                value={newStatusLabel}
-                onChange={(e) => setNewStatusLabel(e.target.value)}
-                className="flex-1"
+                placeholder="Descripción (opcional)"
+                value={newStatusDescription}
+                onChange={(e) => setNewStatusDescription(e.target.value)}
+                className="max-w-md"
               />
-              <Select value={newStatusColor} onValueChange={setNewStatusColor}>
-                <SelectTrigger className="w-32">
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded-full" style={{ backgroundColor: newStatusColor }} />
-                    Color
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_COLORS.map(color => (
-                    <SelectItem key={color.value} value={color.value}>
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 rounded-full" style={{ backgroundColor: color.value }} />
-                        {color.label}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={handleCreateStatus} disabled={!newStatusLabel.trim()}>
-                <Plus className="h-4 w-4 mr-1" />
-                Crear
-              </Button>
             </div>
 
             <ScrollArea className="h-[300px] border rounded-lg p-2">
@@ -343,7 +370,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                           size="icon" 
                           variant="ghost" 
                           className="h-8 w-8 text-destructive"
-                          onClick={() => handleDeleteStatus(status.id)}
+                          onClick={() => setStatusToDelete(status)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -361,7 +388,94 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
             </ScrollArea>
           </TabsContent>
 
-          {/* REGLAS TAB - Permisos de movimiento */}
+          {/* MATRIZ PERMISOS POR ESTADO/ROL */}
+          <TabsContent value="state-permissions" className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Matriz de permisos: por cada estado y rol, define Ver columna, Ver asignados, Mover a este estado, Editar
+              </p>
+            </div>
+            <ScrollArea className="h-[400px]">
+              <div className="border rounded-lg overflow-x-auto">
+                <table className="w-full text-sm min-w-[600px]">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th className="p-2 text-left font-medium">Estado</th>
+                      {ROLES.filter(r => !['trafficker', 'designer'].includes(r)).map(role => (
+                        <th key={role} className="p-2 text-center font-medium text-xs">{ROLE_LABELS[role] || role}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statuses.filter(s => s.is_active).map(status => (
+                      <tr key={status.id} className="border-t">
+                        <td className="p-2">
+                          <div className="flex items-center gap-2">
+                            <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: status.color }} />
+                            <span className="font-medium truncate max-w-[120px]">{status.label}</span>
+                          </div>
+                        </td>
+                        {ROLES.filter(r => !['trafficker', 'designer'].includes(r)).map(role => {
+                          const perm = getStatePermission(status.id, role);
+                          return (
+                            <td key={`${status.id}-${role}`} className="p-1">
+                              <div className="flex flex-wrap gap-1 justify-center">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Checkbox
+                                      checked={perm?.can_view ?? (rules.find(r => r.status_id === status.id)?.can_view_roles?.includes(role) ?? true)}
+                                      onCheckedChange={(c) => toggleStatePermission(status.id, role, 'can_view', !!c)}
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipContent>Ver columna</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Checkbox
+                                      checked={perm?.can_view_assigned_only ?? false}
+                                      onCheckedChange={(c) => toggleStatePermission(status.id, role, 'can_view_assigned_only', !!c)}
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipContent>Ver solo asignados</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Checkbox
+                                      checked={perm?.can_move_to ?? false}
+                                      onCheckedChange={(c) => toggleStatePermission(status.id, role, 'can_move_to', !!c)}
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipContent>Mover a este estado</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Checkbox
+                                      checked={perm?.can_edit ?? false}
+                                      onCheckedChange={(c) => toggleStatePermission(status.id, role, 'can_edit', !!c)}
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipContent>Editar en este estado</TooltipContent>
+                                </Tooltip>
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                    {statuses.filter(s => s.is_active).length === 0 && (
+                      <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Crea estados primero</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </ScrollArea>
+            <p className="text-xs text-muted-foreground">
+              Si no hay permiso explícito en la matriz, se usan las reglas de la pestaña Transiciones y Permisos Rol.
+            </p>
+          </TabsContent>
+
+          {/* REGLAS TAB - Permisos de movimiento y transiciones */}
           <TabsContent value="rules" className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Lock className="h-4 w-4 text-muted-foreground" />
@@ -792,11 +906,53 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
             </div>
           </TabsContent>
 
+          {/* VISIBILIDAD TAB */}
+          <TabsContent value="visibility" className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Configura qué ve cada rol. Admin/Estratega: tablero completo. Editor/Creador: todo + filtro &quot;Mis asignaciones&quot;. Cliente: solo estados configurados + solo su contenido.
+              </p>
+            </div>
+            <Card className="p-4">
+              <Label className="text-sm font-medium">Mostrar contenido no asignado</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Para roles limitados (ej. Creador), ¿mostrar tarjetas sin asignar en estados que pueden ver?
+              </p>
+              <Switch
+                checked={(kanbanConfigJson as { show_unassigned?: boolean })?.show_unassigned ?? false}
+                onCheckedChange={(c) => updateKanbanConfig?.({ ...(kanbanConfigJson || {}), show_unassigned: c })}
+              />
+            </Card>
+          </TabsContent>
+
           {/* SCRIPTS TAB */}
           <TabsContent value="scripts" className="space-y-4">
             <ScriptPermissionsEditor organizationId={organizationId} />
           </TabsContent>
         </Tabs>
+
+        <AlertDialog open={!!statusToDelete} onOpenChange={(o) => !o && setStatusToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar estado?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {statusToDelete && (
+                  <>Se eliminará el estado &quot;{statusToDelete.label}&quot;. Si tiene contenido asignado, verifica antes de continuar.</>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => statusToDelete && handleDeleteStatus(statusToDelete.id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );

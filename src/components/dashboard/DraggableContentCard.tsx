@@ -26,7 +26,7 @@ import {
   type CurrencyType,
 } from "@/components/ui/currency-input";
 import { motion } from "framer-motion";
-import { KanbanCardVideoPreview } from "@/components/board/KanbanCardVideoPreview";
+import { KanbanCardVideoPreview, shouldShowVideoArea } from "@/components/board/KanbanCardVideoPreview";
 import { getStatusNeonStyle, TECH_COLORS } from "@/components/board/kanbanTechStyles";
 
 interface DraggableContentCardProps {
@@ -99,6 +99,7 @@ export function DraggableContentCard({
 
   const displayPayment = getDisplayPayment();
   const statusNeon = getStatusNeonStyle(content.status);
+  const hasVideoArea = shouldShowVideoArea(content);
 
   const formatDate = (date: string | null) => {
     if (!date) return "Sin fecha";
@@ -186,8 +187,8 @@ export function DraggableContentCard({
         }}
         className={cn(
           "group relative overflow-visible rounded-xl cursor-grab active:cursor-grabbing",
-          "w-full min-h-[420px] flex flex-col shrink-0",
-          "transition-all duration-300 ease-out",
+          "w-full flex flex-col shrink-0 transition-[min-height] duration-300 ease-out",
+          hasVideoArea ? "min-h-[420px]" : "min-h-[280px]",
           "hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]",
           "hover:border-[rgba(168,85,247,0.5)]",
           isDragging && "opacity-70 scale-[0.98] shadow-[0_0_25px_rgba(168,85,247,0.3)]"
@@ -198,15 +199,18 @@ export function DraggableContentCard({
           <GripVertical className="h-4 w-4 text-[#cbd5e1]" />
         </div>
 
-        {/* 1. VIDEO PREVIEW - Inline, conditional by status, Bunny iframe */}
+        {/* 1. VIDEO PREVIEW - Solo si shouldShowVideoArea (sin placeholder cuando no hay video) */}
         <KanbanCardVideoPreview
           content={content}
           hooksCount={(content as any).hooks_count}
         />
 
-        {/* 2. BODY */}
+        {/* 2. BODY - layout fluido, pt/mt solo cuando hay video arriba */}
         <div
-          className="flex-1 flex flex-col p-4 pt-3 mt-3"
+          className={cn(
+            "flex-1 flex flex-col p-4",
+            hasVideoArea && "pt-3 mt-3"
+          )}
           style={{ background: TECH_COLORS.cardBody }}
         >
           <h3

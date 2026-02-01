@@ -41,7 +41,8 @@ import {
 } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { StatusChangeDropdown, QuickStatusButtons } from "./StatusChangeDropdown";
-import { KanbanCardVideoPreview } from "./KanbanCardVideoPreview";
+import { KanbanCardVideoPreview, shouldShowVideoArea } from "./KanbanCardVideoPreview";
+import { UserAssignmentSection } from "./UserAssignmentSection";
 import { TECH_COLORS, getStatusNeonStyle } from "./kanbanTechStyles";
 import { motion } from "framer-motion";
 
@@ -79,6 +80,12 @@ interface EnhancedContentCardProps {
   showStatusControls?: boolean;
   ambassadorIds?: Set<string>;
   onShowMarketingInfo?: (content: Content) => void;
+  /** Equipo asignable - creadores y editores para dropdown */
+  creators?: Array<{ id: string; full_name: string | null; avatar_url: string | null }>;
+  editors?: Array<{ id: string; full_name: string | null; avatar_url: string | null }>;
+  onAssignCreator?: (contentId: string, userId: string) => Promise<void>;
+  onAssignEditor?: (contentId: string, userId: string) => Promise<void>;
+  onUpdate?: () => void;
 }
 
 const SIZE_CONFIG = {
@@ -136,6 +143,11 @@ export function EnhancedContentCard({
   showStatusControls = false,
   ambassadorIds = new Set(),
   onShowMarketingInfo,
+  creators = [],
+  editors = [],
+  onAssignCreator,
+  onAssignEditor,
+  onUpdate,
 }: EnhancedContentCardProps) {
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
 
@@ -182,6 +194,7 @@ export function EnhancedContentCard({
 
   const showField = (field: string) => visibleFields.includes(field);
   const responsible = content.creator || content.editor;
+  const hasVideoArea = shouldShowVideoArea(content);
   const hasVideo =
     content.video_url || ((content as any).video_urls?.length ?? 0) > 0;
   const hasRawVideo =
@@ -236,8 +249,8 @@ export function EnhancedContentCard({
         transition={{ duration: 0.2 }}
         className={cn(
           "group cursor-pointer relative rounded-xl overflow-visible cursor-grab active:cursor-grabbing",
-          "w-full min-h-[420px] flex flex-col shrink-0",
-          "transition-all duration-300 ease-out",
+          "w-full flex flex-col shrink-0 transition-[min-height] duration-300 ease-out",
+          hasVideoArea ? "min-h-[420px]" : "min-h-[280px]",
           "hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]",
           "hover:border-[rgba(168,85,247,0.5)]",
           isDragging && "opacity-70 scale-[0.98] shadow-[0_0_25px_rgba(168,85,247,0.3)]",
@@ -319,7 +332,7 @@ export function EnhancedContentCard({
           </DropdownMenu>
         )}
 
-        {/* 1. VIDEO PREVIEW - Inline, conditional by status, Bunny iframe */}
+        {/* 1. VIDEO PREVIEW - Solo si shouldShowVideoArea (sin placeholder cuando no hay video) */}
         {cardSize !== "compact" && (
           <KanbanCardVideoPreview
             content={content}
@@ -328,11 +341,11 @@ export function EnhancedContentCard({
           />
         )}
 
-        {/* 2. Separator + BODY */}
+        {/* 2. Separator + BODY - layout fluido, pt/mt solo cuando hay video arriba */}
         <div
           className={cn(
             "flex-1 flex flex-col p-4",
-            cardSize !== "compact" && "pt-3 mt-3"
+            cardSize !== "compact" && hasVideoArea && "pt-3 mt-3"
           )}
           style={{ background: TECH_COLORS.cardBody }}
         >
@@ -384,6 +397,19 @@ export function EnhancedContentCard({
             </div>
           )}
 
+          {/* Sección Equipo: Creador, Editor, Cliente, Fechas */}
+          {cardSize !== "compact" && (
+            <UserAssignmentSection
+              content={content}
+              creators={creators}
+              editors={editors}
+              userRole={userRole}
+              onAssignCreator={onAssignCreator ? async (userId) => onAssignCreator(content.id, userId) : undefined}
+              onAssignEditor={onAssignEditor ? async (userId) => onAssignEditor(content.id, userId) : undefined}
+              onUpdate={onUpdate}
+            />
+          )}
+
           {(content.sphere_phase || content.campaign_week || marketingIndicator) && (
             <div className={cn("flex flex-wrap items-center mt-3", sizeConfig.spacing)}>
               {content.sphere_phase && SPHERE_PHASE_DISPLAY[content.sphere_phase] && (() => {
@@ -426,12 +452,6 @@ export function EnhancedContentCard({
             </div>
           )}
 
-          {showField("client") && content.client?.name && (
-            <div className={cn("flex items-center mt-3 text-[#cbd5e1]", sizeConfig.spacing)}>
-              <Building2 className={cn(sizeConfig.iconSize, "text-[#8b5cf6]")} />
-              <span className={cn("truncate text-xs")}>{content.client.name}</span>
-            </div>
-          )}
         </div>
 
         {/* 3. FOOTER */}
@@ -442,57 +462,6 @@ export function EnhancedContentCard({
             backdropFilter: "blur(8px)",
           }}
         >
-          {showField("creator") && content.creator && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Avatar
-                  className={cn(
-                    sizeConfig.avatarSize,
-                    "ring-2 cursor-pointer transition-transform hover:scale-110"
-                  )}
-                  style={{
-                    boxShadow: "0 0 8px rgba(168,85,247,0.4)",
-                    border: "1px solid rgba(139,92,246,0.4)",
-                  }}
-                >
-                  <AvatarImage src={content.creator.avatar_url || undefined} />
-                  <AvatarFallback className="bg-[#8b5cf6]/30 text-[#a78bfa] text-xs font-semibold">
-                    {(content.creator.full_name || "?").charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </TooltipTrigger>
-              <TooltipContent className="bg-[#0a0118] border-[#8b5cf6]/30">
-                <span className="font-medium">Creador:</span> {content.creator.full_name}
-                {ambassadorIds.has(content.creator_id!) && (
-                  <span className="ml-1 text-amber-400">👑 Embajador</span>
-                )}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {showField("editor") && content.editor && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Avatar
-                  className={cn(
-                    sizeConfig.avatarSize,
-                    "ring-2 -ml-1.5 cursor-pointer transition-transform hover:scale-110"
-                  )}
-                  style={{
-                    boxShadow: "0 0 8px rgba(236,72,153,0.3)",
-                    border: "1px solid rgba(236,72,153,0.4)",
-                  }}
-                >
-                  <AvatarImage src={content.editor.avatar_url || undefined} />
-                  <AvatarFallback className="bg-[#ec4899]/30 text-[#f472b6] text-xs font-semibold">
-                    {(content.editor.full_name || "?").charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </TooltipTrigger>
-              <TooltipContent className="bg-[#0a0118] border-[#8b5cf6]/30">
-                <span className="font-medium">Editor:</span> {content.editor.full_name}
-              </TooltipContent>
-            </Tooltip>
-          )}
           {showField("deadline") && content.deadline && (
             <div
               className={cn(

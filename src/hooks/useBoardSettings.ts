@@ -10,7 +10,22 @@ export interface OrganizationStatus {
   color: string;
   sort_order: number;
   is_active: boolean;
+  icon?: string | null;
+  description?: string | null;
   created_at: string;
+}
+
+export interface StatePermission {
+  id: string;
+  organization_id: string;
+  status_id: string;
+  role: string;
+  can_view: boolean;
+  can_view_assigned_only: boolean;
+  can_move_to: boolean;
+  can_edit: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface BoardSettings {
@@ -51,6 +66,7 @@ export interface BoardCustomField {
   show_in_detail: boolean;
   sort_order: number;
   is_active: boolean;
+  visible_in_states?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -76,6 +92,8 @@ export function useBoardSettings(organizationId: string | null) {
   const [rules, setRules] = useState<BoardStatusRule[]>([]);
   const [customFields, setCustomFields] = useState<BoardCustomField[]>([]);
   const [permissions, setPermissions] = useState<BoardPermission[]>([]);
+  const [statePermissions, setStatePermissions] = useState<StatePermission[]>([]);
+  const [kanbanConfigJson, setKanbanConfigJson] = useState<Record<string, unknown> | null>(null);
 
   const fetchAll = useCallback(async () => {
     if (!organizationId) {
@@ -85,31 +103,14 @@ export function useBoardSettings(organizationId: string | null) {
 
     setLoading(true);
     try {
-      const [settingsRes, statusesRes, rulesRes, fieldsRes, permsRes] = await Promise.all([
-        supabase
-          .from('board_settings')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .single(),
-        supabase
-          .from('organization_statuses')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .order('sort_order'),
-        supabase
-          .from('board_status_rules')
-          .select('*')
-          .eq('organization_id', organizationId),
-        supabase
-          .from('board_custom_fields')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .eq('is_active', true)
-          .order('sort_order'),
-        supabase
-          .from('board_permissions')
-          .select('*')
-          .eq('organization_id', organizationId)
+      const [settingsRes, statusesRes, rulesRes, fieldsRes, permsRes, statePermsRes, kanbanConfigRes] = await Promise.all([
+        supabase.from('board_settings').select('*').eq('organization_id', organizationId).single(),
+        supabase.from('organization_statuses').select('*').eq('organization_id', organizationId).order('sort_order'),
+        supabase.from('board_status_rules').select('*').eq('organization_id', organizationId),
+        supabase.from('board_custom_fields').select('*').eq('organization_id', organizationId).eq('is_active', true).order('sort_order'),
+        supabase.from('board_permissions').select('*').eq('organization_id', organizationId),
+        supabase.from('state_permissions').select('*').eq('organization_id', organizationId).catch(() => ({ data: [] })),
+        supabase.from('kanban_config').select('config_json').eq('organization_id', organizationId).single().catch(() => ({ data: null })),
       ]);
 
       if (settingsRes.data) {
@@ -137,7 +138,8 @@ export function useBoardSettings(organizationId: string | null) {
       setCustomFields((fieldsRes.data || []).map(f => ({
         ...f,
         field_type: f.field_type as BoardCustomField['field_type'],
-        options: f.options as string[] | null
+        options: f.options as string[] | null,
+        visible_in_states: (f.visible_in_states as string[]) || []
       })));
       setPermissions((permsRes.data || []).map(p => ({
         ...p,
@@ -200,7 +202,9 @@ export function useBoardSettings(organizationId: string | null) {
           label: data.label,
           color: data.color,
           status_key: data.status_key,
-          sort_order: maxOrder + 1
+          sort_order: maxOrder + 1,
+          icon: data.icon ?? null,
+          description: data.description ?? null,
         })
         .select()
         .single();
@@ -456,6 +460,8 @@ export function useBoardSettings(organizationId: string | null) {
     createCustomField,
     updateCustomField,
     deleteCustomField,
-    updatePermission
+    updatePermission,
+    upsertStatePermission,
+    updateKanbanConfig,
   };
 }
