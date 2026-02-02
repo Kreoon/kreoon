@@ -6,8 +6,16 @@ import { Content, ContentStatus } from "@/types/database";
 import { TECH_COLORS } from "./kanbanTechStyles";
 import { cn } from "@/lib/utils";
 
-/** Estados que permiten mostrar área de video: Entregado, Completado, Grabado */
-const VIDEO_AREA_STATUSES: ContentStatus[] = ["delivered", "approved", "recorded"];
+/** Estados que permiten mostrar área de video: tienen o pueden tener video final */
+const VIDEO_AREA_STATUSES: (ContentStatus | string)[] = [
+  "delivered",
+  "approved",
+  "recorded",
+  "corrected", // Video corregido entregado
+  "issue", // Novedad - cliente revisando, ya hay video entregado
+  "review", // En revisión
+  "editing", // En edición - editor puede haber subido preview
+];
 
 function getPrimaryVideoUrl(content: Content): string | null {
   const urls = (content as any).video_urls;
@@ -18,10 +26,17 @@ function getPrimaryVideoUrl(content: Content): string | null {
   return (content as any).video_url || (content as any).bunny_embed_url || null;
 }
 
+/** Estados tempranos: no esperamos video final aún */
+const EARLY_STATUSES: string[] = ["draft", "script_pending", "script_approved", "assigned"];
+
 /** Si debe mostrarse el área de video (sin placeholder cuando es false) */
 export function shouldShowVideoArea(content: Content): boolean {
   const hasVideoUrl = !!getPrimaryVideoUrl(content)?.trim();
-  return hasVideoUrl && VIDEO_AREA_STATUSES.includes(content.status);
+  if (!hasVideoUrl) return false;
+  const status = String(content.status || "").toLowerCase();
+  if (VIDEO_AREA_STATUSES.some((s) => String(s).toLowerCase() === status)) return true;
+  if (EARLY_STATUSES.includes(status)) return false;
+  return true;
 }
 
 function isBunnyUrl(url: string): boolean {
@@ -29,6 +44,10 @@ function isBunnyUrl(url: string): boolean {
     url.includes("mediadelivery.net") ||
     url.includes("b-cdn.net")
   );
+}
+
+function isDirectVideoUrl(url: string): boolean {
+  return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) || url.includes("supabase.co/storage");
 }
 
 function buildBunnyEmbedUrl(
@@ -77,10 +96,15 @@ export function KanbanCardVideoPreview({
     [primaryVideoUrl]
   );
 
-  const canPlayInline = showVideoArea && isBunny && !!bunnyIds;
-  const embedUrl = canPlayInline
+  const canPlayWithIframe = showVideoArea && isBunny && !!bunnyIds && /^\d+$/.test(String(bunnyIds.libraryId));
+  const embedUrl = canPlayWithIframe
     ? buildBunnyEmbedUrl(bunnyIds!.libraryId, bunnyIds!.videoId, true)
     : null;
+  const canPlayWithVideoTag = showVideoArea && !!bunnyUrls && (!!bunnyUrls.hls || !!bunnyUrls.mp4);
+  const videoSrc = canPlayWithVideoTag ? (bunnyUrls!.mp4 || bunnyUrls!.hls) : null;
+  const canPlayDirectUrl = showVideoArea && !!primaryVideoUrl && isDirectVideoUrl(primaryVideoUrl);
+  const directVideoSrc = canPlayDirectUrl ? primaryVideoUrl : null;
+  const canPlayInline = canPlayWithIframe || canPlayWithVideoTag || canPlayDirectUrl;
 
   const containerStyle = {
     width: "100%",
@@ -191,6 +215,15 @@ export function KanbanCardVideoPreview({
                   className="absolute top-0 left-0 w-full h-full border-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
+                />
+              )}
+              {!embedUrl && (videoSrc || directVideoSrc) && (
+                <video
+                  src={videoSrc || directVideoSrc || undefined}
+                  autoPlay
+                  controls
+                  playsInline
+                  className="absolute top-0 left-0 w-full h-full object-contain bg-black"
                 />
               )}
               <button

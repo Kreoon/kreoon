@@ -101,14 +101,25 @@ export function useAchievements(userId?: string) {
     if (!userId) return;
     
     try {
-      const { data, error } = await supabase
+      // Fetch sin embed (evita error PGRST200 de relación en schema cache)
+      const { data: uaData, error } = await supabase
         .from('user_achievements')
-        .select('*, achievement:achievements(*)')
+        .select('*')
         .eq('user_id', userId)
         .order('unlocked_at', { ascending: false });
 
       if (error) throw error;
-      setUserAchievements((data || []) as unknown as UserAchievement[]);
+
+      // Obtener achievements para merge (ya se cargan en fetchAchievements)
+      const { data: achData } = await supabase.from('achievements').select('*');
+      const achMap = new Map((achData || []).map(a => [a.id, a]));
+
+      const merged = (uaData || []).map((ua) => ({
+        ...ua,
+        achievement: achMap.get(ua.achievement_id),
+      })) as UserAchievement[];
+
+      setUserAchievements(merged);
     } catch (error) {
       console.error('Error fetching user achievements:', error);
     } finally {

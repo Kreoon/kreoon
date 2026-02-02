@@ -1,8 +1,9 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
@@ -17,25 +18,28 @@ import { TrackingProvider } from "@/contexts/TrackingContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
-import Dashboard from "./pages/Dashboard";
-import ContentBoard from "./pages/ContentBoard";
 import Auth from "./pages/Auth";
 import Content from "./pages/Content";
 import Creators from "./pages/Creators";
-import Scripts from "./pages/Scripts";
 import Clients from "./pages/Clients";
-import Settings from "./pages/Settings";
 import Team from "./pages/Team";
-import CreatorDashboard from "./pages/CreatorDashboard";
-import EditorDashboard from "./pages/EditorDashboard";
-import StrategistDashboard from "./pages/StrategistDashboard";
-import ClientDashboard from "./pages/ClientDashboard";
-import ClientContentBoard from "./pages/ClientContentBoard";
 import PortfolioShell from "./pages/portfolio/PortfolioShell";
-import ExplorePage from "./pages/portfolio/ExplorePage";
 import CompanyProfilePage from "./pages/portfolio/CompanyProfilePage";
+
+const ExplorePage = lazy(() => import("./pages/portfolio/ExplorePage"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const ContentBoard = lazy(() => import("./pages/ContentBoard"));
+const ClientContentBoard = lazy(() => import("./pages/ClientContentBoard"));
+const Settings = lazy(() => import("./pages/Settings"));
+const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
+const EditorDashboard = lazy(() => import("./pages/EditorDashboard"));
+const StrategistDashboard = lazy(() => import("./pages/StrategistDashboard"));
+const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
+const Ranking = lazy(() => import("./pages/Ranking"));
+const Scripts = lazy(() => import("./pages/Scripts"));
+const Marketing = lazy(() => import("./pages/Marketing"));
+const Live = lazy(() => import("./pages/Live"));
 import PublicProfilePage from "./pages/portfolio/PublicProfilePage";
-import Ranking from "./pages/Ranking";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import NoCompany from "./pages/NoCompany";
@@ -47,8 +51,6 @@ import OrgAuth from "./pages/OrgAuth";
 import HomePage from "./pages/HomePage";
 import Register from "./pages/Register";
 import OrgRegister from "./pages/auth/OrgRegister";
-import Live from "./pages/Live";
-import Marketing from "./pages/Marketing";
 import ResetPassword from "./pages/ResetPassword";
 import { MainLayout } from "./components/layout/MainLayout";
 
@@ -63,6 +65,12 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const PageFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+  </div>
+);
 
 // Component to redirect /profile to social
 function ProfileRedirect() {
@@ -89,7 +97,7 @@ function AppRoutes() {
     <Routes key={impersonationKey}>
       <Route path="/social" element={<ProtectedRoute allowNoRoles><PortfolioShell /></ProtectedRoute>} />
       <Route path="/social/*" element={<ProtectedRoute allowNoRoles><PortfolioShell /></ProtectedRoute>} />
-      <Route path="/explore" element={<ProtectedRoute allowNoRoles><ExplorePage /></ProtectedRoute>} />
+      <Route path="/explore" element={<ProtectedRoute allowNoRoles><Suspense fallback={<PageFallback />}><ExplorePage /></Suspense></ProtectedRoute>} />
       <Route path="/company/:username" element={<CompanyProfilePage />} />
       <Route path="/profile/:userId" element={<PublicProfilePage />} />
       <Route path="/profile" element={<ProfileRedirect />} />
@@ -109,22 +117,22 @@ function AppRoutes() {
       <Route path="/register/:slug" element={<Register />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="/" element={<HomePage />} />
-      <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-      <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'creator']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Suspense fallback={<PageFallback />}><Dashboard /></Suspense></MainLayout></ProtectedRoute>} />
+      <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'creator']}><MainLayout><Suspense fallback={<PageFallback />}><ContentBoard /></Suspense></MainLayout></ProtectedRoute>} />
       <Route path="/content" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
       <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Creators /></MainLayout></ProtectedRoute>} />
-      <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
+      <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Suspense fallback={<PageFallback />}><Scripts /></Suspense></MainLayout></ProtectedRoute>} />
       <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
       <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
-      <Route path="/live" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Live /></MainLayout></ProtectedRoute>} />
-      <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
-      <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
-      <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
-      <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
-      <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
-      <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
-      <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute>} />
+      <Route path="/live" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Suspense fallback={<PageFallback />}><Live /></Suspense></MainLayout></ProtectedRoute>} />
+      <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Suspense fallback={<PageFallback />}><Marketing /></Suspense></MainLayout></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Suspense fallback={<PageFallback />}><Settings /></Suspense></MainLayout></ProtectedRoute>} />
+      <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><Suspense fallback={<PageFallback />}><CreatorDashboard /></Suspense></MainLayout></ProtectedRoute>} />
+      <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><Suspense fallback={<PageFallback />}><EditorDashboard /></Suspense></MainLayout></ProtectedRoute>} />
+      <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><Suspense fallback={<PageFallback />}><StrategistDashboard /></Suspense></MainLayout></ProtectedRoute>} />
+      <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><Suspense fallback={<PageFallback />}><ClientDashboard /></Suspense></MainLayout></ProtectedRoute>} />
+      <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><Suspense fallback={<PageFallback />}><ClientContentBoard /></Suspense></MainLayout></ProtectedRoute>} />
+      <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor']}><MainLayout><Suspense fallback={<PageFallback />}><Ranking /></Suspense></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

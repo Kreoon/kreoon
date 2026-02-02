@@ -50,6 +50,28 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
+## Estructura del proyecto (src/)
+
+```
+src/
+├── components/
+│   ├── ui/          # Componentes base reutilizables (shadcn-ui, botones, cards, etc.)
+│   ├── board/       # Kanban, EnhancedContentCard, EnhancedKanbanColumn, BoardConfigDialog
+│   ├── dashboard/   # DraggableContentCard, DroppableKanbanColumn, TechKpi*, GoalsChart, etc.
+│   ├── content/     # ContentDetailDialog, ReviewCard, ContentVideoCard
+│   ├── settings/    # Paneles de configuración (NotificationSettings, Billing, etc.)
+│   ├── points/      # UP, logros, leaderboards, badges
+│   ├── portfolio/   # Feed, perfil público, social
+│   ├── layout/      # MainLayout, PageHeader
+│   └── ...
+├── hooks/           # Custom hooks (useAuth, useContent, useBoardSettings, etc.)
+├── lib/             # utils, statusUtils, edgeFunctions, roles, prompts
+├── types/           # database.ts, tracking.ts (tipos TypeScript centralizados)
+├── integrations/supabase/  # client.ts (Kreoon), lovable-client.ts (Edge Functions), types
+├── contexts/        # Auth, Impersonation, Trial, Tracking, Branding, etc.
+└── pages/           # Rutas principales; settings/sections para configuración
+```
+
 ## What technologies are used for this project?
 
 This project is built with:
@@ -59,6 +81,8 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (auth, database, Edge Functions)
+- TanStack Query
 
 ## How can I deploy this project?
 

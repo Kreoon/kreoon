@@ -12,6 +12,7 @@ import { ScriptViewer } from "@/components/content/ScriptViewer";
 import { StarRatingInput } from "@/components/ui/star-rating-input";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
+import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -240,7 +241,6 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
     setLoading(true);
     try {
       // Use centralized status update with UP points integration
-      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
       await updateContentStatusWithUP({
         contentId: content.id,
         oldStatus: content.status as ContentStatus,

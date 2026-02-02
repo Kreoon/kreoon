@@ -48,7 +48,7 @@ export default function ExplorePage() {
   const [searchResults, setSearchResults] = useState<UserProfileCardData[]>([]);
   const [trendingCreators, setTrendingCreators] = useState<UserProfileCardData[]>([]);
   const [trendingPosts, setTrendingPosts] = useState<TrendingPost[]>([]);
-  const [hashtagPosts, setHashtagPosts] = useState<any[]>([]);
+  const [hashtagPosts, setHashtagPosts] = useState<TrendingPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -70,7 +70,7 @@ export default function ExplorePage() {
     setLoading(true);
     try {
       // Fetch trending creators with stats
-      const { data: profiles } = await (supabase as any)
+      const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name, avatar_url, username, bio, tagline, city, country, is_platform_founder, founder_badge_type')
         .eq('is_public', true)
@@ -78,13 +78,13 @@ export default function ExplorePage() {
 
       // Get follower counts
       const profileIds = profiles?.map(p => p.id) || [];
-      const { data: followerCounts } = await (supabase as any)
+      const { data: followerCounts } = await supabase
         .from('followers')
         .select('following_id')
         .in('following_id', profileIds);
 
       // Get content counts
-      const { data: contentCounts } = await (supabase as any)
+      const { data: contentCounts } = await supabase
         .from('content')
         .select('creator_id')
         .in('creator_id', profileIds)
@@ -136,7 +136,7 @@ export default function ExplorePage() {
     setHasSearched(true);
     try {
       // Build query with type assertion to avoid deep instantiation
-      const baseQuery = (supabase as any)
+      const baseQuery = supabase
         .from('profiles')
         .select('id, full_name, avatar_url, username, bio, tagline, city, country, is_platform_founder, founder_badge_type')
         .eq('is_public', true);
@@ -172,12 +172,12 @@ export default function ExplorePage() {
       // Get stats for filtered users
       const profileIds = profiles?.map(p => p.id) || [];
       
-      const { data: followerCounts } = await (supabase as any)
+      const { data: followerCounts } = await supabase
         .from('followers')
         .select('following_id')
         .in('following_id', profileIds);
 
-      const { data: contentCounts } = await (supabase as any)
+      const { data: contentCounts } = await supabase
         .from('content')
         .select('creator_id')
         .in('creator_id', profileIds)

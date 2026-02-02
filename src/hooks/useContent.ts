@@ -6,11 +6,13 @@ import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 
 interface UseContentOptions {
   userId?: string;
-  role?: 'creator' | 'editor' | 'client' | 'admin';
+  role?: 'creator' | 'editor' | 'client' | 'admin' | 'strategist';
   clientId?: string;
   creatorId?: string;
   editorId?: string;
   organizationId?: string;
+  /** Para creator/editor: cuando false, muestra todo el contenido de la org (no solo asignado). Default: true */
+  showOnlyAssigned?: boolean;
 }
 
 export function useContent(userId?: string, role?: 'creator' | 'editor' | 'client' | 'admin') {
@@ -314,7 +316,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [options.userId, options.role, options.clientId, options.creatorId, options.editorId, isPlatformRoot, currentOrgId, orgLoading]);
+  }, [options.userId, options.role, options.clientId, options.creatorId, options.editorId, options.showOnlyAssigned, isPlatformRoot, currentOrgId, orgLoading]);
 
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {
     // If oldStatus is provided, use UP integration

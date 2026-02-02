@@ -23,6 +23,7 @@ import { ThumbnailSelector } from "@/components/content/ThumbnailSelector";
 import { AIThumbnailGenerator } from "@/components/content/AIThumbnailGenerator";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, STATUS_ORDER, ContentComment } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
+import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
@@ -308,7 +309,6 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     setLoading(true);
     try {
       // Use centralized UP-aware status change
-      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
       await updateContentStatusWithUP({
         contentId: content.id,
         oldStatus: content.status as ContentStatus,

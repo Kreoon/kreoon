@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -8,9 +9,11 @@ interface UserChipProps {
   className?: string;
 }
 
-export function UserChip({ name, avatarUrl, borderColor, className }: UserChipProps) {
+export const UserChip = forwardRef<HTMLDivElement, UserChipProps>(
+  function UserChip({ name, avatarUrl, borderColor, className }, ref) {
   return (
     <div
+      ref={ref}
       className={cn(
         "flex items-center gap-2 rounded-2xl py-1 pr-3 pl-1 transition-all",
         "bg-white/5 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]",
@@ -34,4 +37,4 @@ export function UserChip({ name, avatarUrl, borderColor, className }: UserChipPr
       </span>
     </div>
   );
-}
+});

@@ -9,7 +9,11 @@ interface StatusChangeParams {
 }
 
 /**
- * Centralized hook for handling content status changes with UP points integration
+ * Actualiza el estado de un contenido en Supabase y dispara la lógica de puntos UP
+ * (transiciones de estado que otorgan o penalizan puntos a creador/editor).
+ *
+ * @param params - contentId, oldStatus y newStatus
+ * @throws Error de Supabase si falla el fetch o el update del contenido
  */
 export async function updateContentStatusWithUP(params: StatusChangeParams) {
   const { contentId, oldStatus, newStatus } = params;

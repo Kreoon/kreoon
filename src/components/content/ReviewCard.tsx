@@ -22,6 +22,7 @@ import {
   Send
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -166,7 +167,6 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
     setSubmitting(true);
     try {
       // Use centralized UP-aware status change
-      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
       await updateContentStatusWithUP({
         contentId: content.id,
         oldStatus: content.status as ContentStatus,
@@ -210,7 +210,6 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
     setSubmitting(true);
     try {
       // Use centralized UP-aware status change (delivered -> issue triggers penalty)
-      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
       await updateContentStatusWithUP({
         contentId: content.id,
         oldStatus: content.status as ContentStatus,

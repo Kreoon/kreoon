@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
-import { Settings, Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, Check, X, ArrowUp, ArrowDown, Palette, ChevronRight, ChevronLeft, Lock, FileText, Zap, Filter, Workflow } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useState, useCallback, useEffect } from "react";
+import { Settings, Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, Check, X, ArrowUp, ArrowDown, Palette, ChevronRight, ChevronLeft, Lock, FileText, Zap, Filter, Workflow, Activity, Bell, Plug } from "lucide-react";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,10 +12,25 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useBoardSettings, OrganizationStatus, BoardCustomField, StatePermission } from "@/hooks/useBoardSettings";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScriptPermissionsEditor } from "@/components/settings/ScriptPermissionsEditor";
+import { ColorPicker } from "./config/ColorPicker";
+import { IconPicker } from "./config/IconPicker";
+import { SortableStatusRow } from "./config/SortableStatusRow";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 interface BoardConfigDialogProps {
   organizationId: string | null;
@@ -41,13 +56,20 @@ const STATUS_COLORS = [
 
 const FIELD_TYPES = [
   { value: 'text', label: 'Texto corto' },
+  { value: 'textarea', label: 'Texto largo' },
   { value: 'number', label: 'Número' },
   { value: 'date', label: 'Fecha' },
+  { value: 'datetime', label: 'Fecha y hora' },
   { value: 'select', label: 'Lista desplegable' },
   { value: 'multiselect', label: 'Multi-selector' },
   { value: 'checkbox', label: 'Checkbox' },
   { value: 'currency', label: 'Moneda' },
   { value: 'url', label: 'URL' },
+  { value: 'email', label: 'Email' },
+  { value: 'phone', label: 'Teléfono' },
+  { value: 'rating', label: 'Rating (estrellas)' },
+  { value: 'color', label: 'Color' },
+  { value: 'tags', label: 'Etiquetas' },
 ];
 
 const VISIBLE_FIELD_OPTIONS = [
@@ -64,9 +86,10 @@ const VISIBLE_FIELD_OPTIONS = [
   { value: 'indicators', label: 'Indicadores', description: 'Puntos de estado visual' },
 ];
 
-const ROLES = ['admin', 'creator', 'editor', 'strategist', 'client', 'trafficker', 'designer'];
+const ROLES = ['admin', 'team_leader', 'creator', 'editor', 'strategist', 'client', 'trafficker', 'designer'];
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
+  team_leader: 'Líder Equipo',
   creator: 'Creador',
   editor: 'Editor',
   strategist: 'Estratega',
@@ -76,17 +99,24 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export function BoardConfigDialog({ organizationId, trigger, open: controlledOpen, onOpenChange, onSettingsChange }: BoardConfigDialogProps) {
+  const { toast } = useToast();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
   const [editingStatus, setEditingStatus] = useState<OrganizationStatus | null>(null);
   const [newStatusLabel, setNewStatusLabel] = useState('');
   const [newStatusColor, setNewStatusColor] = useState('#6b7280');
+  const [newStatusIcon, setNewStatusIcon] = useState<string | null>(null);
   const [newStatusDescription, setNewStatusDescription] = useState('');
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldType, setNewFieldType] = useState<BoardCustomField['field_type']>('text');
 
   const [statusToDelete, setStatusToDelete] = useState<OrganizationStatus | null>(null);
+  const [contentCountsByStatus, setContentCountsByStatus] = useState<Record<string, number>>({});
+  const statusSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const {
     loading,
@@ -96,6 +126,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     customFields,
     permissions,
     statePermissions,
+    refetch,
     updateSettings,
     createStatus,
     updateStatus,
@@ -110,6 +141,58 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     kanbanConfigJson,
     updateKanbanConfig,
   } = useBoardSettings(organizationId);
+
+  // Refetch al abrir el diálogo para cargar configuración actual
+  useEffect(() => {
+    if (open && organizationId) {
+      refetch();
+    }
+  }, [open, organizationId, refetch]);
+
+  // Cargar conteo de contenidos por estado cuando abre el diálogo
+  useEffect(() => {
+    if (!open || !organizationId) return;
+    const loadContentCounts = async () => {
+      const { data } = await supabase
+        .from("content")
+        .select("status")
+        .eq("organization_id", organizationId)
+        .not("status", "is", null);
+      const counts: Record<string, number> = {};
+      (data || []).forEach((r: { status: string }) => {
+        counts[r.status] = (counts[r.status] || 0) + 1;
+      });
+      setContentCountsByStatus(counts);
+    };
+    loadContentCounts();
+  }, [open, organizationId]);
+
+  const getContentCountForStatus = (statusKey: string) =>
+    contentCountsByStatus[statusKey] ?? 0;
+
+  const getStatePermission = (statusId: string, role: string) =>
+    statePermissions.find(p => p.status_id === statusId && p.role === role) ?? null;
+
+  const toggleStatePermission = async (
+    statusId: string,
+    role: string,
+    field: 'can_view' | 'can_view_assigned_only' | 'can_move_to' | 'can_edit',
+    value: boolean
+  ) => {
+    const existing = getStatePermission(statusId, role);
+    await upsertStatePermission({
+      status_id: statusId,
+      role,
+      ...(existing && {
+        can_view: existing.can_view,
+        can_view_assigned_only: existing.can_view_assigned_only,
+        can_move_to: existing.can_move_to,
+        can_edit: existing.can_edit,
+      }),
+      [field]: value,
+    });
+    onSettingsChange?.();
+  };
 
   // Get rule for a status
   const getRuleForStatus = (statusId: string) => {
@@ -142,11 +225,12 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
       label: newStatusLabel,
       color: newStatusColor,
       status_key: statusKey,
-      icon: null,
+      icon: newStatusIcon,
       description: newStatusDescription.trim() || null,
     });
     setNewStatusLabel('');
     setNewStatusColor('#6b7280');
+    setNewStatusIcon(null);
     setNewStatusDescription('');
     onSettingsChange?.();
   };
@@ -206,42 +290,95 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     onSettingsChange?.();
   };
 
+  const TAB_ITEMS = [
+    { id: "statuses", label: "Estados", icon: Workflow },
+    { id: "state-permissions", label: "Permisos", icon: Lock },
+    { id: "rules", label: "Transiciones", icon: ChevronRight },
+    { id: "cards", label: "Tarjetas", icon: Palette },
+    { id: "fields", label: "Campos", icon: FileText },
+    { id: "permissions", label: "Permisos Rol", icon: Lock },
+    { id: "visibility", label: "Visibilidad", icon: Filter },
+    { id: "automations", label: "Automatizaciones", icon: Activity },
+    { id: "notifications", label: "Notificaciones", icon: Bell },
+    { id: "integrations", label: "Integraciones", icon: Plug },
+    { id: "scripts", label: "Scripts", icon: Zap },
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm" className="gap-2">
             <Settings className="h-4 w-4" />
             Configurar Tablero
           </Button>
         )}
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[85vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Configuración del Tablero
-          </DialogTitle>
-        </DialogHeader>
+      </SheetTrigger>
+      <SheetContent
+        side="right"
+        className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 gap-0 overflow-hidden flex flex-col bg-[#0a0118]/95 backdrop-blur-xl border-[#8b5cf6]/20"
+        aria-describedby="board-config-description"
+      >
+        <Tabs defaultValue="statuses" className="flex h-full overflow-hidden">
+          <div className="flex h-full w-full overflow-hidden">
+            {/* Sidebar - estilo Trello/Notion */}
+            <aside className="w-56 shrink-0 flex flex-col border-r border-white/10 bg-white/[0.02]">
+              <SheetHeader className="p-4 border-b border-white/10 shrink-0">
+                <SheetTitle className="flex items-center gap-2 text-[#f8fafc] text-lg">
+                  <Settings className="h-5 w-5 text-[#a855f7]" />
+                  Configuración
+                </SheetTitle>
+                <SheetDescription id="board-config-description" className="sr-only">
+                  Configura estados, permisos, transiciones, campos y visibilidad del tablero Kanban.
+                </SheetDescription>
+              </SheetHeader>
+              <TabsList className="flex-1 flex flex-col h-auto rounded-none bg-transparent border-0 p-0 overflow-y-auto">
+                {TAB_ITEMS.map((tab) => (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className={cn(
+                      "w-full justify-start gap-2 h-10 px-4 rounded-none border-l-2 border-transparent mt-0.5",
+                      "data-[state=active]:border-[#a855f7] data-[state=active]:bg-[#a855f7]/10 data-[state=active]:text-[#a78bfa]",
+                      "hover:bg-white/5 text-[#94a3b8]"
+                    )}
+                  >
+                    <tab.icon className="h-4 w-4 shrink-0" />
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </aside>
 
-        <Tabs defaultValue="statuses" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-1">
-            <TabsTrigger value="statuses">Estados</TabsTrigger>
-            <TabsTrigger value="state-permissions">Matriz Permisos</TabsTrigger>
-            <TabsTrigger value="rules">Transiciones</TabsTrigger>
-            <TabsTrigger value="cards">Tarjetas</TabsTrigger>
-            <TabsTrigger value="fields">Campos</TabsTrigger>
-            <TabsTrigger value="permissions">Permisos Rol</TabsTrigger>
-            <TabsTrigger value="visibility">Visibilidad</TabsTrigger>
-            <TabsTrigger value="scripts">Scripts</TabsTrigger>
-          </TabsList>
+            {/* Contenido principal - scrollable */}
+            <div className="flex-1 overflow-hidden flex flex-col min-w-0">
 
           {/* ESTADOS TAB */}
-          <TabsContent value="statuses" className="space-y-4">
+          <TabsContent value="statuses" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden min-h-0">
+            {!organizationId && (
+              <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-200">
+                No hay organización seleccionada. Asegúrate de estar en el tablero de una organización.
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Crea y organiza los estados de tu flujo de trabajo
               </p>
+              {statuses.length === 0 && organizationId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    toast({ title: "Recargando configuración…" });
+                    await refetch();
+                    onSettingsChange?.();
+                    toast({ title: "Configuración actualizada", description: "Si había datos pendientes, ya deberían aparecer." });
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? "Cargando…" : "Recargar / Inicializar estados"}
+                </Button>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -252,24 +389,8 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                   onChange={(e) => setNewStatusLabel(e.target.value)}
                   className="flex-1 min-w-[180px]"
                 />
-                <Select value={newStatusColor} onValueChange={setNewStatusColor}>
-                  <SelectTrigger className="w-36">
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded-full" style={{ backgroundColor: newStatusColor }} />
-                      Color
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_COLORS.map(color => (
-                      <SelectItem key={color.value} value={color.value}>
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 rounded-full" style={{ backgroundColor: color.value }} />
-                          {color.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ColorPicker value={newStatusColor} onChange={setNewStatusColor} />
+                <IconPicker value={newStatusIcon} onChange={setNewStatusIcon} />
                 <Button onClick={handleCreateStatus} disabled={!newStatusLabel.trim()}>
                   <Plus className="h-4 w-4 mr-1" />
                   Agregar estado
@@ -284,20 +405,29 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
             </div>
 
             <ScrollArea className="h-[300px] border rounded-lg p-2">
-              <div className="space-y-2">
-                {statuses.map((status, index) => (
-                  <div
-                    key={status.id}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg border bg-card",
-                      !status.is_active && "opacity-50"
-                    )}
-                  >
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                    <div 
-                      className="h-4 w-4 rounded-full flex-shrink-0" 
-                      style={{ backgroundColor: status.color }} 
-                    />
+              <DndContext
+                sensors={statusSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={async (event: DragEndEvent) => {
+                  const { active, over } = event;
+                  if (!over || active.id === over.id) return;
+                  const oldIndex = statuses.findIndex((s) => s.id === active.id);
+                  const newIndex = statuses.findIndex((s) => s.id === over.id);
+                  if (oldIndex === -1 || newIndex === -1) return;
+                  const reordered = arrayMove(statuses, oldIndex, newIndex);
+                  await reorderStatuses(reordered.map((s) => s.id));
+                  onSettingsChange?.();
+                  toast({ title: "Orden actualizado" });
+                }}
+              >
+                <SortableContext items={statuses.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {statuses.map((status) => (
+                      <SortableStatusRow key={status.id} id={status.id} isActive={status.is_active}>
+                        <div 
+                          className="h-4 w-4 rounded-full flex-shrink-0" 
+                          style={{ backgroundColor: status.color }} 
+                        />
                     
                     {editingStatus?.id === status.id ? (
                       <div className="flex-1 flex items-center gap-2">
@@ -306,30 +436,17 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                           onChange={(e) => setEditingStatus({ ...editingStatus, label: e.target.value })}
                           className="h-8"
                         />
-                        <Select 
-                          value={editingStatus.color} 
-                          onValueChange={(color) => setEditingStatus({ ...editingStatus, color })}
-                        >
-                          <SelectTrigger className="w-24 h-8">
-                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: editingStatus.color }} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STATUS_COLORS.map(color => (
-                              <SelectItem key={color.value} value={color.value}>
-                                <div className="flex items-center gap-2">
-                                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: color.value }} />
-                                  {color.label}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <ColorPicker
+                          value={editingStatus.color}
+                          onChange={(color) => setEditingStatus({ ...editingStatus, color })}
+                          className="h-8"
+                        />
                         <Button 
                           size="icon" 
                           variant="ghost" 
                           className="h-8 w-8"
                           onClick={() => {
-                            handleUpdateStatus(status.id, { label: editingStatus.label, color: editingStatus.color });
+                            handleUpdateStatus(status.id, { label: editingStatus.label, color: editingStatus.color, icon: editingStatus.icon ?? null });
                             setEditingStatus(null);
                           }}
                         >
@@ -350,6 +467,9 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                         <Badge variant="outline" className="text-xs">
                           {status.status_key}
                         </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {getContentCountForStatus(status.status_key)} contenido(s)
+                        </span>
                         <Button 
                           size="icon" 
                           variant="ghost" 
@@ -371,30 +491,67 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                           variant="ghost" 
                           className="h-8 w-8 text-destructive"
                           onClick={() => setStatusToDelete(status)}
+                          disabled={getContentCountForStatus(status.status_key) > 0}
+                          title={getContentCountForStatus(status.status_key) > 0 ? `No se puede eliminar: tiene ${getContentCountForStatus(status.status_key)} contenido(s)` : "Eliminar estado"}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </>
                     )}
+                      </SortableStatusRow>
+                    ))}
                   </div>
-                ))}
-                
-                {statuses.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No hay estados configurados. Crea el primero arriba.
-                  </div>
-                )}
-              </div>
+                </SortableContext>
+              </DndContext>
+              {statuses.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No hay estados configurados. Crea el primero arriba.
+                </div>
+              )}
             </ScrollArea>
           </TabsContent>
 
           {/* MATRIZ PERMISOS POR ESTADO/ROL */}
-          <TabsContent value="state-permissions" className="space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Lock className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Matriz de permisos: por cada estado y rol, define Ver columna, Ver asignados, Mover a este estado, Editar
-              </p>
+          <TabsContent value="state-permissions" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Matriz de permisos: por estado y rol
+                </p>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button variant="outline" size="sm" onClick={async () => {
+                  for (const s of statuses.filter(s => s.is_active)) {
+                    for (const role of ROLES.filter(r => !['trafficker', 'designer'].includes(r))) {
+                      await upsertStatePermission({ status_id: s.id, role, can_view: true, can_view_assigned_only: false, can_move_to: true, can_edit: true });
+                    }
+                  }
+                  toast({ title: "Preset Admin aplicado", description: "Todos los permisos activados" });
+                  await refetch();
+                  onSettingsChange?.();
+                }}>
+                  Preset Admin
+                </Button>
+                <Button variant="outline" size="sm" onClick={async () => {
+                  for (const s of statuses.filter(s => s.is_active)) {
+                    const clientVisible = ['delivered', 'approved', 'issue', 'corrected'].includes(s.status_key);
+                    await upsertStatePermission({
+                      status_id: s.id,
+                      role: 'client',
+                      can_view: clientVisible,
+                      can_view_assigned_only: clientVisible,
+                      can_move_to: clientVisible,
+                      can_edit: false
+                    });
+                  }
+                  toast({ title: "Preset Cliente aplicado", description: "Solo estados de revisión visibles" });
+                  await refetch();
+                  onSettingsChange?.();
+                }}>
+                  Preset Cliente
+                </Button>
+              </div>
             </div>
             <ScrollArea className="h-[400px]">
               <div className="border rounded-lg overflow-x-auto">
@@ -476,7 +633,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* REGLAS TAB - Permisos de movimiento y transiciones */}
-          <TabsContent value="rules" className="space-y-4">
+          <TabsContent value="rules" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <div className="flex items-center gap-2 mb-2">
               <Lock className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
@@ -616,7 +773,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* TARJETAS TAB */}
-          <TabsContent value="cards" className="space-y-6">
+          <TabsContent value="cards" className="flex-1 overflow-y-auto p-6 space-y-6 mt-0 data-[state=inactive]:hidden">
             {/* Card Size Selection */}
             <div>
               <Label className="text-sm font-medium">Tamaño de tarjeta</Label>
@@ -768,7 +925,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* CAMPOS PERSONALIZADOS TAB */}
-          <TabsContent value="fields" className="space-y-4">
+          <TabsContent value="fields" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <p className="text-sm text-muted-foreground">
               Crea campos personalizados tipo Notion para tus proyectos
             </p>
@@ -838,7 +995,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* PERMISOS TAB */}
-          <TabsContent value="permissions" className="space-y-4">
+          <TabsContent value="permissions" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <p className="text-sm text-muted-foreground">
               Define qué puede hacer cada rol en el tablero
             </p>
@@ -907,7 +1064,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* VISIBILIDAD TAB */}
-          <TabsContent value="visibility" className="space-y-4">
+          <TabsContent value="visibility" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <div className="flex items-center gap-2 mb-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
@@ -926,10 +1083,63 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
             </Card>
           </TabsContent>
 
+          {/* AUTOMATIZACIONES TAB */}
+          <TabsContent value="automations" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Configura reglas automáticas: cuando un contenido cambie de estado, asigna usuarios, envía notificaciones, etc.
+              </p>
+            </div>
+            <Card className="p-6 border-dashed">
+              <div className="text-center text-muted-foreground space-y-2">
+                <Activity className="h-12 w-12 mx-auto opacity-50" />
+                <p className="font-medium">Automatizaciones (próximamente)</p>
+                <p className="text-sm">Crea reglas tipo &quot;Si X entonces Y&quot; para tu flujo de trabajo.</p>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* NOTIFICACIONES TAB */}
+          <TabsContent value="notifications" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+            <div className="flex items-center gap-2 mb-4">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Configura qué notificaciones recibe cada rol y por qué canal (in-app, email, push).
+              </p>
+            </div>
+            <Card className="p-6 border-dashed">
+              <div className="text-center text-muted-foreground space-y-2">
+                <Bell className="h-12 w-12 mx-auto opacity-50" />
+                <p className="font-medium">Notificaciones (próximamente)</p>
+                <p className="text-sm">Personaliza eventos y canales de notificación.</p>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* INTEGRACIONES TAB */}
+          <TabsContent value="integrations" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+            <div className="flex items-center gap-2 mb-4">
+              <Plug className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Webhooks, API, Zapier, Make, n8n. Conecta el tablero con herramientas externas.
+              </p>
+            </div>
+            <Card className="p-6 border-dashed">
+              <div className="text-center text-muted-foreground space-y-2">
+                <Plug className="h-12 w-12 mx-auto opacity-50" />
+                <p className="font-medium">Integraciones (próximamente)</p>
+                <p className="text-sm">Webhooks, tokens de API y conectores para automatizar.</p>
+              </div>
+            </Card>
+          </TabsContent>
+
           {/* SCRIPTS TAB */}
-          <TabsContent value="scripts" className="space-y-4">
+          <TabsContent value="scripts" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <ScriptPermissionsEditor organizationId={organizationId} />
           </TabsContent>
+            </div>
+          </div>
         </Tabs>
 
         <AlertDialog open={!!statusToDelete} onOpenChange={(o) => !o && setStatusToDelete(null)}>
@@ -953,7 +1163,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useMemo, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -246,7 +246,8 @@ export function ContentDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0 flex flex-col">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0 flex flex-col" aria-describedby="content-detail-description">
+        <DialogDescription id="content-detail-description" className="sr-only">Detalle del proyecto de contenido</DialogDescription>
         {/* Hero Header */}
         <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-4 sm:p-6 border-b shrink-0">
           <div className="absolute inset-0 opacity-5">

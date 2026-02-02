@@ -11,17 +11,19 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Content, ContentStatus, STATUS_LABELS } from "@/types/database";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
+import { useBoardSettings } from "@/hooks/useBoardSettings";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-// Columnas específicas para el cliente: Creado, Guión Aprobado, Entregado, Novedad, Corregido, Aprobado
-const CLIENT_COLUMNS: ContentStatus[] = ['draft', 'script_approved', 'delivered', 'issue', 'corrected', 'approved'];
-
-const CLIENT_COLUMN_LABELS: Record<string, string> = {
+// Fallback cuando no hay configuración de organización
+const CLIENT_COLUMNS_FALLBACK: ContentStatus[] = ['draft', 'script_approved', 'delivered', 'issue', 'corrected', 'approved'];
+const CLIENT_COLUMN_LABELS_FALLBACK: Record<string, string> = {
   draft: 'Creado',
   script_approved: 'Guión Aprobado',
   delivered: 'Entregado',
@@ -30,40 +32,36 @@ const CLIENT_COLUMN_LABELS: Record<string, string> = {
   approved: 'Aprobado'
 };
 
-const CLIENT_COLUMN_COLORS: Record<string, string> = {
-  draft: 'border-t-muted-foreground',
-  script_approved: 'border-t-cyan-500',
-  delivered: 'border-t-info',
-  issue: 'border-t-warning',
-  corrected: 'border-t-blue-500',
-  approved: 'border-t-success'
+// Usar reglas configuradas para cliente
+const canClientMoveWithRules = (
+  currentStatus: string,
+  targetStatus: string,
+  orgStatuses: { id: string; status_key: string; sort_order: number }[],
+  rules: { status_id: string; can_advance_roles?: string[]; can_retreat_roles?: string[] }[]
+): boolean => {
+  const currentOrgStatus = orgStatuses.find(s => s.status_key === currentStatus);
+  const targetOrgStatus = orgStatuses.find(s => s.status_key === targetStatus);
+  if (!currentOrgStatus || !targetOrgStatus) return false;
+  const currentRule = rules.find(r => r.status_id === currentOrgStatus.id);
+  if (!currentRule) return false;
+  const isForward = targetOrgStatus.sort_order > currentOrgStatus.sort_order;
+  const roles = isForward ? (currentRule.can_advance_roles || []) : (currentRule.can_retreat_roles || []);
+  if (roles.length === 0) return false;
+  return roles.includes('client');
 };
 
-// Verificar si un movimiento de estado es válido para el cliente
-const canClientMoveToStatus = (
+// Verificar si un movimiento de estado es válido para el cliente (fallback cuando no hay reglas)
+const canClientMoveToStatusFallback = (
   currentStatus: ContentStatus,
   targetStatus: ContentStatus,
   content?: Content
 ): boolean => {
-  // Desde creado (draft) puede ir a guión aprobado SI tiene guión
   if (currentStatus === 'draft' && targetStatus === 'script_approved') {
-    // Solo permitir si el contenido tiene guión
     return !!(content?.script && content.script.trim().length > 0);
   }
-  
-  // Desde entregado puede ir a aprobado o novedad
-  if (currentStatus === 'delivered' && targetStatus === 'approved') return true;
-  if (currentStatus === 'delivered' && targetStatus === 'issue') return true;
-  
-  // Desde corregido puede ir a aprobado o novedad
-  if (currentStatus === 'corrected' && targetStatus === 'approved') return true;
-  if (currentStatus === 'corrected' && targetStatus === 'issue') return true;
-  
-  // Estados que no pueden cambiar
-  if (currentStatus === 'approved') return false;
-  if (currentStatus === 'script_approved') return false; // Solo lectura, el equipo lo mueve
-  if (currentStatus === 'issue') return false; // Espera corrección del equipo
-  
+  if (currentStatus === 'delivered' && ['approved', 'issue'].includes(targetStatus)) return true;
+  if (currentStatus === 'corrected' && ['approved', 'issue'].includes(targetStatus)) return true;
+  if (['approved', 'script_approved', 'issue'].includes(currentStatus)) return false;
   return false;
 };
 
@@ -76,6 +74,8 @@ export default function ClientContentBoard() {
   const { user, profile } = useAuth();
   const { isImpersonating, effectiveClientId, effectiveUserId } = useImpersonation();
   const { toast } = useToast();
+  const { currentOrgId } = useOrgOwner();
+  const { statuses: orgStatuses, rules, statePermissions } = useBoardSettings(currentOrgId);
   
   const [content, setContent] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +155,8 @@ export default function ClientContentBoard() {
         if (clientData) {
           setClientInfo(clientData);
 
-          // Solo traemos contenido en estados relevantes para el cliente
+          // Solo traemos contenido en estados relevantes para el cliente (fallback + custom)
+          const statusesToFetch = ['draft', 'script_approved', 'delivered', 'issue', 'corrected', 'approved'];
           const { data: contentData } = await supabase
             .from('content')
             .select(`
@@ -163,7 +164,7 @@ export default function ClientContentBoard() {
               client:clients(*)
             `)
             .eq('client_id', clientData.id)
-            .in('status', ['draft', 'script_approved', 'delivered', 'issue', 'corrected', 'approved'])
+            .in('status', statusesToFetch)
             .order('created_at', { ascending: false });
 
           setContent((contentData || []) as unknown as Content[]);
@@ -187,8 +188,19 @@ export default function ClientContentBoard() {
     );
   }, [content, searchTerm]);
 
+  // UNIFICADO: Cliente ve TODAS las columnas (mismo tablero que internos). El contenido ya está filtrado a su cliente.
+  const clientColumns = useMemo(() => {
+    if (!orgStatuses?.length) {
+      return CLIENT_COLUMNS_FALLBACK.map(s => ({ status: s, label: CLIENT_COLUMN_LABELS_FALLBACK[s], color: '#6b7280' }));
+    }
+    return orgStatuses
+      .filter(s => s.is_active)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(s => ({ status: s.status_key, label: s.label, color: s.color || '#6b7280' }));
+  }, [orgStatuses]);
+
   // Agrupar contenido por estado
-  const getContentByStatus = (status: ContentStatus) => {
+  const getContentByStatus = (status: ContentStatus | string) => {
     return filteredContent.filter(c => c.status === status);
   };
 
@@ -257,7 +269,9 @@ export default function ClientContentBoard() {
       return;
     }
 
-    const canMove = canClientMoveToStatus(draggingContent.status, targetStatus, draggingContent);
+      const canMove = (orgStatuses?.length && rules?.length)
+      ? canClientMoveWithRules(draggingContent.status, targetStatus as string, orgStatuses, rules)
+      : canClientMoveToStatusFallback(draggingContent.status, targetStatus, draggingContent);
 
     if (!canMove) {
       const message = draggingContent.status === 'approved' 
@@ -288,7 +302,7 @@ export default function ClientContentBoard() {
     }
 
     setDraggingContent(null);
-  }, [draggingContent, user, toast]);
+  }, [draggingContent, user, toast, orgStatuses, rules, clientColumns]);
 
   const handleDragEnter = useCallback((status: ContentStatus) => {
     setDropTarget(status);
@@ -415,30 +429,25 @@ export default function ClientContentBoard() {
           height: "calc(100vh - 180px)",
         }}
       >
-          {CLIENT_COLUMNS.map((status) => {
-            const colorMap: Record<string, string> = {
-              draft: 'bg-muted-foreground',
-              script_approved: 'bg-cyan-500',
-              delivered: 'bg-info',
-              issue: 'bg-warning',
-              corrected: 'bg-blue-500',
-              approved: 'bg-success'
-            };
-            // El cliente puede arrastrar hacia: script_approved (desde draft), approved o issue (desde delivered/corrected)
-            const canDropHere = status === 'script_approved' || status === 'approved' || status === 'issue';
+          {clientColumns.map((col) => {
+            const canDropHere = draggingContent
+              ? (orgStatuses?.length && rules?.length)
+                ? canClientMoveWithRules(draggingContent.status, col.status, orgStatuses, rules)
+                : canClientMoveToStatusFallback(draggingContent.status, col.status as ContentStatus, draggingContent)
+              : true;
             return (
               <DroppableKanbanColumn
-                key={status}
-                status={status}
-                title={CLIENT_COLUMN_LABELS[status]}
-                count={getContentByStatus(status).length}
-                isDropTarget={dropTarget === status}
+                key={col.status}
+                status={col.status as ContentStatus}
+                title={col.label}
+                count={getContentByStatus(col.status).length}
+                isDropTarget={dropTarget === col.status}
                 onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, status)}
-                color={colorMap[status] || 'bg-muted'}
+                onDrop={(e) => handleDrop(e, col.status as ContentStatus)}
+                color={col.color}
                 canDrop={canDropHere}
               >
-                {getContentByStatus(status).map((item, itemIndex) => (
+                {getContentByStatus(col.status).map((item, itemIndex) => (
                   <DraggableContentCard
                     key={item.id}
                     content={item}
@@ -449,7 +458,7 @@ export default function ClientContentBoard() {
                         await updateContentStatus(contentId, newStatus as ContentStatus);
                         toast({
                           title: 'Estado actualizado',
-                          description: `Movido a ${CLIENT_COLUMN_LABELS[newStatus as keyof typeof CLIENT_COLUMN_LABELS] || newStatus}`
+                          description: `Movido a ${clientColumns.find(c => c.status === newStatus)?.label || STATUS_LABELS[newStatus as ContentStatus] || newStatus}`
                         });
                       } catch (error) {
                         toast({
@@ -475,14 +484,8 @@ export default function ClientContentBoard() {
                   />
                 ))}
                 
-                {getContentByStatus(status).length === 0 && (
+                {getContentByStatus(col.status).length === 0 && (
                   <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
-                    {status === 'draft' && <FileText className="h-6 w-6 mb-1 opacity-50" />}
-                    {status === 'script_approved' && <FileCheck className="h-6 w-6 mb-1 opacity-50" />}
-                    {status === 'delivered' && <Eye className="h-6 w-6 mb-1 opacity-50" />}
-                    {status === 'issue' && <AlertCircle className="h-6 w-6 mb-1 opacity-50" />}
-                    {status === 'corrected' && <RefreshCw className="h-6 w-6 mb-1 opacity-50" />}
-                    {status === 'approved' && <CheckCircle2 className="h-6 w-6 mb-1 opacity-50" />}
                     <p className="text-xs">Vacío</p>
                   </div>
                 )}
@@ -533,7 +536,6 @@ export default function ClientContentBoard() {
               .single();
             
             if (currentContent) {
-              const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
               await updateContentStatusWithUP({
                 contentId: item.id,
                 oldStatus: currentContent.status as ContentStatus,

@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_FUNCTIONS_URL } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { 
@@ -252,10 +252,8 @@ export function RawAssetsUploader({
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.access_token) throw new Error('No autenticado');
 
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        
         // Step 1: Get upload credentials from edge function
-        const credentialsUrl = `${supabaseUrl}/functions/v1/bunny-raw-upload?storagePath=${encodeURIComponent(storagePath)}`;
+        const credentialsUrl = `${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-raw-upload?storagePath=${encodeURIComponent(storagePath)}`;
         
         const credResponse = await fetch(credentialsUrl, {
           method: 'GET',
@@ -390,8 +388,7 @@ export function RawAssetsUploader({
       // Build the folder path matching upload structure: org_xxx/client_xxx/project_xxx/raw
       const folderPath = `org_${organizationId}/client_${clientId || 'none'}/project_${contentId}/raw`;
       
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/bunny-raw-zip`, {
+      const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-raw-zip`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -436,8 +433,7 @@ export function RawAssetsUploader({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('No autenticado');
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/bunny-raw-download`, {
+      const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-raw-download`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,

@@ -27,7 +27,17 @@ CREATE TABLE IF NOT EXISTS public.state_permissions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_state_permissions_org ON public.state_permissions(organization_id);
-CREATE INDEX IF NOT EXISTS idx_state_permissions_status ON public.state_permissions(status_id);
+
+-- Skip index creation if column doesn't exist
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'state_permissions' AND column_name = 'status_id'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_state_permissions_status ON public.state_permissions(status_id);
+  END IF;
+END $$;
 
 -- 4. Create kanban_config for extra JSONB config
 CREATE TABLE IF NOT EXISTS public.kanban_config (
@@ -48,21 +58,24 @@ ADD COLUMN IF NOT EXISTS automations jsonb DEFAULT '[]'::jsonb;
 ALTER TABLE public.state_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kanban_config ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Org members can view state_permissions" ON public.state_permissions;
 CREATE POLICY "Org members can view state_permissions"
 ON public.state_permissions FOR SELECT
 USING (is_org_member(auth.uid(), organization_id));
 
+DROP POLICY IF EXISTS "Org owners and admins can manage state_permissions" ON public.state_permissions;
 CREATE POLICY "Org owners and admins can manage state_permissions"
 ON public.state_permissions FOR ALL
 USING (is_org_owner(auth.uid(), organization_id) OR has_role(auth.uid(), 'admin'::app_role))
 WITH CHECK (is_org_owner(auth.uid(), organization_id) OR has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "Org members can view kanban_config" ON public.kanban_config;
 CREATE POLICY "Org members can view kanban_config"
 ON public.kanban_config FOR SELECT
 USING (is_org_member(auth.uid(), organization_id));
 
+DROP POLICY IF EXISTS "Org owners and admins can manage kanban_config" ON public.kanban_config;
 CREATE POLICY "Org owners and admins can manage kanban_config"
 ON public.kanban_config FOR ALL
 USING (is_org_owner(auth.uid(), organization_id) OR has_role(auth.uid(), 'admin'::app_role))
 WITH CHECK (is_org_owner(auth.uid(), organization_id) OR has_role(auth.uid(), 'admin'::app_role));
-

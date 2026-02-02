@@ -19,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -42,19 +44,6 @@ import { useBoardPersistence } from "@/hooks/useBoardPersistence";
 import { useOrgAssignableUsers } from "@/hooks/useOrgAssignableUsers";
 import { AutoSaveIndicator } from "@/components/ui/autosave-indicator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
-// Columnas base del Kanban
-const BOARD_COLUMNS = KANBAN_COLUMNS;
-
-// Columnas para editores: solo desde 'recorded' en adelante
-const EDITOR_COLUMNS = KANBAN_COLUMNS.filter(col => 
-  ['recorded', 'editing', 'delivered', 'issue', 'approved'].includes(col.status)
-);
-
-// Columnas para creadores: solo desde 'assigned' en adelante
-const CREATOR_COLUMNS = KANBAN_COLUMNS.filter(col => 
-  ['assigned', 'recording', 'recorded', 'editing', 'delivered', 'approved', 'paid'].includes(col.status)
-);
 
 // Helper types for movement rules
 interface StatusRule {
@@ -302,71 +291,39 @@ export default function ContentBoard() {
     : (activeRole ||
        (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client'));
   
-  // Helper function to check if a status is visible for the current role
-  const isStatusVisibleForRole = useCallback((statusKey: string): boolean => {
-    // Admin always sees everything (but NOT when impersonating as non-admin)
-    if (primaryRole === 'admin' && !isImpersonating) return true;
-
-    // Find the org status for this status key
-    const orgStatus = orgStatuses.find(s => s.status_key === statusKey);
-    if (!orgStatus) return true; // If no org status config, show by default
-
-    // Find the rule for this status
-    const rule = rules.find(r => r.status_id === orgStatus.id);
-    if (!rule) return true; // If no rule, show by default
-
-    // Check if user's role can view this status
-    const canViewRoles = (rule as any).can_view_roles as string[] | undefined;
-
-    // If explicitly configured empty => nobody sees this status
-    if (Array.isArray(canViewRoles) && canViewRoles.length === 0) return false;
-
-    const effectiveCanViewRoles = canViewRoles || ['admin', 'strategist', 'creator', 'editor', 'trafficker', 'designer', 'client'];
-    return effectiveCanViewRoles.includes(primaryRole);
-  }, [primaryRole, orgStatuses, rules, isImpersonating]);
-
-  // Combine base columns with dynamic columns from organization_statuses
-  // This ensures custom columns (like "en_campaa", "pagado") appear in the board
+  // UNIFICADO: Todos los roles ven TODAS las columnas. La diferencia está en el CONTENIDO, no en las columnas.
   const allBoardColumns = useMemo(() => {
-    // Get base columns depending on role
-    let baseColumns = primaryRole === 'admin' && !isImpersonating 
-      ? BOARD_COLUMNS 
-      : (primaryRole === 'creator' ? CREATOR_COLUMNS : primaryRole === 'editor' ? EDITOR_COLUMNS : BOARD_COLUMNS);
-    
-    // If we have org statuses, add any custom ones that aren't in base columns
-    if (orgStatuses.length > 0) {
-      const baseStatusKeys = new Set(baseColumns.map(c => c.status));
-      
-      // Add custom statuses from org config that aren't in base
-      const customColumns = orgStatuses
-        .filter(s => !baseStatusKeys.has(s.status_key))
-        .sort((a, b) => a.sort_order - b.sort_order)
-        .map(s => ({
-          status: s.status_key,
-          title: s.label,
-          color: s.color || '#6b7280'
-        }));
-      
-      // Sort all columns by org sort_order if available
-      const allColumns = [...baseColumns.map(col => {
-        const orgStatus = orgStatuses.find(s => s.status_key === col.status);
-        return {
-          ...col,
-          sortOrder: orgStatus?.sort_order ?? 999
-        };
-      }), ...customColumns.map(col => {
-        const orgStatus = orgStatuses.find(s => s.status_key === col.status);
-        return {
-          ...col,
-          sortOrder: orgStatus?.sort_order ?? 999
-        };
-      })];
-      
-      return allColumns.sort((a, b) => a.sortOrder - b.sortOrder);
+    if (orgStatuses.length === 0) {
+      return KANBAN_COLUMNS.map(col => ({
+        ...col,
+        sortOrder: KANBAN_COLUMNS.indexOf(col)
+      }));
     }
-    
-    return baseColumns.map(col => ({ ...col, sortOrder: 0 }));
-  }, [primaryRole, isImpersonating, orgStatuses]);
+    return orgStatuses
+      .filter(s => s.is_active)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(s => ({
+        status: s.status_key,
+        title: s.label,
+        color: s.color || '#6b7280',
+        sortOrder: s.sort_order
+      }));
+  }, [orgStatuses]);
+
+  // Toggle "Solo mis asignaciones" para editor/creador (persistido en localStorage)
+  const [showOnlyAssigned, setShowOnlyAssignedState] = useState(true);
+  useEffect(() => {
+    const key = `board-show-only-assigned-${currentOrgId || 'default'}`;
+    try {
+      const v = localStorage.getItem(key);
+      setShowOnlyAssignedState(v === null ? true : v === 'true');
+    } catch { /* ignore */ }
+  }, [currentOrgId]);
+  const setShowOnlyAssigned = useCallback((v: boolean) => {
+    setShowOnlyAssignedState(v);
+    const key = `board-show-only-assigned-${currentOrgId || 'default'}`;
+    try { localStorage.setItem(key, String(v)); } catch { /* ignore */ }
+  }, [currentOrgId]);
 
   // Fetch content según rol - use targetUserId for impersonation
   const { content, loading, updateContentStatus, deleteContent, refetch } = useContentWithFilters({
@@ -482,11 +439,8 @@ export default function ContentBoard() {
     });
   }, [content]);
 
-  // Filtrar contenido por búsqueda, fechas, producto, campaña Y visibilidad de estado
+  // Filtrar contenido por búsqueda, fechas, producto, campaña (sin filtrar por visibilidad de estado - todos ven todas las columnas)
   const filteredContent = useMemo(() => content.filter(c => {
-    // First check if this content's status is visible to the user
-    if (!isStatusVisibleForRole(c.status)) return false;
-    
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       const matchesSearch = (
@@ -518,7 +472,7 @@ export default function ContentBoard() {
     }
     
     return true;
-  }), [content, isStatusVisibleForRole, searchTerm, startDateFilter, deadlineFilter, filterProductId, filterCampaignWeek]);
+  }), [content, searchTerm, startDateFilter, deadlineFilter, filterProductId, filterCampaignWeek]);
 
   // Agrupar contenido por estado (soporta status personalizados)
   const getContentByStatus = (status: ContentStatus | string) => {
@@ -907,6 +861,18 @@ export default function ContentBoard() {
                   <TooltipContent>Restablecer todos los filtros</TooltipContent>
                 </Tooltip>
               )}
+              {['creator', 'editor'].includes(primaryRole as string) && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="show-only-assigned"
+                    checked={showOnlyAssigned}
+                    onCheckedChange={setShowOnlyAssigned}
+                  />
+                  <Label htmlFor="show-only-assigned" className="text-xs md:text-sm cursor-pointer whitespace-nowrap">
+                    Solo mis asignaciones
+                  </Label>
+                </div>
+              )}
               <BoardViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
               {showAdminControls && (
                 <>
@@ -952,10 +918,7 @@ export default function ContentBoard() {
                 height: "calc(100vh - 180px)",
               }}
             >
-              {allBoardColumns
-                // Filter columns by visibility permissions (board config)
-                .filter((column) => isStatusVisibleForRole(column.status))
-                .map(column => {
+              {allBoardColumns.map(column => {
                 const columnContent = getContentByStatus(column.status);
                 const isCurrentDropTarget = dropTarget === column.status;
                 const canDropHere = draggingContent 

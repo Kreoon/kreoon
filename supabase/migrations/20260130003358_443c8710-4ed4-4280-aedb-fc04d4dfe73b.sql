@@ -3,6 +3,12 @@ DROP POLICY IF EXISTS "Members can view org goals" ON public.goals;
 DROP POLICY IF EXISTS "Org owners can manage org goals" ON public.goals;
 DROP POLICY IF EXISTS "Platform admins can manage goals in current org" ON public.goals;
 
+-- Drop policies if they already exist (to avoid duplicates)
+DROP POLICY IF EXISTS "Users can view goals from their organization" ON public.goals;
+DROP POLICY IF EXISTS "Users can create goals for their organization" ON public.goals;
+DROP POLICY IF EXISTS "Users can update goals from their organization" ON public.goals;
+DROP POLICY IF EXISTS "Users can delete goals from their organization" ON public.goals;
+
 -- Create simple organization-based policies for goals
 -- Allow authenticated users to view goals from their current organization
 CREATE POLICY "Users can view goals from their organization" 
@@ -34,7 +40,7 @@ USING (
   )
 );
 
--- Allow authenticated users to delete goals from their current organization
+-- Allow authenticated users to delete goals from their organization
 CREATE POLICY "Users can delete goals from their organization" 
 ON public.goals 
 FOR DELETE 

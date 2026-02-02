@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -42,7 +42,8 @@ export function ContentConfigDialog({ open, onOpenChange, organizationId }: Cont
   if (loading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl" aria-describedby="content-config-desc">
+          <DialogDescription id="content-config-desc" className="sr-only">Configuración del contenido</DialogDescription>
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -53,7 +54,8 @@ export function ContentConfigDialog({ open, onOpenChange, organizationId }: Cont
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" aria-describedby="content-config-desc">
+        <DialogDescription id="content-config-desc" className="sr-only">Configuración del contenido</DialogDescription>
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             ⚙️ Configuración del Contenido

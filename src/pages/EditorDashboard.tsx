@@ -9,7 +9,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Content, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
-import { KpiContentDialog } from '@/components/dashboard/KpiContentDialog';
 import { TechKpiDialog } from '@/components/dashboard/TechKpiDialog';
 import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/index';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';

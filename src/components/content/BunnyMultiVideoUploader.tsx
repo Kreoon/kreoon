@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2, CheckCircle, XCircle, Video, RefreshCw, Plus, Trash2 } from "lucide-react";
 
@@ -149,7 +149,7 @@ export function BunnyMultiVideoUploader({
     ));
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseUrl = SUPABASE_FUNCTIONS_URL;
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('No autenticado');
 

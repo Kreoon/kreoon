@@ -16,6 +16,7 @@ import { Progress } from '@/components/ui/progress';
 import { RichTextViewer } from '@/components/ui/rich-text-editor';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { useNavigate } from 'react-router-dom';
 import { ClientFinanceChart } from '@/components/dashboard/ClientFinanceChart';
@@ -529,7 +530,6 @@ export default function ClientDashboard() {
 
     try {
       // Use centralized UP-aware status change
-      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
       await updateContentStatusWithUP({
         contentId: selectedContent.id,
         oldStatus: selectedContent.status as ContentStatus,
@@ -573,7 +573,6 @@ export default function ClientDashboard() {
 
     try {
       // Use centralized UP-aware status change (delivered -> issue triggers penalty)
-      const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
       await updateContentStatusWithUP({
         contentId: selectedContent.id,
         oldStatus: selectedContent.status as ContentStatus,
@@ -618,7 +617,6 @@ export default function ClientDashboard() {
       
       if (currentContent) {
         // Use centralized UP-aware status change
-        const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
         await updateContentStatusWithUP({
           contentId,
           oldStatus: currentContent.status as ContentStatus,
@@ -2003,7 +2001,6 @@ export default function ClientDashboard() {
           onClose={() => setShowFullscreenReview(false)}
           onApprove={async (item, feedbackText) => {
             // Use centralized UP-aware status change
-            const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
             await updateContentStatusWithUP({
               contentId: item.id,
               oldStatus: item.status as ContentStatus,
@@ -2029,7 +2026,6 @@ export default function ClientDashboard() {
           }}
           onReject={async (item, feedbackText) => {
             // Use centralized UP-aware status change
-            const { updateContentStatusWithUP } = await import('@/hooks/useContentStatusWithUP');
             await updateContentStatusWithUP({
               contentId: item.id,
               oldStatus: item.status as ContentStatus,

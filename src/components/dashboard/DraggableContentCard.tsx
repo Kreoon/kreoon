@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { handleSupabaseError } from "@/lib/supabaseHelpers";
 import { Badge } from "@/components/ui/badge";
 import {
   CurrencyDisplay,
@@ -109,7 +110,7 @@ export function DraggableContentCard({
   const handleMarkCreatorPaid = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const updates: any = { creator_paid: true };
+      const updates: Record<string, unknown> = { creator_paid: true };
       if (content.editor_paid) {
         updates.status = "paid";
         updates.paid_at = new Date().toISOString();
@@ -121,15 +122,16 @@ export function DraggableContentCard({
       if (error) throw error;
       toast({ title: "Pago registrado", description: `Creador pagado` });
       onPaymentUpdate?.();
-    } catch {
-      toast({ title: "Error", description: "No se pudo registrar el pago", variant: "destructive" });
+    } catch (err: unknown) {
+      handleSupabaseError(err instanceof Error ? err : null, toast, "Error al registrar pago");
+      onPaymentUpdate?.();
     }
   };
 
   const handleMarkEditorPaid = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const updates: any = { editor_paid: true };
+      const updates: Record<string, unknown> = { editor_paid: true };
       if (content.creator_paid) {
         updates.status = "paid";
         updates.paid_at = new Date().toISOString();
@@ -141,8 +143,9 @@ export function DraggableContentCard({
       if (error) throw error;
       toast({ title: "Pago registrado", description: `Editor pagado` });
       onPaymentUpdate?.();
-    } catch {
-      toast({ title: "Error", description: "No se pudo registrar el pago", variant: "destructive" });
+    } catch (err: unknown) {
+      handleSupabaseError(err instanceof Error ? err : null, toast, "Error al registrar pago");
+      onPaymentUpdate?.();
     }
   };
 

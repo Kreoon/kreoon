@@ -72,11 +72,13 @@ export function UserAssignmentSection({
           canAssign ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <UserChip
-                  name={content.creator.full_name || ""}
-                  avatarUrl={content.creator.avatar_url}
-                  borderColor="#06b6d4"
-                />
+                <div>
+                  <UserChip
+                    name={content.creator.full_name || ""}
+                    avatarUrl={content.creator.avatar_url}
+                    borderColor="#06b6d4"
+                  />
+                </div>
               </TooltipTrigger>
               <TooltipContent>Creador asignado</TooltipContent>
             </Tooltip>
