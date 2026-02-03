@@ -13,65 +13,69 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // React core
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          // UI framework
-          'vendor-radix': [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-hover-card',
-            '@radix-ui/react-label',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group',
-            '@radix-ui/react-tooltip',
-          ],
-          // Data & state management
-          'vendor-data': ['@tanstack/react-query', '@supabase/supabase-js'],
-          // Rich text editor
-          'vendor-tiptap': [
-            '@tiptap/react',
-            '@tiptap/starter-kit',
-            '@tiptap/extension-image',
-            '@tiptap/extension-link',
-            '@tiptap/extension-placeholder',
-            '@tiptap/extension-table',
-            '@tiptap/extension-table-row',
-            '@tiptap/extension-table-cell',
-            '@tiptap/extension-table-header',
-            '@tiptap/extension-task-list',
-            '@tiptap/extension-task-item',
-          ],
-          // Animation & charts
-          'vendor-viz': ['framer-motion', 'recharts'],
-          // Date utilities
-          'vendor-date': ['date-fns'],
-          // Icons
-          'vendor-icons': ['lucide-react'],
+        // Use function to avoid circular dependencies and ensure proper load order
+        manualChunks(id) {
+          // React must be in its own chunk and load first - don't mix with anything else
+          if (id.includes('node_modules/react-dom')) {
+            return 'vendor-react-dom';
+          }
+          if (id.includes('node_modules/react/') || id.includes('node_modules/scheduler')) {
+            return 'vendor-react';
+          }
+
+          // React Router separate from React core
+          if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) {
+            return 'vendor-router';
+          }
+
+          // Radix UI components - separate chunk, depends on React
+          if (id.includes('node_modules/@radix-ui')) {
+            return 'vendor-radix';
+          }
+
+          // Supabase - no React dependency
+          if (id.includes('node_modules/@supabase')) {
+            return 'vendor-supabase';
+          }
+
+          // TanStack Query - depends on React
+          if (id.includes('node_modules/@tanstack')) {
+            return 'vendor-query';
+          }
+
+          // TipTap editor
+          if (id.includes('node_modules/@tiptap') || id.includes('node_modules/prosemirror')) {
+            return 'vendor-editor';
+          }
+
+          // Charts and animation
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) {
+            return 'vendor-charts';
+          }
+          if (id.includes('node_modules/framer-motion')) {
+            return 'vendor-motion';
+          }
+
           // Form handling
-          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          if (id.includes('node_modules/react-hook-form') || id.includes('node_modules/@hookform')) {
+            return 'vendor-forms';
+          }
+          if (id.includes('node_modules/zod')) {
+            return 'vendor-zod';
+          }
+
+          // Icons
+          if (id.includes('node_modules/lucide-react')) {
+            return 'vendor-icons';
+          }
+
+          // Date utilities
+          if (id.includes('node_modules/date-fns')) {
+            return 'vendor-date';
+          }
         },
       },
     },
-    // Increase chunk size warning limit since we're intentionally creating vendor chunks
     chunkSizeWarningLimit: 600,
   },
   plugins: [
