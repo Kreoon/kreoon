@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, forwardRef } from "react";
 import { Play, Volume2, VolumeX } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface AutoPauseVideoProps {
@@ -27,7 +26,7 @@ function extractVideoId(url: string): string | null {
 
 // Build proxied thumbnail URL through edge function
 function getProxiedThumbnailUrl(contentId: string, videoId: string): string {
-  const supabaseUrl = (supabase as any).supabaseUrl as string;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   return `${supabaseUrl}/functions/v1/bunny-thumbnail?content_id=${encodeURIComponent(contentId)}&video_id=${encodeURIComponent(videoId)}`;
 }
 

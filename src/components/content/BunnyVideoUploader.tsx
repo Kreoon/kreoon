@@ -5,12 +5,18 @@ import { supabase, SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2, CheckCircle, XCircle, Video, RefreshCw } from "lucide-react";
 
+type VideoUploadStatus = 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
+
 interface BunnyVideoUploaderProps {
   contentId: string;
   title: string;
   onUploadComplete?: (embedUrl: string) => void;
-  currentStatus?: string;
+  currentStatus?: VideoUploadStatus | string;
   disabled?: boolean;
+}
+
+function isValidStatus(status: string | undefined): status is VideoUploadStatus {
+  return status !== undefined && ['idle', 'uploading', 'processing', 'completed', 'failed'].includes(status);
 }
 
 export function BunnyVideoUploader({ 
@@ -23,16 +29,16 @@ export function BunnyVideoUploader({
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'completed' | 'failed'>(
-    currentStatus as any || 'idle'
+  const [status, setStatus] = useState<VideoUploadStatus>(
+    isValidStatus(currentStatus) ? currentStatus : 'idle'
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [videoId, setVideoId] = useState<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (currentStatus) {
-      setStatus(currentStatus as any);
+    if (isValidStatus(currentStatus)) {
+      setStatus(currentStatus);
     }
   }, [currentStatus]);
 

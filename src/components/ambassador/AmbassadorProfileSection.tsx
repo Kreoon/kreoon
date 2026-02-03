@@ -17,6 +17,26 @@ interface AmbassadorProfileSectionProps {
   isOwn?: boolean;
 }
 
+interface AmbassadorReferral {
+  id: string;
+  status: string;
+  referred_email: string;
+  referred_type: string;
+  created_at: string;
+}
+
+interface AmbassadorStats {
+  membership: {
+    ambassador_level: string | null;
+    ambassador_since: string | null;
+    ambassador_total_referrals: number | null;
+    ambassador_active_referrals: number | null;
+    ambassador_network_revenue: number | null;
+  } | null;
+  referrals: AmbassadorReferral[];
+  latestStats: Record<string, unknown> | null;
+}
+
 const LEVEL_COLORS = {
   none: "bg-muted text-muted-foreground",
   bronze: "bg-amber-600 text-white",
@@ -35,7 +55,7 @@ export function AmbassadorProfileSection({ userId, ambassadorLevel = "none", isO
   const { getAmbassadorStats, createReferral, getMyReferralCode, loading } = useAmbassador();
   const { evaluateAmbassador, loading: aiLoading } = useTalentAI();
   
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<AmbassadorStats | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<TalentAmbassadorResult | null>(null);
   const [currentLevel, setCurrentLevel] = useState<"none" | "bronze" | "silver" | "gold">(ambassadorLevel);
@@ -81,8 +101,8 @@ export function AmbassadorProfileSection({ userId, ambassadorLevel = "none", isO
     }
   };
 
-  const activeReferrals = stats?.referrals?.filter((r: any) => r.status === "active")?.length || 0;
-  const pendingReferrals = stats?.referrals?.filter((r: any) => r.status === "pending")?.length || 0;
+  const activeReferrals = stats?.referrals?.filter((r) => r.status === "active")?.length || 0;
+  const pendingReferrals = stats?.referrals?.filter((r) => r.status === "pending")?.length || 0;
   const totalReferrals = stats?.referrals?.length || 0;
 
   if (currentLevel === "none" && !isOwn) {

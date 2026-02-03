@@ -76,7 +76,7 @@ export function ClientCard({
       .select('strategist_id, is_primary')
       .eq('client_id', client.id);
 
-    if (!error && data?.length) {
+if (!error && data?.length) {
       const strategistIds = [...new Set(data.map(d => d.strategist_id))];
       const { data: profilesData } = await supabase
         .from('profiles')
@@ -87,7 +87,7 @@ export function ClientCard({
         .map(d => ({
           id: d.strategist_id,
           full_name: profileMap.get(d.strategist_id)?.full_name || 'Sin nombre',
-          avatar_url: profileMap.get(d.strategist_id)?.avatar_url,
+          avatar_url: profileMap.get(d.strategist_id)?.avatar_url || null,
           is_primary: d.is_primary || false,
         }))
         .filter(s => s.id)

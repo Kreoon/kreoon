@@ -238,7 +238,7 @@ export function AmbassadorDashboard() {
                   <TableCell>
                     <Select
                       value={amb.ambassador_level}
-                      onValueChange={(v: any) => handleLevelChange(amb.user_id, v)}
+                      onValueChange={(v) => handleLevelChange(amb.user_id, v as "none" | "bronze" | "silver" | "gold")}
                       disabled={loading}
                     >
                       <SelectTrigger className="w-[100px]">

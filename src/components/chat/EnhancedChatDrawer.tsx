@@ -29,6 +29,7 @@ import { ChatListItem } from './ChatListItem';
 import { ChatConversationView } from './ChatConversationView';
 import { PresenceIndicator } from './PresenceIndicator';
 import { getPrimaryRole, getRoleLabelShort } from '@/lib/roles';
+import type { AppRole } from '@/types/database';
 
 interface EnhancedChatDrawerProps {
   isOpen: boolean;
@@ -186,7 +187,7 @@ export function EnhancedChatDrawer({
   });
 
   const getRoleBadge = useCallback((roles: string[]) => {
-    const primary = getPrimaryRole(roles as any);
+    const primary = getPrimaryRole(roles as AppRole[]);
     return primary ? getRoleLabelShort(primary) : null;
   }, []);
 

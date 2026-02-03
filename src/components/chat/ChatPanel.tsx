@@ -5,6 +5,7 @@ import { useChatAttachments } from '@/hooks/useChatAttachments';
 import { useAIChat, isAIUser } from '@/hooks/useAIChat';
 import { useAuth } from '@/hooks/useAuth';
 import { getPrimaryRole, getRoleLabelShort } from '@/lib/roles';
+import type { AppRole } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -190,7 +191,7 @@ export function ChatPanel({ isOpen, onClose, onActiveConversationChange }: ChatP
   );
 
   const getRoleBadge = useCallback((roles: string[]) => {
-    const primary = getPrimaryRole(roles as any);
+    const primary = getPrimaryRole(roles as AppRole[]);
     return primary ? getRoleLabelShort(primary) : null;
   }, []);
 

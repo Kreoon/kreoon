@@ -1,4 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+
+// Type for webkit prefixed AudioContext (Safari)
+interface WindowWithWebkit extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
 import { Crown, Sparkles, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,7 +31,10 @@ const ConfettiParticle = ({ delay, color, left }: { delay: number; color: string
 // Play celebration sound using Web Audio API
 const playCelebrationSound = () => {
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const windowWithWebkit = window as WindowWithWebkit;
+    const AudioContextClass = window.AudioContext || windowWithWebkit.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const audioContext = new AudioContextClass();
     
     // Create a cheerful arpeggio
     const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
