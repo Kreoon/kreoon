@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { supabaseLovable } from "@/integrations/supabase/lovable-client";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -440,7 +440,7 @@ export function StandaloneScriptGenerator() {
   };
 
   const callWebhook = async (webhookUrl: string, payload: any): Promise<any> => {
-    const { data, error } = await supabaseLovable.functions.invoke('n8n-proxy', {
+    const { data, error } = await supabase.functions.invoke('n8n-proxy', {
       body: {
         webhookUrl,
         payload,

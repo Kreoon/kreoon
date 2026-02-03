@@ -17,7 +17,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
-import { supabaseLovable } from "@/integrations/supabase/lovable-client";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -98,7 +98,7 @@ export function LiveContentGenerator() {
     setLoading(true);
     setContent(null);
     try {
-      const { data, error } = await supabaseLovable.functions.invoke("streaming-ai-generate", {
+      const { data, error } = await supabase.functions.invoke("streaming-ai-generate", {
         body: {
           action: "generate_full",
           organizationId: profile?.current_organization_id,
