@@ -146,7 +146,7 @@ export function ClientUsersDialog({ clientId, clientName, organizationId, open, 
         .eq('organization_id', organizationId)
         .eq('role', 'client');
 
-      if (!orgMembers || orgMembers.length === 0) {
+if (!orgMembers || orgMembers.length === 0) {
         setAvailableUsers([]);
         return;
       }

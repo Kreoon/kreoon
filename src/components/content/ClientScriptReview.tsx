@@ -186,7 +186,7 @@ function extractSection(text: string, startMarkers: string[]): string {
     }
   }
   
-  return text.slice(start, end).trim().replace(/^[:\s\-]+/, '').trim();
+  return text.slice(start, end).trim().replace(/^[:\s-]+/, '').trim();
 }
 
 // Parse HTML content to structured list items

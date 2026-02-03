@@ -85,7 +85,7 @@ export function StatusChangeDropdown({
   const getAllowedStatuses = (): ContentStatus[] => {
     if (!userRole) return [];
 
-    let allowedToStatuses = ROLE_ALLOWED_STATUSES[userRole] || [];
+    const allowedToStatuses = ROLE_ALLOWED_STATUSES[userRole] || [];
     const canMoveFrom = ROLE_CAN_MOVE_FROM[userRole] || [];
 
     // Check if user can move from current status
