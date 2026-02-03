@@ -8,3 +8,4 @@ export { ExecutiveSummaryTab } from './ExecutiveSummaryTab';
 export { SalesAnglesTab } from './SalesAnglesTab';
 export { PUVTransformationTab } from './PUVTransformationTab';
 export { LeadMagnetsCreativesTab } from './LeadMagnetsCreativesTab';
+export { StrategicPlaybookTab } from './StrategicPlaybookTab';

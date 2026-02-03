@@ -15,7 +15,7 @@ import {
   AvatarSegmentationTab,
   CompetitionAnalysisTab,
   DifferentiationTab,
-  NeuromarketingTab,
+  StrategicPlaybookTab,
   ExecutiveSummaryTab,
   SalesAnglesTab,
   PUVTransformationTab,
@@ -262,7 +262,7 @@ export function ProductDetailDialog({
             <TabsList className="grid grid-cols-6 h-auto gap-1">
               <TabsTrigger value="esfera" className="gap-1 text-xs py-2">
                 <Brain className="h-3 w-3" />
-                Esfera
+                Playbook
               </TabsTrigger>
               <TabsTrigger value="angles" className="gap-1 text-xs py-2">
                 <Sparkles className="h-3 w-3" />
@@ -374,7 +374,12 @@ export function ProductDetailDialog({
           </TabsContent>
 
           <TabsContent value="esfera" className="mt-4">
-            <NeuromarketingTab contentStrategy={product?.content_strategy as any} />
+            <StrategicPlaybookTab
+              contentStrategy={product?.content_strategy as any}
+              avatarProfiles={product?.avatar_profiles as any}
+              salesAnglesData={product?.sales_angles_data as any}
+              marketResearch={product?.market_research as any}
+            />
           </TabsContent>
 
           <TabsContent value="angles" className="mt-4">
