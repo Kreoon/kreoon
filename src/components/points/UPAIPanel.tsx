@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useOrganizationAI, AI_PROVIDERS_CONFIG } from '@/hooks/useOrganizationAI';
 import { AIProviderSelector } from '@/components/ai/AIProviderSelector';
+import { AIFeedbackWidget } from '@/components/ai/AIFeedbackWidget';
 
 interface UPAIPanelProps {
   organizationId: string;
@@ -51,6 +52,8 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
   const [generatedQuests, setGeneratedQuests] = useState<any[]>([]);
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [lastExecutionId, setLastExecutionId] = useState<string | null>(null);
+  const [feedbackDismissed, setFeedbackDismissed] = useState(false);
   
   // AI provider selection for this module
   const [selectedAI, setSelectedAI] = useState<{ provider: string; model: string }>({ 
@@ -117,10 +120,12 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
   const handleGetRecommendations = async () => {
     setLoading('recommendations');
     setLastAction('recommendations');
+    setFeedbackDismissed(false);
     try {
       const recs = await getRuleRecommendations();
       const results = recs?.recommendations || recs || [];
       setRecommendations(results);
+      if ((recs as any)?.execution_id) setLastExecutionId((recs as any).execution_id);
       toast({ 
         title: results.length > 0 ? 'Recomendaciones generadas' : 'Sin recomendaciones',
         description: results.length > 0 ? `${results.length} sugerencias encontradas` : 'No hay recomendaciones en este momento'
@@ -135,10 +140,12 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
   const handleCheckFraud = async () => {
     setLoading('fraud');
     setLastAction('fraud');
+    setFeedbackDismissed(false);
     try {
       const result = await checkAntiFraud();
       const alerts = result?.alerts || [];
       setFraudAlerts(alerts);
+      if ((result as any)?.execution_id) setLastExecutionId((result as any).execution_id);
       toast({ 
         title: alerts.length > 0 ? `${alerts.length} alertas detectadas` : 'Sin alertas de fraude',
         description: alerts.length === 0 ? 'No se detectaron patrones sospechosos' : undefined
@@ -603,6 +610,15 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
                   )}
                   <span className="text-xs">Generar Misiones</span>
                 </Button>
+
+                {lastExecutionId && !feedbackDismissed && (
+                  <div className="col-span-full mt-2">
+                    <AIFeedbackWidget
+                      executionId={lastExecutionId}
+                      onClose={() => setFeedbackDismissed(true)}
+                    />
+                  </div>
+                )}
 
                 <Button 
                   variant="outline" 

@@ -101,6 +101,18 @@ export default {
           wow: "hsl(var(--reaction-wow))",
           sad: "hsl(var(--reaction-sad))",
         },
+        // Kreoon palette
+        "kreoon-bg-primary": "#0a0a0f",
+        "kreoon-bg-secondary": "#12121a",
+        "kreoon-bg-card": "#1a1a24",
+        "kreoon-purple-500": "#7c3aed",
+        "kreoon-purple-400": "#a855f7",
+        "kreoon-purple-600": "#6d28d9",
+        "kreoon-purple-glow": "rgba(124, 58, 237, 0.3)",
+        "kreoon-border": "rgba(139, 92, 246, 0.2)",
+        "kreoon-text-primary": "#ffffff",
+        "kreoon-text-secondary": "#a1a1aa",
+        "kreoon-text-muted": "#71717a",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -186,6 +198,14 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.6" },
         },
+        "kreoon-skeleton-pulse": {
+          "0%, 100%": { opacity: "0.4" },
+          "50%": { opacity: "0.7" },
+        },
+        "kreoon-skeleton-shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -205,6 +225,8 @@ export default {
         "wiggle": "wiggle 0.3s ease-in-out",
         "confetti": "confetti 0.8s ease-out forwards",
         "spin-slow": "spin-slow 3s linear infinite",
+        "kreoon-skeleton-pulse": "kreoon-skeleton-pulse 1.5s ease-in-out infinite",
+        "kreoon-skeleton-shimmer": "kreoon-skeleton-shimmer 1.5s ease-in-out infinite",
         "pulse-slow": "pulse-slow 2s ease-in-out infinite",
       },
       backgroundImage: {
@@ -212,11 +234,15 @@ export default {
         'gradient-subtle': 'var(--gradient-subtle)',
         'gradient-card': 'var(--gradient-card)',
         'gradient-glow': 'var(--gradient-glow)',
+        'kreoon-gradient': 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+        'kreoon-gradient-dark': 'linear-gradient(135deg, #1a1a24 0%, #0a0a0f 100%)',
       },
       boxShadow: {
         'glow': 'var(--shadow-glow)',
         'violet': 'var(--shadow-violet)',
         'glow-sm': '0 0 15px hsl(282 100% 36% / 0.2)',
+        'kreoon-glow': '0 0 40px rgba(124, 58, 237, 0.3)',
+        'kreoon-glow-lg': '0 0 60px rgba(124, 58, 237, 0.4)',
       },
     },
   },

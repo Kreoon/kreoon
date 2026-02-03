@@ -75,7 +75,6 @@ export function useHashtags() {
         .from('portfolio_posts')
         .select('*')
         .in('id', postIds)
-        .eq('visibility', 'public')
         .order('created_at', { ascending: false });
 
       if (error) throw error;

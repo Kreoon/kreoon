@@ -1,11 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getKreoonClient, isKreoonConfigured } from "../_shared/kreoon-client.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
+import { callAISingle, corsHeaders } from "../_shared/ai-providers.ts";
 
 interface ScriptRequest {
   organizationId: string;
@@ -94,53 +91,6 @@ const SPHERE_PHASE_DETAILS: Record<string, {
   }
 };
 
-// Get module AI configuration with validation
-async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-  
-  const { data: moduleData } = await supabase
-    .from("organization_ai_modules")
-    .select("is_active, provider, model")
-    .eq("organization_id", organizationId)
-    .eq("module_key", moduleKey)
-    .maybeSingle();
-  
-  if (!moduleData?.is_active) {
-    throw new Error(`MODULE_INACTIVE:${moduleKey}`);
-  }
-  
-  let provider = moduleData?.provider || "lovable";
-  let model = moduleData?.model || "google/gemini-2.5-flash";
-  let apiKey: string | null = null;
-  
-  if (provider !== "lovable") {
-    const { data: providerData } = await supabase
-      .from("organization_ai_providers")
-      .select("api_key_encrypted")
-      .eq("organization_id", organizationId)
-      .eq("provider_key", provider)
-      .eq("is_enabled", true)
-      .maybeSingle();
-    
-    if (providerData?.api_key_encrypted) {
-      apiKey = providerData.api_key_encrypted;
-    } else {
-      provider = "lovable";
-      model = "google/gemini-2.5-flash";
-    }
-  }
-  
-  if (provider === "lovable") {
-    apiKey = lovableApiKey || null;
-  }
-  
-  if (!apiKey) {
-    throw new Error("No hay API key configurada para el proveedor de IA");
-  }
-  
-  return { provider, model, apiKey };
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -178,7 +128,7 @@ serve(async (req) => {
       );
     }
 
-    // Validate module is active
+    // Validate module is active and get config
     let aiConfig;
     try {
       aiConfig = await getModuleAIConfig(supabase, organizationId, "scripts");
@@ -279,87 +229,30 @@ Estructura recomendada: Hook → Problema → Solución → Beneficios → CTA`;
 Genera un guión completo listo para grabar, con indicaciones de acción para el creador.
 ${phaseInfo ? `RECUERDA: Este guión es específicamente para la fase "${phaseInfo.label}" del Método Esfera. Asegúrate de que cada elemento del guión cumpla con los objetivos de esta fase.` : ''}`;
 
-    // Build request based on provider
-    let url: string;
-    let headers: Record<string, string>;
-    let body: any;
-
-    if (aiConfig.provider === "lovable") {
-      url = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      headers = {
-        Authorization: `Bearer ${aiConfig.apiKey}`,
-        "Content-Type": "application/json",
-      };
-      body = {
-        model: aiConfig.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        max_tokens: 1500,
-        temperature: 0.7,
-      };
-    } else if (aiConfig.provider === "openai") {
-      url = "https://api.openai.com/v1/chat/completions";
-      headers = {
-        Authorization: `Bearer ${aiConfig.apiKey}`,
-        "Content-Type": "application/json",
-      };
-      body = {
-        model: aiConfig.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        max_tokens: 1500,
-        temperature: 0.7,
-      };
-    } else {
-      // Fallback to lovable
-      url = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      headers = {
-        Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
-        "Content-Type": "application/json",
-      };
-      body = {
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        max_tokens: 1500,
-        temperature: 0.7,
-      };
-    }
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      
-      if (response.status === 429) {
+    let script: string;
+    try {
+      script = await callAISingle(
+        aiConfig.provider,
+        aiConfig.model,
+        aiConfig.apiKey,
+        systemPrompt,
+        userPrompt
+      );
+    } catch (err: any) {
+      if (err?.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limits exceeded" }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
+      if (err?.status === 402) {
         return new Response(
           JSON.stringify({ error: "Payment required" }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
-      throw new Error(`AI gateway error: ${response.status}`);
+      throw err;
     }
-
-    const data = await response.json();
-    const script = data.choices?.[0]?.message?.content || "";
 
     console.log("Script generated successfully with provider:", aiConfig.provider);
 

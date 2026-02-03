@@ -1,15 +1,14 @@
-import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { supabaseLovable } from '@/integrations/supabase/lovable-client';
-import { usePortfolioAIConfig } from './usePortfolioAIConfig';
-import { toast } from 'sonner';
-
-type AIAction = 'search' | 'caption' | 'bio' | 'recommendations' | 'moderation' | 'blocks';
+import { useState, useCallback } from "react";
+import { supabaseLovable } from "@/integrations/supabase/lovable-client";
+import { usePortfolioAIConfig } from "./usePortfolioAIConfig";
+import { useAuth } from "./useAuth";
+import type { PortfolioAIAction } from "@/lib/prompts/portfolio-ai-types";
+import { toast } from "sonner";
 
 interface UsePortfolioAIResult {
   isEnabled: boolean;
   loading: boolean;
-  executeAI: <T = unknown>(action: AIAction, payload: Record<string, unknown>) => Promise<T | null>;
+  executeAI: <T = unknown>(action: PortfolioAIAction, payload: Record<string, unknown>) => Promise<T | null>;
   generateCaption: (context: string, contentType?: string, tone?: string) => Promise<{ captions: Array<{ text: string; hashtags: string[] }> } | null>;
   improveBio: (currentBio: string, profession?: string, skills?: string) => Promise<{ improved_bio: string; key_changes: string[] } | null>;
   semanticSearch: (query: string) => Promise<{ entities: string[]; keywords: string[]; location?: string; categories: string[] } | null>;
@@ -19,35 +18,40 @@ interface UsePortfolioAIResult {
 
 export function usePortfolioAI(): UsePortfolioAIResult {
   const { config, isFeatureEnabled } = usePortfolioAIConfig();
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const executeAI = useCallback(async <T = unknown>(
-    action: AIAction,
-    payload: Record<string, unknown>
-  ): Promise<T | null> => {
-    if (!config.enabled) {
-      toast.error('IA no está habilitada para este módulo');
-      return null;
-    }
-
-    setLoading(true);
-    try {
-      const { data, error } = await supabaseLovable.functions.invoke('portfolio-ai', {
-        body: { action, payload }
-      });
-
-      if (error) {
-        console.error('[usePortfolioAI] Error:', error);
-        toast.error('Error al ejecutar IA');
+  const executeAI = useCallback(
+    async <T = unknown>(action: PortfolioAIAction, payload: Record<string, unknown>): Promise<T | null> => {
+      if (!config.enabled) {
+        toast.error("IA no está habilitada para este módulo");
         return null;
       }
 
-      if (data?.error) {
-        toast.error(data.error);
-        return null;
-      }
+      const body: Record<string, unknown> = {
+        action,
+        payload,
+        organizationId: profile?.current_organization_id ?? undefined,
+      };
 
-      return data?.data as T;
+      setLoading(true);
+      try {
+        const { data, error } = await supabaseLovable.functions.invoke("portfolio-ai", {
+          body,
+        });
+
+        if (error) {
+          console.error("[usePortfolioAI] Error:", error);
+          toast.error("Error al ejecutar IA");
+          return null;
+        }
+
+        if (data?.error) {
+          toast.error(data.error);
+          return null;
+        }
+
+        return data?.data as T;
     } catch (error) {
       console.error('[usePortfolioAI] Exception:', error);
       toast.error('Error de conexión con IA');
@@ -55,7 +59,7 @@ export function usePortfolioAI(): UsePortfolioAIResult {
     } finally {
       setLoading(false);
     }
-  }, [config.enabled]);
+  }, [config.enabled, profile?.current_organization_id]);
 
   const generateCaption = useCallback(async (
     context: string,

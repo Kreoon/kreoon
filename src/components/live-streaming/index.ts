@@ -27,8 +27,11 @@ export { ThumbnailUploader } from './components/ThumbnailUploader';
 export { StreamPlayer } from './components/StreamPlayer';
 
 // Hooks
-export { useStreamingAI } from './hooks/useStreamingAI';
+export { useStreamingAI, type FullLiveContentResult } from './hooks/useStreamingAI';
 export { useStreamingRealtime } from './hooks/useStreamingRealtime';
+
+// Live Content Generator (paquete completo Live Shopping)
+export { LiveContentGenerator } from '../streaming/LiveContentGenerator';
 
 // Constants
 export * from './LiveStreamingConstants';

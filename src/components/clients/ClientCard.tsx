@@ -73,24 +73,28 @@ export function ClientCard({
   const fetchStrategists = async () => {
     const { data, error } = await supabase
       .from('client_strategists')
-      .select(`
-        strategist_id,
-        is_primary,
-        profiles:strategist_id(id, full_name, avatar_url)
-      `)
+      .select('strategist_id, is_primary')
       .eq('client_id', client.id);
 
-    if (!error && data) {
+    if (!error && data?.length) {
+      const strategistIds = [...new Set(data.map(d => d.strategist_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', strategistIds);
+      const profileMap = new Map((profilesData ?? []).map(p => [p.id, p]));
       const list = data
         .map(d => ({
-          id: (d.profiles as any)?.id,
-          full_name: (d.profiles as any)?.full_name || 'Sin nombre',
-          avatar_url: (d.profiles as any)?.avatar_url,
+          id: d.strategist_id,
+          full_name: profileMap.get(d.strategist_id)?.full_name || 'Sin nombre',
+          avatar_url: profileMap.get(d.strategist_id)?.avatar_url,
           is_primary: d.is_primary || false,
         }))
         .filter(s => s.id)
         .sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0));
       setStrategists(list);
+    } else {
+      setStrategists([]);
     }
   };
 

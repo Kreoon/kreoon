@@ -2,76 +2,13 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getKreoonClient, isKreoonConfigured, validateKreoonAuth } from "../_shared/kreoon-client.ts";
+import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
+import { callAISingle } from "../_shared/ai-providers.ts";
+import { searchWithPerplexity } from "../_shared/perplexity-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-// AI Provider configurations
-interface AIProviderConfig {
-  url: string;
-  getHeaders: (apiKey: string) => Record<string, string>;
-  formatBody: (messages: any[], tools?: any[]) => any;
-  extractContent: (response: any, tools?: any[]) => any;
-}
-
-const AI_PROVIDERS: Record<string, AIProviderConfig> = {
-  gemini: {
-    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    getHeaders: (apiKey: string) => ({
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    }),
-    formatBody: (messages: any[], tools?: any[]) => ({
-      model: "gemini-2.5-flash",
-      messages,
-      ...(tools ? { tools, tool_choice: { type: "function", function: { name: tools[0].function.name } } } : {}),
-    }),
-    extractContent: (response: any, tools?: any[]) => {
-      if (tools && response.choices[0].message.tool_calls) {
-        return JSON.parse(response.choices[0].message.tool_calls[0].function.arguments);
-      }
-      return response.choices[0].message.content;
-    },
-  },
-  openai: {
-    url: "https://api.openai.com/v1/chat/completions",
-    getHeaders: (apiKey: string) => ({
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    }),
-    formatBody: (messages: any[], tools?: any[]) => ({
-      model: "gpt-4o-mini",
-      messages,
-      ...(tools ? { tools, tool_choice: { type: "function", function: { name: tools[0].function.name } } } : {}),
-    }),
-    extractContent: (response: any, tools?: any[]) => {
-      if (tools && response.choices[0].message.tool_calls) {
-        return JSON.parse(response.choices[0].message.tool_calls[0].function.arguments);
-      }
-      return response.choices[0].message.content;
-    },
-  },
-  anthropic: {
-    url: "https://api.anthropic.com/v1/messages",
-    getHeaders: (apiKey: string) => ({
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    }),
-    formatBody: (messages: any[]) => ({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      messages: messages.map((m) => ({
-        role: m.role === "system" ? "user" : m.role,
-        content: m.content,
-      })),
-    }),
-    extractContent: (response: any) => {
-      return response.content?.[0]?.text || "";
-    },
-  },
 };
 
 interface TalentMatchingRequest {
@@ -109,106 +46,88 @@ interface TalentAmbassadorRequest {
   userId: string;
 }
 
-type RequestBody = TalentMatchingRequest | TalentQualityRequest | TalentRiskRequest | TalentReputationRequest | TalentAmbassadorRequest;
-
-async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
-  const googleApiKey = Deno.env.get("GOOGLE_AI_API_KEY");
-  const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-
-  // First try to get module-specific config
-  const { data: moduleData } = await supabase
-    .from("organization_ai_modules")
-    .select("provider, model")
-    .eq("organization_id", organizationId)
-    .eq("module_key", moduleKey)
-    .eq("is_active", true)
-    .single();
-
-  // Then get organization defaults
-  const { data: defaults } = await supabase
-    .from("organization_ai_defaults")
-    .select("default_provider, default_model")
-    .eq("organization_id", organizationId)
-    .single();
-
-  // Use module config if available, otherwise use org defaults
-  let provider = moduleData?.provider || defaults?.default_provider || "gemini";
-  let model = moduleData?.model || defaults?.default_model || "gemini-2.5-flash";
-
-  // Map lovable provider to gemini
-  if (provider === "lovable") {
-    provider = "gemini";
-    if (model.startsWith("google/")) {
-      model = model.replace("google/", "");
-    } else if (model.startsWith("openai/")) {
-      provider = "openai";
-      model = model.replace("openai/", "").replace("gpt-5", "gpt-4o").replace("gpt-5-mini", "gpt-4o-mini");
-    }
-  }
-
-  // Get the appropriate API key based on provider
-  let apiKey = "";
-  switch (provider) {
-    case "openai":
-      apiKey = openaiApiKey || "";
-      break;
-    case "gemini":
-      apiKey = googleApiKey || "";
-      break;
-    case "anthropic":
-      apiKey = Deno.env.get("ANTHROPIC_API_KEY") || "";
-      break;
-    default:
-      apiKey = googleApiKey || "";
-      provider = "gemini";
-      model = "gemini-2.5-flash";
-      break;
-  }
-
-  // Fallback if no API key for selected provider
-  if (!apiKey) {
-    if (googleApiKey) {
-      provider = "gemini";
-      model = "gemini-2.5-flash";
-      apiKey = googleApiKey;
-    } else if (openaiApiKey) {
-      provider = "openai";
-      model = "gpt-4o-mini";
-      apiKey = openaiApiKey;
-    }
-  }
-
-  console.log(`AI Config for module ${moduleKey}: provider=${provider}, model=${model}, hasKey=${!!apiKey}`);
-
-  return { provider, model, apiKey };
+interface TalentSuggestCreatorRequest {
+  action: "suggest_creator_profile";
+  organizationId: string;
+  productName: string;
+  productCategory?: string;
 }
 
-async function callAI(
-  provider: string,
-  messages: any[],
-  apiKey: string,
-  tools?: any[]
-): Promise<any> {
-  const config = AI_PROVIDERS[provider] || AI_PROVIDERS.lovable;
-  const response = await fetch(config.url, {
-    method: "POST",
-    headers: config.getHeaders(apiKey),
-    body: JSON.stringify(config.formatBody(messages, tools)),
-  });
+type RequestBody =
+  | TalentMatchingRequest
+  | TalentQualityRequest
+  | TalentRiskRequest
+  | TalentReputationRequest
+  | TalentAmbassadorRequest
+  | TalentSuggestCreatorRequest;
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`AI API error: ${error}`);
-  }
-
-  const data = await response.json();
-  return config.extractContent(data, tools);
-}
-
-async function handleMatching(supabase: any, req: TalentMatchingRequest, provider: string, apiKey: string) {
-  // Get available talent
+async function handleMatching(supabase: any, req: TalentMatchingRequest, provider: string, model: string, apiKey: string) {
   const roleFilter = req.role === "editor" ? "editor" : "creator";
-  
+
+  // Si tenemos contentId, obtener contexto del producto y avatares
+  let productContext: {
+    productName: string;
+    contentTitle?: string | null;
+    salesAngle: string | null;
+    spherePhase: string | null;
+    avatar: {
+      name: string;
+      age?: string;
+      gender?: string;
+      occupation?: string;
+      situation?: string;
+      characteristics?: string[] | string;
+      drivers?: Record<string, unknown> | string;
+      tone?: string;
+      style?: string;
+    } | null;
+  } | null = null;
+
+  if (req.contentId) {
+    const { data: content } = await supabase
+      .from("content")
+      .select(`
+        title,
+        product_id,
+        sales_angle,
+        sphere_phase,
+        product:products(
+          name,
+          avatar_profiles,
+          market_research
+        )
+      `)
+      .eq("id", req.contentId)
+      .single();
+
+    if (content?.product) {
+      const p = content.product as any;
+      const ap = typeof p.avatar_profiles === "string" ? (() => { try { return JSON.parse(p.avatar_profiles || "{}"); } catch { return {}; } })() : (p.avatar_profiles || {});
+      const profilesArr = ap.profiles || ap.avatars || (Array.isArray(ap) ? ap : []);
+      const primaryAvatar = Array.isArray(profilesArr) ? profilesArr[0] : null;
+      productContext = {
+        productName: p.name || "Sin nombre",
+        contentTitle: content.title || null,
+        salesAngle: content.sales_angle || null,
+        spherePhase: content.sphere_phase || null,
+        avatar: primaryAvatar ? {
+          name: primaryAvatar.name || primaryAvatar.nombre || "Sin nombre",
+          age: primaryAvatar.age || primaryAvatar.edad,
+          gender: primaryAvatar.gender || primaryAvatar.genero,
+          occupation: primaryAvatar.occupation || primaryAvatar.ocupacion,
+          situation: primaryAvatar.situation || primaryAvatar.situacion,
+          characteristics: primaryAvatar.characteristics || primaryAvatar.caracteristicas,
+          drivers: primaryAvatar.drivers || primaryAvatar.drivers_emocionales || primaryAvatar.primary_pain || primaryAvatar.objeciones,
+          tone: primaryAvatar.ideal_message_tone || primaryAvatar.tone || primaryAvatar.tono_comunicacion || primaryAvatar.tono,
+          style: Array.isArray(primaryAvatar.content_consumption?.content_types)
+            ? primaryAvatar.content_consumption.content_types.join(", ")
+            : (primaryAvatar.content_consumption?.content_types || primaryAvatar.style || ""),
+        } : null,
+      };
+    }
+  }
+
+  // Get available talent
   const { data: members } = await supabase
     .from("organization_member_roles")
     .select("user_id")
@@ -216,18 +135,19 @@ async function handleMatching(supabase: any, req: TalentMatchingRequest, provide
     .eq("role", roleFilter);
 
   if (!members?.length) {
-    return { selected_id: null, reasoning: ["No hay talento disponible con el rol especificado"], risk_level: "high", confidence: 0 };
+    return { selected_id: null, reasoning: ["No hay talento disponible con el rol especificado"], risk_level: "high", confidence: 0, fit_score: 0 };
   }
 
   const userIds = members.map((m: any) => m.user_id);
 
-  // Get talent profiles with performance data
+  // Get talent profiles with performance data + fit-relevant fields (bio, specialties, style)
   const { data: profiles } = await supabase
     .from("profiles")
     .select(`
-      id, full_name, quality_score_avg, reliability_score, velocity_score,
+      id, full_name, bio, quality_score_avg, reliability_score, velocity_score,
       editor_rating, editor_completed_count, editor_on_time_count,
-      is_active, ai_recommended_level, ai_risk_flag
+      is_active, ai_recommended_level, ai_risk_flag,
+      specialties_tags, style_keywords, content_categories, industries, interests
     `)
     .in("id", userIds)
     .eq("is_active", true);
@@ -245,33 +165,52 @@ async function handleMatching(supabase: any, req: TalentMatchingRequest, provide
 
   const talentWithWorkload = await Promise.all(workloadPromises);
 
-  const systemPrompt = `Eres un asistente de asignación de talento para una agencia de contenido.
-Tu tarea es seleccionar el mejor ${req.role === "editor" ? "editor" : "creador"} para un proyecto.
+  const avatarContextBlock = productContext?.avatar ? `
+AVATAR OBJETIVO DEL CONTENIDO:
+- Nombre: ${productContext.avatar.name}
+- Edad: ${productContext.avatar.age || "No definido"}
+- Género: ${productContext.avatar.gender || "No definido"}
+- Ocupación: ${productContext.avatar.occupation || "No definido"}
+- Características: ${Array.isArray(productContext.avatar.characteristics) ? productContext.avatar.characteristics.join(", ") : (productContext.avatar.characteristics || "No definidas")}
+- Drivers emocionales: ${typeof productContext.avatar.drivers === "object" ? JSON.stringify(productContext.avatar.drivers) : (productContext.avatar.drivers || "No definidos")}
+- Situación: ${productContext.avatar.situation || "No especificada"}
+- Tono preferido: ${productContext.avatar.tone || "No definido"}
+- Tipo de contenido: ${productContext.avatar.style || "No definido"}
 
-Considera:
-1. Carga de trabajo actual (menos es mejor)
-2. Score de calidad (mayor es mejor)
-3. Score de confiabilidad/puntualidad (mayor es mejor)
-4. Nivel de riesgo del talento (evitar "high")
-5. Nivel recomendado por IA (elite > pro > junior)
+CONSIDERACIÓN PARA MATCHING:
+Prioriza creadores cuyo estilo, demografía o especialidad conecten mejor con este avatar.
+Por ejemplo, si el avatar es una mujer joven interesada en skincare, un creador con audiencia similar tendría mejor "fit".
+Incluye un fit_score (0-100) que evalúe qué tan bien el talento encaja con el avatar objetivo.
+` : "";
 
-${req.deadline ? `Deadline del proyecto: ${req.deadline}` : ""}
+  const systemPrompt = `Eres un asistente experto en asignación de talento para producción de contenido UGC.
+
+Tu tarea es seleccionar el mejor ${req.role === "editor" ? "editor" : "creador"} para un proyecto específico considerando:
+1. Carga de trabajo actual (no sobrecargar)
+2. Score de calidad histórico
+3. Confiabilidad y velocidad de entrega
+4. Nivel recomendado por IA
+5. Banderas de riesgo activas
+6. FIT CON EL AVATAR OBJETIVO (si está disponible)
+${avatarContextBlock}
+
+Responde en español. Proporciona reasoning detallado.`;
+
+  const userPrompt = `Rol buscado: ${req.role}
+${req.deadline ? `Deadline: ${req.deadline}` : ""}
 ${req.priority ? `Prioridad: ${req.priority}` : ""}
-${req.contentType ? `Tipo de contenido: ${req.contentType}` : ""}`;
+${req.contentType ? `Tipo de contenido: ${req.contentType}` : ""}
+${productContext ? `
+Producto: ${productContext.productName}
+${productContext.contentTitle ? `Contenido: ${productContext.contentTitle}` : ""}
+Fase ESFERA: ${productContext.spherePhase || "No definida"}
+Ángulo de venta: ${productContext.salesAngle || "No definido"}
+` : ""}
 
-  const userPrompt = `Selecciona el mejor talento de esta lista:
-
+Talentos disponibles:
 ${JSON.stringify(talentWithWorkload, null, 2)}
 
-Responde en JSON con:
-{
-  "selected_id": "uuid del seleccionado",
-  "selected_name": "nombre del seleccionado",
-  "reasoning": ["razón 1", "razón 2"],
-  "risk_level": "low" | "medium" | "high",
-  "confidence": 0-100,
-  "alternatives": [{"id": "uuid", "name": "nombre", "reason": "por qué es alternativa"}]
-}`;
+Selecciona el mejor talento. Responde con JSON.`;
 
   const tools = [{
     type: "function",
@@ -286,35 +225,38 @@ Responde en JSON con:
           reasoning: { type: "array", items: { type: "string" }, description: "Razones de la selección" },
           risk_level: { type: "string", enum: ["low", "medium", "high"] },
           confidence: { type: "number", description: "Confianza de 0 a 100" },
+          fit_score: {
+            type: "number",
+            description: "Score de fit con avatar/campaña (0-100). 100 = perfecto match. Prioriza creadores cuyo estilo/demografía conecten con el avatar. Usa 50 si no hay contexto de producto."
+          },
           alternatives: {
             type: "array",
             items: {
               type: "object",
               properties: {
-                id: { type: "string" },
+                talent_id: { type: "string", description: "UUID del talento alternativo" },
+                id: { type: "string", description: "Alias de talent_id" },
                 name: { type: "string" },
+                score: { type: "number", description: "Score de aptitud 0-100" },
                 reason: { type: "string" }
               }
             }
           }
         },
-        required: ["selected_id", "reasoning", "risk_level", "confidence"]
+        required: ["selected_id", "reasoning", "risk_level", "confidence", "fit_score"]
       }
     }
   }];
 
-  const result = await callAI(
-    provider,
-    [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ],
-    apiKey,
-    tools
-  );
+  const result = await callAISingle(provider, model, apiKey, systemPrompt, userPrompt, tools);
 
   // Parse if string
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
+
+  // Ensure fit_score exists (default 50 when AI no lo proporciona)
+  if (typeof parsed.fit_score !== "number") {
+    parsed.fit_score = 50;
+  }
 
   // Update content with assignment reason if contentId provided
   if (req.contentId && parsed.selected_id) {
@@ -330,7 +272,7 @@ Responde en JSON con:
   return parsed;
 }
 
-async function handleQuality(supabase: any, req: TalentQualityRequest, provider: string, apiKey: string) {
+async function handleQuality(supabase: any, req: TalentQualityRequest, provider: string, model: string, apiKey: string) {
   // Get content details
   const { data: content } = await supabase
     .from("content")
@@ -393,15 +335,7 @@ Responde en JSON con:
     }
   }];
 
-  const result = await callAI(
-    provider,
-    [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ],
-    apiKey,
-    tools
-  );
+  const result = await callAISingle(provider, model, apiKey, systemPrompt, userPrompt, tools);
 
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
 
@@ -414,7 +348,7 @@ Responde en JSON con:
   return parsed;
 }
 
-async function handleRisk(supabase: any, req: TalentRiskRequest, provider: string, apiKey: string) {
+async function handleRisk(supabase: any, req: TalentRiskRequest, provider: string, model: string, apiKey: string) {
   // Get user profile
   const { data: profile } = await supabase
     .from("profiles")
@@ -480,15 +414,7 @@ Responde en JSON con:
     }
   }];
 
-  const result = await callAI(
-    provider,
-    [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ],
-    apiKey,
-    tools
-  );
+  const result = await callAISingle(provider, model, apiKey, systemPrompt, userPrompt, tools);
 
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
 
@@ -501,7 +427,7 @@ Responde en JSON con:
   return parsed;
 }
 
-async function handleReputation(supabase: any, req: TalentReputationRequest, provider: string, apiKey: string) {
+async function handleReputation(supabase: any, req: TalentReputationRequest, provider: string, model: string, apiKey: string) {
   // Get user profile
   const { data: profile } = await supabase
     .from("profiles")
@@ -592,15 +518,7 @@ Responde en JSON con:
     }
   }];
 
-  const result = await callAI(
-    provider,
-    [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ],
-    apiKey,
-    tools
-  );
+  const result = await callAISingle(provider, model, apiKey, systemPrompt, userPrompt, tools);
 
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
 
@@ -627,7 +545,7 @@ Responde en JSON con:
   return parsed;
 }
 
-async function handleAmbassador(supabase: any, req: TalentAmbassadorRequest, provider: string, apiKey: string) {
+async function handleAmbassador(supabase: any, req: TalentAmbassadorRequest, provider: string, model: string, apiKey: string) {
   // Get user profile
   const { data: profile } = await supabase
     .from("profiles")
@@ -768,15 +686,7 @@ Responde en JSON con:
     }
   }];
 
-  const result = await callAI(
-    provider,
-    [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ],
-    apiKey,
-    tools
-  );
+  const result = await callAISingle(provider, model, apiKey, systemPrompt, userPrompt, tools);
 
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
 
@@ -796,6 +706,34 @@ Responde en JSON con:
     });
 
   return parsed;
+}
+
+async function handleSuggestCreatorProfile(supabase: any, req: TalentSuggestCreatorRequest) {
+  const productCategory = req.productCategory || req.productName || "productos en general";
+
+  const trendsResearch = await searchWithPerplexity(
+    supabase,
+    req.organizationId,
+    `¿Qué tipo de creadores de contenido UGC están generando mejores resultados para productos de ${productCategory} en Latinoamérica?
+
+Incluye:
+1. Características demográficas ideales
+2. Estilo de contenido que funciona
+3. Tamaño de audiencia óptimo (micro, medio, macro)
+4. Plataformas donde son más efectivos
+5. Ejemplos de creadores exitosos en el nicho`,
+    { recencyFilter: "month" }
+  );
+
+  return {
+    externalResearch: trendsResearch.content,
+    citations: trendsResearch.citations,
+    recommendedProfile: {
+      summary: "Perfil ideal basado en investigación de tendencias actuales",
+      productCategory,
+      productName: req.productName,
+    },
+  };
 }
 
 serve(async (req) => {
@@ -828,24 +766,27 @@ serve(async (req) => {
     };
 
     const moduleKey = moduleKeyMap[body.action];
-    const aiConfig = await getModuleAIConfig(supabase, body.organizationId, moduleKey);
+    const aiConfig = await getModuleAIConfig(supabase, body.organizationId, moduleKey, { requireActive: false });
 
     let result;
     switch (body.action) {
       case "matching":
-        result = await handleMatching(supabase, body, aiConfig.provider, aiConfig.apiKey);
+        result = await handleMatching(supabase, body, aiConfig.provider, aiConfig.model, aiConfig.apiKey);
         break;
       case "quality":
-        result = await handleQuality(supabase, body, aiConfig.provider, aiConfig.apiKey);
+        result = await handleQuality(supabase, body, aiConfig.provider, aiConfig.model, aiConfig.apiKey);
         break;
       case "risk":
-        result = await handleRisk(supabase, body, aiConfig.provider, aiConfig.apiKey);
+        result = await handleRisk(supabase, body, aiConfig.provider, aiConfig.model, aiConfig.apiKey);
         break;
       case "reputation":
-        result = await handleReputation(supabase, body, aiConfig.provider, aiConfig.apiKey);
+        result = await handleReputation(supabase, body, aiConfig.provider, aiConfig.model, aiConfig.apiKey);
         break;
       case "ambassador":
-        result = await handleAmbassador(supabase, body as TalentAmbassadorRequest, aiConfig.provider, aiConfig.apiKey);
+        result = await handleAmbassador(supabase, body as TalentAmbassadorRequest, aiConfig.provider, aiConfig.model, aiConfig.apiKey);
+        break;
+      case "suggest_creator_profile":
+        result = await handleSuggestCreatorProfile(supabase, body as TalentSuggestCreatorRequest);
         break;
       default:
         throw new Error("Invalid action");
@@ -868,18 +809,28 @@ serve(async (req) => {
       }
     }
 
-    await supabase.from("ai_usage_logs").insert({
-      organization_id: body.organizationId,
-      user_id: userId,
-      module: moduleKey,
-      action: body.action,
-      provider: aiConfig.provider,
-      model: aiConfig.model,
-      success: true,
-    });
+    const { data: logRow } = await supabase
+      .from("ai_usage_logs")
+      .insert({
+        organization_id: body.organizationId,
+        user_id: userId,
+        module: moduleKey,
+        action: body.action,
+        provider: aiConfig.provider,
+        model: aiConfig.model,
+        success: true,
+      })
+      .select("id")
+      .single();
 
     return new Response(
-      JSON.stringify({ success: true, ...result, provider: aiConfig.provider, model: aiConfig.model }),
+      JSON.stringify({
+        success: true,
+        ...result,
+        provider: aiConfig.provider,
+        model: aiConfig.model,
+        execution_id: logRow?.id ?? undefined,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {

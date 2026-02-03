@@ -254,18 +254,7 @@ export default function VideosPage() {
         queries.push(
           supabase
             .from('content')
-            .select(`
-              id,
-              title,
-              video_url,
-              thumbnail_url,
-              creator_id,
-              views_count,
-              likes_count,
-              created_at,
-              creator:profiles!content_creator_id_fkey(id, full_name, avatar_url),
-              client:clients!content_client_id_fkey(name)
-            `)
+            .select('id, title, video_url, thumbnail_url, creator_id, client_id, views_count, likes_count, created_at')
             .eq('is_published', true)
             .not('video_url', 'is', null)
             .order('created_at', { ascending: false })
@@ -297,24 +286,38 @@ export default function VideosPage() {
 
       const results = await Promise.all(queries);
       
-      // Process content videos
-      const contentVideos = filter !== 'posts' && results[0]?.data 
-        ? results[0].data.map((c: any) => ({
+      // Process content videos - fetch profiles and clients separately (embeds cause 400)
+      let contentVideos: VideoItem[] = [];
+      if (filter !== 'posts' && results[0]?.data && results[0].data.length > 0) {
+        const contentData = results[0].data as any[];
+        const creatorIds = [...new Set(contentData.map((c) => c.creator_id).filter(Boolean))];
+        const clientIds = [...new Set(contentData.map((c) => c.client_id).filter(Boolean))];
+        const [profilesRes, clientsRes] = await Promise.all([
+          creatorIds.length > 0 ? supabase.from('profiles').select('id, full_name, avatar_url').in('id', creatorIds) : { data: [] },
+          clientIds.length > 0 ? supabase.from('clients').select('id, name').in('id', clientIds) : { data: [] },
+        ]);
+        const profileMap = new Map((profilesRes.data ?? []).map((p) => [p.id, p]));
+        const clientMap = new Map((clientsRes.data ?? []).map((c) => [c.id, c]));
+        contentVideos = contentData.map((c) => {
+          const creator = c.creator_id ? profileMap.get(c.creator_id) : null;
+          const client = c.client_id ? clientMap.get(c.client_id) : null;
+          return {
             id: c.id,
             type: 'work' as const,
             title: c.title,
             video_url: c.video_url,
             thumbnail_url: c.thumbnail_url,
-            user_id: c.creator?.id,
-            user_name: c.creator?.full_name,
-            user_avatar: c.creator?.avatar_url,
-            client_name: c.client?.name,
+            user_id: creator?.id ?? c.creator_id,
+            user_name: creator?.full_name ?? null,
+            user_avatar: creator?.avatar_url ?? null,
+            client_name: client?.name ?? null,
             views_count: c.views_count || 0,
             likes_count: c.likes_count || 0,
             comments_count: 0,
             created_at: c.created_at,
-          }))
-        : [];
+          };
+        });
+      }
 
       // Process post videos - need to fetch profiles separately
       let postVideos: VideoItem[] = [];

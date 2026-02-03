@@ -1,14 +1,31 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { makeAIRequest, getAPIKey, corsHeaders } from "../_shared/ai-providers.ts";
+import { PORTFOLIO_PROMPTS } from "../_shared/portfolio-prompts.ts";
 
 interface AIRequest {
-  action: 'search' | 'caption' | 'bio' | 'recommendations' | 'moderation' | 'blocks';
+  action: "search" | "caption" | "bio" | "recommendations" | "moderation" | "blocks";
   payload: Record<string, unknown>;
   organizationId?: string;
+  prompts?: {
+    system: string;
+    user: string;
+    outputSchema?: Record<string, unknown>;
+  };
+}
+
+/** Prompts centralizados - fallback cuando el frontend no envía prompts */
+function getLocalPrompts(action: string, payload: Record<string, unknown>): { system: string; user: string } {
+  const config = PORTFOLIO_PROMPTS[action];
+  if (config) {
+    return {
+      system: config.system,
+      user: config.userTemplate(payload ?? {}),
+    };
+  }
+  return {
+    system: "Eres un asistente útil. Responde SOLO en JSON válido.",
+    user: JSON.stringify(payload),
+  };
 }
 
 serve(async (req) => {
@@ -17,161 +34,75 @@ serve(async (req) => {
   }
 
   try {
-    // Try Gemini first, then OpenAI
-    const GOOGLE_AI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY');
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    
-    if (!GOOGLE_AI_API_KEY && !OPENAI_API_KEY) {
-      throw new Error('No AI API keys configured. Set GOOGLE_AI_API_KEY or OPENAI_API_KEY');
+    const googleKey = getAPIKey("gemini");
+    const openaiKey = getAPIKey("openai");
+
+    if (!googleKey && !openaiKey) {
+      throw new Error("No AI API keys configured. Set GOOGLE_AI_API_KEY or OPENAI_API_KEY");
     }
 
-    const { action, payload, organizationId } = await req.json() as AIRequest;
+    const { action, payload, organizationId, prompts } = (await req.json()) as AIRequest;
 
-    console.log(`[portfolio-ai] Action: ${action}, Org: ${organizationId}`);
+    console.log(`[portfolio-ai] Action: ${action}, Org: ${organizationId}, promptsFromFrontend: ${!!prompts}`);
 
-    let systemPrompt = '';
-    let userPrompt = '';
+    let systemPrompt: string;
+    let userPrompt: string;
 
-    switch (action) {
-      case 'search':
-        systemPrompt = `You are an intelligent search assistant for a creative portfolio platform. 
-Parse the user's search query and extract structured search parameters.
-Return JSON with: entities (array), keywords (array), location (string|null), categories (array), skills (array).`;
-        userPrompt = `Search query: "${payload.query}"
-Extract search parameters from this query. Return valid JSON only.`;
-        break;
-
-      case 'caption':
-        systemPrompt = `You are a creative caption writer for social media content.
-Generate engaging, authentic captions that drive engagement.
-Your style is conversational, trendy, and adapted to Instagram/TikTok style.`;
-        userPrompt = `Content type: ${payload.content_type}
-Context: ${payload.context}
-Tone: ${payload.tone || 'casual'}
-Language: ${payload.language || 'es'}
-
-Generate 3 caption options. Return JSON with captions array containing objects with text and hashtags.`;
-        break;
-
-      case 'bio':
-        systemPrompt = `You are a professional bio writer specialized in creative portfolios.
-Craft compelling, professional bios that highlight unique value.
-Keep bios concise, impactful, and optimized for discoverability.`;
-        userPrompt = `Current bio: "${payload.current_bio || ''}"
-Role/Profession: ${payload.profession || 'Creator'}
-Key skills: ${payload.skills || ''}
-Tone: ${payload.tone || 'professional'}
-Language: ${payload.language || 'es'}
-
-Improve this bio. Return JSON with improved_bio (string) and key_changes (array).`;
-        break;
-
-      case 'recommendations':
-        systemPrompt = `You are a recommendation engine for a creative portfolio platform.
-Suggest creators and content based on user interests and engagement patterns.`;
-        userPrompt = `User interests: ${JSON.stringify(payload.interests || [])}
-Recently viewed categories: ${JSON.stringify(payload.categories || [])}
-
-Generate recommendation reasoning. Return JSON with creator_recommendations and content_recommendations arrays.`;
-        break;
-
-      case 'moderation':
-        systemPrompt = `You are a content moderation assistant for a professional creative platform.
-Identify potentially problematic content while respecting creative expression.
-Be lenient with creative content but strict with clear violations.`;
-        userPrompt = `Content type: ${payload.content_type}
-Text content: "${payload.text || ''}"
-Has media: ${payload.has_media || false}
-
-Analyze for violations. Return JSON with is_flagged (boolean), severity (none|low|medium|high|critical), reasons (array), action_recommended (approve|review|hide|remove).`;
-        break;
-
-      case 'blocks':
-        systemPrompt = `You are a profile optimization assistant for creative portfolios.
-Suggest profile block structure for maximum impact.`;
-        userPrompt = `Profession: ${payload.profession || 'Creator'}
-Available content types: ${JSON.stringify(payload.content_types || [])}
-Goals: ${payload.goals || 'showcase work'}
-
-Suggest optimal profile blocks. Return JSON with suggested_blocks array containing objects with block_key, title, reason, priority.`;
-        break;
-
-      default:
-        throw new Error(`Unknown action: ${action}`);
+    if (prompts?.system && prompts?.user) {
+      systemPrompt = prompts.system;
+      userPrompt = prompts.user;
+    } else {
+      const localPrompts = getLocalPrompts(action, payload ?? {});
+      systemPrompt = localPrompts.system;
+      userPrompt = localPrompts.user;
     }
 
-    let response;
-    let usedProvider = '';
+    let result: any;
+    let usedProvider = "";
 
-    // Try Gemini first
-    if (GOOGLE_AI_API_KEY) {
-      response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GOOGLE_AI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          response_format: { type: 'json_object' }
-        }),
+    const config = { systemPrompt, userPrompt, temperature: 0.7 };
+
+    let aiResult = googleKey
+      ? await makeAIRequest({ provider: "gemini", model: "gemini-2.5-flash", apiKey: googleKey, ...config })
+      : { success: false as const, error: "No Gemini key" };
+
+    if (!aiResult.success && openaiKey) {
+      console.log("[portfolio-ai] Falling back to OpenAI");
+      aiResult = await makeAIRequest({
+        provider: "openai",
+        model: "gpt-4o-mini",
+        apiKey: openaiKey,
+        ...config,
       });
-      usedProvider = 'gemini';
+      usedProvider = "openai";
+    } else if (aiResult.success) {
+      usedProvider = "gemini";
     }
 
-    // Fallback to OpenAI if Gemini failed or not available
-    if ((!response || !response.ok) && OPENAI_API_KEY) {
-      console.log('[portfolio-ai] Falling back to OpenAI');
-      response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          response_format: { type: 'json_object' }
-        }),
-      });
-      usedProvider = 'openai';
-    }
-
-    if (!response || !response.ok) {
-      const errorText = response ? await response.text() : 'No response';
-      console.error('[portfolio-ai] AI error:', response?.status, errorText);
-      
-      if (response?.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
+    if (!aiResult.success) {
+      const err = aiResult.error ?? "AI error";
+      if (err.includes("429")) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
           status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response?.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits.' }), {
+      if (err.includes("402")) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
           status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      
-      throw new Error(`AI error: ${response?.status}`);
+      console.error("[portfolio-ai] AI error:", err);
+      throw new Error(err);
     }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    const content = aiResult.content ?? "";
 
-    let result;
     try {
       result = JSON.parse(content);
     } catch {
-      console.error('[portfolio-ai] Failed to parse AI response:', content);
+      console.error("[portfolio-ai] Failed to parse AI response:", content);
       result = { raw: content };
     }
 

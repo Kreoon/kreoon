@@ -21,8 +21,9 @@ import {
   Plus, X, Wand2, Settings2,
   Video, ChevronDown, CheckCircle2, 
   Package, Lightbulb, Copy, Download, AlertCircle, Database, Webhook,
-  Clock, Monitor, Heart, Zap, ShieldX, Check
+  Clock, Monitor, Heart, Zap, ShieldX, Check, Search
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { sanitizeHTML } from "@/lib/sanitizeHTML";
 
 interface GeneratedContent {
@@ -80,6 +81,7 @@ interface StandaloneFormData {
   selected_objection: string;
   video_duration: string;
   target_platform: string;
+  use_perplexity: boolean;
 }
 
 interface GenerationStep {
@@ -395,6 +397,12 @@ export function StandaloneScriptGenerator() {
         id: organizationId,
         custom_prompts: customPrompts,
       },
+      // Perplexity research (for n8n workflows that support it)
+      perplexity: formData.use_perplexity ? {
+        use_perplexity: true,
+        perplexity_queries: perplexityQueries,
+        custom_perplexity_query: customPerplexityQuery.trim() || undefined,
+      } : undefined,
       // Research product data if selected
       research_data: researchProduct ? {
         avatars: researchAvatars,
@@ -1184,6 +1192,78 @@ export function StandaloneScriptGenerator() {
                 </div>
               </CollapsibleContent>
             </Collapsible>
+
+            {/* Toggle Perplexity Research */}
+            <div className="space-y-4 pt-4 border-t">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/20 rounded-lg">
+                    <Search className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Investigación en tiempo real</p>
+                    <p className="text-xs text-muted-foreground">
+                      Usa Perplexity para buscar tendencias y hooks actuales (requiere workflow n8n configurado)
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.use_perplexity}
+                  onCheckedChange={(checked) => setFormData({ ...formData, use_perplexity: checked })}
+                />
+              </div>
+
+              {formData.use_perplexity && (
+                <div className="ml-4 space-y-2 animate-in slide-in-from-top-2">
+                  <p className="text-sm font-medium text-muted-foreground">¿Qué investigar?</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge
+                      variant={perplexityQueries.trends ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => setPerplexityQueries((q) => ({ ...q, trends: !q.trends }))}
+                    >
+                      📈 Tendencias actuales
+                    </Badge>
+                    <Badge
+                      variant={perplexityQueries.hooks ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => setPerplexityQueries((q) => ({ ...q, hooks: !q.hooks }))}
+                    >
+                      🎣 Hooks efectivos
+                    </Badge>
+                    <Badge
+                      variant={perplexityQueries.competitors ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => setPerplexityQueries((q) => ({ ...q, competitors: !q.competitors }))}
+                    >
+                      🏢 Competencia
+                    </Badge>
+                    <Badge
+                      variant={perplexityQueries.audience ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => setPerplexityQueries((q) => ({ ...q, audience: !q.audience }))}
+                    >
+                      👥 Audiencia
+                    </Badge>
+                  </div>
+
+                  <Collapsible>
+                    <CollapsibleTrigger className="text-sm text-purple-400 hover:text-purple-300">
+                      + Agregar búsqueda personalizada
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <Textarea
+                        placeholder="Ej: ¿Cuáles son los challenges virales de TikTok esta semana relacionados con skincare?"
+                        value={customPerplexityQuery}
+                        onChange={(e) => setCustomPerplexityQuery(e.target.value)}
+                        className="mt-2"
+                        rows={2}
+                      />
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 

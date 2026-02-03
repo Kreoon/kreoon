@@ -1,122 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Get module AI configuration with validation
-async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-  
-  const { data: moduleData } = await supabase
-    .from("organization_ai_modules")
-    .select("is_active, provider, model")
-    .eq("organization_id", organizationId)
-    .eq("module_key", moduleKey)
-    .maybeSingle();
-  
-  // If module not configured or inactive, use lovable as default
-  let provider = moduleData?.provider || "lovable";
-  let model = moduleData?.model || "google/gemini-2.5-flash";
-  let apiKey: string | null = null;
-  
-  if (provider !== "lovable") {
-    const { data: providerData } = await supabase
-      .from("organization_ai_providers")
-      .select("api_key_encrypted")
-      .eq("organization_id", organizationId)
-      .eq("provider_key", provider)
-      .eq("is_enabled", true)
-      .maybeSingle();
-    
-    if (providerData?.api_key_encrypted) {
-      apiKey = providerData.api_key_encrypted;
-    } else {
-      // Fallback to lovable
-      provider = "lovable";
-      model = "google/gemini-2.5-flash";
-    }
-  }
-  
-  return {
-    provider,
-    model,
-    apiKey: apiKey || lovableApiKey,
-    isActive: moduleData?.is_active !== false // Default to active if not configured
-  };
-}
-
-// Make AI request based on provider
-async function makeAIRequest(aiConfig: any, systemPrompt: string, userPrompt: string) {
-  const { provider, model, apiKey } = aiConfig;
-  
-  let apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
-  let headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  let body: any = {
-    model: model,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ],
-    temperature: 0.3,
-  };
-
-  if (provider === "openai") {
-    apiUrl = "https://api.openai.com/v1/chat/completions";
-    headers["Authorization"] = `Bearer ${apiKey}`;
-  } else if (provider === "anthropic") {
-    apiUrl = "https://api.anthropic.com/v1/messages";
-    headers["x-api-key"] = apiKey;
-    headers["anthropic-version"] = "2023-06-01";
-    body = {
-      model: model,
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
-    };
-  } else if (provider === "gemini") {
-    apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    delete headers["Authorization"];
-    body = {
-      contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
-      generationConfig: { temperature: 0.3 }
-    };
-  } else {
-    // Lovable AI Gateway (default)
-    headers["Authorization"] = `Bearer ${apiKey}`;
-  }
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`AI API error (${provider}):`, response.status, errorText);
-    throw new Error(`AI API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  
-  // Extract content based on provider
-  let content: string;
-  if (provider === "anthropic") {
-    content = data.content?.[0]?.text || "";
-  } else if (provider === "gemini") {
-    content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  } else {
-    content = data.choices?.[0]?.message?.content || "";
-  }
-  
-  return content;
-}
+import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
+import { makeAIRequest, corsHeaders } from "../_shared/ai-providers.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -134,9 +20,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get AI configuration for registration module
-    const aiConfig = await getModuleAIConfig(supabase, organizationId, "registration");
-    
+    const aiConfig = await getModuleAIConfig(supabase, organizationId, "registration", { requireActive: false });
     console.log(`Using AI provider: ${aiConfig.provider}, model: ${aiConfig.model}`);
 
     const systemPrompt = "Eres un experto en análisis de perfiles para plataformas de contenido UGC. Tu trabajo es sugerir el rol más adecuado basándote en la información proporcionada. Siempre responde en JSON válido.";
@@ -162,7 +46,19 @@ Analiza el perfil y responde SOLO con un JSON válido con esta estructura:
   "reasoning": "Explicación breve de por qué se sugiere este rol"
 }`;
 
-    const content = await makeAIRequest(aiConfig, systemPrompt, userPrompt);
+    const result = await makeAIRequest({
+      ...aiConfig,
+      systemPrompt,
+      userPrompt,
+      temperature: 0.3,
+    });
+
+    if (!result.success) {
+      console.error("AI API error:", result.error);
+      throw new Error(result.error ?? "AI API error");
+    }
+
+    const content = result.content ?? "";
 
     // Parse JSON response
     let result;

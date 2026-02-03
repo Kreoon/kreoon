@@ -174,17 +174,10 @@ export const PortfolioProfile = memo(function PortfolioProfile({
             .from('followers')
             .select('id', { count: 'exact', head: true })
             .eq('follower_id', userId),
-          // Fetch organization membership info
+          // Fetch organization membership info (sin embed para evitar 400)
           supabase
             .from('organization_members')
-            .select(`
-              role,
-              organization:organization_id (
-                id,
-                name,
-                logo_url
-              )
-            `)
+            .select('role, organization_id')
             .eq('user_id', userId)
             .limit(1)
             .maybeSingle(),
@@ -195,19 +188,19 @@ export const PortfolioProfile = memo(function PortfolioProfile({
         }
 
         // Set membership info
-        if (membershipRes.data) {
-          const orgData = membershipRes.data.organization as any;
+        if (membershipRes.data?.organization_id) {
+          const { data: org } = await supabase
+            .from('organizations')
+            .select('id, name, logo_url')
+            .eq('id', membershipRes.data.organization_id)
+            .single();
           setMembership({
             role: membershipRes.data.role || '',
-            organization: orgData ? {
-              id: orgData.id,
-              name: orgData.name,
-              logo_url: orgData.logo_url,
-            } : null,
+            organization: org ? { id: org.id, name: org.name, logo_url: org.logo_url } : null,
             is_independent: false,
           });
         } else {
-          setMembership({ role: '', organization: null, is_independent: true });
+          setMembership({ role: membershipRes.data?.role || '', organization: null, is_independent: !membershipRes.data });
         }
 
         const totalViews = postsRes.data?.reduce((sum, p) => sum + (p.views_count || 0), 0) || 0;

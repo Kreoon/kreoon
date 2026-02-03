@@ -120,6 +120,7 @@ export function ScriptSubTab({
             onSaveComplete={onUpdate}
             productName={selectedProduct?.name}
             spherePhase={formData.sphere_phase}
+            organizationId={content?.organization_id}
             disabled={isReadOnly}
           />
         </SectionCard>

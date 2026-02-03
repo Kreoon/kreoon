@@ -127,23 +127,24 @@ export function MarketingTraffic({ organizationId, selectedClientId }: Marketing
     setLoading(true);
 
     try {
-      let query = supabase
-        .from('traffic_channels')
-        .select(`
-          *,
-          responsible:profiles!traffic_channels_responsible_id_fkey(id, full_name, avatar_url)
-        `)
-        .eq('organization_id', organizationId);
-      
-      // Filter by client if selected
+      let query = supabase.from('traffic_channels').select('*').eq('organization_id', organizationId);
       if (selectedClientId) {
         query = query.eq('client_id', selectedClientId);
       }
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data: raw, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      setChannels(data || []);
+
+      const data = raw || [];
+      if (data.length > 0) {
+        const respIds = [...new Set(data.map((c: any) => c.responsible_id).filter(Boolean))];
+        const { data: profiles } = respIds.length > 0 ? await supabase.from('profiles').select('id, full_name, avatar_url').in('id', respIds) : { data: [] };
+        const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+        data.forEach((c: any) => {
+          c.responsible = c.responsible_id ? profileMap.get(c.responsible_id) ?? null : null;
+        });
+      }
+      setChannels(data);
 
       // Fetch metrics for each channel
       const metrics: Record<string, SyncLog> = {};

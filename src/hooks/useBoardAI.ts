@@ -16,6 +16,7 @@ export interface CardAnalysis {
   confidence: number;
   analyzed_at: string;
   ai_model: string;
+  execution_id?: string;
 }
 
 export interface Bottleneck {
@@ -50,6 +51,7 @@ export interface BoardAnalysis {
   }>;
   analyzed_at: string;
   ai_model: string;
+  execution_id?: string;
 }
 
 export interface NextStateSuggestion {
@@ -81,6 +83,13 @@ export interface AutomationRecommendations {
   ai_model: string;
 }
 
+export interface ResearchContextResult {
+  research: string;
+  citations: string[];
+  contentContext: { title?: string; salesAngle?: string; spherePhase?: string };
+  researchType: string;
+}
+
 export function useBoardAI(organizationId?: string) {
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
@@ -90,7 +99,7 @@ export function useBoardAI(organizationId?: string) {
   const [automationRecommendations, setAutomationRecommendations] = useState<AutomationRecommendations | null>(null);
   const [moduleInactive, setModuleInactive] = useState<string | null>(null);
 
-  const callBoardAI = useCallback(async (action: string, contentId?: string) => {
+  const callBoardAI = useCallback(async (action: string, contentId?: string, extra?: Record<string, unknown>) => {
     if (!organizationId) {
       toast({ title: 'Error', description: 'Organización no encontrada', variant: 'destructive' });
       return null;
@@ -99,7 +108,7 @@ export function useBoardAI(organizationId?: string) {
     setModuleInactive(null);
 
     const { data, error } = await supabase.functions.invoke('board-ai', {
-      body: { action, organizationId, contentId }
+      body: { action, organizationId, contentId, ...extra }
     });
 
     // Handle MODULE_INACTIVE error
@@ -226,6 +235,26 @@ export function useBoardAI(organizationId?: string) {
     setAutomationRecommendations(null);
   }, []);
 
+  const researchContext = useCallback(async (
+    contentId: string,
+    researchType: "trends" | "competitors" | "hooks" = "trends"
+  ): Promise<ResearchContextResult | null> => {
+    setLoading("research");
+    try {
+      const result = await callBoardAI("research_context", contentId, { researchType });
+      return result as ResearchContextResult | null;
+    } catch (error) {
+      toast({
+        title: "Error al investigar",
+        description: "No se pudo completar la investigación con Perplexity",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setLoading(null);
+    }
+  }, [callBoardAI, toast]);
+
   return {
     loading,
     cardAnalysis,
@@ -238,6 +267,7 @@ export function useBoardAI(organizationId?: string) {
     suggestNextState,
     detectBottlenecks,
     recommendAutomation,
+    researchContext,
     clearAnalysis
   };
 }

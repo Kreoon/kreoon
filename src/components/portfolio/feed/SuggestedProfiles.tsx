@@ -94,20 +94,22 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }
           .in('id', candidateArray)
           .limit(limit);
 
-        // Fetch organization membership for these profiles
+        // Fetch organization membership for these profiles (sin embed para evitar 400)
         const { data: membershipData } = await supabase
           .from('organization_members')
-          .select(`
-            user_id,
-            role,
-            organization:organization_id (name)
-          `)
+          .select('user_id, role, organization_id')
           .in('user_id', candidateArray);
+
+        const orgIds = [...new Set((membershipData ?? []).map(m => m.organization_id).filter(Boolean))];
+        const { data: orgs } = orgIds.length > 0
+          ? await supabase.from('organizations').select('id, name').in('id', orgIds)
+          : { data: [] };
+        const orgMap = new Map((orgs ?? []).map(o => [o.id, o.name]));
 
         const membershipMap = new Map(
           (membershipData || []).map(m => [m.user_id, { 
             role: m.role, 
-            organization_name: (m.organization as any)?.name 
+            organization_name: m.organization_id ? orgMap.get(m.organization_id) : null 
           }])
         );
 

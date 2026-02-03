@@ -129,12 +129,15 @@ export function MainLayout({
         </div>
         
         {/* Main Content */}
-        <main className={cn(
-          "pb-16 md:pb-0 transition-all duration-300",
-          sidebarCollapsed ? "md:ml-20" : "md:ml-64",
-          chatOpen ? 'md:mr-96' : '',
-          "md:pt-14" // Add padding for the header
-        )}>
+        <main
+          id="main-content"
+          className={cn(
+            "pb-16 md:pb-0 transition-all duration-300",
+            sidebarCollapsed ? "md:ml-20" : "md:ml-64",
+            chatOpen ? 'md:mr-96' : '',
+            "md:pt-14" // Add padding for the header
+          )}
+        >
           <div className="min-h-screen p-4 md:p-6">
             {children}
           </div>
@@ -217,12 +220,15 @@ export function MainLayout({
         </div>
 
         {/* Main Content */}
-        <main className={cn(
-          "transition-all duration-300",
-          sidebarCollapsed ? "md:ml-20" : "md:ml-64",
-          chatOpen ? 'md:mr-96' : '',
-          "md:pt-14"
-        )}>
+        <main
+          id="main-content"
+          className={cn(
+            "transition-all duration-300",
+            sidebarCollapsed ? "md:ml-20" : "md:ml-64",
+            chatOpen ? 'md:mr-96' : '',
+            "md:pt-14"
+          )}
+        >
           <div className="min-h-screen p-4 md:p-6">
             {children}
           </div>
@@ -313,12 +319,15 @@ export function MainLayout({
       </div>
       
       {/* Main Content */}
-      <main className={cn(
-        "transition-all duration-300",
-        sidebarCollapsed ? "md:ml-20" : "md:ml-64",
-        chatOpen ? 'md:mr-96' : '',
-        "md:pt-14" // Add padding for the header
-      )}>
+      <main
+        id="main-content"
+        className={cn(
+          "transition-all duration-300",
+          sidebarCollapsed ? "md:ml-20" : "md:ml-64",
+          chatOpen ? 'md:mr-96' : '',
+          "md:pt-14" // Add padding for the header
+        )}
+      >
         <div className="min-h-screen p-4 md:p-6">
           {children}
         </div>

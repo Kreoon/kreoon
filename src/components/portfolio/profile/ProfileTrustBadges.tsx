@@ -138,7 +138,7 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
             .maybeSingle(),
           supabase
             .from('user_achievements')
-            .select('id, unlocked_at, achievement:achievements(*)')
+            .select('id, unlocked_at, achievement_id')
             .eq('user_id', userId)
             .order('unlocked_at', { ascending: false })
             .limit(10),
@@ -159,8 +159,17 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
             consecutive_on_time: 0 // Not tracked in V2 totals
           });
         }
-        if (achievementsRes.data) {
-          setAchievements(achievementsRes.data as unknown as UserAchievement[]);
+        if (achievementsRes.data && achievementsRes.data.length > 0) {
+          const uaList = achievementsRes.data as { id: string; unlocked_at: string; achievement_id: string }[];
+          const achIds = [...new Set(uaList.map((u) => u.achievement_id).filter(Boolean))];
+          const { data: achData } = achIds.length > 0
+            ? await supabase.from('achievements').select('*').in('id', achIds)
+            : { data: [] };
+          const achMap = new Map((achData ?? []).map((a) => [a.id, a]));
+          const mapped: UserAchievement[] = uaList
+            .filter((u) => achMap.has(u.achievement_id))
+            .map((u) => ({ id: u.id, unlocked_at: u.unlocked_at, achievement: achMap.get(u.achievement_id)! }));
+          setAchievements(mapped);
         }
         if (badgesRes.data) setOrgBadges(badgesRes.data);
 

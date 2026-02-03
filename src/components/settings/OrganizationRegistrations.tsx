@@ -110,7 +110,7 @@ export function OrganizationRegistrations() {
           .select('user_id')
           .eq('organization_id', org.id)
           .eq('is_owner', true)
-          .single();
+          .maybeSingle();
 
         let owner = null;
         if (ownerData?.user_id) {
@@ -118,7 +118,7 @@ export function OrganizationRegistrations() {
             .from('profiles')
             .select('id, full_name, email, avatar_url')
             .eq('id', ownerData.user_id)
-            .single();
+            .maybeSingle();
           owner = profileData;
         }
 

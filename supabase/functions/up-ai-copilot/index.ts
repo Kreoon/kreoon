@@ -1,11 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
+import { callAISingle, corsHeaders } from "../_shared/ai-providers.ts";
 
 interface QualityScoreRequest {
   action: "quality_score";
@@ -44,153 +41,7 @@ type RequestBody =
   | QuestGenerationRequest
   | RuleRecommendationsRequest;
 
-// Provider configurations
-interface AIProviderConfig {
-  url: string;
-  getHeaders: (apiKey: string) => Record<string, string>;
-  getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => any;
-  extractContent: (data: any, hasTools: boolean) => any;
-}
-
-const AI_PROVIDERS: Record<string, AIProviderConfig> = {
-  lovable: {
-    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
-    getHeaders: (apiKey: string) => ({
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    }),
-    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
-      const body: any = {
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      };
-      if (tools) {
-        body.tools = tools;
-        body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
-      }
-      return body;
-    },
-    extractContent: (data: any, hasTools: boolean) => {
-      if (hasTools && data.choices?.[0]?.message?.tool_calls?.[0]) {
-        return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
-      }
-      return data.choices?.[0]?.message?.content || "";
-    }
-  },
-  openai: {
-    url: "https://api.openai.com/v1/chat/completions",
-    getHeaders: (apiKey: string) => ({
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    }),
-    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
-      const body: any = {
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        max_tokens: 2000,
-        temperature: 0.7,
-      };
-      if (tools) {
-        body.tools = tools;
-        body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
-      }
-      return body;
-    },
-    extractContent: (data: any, hasTools: boolean) => {
-      if (hasTools && data.choices?.[0]?.message?.tool_calls?.[0]) {
-        return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
-      }
-      return data.choices?.[0]?.message?.content || "";
-    }
-  },
-  gemini: {
-    url: "https://generativelanguage.googleapis.com/v1beta/models",
-    getHeaders: (apiKey: string) => ({
-      "x-goog-api-key": apiKey,
-      "Content-Type": "application/json",
-    }),
-    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
-      const body: any = {
-        contents: [
-          { role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }
-        ],
-        generationConfig: {
-          maxOutputTokens: 2000,
-          temperature: 0.7,
-        }
-      };
-      // Gemini uses different tool format - simplified for now
-      return body;
-    },
-    extractContent: (data: any, hasTools: boolean) => {
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      if (hasTools) {
-        try {
-          // Try to parse JSON from response
-          const jsonMatch = text.match(/\{[\s\S]*\}/);
-          if (jsonMatch) return JSON.parse(jsonMatch[0]);
-        } catch {}
-      }
-      return text;
-    }
-  }
-};
-
-// Get module AI configuration with validation
-async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-  
-  // Check if module is active
-  const { data: moduleData } = await supabase
-    .from("organization_ai_modules")
-    .select("is_active, provider, model")
-    .eq("organization_id", organizationId)
-    .eq("module_key", moduleKey)
-    .maybeSingle();
-  
-  if (!moduleData?.is_active) {
-    throw new Error(`MODULE_INACTIVE:${moduleKey}`);
-  }
-  
-  let provider = moduleData?.provider || "lovable";
-  let model = moduleData?.model || "google/gemini-2.5-flash";
-  let apiKey: string | null = null;
-  
-  if (provider !== "lovable") {
-    const { data: providerData } = await supabase
-      .from("organization_ai_providers")
-      .select("api_key_encrypted")
-      .eq("organization_id", organizationId)
-      .eq("provider_key", provider)
-      .eq("is_enabled", true)
-      .maybeSingle();
-    
-    if (providerData?.api_key_encrypted) {
-      apiKey = providerData.api_key_encrypted;
-    } else {
-      provider = "lovable";
-      model = "google/gemini-2.5-flash";
-    }
-  }
-  
-  if (provider === "lovable") {
-    apiKey = lovableApiKey || null;
-  }
-  
-  if (!apiKey) {
-    throw new Error("No hay API key configurada para el proveedor de IA");
-  }
-  
-  return { provider, model, apiKey };
-}
-
-// Log AI usage
+// Log AI usage; returns execution id for feedback loop
 async function logAIUsage(
   supabase: any, 
   organizationId: string, 
@@ -203,22 +54,32 @@ async function logAIUsage(
   errorMessage?: string,
   tokensInput?: number,
   tokensOutput?: number
-) {
+): Promise<string | null> {
   try {
-    await supabase.from("ai_usage_logs").insert({
-      organization_id: organizationId,
-      user_id: userId,
-      provider,
-      model,
-      module: "sistema_up",
-      action,
-      success,
-      error_message: errorMessage,
-      tokens_input: tokensInput,
-      tokens_output: tokensOutput
-    });
+    const { data, error } = await supabase
+      .from("ai_usage_logs")
+      .insert({
+        organization_id: organizationId,
+        user_id: userId,
+        provider,
+        model,
+        module: "sistema_up",
+        action,
+        success,
+        error_message: errorMessage,
+        tokens_input: tokensInput,
+        tokens_output: tokensOutput
+      })
+      .select("id")
+      .single();
+    if (error) {
+      console.error("Error logging AI usage:", error);
+      return null;
+    }
+    return data?.id ?? null;
   } catch (e) {
     console.error("Error logging AI usage:", e);
+    return null;
   }
 }
 
@@ -280,9 +141,12 @@ serve(async (req) => {
         throw new Error("Invalid action");
     }
 
-    // Add provider info to result
+    // Add provider info and execution id for feedback loop
     result.aiProvider = provider;
     result.aiModel = model;
+    const userId = (body as any).userId ?? "system";
+    const executionId = await logAIUsage(supabase, orgId, userId, provider, model, "sistema_up", body.action, true);
+    result.execution_id = executionId ?? undefined;
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -295,41 +159,6 @@ serve(async (req) => {
     );
   }
 });
-
-async function callAI(
-  provider: string, 
-  model: string, 
-  apiKey: string,
-  systemPrompt: string, 
-  userPrompt: string, 
-  tools?: any[]
-) {
-  const config = AI_PROVIDERS[provider] || AI_PROVIDERS.lovable;
-  
-  let url = config.url;
-  if (provider === "gemini") {
-    url = `${config.url}/${model}:generateContent`;
-  }
-
-  console.log(`Calling ${provider} API with model: ${model}`);
-  
-  const response = await fetch(url, {
-    method: "POST",
-    headers: config.getHeaders(apiKey),
-    body: JSON.stringify(config.getBody(model, systemPrompt, userPrompt, tools)),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    console.error(`${provider} API error:`, response.status, text);
-    throw new Error(`${provider} API error: ${response.status} - ${text}`);
-  }
-
-  const data = await response.json();
-  console.log(`${provider} response received`);
-  
-  return config.extractContent(data, !!tools);
-}
 
 async function evaluateQualityScore(
   supabase: any, 
@@ -579,10 +408,10 @@ EVALÚA basándote en TODA esta información. Sé específico.`;
   let result: any;
   
   if (provider === "openai" || provider === "lovable") {
-    result = await callAI(provider, model, apiKey, systemPrompt, prompt, tools);
+    result = await callAISingle(provider, model, apiKey, systemPrompt, prompt, tools);
   } else {
     // For providers without native tool support, parse JSON response
-    const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
+    const rawResult = await callAISingle(provider, model, apiKey, systemPrompt, prompt);
     try {
       const jsonMatch = typeof rawResult === 'string' 
         ? rawResult.match(/\{[\s\S]*\}/) 
@@ -716,9 +545,9 @@ Detecta eventos que podrían haberse producido pero no se registraron.`;
   let result: any;
   
   if (provider === "openai" || provider === "lovable") {
-    result = await callAI(provider, model, apiKey, systemPrompt, prompt, tools);
+    result = await callAISingle(provider, model, apiKey, systemPrompt, prompt, tools);
   } else {
-    const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
+    const rawResult = await callAISingle(provider, model, apiKey, systemPrompt, prompt);
     try {
       result = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
     } catch {
@@ -855,9 +684,9 @@ Detecta patrones de fraude o gaming del sistema.`;
   let result: any;
   
   if (provider === "openai" || provider === "lovable") {
-    result = await callAI(provider, model, apiKey, systemPrompt, prompt, tools);
+    result = await callAISingle(provider, model, apiKey, systemPrompt, prompt, tools);
   } else {
-    const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
+    const rawResult = await callAISingle(provider, model, apiKey, systemPrompt, prompt);
     try {
       result = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
     } catch {
@@ -968,9 +797,9 @@ Genera 3-5 misiones nuevas y relevantes para creadores de contenido UGC.`;
   let result: any;
   
   if (provider === "openai" || provider === "lovable") {
-    result = await callAI(provider, model, apiKey, systemPrompt, prompt, tools);
+    result = await callAISingle(provider, model, apiKey, systemPrompt, prompt, tools);
   } else {
-    const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
+    const rawResult = await callAISingle(provider, model, apiKey, systemPrompt, prompt);
     try {
       result = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
     } catch {
@@ -1084,9 +913,9 @@ Sugiere mejoras al sistema de puntos para optimizar engagement y prevenir gaming
   let result: any;
   
   if (provider === "openai" || provider === "lovable") {
-    result = await callAI(provider, model, apiKey, systemPrompt, prompt, tools);
+    result = await callAISingle(provider, model, apiKey, systemPrompt, prompt, tools);
   } else {
-    const rawResult = await callAI(provider, model, apiKey, systemPrompt, prompt);
+    const rawResult = await callAISingle(provider, model, apiKey, systemPrompt, prompt);
     try {
       result = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
     } catch {

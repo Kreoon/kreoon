@@ -30,23 +30,30 @@ export function useSocialNotifications() {
     if (!user?.id) return;
 
     try {
-      // Use any to bypass type checking for new table
-      const { data, error } = await (supabase as any)
+      const { data: raw, error } = await supabase
         .from('social_notifications')
-        .select(`
-          *,
-          actor:profiles!social_notifications_actor_id_fkey(
-            id, full_name, avatar_url, username
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter((n: SocialNotification) => !n.is_read).length || 0);
+      const notificationsData = raw || [];
+      if (notificationsData.length > 0) {
+        const actorIds = [...new Set(notificationsData.map((n: SocialNotification) => n.actor_id).filter(Boolean))];
+        const { data: actors } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, username')
+          .in('id', actorIds);
+        const actorMap = new Map((actors ?? []).map(a => [a.id, a]));
+        notificationsData.forEach((n: SocialNotification) => {
+          (n as any).actor = actorMap.get(n.actor_id) ?? null;
+        });
+      }
+
+      setNotifications(notificationsData);
+      setUnreadCount(notificationsData.filter((n: SocialNotification) => !n.is_read).length || 0);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -121,19 +128,20 @@ export function useSocialNotifications() {
           filter: `user_id=eq.${user.id}`
         },
         async (payload) => {
-          // Fetch the new notification with actor info
-          const { data } = await (supabase as any)
+          const newNotif = payload.new as SocialNotification;
+          const { data } = await supabase
             .from('social_notifications')
-            .select(`
-              *,
-              actor:profiles!social_notifications_actor_id_fkey(
-                id, full_name, avatar_url, username
-              )
-            `)
-            .eq('id', (payload.new as any).id)
+            .select('*')
+            .eq('id', newNotif.id)
             .single();
 
-          if (data) {
+          if (data && newNotif.actor_id) {
+            const { data: actor } = await supabase
+              .from('profiles')
+              .select('id, full_name, avatar_url, username')
+              .eq('id', newNotif.actor_id)
+              .single();
+            (data as any).actor = actor ?? null;
             setNotifications(prev => [data as SocialNotification, ...prev]);
             setUnreadCount(prev => prev + 1);
           }

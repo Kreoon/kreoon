@@ -1,74 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
+import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Get module AI configuration with validation
-async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-  
-  const { data: moduleData } = await supabase
-    .from("organization_ai_modules")
-    .select("is_active, provider, model")
-    .eq("organization_id", organizationId)
-    .eq("module_key", moduleKey)
-    .maybeSingle();
-  
-  if (!moduleData?.is_active) {
-    throw new Error(`MODULE_INACTIVE:${moduleKey}`);
-  }
-  
-  let provider = moduleData?.provider || "lovable";
-  let model = moduleData?.model || "";
-  let apiKey: string | null = null;
-  
-  // Ensure model has correct format for image generation
-  // The allowed image models are: google/gemini-2.5-flash-image-preview, google/gemini-3-pro-image-preview, gpt-image-1, dall-e-3
-  const validImageModels = [
-    "google/gemini-2.5-flash-image-preview",
-    "google/gemini-3-pro-image-preview", 
-    "gpt-image-1",
-    "dall-e-3"
-  ];
-  
-  if (!model || !validImageModels.includes(model)) {
-    // Default to Gemini image model if invalid or not an image model
-    model = "google/gemini-2.5-flash-image-preview";
-    provider = "lovable";
-  }
-  
-  if (provider === "openai") {
-    const { data: providerData } = await supabase
-      .from("organization_ai_providers")
-      .select("api_key_encrypted")
-      .eq("organization_id", organizationId)
-      .eq("provider_key", "openai")
-      .eq("is_enabled", true)
-      .maybeSingle();
-    
-    if (providerData?.api_key_encrypted) {
-      apiKey = providerData.api_key_encrypted;
-    } else {
-      provider = "lovable";
-      model = "google/gemini-2.5-flash-image-preview";
-    }
-  }
-  
-  if (provider === "lovable" || provider === "gemini") {
-    apiKey = lovableApiKey || null;
-    provider = "lovable";
-  }
-  
-  if (!apiKey) {
-    throw new Error("No hay API key configurada para el proveedor de IA");
-  }
-  
-  return { provider, model, apiKey };
-}
+const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-exp-image-generation";
 
 // Clean and normalize prompt for image generation
 function cleanPromptForImageGen(rawPrompt: string): string {
@@ -254,10 +194,8 @@ serve(async (req) => {
         }
       }
     } else {
-      // Lovable/Gemini
-      const messages: any[] = [];
+      // Gemini image generation (direct API)
       const contentParts: any[] = [{ type: "text", text: cleanedPrompt }];
-
       if (referenceImage) {
         contentParts.push({ type: "image_url", image_url: { url: referenceImage } });
       }
@@ -265,20 +203,15 @@ serve(async (req) => {
         contentParts.push({ type: "image_url", image_url: { url: productImage } });
       }
 
-      messages.push({
-        role: "user",
-        content: contentParts.length > 1 ? contentParts : cleanedPrompt
-      });
-
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${aiConfig.apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: aiConfig.model || "google/gemini-2.5-flash-image-preview",
-          messages,
+          model: aiConfig.model === "gemini-2.5-flash-image-preview" ? aiConfig.model : GEMINI_IMAGE_MODEL,
+          messages: [{ role: "user", content: contentParts.length > 1 ? contentParts : cleanedPrompt }],
           modalities: ["image", "text"],
           generation_config: {
             image_format: "png",

@@ -407,19 +407,29 @@ export default function ContentBoard() {
 
       setClients(clientsList?.map(c => ({ id: c.id, name: c.name })) || []);
 
-      // Products only from clients in this org
-      const { data: productsList } = await supabase
-        .from('products')
-        .select('id, name, client_id, clients!inner(name, organization_id)')
-        .eq('clients.organization_id', currentOrgId)
-        .order('name');
+      // Products only from clients in this org (sin join clients() para evitar 400 con muchos IDs)
+      const orgClientIds = clientsList?.map(c => c.id) ?? [];
+      const clientMap = new Map(clientsList?.map(c => [c.id, c.name]) ?? []);
+      let productsList: any[] = [];
+      if (orgClientIds.length > 0) {
+        const CHUNK = 50;
+        for (let i = 0; i < orgClientIds.length; i += CHUNK) {
+          const chunk = orgClientIds.slice(i, i + CHUNK);
+          const { data } = await supabase
+            .from('products')
+            .select('id, name, client_id')
+            .in('client_id', chunk)
+            .order('name');
+          if (data?.length) productsList.push(...data);
+        }
+      }
 
       setProducts(
-        productsList?.map(p => ({
+        productsList.map((p: any) => ({
           id: p.id,
           name: p.name,
-          client_name: (p.clients as any)?.name,
-        })) || []
+          client_name: clientMap.get(p.client_id),
+        }))
       );
     };
 

@@ -118,7 +118,6 @@ export default function ExplorePage() {
       const { data: posts } = await (supabase as any)
         .from('portfolio_posts')
         .select('id, media_url, media_type, likes_count, views_count, user_id')
-        .eq('visibility', 'public')
         .gte('created_at', weekAgo.toISOString())
         .order('likes_count', { ascending: false })
         .limit(24);

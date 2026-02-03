@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
@@ -32,10 +33,12 @@ import {
   RefreshCw,
   FileSearch,
   AlertCircle,
+  Search,
 } from "lucide-react";
 
 
 import { parseProductResearch, formatResearchForPrompt } from "@/lib/productResearchParser";
+import { AIFeedbackWidget } from "@/components/ai/AIFeedbackWidget";
 
 interface Product {
   id: string;
@@ -509,6 +512,16 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated, organiz
     research: "",
   });
   const [docsLoaded, setDocsLoaded] = useState(false);
+  const [lastExecutionId, setLastExecutionId] = useState<string | null>(null);
+  const [feedbackDismissed, setFeedbackDismissed] = useState(false);
+  const [usePerplexity, setUsePerplexity] = useState(false);
+  const [perplexityQueries, setPerplexityQueries] = useState({
+    trends: true,
+    hooks: true,
+    competitors: false,
+    audience: false,
+  });
+  const [customPerplexityQuery, setCustomPerplexityQuery] = useState("");
 
   const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([
     { key: "script", label: "Guión", status: "pending" },
@@ -978,7 +991,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
     type: "script" | "editor" | "strategist" | "trafficker",
     customPrompt: string,
     previousScript?: string
-  ): Promise<string> => {
+  ): Promise<{ script: string; executionId?: string }> => {
     const baseContext = buildBaseContext();
     
     let fullPrompt = `${customPrompt}\n\n---\nCONTEXTO:\n${baseContext}`;
@@ -1001,6 +1014,16 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           ideal_avatar: product?.ideal_avatar,
           sales_angles: product?.sales_angles,
         },
+        script_params: {
+          sales_angle: formData.sales_angle,
+          target_country: formData.target_country,
+          ideal_avatar: formData.ideal_avatar,
+          platform: "TikTok",
+          product_category: product?.name,
+        },
+        use_perplexity: usePerplexity,
+        perplexity_queries: usePerplexity ? perplexityQueries : undefined,
+        custom_perplexity_query: usePerplexity && customPerplexityQuery.trim() ? customPerplexityQuery.trim() : undefined,
         generation_type: type,
         ai_provider: "lovable",
         ai_model: formData.ai_model,
@@ -1017,7 +1040,10 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
     
     if (data.error) throw new Error(data.error);
 
-    return data.script || data.result || "";
+    return {
+      script: data.script || data.result || "",
+      executionId: data.execution_id,
+    };
   };
 
   const handleGenerate = async () => {
@@ -1040,6 +1066,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
     }
 
     setLoading(true);
+    setFeedbackDismissed(false);
     resetSteps();
 
     const generatedContent: GeneratedContent = {
@@ -1060,30 +1087,40 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
     };
 
     try {
+      let lastExecutionIdFromRun: string | undefined;
       // Step 1: Generate Script
       updateStepStatus("script", "generating");
-      generatedContent.script = await generateContent("script", formData.script_prompt);
+      const scriptResult = await generateContent("script", formData.script_prompt);
+      generatedContent.script = scriptResult.script;
+      lastExecutionIdFromRun = scriptResult.executionId;
       updateStepStatus("script", "done");
       emitProgress({ script: generatedContent.script });
 
       // Step 2: Generate Editor Guidelines
       updateStepStatus("editor", "generating");
-      generatedContent.editor_guidelines = await generateContent("editor", formData.editor_prompt, generatedContent.script);
+      const editorResult = await generateContent("editor", formData.editor_prompt, generatedContent.script);
+      generatedContent.editor_guidelines = editorResult.script;
+      lastExecutionIdFromRun = editorResult.executionId ?? lastExecutionIdFromRun;
       updateStepStatus("editor", "done");
       emitProgress({ editor_guidelines: generatedContent.editor_guidelines });
 
       // Step 3: Generate Strategist Guidelines
       updateStepStatus("strategist", "generating");
-      generatedContent.strategist_guidelines = await generateContent("strategist", formData.strategist_prompt, generatedContent.script);
+      const strategistResult = await generateContent("strategist", formData.strategist_prompt, generatedContent.script);
+      generatedContent.strategist_guidelines = strategistResult.script;
+      lastExecutionIdFromRun = strategistResult.executionId ?? lastExecutionIdFromRun;
       updateStepStatus("strategist", "done");
       emitProgress({ strategist_guidelines: generatedContent.strategist_guidelines });
 
       // Step 4: Generate Trafficker Guidelines
       updateStepStatus("trafficker", "generating");
-      generatedContent.trafficker_guidelines = await generateContent("trafficker", formData.trafficker_prompt, generatedContent.script);
+      const traffickerResult = await generateContent("trafficker", formData.trafficker_prompt, generatedContent.script);
+      generatedContent.trafficker_guidelines = traffickerResult.script;
+      lastExecutionIdFromRun = traffickerResult.executionId ?? lastExecutionIdFromRun;
       updateStepStatus("trafficker", "done");
       emitProgress({ trafficker_guidelines: generatedContent.trafficker_guidelines });
 
+      if (lastExecutionIdFromRun) setLastExecutionId(lastExecutionIdFromRun);
       toast({
         title: "Contenido generado exitosamente",
         description: `Guión y pautas generados con IA`,
@@ -1486,6 +1523,75 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         />
       </div>
 
+      {/* Toggle de Perplexity */}
+      <div className="space-y-4 pt-4 border-t">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-500/20 rounded-lg">
+              <Search className="w-5 h-5 text-purple-400" />
+            </div>
+            <div>
+              <p className="font-medium">Investigación en tiempo real</p>
+              <p className="text-sm text-muted-foreground">
+                Usa Perplexity para buscar tendencias y hooks actuales
+              </p>
+            </div>
+          </div>
+          <Switch checked={usePerplexity} onCheckedChange={setUsePerplexity} />
+        </div>
+
+        {usePerplexity && (
+          <div className="ml-4 space-y-2 animate-in slide-in-from-top-2">
+            <p className="text-sm font-medium text-muted-foreground">¿Qué investigar?</p>
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={perplexityQueries.trends ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setPerplexityQueries((q) => ({ ...q, trends: !q.trends }))}
+              >
+                📈 Tendencias actuales
+              </Badge>
+              <Badge
+                variant={perplexityQueries.hooks ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setPerplexityQueries((q) => ({ ...q, hooks: !q.hooks }))}
+              >
+                🎣 Hooks efectivos
+              </Badge>
+              <Badge
+                variant={perplexityQueries.competitors ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setPerplexityQueries((q) => ({ ...q, competitors: !q.competitors }))}
+              >
+                🏢 Competencia
+              </Badge>
+              <Badge
+                variant={perplexityQueries.audience ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setPerplexityQueries((q) => ({ ...q, audience: !q.audience }))}
+              >
+                👥 Audiencia
+              </Badge>
+            </div>
+
+            <Collapsible>
+              <CollapsibleTrigger className="text-sm text-purple-400 hover:text-purple-300">
+                + Agregar búsqueda personalizada
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <Textarea
+                  placeholder="Ej: ¿Cuáles son los challenges virales de TikTok esta semana relacionados con skincare?"
+                  value={customPerplexityQuery}
+                  onChange={(e) => setCustomPerplexityQuery(e.target.value)}
+                  className="mt-2"
+                  rows={2}
+                />
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        )}
+      </div>
+
       {/* Custom Prompts Section */}
       <Collapsible open={promptsOpen} onOpenChange={setPromptsOpen}>
         <div className="flex gap-2">
@@ -1601,6 +1707,15 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </>
         )}
       </Button>
+
+      {lastExecutionId && !feedbackDismissed && (
+        <div className="mt-4">
+          <AIFeedbackWidget
+            executionId={lastExecutionId}
+            onClose={() => setFeedbackDismissed(true)}
+          />
+        </div>
+      )}
     </div>
   );
 }

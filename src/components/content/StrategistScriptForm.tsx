@@ -90,6 +90,13 @@ interface ScriptFormData {
   use_perplexity: boolean;
 }
 
+interface PerplexityQueriesState {
+  trends: boolean;
+  hooks: boolean;
+  competitors: boolean;
+  audience: boolean;
+}
+
 interface GenerationStep {
   key: "script" | "editor" | "strategist" | "trafficker" | "designer" | "admin";
   label: string;
@@ -1184,6 +1191,13 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     target_platform: "",
     use_perplexity: false,
   });
+  const [perplexityQueries, setPerplexityQueries] = useState<PerplexityQueriesState>({
+    trends: true,
+    hooks: true,
+    competitors: false,
+    audience: false,
+  });
+  const [customPerplexityQuery, setCustomPerplexityQuery] = useState("");
 
   // Update prompts when custom prompts are loaded
   useEffect(() => {
@@ -1729,6 +1743,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         ai_provider: "gemini",
         ai_model: formData.ai_model,
         use_perplexity: formData.use_perplexity,
+        perplexity_queries: formData.use_perplexity ? perplexityQueries : undefined,
+        custom_perplexity_query: formData.use_perplexity && customPerplexityQuery.trim() ? customPerplexityQuery.trim() : undefined,
         script_params: {
           cta: formData.cta,
           sales_angle: formData.sales_angle,
@@ -1738,6 +1754,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           video_duration: formData.video_duration,
           target_platform: formData.target_platform,
           ideal_avatar: formData.ideal_avatar,
+          platform: formData.target_platform || "TikTok",
+          product_category: product?.name,
           video_strategies: formData.video_strategies,
           reference_transcription: formData.reference_transcription,
           hooks: formData.hooks,
@@ -2089,16 +2107,16 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Toggle Perplexity Research */}
-        <div className="space-y-2 md:col-span-2">
-          <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
+        <div className="space-y-4 md:col-span-2">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Search className="h-5 w-5 text-primary" />
+              <div className="p-2 bg-purple-500/20 rounded-lg">
+                <Search className="h-5 w-5 text-purple-400" />
               </div>
               <div>
-                <Label className="text-sm font-medium">Pre-investigación con Perplexity</Label>
+                <Label className="text-sm font-medium">Investigación en tiempo real</Label>
                 <p className="text-xs text-muted-foreground">
-                  Busca tendencias y datos actuales antes de generar el guión
+                  Usa Perplexity para buscar tendencias y hooks actuales
                 </p>
               </div>
             </div>
@@ -2107,6 +2125,57 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
               onCheckedChange={(checked) => setFormData({ ...formData, use_perplexity: checked })}
             />
           </div>
+
+          {formData.use_perplexity && (
+            <div className="ml-4 space-y-2 animate-in slide-in-from-top-2">
+              <p className="text-sm font-medium text-muted-foreground">¿Qué investigar?</p>
+              <div className="flex flex-wrap gap-2">
+                <Badge
+                  variant={perplexityQueries.trends ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => setPerplexityQueries((q) => ({ ...q, trends: !q.trends }))}
+                >
+                  📈 Tendencias actuales
+                </Badge>
+                <Badge
+                  variant={perplexityQueries.hooks ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => setPerplexityQueries((q) => ({ ...q, hooks: !q.hooks }))}
+                >
+                  🎣 Hooks efectivos
+                </Badge>
+                <Badge
+                  variant={perplexityQueries.competitors ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => setPerplexityQueries((q) => ({ ...q, competitors: !q.competitors }))}
+                >
+                  🏢 Competencia
+                </Badge>
+                <Badge
+                  variant={perplexityQueries.audience ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => setPerplexityQueries((q) => ({ ...q, audience: !q.audience }))}
+                >
+                  👥 Audiencia
+                </Badge>
+              </div>
+
+              <Collapsible>
+                <CollapsibleTrigger className="text-sm text-purple-400 hover:text-purple-300">
+                  + Agregar búsqueda personalizada
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <Textarea
+                    placeholder="Ej: ¿Cuáles son los challenges virales de TikTok esta semana relacionados con skincare?"
+                    value={customPerplexityQuery}
+                    onChange={(e) => setCustomPerplexityQuery(e.target.value)}
+                    className="mt-2"
+                    rows={2}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          )}
         </div>
 
         {/* Estructura Narrativa */}

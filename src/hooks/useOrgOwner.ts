@@ -12,7 +12,7 @@ export interface OrgOwnerStatus {
   loading: boolean;
 }
 
-const ORG_OWNER_TIMEOUT_MS = 8000;
+const ORG_OWNER_TIMEOUT_MS = 15000;
 
 type PromiseLikeAny<T> = PromiseLike<T>;
 
@@ -101,7 +101,8 @@ export function useOrgOwner(): OrgOwnerStatus {
         setCurrentOrgName(orgRes.data?.name || null);
       } catch (error) {
         // IMPORTANT: never leave the app in an infinite loading state
-        console.error('Error checking org owner status:', error);
+        const isTimeout = error instanceof Error && error.message?.startsWith('timeout:');
+        if (!isTimeout) console.error('Error checking org owner status:', error);
         if (cancelled) return;
         setIsOrgOwner(false);
         setCurrentOrgId(orgId);

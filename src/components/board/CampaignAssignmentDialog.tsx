@@ -74,7 +74,7 @@ export function CampaignAssignmentDialog({
         .select('id')
         .eq('organization_id', organizationId)
         .eq('client_id', content.client_id)
-        .single();
+        .maybeSingle();
 
       let query = supabase
         .from('marketing_campaigns')

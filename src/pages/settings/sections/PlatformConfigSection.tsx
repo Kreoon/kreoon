@@ -4,6 +4,7 @@ import { AppSettingsManagement } from '@/components/settings/AppSettingsManageme
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
 import { TokenGiftingPanel } from '@/components/settings/TokenGiftingPanel';
+import { AITokensOrgAdmin } from '@/components/settings/ai/AITokensOrgAdmin';
 import { PlatformMetricsPanel } from '@/components/settings/PlatformMetricsPanel';
 import { KreoonIAWebhooksSettings } from '@/components/settings/KreoonIAWebhooksSettings';
 
@@ -57,8 +58,9 @@ export default function PlatformConfigSection() {
           <PlatformMetricsPanel />
         </TabsContent>
 
-        <TabsContent value="tokens">
+        <TabsContent value="tokens" className="space-y-6">
           <TokenGiftingPanel />
+          <AITokensOrgAdmin />
         </TabsContent>
 
         <TabsContent value="appearance">

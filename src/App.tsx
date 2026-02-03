@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { KreoonToastProvider } from "@/components/ui/kreoon";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -18,6 +18,13 @@ import { TrackingProvider } from "@/contexts/TrackingContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
+import { ScrollToTopButton } from "@/components/ui/kreoon";
+import { HelmetProvider } from "react-helmet-async";
+import { SkipLink } from "@/lib/accessibility";
+import { ErrorBoundary } from "@/components/error";
+import { SystemStatusBanner } from "@/components/ui/kreoon";
+import { useSystemStatus } from "@/hooks/useSystemStatus";
 import Auth from "./pages/Auth";
 import Content from "./pages/Content";
 import Creators from "./pages/Creators";
@@ -52,6 +59,8 @@ import HomePage from "./pages/HomePage";
 import Register from "./pages/Register";
 import OrgRegister from "./pages/auth/OrgRegister";
 import ResetPassword from "./pages/ResetPassword";
+import Maintenance from "./pages/Maintenance";
+import ComingSoon from "./pages/ComingSoon";
 import { MainLayout } from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient({
@@ -89,7 +98,8 @@ function ProfileRedirect() {
 
 function AppRoutes() {
   const { impersonationKey } = useImpersonation();
-  
+  useScrollToTop();
+
   // Listen for new content notifications (strategists/admins only)
   useNewContentNotifications();
   
@@ -133,40 +143,65 @@ function AppRoutes() {
       <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><Suspense fallback={<PageFallback />}><ClientDashboard /></Suspense></MainLayout></ProtectedRoute>} />
       <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><Suspense fallback={<PageFallback />}><ClientContentBoard /></Suspense></MainLayout></ProtectedRoute>} />
       <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor']}><MainLayout><Suspense fallback={<PageFallback />}><Ranking /></Suspense></MainLayout></ProtectedRoute>} />
+      
+      {/* Utility pages */}
+      <Route path="/maintenance" element={<Maintenance />} />
+      <Route path="/coming-soon" element={<ComingSoon />} />
+      
+      {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
 function AppContent() {
+  const systemStatus = useSystemStatus();
+
   return (
-    <BrowserRouter>
-      <BrandingProvider>
-        <AuthProvider>
-          <TrackingProvider>
-            <ImpersonationProvider>
-              <TrialProvider>
-                <UnsavedChangesProvider>
-                  <AchievementNotificationProvider>
-                    <StrategistClientProvider>
-                      <AICopilotProvider>
-                        <TooltipProvider delayDuration={0}>
-                          <ImpersonationBanner />
-                          <Toaster />
-                          <Sonner />
-                          <UpdatePrompt />
-                          <AppRoutes />
-                        </TooltipProvider>
-                      </AICopilotProvider>
-                    </StrategistClientProvider>
-                  </AchievementNotificationProvider>
-                </UnsavedChangesProvider>
-              </TrialProvider>
-            </ImpersonationProvider>
-          </TrackingProvider>
-        </AuthProvider>
-      </BrandingProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <HelmetProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <BrandingProvider>
+            <AuthProvider>
+              <TrackingProvider>
+                <ImpersonationProvider>
+                  <TrialProvider>
+                    <UnsavedChangesProvider>
+                      <AchievementNotificationProvider>
+                        <StrategistClientProvider>
+                          <AICopilotProvider>
+                            <TooltipProvider delayDuration={0}>
+                              <SkipLink />
+                              
+                              {/* Banner de estado del sistema */}
+                              {systemStatus && systemStatus.status !== "operational" && (
+                                <SystemStatusBanner
+                                  status={systemStatus.status}
+                                  message={systemStatus.message}
+                                  link={systemStatus.link}
+                                  dismissible
+                                />
+                              )}
+                              
+                              <ImpersonationBanner />
+                              <Toaster />
+                              <KreoonToastProvider />
+                              <UpdatePrompt />
+                              <ScrollToTopButton />
+                              <AppRoutes />
+                            </TooltipProvider>
+                          </AICopilotProvider>
+                        </StrategistClientProvider>
+                      </AchievementNotificationProvider>
+                    </UnsavedChangesProvider>
+                  </TrialProvider>
+                </ImpersonationProvider>
+              </TrackingProvider>
+            </AuthProvider>
+          </BrandingProvider>
+        </BrowserRouter>
+      </HelmetProvider>
+    </ErrorBoundary>
   );
 }
 

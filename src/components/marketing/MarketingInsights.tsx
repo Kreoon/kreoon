@@ -74,25 +74,32 @@ export function MarketingInsights({ organizationId, selectedClientId }: Marketin
     try {
       let query = supabase
         .from('marketing_ai_insights')
-        .select(`
-          *,
-          related_channel:traffic_channels(channel_name),
-          related_campaign:marketing_campaigns(name)
-        `)
+        .select('*')
         .eq('organization_id', organizationId)
         .eq('is_dismissed', false);
-      
-      // Filter by client if selected
       if (selectedClientId) {
         query = query.eq('client_id', selectedClientId);
       }
-      
-      const { data, error } = await query
-        .order('created_at', { ascending: false })
-        .limit(20);
+      const { data: raw, error } = await query.order('created_at', { ascending: false }).limit(20);
 
       if (error) throw error;
-      setInsights(data || []);
+
+      const data = raw || [];
+      if (data.length > 0) {
+        const channelIds = [...new Set(data.map((i: any) => i.related_channel_id).filter(Boolean))];
+        const campaignIds = [...new Set(data.map((i: any) => i.related_campaign_id).filter(Boolean))];
+        const [chRes, campRes] = await Promise.all([
+          channelIds.length > 0 ? supabase.from('traffic_channels').select('id, channel_name').in('id', channelIds) : { data: [] },
+          campaignIds.length > 0 ? supabase.from('marketing_campaigns').select('id, name').in('id', campaignIds) : { data: [] },
+        ]);
+        const channelMap = new Map((chRes.data ?? []).map((c) => [c.id, { channel_name: c.channel_name }]));
+        const campaignMap = new Map((campRes.data ?? []).map((c) => [c.id, { name: c.name }]));
+        data.forEach((i: any) => {
+          i.related_channel = i.related_channel_id ? channelMap.get(i.related_channel_id) ?? null : null;
+          i.related_campaign = i.related_campaign_id ? campaignMap.get(i.related_campaign_id) ?? null : null;
+        });
+      }
+      setInsights(data);
     } catch (error) {
       console.error('Error fetching insights:', error);
       toast.error('Error al cargar insights');

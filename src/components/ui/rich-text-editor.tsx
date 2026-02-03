@@ -94,7 +94,7 @@ export function RichTextEditor({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       Placeholder.configure({ placeholder }),
       Link.configure({
         openOnClick: false,
@@ -494,7 +494,7 @@ export function RichTextEditor({
 export function RichTextViewer({ content, className }: { content: string; className?: string }) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       Link.configure({
         openOnClick: true,
         HTMLAttributes: {

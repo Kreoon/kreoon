@@ -1,35 +1,86 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAIWithFallback, getAPIKey, corsHeaders } from "../_shared/ai-providers.ts";
+import { searchWithPerplexity } from "../_shared/perplexity-client.ts";
+import { checkAndDeductTokens, insufficientTokensResponse } from "../_shared/ai-token-guard.ts";
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, currentScript, productName, spherePhase } = await req.json();
-    
-    // Try Gemini first, then OpenAI
-    const GOOGLE_AI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY');
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    
-    if (!GOOGLE_AI_API_KEY && !OPENAI_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: 'No AI API keys configured. Set GOOGLE_AI_API_KEY or OPENAI_API_KEY' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    const { messages, currentScript, productName, spherePhase, organizationId, use_perplexity } = await req.json();
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Validar y deducir tokens de IA (si la org tiene organization_ai_tokens)
+    if (organizationId) {
+      const estimatedCost = use_perplexity ? 145 : 25; // script_chat (25) + research (120) si Perplexity
+      const tokenCheck = await checkAndDeductTokens(
+        supabase,
+        organizationId,
+        "script_chat",
+        estimatedCost
       );
+      if (!tokenCheck.allowed) {
+        return insufficientTokensResponse(tokenCheck);
+      }
+    }
+
+    const googleKey = getAPIKey("gemini");
+    const openaiKey = getAPIKey("openai");
+    const anthropicKey = getAPIKey("anthropic");
+    const perplexityKey = getAPIKey("perplexity");
+
+    const configs = [
+      ...(googleKey ? [{ provider: "gemini", model: "gemini-2.5-flash", apiKey: googleKey }] : []),
+      ...(openaiKey ? [{ provider: "openai", model: "gpt-4o-mini", apiKey: openaiKey }] : []),
+      ...(anthropicKey ? [{ provider: "anthropic", model: "claude-sonnet-4-20250514", apiKey: anthropicKey }] : []),
+      ...(perplexityKey ? [{ provider: "perplexity", model: "llama-3.1-sonar-large-128k-online", apiKey: perplexityKey }] : []),
+    ];
+
+    if (configs.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "No AI API keys configured. Set GOOGLE_AI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY or PERPLEXITY_API_KEY" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let perplexityContext = "";
+    if (use_perplexity) {
+      const userMessage = Array.isArray(messages) && messages.length > 0
+        ? (messages[messages.length - 1] as any)?.content || ""
+        : "";
+      if (userMessage.trim()) {
+        try {
+          const result = await searchWithPerplexity(supabase, organizationId || "default", userMessage, {
+            recencyFilter: "week",
+            maxTokens: 1500,
+          });
+          if (result.content) {
+            perplexityContext = `
+
+INVESTIGACIÓN EN TIEMPO REAL (Perplexity):
+${result.content}
+
+USA esta información para responder con datos actuales y relevantes.`;
+          }
+        } catch (e) {
+          console.warn("[script-chat] Perplexity search failed:", (e as Error).message);
+        }
+      }
     }
 
     const systemPrompt = `Eres un experto en copywriting y guiones de video UGC. 
 Tu tarea es ayudar a mejorar y refinar guiones de video basándote en las instrucciones del usuario.
 
 CONTEXTO:
-- Producto: ${productName || 'No especificado'}
-- Fase del embudo: ${spherePhase || 'No especificada'}
+- Producto: ${productName || "No especificado"}
+- Fase del embudo: ${spherePhase || "No especificada"}
+${perplexityContext}
 
 GUIÓN ACTUAL:
 ${currentScript}
@@ -46,84 +97,40 @@ INSTRUCCIONES CRÍTICAS:
 
 IMPORTANTE: Tu respuesta debe ser ÚNICAMENTE el guión completo modificado, sin comentarios ni explicaciones antes o después.`;
 
-    let response;
-    let usedProvider = '';
+    const userPrompt =
+      Array.isArray(messages) && messages.length > 0
+        ? messages.map((m: any) => `${m.role}: ${m.content || ""}`).join("\n\n")
+        : "Usuario: Por favor mejora el guión.";
 
-    // Try Gemini first
-    if (GOOGLE_AI_API_KEY) {
-      response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GOOGLE_AI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages
-          ],
-        }),
-      });
-      usedProvider = 'gemini';
-    }
-
-    // Fallback to OpenAI
-    if ((!response || !response.ok) && OPENAI_API_KEY) {
-      console.log('[script-chat] Falling back to OpenAI');
-      response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages
-          ],
-        }),
-      });
-      usedProvider = 'openai';
-    }
-
-    if (!response || !response.ok) {
-      const errorText = response ? await response.text() : 'No response';
-      console.error('AI error:', response?.status, errorText);
-      
-      if (response?.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      if (response?.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Payment required. Please add credits to your workspace.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      throw new Error(`AI error: ${response?.status}`);
-    }
-
-    const data = await response.json();
-    const assistantContent = data.choices?.[0]?.message?.content || 'No se pudo generar una respuesta';
+    const { result, usedProvider } = await callAIWithFallback(configs, systemPrompt, userPrompt);
+    const assistantContent = typeof result === "string" ? result : String(result ?? "No se pudo generar una respuesta");
 
     console.log(`[script-chat] Success using ${usedProvider}`);
 
+    // Nota: los tokens ya se dedujeron al inicio con checkAndDeductTokens
+
     return new Response(
       JSON.stringify({ content: assistantContent, provider: usedProvider }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (error: unknown) {
-    console.error('Error in script-chat:', error);
+    const err = error as any;
+    if (err?.status === 429) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (err?.status === 402) {
+      return new Response(
+        JSON.stringify({ error: "Payment required. Please add credits to your workspace." }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    console.error("Error in script-chat:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

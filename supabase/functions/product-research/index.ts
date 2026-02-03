@@ -3,9 +3,27 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Pasos del research con dependencias explícitas (mapeo a fases A1/A2/A3/B1/B2/B3)
+const RESEARCH_STEPS = [
+  { id: "market_overview", name: "Panorama de Mercado", dependsOn: [] as string[] },
+  { id: "jtbd", name: "Jobs To Be Done + Dolores/Deseos", dependsOn: ["market_overview"] },
+  { id: "competitors", name: "Análisis de Competencia", dependsOn: ["market_overview"] },
+  { id: "avatars_differentiation", name: "Avatares + Diferenciación + ESFERA + Resumen Ejecutivo", dependsOn: ["jtbd", "competitors"] },
+  { id: "sales_puv_transformation_leadmagnets", name: "Ángulos + PUV + Transformación + Lead Magnets", dependsOn: ["avatars_differentiation"] },
+  { id: "video_creatives", name: "Creativos de Video", dependsOn: ["sales_puv_transformation_leadmagnets"] },
+];
+
+interface ResearchState {
+  productId: string;
+  completedSteps: string[];
+  currentStep: string | null;
+  results: Record<string, unknown>;
+  error?: string;
+}
 
 // Function to fetch document content from URL
 async function fetchDocumentContent(url: string): Promise<string> {
@@ -84,9 +102,303 @@ async function fetchDocumentContent(url: string): Promise<string> {
     return '';
     
   } catch (error) {
-    console.error('[fetchDocumentContent] Error:', error);
-    return '';
+    console.error("[fetchDocumentContent] Error:", error);
+    return "";
   }
+}
+
+/** Ejecuta un paso del research usando Perplexity */
+async function executeResearchStep(
+  stepId: string,
+  baseContext: string,
+  targetMarket: string,
+  _previousResults: Record<string, unknown>,
+  perplexityApiKey: string
+): Promise<{ success: boolean; result?: unknown; error?: string }> {
+  const runPerplexity = async (prompt: string, schema: any, schemaName: string) => {
+    const res = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${perplexityApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar-pro",
+        max_tokens: 4500,
+        temperature: 0.15,
+        messages: [
+          { role: "system", content: "Responde en español. DEVUELVE SOLO JSON válido sin markdown." },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_schema", json_schema: { name: schemaName, schema } },
+      }),
+    });
+    if (!res.ok) throw new Error(`Perplexity HTTP ${res.status}`);
+    const data = await res.json();
+    const content = (data.choices?.[0]?.message?.content || "").toString();
+    const repaired = repairJsonForParse(content.trim());
+    return JSON.parse(repaired);
+  };
+
+  const schemas: Record<string, any> = {
+    market_overview: {
+      type: "object",
+      additionalProperties: false,
+      required: ["market_overview"],
+      properties: {
+        market_overview: {
+          type: "object",
+          additionalProperties: true,
+          properties: {
+            marketSize: { type: "string" },
+            growthTrend: { type: "string" },
+            marketState: { type: "string" },
+            marketStateExplanation: { type: "string" },
+            macroVariables: { type: "array", minItems: 5, items: { type: "string" } },
+            awarenessLevel: { type: "string" },
+            summary: { type: "string" },
+            opportunities: { type: "array", minItems: 3, items: { type: "string" } },
+            threats: { type: "array", minItems: 3, items: { type: "string" } },
+          },
+        },
+      },
+    },
+    jtbd: {
+      type: "object",
+      additionalProperties: false,
+      required: ["jtbd"],
+      properties: {
+        jtbd: {
+          type: "object",
+          additionalProperties: true,
+          properties: {
+            functional: { type: "string" },
+            emotional: { type: "string" },
+            social: { type: "string" },
+            pains: { type: "array", minItems: 10, maxItems: 10, items: { type: "object", additionalProperties: true } },
+            desires: { type: "array", minItems: 10, maxItems: 10, items: { type: "object", additionalProperties: true } },
+            objections: { type: "array", minItems: 10, maxItems: 10, items: { type: "object", additionalProperties: true } },
+            insights: { type: "array", minItems: 10, items: { type: "string" } },
+          },
+        },
+      },
+    },
+    competitors: {
+      type: "object",
+      additionalProperties: false,
+      required: ["competitors"],
+      properties: {
+        competitors: {
+          type: "array",
+          minItems: 10,
+          maxItems: 10,
+          items: { type: "object", additionalProperties: true },
+        },
+      },
+    },
+    avatars_differentiation: {
+      type: "object",
+      additionalProperties: false,
+      required: ["avatars", "differentiation", "esferaInsights", "executiveSummary"],
+      properties: {
+        avatars: { type: "array", minItems: 5, maxItems: 5, items: { type: "object", additionalProperties: true } },
+        differentiation: { type: "object", additionalProperties: true },
+        esferaInsights: { type: "object", additionalProperties: true },
+        executiveSummary: { type: "object", additionalProperties: true },
+      },
+    },
+    sales_puv_transformation_leadmagnets: {
+      type: "object",
+      additionalProperties: false,
+      required: ["salesAngles", "puv", "transformation", "leadMagnets"],
+      properties: {
+        salesAngles: { type: "array", minItems: 20, maxItems: 20, items: { type: "object", additionalProperties: true } },
+        puv: { type: "object", additionalProperties: true },
+        transformation: { type: "object", additionalProperties: true },
+        leadMagnets: { type: "array", minItems: 3, maxItems: 3, items: { type: "object", additionalProperties: true } },
+      },
+    },
+    video_creatives: {
+      type: "object",
+      additionalProperties: false,
+      required: ["creatives"],
+      properties: {
+        creatives: { type: "array", minItems: 30, maxItems: 30, items: { type: "object", additionalProperties: true } },
+      },
+    },
+  };
+
+  const prompts: Record<string, string> = {
+    market_overview: `Devuelve SOLO JSON válido (sin markdown) usando información real y actualizada (búsqueda web).
+${baseContext}
+Objetivo: SOLO panorama de mercado. macroVariables: mínimo 5. opportunities: mínimo 3. threats: mínimo 3.
+Estructura: {"market_overview":{"marketSize":"","growthTrend":"","marketState":"","marketStateExplanation":"","macroVariables":[],"awarenessLevel":"","summary":"","opportunities":[],"threats":[]}}`,
+    jtbd: `Devuelve SOLO JSON válido (sin markdown) usando información real (búsqueda web).
+${baseContext}
+Objetivo: SOLO JTBD. pains: EXACTAMENTE 10. desires: EXACTAMENTE 10. objections: EXACTAMENTE 10. insights: mínimo 10.
+Estructura: {"jtbd":{"functional":"","emotional":"","social":"","pains":[{"pain":"","why":"","impact":""}],"desires":[{"desire":"","emotion":"","idealState":""}],"objections":[{"objection":"","belief":"","counter":""}],"insights":[]}}`,
+    competitors: `Devuelve SOLO JSON válido (sin markdown) usando información real (búsqueda web).
+${baseContext}
+Objetivo: SOLO competencia. competitors: EXACTAMENTE 10 competidores REALES del mercado ${targetMarket} con URLs verificables.`,
+    avatars_differentiation: `Devuelve SOLO JSON válido (sin markdown).
+${baseContext}
+Objetivo: Avatares (5) + Diferenciación + ESFERA + Resumen ejecutivo. avatars: exactamente 5 detallados.`,
+    sales_puv_transformation_leadmagnets: `Devuelve SOLO JSON válido (sin markdown).
+${baseContext}
+Objetivo: 20 ángulos + PUV + transformación + 3 lead magnets. salesAngles: exactamente 20. leadMagnets: exactamente 3.`,
+    video_creatives: `Devuelve SOLO JSON válido (sin markdown).
+${baseContext}
+Objetivo: 30 creativos multi-formato distribuidos por fase ESFERA. creatives: exactamente 30.`,
+  };
+
+  const schema = schemas[stepId];
+  const prompt = prompts[stepId];
+  if (!schema || !prompt) {
+    return { success: false, error: `Unknown step: ${stepId}` };
+  }
+
+  const parsed = await runPerplexity(prompt, schema, stepId);
+  return { success: true, result: parsed };
+}
+
+function repairJsonForParse(str: string): string {
+  let s = str.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim();
+  try {
+    JSON.parse(s);
+    return s;
+  } catch {
+    s = s.replace(/,\s*$/, "");
+    let open = 0,
+      bracket = 0;
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      if (c === "{") open++;
+      else if (c === "}") open--;
+      else if (c === "[") bracket++;
+      else if (c === "]") bracket--;
+    }
+    while (bracket > 0) {
+      s += "]";
+      bracket--;
+    }
+    while (open > 0) {
+      s += "}";
+      open--;
+    }
+    return s;
+  }
+}
+
+/** Guarda progreso parcial en research_progress */
+async function savePartialResults(
+  supabase: any,
+  productId: string,
+  results: Record<string, unknown>,
+  completedSteps: string[]
+) {
+  const { error } = await supabase
+    .from("products")
+    .update({
+      research_progress: {
+        completed_steps: completedSteps,
+        partial_results: results,
+        updated_at: new Date().toISOString(),
+      },
+      brief_status: "in_progress",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", productId);
+
+  if (error) {
+    console.error("[product-research] savePartialResults error:", error);
+  }
+}
+
+/** Consolida resultados parciales en columnas finales del producto */
+async function consolidateFinalResults(
+  supabase: any,
+  productId: string,
+  results: Record<string, unknown>,
+  briefData: any
+) {
+  const r = results as any;
+  const { data: existing } = await supabase
+    .from("products")
+    .select("market_research, competitor_analysis, avatar_profiles, content_strategy, sales_angles_data")
+    .eq("id", productId)
+    .single();
+
+  const existingData = (existing as any) || {};
+
+  const marketResearch: any = (existingData.market_research && typeof existingData.market_research === "object")
+    ? { ...existingData.market_research }
+    : {};
+  const mo = r.market_overview?.market_overview ?? r.market_overview;
+  if (mo) {
+    marketResearch.market_overview = mo;
+  }
+  if (r.jtbd?.jtbd) {
+    marketResearch.jtbd = r.jtbd.jtbd;
+  }
+  marketResearch.generatedAt = new Date().toISOString();
+
+  const competitorAnalysis: any = (existingData.competitor_analysis && typeof existingData.competitor_analysis === "object")
+    ? { ...existingData.competitor_analysis }
+    : {};
+  if (r.competitors?.competitors) {
+    competitorAnalysis.competitors = r.competitors.competitors;
+  }
+  if (r.avatars_differentiation?.differentiation) {
+    competitorAnalysis.differentiation = r.avatars_differentiation.differentiation;
+  }
+  if (Object.keys(competitorAnalysis).length) {
+    competitorAnalysis.generatedAt = new Date().toISOString();
+  }
+
+  const update: Record<string, unknown> = {
+    brief_status: "completed",
+    brief_completed_at: new Date().toISOString(),
+    brief_data: briefData,
+    research_generated_at: new Date().toISOString(),
+    research_progress: null,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (Object.keys(marketResearch).length) update.market_research = marketResearch;
+  if (r.jtbd?.jtbd) update.ideal_avatar = JSON.stringify({ jtbd: r.jtbd.jtbd });
+  if (Object.keys(competitorAnalysis).length) update.competitor_analysis = competitorAnalysis;
+
+  if (r.avatars_differentiation?.avatars) {
+    update.avatar_profiles = {
+      profiles: r.avatars_differentiation.avatars,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+  if (r.avatars_differentiation?.executiveSummary || r.avatars_differentiation?.esferaInsights) {
+    const existingCs = existingData.content_strategy && typeof existingData.content_strategy === "object" ? existingData.content_strategy : {};
+    update.content_strategy = {
+      ...existingCs,
+      executiveSummary: r.avatars_differentiation.executiveSummary || existingCs.executiveSummary || {},
+      esferaInsights: r.avatars_differentiation.esferaInsights || existingCs.esferaInsights || {},
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  const s = r.sales_puv_transformation_leadmagnets;
+  const existingSales = (existingData.sales_angles_data && typeof existingData.sales_angles_data === "object") ? existingData.sales_angles_data : {};
+  if (s || r.video_creatives) {
+    update.sales_angles_data = {
+      ...existingSales,
+      ...(s?.salesAngles && { angles: s.salesAngles }),
+      ...(s?.puv && { puv: s.puv }),
+      ...(s?.transformation && { transformation: s.transformation }),
+      ...(s?.leadMagnets && { leadMagnets: s.leadMagnets }),
+      ...(r.video_creatives?.creatives && { videoCreatives: r.video_creatives.creatives }),
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  await supabase.from("products").update(update).eq("id", productId);
 }
 
 // Prompt completo del Método Esfera - Versión mejorada con más detalle
@@ -597,49 +909,132 @@ IMPORTANTE:
 - Para los competidores, intenta incluir URLs reales de sus sitios web y redes sociales.`;
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { productId, briefData } = await req.json();
+    const body = await req.json();
+    const { productId, briefData, useSteps = true, startFromStep, previousResults } = body;
 
     if (!productId || !briefData) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Product ID and brief data are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: "Product ID and brief data are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+    const perplexityApiKey = Deno.env.get("PERPLEXITY_API_KEY");
     if (!perplexityApiKey) {
-      console.error('PERPLEXITY_API_KEY not configured');
+      console.error("PERPLEXITY_API_KEY not configured");
       return new Response(
-        JSON.stringify({ success: false, error: 'Perplexity API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: "Perplexity API key not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-    if (!lovableApiKey) {
-      console.error('LOVABLE_API_KEY not configured');
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Flujo por pasos (useSteps = true)
+    if (useSteps) {
+      const phase = (briefData?.researchPhase || body?.phase) as "A" | "B" | undefined;
+
+      let productDescription = buildProductDescription(briefData);
+      const targetMarket = briefData.targetMarket || "Latinoamérica (LATAM)";
+      let documentContent = "";
+      if (briefData.documentUrl) {
+        try {
+          documentContent = await fetchDocumentContent(briefData.documentUrl);
+        } catch (e) {
+          console.warn("[product-research] Could not fetch document:", e);
+        }
+      }
+      if (documentContent) {
+        productDescription += `\n\n---\n\n**INFORMACIÓN ADICIONAL DEL DOCUMENTO:**\n\n${documentContent}`;
+      }
+      const baseContext = `Producto (brief resumido):\n${productDescription}\n\nMercado objetivo: ${targetMarket}`;
+
+      const { data: product } = await supabase
+        .from("products")
+        .select("research_progress, market_research, competitor_analysis, avatar_profiles, sales_angles_data")
+        .eq("id", productId)
+        .single();
+
+      const progress = (product as any)?.research_progress;
+      let results: Record<string, unknown> = previousResults || progress?.partial_results || {};
+      let completedSteps: string[] = progress?.completed_steps || [];
+
+      const startIdx = startFromStep
+        ? Math.max(0, RESEARCH_STEPS.findIndex((s) => s.id === startFromStep))
+        : 0;
+
+      for (let i = startIdx; i < RESEARCH_STEPS.length; i++) {
+        const step = RESEARCH_STEPS[i];
+        const depsMet = step.dependsOn.every((d) => completedSteps.includes(d));
+        if (!depsMet) continue;
+
+        console.log(`[product-research] Step ${i + 1}/${RESEARCH_STEPS.length}: ${step.id}`);
+
+        let stepResult: { success: boolean; result?: unknown; error?: string } = { success: false };
+        try {
+          stepResult = await executeResearchStep(
+            step.id,
+            baseContext,
+            targetMarket,
+            results,
+            perplexityApiKey
+          );
+        } catch (e) {
+          stepResult = { success: false, error: e instanceof Error ? e.message : String(e) };
+        }
+
+        if (!stepResult.success) {
+          await savePartialResults(supabase, productId, results, completedSteps);
+          return new Response(
+            JSON.stringify({
+              success: false,
+              completedSteps,
+              failedStep: step.id,
+              error: stepResult.error,
+              partialResults: results,
+            }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        results[step.id] = stepResult.result;
+        completedSteps.push(step.id);
+        await savePartialResults(supabase, productId, results, completedSteps);
+      }
+
+      await consolidateFinalResults(supabase, productId, results, briefData);
+
       return new Response(
-        JSON.stringify({ success: false, error: 'Lovable API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          success: true,
+          completedSteps,
+          phase: phase || "A+B",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Flujo legacy (useSteps = false) - Phase A / B
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!lovableApiKey) {
+      console.error("LOVABLE_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ success: false, error: "Lovable API key not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Build product description from brief data
     let productDescription = buildProductDescription(briefData);
     const targetMarket = briefData.targetMarket || 'Latinoamérica (LATAM)';
-    const phase = (briefData?.researchPhase || (await (async () => {
-      try {
-        const body = await req.clone().json();
-        return body?.phase;
-      } catch {
-        return undefined;
-      }
-    })())) as ('A' | 'B' | undefined);
+    const phase = (briefData?.researchPhase || body?.phase) as "A" | "B" | undefined;
 
     // Try to fetch document content if URL is provided
     let documentContent = '';

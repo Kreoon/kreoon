@@ -4,9 +4,16 @@
  */
 
 export const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+export type AIProviderKey = "gemini" | "openai" | "anthropic" | "perplexity" | "lovable";
+
+export interface AIMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
 
 export interface AIProviderConfig {
   url: string;
@@ -44,7 +51,7 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
         return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
       }
       return data.choices?.[0]?.message?.content || "";
-    }
+    },
   },
   openai: {
     url: "https://api.openai.com/v1/chat/completions",
@@ -73,7 +80,7 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
         return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
       }
       return data.choices?.[0]?.message?.content || "";
-    }
+    },
   },
   anthropic: {
     url: "https://api.anthropic.com/v1/messages",
@@ -88,9 +95,60 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     }),
-    extractContent: (data: any) => data.content?.[0]?.text || ""
-  }
+    extractContent: (data: any) => data.content?.[0]?.text || "",
+  },
+  perplexity: {
+    url: "https://api.perplexity.ai/chat/completions",
+    getHeaders: (apiKey: string) => ({
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    }),
+    getBody: (model: string, systemPrompt: string, userPrompt: string) => ({
+      model: model || "llama-3.1-sonar-large-128k-online",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: 4096,
+      temperature: 0.2,
+      return_citations: true,
+    }),
+    extractContent: (data: any) => data.choices?.[0]?.message?.content || "",
+  },
+  lovable: {
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    getHeaders: (apiKey: string) => AI_PROVIDERS.gemini.getHeaders(apiKey),
+    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) =>
+      AI_PROVIDERS.gemini.getBody(model, systemPrompt, userPrompt, tools),
+    extractContent: (data: any, hasTools?: boolean) => AI_PROVIDERS.gemini.extractContent(data, hasTools),
+  },
 };
+
+/** Resuelve provider (lovable -> gemini) */
+export function resolveProvider(provider: string): string {
+  return provider === "lovable" ? "gemini" : provider;
+}
+
+/** Obtiene headers para un proveedor */
+export function getHeaders(provider: string, apiKey: string): Record<string, string> {
+  const p = resolveProvider(provider);
+  const config = AI_PROVIDERS[p] || AI_PROVIDERS.gemini;
+  return config.getHeaders(apiKey);
+}
+
+/** Obtiene body para un proveedor */
+export function getBody(provider: string, model: string, systemPrompt: string, userPrompt: string, tools?: any[]): any {
+  const p = resolveProvider(provider);
+  const config = AI_PROVIDERS[p] || AI_PROVIDERS.gemini;
+  return config.getBody(model, systemPrompt, userPrompt, tools);
+}
+
+/** Extrae contenido de la respuesta */
+export function extractContent(provider: string, response: any, hasTools?: boolean): any {
+  const p = resolveProvider(provider);
+  const config = AI_PROVIDERS[p] || AI_PROVIDERS.gemini;
+  return config.extractContent(response, hasTools);
+}
 
 // Mapeo de modelos Lovable a modelos directos
 export const MODEL_MAP: Record<string, { provider: string; model: string }> = {
@@ -113,15 +171,124 @@ export const MODEL_MAP: Record<string, { provider: string; model: string }> = {
   "gemini-2.5-pro": { provider: "gemini", model: "gemini-2.5-pro" },
 };
 
+/** Llamada única a un proveedor de IA (con soporte para tools) */
+export async function callAISingle(
+  provider: string,
+  model: string,
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  tools?: any[]
+): Promise<any> {
+  const config = AI_PROVIDERS[resolveProvider(provider)] || AI_PROVIDERS.gemini;
+  const response = await fetch(config.url, {
+    method: "POST",
+    headers: config.getHeaders(apiKey),
+    body: JSON.stringify(config.getBody(model, systemPrompt, userPrompt, tools)),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    const err: any = new Error(`AI API Error: ${response.status} ${errorText}`);
+    err.status = response.status;
+    err.details = errorText;
+    throw err;
+  }
+
+  const data = await response.json();
+  return config.extractContent(data, !!tools);
+}
+
+/** Llamada con fallback automático a otros proveedores.
+ * Si un proveedor devuelve 429 (rate limit) o 402 (créditos), prueba con el siguiente.
+ */
+export async function callAIWithFallback(
+  configs: Array<{ provider: string; model: string; apiKey: string }>,
+  systemPrompt: string,
+  userPrompt: string,
+  tools?: any[]
+): Promise<{ result: any; usedProvider: string; usedModel: string }> {
+  const errors: string[] = [];
+  let lastError: any = null;
+
+  for (const cfg of configs) {
+    try {
+      const result = await callAISingle(
+        cfg.provider,
+        cfg.model,
+        cfg.apiKey,
+        systemPrompt,
+        userPrompt,
+        tools
+      );
+      return { result, usedProvider: cfg.provider, usedModel: cfg.model };
+    } catch (err: any) {
+      lastError = err;
+      errors.push(`${cfg.provider}: ${err.message}`);
+      const status = err?.status;
+      if (status === 429 || status === 402) {
+        console.warn(`[AI] ${cfg.provider} ${status === 429 ? "rate limit" : "créditos agotados"}, probando siguiente...`);
+      }
+      continue;
+    }
+  }
+
+  const finalError = new Error(`Todos los proveedores de IA fallaron: ${errors.join("; ")}`) as any;
+  if (lastError?.status) finalError.status = lastError.status;
+  throw finalError;
+}
+
+/**
+ * Función unificada para hacer requests a la IA (sin tools).
+ * Usa AI_PROVIDERS existente para compatibilidad con el resto del código.
+ */
+export async function makeAIRequest(config: {
+  provider: string;
+  model: string;
+  apiKey: string;
+  systemPrompt: string;
+  userPrompt: string;
+  temperature?: number;
+  maxTokens?: number;
+}): Promise<{ success: boolean; content?: string; error?: string }> {
+  const { provider, model, apiKey, systemPrompt, userPrompt, temperature = 0.7, maxTokens = 4096 } = config;
+
+  try {
+    const prov = AI_PROVIDERS[provider] || AI_PROVIDERS.gemini;
+    const baseBody = prov.getBody(model, systemPrompt, userPrompt);
+    const body = { ...baseBody, temperature, max_tokens: maxTokens };
+
+    const response = await fetch(prov.url, {
+      method: "POST",
+      headers: prov.getHeaders(apiKey),
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, error: `${response.status}: ${errorText}` };
+    }
+
+    const data = await response.json();
+    const content = prov.extractContent(data, false);
+    return { success: true, content: typeof content === "string" ? content : String(content ?? "") };
+  } catch (err: any) {
+    return { success: false, error: err?.message ?? String(err) };
+  }
+}
+
 // Obtener API key según el proveedor
 export function getAPIKey(provider: string): string | null {
-  switch (provider) {
+  const p = resolveProvider(provider);
+  switch (p) {
     case "gemini":
       return Deno.env.get("GOOGLE_AI_API_KEY") || null;
     case "openai":
       return Deno.env.get("OPENAI_API_KEY") || null;
     case "anthropic":
       return Deno.env.get("ANTHROPIC_API_KEY") || null;
+    case "perplexity":
+      return Deno.env.get("PERPLEXITY_API_KEY") || null;
     default:
       return null;
   }

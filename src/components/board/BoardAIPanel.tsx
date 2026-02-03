@@ -16,10 +16,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Brain, Sparkles, AlertTriangle, CheckCircle2, 
   ArrowRight, Lightbulb, Target, Zap, BarChart3,
-  Loader2, Clock, AlertCircle, TrendingUp, X
+  Loader2, Clock, AlertCircle, TrendingUp, X, Search
 } from 'lucide-react';
-import { useBoardAI, CardAnalysis, BoardAnalysis } from '@/hooks/useBoardAI';
+import { useBoardAI, CardAnalysis, BoardAnalysis, ResearchContextResult } from '@/hooks/useBoardAI';
 import { useAICopilot } from '@/contexts/AICopilotContext';
+import { AIFeedbackWidget } from '@/components/ai/AIFeedbackWidget';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -67,13 +68,17 @@ export function BoardAIPanel({
     analyzeCard,
     analyzeBoard,
     recommendAutomation,
+    researchContext,
     clearAnalysis
   } = useBoardAI(organizationId);
 
   const { addNotification } = useAICopilot();
   const [activeTab, setActiveTab] = useState<'analysis' | 'bottlenecks' | 'automation'>('analysis');
+  const [researchResult, setResearchResult] = useState<ResearchContextResult | null>(null);
+  const isResearching = loading === 'research';
 
   const handleAnalyze = async () => {
+    setFeedbackDismissed(false);
     try {
       if (mode === 'card' && contentId) {
         const result = await analyzeCard(contentId);
@@ -112,6 +117,7 @@ export function BoardAIPanel({
   };
 
   const handleClose = () => {
+    setResearchResult(null);
     clearAnalysis();
     onClose();
   };
@@ -275,6 +281,50 @@ export function BoardAIPanel({
                   </CardContent>
                 </Card>
 
+                {/* Investigar tendencias con Perplexity */}
+                {contentId && (
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const result = await researchContext(contentId, 'trends');
+                        if (result) {
+                          setResearchResult(result);
+                          addNotification({
+                            type: 'success',
+                            title: 'Investigación completada',
+                            message: 'Tendencias actuales cargadas con Perplexity',
+                          });
+                        }
+                      }}
+                      disabled={isResearching || moduleInactive !== null}
+                      className="gap-2"
+                    >
+                      <Search className="w-4 h-4" />
+                      {isResearching ? 'Investigando...' : 'Investigar tendencias'}
+                    </Button>
+                    {researchResult && (
+                      <Card className="border-purple-500/20 bg-purple-500/5">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Search className="h-4 w-4 text-purple-500" />
+                            Investigación en tiempo real
+                          </CardTitle>
+                          {researchResult.citations?.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              Fuentes: {researchResult.citations.slice(0, 3).join(', ')}
+                            </p>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm whitespace-pre-wrap">{researchResult.research}</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+
                 {/* Explainability Section */}
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-2">
@@ -298,6 +348,15 @@ export function BoardAIPanel({
                     </div>
                   </CardContent>
                 </Card>
+
+                {cardAnalysis.execution_id && !feedbackDismissed && (
+                  <div className="mt-4">
+                    <AIFeedbackWidget
+                      executionId={cardAnalysis.execution_id}
+                      onClose={() => setFeedbackDismissed(true)}
+                    />
+                  </div>
+                )}
               </div>
             </ScrollArea>
           )}
@@ -385,6 +444,15 @@ export function BoardAIPanel({
                           ))}
                         </CardContent>
                       </Card>
+                    )}
+
+                    {boardAnalysis.execution_id && !feedbackDismissed && (
+                      <div className="mt-4">
+                        <AIFeedbackWidget
+                          executionId={boardAnalysis.execution_id}
+                          onClose={() => setFeedbackDismissed(true)}
+                        />
+                      </div>
                     )}
                   </TabsContent>
 

@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
-import { supabaseLovable } from '@/integrations/supabase/lovable-client';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Send, 
@@ -15,7 +15,8 @@ import {
   RefreshCw,
   Copy,
   Check,
-  Save
+  Save,
+  Search
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sanitizeHTMLWithBreaks } from '@/lib/sanitizeHTML';
@@ -33,6 +34,7 @@ interface ScriptAIChatProps {
   onSaveComplete?: () => void;
   productName?: string;
   spherePhase?: string | null;
+  organizationId?: string;
   disabled?: boolean;
 }
 
@@ -52,10 +54,12 @@ export function ScriptAIChat({
   onSaveComplete,
   productName,
   spherePhase,
+  organizationId,
   disabled = false 
 }: ScriptAIChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [usePerplexity, setUsePerplexity] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -83,7 +87,7 @@ export function ScriptAIChat({
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabaseLovable.functions.invoke('script-chat', {
+      const { data, error } = await supabase.functions.invoke('script-chat', {
         body: {
           messages: [
             ...messages.map(m => ({ role: m.role, content: m.content })),
@@ -92,15 +96,22 @@ export function ScriptAIChat({
           currentScript,
           productName,
           spherePhase,
+          organizationId,
+          use_perplexity: usePerplexity,
         }
       });
 
       if (error) {
-        throw new Error(error.message);
+        const err = error as any;
+        err.status = err.context?.status;
+        err.responseBody = err.context?.body;
+        throw err;
       }
 
       if (data?.error) {
-        throw new Error(data.error);
+        const err = new Error(typeof data.error === 'string' ? data.error : data.error?.message || 'Error') as any;
+        err.status = data.status ?? 500;
+        throw err;
       }
 
       const assistantMessage: Message = {
@@ -111,11 +122,24 @@ export function ScriptAIChat({
 
       setMessages(prev => [...prev, assistantMessage]);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in AI chat:', error);
+      const status = error?.status ?? error?.context?.status;
+      const msg = String(error?.message || '');
+      let detail = '';
+      try {
+        const body = typeof error?.responseBody === 'string' ? JSON.parse(error.responseBody) : error?.responseBody;
+        if (body?.detail) detail = ` (${body.detail})`;
+      } catch { /* ignore */ }
+      const is429 = status === 429 || msg.includes('429') || msg.toLowerCase().includes('too many requests');
+      const is402 = status === 402 || msg.includes('insufficient_tokens') || msg.includes('402');
       toast({
         title: 'Error',
-        description: 'No se pudo procesar tu solicitud. Intenta de nuevo.',
+        description: is402
+          ? `No tienes tokens suficientes. Compra más o conecta tu propia API en Configuración.${detail}`
+          : is429
+            ? 'Demasiadas solicitudes. Espera un momento e intenta de nuevo.'
+            : 'No se pudo procesar tu solicitud. Intenta de nuevo.',
         variant: 'destructive',
       });
     } finally {
@@ -308,6 +332,13 @@ export function ScriptAIChat({
 
       {/* Input */}
       <div className="p-3 border-t bg-muted/10 space-y-2">
+        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-purple-500/5 border border-purple-500/10">
+          <div className="flex items-center gap-2">
+            <Search className="w-4 h-4 text-purple-500" />
+            <span className="text-xs font-medium">Incluir datos actuales (Perplexity)</span>
+          </div>
+          <Switch checked={usePerplexity} onCheckedChange={setUsePerplexity} />
+        </div>
         <div className="flex gap-2">
           <Textarea
             ref={textareaRef}

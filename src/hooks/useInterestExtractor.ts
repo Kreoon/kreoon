@@ -7,6 +7,8 @@ const MIN_EXTRACTION_INTERVAL = 60 * 60 * 1000;
 // Minimum events before triggering extraction
 const MIN_EVENTS_FOR_EXTRACTION = 10;
 
+const warnedExtractorRef = { current: false };
+
 function getAnonymousViewerId(): string | null {
   return localStorage.getItem('anon_viewer_id');
 }
@@ -38,25 +40,26 @@ export function useInterestExtractor() {
     }
 
     try {
-      console.log('[useInterestExtractor] Running interest extraction...');
-      
       const response = await supabase.functions.invoke('interest-extractor', {
         body: { user_id: userId, viewer_id: viewerId }
       });
 
       if (response.error) {
-        console.error('[useInterestExtractor] Error:', response.error);
+        if (!warnedExtractorRef.current) {
+          warnedExtractorRef.current = true;
+          console.warn('[useInterestExtractor] La función no está disponible. Despliega: npx supabase functions deploy interest-extractor --project-ref wjkbqcrxwsmvtxmqgiqc');
+        }
         return;
       }
 
-      console.log('[useInterestExtractor] Extraction complete:', response.data);
       lastExtractionRef.current = Date.now();
       eventCountRef.current = 0;
-
-      // Store last extraction time
       localStorage.setItem('last_interest_extraction', String(Date.now()));
     } catch (error) {
-      console.error('[useInterestExtractor] Error extracting interests:', error);
+      if (!warnedExtractorRef.current) {
+        warnedExtractorRef.current = true;
+        console.warn('[useInterestExtractor] La función no está disponible. Despliega: npx supabase functions deploy interest-extractor --project-ref wjkbqcrxwsmvtxmqgiqc');
+      }
     }
   }, [user?.id]);
 

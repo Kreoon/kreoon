@@ -50,33 +50,33 @@ export function MarketingCampaigns({ organizationId, selectedClientId }: Marketi
           .select('id')
           .eq('organization_id', organizationId)
           .eq('client_id', selectedClientId)
-          .single();
+          .maybeSingle();
         
         marketingClientId = mcData?.id || null;
       }
 
-      let query = supabase
-        .from('marketing_campaigns')
-        .select(`
-          *,
-          marketing_client:marketing_clients(
-            id,
-            client_id,
-            client:clients(id, name, logo_url)
-          )
-        `)
-        .eq('organization_id', organizationId);
-      
-      // Filter by marketing_client_id if we have a selected client
+      let query = supabase.from('marketing_campaigns').select('*').eq('organization_id', organizationId);
       if (selectedClientId && marketingClientId) {
         query = query.eq('marketing_client_id', marketingClientId);
       }
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data: raw, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      setCampaigns((data || []).map(item => ({
+
+      const campaignsData = (raw || []) as any[];
+      if (campaignsData.length > 0) {
+        const mcIds = [...new Set(campaignsData.map((c) => c.marketing_client_id).filter(Boolean))];
+        const { data: mcList } = mcIds.length > 0 ? await supabase.from('marketing_clients').select('id, client_id').in('id', mcIds) : { data: [] };
+        const clientIds = [...new Set((mcList ?? []).map((m) => m.client_id).filter(Boolean))];
+        const { data: clientsList } = clientIds.length > 0 ? await supabase.from('clients').select('id, name, logo_url').in('id', clientIds) : { data: [] };
+        const clientMap = new Map((clientsList ?? []).map((c) => [c.id, c]));
+        const mcMap = new Map((mcList ?? []).map((m) => [m.id, { id: m.id, client_id: m.client_id, client: m.client_id ? clientMap.get(m.client_id) : null }]));
+        campaignsData.forEach((c) => {
+          c.marketing_client = c.marketing_client_id ? mcMap.get(c.marketing_client_id) ?? null : null;
+        });
+      }
+
+      setCampaigns(campaignsData.map(item => ({
         ...item,
         platforms: item.platforms || [],
         objectives: item.objectives || [],

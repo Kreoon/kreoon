@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { useTalentAI, TalentReputationResult, TalentRiskResult } from "@/hooks/useTalentAI";
 import { cn } from "@/lib/utils";
+import { AIFeedbackWidget } from "@/components/ai/AIFeedbackWidget";
 
 interface TalentAITabProps {
   userId: string;
@@ -64,6 +65,8 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
   const [reputationAnalysis, setReputationAnalysis] = useState<TalentReputationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [lastExecutionId, setLastExecutionId] = useState<string | null>(null);
+  const [feedbackDismissed, setFeedbackDismissed] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -110,6 +113,7 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
 
   const runFullAnalysis = async () => {
     setAnalyzing(true);
+    setFeedbackDismissed(false);
     try {
       const [risk, reputation] = await Promise.all([
         analyzeRisk(userId),
@@ -118,6 +122,8 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
 
       setRiskAnalysis(risk);
       setReputationAnalysis(reputation);
+      const execId = reputation?.execution_id ?? risk?.execution_id;
+      if (execId) setLastExecutionId(execId);
       
       // Refresh data after analysis
       await fetchData();
@@ -185,6 +191,13 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
           Analizar
         </Button>
       </div>
+
+      {lastExecutionId && !feedbackDismissed && (
+        <AIFeedbackWidget
+          executionId={lastExecutionId}
+          onClose={() => setFeedbackDismissed(true)}
+        />
+      )}
 
       {/* Level and Risk Cards */}
       <div className="grid grid-cols-2 gap-4">

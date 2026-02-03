@@ -1,11 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getKreoonClient, isKreoonConfigured } from "../_shared/kreoon-client.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
+import { callAIWithFallback, corsHeaders } from "../_shared/ai-providers.ts";
+import { PerplexitySearches, searchWithPerplexity } from "../_shared/perplexity-client.ts";
+import { MASTER_SCRIPT_PROMPT } from "../_shared/prompts/scripts.ts";
 
 interface ContentAIRequest {
   action: "generate_script" | "analyze_content" | "chat" | "improve_script" | "research_and_generate";
@@ -13,6 +12,13 @@ interface ContentAIRequest {
   ai_provider?: "gemini" | "openai" | "anthropic";
   ai_model?: string;
   use_perplexity?: boolean; // Enable pre-research with Perplexity
+  perplexity_queries?: {
+    trends?: boolean;
+    hooks?: boolean;
+    competitors?: boolean;
+    audience?: boolean;
+  };
+  custom_perplexity_query?: string;
   data?: {
     client_name?: string;
     product?: string;
@@ -145,231 +151,29 @@ function buildProductContext(product?: ContentAIRequest['product']): string {
   return sections.join('\n');
 }
 
-// AI Provider configurations - Direct APIs only (no Lovable Gateway)
-type AIProvider = "gemini" | "openai" | "anthropic";
-
-interface AIConfig {
-  url: string;
-  getHeaders: (apiKey: string) => Record<string, string>;
-  getBody: (model: string, systemPrompt: string, userPrompt: string) => any;
-  extractContent: (data: any) => string;
-}
-
-const AI_PROVIDERS: Record<AIProvider, AIConfig> = {
-  gemini: {
-    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    getHeaders: (apiKey) => ({
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    }),
-    getBody: (model, systemPrompt, userPrompt) => ({
-      model: model || "gemini-2.5-flash",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
-    extractContent: (data) => data.choices?.[0]?.message?.content || "",
-  },
-  openai: {
-    url: "https://api.openai.com/v1/chat/completions",
-    getHeaders: (apiKey) => ({
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    }),
-    getBody: (model, systemPrompt, userPrompt) => ({
-      model: model || "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
-    extractContent: (data) => data.choices?.[0]?.message?.content || "",
-  },
-  anthropic: {
-    url: "https://api.anthropic.com/v1/messages",
-    getHeaders: (apiKey) => ({
-      "x-api-key": apiKey,
-      "Content-Type": "application/json",
-      "anthropic-version": "2023-06-01",
-    }),
-    getBody: (model, systemPrompt, userPrompt) => ({
-      model: model || "claude-sonnet-4-20250514",
-      max_tokens: 8192,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
-    }),
-    extractContent: (data) => data.content?.[0]?.text || "",
-  },
-};
-
-// Map of model names to their provider
-const MODEL_PROVIDER_MAP: Record<string, AIProvider> = {
-  // Gemini models
-  "gemini-2.5-flash": "gemini",
-  "gemini-2.5-pro": "gemini",
-  "gemini-2.0-flash": "gemini",
-  // OpenAI models  
-  "gpt-4o": "openai",
-  "gpt-4o-mini": "openai",
-  "gpt-4-turbo": "openai",
-  // Legacy mappings (from Lovable naming)
-  "google/gemini-2.5-flash": "gemini",
-  "google/gemini-2.5-pro": "gemini",
-  "google/gemini-3-flash-preview": "gemini",
-  "openai/gpt-5": "openai",
-  "openai/gpt-5-mini": "openai",
-};
-
-// Get the actual model name for the provider
-function normalizeModelName(model: string): string {
-  // Strip provider prefix if present
-  if (model.startsWith("google/")) {
-    const stripped = model.replace("google/", "");
-    if (stripped === "gemini-3-flash-preview") return "gemini-2.5-flash";
-    return stripped;
-  }
-  if (model.startsWith("openai/")) {
-    const stripped = model.replace("openai/", "");
-    if (stripped === "gpt-5") return "gpt-4o";
-    if (stripped === "gpt-5-mini") return "gpt-4o-mini";
-    return stripped;
-  }
-  return model;
-}
-
 // Map action to module key
 const ACTION_TO_MODULE: Record<string, string> = {
   generate_script: "scripts",
+  research_and_generate: "scripts",
   analyze_content: "content_detail",
   chat: "content_detail",
   improve_script: "scripts",
 };
 
-// Get module AI configuration with validation and fallback chain
-// IMPORTANT: This function now allows bypass when module config is not accessible
-async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string, requestedModel?: string): Promise<{
-  provider: AIProvider;
-  model: string;
-  apiKey: string;
-  fallbackProvider: AIProvider | null;
-  fallbackModel: string | null;
-  fallbackApiKey: string | null;
-}> {
-  const googleApiKey = Deno.env.get("GOOGLE_AI_API_KEY");
-  const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-  
-  let configuredProvider: AIProvider = "gemini";
-  let configuredModel = requestedModel || "gemini-2.5-flash";
-  
-  // Try to check if module is active (but don't fail if we can't access it)
-  try {
-    const { data: moduleData, error: moduleError } = await supabase
-      .from("organization_ai_modules")
-      .select("is_active, provider, model")
-      .eq("organization_id", organizationId)
-      .eq("module_key", moduleKey)
-      .maybeSingle();
-    
-    // Only enforce module check if we successfully queried the table
-    if (!moduleError && moduleData !== null) {
-      if (!moduleData.is_active) {
-        throw new Error(`MODULE_INACTIVE:${moduleKey}`);
-      }
-      configuredProvider = (moduleData.provider || "gemini") as AIProvider;
-      configuredModel = moduleData.model || configuredModel;
-    } else {
-      // Can't access module config - use defaults with API keys
-      console.log(`[content-ai] Could not access module config for ${moduleKey}, using defaults`);
-    }
-  } catch (checkError: any) {
-    // If error is MODULE_INACTIVE, re-throw it
-    if (checkError?.message?.includes("MODULE_INACTIVE")) {
-      throw checkError;
-    }
-    // Otherwise, proceed with defaults
-    console.log(`[content-ai] Module check failed: ${checkError?.message}, proceeding with defaults`);
+// Get fallback config when primary fails (from env)
+function getFallbackConfig(primaryProvider: string): { provider: string; model: string; apiKey: string } | null {
+  const googleKey = Deno.env.get("GOOGLE_AI_API_KEY");
+  const openaiKey = Deno.env.get("OPENAI_API_KEY");
+  if (primaryProvider === "gemini" && openaiKey) {
+    return { provider: "openai", model: "gpt-4o-mini", apiKey: openaiKey };
   }
-  
-  // Normalize provider name (convert "lovable" to "gemini")
-  if (configuredProvider === "lovable" as any) {
-    configuredProvider = "gemini";
+  if (primaryProvider === "openai" && googleKey) {
+    return { provider: "gemini", model: "gemini-2.5-flash", apiKey: googleKey };
   }
-  
-  // Normalize model name
-  configuredModel = normalizeModelName(configuredModel);
-  
-  // Determine provider from model if not already set
-  const modelProvider = MODEL_PROVIDER_MAP[configuredModel] || MODEL_PROVIDER_MAP[requestedModel || ""];
-  if (modelProvider) {
-    configuredProvider = modelProvider;
-  }
-  
-  // Check for organization-specific API keys first (optional - don't fail)
-  try {
-    if (configuredProvider !== "gemini" && configuredProvider !== "openai") {
-      const { data: providerData } = await supabase
-        .from("organization_ai_providers")
-        .select("api_key_encrypted")
-        .eq("organization_id", organizationId)
-        .eq("provider_key", configuredProvider)
-        .eq("is_enabled", true)
-        .maybeSingle();
-      
-      if (providerData?.api_key_encrypted) {
-        const fallbackProv: AIProvider | null = googleApiKey ? "gemini" : (openaiApiKey ? "openai" : null);
-        return { 
-          provider: configuredProvider, 
-          model: configuredModel, 
-          apiKey: providerData.api_key_encrypted,
-          fallbackProvider: fallbackProv,
-          fallbackModel: fallbackProv === "gemini" ? "gemini-2.5-flash" : (fallbackProv === "openai" ? "gpt-4o-mini" : null),
-          fallbackApiKey: googleApiKey || openaiApiKey || null
-        };
-      }
-    }
-  } catch (provError) {
-    console.log(`[content-ai] Could not check org providers: ${provError}`);
-  }
-  
-  // Build fallback chain: Gemini -> OpenAI
-  const providers: Array<{ provider: AIProvider; model: string; apiKey: string }> = [];
-  
-  if (googleApiKey) {
-    providers.push({ 
-      provider: "gemini", 
-      model: configuredProvider === "gemini" ? configuredModel : "gemini-2.5-flash", 
-      apiKey: googleApiKey 
-    });
-  }
-  
-  if (openaiApiKey) {
-    providers.push({ 
-      provider: "openai", 
-      model: configuredProvider === "openai" ? configuredModel : "gpt-4o-mini", 
-      apiKey: openaiApiKey 
-    });
-  }
-  
-  if (providers.length === 0) {
-    throw new Error("No hay API keys configuradas. Configura GOOGLE_AI_API_KEY o OPENAI_API_KEY");
-  }
-  
-  // Return primary with fallback info
-  const primary = providers[0];
-  const fallback = providers[1] || null;
-  
-  return { 
-    provider: primary.provider, 
-    model: primary.model, 
-    apiKey: primary.apiKey,
-    fallbackProvider: fallback?.provider || null,
-    fallbackModel: fallback?.model || null,
-    fallbackApiKey: fallback?.apiKey || null
-  };
+  return null;
 }
 
-// Log AI usage
+// Log AI usage; returns execution id for feedback loop
 async function logAIUsage(supabase: any, params: {
   organizationId: string;
   userId: string;
@@ -378,71 +182,36 @@ async function logAIUsage(supabase: any, params: {
   action: string;
   success: boolean;
   errorMessage?: string;
-}) {
+}): Promise<string | null> {
   try {
-    await supabase.from("ai_usage_logs").insert({
-      organization_id: params.organizationId,
-      user_id: params.userId,
-      provider: params.provider,
-      model: params.model,
-      module: "content",
-      action: params.action,
-      success: params.success,
-      error_message: params.errorMessage,
-    });
+    const { data, error } = await supabase
+      .from("ai_usage_logs")
+      .insert({
+        organization_id: params.organizationId,
+        user_id: params.userId,
+        provider: params.provider,
+        model: params.model,
+        module: "content",
+        action: params.action,
+        success: params.success,
+        error_message: params.errorMessage,
+      })
+      .select("id")
+      .single();
+    if (error) {
+      console.error("Failed to log AI usage:", error);
+      return null;
+    }
+    return data?.id ?? null;
   } catch (e) {
     console.error("Failed to log AI usage:", e);
+    return null;
   }
 }
 
-// PROMPT MAESTRO - Sistema avanzado de generación de guiones con Prompt Engineering
-const MASTER_SYSTEM_PROMPT = `🎯 ROL DEL SISTEMA
-
-Actúa como un Prompt Engineer senior y estratega digital experto en UGC, performance ads y storytelling, encargado de construir prompts de alta precisión antes de generar cualquier guion.
-
-Tu función principal es convertir la información del formulario en prompts claros, completos y alineados al objetivo del negocio.
-
-📥 INPUT OBLIGATORIO (DESDE EL FORMULARIO)
-
-Antes de generar cualquier prompt o guion, DEBES analizar y usar explícitamente los siguientes campos del formulario:
-
-- CTA (Llamado a la acción)
-- Ángulo de venta seleccionado
-- Cantidad de hooks
-- País objetivo
-- Estructura narrativa
-- Avatar / Cliente ideal
-- Estrategias / estructuras de video
-- Transcripción de video de referencia (si existe)
-- Hooks sugeridos por el usuario (si existen)
-- Instrucciones adicionales del usuario
-- Documentos del producto (Brief, Onboarding, Research)
-
-⚠️ REGLAS CRÍTICAS:
-- NINGÚN CAMPO debe ser ignorado si tiene información
-- Si un campo está vacío, NO lo inventes
-- Todo el contenido generado debe ser COHERENTE entre sí
-- Cada proyecto genera 1 SOLO GUION completo
-- La cantidad de hooks debe respetar EXACTAMENTE el valor configurado
-
-🎨 FORMATO VISUAL DEL RESULTADO (OBLIGATORIO):
-- Devuelve SOLO HTML (sin Markdown, sin backticks, sin texto fuera de etiquetas)
-- Usa HTML semántico: <h2>, <h3>, <h4>, <p>, <ul>, <li>, <strong>, <em>
-- Usar <strong> para ideas clave y frases importantes
-- Usar <em> para intención emocional o tono
-- Usar <u> SOLO para CTAs o frases accionables
-- Emojis: máximo 1–2 por bloque, solo como guía visual (🎯🔥🚀🎥)
-- Espaciado amplio entre secciones (cada bloque debe ser claro)
-- Párrafos cortos (máx. 2–3 líneas por bloque)
-
-🚫 EVITAR:
-- Markdown visible (##, **, \`\`\`)
-- Bloques largos sin aire
-- Texto genérico o repetitivo
-- Lenguaje publicitario forzado`;
-
+// Usa prompt maestro centralizado desde _shared/prompts/scripts.ts
 const SYSTEM_PROMPTS = {
-  generate_script: MASTER_SYSTEM_PROMPT,
+  generate_script: MASTER_SCRIPT_PROMPT,
   
   analyze_content: `Eres un experto en análisis de contenido de video y marketing digital.
 Tu trabajo es analizar guiones y videos para dar feedback constructivo y específico.
@@ -477,84 +246,6 @@ Mantén la esencia del mensaje original mientras optimizas:
 
 Devuelve el guion mejorado en formato HTML estructurado.`,
 };
-
-// ============= PERPLEXITY PRE-RESEARCH =============
-async function runPerplexityResearch(
-  productName: string,
-  productDescription: string,
-  salesAngle: string,
-  targetCountry: string
-): Promise<{ success: boolean; research?: string; error?: string }> {
-  const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
-  
-  if (!perplexityApiKey) {
-    console.log("[Perplexity] No API key configured, skipping research");
-    return { success: false, error: "Perplexity API key not configured" };
-  }
-  
-  const prompt = `Investiga información actualizada sobre "${productName}" para crear contenido publicitario:
-
-PRODUCTO: ${productName}
-DESCRIPCIÓN: ${productDescription || 'No disponible'}
-ÁNGULO DE VENTA: ${salesAngle || 'General'}
-PAÍS OBJETIVO: ${targetCountry || 'Latinoamérica'}
-
-NECESITO:
-1. Tendencias actuales del mercado relacionadas
-2. Estadísticas o datos recientes que respalden el ángulo de venta
-3. Puntos de dolor comunes de la audiencia objetivo
-4. Frases o expresiones populares en ${targetCountry || 'el mercado latino'}
-5. Competidores principales y cómo se diferencian
-
-Responde de forma concisa y directa, máximo 500 palabras.`;
-
-  try {
-    console.log("[Perplexity] Starting research for:", productName);
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-    
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'sonar',
-        max_tokens: 1500,
-        temperature: 0.2,
-        messages: [
-          { role: 'system', content: 'Eres un investigador de mercado experto. Responde en español con datos actuales y verificables.' },
-          { role: 'user', content: prompt }
-        ],
-      }),
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[Perplexity] API error:", response.status, errorText);
-      return { success: false, error: `Perplexity error: ${response.status}` };
-    }
-    
-    const data = await response.json();
-    const research = data.choices?.[0]?.message?.content || "";
-    
-    console.log("[Perplexity] Research completed, length:", research.length);
-    
-    return { success: true, research };
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
-      console.error("[Perplexity] Request timeout");
-      return { success: false, error: "Research timeout" };
-    }
-    console.error("[Perplexity] Error:", error.message);
-    return { success: false, error: error.message };
-  }
-}
 
 // ============= IMPROVED HTML BLOCK FORMAT =============
 const BLOCK_FORMAT_INSTRUCTIONS = `
@@ -609,131 +300,31 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Fallback between Gemini and OpenAI when one fails
-async function callWithFallback(
-  primaryConfig: AIConfig,
-  primaryApiKey: string,
-  primaryModel: string,
-  systemPrompt: string,
-  userPrompt: string,
-  fallbackProvider?: AIProvider | null,
-  fallbackApiKey?: string | null,
-  fallbackModel?: string | null
-): Promise<{ content: string; usedFallback: boolean; provider: string }> {
-  
-  // Try primary provider first
-  try {
-    const content = await callAISingle(primaryConfig, primaryApiKey, primaryModel, systemPrompt, userPrompt);
-    return { content, usedFallback: false, provider: Object.keys(AI_PROVIDERS).find(k => AI_PROVIDERS[k as AIProvider] === primaryConfig) || "unknown" };
-  } catch (error: any) {
-    console.warn(`[callAI] Primary provider failed: ${error.message}`);
-    
-    // If fallback available, try it
-    if (fallbackProvider && fallbackApiKey && AI_PROVIDERS[fallbackProvider]) {
-      console.log(`[callAI] Attempting fallback to ${fallbackProvider}...`);
-      try {
-        const content = await callAISingle(
-          AI_PROVIDERS[fallbackProvider], 
-          fallbackApiKey, 
-          fallbackModel || (fallbackProvider === "gemini" ? "gemini-2.5-flash" : "gpt-4o-mini"), 
-          systemPrompt, 
-          userPrompt
-        );
-        console.log(`[callAI] Fallback to ${fallbackProvider} successful`);
-        return { content, usedFallback: true, provider: fallbackProvider };
-      } catch (fallbackError: any) {
-        console.error(`[callAI] Fallback to ${fallbackProvider} also failed:`, fallbackError.message);
-        throw fallbackError;
-      }
-    }
-    
-    throw error;
-  }
-}
-
-async function callAISingle(
-  config: AIConfig,
-  apiKey: string,
-  model: string,
-  systemPrompt: string,
-  userPrompt: string,
-  maxRetries: number = 2
-): Promise<string> {
-  console.log(`[callAI] Request to: ${config.url}, Model: ${model}`);
-
-  const requestBody = config.getBody(model, systemPrompt, userPrompt);
-  let lastError: Error | null = null;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`[callAI] Attempt ${attempt}/${maxRetries}`);
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 90000);
-
-      const response = await fetch(config.url, {
-        method: "POST",
-        headers: config.getHeaders(apiKey),
-        body: JSON.stringify(requestBody),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      console.log(`[callAI] Response status: ${response.status}`);
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          console.error(`[callAI] Rate limit (attempt ${attempt}/${maxRetries})`);
-          if (attempt < maxRetries) {
-            const waitTime = Math.pow(2, attempt) * 1000 + Math.random() * 500;
-            console.log(`[callAI] Waiting ${Math.round(waitTime)}ms...`);
-            await sleep(waitTime);
-            continue;
-          }
-          throw new Error("Rate limit - intenta de nuevo en unos segundos");
-        }
-        if (response.status === 402) {
-          throw new Error("Créditos de IA agotados - contacta al administrador");
-        }
-        const errorText = await response.text();
-        throw new Error(`Error IA: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const content = config.extractContent(data);
-      
-      if (!content) {
-        throw new Error("La IA no generó contenido");
-      }
-      
-      console.log(`[callAI] Success, content length: ${content.length}`);
-      return content;
-    } catch (error: any) {
-      lastError = error;
-      if (error.name === 'AbortError') {
-        throw new Error("Timeout - intenta con un prompt más corto");
-      }
-      if (!error.message?.includes('Rate limit')) {
-        throw error;
-      }
-    }
-  }
-  
-  throw lastError || new Error("Error de IA después de varios intentos");
-}
-
+/** Wrapper para content-ai que usa callAIWithFallback del shared */
 async function callAI(
-  config: AIConfig,
+  provider: string,
   apiKey: string,
   model: string,
   systemPrompt: string,
   userPrompt: string,
-  fallbackProvider?: AIProvider | null,
+  fallbackProvider?: string | null,
   fallbackApiKey?: string | null,
   fallbackModel?: string | null
 ): Promise<string> {
-  const { content } = await callWithFallback(config, apiKey, model, systemPrompt, userPrompt, fallbackProvider, fallbackApiKey, fallbackModel);
-  return content;
+  const configs = [
+    { provider, model, apiKey },
+    ...(fallbackProvider && fallbackApiKey
+      ? [
+          {
+            provider: fallbackProvider,
+            model: fallbackModel || (fallbackProvider === "gemini" ? "gemini-2.5-flash" : "gpt-4o-mini"),
+            apiKey: fallbackApiKey,
+          },
+        ]
+      : []),
+  ];
+  const { result } = await callAIWithFallback(configs, systemPrompt, userPrompt);
+  return typeof result === "string" ? result : String(result ?? "");
 }
 
 // Genera el bloque HTML para cada rol (simplified version)
@@ -831,11 +422,11 @@ serve(async (req) => {
     // Get module key for this action
     const moduleKey = ACTION_TO_MODULE[action] || "content_detail";
 
-    // Get AI configuration (validates module is active)
-    // Pass requested model from body for fallback if module config is not accessible
     let aiConfig;
+    let fallback: { provider: string; model: string; apiKey: string } | null = null;
     try {
-      aiConfig = await getModuleAIConfig(supabase, organizationId, moduleKey, body.ai_model);
+      aiConfig = await getModuleAIConfig(supabase, organizationId, moduleKey);
+      fallback = getFallbackConfig(aiConfig.provider);
     } catch (error: any) {
       if (error.message?.startsWith("MODULE_INACTIVE:")) {
         const module = error.message.split(":")[1];
@@ -851,7 +442,6 @@ serve(async (req) => {
       throw error;
     }
 
-    const providerConfig = AI_PROVIDERS[aiConfig.provider];
     let result: string;
 
     switch (action) {
@@ -863,24 +453,110 @@ serve(async (req) => {
           let perplexityResearch = "";
           
           if (usePerplexity) {
-            console.log("[content-ai] Running Perplexity pre-research...");
-            const researchResult = await runPerplexityResearch(
-              product.name || "",
-              product.description || "",
-              body.script_params?.sales_angle || "",
-              body.script_params?.target_country || "México"
-            );
-            
-            if (researchResult.success && researchResult.research) {
-              perplexityResearch = `
-📊 INVESTIGACIÓN DE MERCADO EN TIEMPO REAL (Perplexity):
-${researchResult.research}
+            const queries = body.perplexity_queries || { trends: true, hooks: true };
+            const productName = product.name || "";
+            const productCategory = body.script_params?.product_category || productName;
+            const platform = body.script_params?.platform || "TikTok";
+            const targetCountry = body.script_params?.target_country || "Colombia";
+            const idealAvatar = product.ideal_avatar || body.script_params?.ideal_avatar || "";
+            const competitors = body.script_params?.competitors;
 
-⚠️ USA ESTA INFORMACIÓN para hacer el contenido más relevante y actual.
+            const searchPromises: Promise<{ type: string; result: { content: string; citations?: string[] } }>[] = [];
+
+            if (queries.trends !== false) {
+              searchPromises.push(
+                PerplexitySearches.contentTrends(supabase, organizationId, {
+                  niche: productCategory,
+                  platform,
+                  country: targetCountry,
+                }).then((r) => ({ type: "trends", result: r }))
+              );
+            }
+            if (queries.hooks !== false) {
+              searchPromises.push(
+                PerplexitySearches.hookResearch(supabase, organizationId, {
+                  productType: productCategory,
+                  platform,
+                  targetAudience: idealAvatar || undefined,
+                }).then((r) => ({ type: "hooks", result: r }))
+              );
+            }
+            if (queries.competitors && (competitors?.length || productName)) {
+              searchPromises.push(
+                PerplexitySearches.competitorAnalysis(supabase, organizationId, {
+                  productName,
+                  competitors: Array.isArray(competitors) ? competitors : undefined,
+                  market: targetCountry,
+                }).then((r) => ({ type: "competitors", result: r }))
+              );
+            }
+            if (queries.audience) {
+              searchPromises.push(
+                PerplexitySearches.audienceResearch(supabase, organizationId, {
+                  productName,
+                  currentAvatar: idealAvatar || undefined,
+                }).then((r) => ({ type: "audience", result: r }))
+              );
+            }
+            if (body.custom_perplexity_query) {
+              searchPromises.push(
+                searchWithPerplexity(supabase, organizationId, body.custom_perplexity_query).then((r) => ({
+                  type: "custom",
+                  result: r,
+                }))
+              );
+            }
+
+            // Fallback: si no hay búsquedas específicas, usar query genérico
+            if (searchPromises.length === 0) {
+              const fallbackQuery = `Investiga información actualizada sobre "${productName}" para crear contenido publicitario:
+
+PRODUCTO: ${productName}
+DESCRIPCIÓN: ${product.description || "No disponible"}
+ÁNGULO DE VENTA: ${body.script_params?.sales_angle || "General"}
+PAÍS OBJETIVO: ${targetCountry}
+
+NECESITO: Tendencias actuales, estadísticas recientes, puntos de dolor de la audiencia, frases populares, competidores. Responde conciso, máximo 500 palabras.`;
+              searchPromises.push(
+                searchWithPerplexity(supabase, organizationId, fallbackQuery, {
+                  recencyFilter: "week",
+                  maxTokens: 1500,
+                }).then((r) => ({ type: "market", result: r }))
+              );
+            }
+
+            try {
+              console.log("[content-ai] Running Perplexity research, queries:", searchPromises.length);
+              const searchResults = await Promise.allSettled(searchPromises);
+              const results: string[] = [];
+
+              for (const res of searchResults) {
+                if (res.status === "fulfilled" && res.value.result.content) {
+                  const { type, result: data } = res.value;
+                  const citations = data.citations?.slice(0, 3).join(", ") || "No disponibles";
+                  results.push(
+                    `### Investigación: ${type.toUpperCase()}\n${data.content}\n\nFuentes: ${citations}`
+                  );
+                }
+              }
+
+              if (results.length > 0) {
+                perplexityResearch = `
+=== INVESTIGACIÓN EN TIEMPO REAL (Perplexity) ===
+${results.join("\n---\n")}
+=== FIN DE INVESTIGACIÓN ===
+
+IMPORTANTE: Usa la información de la investigación para:
+- Incluir hooks y formatos que están funcionando actualmente
+- Evitar contenido sobreutilizado o penalizado
+- Adaptar el tono a las tendencias actuales
+- Incluir referencias relevantes si aplica
+
 `;
-              console.log("[content-ai] Perplexity research added, length:", perplexityResearch.length);
-            } else {
-              console.log("[content-ai] Perplexity research skipped:", researchResult.error);
+                console.log("[content-ai] Perplexity research added, sections:", results.length);
+              }
+            } catch (e) {
+              console.log("[content-ai] Perplexity research skipped:", (e as Error).message);
             }
           }
           
@@ -897,7 +573,7 @@ ${researchResult.research}
           // Build product context to inject into prompts (legacy support)
           const productContext = buildProductContext(product);
           
-          let masterPrompt = MASTER_SYSTEM_PROMPT;
+          let masterPrompt = MASTER_SCRIPT_PROMPT;
           let formatRules = "";
           let criticalRules = "";
           let rolePrompt = "";
@@ -905,7 +581,7 @@ ${researchResult.research}
           if (customPrompts) {
             // Apply template variable replacements to custom prompts
             masterPrompt = replaceTemplateVariables(
-              customPrompts.master_prompt || MASTER_SYSTEM_PROMPT,
+              customPrompts.master_prompt || MASTER_SCRIPT_PROMPT,
               product, body.script_params, documents
             );
             formatRules = replaceTemplateVariables(
@@ -944,7 +620,7 @@ IMPORTANTE:
 - Usa expresiones y modismos del país objetivo cuando sea apropiado
 - El resultado debe ser HTML limpio, sin markdown, listo para renderizar
 - ORGANIZA el contenido usando la estructura de bloques indicada`
-            : `${MASTER_SYSTEM_PROMPT}
+            : `${MASTER_SCRIPT_PROMPT}
 
 ${BLOCK_FORMAT_INSTRUCTIONS}
 
@@ -963,7 +639,7 @@ IMPORTANTE:
           console.log("[content-ai] Full system prompt length:", fullSystemPrompt.length);
           console.log("[content-ai] Template variables replaced, Perplexity:", usePerplexity);
 
-          result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
+          result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt, fallbackProvider, fallbackApiKey, fallbackModel);
 
           await logAIUsage(supabase, {
             organizationId,
@@ -996,7 +672,7 @@ TONO: ${data?.tone || "Profesional y dinámico"}
 
 Genera un guion completo con timestamps, descripciones visuales y sugerencias de audio.`;
 
-        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.generate_script, legacyPrompt, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
+        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.generate_script, legacyPrompt, fallbackProvider, fallbackApiKey, fallbackModel);
         break;
       }
 
@@ -1008,7 +684,7 @@ ${data?.video_url ? `VIDEO URL: ${data.video_url}` : ""}
 
 Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y sugerencias específicas de mejora.`;
 
-        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.analyze_content, analyzePrompt, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
+        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.analyze_content, analyzePrompt, fallbackProvider, fallbackApiKey, fallbackModel);
         break;
       }
 
@@ -1019,7 +695,7 @@ Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y s
 
         // For chat, build the full conversation
         const userMessage = data.messages[data.messages.length - 1]?.content || "";
-        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.chat, userMessage, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
+        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.chat, userMessage, fallbackProvider, fallbackApiKey, fallbackModel);
         break;
       }
 
@@ -1034,7 +710,7 @@ ${data?.feedback || "Hazlo más dinámico y atractivo"}
 
 Devuelve el guion mejorado manteniendo el formato HTML estructurado.`;
 
-        result = await callAI(providerConfig, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.improve_script, improvePrompt, aiConfig.fallbackProvider, aiConfig.fallbackApiKey, aiConfig.fallbackModel);
+        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.improve_script, improvePrompt, fallbackProvider, fallbackApiKey, fallbackModel);
         break;
       }
 
@@ -1042,7 +718,7 @@ Devuelve el guion mejorado manteniendo el formato HTML estructurado.`;
         throw new Error(`Unknown action: ${action}`);
     }
 
-    await logAIUsage(supabase, {
+    const executionId = await logAIUsage(supabase, {
       organizationId,
       userId: "system",
       provider: aiConfig.provider,
@@ -1052,7 +728,7 @@ Devuelve el guion mejorado manteniendo el formato HTML estructurado.`;
     });
 
     return new Response(
-      JSON.stringify({ success: true, result, ai_provider: aiConfig.provider, ai_model: aiConfig.model }),
+      JSON.stringify({ success: true, result, ai_provider: aiConfig.provider, ai_model: aiConfig.model, execution_id: executionId ?? undefined }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

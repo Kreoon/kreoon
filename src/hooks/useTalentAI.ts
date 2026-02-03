@@ -26,6 +26,7 @@ export interface TalentRiskResult {
   recommended_action: string;
   max_recommended_tasks?: number;
   burnout_probability?: number;
+  execution_id?: string;
 }
 
 export interface TalentReputationResult {
@@ -40,6 +41,7 @@ export interface TalentReputationResult {
   }>;
   strengths: string[];
   development_areas: string[];
+  execution_id?: string;
 }
 
 export interface TalentAmbassadorResult {

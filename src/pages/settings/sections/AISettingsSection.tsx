@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, Sparkles, MessageSquare, Cpu, Blocks, Zap, Brain, BarChart3, FileText } from 'lucide-react';
@@ -13,7 +14,19 @@ import { Badge } from '@/components/ui/badge';
 
 export default function AISettingsSection() {
   const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState('providers');
+  const [searchParams] = useSearchParams();
+  const subTabFromUrl = searchParams.get('subTab');
+  const [activeTab, setActiveTab] = useState(subTabFromUrl === 'custom-api' ? 'providers' : 'providers');
+  const [orgAIInitialTab, setOrgAIInitialTab] = useState<'overview' | 'custom-api' | 'providers' | 'usage' | undefined>(
+    subTabFromUrl === 'custom-api' ? 'custom-api' : undefined
+  );
+
+  useEffect(() => {
+    if (subTabFromUrl === 'custom-api') {
+      setActiveTab('providers');
+      setOrgAIInitialTab('custom-api');
+    }
+  }, [subTabFromUrl]);
   
   if (!profile?.current_organization_id) {
     return (
@@ -99,7 +112,7 @@ export default function AISettingsSection() {
         </TabsList>
 
         <TabsContent value="providers" className="mt-0">
-          <OrganizationAISettings organizationId={profile.current_organization_id} />
+          <OrganizationAISettings organizationId={profile.current_organization_id} initialTab={orgAIInitialTab} />
         </TabsContent>
 
         <TabsContent value="scripts" className="mt-0">

@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+const warnedRecommendationsRef = { current: false };
+
 interface ContentItem {
   id: string;
   title: string;
@@ -47,7 +49,10 @@ export function useRecommendations(options: UseRecommendationsOptions = {}) {
       });
 
       if (response.error) {
-        console.error('[useRecommendations] Error:', response.error);
+        if (!warnedRecommendationsRef.current) {
+          warnedRecommendationsRef.current = true;
+          console.warn('[useRecommendations] La función no está disponible. Despliega: npx supabase functions deploy feed-recommendations --project-ref wjkbqcrxwsmvtxmqgiqc');
+        }
         return;
       }
 
@@ -57,7 +62,10 @@ export function useRecommendations(options: UseRecommendationsOptions = {}) {
         setHasPersonalization(data.has_personalization || false);
       }
     } catch (error) {
-      console.error('[useRecommendations] Error fetching recommendations:', error);
+      if (!warnedRecommendationsRef.current) {
+        warnedRecommendationsRef.current = true;
+        console.warn('[useRecommendations] La función no está disponible. Despliega: npx supabase functions deploy feed-recommendations --project-ref wjkbqcrxwsmvtxmqgiqc');
+      }
     } finally {
       setLoading(false);
     }

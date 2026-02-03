@@ -30,6 +30,7 @@ import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
 
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
+import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
 import { Badge } from "@/components/ui/badge";
 
 interface NavItem {
@@ -378,6 +379,16 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           ))}
         </nav>
+
+        {/* AI Tokens - solo si tiene org y no es cliente */}
+        {profile?.current_organization_id && !activeIsClient && (
+          <div className="border-t border-[hsl(270,100%,60%,0.08)] px-3 py-2">
+            <AITokensPanelTrigger
+              organizationId={profile.current_organization_id}
+              variant={collapsed ? "compact" : "header"}
+            />
+          </div>
+        )}
 
         {/* Achievements Widget */}
         <div className="border-t border-[hsl(270,100%,60%,0.08)]">

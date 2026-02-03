@@ -9,6 +9,21 @@ interface AIGenerationResult {
   description?: string;
 }
 
+export interface FullLiveContentResult {
+  event_title?: string;
+  event_description?: string;
+  promotional_content?: {
+    teaser_post?: string;
+    reminder_post?: string;
+    countdown_story?: string;
+    hashtags?: string[];
+  };
+  script_outline?: Record<string, unknown>;
+  interaction_elements?: Record<string, unknown>;
+  technical_checklist?: string[];
+  kpis_target?: Record<string, string>;
+}
+
 interface UseStreamingAIOptions {
   organizationId?: string;
 }
@@ -103,10 +118,41 @@ export function useStreamingAI(options?: UseStreamingAIOptions) {
     }
   };
 
+  const generateFullLiveContent = async (
+    eventData: Record<string, unknown>,
+    usePerplexity = false
+  ): Promise<FullLiveContentResult | null> => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabaseLovable.functions.invoke("streaming-ai-generate", {
+        body: {
+          action: "generate_full",
+          organizationId,
+          eventData,
+          usePerplexity,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as FullLiveContentResult;
+    } catch (error) {
+      console.error("Error generating full live content:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo generar el contenido completo",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     generateEventContent,
     improveTitle,
     improveDescription,
+    generateFullLiveContent,
   };
 }

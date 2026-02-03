@@ -27,7 +27,23 @@ export interface AIDefaults {
   sistema_up_model: string | null;
   live_assistant_provider: string | null;
   live_assistant_model: string | null;
+  perplexity_model: string | null;
+  perplexity_features: Record<string, boolean> | null;
 }
+
+export const PERPLEXITY_MODELS = [
+  { value: 'llama-3.1-sonar-small-128k-online', label: 'Sonar Small (Rápido, económico)' },
+  { value: 'llama-3.1-sonar-large-128k-online', label: 'Sonar Large (Recomendado)' },
+  { value: 'llama-3.1-sonar-huge-128k-online', label: 'Sonar Huge (Máxima calidad)' },
+];
+
+export const PERPLEXITY_FEATURES = [
+  { key: 'scripts', label: 'Generación de guiones', description: 'Investigar tendencias antes de crear guiones' },
+  { key: 'research', label: 'Investigación de mercado', description: 'Enriquecer briefs con datos actuales' },
+  { key: 'board', label: 'Análisis de tablero', description: 'Contexto de tendencias en tarjetas' },
+  { key: 'talent', label: 'Matching de talento', description: 'Sugerir tipo de creador por tendencias' },
+  { key: 'live', label: 'Live Shopping', description: 'Tendencias para eventos en vivo' },
+] as const;
 
 export interface AIUsageLog {
   id: string;
@@ -81,6 +97,17 @@ export const AI_PROVIDERS_CONFIG = {
       { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5 (Recomendado)', default: true },
       { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
       { value: 'claude-3-5-haiku', label: 'Claude 3.5 Haiku (Rápido)' },
+    ]
+  },
+  xai: {
+    key: 'xai',
+    label: 'xAI Grok',
+    description: 'Grok 2 - API Directa',
+    requiresApiKey: true,
+    models: [
+      { value: 'grok-2-1212', label: 'Grok 2 (Recomendado)', default: true },
+      { value: 'grok-2-vision-1212', label: 'Grok 2 Vision' },
+      { value: 'grok-2-1212-fast', label: 'Grok 2 Fast' },
     ]
   }
 };
@@ -167,7 +194,9 @@ export function useOrganizationAI(organizationId?: string) {
           .eq('id', existing.id);
         if (error) throw error;
       } else {
-        const defaultModels = AI_PROVIDERS_CONFIG[providerKey as keyof typeof AI_PROVIDERS_CONFIG]?.models.map(m => m.value) || [];
+        const defaultModels = providerKey === 'perplexity'
+          ? PERPLEXITY_MODELS.map(m => m.value)
+          : (AI_PROVIDERS_CONFIG[providerKey as keyof typeof AI_PROVIDERS_CONFIG]?.models.map(m => m.value) || []);
         const { error } = await supabase
           .from('organization_ai_providers')
           .insert({
@@ -208,7 +237,9 @@ export function useOrganizationAI(organizationId?: string) {
           .eq('id', existing.id);
         if (error) throw error;
       } else {
-        const defaultModels = AI_PROVIDERS_CONFIG[providerKey as keyof typeof AI_PROVIDERS_CONFIG]?.models.map(m => m.value) || [];
+        const defaultModels = providerKey === 'perplexity'
+          ? PERPLEXITY_MODELS.map(m => m.value)
+          : (AI_PROVIDERS_CONFIG[providerKey as keyof typeof AI_PROVIDERS_CONFIG]?.models.map(m => m.value) || []);
         const { error } = await supabase
           .from('organization_ai_providers')
           .insert({
@@ -313,6 +344,49 @@ export function useOrganizationAI(organizationId?: string) {
     return key.substring(0, 4) + '****' + key.substring(key.length - 4);
   };
 
+  // Perplexity
+  const perplexityConnected = hasValidApiKey('perplexity');
+  const perplexityModel = defaults?.perplexity_model || 'llama-3.1-sonar-large-128k-online';
+  const perplexityFeatures: Record<string, boolean> = (defaults?.perplexity_features as Record<string, boolean>) ?? {
+    scripts: true, research: true, board: false, talent: false, live: false
+  };
+
+  const savePerplexityKey = async (key: string) => {
+    await updateProviderApiKey('perplexity', key);
+  };
+
+  const savePerplexityModel = async (model: string) => {
+    await updateDefaults({ perplexity_model: model } as any);
+  };
+
+  const updatePerplexityFeature = async (featureKey: string, enabled: boolean) => {
+    const next = { ...perplexityFeatures, [featureKey]: enabled };
+    await updateDefaults({ perplexity_features: next } as any);
+  };
+
+  const testPerplexityConnection = async (): Promise<boolean> => {
+    const provider = providers.find(p => p.provider_key === 'perplexity');
+    const apiKey = provider?.api_key_encrypted;
+    if (!apiKey) return false;
+    try {
+      const res = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: perplexityModel,
+          messages: [{ role: 'user', content: 'Hi' }],
+          max_tokens: 5,
+        }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  };
+
   return {
     providers,
     defaults,
@@ -326,6 +400,14 @@ export function useOrganizationAI(organizationId?: string) {
     getEnabledProviders,
     hasValidApiKey,
     getMaskedApiKey,
-    refetch: fetchData
+    refetch: fetchData,
+    // Perplexity
+    perplexityConnected,
+    perplexityModel,
+    perplexityFeatures,
+    savePerplexityKey,
+    savePerplexityModel,
+    updatePerplexityFeature,
+    testPerplexityConnection,
   };
 }

@@ -22,7 +22,8 @@ import {
   Sparkles,
   Blocks,
   Cpu,
-  Zap
+  Zap,
+  Search
 } from 'lucide-react';
 import {
   Select,
@@ -33,17 +34,22 @@ import {
 } from "@/components/ui/select";
 import { 
   useOrganizationAI, 
-  AI_PROVIDERS_CONFIG 
+  AI_PROVIDERS_CONFIG,
+  PERPLEXITY_MODELS,
+  PERPLEXITY_FEATURES
 } from '@/hooks/useOrganizationAI';
 import { AIModulesManager } from './AIModulesManager';
+import { CustomAIApiSettings } from './ai/CustomAIApiSettings';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface OrganizationAISettingsProps {
   organizationId: string;
+  /** Tab inicial (ej. desde deep link) */
+  initialTab?: 'overview' | 'custom-api' | 'providers' | 'usage';
 }
 
-export function OrganizationAISettings({ organizationId }: OrganizationAISettingsProps) {
+export function OrganizationAISettings({ organizationId, initialTab }: OrganizationAISettingsProps) {
   const {
     providers,
     defaults,
@@ -55,13 +61,33 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
     updateDefaults,
     getEnabledProviders,
     hasValidApiKey,
-    getMaskedApiKey
+    getMaskedApiKey,
+    perplexityConnected,
+    perplexityModel,
+    perplexityFeatures,
+    savePerplexityKey,
+    savePerplexityModel,
+    updatePerplexityFeature,
+    testPerplexityConnection,
+    refetch
   } = useOrganizationAI(organizationId);
 
   const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({});
   const [apiKeyInputs, setApiKeyInputs] = useState<Record<string, string>>({});
   const [editingApiKey, setEditingApiKey] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(initialTab ?? 'overview');
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
+  const [perplexityKey, setPerplexityKey] = useState('');
+  const [perplexityModelLocal, setPerplexityModelLocal] = useState(perplexityModel);
+  const [isSavingPerplexity, setIsSavingPerplexity] = useState(false);
+  const [isTestingPerplexity, setIsTestingPerplexity] = useState(false);
+
+  // Sync perplexityModelLocal when defaults load
+  useEffect(() => {
+    setPerplexityModelLocal(defaults?.perplexity_model || 'llama-3.1-sonar-large-128k-online');
+  }, [defaults?.perplexity_model]);
 
   if (loading) {
     return (
@@ -77,6 +103,54 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
       toast.success(enabled ? 'Proveedor habilitado' : 'Proveedor deshabilitado');
     } catch {
       toast.error('Error al actualizar el proveedor');
+    }
+  };
+
+  const handleSavePerplexityKey = async () => {
+    if (!perplexityKey?.trim()) {
+      if (perplexityConnected) {
+        toast.error('Ingresa una nueva API Key para actualizar');
+      } else {
+        toast.error('Ingresa una API Key válida');
+      }
+      return;
+    }
+    setIsSavingPerplexity(true);
+    try {
+      await savePerplexityKey(perplexityKey.trim());
+      setPerplexityKey('');
+      toast.success('API Key de Perplexity guardada correctamente');
+      refetch();
+    } catch {
+      toast.error('Error al guardar la API Key');
+    } finally {
+      setIsSavingPerplexity(false);
+    }
+  };
+
+  const handleSavePerplexityModel = async (model: string) => {
+    setPerplexityModelLocal(model);
+    try {
+      await savePerplexityModel(model);
+      toast.success('Modelo de Perplexity actualizado');
+    } catch {
+      toast.error('Error al actualizar el modelo');
+    }
+  };
+
+  const handleTestPerplexity = async () => {
+    setIsTestingPerplexity(true);
+    try {
+      const ok = await testPerplexityConnection();
+      if (ok) {
+        toast.success('Conexión exitosa con Perplexity');
+      } else {
+        toast.error('No se pudo conectar. Verifica tu API Key.');
+      }
+    } catch {
+      toast.error('Error al probar la conexión');
+    } finally {
+      setIsTestingPerplexity(false);
     }
   };
 
@@ -112,10 +186,14 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Blocks className="h-4 w-4" />
               Vista General
+            </TabsTrigger>
+            <TabsTrigger value="custom-api" className="flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              Mis APIs
             </TabsTrigger>
             <TabsTrigger value="providers" className="flex items-center gap-2">
               <Cpu className="h-4 w-4" />
@@ -273,6 +351,110 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
 
               <Separator />
 
+              {/* Perplexity - Investigación en Tiempo Real */}
+              <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Search className="w-5 h-5 text-purple-500" />
+                    Perplexity AI - Investigación en Tiempo Real
+                  </CardTitle>
+                  <CardDescription>
+                    Conecta Perplexity para habilitar búsquedas de tendencias, hooks y análisis competitivo en tiempo real.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Estado de conexión</p>
+                      <p className="text-sm text-muted-foreground">
+                        {perplexityConnected ? 'Conectado y funcionando' : 'No configurado'}
+                      </p>
+                    </div>
+                    <Badge variant={perplexityConnected ? 'default' : 'secondary'}>
+                      {perplexityConnected ? '✓ Activo' : 'Inactivo'}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="perplexity-key">API Key de Perplexity</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="perplexity-key"
+                        type="password"
+                        placeholder={perplexityConnected ? 'Dejar vacío para mantener la actual' : 'pplx-...'}
+                        value={perplexityKey}
+                        onChange={(e) => setPerplexityKey(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button onClick={handleSavePerplexityKey} disabled={isSavingPerplexity || !perplexityKey.trim()}>
+                        {isSavingPerplexity ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Guardar'}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Obtén tu API key en{' '}
+                      <a href="https://www.perplexity.ai/settings/api" target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">
+                        perplexity.ai/settings/api
+                      </a>
+                    </p>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label>Modelo preferido</Label>
+                    <Select value={perplexityModelLocal} onValueChange={handleSavePerplexityModel} disabled={saving}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PERPLEXITY_MODELS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-3">
+                    <p className="font-medium">¿Dónde usar Perplexity?</p>
+                    <div className="space-y-2">
+                      {PERPLEXITY_FEATURES.map((feature) => (
+                        <div key={feature.key} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-sm">{feature.label}</p>
+                            <p className="text-xs text-muted-foreground">{feature.description}</p>
+                          </div>
+                          <Switch
+                            checked={perplexityFeatures[feature.key] ?? false}
+                            onCheckedChange={(checked) => updatePerplexityFeature(feature.key, checked)}
+                            disabled={saving}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    onClick={handleTestPerplexity}
+                    className="w-full"
+                    disabled={!perplexityConnected || isTestingPerplexity}
+                  >
+                    {isTestingPerplexity ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Zap className="w-4 h-4 mr-2" />
+                    )}
+                    Probar conexión
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Separator />
+
               {/* Modules */}
               <div className="space-y-4">
                 <AIModulesManager 
@@ -281,6 +463,11 @@ export function OrganizationAISettings({ organizationId }: OrganizationAISetting
                 />
               </div>
             </div>
+          </TabsContent>
+
+          {/* Mis APIs Tab - Custom API Connection */}
+          <TabsContent value="custom-api" className="mt-6">
+            <CustomAIApiSettings organizationId={organizationId} />
           </TabsContent>
 
           {/* Providers Tab - Full API Key Management */}

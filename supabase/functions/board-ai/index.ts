@@ -2,115 +2,34 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getKreoonClient, isKreoonConfigured, validateKreoonAuth } from "../_shared/kreoon-client.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import {
+  corsHeaders,
+  callAIWithFallback,
+} from "../_shared/ai-providers.ts";
+import { getModuleAIConfigsWithFallback } from "../_shared/get-module-ai-config.ts";
+import {
+  BOARD_SYSTEM_PROMPTS,
+  BOARD_USER_TEMPLATES,
+  replaceBoardVariables,
+} from "../_shared/prompts/board.ts";
+import { PerplexitySearches } from "../_shared/perplexity-client.ts";
 
 // Action types
-type BoardAIAction = 
+type BoardAIAction =
   | "analyze_card"
   | "analyze_board"
   | "suggest_next_state"
   | "detect_bottlenecks"
-  | "recommend_automation";
+  | "recommend_automation"
+  | "research_context";
 
 interface RequestBody {
   action: BoardAIAction;
   organizationId: string;
   contentId?: string;
+  researchType?: "trends" | "competitors" | "hooks";
   boardData?: any;
 }
-
-// AI Provider configuration
-interface AIProviderConfig {
-  url: string;
-  getHeaders: (apiKey: string) => Record<string, string>;
-  getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => any;
-  extractContent: (data: any, hasTools: boolean) => any;
-}
-
-const AI_PROVIDERS: Record<string, AIProviderConfig> = {
-  gemini: {
-    // Gemini API directo (proveedor predeterminado)
-    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    getHeaders: (apiKey: string) => ({
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    }),
-    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
-      const body: any = {
-        model: model || "gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        max_tokens: 2000,
-        temperature: 0.7,
-      };
-      if (tools) {
-        body.tools = tools;
-        body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
-      }
-      return body;
-    },
-    extractContent: (data: any, hasTools: boolean) => {
-      if (hasTools && data.choices?.[0]?.message?.tool_calls?.[0]) {
-        return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
-      }
-      return data.choices?.[0]?.message?.content || "";
-    }
-  },
-  openai: {
-    url: "https://api.openai.com/v1/chat/completions",
-    getHeaders: (apiKey: string) => ({
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    }),
-    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
-      const isNewOpenAIModel = model.startsWith("gpt-5") || model.startsWith("o3") || model.startsWith("o4");
-
-      const body: any = {
-        model: model || "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        ...(isNewOpenAIModel
-          ? { max_completion_tokens: 2000 }
-          : { max_tokens: 2000, temperature: 0.7 }),
-      };
-
-      if (tools) {
-        body.tools = tools;
-        body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
-      }
-      return body;
-    },
-    extractContent: (data: any, hasTools: boolean) => {
-      if (hasTools && data.choices?.[0]?.message?.tool_calls?.[0]) {
-        return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
-      }
-      return data.choices?.[0]?.message?.content || "";
-    }
-  },
-  anthropic: {
-    url: "https://api.anthropic.com/v1/messages",
-    getHeaders: (apiKey: string) => ({
-      "x-api-key": apiKey,
-      "Content-Type": "application/json",
-      "anthropic-version": "2023-06-01",
-    }),
-    getBody: (model: string, systemPrompt: string, userPrompt: string) => ({
-      model: model || "claude-sonnet-4-20250514",
-      max_tokens: 2000,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
-    }),
-    extractContent: (data: any) => data.content?.[0]?.text || ""
-  }
-};
 
 // Map action to module key for validation
 const ACTION_TO_MODULE: Record<BoardAIAction, string> = {
@@ -119,6 +38,7 @@ const ACTION_TO_MODULE: Record<BoardAIAction, string> = {
   suggest_next_state: "board_cards",
   detect_bottlenecks: "board_states",
   recommend_automation: "board_flows",
+  research_context: "board_cards",
 };
 
 // Check if a module is active for the organization
@@ -133,166 +53,7 @@ async function isModuleActive(supabase: any, organizationId: string, moduleKey: 
   return data?.is_active ?? false;
 }
 
-// Get module-specific configuration (provider & model)
-async function getModuleAIConfig(supabase: any, organizationId: string, moduleKey: string) {
-  const googleApiKey = Deno.env.get("GOOGLE_AI_API_KEY");
-  const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-  
-  // First check if module is active
-  const { data: moduleData } = await supabase
-    .from("organization_ai_modules")
-    .select("is_active, provider, model")
-    .eq("organization_id", organizationId)
-    .eq("module_key", moduleKey)
-    .maybeSingle();
-  
-  if (!moduleData?.is_active) {
-    throw new Error(`MODULE_INACTIVE:${moduleKey}`);
-  }
-  
-  // Get the provider configuration from the module or fall back to org defaults
-  let provider = moduleData?.provider || "gemini";
-  let model = moduleData?.model || "gemini-2.5-flash";
-  
-  // Map old lovable provider to gemini
-  if (provider === "lovable") {
-    provider = "gemini";
-    // Map lovable models to gemini models
-    if (model.startsWith("google/")) {
-      model = model.replace("google/", "");
-    } else if (model.startsWith("openai/")) {
-      provider = "openai";
-      model = model.replace("openai/", "").replace("gpt-5", "gpt-4o").replace("gpt-5-mini", "gpt-4o-mini");
-    }
-  }
-  
-  // If provider is external, get API key
-  if (provider !== "gemini" && provider !== "openai") {
-    const { data: providerData } = await supabase
-      .from("organization_ai_providers")
-      .select("api_key_encrypted")
-      .eq("organization_id", organizationId)
-      .eq("provider_key", provider)
-      .eq("is_enabled", true)
-      .maybeSingle();
-    
-    if (providerData?.api_key_encrypted) {
-      return { provider, model, apiKey: providerData.api_key_encrypted };
-    }
-    // Fall back to gemini if no API key
-    provider = "gemini";
-    model = "gemini-2.5-flash";
-  }
-  
-  // Get API key based on provider
-  let apiKey = provider === "openai" ? openaiApiKey : googleApiKey;
-  
-  // Fallback chain: if preferred provider has no key, try the other
-  if (!apiKey) {
-    if (googleApiKey) {
-      provider = "gemini";
-      model = "gemini-2.5-flash";
-      apiKey = googleApiKey;
-    } else if (openaiApiKey) {
-      provider = "openai";
-      model = "gpt-4o-mini";
-      apiKey = openaiApiKey;
-    }
-  }
-  
-  if (!apiKey) {
-    throw new Error("No hay API keys de IA configuradas. Configura GOOGLE_AI_API_KEY o OPENAI_API_KEY");
-  }
-  
-  return { provider, model, apiKey };
-}
-
-// Get all available AI configurations for an organization (for fallback)
-async function getAllAIConfigs(supabase: any, organizationId: string) {
-  const googleApiKey = Deno.env.get("GOOGLE_AI_API_KEY");
-  const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-  
-  const { data: defaults } = await supabase
-    .from("organization_ai_defaults")
-    .select("*")
-    .eq("organization_id", organizationId)
-    .maybeSingle();
-
-  type OrgProviderRow = {
-    provider_key: string;
-    api_key_encrypted: string | null;
-    available_models: string[] | null;
-  };
-
-  const { data: enabledProviders } = await supabase
-    .from("organization_ai_providers")
-    .select("provider_key, api_key_encrypted, available_models")
-    .eq("organization_id", organizationId)
-    .eq("is_enabled", true);
-
-  const configs: Array<{ provider: string; model: string; apiKey: string }> = [];
-  const providerByKey = new Map<string, OrgProviderRow>(
-    ((enabledProviders as OrgProviderRow[] | null) || []).map((p) => [p.provider_key, p])
-  );
-
-  let preferredProvider = defaults?.tablero_provider || defaults?.default_provider || "gemini";
-  let preferredModel = defaults?.tablero_model || defaults?.default_model || "gemini-2.5-flash";
-
-  // Map lovable to gemini
-  if (preferredProvider === "lovable") {
-    preferredProvider = "gemini";
-    if (preferredModel.startsWith("google/")) {
-      preferredModel = preferredModel.replace("google/", "");
-    }
-  }
-
-  // Add preferred provider first if it has API key
-  if (preferredProvider === "gemini" && googleApiKey) {
-    configs.push({ provider: "gemini", model: preferredModel || "gemini-2.5-flash", apiKey: googleApiKey });
-  } else if (preferredProvider === "openai" && openaiApiKey) {
-    configs.push({ provider: "openai", model: preferredModel || "gpt-4o-mini", apiKey: openaiApiKey });
-  } else if (preferredProvider !== "gemini" && preferredProvider !== "openai") {
-    const orgProvider = providerByKey.get(preferredProvider);
-    if (orgProvider?.api_key_encrypted) {
-      const model = preferredModel || (
-        Array.isArray(orgProvider.available_models) && orgProvider.available_models.length
-          ? orgProvider.available_models[0]
-          : preferredProvider === "openai" ? "gpt-4o" : "gemini-2.5-flash"
-      );
-      configs.push({ provider: preferredProvider, model, apiKey: orgProvider.api_key_encrypted });
-    }
-  }
-
-  // Add Gemini as fallback
-  if (googleApiKey && !configs.some(c => c.provider === "gemini")) {
-    configs.push({ provider: "gemini", model: "gemini-2.5-flash", apiKey: googleApiKey });
-  }
-
-  // Add OpenAI as fallback
-  if (openaiApiKey && !configs.some(c => c.provider === "openai")) {
-    configs.push({ provider: "openai", model: "gpt-4o-mini", apiKey: openaiApiKey });
-  }
-
-  // Add external providers from organization config
-  const externalProviders = ["anthropic"];
-  for (const key of externalProviders) {
-    const p = providerByKey.get(key);
-    if (p?.api_key_encrypted && !configs.some(c => c.provider === key)) {
-      const fallbackModel = Array.isArray(p.available_models) && p.available_models.length
-        ? p.available_models[0]
-        : "claude-sonnet-4-20250514";
-      configs.push({ provider: key, model: fallbackModel, apiKey: p.api_key_encrypted });
-    }
-  }
-
-  if (configs.length === 0) {
-    throw new Error("No hay proveedores de IA configurados. Configura GOOGLE_AI_API_KEY o OPENAI_API_KEY.");
-  }
-
-  return configs;
-}
-
-// Log AI usage
+// Log AI usage; returns execution id for feedback loop
 async function logAIUsage(supabase: any, params: {
   organizationId: string;
   userId: string;
@@ -301,87 +62,31 @@ async function logAIUsage(supabase: any, params: {
   action: string;
   success: boolean;
   errorMessage?: string;
-}) {
+}): Promise<string | null> {
   try {
-    await supabase.from("ai_usage_logs").insert({
-      organization_id: params.organizationId,
-      user_id: params.userId,
-      provider: params.provider,
-      model: params.model,
-      module: "tablero",
-      action: params.action,
-      success: params.success,
-      error_message: params.errorMessage,
-    });
+    const { data, error } = await supabase
+      .from("ai_usage_logs")
+      .insert({
+        organization_id: params.organizationId,
+        user_id: params.userId,
+        provider: params.provider,
+        model: params.model,
+        module: "tablero",
+        action: params.action,
+        success: params.success,
+        error_message: params.errorMessage,
+      })
+      .select("id")
+      .single();
+    if (error) {
+      console.error("Failed to log AI usage:", error);
+      return null;
+    }
+    return data?.id ?? null;
   } catch (e) {
     console.error("Failed to log AI usage:", e);
+    return null;
   }
-}
-
-// Call AI provider (single attempt)
-async function callAISingle(
-  config: AIProviderConfig,
-  apiKey: string,
-  model: string,
-  systemPrompt: string,
-  userPrompt: string,
-  tools?: any[]
-): Promise<any> {
-  const url = config.url.includes("generativelanguage")
-    ? `${config.url}/${model}:generateContent`
-    : config.url;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: config.getHeaders(apiKey),
-    body: JSON.stringify(config.getBody(model, systemPrompt, userPrompt, tools)),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("AI API Error:", response.status, errorText);
-    const err: any = new Error(`AI API Error: ${response.status} ${errorText}`);
-    err.status = response.status;
-    err.details = errorText;
-    throw err;
-  }
-
-  const data = await response.json();
-  return config.extractContent(data, !!tools);
-}
-
-// Call AI with automatic fallback to other providers
-async function callAIWithFallback(
-  configs: Array<{ provider: string; model: string; apiKey: string }>,
-  systemPrompt: string,
-  userPrompt: string,
-  tools?: any[]
-): Promise<{ result: any; usedProvider: string; usedModel: string }> {
-  const errors: string[] = [];
-
-  for (const cfg of configs) {
-    const providerConfig = AI_PROVIDERS[cfg.provider] || AI_PROVIDERS.lovable;
-    
-    try {
-      console.log(`Intentando con proveedor: ${cfg.provider}, modelo: ${cfg.model}`);
-      const result = await callAISingle(providerConfig, cfg.apiKey, cfg.model, systemPrompt, userPrompt, tools);
-      console.log(`Éxito con proveedor: ${cfg.provider}`);
-      return { result, usedProvider: cfg.provider, usedModel: cfg.model };
-    } catch (err: any) {
-      const errorMsg = `${cfg.provider}: ${err.message}`;
-      errors.push(errorMsg);
-      console.warn(`Fallo con ${cfg.provider}, intentando siguiente...`, err.message);
-      
-      // If it's a rate limit error and we have more providers, continue
-      // If it's the last provider, we'll throw at the end
-      continue;
-    }
-  }
-
-  // All providers failed
-  const allErrors = errors.join("; ");
-  console.error("Todos los proveedores de IA fallaron:", allErrors);
-  throw new Error(`Todos los proveedores de IA fallaron: ${allErrors}`);
 }
 
 // Status labels in Spanish
@@ -403,16 +108,25 @@ const STATUS_LABELS: Record<string, string> = {
 // ==================== AI ACTIONS ====================
 
 async function analyzeCard(supabase: any, contentId: string, organizationId: string, userId: string) {
-  const configs = await getAllAIConfigs(supabase, organizationId);
+  const configs = await getModuleAIConfigsWithFallback(supabase, organizationId, "tablero");
 
-  // Get card details with related data
+  // Get card details with related data (incl. product for context)
   const { data: content, error } = await supabase
     .from("content")
     .select(`
       *,
       client:clients(name),
-      creator:profiles!content_creator_id_fkey(full_name),
-      editor:profiles!content_editor_id_fkey(full_name)
+      creator:profiles!content_creator_id_fkey(full_name, avatar_url, specialties_tags, best_at),
+      editor:profiles!content_editor_id_fkey(full_name, avatar_url),
+      product:products(
+        name,
+        description,
+        sales_angles,
+        sales_angles_data,
+        avatar_profiles,
+        market_research,
+        content_strategy
+      )
     `)
     .eq("id", contentId)
     .single();
@@ -441,30 +155,58 @@ async function analyzeCard(supabase: any, contentId: string, organizationId: str
     ? Math.floor((new Date(content.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
 
-  const systemPrompt = `Eres un asistente de análisis de producción de contenido para una agencia.
-Tu rol es analizar tarjetas de contenido en un tablero Kanban y proporcionar insights accionables.
-Responde siempre en español. Sé directo y conciso.
-Tus análisis deben ser explicables: indica qué datos analizaste y por qué llegas a cada conclusión.`;
+  // Build product context block when product exists
+  let productContextBlock = "";
+  if (content.product) {
+    const p = content.product as any;
+    const firstAvatar = (() => {
+      try {
+        const ap = typeof p.avatar_profiles === "string" ? JSON.parse(p.avatar_profiles || "{}") : (p.avatar_profiles || {});
+        const profiles = ap.profiles || ap.avatars || (Array.isArray(ap) ? ap : []);
+        return Array.isArray(profiles) ? profiles[0] : null;
+      } catch {
+        return null;
+      }
+    })();
+    productContextBlock = `
+CONTEXTO DEL PRODUCTO:
+- Producto: ${p.name || "Sin nombre"}
+- Descripción: ${(p.description || "No disponible").slice(0, 500)}
+- Ángulo de venta: ${content.sales_angle || "No definido"}
+- Fase ESFERA: ${content.sphere_phase || "No definida"}
+${firstAvatar ? `
+- Avatar principal: ${firstAvatar.name || firstAvatar.nombre || "Sin nombre"}
+  - Situación: ${firstAvatar.situation || firstAvatar.situacion || "No definida"}
+  - Dolor/Drivers: ${firstAvatar.primary_pain || firstAvatar.drivers || firstAvatar.objeciones || "No definido"}
+` : p.ideal_avatar ? `
+- Avatar ideal (resumen): ${String(p.ideal_avatar).slice(0, 300)}
+` : ""}
+${p.market_research ? `- Research de mercado (resumen): ${String(p.market_research).slice(0, 400)}...` : ""}`;
+  } else {
+    productContextBlock = "\nPRODUCTO: No asociado";
+  }
 
-  const userPrompt = `Analiza esta tarjeta de contenido:
-
-INFORMACIÓN DE LA TARJETA:
-- Título: ${content.title}
-- Cliente: ${content.client?.name || "Sin asignar"}
-- Estado actual: ${STATUS_LABELS[content.status] || content.status}
-- Días en estado actual: ${daysInCurrentStatus}
-- Deadline: ${content.deadline ? new Date(content.deadline).toLocaleDateString() : "Sin deadline"}
-- Días hasta deadline: ${daysUntilDeadline !== null ? daysUntilDeadline : "N/A"}
-- ¿Vencido?: ${isOverdue ? "SÍ" : "No"}
-- Creador: ${content.creator?.full_name || "Sin asignar"}
-- Editor: ${content.editor?.full_name || "Sin asignar"}
-- Tiene guión: ${content.script ? "Sí" : "No"}
-- Tiene video: ${content.video_url ? "Sí" : "No"}
-
-HISTORIAL DE ESTADOS (últimos):
-${statusLogs?.map((log: any) => `- ${log.from_status || "inicio"} → ${log.to_status} (${new Date(log.moved_at).toLocaleDateString()})`).join("\n") || "Sin historial"}
-
-Proporciona un análisis estructurado.`;
+  const systemPrompt = BOARD_SYSTEM_PROMPTS.analyze_card;
+  const userPrompt = replaceBoardVariables(BOARD_USER_TEMPLATES.analyze_card, {
+    title: content.title,
+    client_name: content.client?.name || "Sin cliente",
+    status: STATUS_LABELS[content.status] || content.status,
+    days_in_status: daysInCurrentStatus,
+    deadline: content.deadline
+      ? `${new Date(content.deadline).toLocaleDateString()}${daysUntilDeadline !== null ? ` (${daysUntilDeadline} días)` : ""}${isOverdue ? " — VENCIDO" : ""}`
+      : "Sin deadline",
+    creator_name: content.creator?.full_name || "Sin asignar",
+    editor_name: content.editor?.full_name || "Sin asignar",
+    has_script: content.script ? "Sí" : "No",
+    has_video: content.video_url ? "Sí" : "No",
+    status_history: JSON.stringify(
+      (content.status_history ||
+        statusLogs?.slice(0, 5).map((l: any) => ({ from: l.from_status, to: l.to_status, at: l.moved_at })) ||
+        []
+      ).slice(0, 5)
+    ),
+    product_context: productContextBlock.trim(),
+  });
 
   const tools = [{
     type: "function",
@@ -508,6 +250,24 @@ Proporciona un análisis estructurado.`;
           confidence: {
             type: "number",
             description: "Nivel de confianza del análisis (0-100)"
+          },
+          product_insights: {
+            type: "object",
+            description: "Insights de alineación con producto/campaña (solo si hay producto asociado)",
+            properties: {
+              alignment_with_avatar: {
+                type: "string",
+                description: "Evaluación de si el contenido está alineado con el avatar objetivo"
+              },
+              esfera_phase_notes: {
+                type: "string",
+                description: "Notas sobre la fase ESFERA y su impacto en prioridad/urgencia"
+              },
+              content_fit_score: {
+                type: "number",
+                description: "Puntuación 0-100 de ajuste del contenido al producto y campaña"
+              }
+            }
           }
         },
         required: ["current_interpretation", "risk_level", "risk_percentage", "probable_next_state", "recommendation", "confidence"],
@@ -538,12 +298,16 @@ Proporciona un análisis estructurado.`;
 }
 
 async function analyzeBoard(supabase: any, organizationId: string, userId: string) {
-  const configs = await getAllAIConfigs(supabase, organizationId);
+  const configs = await getModuleAIConfigsWithFallback(supabase, organizationId, "tablero");
 
-  // Get all content for the organization
+  // Get all content for the organization with product/campaign context
   const { data: contents } = await supabase
     .from("content")
-    .select("id, title, status, deadline, created_at, updated_at, creator_id, editor_id")
+    .select(`
+      id, title, status, deadline, created_at, updated_at, creator_id, editor_id, sphere_phase, sales_angle,
+      product:products(name),
+      client:clients(name)
+    `)
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false });
 
@@ -582,22 +346,68 @@ async function analyzeBoard(supabase: any, organizationId: string, userId: strin
     new Date(c.updated_at) < sevenDaysAgo && !["approved", "paid", "delivered"].includes(c.status)
   );
 
-  const systemPrompt = `Eres un analista de productividad para una agencia de contenido.
-Tu rol es analizar tableros Kanban y detectar cuellos de botella, problemas de flujo y oportunidades de mejora.
-Responde siempre en español. Sé directo y accionable.
-Explica siempre el razonamiento detrás de cada conclusión.`;
+  const statusDistributionStr = statusDistribution
+    .map((s) => `- ${s.label}: ${s.count} (${s.percentage}%)`)
+    .join("\n");
 
-  const userPrompt = `Analiza este tablero de producción de contenido:
+  const tasksByCreator = (() => {
+    const byCreator: Record<string, number> = {};
+    contents.forEach((c: any) => {
+      const id = c.creator_id || "sin_asignar";
+      byCreator[id] = (byCreator[id] || 0) + 1;
+    });
+    return Object.entries(byCreator)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(", ");
+  })();
+  const tasksByEditor = (() => {
+    const byEditor: Record<string, number> = {};
+    contents.forEach((c: any) => {
+      const id = c.editor_id || "sin_asignar";
+      byEditor[id] = (byEditor[id] || 0) + 1;
+    });
+    return Object.entries(byEditor)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(", ");
+  })();
 
-MÉTRICAS GENERALES:
-- Total de tarjetas: ${totalCards}
-- Tarjetas vencidas: ${overdueItems.length}
-- Tarjetas sin movimiento (7+ días): ${staleItems.length}
+  // Build aggregated product/campaign context
+  const productCounts: Record<string, number> = {};
+  const phaseCounts: Record<string, number> = {};
+  const clientNames = new Set<string>();
+  contents.forEach((c: any) => {
+    const pName = c.product?.name || "Sin producto";
+    productCounts[pName] = (productCounts[pName] || 0) + 1;
+    const phase = c.sphere_phase || "Sin fase";
+    phaseCounts[phase] = (phaseCounts[phase] || 0) + 1;
+    if (c.client?.name) clientNames.add(c.client.name);
+  });
+  const productLines = Object.entries(productCounts)
+    .map(([name, count]) => `  - ${name}: ${count} tarjetas`)
+    .join("\n");
+  const phaseLines = Object.entries(phaseCounts)
+    .filter(([k]) => k !== "Sin fase")
+    .map(([phase, count]) => `  - ${phase}: ${count} tarjetas`)
+    .join("\n");
+  let campaignContextBlock = "";
+  if (productLines || phaseLines || clientNames.size > 0) {
+    campaignContextBlock = `
+CONTEXTO PRODUCTOS/CAMPAÑAS (agregado del tablero):
+${productLines ? `Productos en el tablero:\n${productLines}` : ""}
+${phaseLines ? `\nFases ESFERA:\n${phaseLines}` : ""}
+${clientNames.size > 0 ? `\nClientes: ${[...clientNames].join(", ")}` : ""}
+`;
+  }
 
-DISTRIBUCIÓN POR ESTADO:
-${statusDistribution.map(s => `- ${s.label}: ${s.count} (${s.percentage}%)`).join("\n")}
-
-Detecta cuellos de botella y sugiere mejoras.`;
+  const systemPrompt = BOARD_SYSTEM_PROMPTS.analyze_board;
+  const userPrompt = replaceBoardVariables(BOARD_USER_TEMPLATES.analyze_board, {
+    total_cards: totalCards,
+    overdue_count: overdueItems.length,
+    status_distribution: `${statusDistributionStr}\n- Tarjetas sin movimiento (7+ días): ${staleItems.length}`,
+    tasks_by_creator: tasksByCreator || "N/A",
+    tasks_by_editor: tasksByEditor || "N/A",
+    campaign_context: campaignContextBlock.trim() || "No hay productos/campañas asociados en el tablero.",
+  });
 
   const tools = [{
     type: "function",
@@ -658,7 +468,7 @@ Detecta cuellos de botella y sugiere mejoras.`;
 
   const { result, usedProvider, usedModel } = await callAIWithFallback(configs, systemPrompt, userPrompt, tools);
 
-  await logAIUsage(supabase, {
+  const executionId = await logAIUsage(supabase, {
     organizationId,
     userId,
     provider: usedProvider,
@@ -674,12 +484,13 @@ Detecta cuellos de botella y sugiere mejoras.`;
     stale_count: staleItems.length,
     status_distribution: statusDistribution,
     analyzed_at: new Date().toISOString(),
-    ai_model: usedModel
+    ai_model: usedModel,
+    execution_id: executionId ?? undefined
   };
 }
 
 async function suggestNextState(supabase: any, contentId: string, organizationId: string, userId: string) {
-  const configs = await getAllAIConfigs(supabase, organizationId);
+  const configs = await getModuleAIConfigsWithFallback(supabase, organizationId, "tablero");
 
   // Get card details
   const { data: content } = await supabase
@@ -695,18 +506,15 @@ async function suggestNextState(supabase: any, contentId: string, organizationId
 
   if (!content) throw new Error("Content not found");
 
-  const systemPrompt = `Eres un asistente de flujo de trabajo para producción de contenido.
-Analiza el estado actual de una tarjeta y sugiere el siguiente estado más apropiado.
-Considera los prerrequisitos típicos de cada estado.`;
-
-  const userPrompt = `Tarjeta: "${content.title}"
-Estado actual: ${STATUS_LABELS[content.status] || content.status}
-Tiene guión: ${content.script ? "Sí" : "No"}
-Tiene video: ${content.video_url ? "Sí" : "No"}
-Creador asignado: ${content.creator?.full_name || "No"}
-Editor asignado: ${content.editor?.full_name || "No"}
-
-¿Cuál debería ser el siguiente estado y por qué?`;
+  const systemPrompt = BOARD_SYSTEM_PROMPTS.suggest_next_state;
+  const userPrompt = replaceBoardVariables(BOARD_USER_TEMPLATES.suggest_next_state, {
+    current_status: STATUS_LABELS[content.status] || content.status,
+    has_script: content.script ? "Sí" : "No",
+    has_video: content.video_url ? "Sí" : "No",
+    has_creator: content.creator?.full_name ? `Sí (${content.creator.full_name})` : "No",
+    has_editor: content.editor?.full_name ? `Sí (${content.editor.full_name})` : "No",
+    recent_comments: "",
+  });
 
   const tools = [{
     type: "function",
@@ -757,12 +565,13 @@ async function detectBottlenecks(supabase: any, organizationId: string, userId: 
     health_score: analysis.health_score,
     status_distribution: analysis.status_distribution,
     analyzed_at: analysis.analyzed_at,
-    ai_model: analysis.ai_model
+    ai_model: analysis.ai_model,
+    execution_id: (analysis as any).execution_id
   };
 }
 
 async function recommendAutomation(supabase: any, organizationId: string, userId: string) {
-  const configs = await getAllAIConfigs(supabase, organizationId);
+  const configs = await getModuleAIConfigsWithFallback(supabase, organizationId, "tablero");
 
   // Get recent status changes
   const { data: statusLogs } = await supabase
@@ -791,21 +600,16 @@ async function recommendAutomation(supabase: any, organizationId: string, userId
     };
   }
 
-  const systemPrompt = `Eres un experto en automatización de flujos de trabajo.
-Analiza patrones de movimiento de tarjetas y sugiere automatizaciones útiles.
-Las automatizaciones deben ser prácticas y mejorar la eficiencia.
-Responde en español.
-Devuelve SIEMPRE un JSON válido con la forma: {\"automations\":[...],\"patterns_analyzed\":[...] }.`;
-
   const transitionLines = Object.entries(transitions)
     .sort((a, b) => b[1] - a[1])
     .map(([t, c]) => `- ${t}: ${c} veces`)
     .join("\n");
 
-  const userPrompt = `Patrones de transición detectados (últimas 100):
-${transitionLines || "(sin patrones)"}
-
-Sugiere automatizaciones basadas en estos patrones.`;
+  const systemPrompt = BOARD_SYSTEM_PROMPTS.recommend_automation;
+  const userPrompt = replaceBoardVariables(BOARD_USER_TEMPLATES.recommend_automation, {
+    transition_patterns: transitionLines || "(sin patrones)",
+    current_rules: "",
+  });
 
   const tools = [{
     type: "function",
@@ -857,7 +661,7 @@ Sugiere automatizaciones basadas en estos patrones.`;
     normalized.automations = [];
   }
 
-  await logAIUsage(supabase, {
+  const executionId = await logAIUsage(supabase, {
     organizationId,
     userId,
     provider: usedProvider,
@@ -871,6 +675,76 @@ Sugiere automatizaciones basadas en estos patrones.`;
     transition_patterns: transitions,
     analyzed_at: new Date().toISOString(),
     ai_model: usedModel,
+    execution_id: executionId ?? undefined
+  };
+}
+
+// ==================== RESEARCH CONTEXT (Perplexity) ====================
+
+async function handleResearchContext(
+  supabase: any,
+  contentId: string,
+  organizationId: string,
+  researchType: "trends" | "competitors" | "hooks"
+) {
+  const { data: content, error } = await supabase
+    .from("content")
+    .select(`
+      title,
+      sales_angle,
+      sphere_phase,
+      product:products(name, description)
+    `)
+    .eq("id", contentId)
+    .single();
+
+  if (error || !content) {
+    throw new Error("Content not found");
+  }
+
+  const product = content.product as { name?: string; description?: string; category?: string } | null;
+  if (!product?.name) {
+    throw new Error("No product associated with this content");
+  }
+
+  const niche = (product as any).category || product.name;
+
+  let research;
+  switch (researchType) {
+    case "trends":
+      research = await PerplexitySearches.contentTrends(supabase, organizationId, {
+        niche,
+        platform: "TikTok",
+      });
+      break;
+    case "competitors":
+      research = await PerplexitySearches.competitorAnalysis(supabase, organizationId, {
+        productName: product.name,
+        market: "Latinoamérica",
+      });
+      break;
+    case "hooks":
+      research = await PerplexitySearches.hookResearch(supabase, organizationId, {
+        productType: niche,
+        platform: "TikTok",
+      });
+      break;
+    default:
+      research = await PerplexitySearches.contentTrends(supabase, organizationId, {
+        niche,
+        platform: "TikTok",
+      });
+  }
+
+  return {
+    research: research.content,
+    citations: research.citations,
+    contentContext: {
+      title: content.title,
+      salesAngle: content.sales_angle,
+      spherePhase: content.sphere_phase,
+    },
+    researchType,
   };
 }
 
@@ -956,6 +830,12 @@ serve(async (req) => {
       case "recommend_automation":
         result = await recommendAutomation(supabase, organizationId, userId);
         break;
+      case "research_context": {
+        const researchType = (body as RequestBody).researchType || "trends";
+        if (!contentId) throw new Error("contentId is required for research_context");
+        result = await handleResearchContext(supabase, contentId, organizationId, researchType);
+        break;
+      }
       default:
         throw new Error(`Unknown action: ${action}`);
     }
