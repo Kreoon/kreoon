@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- =============================================
 -- ARQUITECTURA MULTI-TENANT: ORGANIZACIONES
 -- =============================================
@@ -49,7 +50,7 @@ CREATE TABLE public.organization_invitations (
   organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   email text NOT NULL,
   role app_role NOT NULL DEFAULT 'creator',
-  token text UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex'),
+  token text UNIQUE NOT NULL DEFAULT gen_random_uuid()::text,
   expires_at timestamptz NOT NULL DEFAULT (now() + interval '7 days'),
   invited_by uuid REFERENCES auth.users(id),
   created_at timestamptz DEFAULT now(),
