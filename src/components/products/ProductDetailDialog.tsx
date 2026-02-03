@@ -63,6 +63,8 @@ interface ProductDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave?: () => void;
+  /** Llamado cuando la investigación IA termina - refresca el producto sin cerrar */
+  onResearchComplete?: (updatedProduct: Product) => void;
   readOnly?: boolean;
 }
 
@@ -72,6 +74,7 @@ export function ProductDetailDialog({
   open, 
   onOpenChange, 
   onSave,
+  onResearchComplete,
   readOnly = false
 }: ProductDetailDialogProps) {
   const { toast } = useToast();
@@ -315,9 +318,14 @@ export function ProductDetailDialog({
                   // Ensure businessType from product takes precedence
                   businessType: product.business_type || (product.brief_data as any)?.businessType || 'product_service'
                 }}
-                onComplete={() => {
+                onComplete={async () => {
                   toast({ title: "Investigación generada", description: "Los datos del producto han sido actualizados con IA" });
-                  onSave?.();
+                  if (product?.id && onResearchComplete) {
+                    const { data } = await supabase.from('products').select('*').eq('id', product.id).single();
+                    if (data) onResearchComplete(data as Product);
+                  } else {
+                    onSave?.();
+                  }
                 }}
               />
             ) : (
@@ -339,10 +347,10 @@ export function ProductDetailDialog({
             <MarketOverviewTab marketResearch={(() => {
               try {
                 if (!product?.market_research) return null;
-                if (typeof product.market_research === 'string') {
-                  return JSON.parse(product.market_research);
-                }
-                return product.market_research;
+                const mr = typeof product.market_research === 'string'
+                  ? JSON.parse(product.market_research)
+                  : product.market_research;
+                return mr?.market_overview || mr;
               } catch {
                 return null;
               }

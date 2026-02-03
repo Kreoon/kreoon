@@ -34,7 +34,7 @@ import {
   Save,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { supabaseLovable } from '@/integrations/supabase/lovable-client';
+import { invokeProductResearch } from '@/lib/productResearch';
 import { toast } from 'sonner';
 
 // Comprehensive brief data structure
@@ -299,35 +299,60 @@ export function ProductBriefWizard({
     ...existingBrief,
   });
 
-  // Save brief to database
+  // Save brief to database (usa Edge Function para evitar 500 por RLS)
   const saveBrief = useCallback(async (showToast = true) => {
     if (isSaving) return;
-    
+
     setIsSaving(true);
-    try {
+    const sanitizeBusinessType = (v: string) =>
+      (v === 'personal_brand' || v === 'product_service') ? v : 'product_service';
+    const completed = isAllStepsComplete();
+    const payload = {
+      productId,
+      briefData: JSON.parse(JSON.stringify(briefData)),
+      briefStatus: completed ? 'completed' : 'in_progress',
+      briefCompletedAt: completed ? new Date().toISOString() : null,
+      businessType: sanitizeBusinessType(briefData.businessType || 'product_service'),
+    };
+
+    const saveViaFunction = async () => {
+      const { data, error } = await supabase.functions.invoke('save-product-brief', {
+        body: payload,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return !data?.error;
+    };
+
+    const saveViaDirect = async () => {
       const { error } = await supabase
         .from('products')
-        .update({ 
-          brief_data: JSON.parse(JSON.stringify(briefData)),
-          brief_status: isAllStepsComplete() ? 'completed' : 'in_progress',
-          brief_completed_at: isAllStepsComplete() ? new Date().toISOString() : null,
-          business_type: briefData.businessType,
-          updated_at: new Date().toISOString()
+        .update({
+          brief_data: payload.briefData,
+          brief_status: payload.briefStatus,
+          brief_completed_at: payload.briefCompletedAt,
+          business_type: payload.businessType,
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', productId);
-
+        .eq('id', productId)
+        .select('id');
       if (error) throw error;
+    };
 
+    try {
+      try {
+        await saveViaDirect();
+      } catch {
+        await new Promise((r) => setTimeout(r, 600));
+        await saveViaFunction();
+      }
       setHasUnsavedChanges(false);
       setLastSavedAt(new Date());
-      if (showToast) {
-        toast.success('Brief guardado correctamente');
-      }
+      if (showToast) toast.success('Brief guardado correctamente');
     } catch (error) {
       console.error('Error saving brief:', error);
-      if (showToast) {
-        toast.error('Error al guardar el brief');
-      }
+      const msg = error instanceof Error ? error.message : 'Error de conexión';
+      if (showToast) toast.error('Error al guardar el brief', { description: msg });
     } finally {
       setIsSaving(false);
     }
@@ -489,7 +514,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
 
       const { data, error } = await supabase.functions.invoke('multi-ai', {
         body: {
-          provider: 'lovable',
+          provider: 'gemini',
           model: 'google/gemini-2.5-flash',
           mode: 'first',
           models: ['gemini'],
@@ -523,24 +548,33 @@ Escribe 1-2 frases de complemento para agregar al final.`
   };
 
   const handleGenerateResearch = async () => {
+    console.log('[Brief] Generar Investigación: clic recibido');
     if (!isStepComplete(0) || !isStepComplete(1) || !isStepComplete(2)) {
+      console.log('[Brief] Generar Investigación: pasos incompletos, abortando');
       toast.error('Completa al menos las primeras 3 secciones del brief');
       return;
     }
 
     setIsGenerating(true);
+    console.log('[Brief] Generar Investigación: iniciando, productId=', productId);
     try {
-      await supabase
-        .from('products')
-        .update({ 
-          brief_status: 'in_progress',
-          brief_data: JSON.parse(JSON.stringify(briefData))
-        })
-        .eq('id', productId);
+      const payload = { brief_status: 'in_progress', brief_data: JSON.parse(JSON.stringify(briefData)) };
+      let updateErr: any = null;
+      for (let i = 0; i < 2; i++) {
+        const { error } = await supabase.from('products').update(payload).eq('id', productId).select('id');
+        if (!error) { updateErr = null; break; }
+        updateErr = error;
+        if (i < 1) await new Promise(r => setTimeout(r, 800));
+      }
+      if (updateErr) {
+        console.error('[Brief] Generar Investigación: error al actualizar producto', updateErr);
+        throw updateErr;
+      }
+      console.log('[Brief] Generar Investigación: producto actualizado OK, invocando product-research (Kreoon)...');
 
-      const { data, error } = await supabaseLovable.functions.invoke('product-research', {
-        body: { productId, briefData }
-      });
+      const { data, error } = await invokeProductResearch({ productId, briefData });
+
+      console.log('[Brief] Generar Investigación: respuesta product-research', { data, error });
 
       if (error) throw error;
 

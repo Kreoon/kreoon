@@ -34,7 +34,7 @@ import {
   Film,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { supabaseLovable } from '@/integrations/supabase/lovable-client';
+import { invokeProductResearch } from '@/lib/productResearch';
 import { toast } from 'sonner';
 
 // Esfera phase distribution
@@ -679,10 +679,8 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
 
       toast.success('Producto creado, iniciando investigación con IA...');
 
-      // Step 2: Call the research function
-      const { data, error } = await supabaseLovable.functions.invoke('product-research', {
-        body: { productId: newProduct.id, briefData }
-      });
+      // Step 2: Call the research function (Kreoon directo)
+      const { data, error } = await invokeProductResearch({ productId: newProduct.id, briefData });
 
       if (error) throw error;
 

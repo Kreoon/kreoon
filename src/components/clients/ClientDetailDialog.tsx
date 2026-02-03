@@ -962,8 +962,16 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         clientId={client.id}
         open={showProductDialog}
         onOpenChange={setShowProductDialog}
-        onSave={() => {
+        onResearchComplete={(updated) => {
+          setSelectedProduct(updated);
           fetchProducts();
+        }}
+        onSave={async () => {
+          await fetchProducts();
+          if (selectedProduct?.id) {
+            const { data } = await supabase.from('products').select('*').eq('id', selectedProduct.id).single();
+            if (data) setSelectedProduct(data);
+          }
           setShowProductDialog(false);
         }}
       />

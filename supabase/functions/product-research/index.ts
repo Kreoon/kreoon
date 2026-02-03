@@ -341,6 +341,7 @@ async function consolidateFinalResults(
     marketResearch.jtbd = r.jtbd.jtbd;
   }
   marketResearch.generatedAt = new Date().toISOString();
+  console.log("[product-research] consolidate: market_overview=" + !!mo + " jtbd=" + !!r.jtbd?.jtbd);
 
   const competitorAnalysis: any = (existingData.competitor_analysis && typeof existingData.competitor_analysis === "object")
     ? { ...existingData.competitor_analysis }
@@ -398,7 +399,18 @@ async function consolidateFinalResults(
     };
   }
 
-  await supabase.from("products").update(update).eq("id", productId);
+  const keys = Object.keys(update).filter((k) => k !== "updated_at");
+  console.log("[product-research] consolidateFinalResults updating keys:", keys.join(", "));
+  const { data: upData, error } = await supabase
+    .from("products")
+    .update(update)
+    .eq("id", productId)
+    .select("id");
+  if (error) {
+    console.error("[product-research] consolidateFinalResults UPDATE error:", error.message, JSON.stringify(error.details));
+  } else {
+    console.log("[product-research] consolidateFinalResults OK, rows:", upData?.length ?? 0);
+  }
 }
 
 // Prompt completo del Método Esfera - Versión mejorada con más detalle
@@ -909,12 +921,14 @@ IMPORTANTE:
 - Para los competidores, intenta incluir URLs reales de sus sitios web y redes sociales.`;
 
 serve(async (req) => {
+  console.log("[product-research] Request received:", req.method, req.url);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const body = await req.json();
+    console.log("[product-research] Body keys:", Object.keys(body || {}));
     const { productId, briefData, useSteps = true, startFromStep, previousResults } = body;
 
     if (!productId || !briefData) {
@@ -1021,16 +1035,7 @@ serve(async (req) => {
       );
     }
 
-    // Flujo legacy (useSteps = false) - Phase A / B
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableApiKey) {
-      console.error("LOVABLE_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ success: false, error: "Lovable API key not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    // Flujo legacy (useSteps = false) - Phase A / B - usa Perplexity (ya validado arriba)
     // Build product description from brief data
     let productDescription = buildProductDescription(briefData);
     const targetMarket = briefData.targetMarket || 'Latinoamérica (LATAM)';
@@ -1487,9 +1492,7 @@ Estructura JSON EXACTA:
     };
 
     // Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = getKreoonClient();
 
     const savePartial = async (partialUpdate: Record<string, unknown>) => {
       const { error: partialError } = await supabase
