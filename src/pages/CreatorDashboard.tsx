@@ -46,7 +46,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Importar componentes del sistema "El Estudio"
+// Importar componentes del sistema Kreoon IA
 import {
   LevelBadge,
   CreditsDisplay,

@@ -36,7 +36,7 @@ import {
 import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
 
-// Importar componentes del sistema "El Estudio"
+// Importar componentes del sistema Kreoon IA
 import {
   LevelBadge,
   CreditsDisplay,

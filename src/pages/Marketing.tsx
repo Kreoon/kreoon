@@ -9,12 +9,13 @@ import { MarketingInsights } from "@/components/marketing/MarketingInsights";
 import { MarketingContent } from "@/components/marketing/MarketingContent";
 import { ClientMarketingDashboard } from "@/components/marketing/ClientMarketingDashboard";
 import { UnifiedClientSwitcher } from "@/components/marketing/UnifiedClientSwitcher";
-import { 
-  LayoutDashboard, 
-  Target, 
-  Radio, 
-  Megaphone, 
-  BarChart3, 
+import { PageHeader } from "@/components/layout/PageHeader";
+import {
+  LayoutDashboard,
+  Target,
+  Radio,
+  Megaphone,
+  BarChart3,
   Sparkles,
   TrendingUp,
   FileVideo,
@@ -34,31 +35,21 @@ export default function Marketing() {
   const effectiveOrgId = profile?.current_organization_id;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-6 px-4 space-y-6">
-        {/* Header con Company Switcher y Client Switcher */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
-                <TrendingUp className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">Marketing Hub</h1>
-                <p className="text-muted-foreground">
-                  Centro de control estratégico de marketing
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Unified Client Switcher */}
-          <UnifiedClientSwitcher
-            organizationId={effectiveOrgId}
-            selectedClientId={selectedClientId}
-            onClientChange={setSelectedClientId}
-          />
-        </div>
+    <div className="min-h-screen">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        {/* Page Header - Kreoon Tech */}
+        <PageHeader
+          icon={TrendingUp}
+          title="Kreoon Marketing"
+          subtitle="Centro de control estratégico de marketing"
+          action={
+            <UnifiedClientSwitcher
+              organizationId={effectiveOrgId}
+              selectedClientId={selectedClientId}
+              onClientChange={setSelectedClientId}
+            />
+          }
+        />
 
         {/* Context Badge */}
         {selectedClientId && (
