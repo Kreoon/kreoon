@@ -74,9 +74,23 @@ export {
 
 // Escrow Components
 export {
+  // Core
   EscrowStatusCard,
   EscrowListItem,
   EscrowTimeline,
+  // Enhanced
+  EscrowStatusBadge,
+  getEscrowStatusColors,
+  EscrowTimelineEnhanced,
+  EscrowDistribution,
+  EscrowCard,
+  EscrowActions,
+  EscrowDetailDrawer,
+  CampaignEscrowSection,
+  // Modals
+  ApproveContentModal,
+  RequestChangesModal,
+  OpenDisputeModal,
 } from './components/Escrow';
 
 // Admin Components
