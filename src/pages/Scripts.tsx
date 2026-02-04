@@ -10,10 +10,11 @@ const Scripts = () => {
   return (
     <div className="min-h-screen">
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        {/* Page Header - El Estudio theme */}
         <PageHeader
           icon={Scroll}
-          title="KREOON IA"
-          subtitle="Genera guiones profesionales para cualquier producto o servicio"
+          title="Kreoon IA"
+          subtitle="Asistente inteligente para guiones y estrategia de contenido"
           action={
             profile?.current_organization_id && (
               <AITokensPanelTrigger

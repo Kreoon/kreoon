@@ -356,16 +356,16 @@ export default function Team() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Page Header */}
+      {/* Page Header - El Estudio theme */}
       <PageHeader
         icon={Swords}
-        title={currentOrg?.name ? `Equipo de ${currentOrg.name}` : "Equipo"}
-        subtitle={`Administra los miembros de tu organización (${profiles.length} miembros)`}
+        title={currentOrg?.name ? `Elenco de ${currentOrg.name}` : "Elenco"}
+        subtitle={`Administra los miembros del estudio (${profiles.length} talentos)`}
         action={
           <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
             <DialogTrigger asChild>
-              <Button 
-                className="gap-2 font-medieval" 
+              <Button
+                className="gap-2"
                 onClick={(e) => {
                   if (isReadOnly) {
                     e.preventDefault();
@@ -375,12 +375,12 @@ export default function Team() {
                 disabled={isReadOnly}
               >
                 <UserPlus className="w-4 h-4" />
-                Invitar Vasallo
+                Invitar Talento
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Invitar nuevo usuario a {currentOrg?.name}</DialogTitle>
+                <DialogTitle>Invitar nuevo talento a {currentOrg?.name}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>

@@ -363,19 +363,19 @@ const Content = () => {
     <VideoPlayerProvider>
       <div className="min-h-screen">
         <div className="p-4 md:p-6 space-y-6">
-          {/* Page Header */}
+          {/* Page Header - El Estudio theme */}
           <PageHeader
             icon={Film}
-            title="Portafolio"
-            subtitle="Videos finales y contenido público"
+            title="Archivo"
+            subtitle="Videos finales y producciones publicadas"
             action={
               isAdmin && (
                 <Dialog open={newVideoOpen} onOpenChange={setNewVideoOpen}>
                   <DialogTrigger asChild>
                     <Button variant="default" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0">
                       <Plus className="h-4 w-4" />
-                      <span className="hidden sm:inline">Nuevo Video</span>
-                      <span className="sm:hidden">Nuevo</span>
+                      <span className="hidden sm:inline">Nueva Pieza</span>
+                      <span className="sm:hidden">Nueva</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-[95vw] sm:max-w-md">
