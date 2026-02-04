@@ -93,7 +93,7 @@ export function useTrackingConfig({ organizationId }: UseTrackingConfigProps) {
           id: aiData.id,
           organizationId: aiData.organization_id,
           enabled: aiData.enabled,
-          provider: aiData.provider as 'lovable' | 'openai' | 'google',
+          provider: aiData.provider as 'kreoon' | 'openai' | 'google',
           model: aiData.model,
           analysisFrequency: aiData.analysis_frequency as AnalysisFrequency,
           autoAlertsEnabled: aiData.auto_alerts_enabled,

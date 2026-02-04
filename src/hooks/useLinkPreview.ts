@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { supabase } from '@/integrations/supabase/client';
 
 export interface LinkPreview {
   url: string;
@@ -53,7 +52,7 @@ export function useLinkPreview() {
       }
 
       // Fetch from edge function
-      const { data, error } = await supabase.functions.invoke('fetch-document', {
+      const { data, error } = await supabaseLovable.functions.invoke('fetch-document', {
         body: { url, type: 'metadata' }
       });
 

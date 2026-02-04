@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -132,7 +131,7 @@ export default function StrategistDashboard() {
     setGeneratedScript("");
 
     try {
-      const response = await supabase.functions.invoke('generate-script', {
+      const response = await supabaseLovable.functions.invoke('generate-script', {
         body: {
           product_name: selectedProduct.name,
           strategy: selectedProduct.strategy || '',

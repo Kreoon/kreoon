@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Building2,
   Lock,
@@ -116,7 +115,7 @@ export default function OrgRegister() {
     if (!fullName.trim() || !email.trim() || !organization?.id) return;
     setLoadingSuggestion(true);
     try {
-      const response = await supabase.functions.invoke("suggest-role", {
+      const response = await supabaseLovable.functions.invoke("suggest-role", {
         body: {
           fullName: fullName.trim(),
           email: email.trim(),
@@ -151,7 +150,7 @@ export default function OrgRegister() {
   const fetchOrganization = async () => {
     try {
       const { data: edgeData, error: edgeError } =
-        await supabase.functions.invoke("org-public-info", {
+        await supabaseLovable.functions.invoke("org-public-info", {
           body: { slug },
         });
 
@@ -343,7 +342,7 @@ export default function OrgRegister() {
         return;
       }
 
-      supabase.functions
+      supabaseLovable.functions
         .invoke("notify-new-member", {
           body: {
             user_id: userId,

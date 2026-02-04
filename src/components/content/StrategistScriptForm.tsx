@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1137,15 +1136,15 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   // Load enabled AI providers from organization settings
   const { getEnabledProviders, hasValidApiKey, loading: loadingAI } = useOrganizationAI(organizationId);
   
-  // Check which providers are enabled (lovable is always enabled)
+  // Check which providers are enabled (kreoon is always enabled)
   const enabledProviderKeys = useMemo(() => {
     const enabled = getEnabledProviders();
     return enabled.map(e => e.key);
   }, [getEnabledProviders]);
-  
+
   // Check if a provider is enabled
   const isProviderEnabled = (providerValue: string) => {
-    if (providerValue === 'lovable') return true; // Always enabled
+    if (providerValue === 'kreoon') return true; // Always enabled
     return enabledProviderKeys.includes(providerValue);
   };
   
@@ -1725,7 +1724,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       fullPrompt += `\n\n---\nGUIÓN GENERADO:\n${previousScript}`;
     }
 
-    const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
+    const { data, error } = await supabaseLovable.functions.invoke(CONTENT_AI_FUNCTION, {
       body: {
         action: formData.use_perplexity ? "research_and_generate" : "generate_script",
         organizationId,

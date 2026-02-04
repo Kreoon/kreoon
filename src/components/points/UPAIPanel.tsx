@@ -56,9 +56,9 @@ export function UPAIPanel({ organizationId, aiConfig }: UPAIPanelProps) {
   const [feedbackDismissed, setFeedbackDismissed] = useState(false);
   
   // AI provider selection for this module
-  const [selectedAI, setSelectedAI] = useState<{ provider: string; model: string }>({ 
-    provider: 'lovable', 
-    model: 'google/gemini-2.5-flash' 
+  const [selectedAI, setSelectedAI] = useState<{ provider: string; model: string }>({
+    provider: 'kreoon',
+    model: 'google/gemini-2.5-flash'
   });
   
   // Initialize selected AI from module config

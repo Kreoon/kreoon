@@ -7,7 +7,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -81,7 +80,7 @@ export function AIChatPanel({ isOpen, onClose, organizationId }: AIChatPanelProp
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('ai-assistant', {
+      const { data, error } = await supabaseLovable.functions.invoke('ai-assistant', {
         body: {
           message: userMessage.content,
           organizationId,

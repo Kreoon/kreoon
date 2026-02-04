@@ -505,15 +505,15 @@ ${!userAccessLevels.has('financials') ? '- Información financiera detallada, pa
 
     aiMessages.push({ role: 'user', content: message });
 
-    // Determine API configuration
-    const provider = config.provider || 'lovable';
+    // Determine API configuration - kreoon uses Gemini
+    const provider = config.provider || 'kreoon';
     let apiUrl = '';
     let apiKey = '';
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
-    if (provider === 'lovable') {
-      apiKey = Deno.env.get('LOVABLE_API_KEY') || '';
-      apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+    if (provider === 'kreoon' || provider === 'gemini') {
+      apiKey = Deno.env.get('GOOGLE_AI_API_KEY') || '';
+      apiUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
       headers['Authorization'] = `Bearer ${apiKey}`;
     } else if (provider === 'openai') {
       const { data: providerConfig } = await supabase
