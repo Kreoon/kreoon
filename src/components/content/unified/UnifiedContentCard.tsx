@@ -168,12 +168,12 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   const fallbackVideoSrc = bunnyUrls?.mp4 || bunnyUrls?.hls || currentVideoUrl;
   const thumbnailSrc = bunnyUrls?.thumbnail || content.thumbnail_url;
 
-  // Estados que permiten descarga para clientes
-  const clientDownloadStatuses = ['approved', 'paid', 'delivered'];
+  // Estados que permiten descarga para clientes (solo aprobado y pagado)
+  const clientDownloadStatuses = ['approved', 'paid'];
 
   // Check if download is allowed based on role
   // - Admins/Creators/Editors: can always download if there's a video
-  // - Clients: only when status is approved/paid/delivered
+  // - Clients: only when status is approved or paid
   const canDownload = showDownload && !!currentVideoUrl && (
     isAdmin || isCreator || isOwner
       ? true  // Admin/Creator/Owner can always download
