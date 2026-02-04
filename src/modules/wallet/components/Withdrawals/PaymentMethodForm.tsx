@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { usePaymentMethodMutations } from '../../hooks/usePaymentMethods';
-import type { PaymentMethodType, PAYMENT_METHOD_LABELS } from '../../types';
+import type { PaymentMethodType } from '../../types';
+import { PAYMENT_METHOD_LABELS } from '../../types';
 
 const PAYMENT_METHODS: PaymentMethodType[] = [
   'bank_transfer_colombia',
