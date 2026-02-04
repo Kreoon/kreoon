@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect, memo, useCallback } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useState, memo, useCallback } from 'react';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -14,9 +14,6 @@ import { ContentSettingsDialog } from '@/components/content/ContentSettingsDialo
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { CommentsSection } from '@/components/content/CommentsSection';
 import {
-  Play,
-  Heart,
-  Eye,
   Download,
   MessageCircle,
   ChevronLeft,
@@ -27,18 +24,18 @@ import {
   ThumbsDown,
   FileCheck,
   AlertTriangle,
-  MoreVertical,
-  Volume2,
-  VolumeX,
-  Handshake,
+  Share2,
+  Building2,
+  Video,
   Settings,
-  ExternalLink
+  Handshake,
+  Heart,
+  Eye
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -91,10 +88,41 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-// Build embed URL for Bunny
-function buildEmbedSrc(url: string, nonce?: number): string {
-  const t = nonce ?? Date.now();
-  return `${url}?autoplay=false&loop=true&preload=true&responsive=true&t=${t}`;
+// Extract Bunny video ID from URL
+function extractBunnyVideoId(url: string): string | null {
+  if (!url) return null;
+  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
+  if (embedMatch) return embedMatch[2];
+  const cdnMatch = url.match(/b-cdn\.net\/([a-f0-9-]+)/i);
+  if (cdnMatch) return cdnMatch[1];
+  return null;
+}
+
+// Build optimal Bunny embed URL for native player
+function buildBunnyEmbedUrl(url: string): string {
+  // If it's already an embed URL, optimize it
+  if (url.includes('iframe.mediadelivery.net/embed')) {
+    const base = url.split('?')[0];
+    return `${base}?autoplay=false&loop=false&muted=false&preload=metadata&responsive=true`;
+  }
+
+  // If it's a CDN URL, convert to embed
+  const videoId = extractBunnyVideoId(url);
+  if (videoId) {
+    // Default library ID - will be replaced by actual if found in URL
+    let libraryId = '263775';
+    const libMatch = url.match(/embed\/(\d+)\//);
+    if (libMatch) libraryId = libMatch[1];
+    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&loop=false&muted=false&preload=metadata&responsive=true`;
+  }
+
+  return url;
+}
+
+// Check if URL is a Bunny video
+function isBunnyUrl(url: string): boolean {
+  if (!url) return false;
+  return url.includes('iframe.mediadelivery.net') || url.includes('b-cdn.net') || url.includes('bunnycdn');
 }
 
 export const UnifiedContentCard = memo(function UnifiedContentCard({
@@ -115,9 +143,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   className
 }: UnifiedContentCardProps) {
   const { toast: toastHook } = useToast();
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
-  const [playerNonce, setPlayerNonce] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -126,37 +152,21 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   const [submitting, setSubmitting] = useState(false);
   const [isTogglingKreoon, setIsTogglingKreoon] = useState(false);
   const [kreoonEnabled, setKreoonEnabled] = useState(content.shared_on_kreoon ?? false);
-  const [muted, setMuted] = useState(true);
-  const [playing, setPlaying] = useState(false);
-  const [embedSrc, setEmbedSrc] = useState('');
 
   // Get all video URLs
-  const videoUrls = content.video_urls?.filter(u => u?.trim()) || [];
-  if (content.video_url && !videoUrls.includes(content.video_url)) {
-    videoUrls.unshift(content.video_url);
-  }
-  if (content.bunny_embed_url && !videoUrls.includes(content.bunny_embed_url)) {
-    videoUrls.push(content.bunny_embed_url);
-  }
+  const videoUrls = (() => {
+    const urls: string[] = [];
+    if (content.bunny_embed_url) urls.push(content.bunny_embed_url);
+    if (content.video_url && !urls.includes(content.video_url)) urls.push(content.video_url);
+    if (content.video_urls) {
+      content.video_urls.filter(u => u?.trim() && !urls.includes(u)).forEach(u => urls.push(u));
+    }
+    return urls.filter(u => u?.trim());
+  })();
 
   const hasMultipleVariants = videoUrls.length > 1;
   const currentVideoUrl = videoUrls[currentVariantIndex] || videoUrls[0];
-
-  // Check if URL is Bunny embed
-  const isBunnyEmbed = !!currentVideoUrl && currentVideoUrl.includes('iframe.mediadelivery.net/embed');
-
-  // Update embed src when video changes
-  useEffect(() => {
-    if (!isBunnyEmbed || !currentVideoUrl) {
-      setEmbedSrc('');
-      return;
-    }
-    setEmbedSrc('about:blank');
-    const t = window.setTimeout(() => {
-      setEmbedSrc(buildEmbedSrc(currentVideoUrl, playerNonce));
-    }, 150);
-    return () => window.clearTimeout(t);
-  }, [isBunnyEmbed, currentVideoUrl, playerNonce]);
+  const isBunny = isBunnyUrl(currentVideoUrl);
 
   // Check if download is allowed (only when approved/delivered)
   const canDownload = showDownload &&
@@ -166,79 +176,31 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   // Workflow actions based on status
   const getAvailableActions = useCallback(() => {
     if (!showWorkflowActions) return [];
-    const actions: { status: ContentStatus; label: string; icon: any; variant: 'success' | 'warning' | 'default' }[] = [];
+    const actions: { status: ContentStatus; label: string; icon: any; variant: 'success' | 'warning' }[] = [];
 
     if (content.status === 'script_pending') {
-      actions.push({
-        status: 'script_approved',
-        label: 'Aprobar Guión',
-        icon: FileCheck,
-        variant: 'success'
-      });
+      actions.push({ status: 'script_approved', label: 'Aprobar Guión', icon: FileCheck, variant: 'success' });
     }
-
     if (content.status === 'delivered' || content.status === 'review') {
-      actions.push({
-        status: 'approved',
-        label: 'Aprobar',
-        icon: ThumbsUp,
-        variant: 'success'
-      });
-      actions.push({
-        status: 'issue',
-        label: 'Correcciones',
-        icon: AlertTriangle,
-        variant: 'warning'
-      });
+      actions.push({ status: 'approved', label: 'Aprobar', icon: ThumbsUp, variant: 'success' });
+      actions.push({ status: 'issue', label: 'Correcciones', icon: AlertTriangle, variant: 'warning' });
     }
-
     if (content.status === 'corrected') {
-      actions.push({
-        status: 'approved',
-        label: 'Aprobar',
-        icon: ThumbsUp,
-        variant: 'success'
-      });
+      actions.push({ status: 'approved', label: 'Aprobar', icon: ThumbsUp, variant: 'success' });
     }
-
     return actions;
   }, [content.status, showWorkflowActions]);
 
-  const togglePlayPause = () => {
-    if (videoRef.current) {
-      if (playing) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setPlaying(!playing);
-    }
-  };
-
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (videoRef.current) {
-      videoRef.current.muted = !muted;
-    }
-    setMuted(!muted);
-  };
-
   const handleDownload = async () => {
     if (isDownloading || !currentVideoUrl) return;
-
     setIsDownloading(true);
     try {
       const { data, error } = await supabase.functions.invoke('bunny-download', {
-        body: {
-          content_id: content.id,
-          video_url: currentVideoUrl,
-        },
+        body: { content_id: content.id, video_url: currentVideoUrl },
       });
-
       if (error) throw error;
-      const downloadUrl = data?.download_url;
-      const title = data?.title;
 
+      const downloadUrl = data?.download_url;
       if (!downloadUrl) {
         toast.error('No se pudo generar el link de descarga');
         return;
@@ -247,18 +209,9 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
       const res = await fetch(downloadUrl);
       if (!res.ok) throw new Error(`Download failed (${res.status})`);
 
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('text/html')) {
-        throw new Error('El archivo no está disponible para descarga');
-      }
-
       const blob = await res.blob();
-      const safeName = (title || content.title || 'video')
-        .toLowerCase()
-        .replace(/[^a-z0-9\-_]+/gi, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-        .slice(0, 80);
+      const safeName = (data?.title || content.title || 'video')
+        .toLowerCase().replace(/[^a-z0-9\-_]+/gi, '-').slice(0, 80);
 
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -268,7 +221,6 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
       a.click();
       a.remove();
       URL.revokeObjectURL(objectUrl);
-
       toast.success('Descarga iniciada');
     } catch (e) {
       console.error('download error', e);
@@ -278,31 +230,37 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
     }
   };
 
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/content/${content.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: content.title, url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link copiado al portapapeles');
+      }
+    } catch (e) {
+      // User cancelled share
+    }
+  };
+
   const handleToggleKreoon = async () => {
     if (isTogglingKreoon) return;
-
     setIsTogglingKreoon(true);
     const newValue = !kreoonEnabled;
-
     try {
-      const { error } = await supabase
-        .from('content')
-        .update({
-          shared_on_kreoon: newValue,
-          show_on_creator_profile: newValue,
-          show_on_client_profile: newValue,
-          is_collaborative: newValue,
-          shared_at: newValue ? new Date().toISOString() : null
-        })
-        .eq('id', content.id);
-
+      const { error } = await supabase.from('content').update({
+        shared_on_kreoon: newValue,
+        show_on_creator_profile: newValue,
+        show_on_client_profile: newValue,
+        is_collaborative: newValue,
+        shared_at: newValue ? new Date().toISOString() : null
+      }).eq('id', content.id);
       if (error) throw error;
-
       setKreoonEnabled(newValue);
       toast.success(newValue ? 'Compartido en Kreoon Social' : 'Removido de Kreoon Social');
       onUpdate?.();
     } catch (error) {
-      console.error('Error toggling Kreoon:', error);
       toast.error('Error al cambiar estado');
     } finally {
       setIsTogglingKreoon(false);
@@ -321,21 +279,16 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
           oldStatus: content.status as ContentStatus,
           newStatus: status
         });
-
         const updateData: any = {};
-        if (status === 'approved') {
-          updateData.approved_by = userId;
-        }
+        if (status === 'approved') updateData.approved_by = userId;
         if (status === 'script_approved') {
           updateData.script_approved_at = new Date().toISOString();
           updateData.script_approved_by = userId;
         }
-
         if (Object.keys(updateData).length > 0) {
           await supabase.from('content').update(updateData).eq('id', content.id);
         }
       }
-
       if (feedback) {
         await supabase.from('content_comments').insert({
           content_id: content.id,
@@ -343,13 +296,11 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
           comment: `${label}: ${feedback}`
         });
       }
-
       toastHook({ title: label, description: 'El contenido ha sido actualizado' });
       setFeedback('');
       setShowFeedback(false);
       onUpdate?.();
     } catch (error) {
-      console.error('Error updating content status:', error);
       toastHook({ title: 'Error', variant: 'destructive' });
     } finally {
       setSubmitting(false);
@@ -358,238 +309,141 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onLike) {
-      onLike(content.id);
-    }
+    if (onLike) onLike(content.id);
   };
 
   const actions = getAvailableActions();
 
   return (
     <Card className={cn(
-      "overflow-hidden group",
-      "hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10",
+      "overflow-hidden group bg-card border-border",
+      "hover:border-primary/40 transition-all duration-200 hover:shadow-lg",
       className
     )}>
-      <CardContent className="p-0">
-        {/* Video/Thumbnail Section */}
-        <div
-          className="relative w-full bg-black cursor-pointer"
-          style={{ aspectRatio: '9/16', maxHeight: '500px' }}
-          onClick={onOpenFullscreen}
-        >
-          {/* Status badge - top left */}
-          <div className="absolute top-3 left-3 z-20">
-            <Badge className={cn(
-              "text-xs font-medium",
-              STATUS_COLORS[content.status as keyof typeof STATUS_COLORS] || 'bg-gray-500'
-            )}>
-              {STATUS_LABELS[content.status as keyof typeof STATUS_LABELS] || content.status}
+      {/* Video Player Section - Native Bunny Embed */}
+      <div
+        className="relative w-full bg-black cursor-pointer"
+        style={{ aspectRatio: '9/16' }}
+        onClick={onOpenFullscreen}
+      >
+        {/* Status Badge - Top Left */}
+        <div className="absolute top-2 left-2 z-10">
+          <Badge className={cn(
+            "text-[10px] font-semibold px-2 py-0.5 shadow-lg",
+            STATUS_COLORS[content.status as keyof typeof STATUS_COLORS] || 'bg-gray-500'
+          )}>
+            {STATUS_LABELS[content.status as keyof typeof STATUS_LABELS] || content.status}
+          </Badge>
+        </div>
+
+        {/* Kreoon Badge - Top Right */}
+        {kreoonEnabled && (
+          <div className="absolute top-2 right-2 z-10">
+            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] px-2 py-0.5 shadow-lg">
+              <Handshake className="h-3 w-3 mr-1" />
+              Kreoon
             </Badge>
           </div>
+        )}
 
-          {/* Mute toggle - top right */}
-          {!isBunnyEmbed && currentVideoUrl && (
+        {/* Native Bunny Video Player */}
+        {currentVideoUrl && isBunny ? (
+          <iframe
+            key={`bunny-${currentVideoUrl}-${currentVariantIndex}`}
+            src={buildBunnyEmbedUrl(currentVideoUrl)}
+            className="absolute inset-0 w-full h-full"
+            loading="lazy"
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            style={{ border: 'none' }}
+          />
+        ) : currentVideoUrl ? (
+          <video
+            key={currentVideoUrl}
+            src={currentVideoUrl}
+            poster={content.thumbnail_url || undefined}
+            className="w-full h-full object-contain"
+            controls
+            playsInline
+            preload="metadata"
+          />
+        ) : content.thumbnail_url ? (
+          <img
+            src={content.thumbnail_url}
+            alt={content.title}
+            className="w-full h-full object-contain"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center text-white/40">
+            <Video className="h-12 w-12 mb-2" />
+            <span className="text-sm">Sin video</span>
+          </div>
+        )}
+
+        {/* Variant Navigation */}
+        {hasMultipleVariants && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
             <button
-              onClick={toggleMute}
-              className="absolute top-3 right-3 z-20 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentVariantIndex(prev => Math.max(0, prev - 1));
+              }}
+              disabled={currentVariantIndex === 0}
+              className="text-white disabled:opacity-30 p-0.5 hover:bg-white/20 rounded transition-colors"
             >
-              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              <ChevronLeft className="h-4 w-4" />
             </button>
-          )}
+            <span className="text-white text-xs font-medium min-w-[40px] text-center">
+              {currentVariantIndex + 1} / {videoUrls.length}
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentVariantIndex(prev => Math.min(videoUrls.length - 1, prev + 1));
+              }}
+              disabled={currentVariantIndex === videoUrls.length - 1}
+              className="text-white disabled:opacity-30 p-0.5 hover:bg-white/20 rounded transition-colors"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+      </div>
 
-          {/* Video Player */}
-          {isBunnyEmbed && currentVideoUrl ? (
-            <iframe
-              key={`${currentVideoUrl}-${playerNonce}`}
-              src={embedSrc || buildEmbedSrc(currentVideoUrl, playerNonce)}
-              className="absolute inset-0 w-full h-full"
-              loading="lazy"
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowFullScreen
-              style={{ border: 'none' }}
-            />
-          ) : currentVideoUrl ? (
-            <>
-              <video
-                ref={videoRef}
-                key={currentVideoUrl}
-                src={currentVideoUrl}
-                loop
-                muted={muted}
-                playsInline
-                poster={content.thumbnail_url || undefined}
-                className="w-full h-full object-contain"
-                onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
-                onPlay={() => setPlaying(true)}
-                onPause={() => setPlaying(false)}
-              />
+      {/* Info Section - Below Video */}
+      <div className="p-3 space-y-3">
+        {/* Title / Product Name */}
+        <h3 className="font-semibold text-sm line-clamp-2 text-foreground">
+          {content.title}
+        </h3>
 
-              {/* Play overlay */}
-              {!playing && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center"
-                  onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
-                >
-                  <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <Play className="h-8 w-8 text-white fill-white ml-1" />
-                  </div>
-                </div>
-              )}
-            </>
-          ) : content.thumbnail_url ? (
-            <>
-              <img
-                src={content.thumbnail_url}
-                alt={content.title}
-                className="w-full h-full object-contain"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <Play className="h-8 w-8 text-white fill-white ml-1" />
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-white/50">
-              <Play className="h-12 w-12 mb-2" />
-              <span className="text-sm">Sin video</span>
+        {/* Creator & Client Info Row */}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          {/* Creator (Who recorded it) */}
+          {content.creator && (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Avatar className="h-5 w-5 border border-border flex-shrink-0">
+                <AvatarImage src={content.creator.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                  <User className="h-2.5 w-2.5" />
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate">{content.creator.full_name || 'Creador'}</span>
             </div>
           )}
 
-          {/* Variant navigation - bottom center */}
-          {hasMultipleVariants && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentVariantIndex(prev => {
-                    const next = Math.max(0, prev - 1);
-                    if (next !== prev) setPlayerNonce(n => n + 1);
-                    return next;
-                  });
-                }}
-                disabled={currentVariantIndex === 0}
-                className="text-white disabled:opacity-30 p-1"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <span className="text-white text-xs font-medium px-1">
-                {currentVariantIndex + 1}/{videoUrls.length}
-              </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentVariantIndex(prev => {
-                    const next = Math.min(videoUrls.length - 1, prev + 1);
-                    if (next !== prev) setPlayerNonce(n => n + 1);
-                    return next;
-                  });
-                }}
-                disabled={currentVariantIndex === videoUrls.length - 1}
-                className="text-white disabled:opacity-30 p-1"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+          {/* Client/Company (What company it's from) */}
+          {content.client && (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              <span className="truncate">{content.client.name || 'Cliente'}</span>
             </div>
           )}
         </div>
 
-        {/* Action bar - Avatar, Download, Like, Comment, More */}
-        <div className="px-3 py-2 flex items-center justify-between border-b border-border">
-          <div className="flex items-center gap-2">
-            {/* Avatar + Download */}
-            <Avatar className="h-6 w-6 border border-border">
-              <AvatarImage src={content.creator?.avatar_url || undefined} />
-              <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                <User className="h-3 w-3" />
-              </AvatarFallback>
-            </Avatar>
-
-            {canDownload && (
-              <button
-                onClick={(e) => { e.stopPropagation(); handleDownload(); }}
-                disabled={isDownloading}
-                className={cn(
-                  "p-1.5 rounded-full transition-colors text-primary hover:bg-primary/10",
-                  isDownloading && "opacity-60 cursor-not-allowed"
-                )}
-                title="Descargar video"
-              >
-                {isDownloading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1">
-            {/* Like button */}
-            {onLike && (
-              <button
-                onClick={handleLike}
-                className={cn(
-                  "p-1.5 rounded-full transition-colors",
-                  content.is_liked
-                    ? "text-red-500"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Heart className="h-4 w-4" fill={content.is_liked ? "currentColor" : "none"} />
-              </button>
-            )}
-
-            {/* Comment button */}
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
-              className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <MessageCircle className="h-4 w-4" />
-            </button>
-
-            {/* More menu */}
-            {(isAdmin || isOwner || isCreator) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => setShowSettings(true)}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Configuración
-                  </DropdownMenuItem>
-
-                  {showKreoonToggle && (
-                    <DropdownMenuItem onClick={handleToggleKreoon} disabled={isTogglingKreoon}>
-                      <Handshake className="h-4 w-4 mr-2" />
-                      {kreoonEnabled ? 'Quitar de Kreoon' : 'Compartir en Kreoon'}
-                    </DropdownMenuItem>
-                  )}
-
-                  {currentVideoUrl && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <a href={currentVideoUrl} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Ver video original
-                        </a>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </div>
-
-        {/* Stats row - Views and Likes */}
-        <div className="px-3 py-2 flex items-center gap-4 text-xs text-muted-foreground">
+        {/* Stats Row */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Eye className="h-3.5 w-3.5" />
             {formatCount(content.views_count || 0)}
@@ -598,32 +452,105 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
             <Heart className="h-3.5 w-3.5" />
             {formatCount(content.likes_count || 0)}
           </span>
-          {kreoonEnabled && (
-            <span className="flex items-center gap-1 text-purple-500">
-              <Handshake className="h-3.5 w-3.5" />
-              Kreoon
-            </span>
+        </div>
+
+        {/* Action Buttons Row */}
+        <div className="flex items-center gap-2 pt-1">
+          {/* Download Button */}
+          {canDownload && (
+            <Button
+              onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+              disabled={isDownloading}
+              size="sm"
+              className="flex-1 h-8 text-xs gap-1.5 bg-primary hover:bg-primary/90"
+            >
+              {isDownloading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              Descargar
+            </Button>
+          )}
+
+          {/* Share Button */}
+          <Button
+            onClick={(e) => { e.stopPropagation(); handleShare(); }}
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs gap-1.5 flex-1"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Compartir
+          </Button>
+
+          {/* Like Button */}
+          {onLike && (
+            <Button
+              onClick={handleLike}
+              size="sm"
+              variant="ghost"
+              className={cn(
+                "h-8 w-8 p-0",
+                content.is_liked && "text-red-500"
+              )}
+            >
+              <Heart className="h-4 w-4" fill={content.is_liked ? "currentColor" : "none"} />
+            </Button>
+          )}
+
+          {/* Comments */}
+          <Button
+            onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+          >
+            <MessageCircle className="h-4 w-4" />
+          </Button>
+
+          {/* More Options - Admin/Owner only */}
+          {(isAdmin || isOwner || isCreator) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => setShowSettings(true)}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Configuración
+                </DropdownMenuItem>
+                {showKreoonToggle && (
+                  <DropdownMenuItem onClick={handleToggleKreoon} disabled={isTogglingKreoon}>
+                    <Handshake className="h-4 w-4 mr-2" />
+                    {kreoonEnabled ? 'Quitar de Kreoon' : 'Compartir en Kreoon'}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
-        {/* Feedback input for corrections */}
+        {/* Feedback Input for Corrections */}
         {showFeedback && (
-          <div className="border-t p-3 bg-muted/30">
+          <div className="pt-2 space-y-2">
             <Textarea
               placeholder="Describe las correcciones necesarias..."
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
-              className="min-h-[60px] text-sm resize-none mb-2"
+              className="min-h-[60px] text-sm resize-none"
               autoFocus
             />
             <div className="flex gap-2">
               <Button
                 onClick={() => handleAction('approved', 'Aprobado')}
                 disabled={submitting}
-                className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
+                className="flex-1 bg-green-600 hover:bg-green-700"
                 size="sm"
               >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
+                {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <ThumbsUp className="h-3.5 w-3.5 mr-1" />}
                 Aprobar
               </Button>
               <Button
@@ -633,22 +560,22 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
                 className="flex-1"
                 size="sm"
               >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ThumbsDown className="h-4 w-4 mr-1" />}
+                {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <ThumbsDown className="h-3.5 w-3.5 mr-1" />}
                 Corrección
               </Button>
             </div>
             <button
               onClick={() => setShowFeedback(false)}
-              className="w-full text-xs text-muted-foreground mt-2 hover:text-foreground"
+              className="w-full text-xs text-muted-foreground hover:text-foreground"
             >
               Cancelar
             </button>
           </div>
         )}
 
-        {/* Action buttons - Only show if there are available actions and feedback is hidden */}
+        {/* Workflow Action Buttons */}
         {!showFeedback && actions.length > 0 && (
-          <div className="border-t p-3 flex gap-2">
+          <div className="flex gap-2 pt-1">
             {actions.map(action => (
               <Button
                 key={action.status}
@@ -662,18 +589,18 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
                 disabled={submitting}
                 className={cn(
                   "flex-1",
-                  action.variant === 'success' && "bg-success hover:bg-success/90 text-success-foreground",
-                  action.variant === 'warning' && "bg-warning hover:bg-warning/90 text-warning-foreground"
+                  action.variant === 'success' && "bg-green-600 hover:bg-green-700",
+                  action.variant === 'warning' && "bg-amber-500 hover:bg-amber-600"
                 )}
                 size="sm"
               >
-                {submitting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <action.icon className="h-4 w-4 mr-1" />}
+                {submitting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <action.icon className="h-3.5 w-3.5 mr-1" />}
                 {action.label}
               </Button>
             ))}
           </div>
         )}
-      </CardContent>
+      </div>
 
       {/* Settings Dialog */}
       <ContentSettingsDialog
@@ -685,7 +612,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
 
       {/* Comments Drawer */}
       <Drawer open={showComments} onOpenChange={setShowComments}>
-        <DrawerContent className="h-[70vh] bg-zinc-900 border-none">
+        <DrawerContent className="h-[70vh] bg-background border-t">
           <CommentsSection
             contentId={content.id}
             isOpen={showComments}
