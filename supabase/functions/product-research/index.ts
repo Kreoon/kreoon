@@ -968,7 +968,7 @@ FIDELIZAR (Post-Purchase):
 ${baseContext}
 
 AVATARES Y SUS DRIVERS:
-${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: Drivers: ${a.drivers} | Frases: ${a.phrases?.slice(0, 2).join(', ')}`).join('\n') || 'N/A'}
+${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: Drivers: ${Array.isArray(a.psychographics?.drivers) ? a.psychographics.drivers.join(', ') : (a.drivers || 'N/A')} | Frases: ${Array.isArray(a.communication?.phrases) ? a.communication.phrases.slice(0, 2).join(', ') : (a.phrases || 'N/A')}`).join('\n') || 'N/A'}
 
 OPORTUNIDADES DE DIFERENCIACIÓN:
 ${prevDiff?.differentiation?.positioningOpportunities?.map((o: any) => `- ${o.opportunity}: ${o.why}`).join('\n') || 'N/A'}
@@ -1160,10 +1160,10 @@ AVATARES:
 ${prevAvatars?.avatars?.map((a: any) => `- ${a.name}`).join(', ') || 'N/A'}
 
 ESFERA INSIGHTS:
-- Enganchar: ${prevDiff?.esferaInsights?.enganchar?.opportunities?.slice(0, 2).join(', ') || 'captar atención'}
-- Solución: ${prevDiff?.esferaInsights?.solucion?.educationAngles?.slice(0, 2).join(', ') || 'educar y presentar'}
-- Remarketing: ${prevDiff?.esferaInsights?.remarketing?.decisionMessages?.slice(0, 2).join(', ') || 'reforzar decisión'}
-- Fidelizar: ${prevDiff?.esferaInsights?.fidelizar?.communityOpportunities?.slice(0, 2).join(', ') || 'retener y referir'}
+- Enganchar: ${Array.isArray(prevDiff?.esferaInsights?.enganchar?.opportunities) ? prevDiff.esferaInsights.enganchar.opportunities.slice(0, 2).join(', ') : (prevDiff?.esferaInsights?.enganchar?.opportunities || 'captar atención')}
+- Solución: ${Array.isArray(prevDiff?.esferaInsights?.solucion?.educationAngles) ? prevDiff.esferaInsights.solucion.educationAngles.slice(0, 2).join(', ') : (prevDiff?.esferaInsights?.solucion?.educationAngles || 'educar y presentar')}
+- Remarketing: ${Array.isArray(prevDiff?.esferaInsights?.remarketing?.decisionMessages) ? prevDiff.esferaInsights.remarketing.decisionMessages.slice(0, 2).join(', ') : (prevDiff?.esferaInsights?.remarketing?.decisionMessages || 'reforzar decisión')}
+- Fidelizar: ${Array.isArray(prevDiff?.esferaInsights?.fidelizar?.communityOpportunities) ? prevDiff.esferaInsights.fidelizar.communityOpportunities.slice(0, 2).join(', ') : (prevDiff?.esferaInsights?.fidelizar?.communityOpportunities || 'retener y referir')}
 
 INSTRUCCIONES CRÍTICAS:
 - Cada idea debe ser PRODUCIBLE (realista para el equipo)
