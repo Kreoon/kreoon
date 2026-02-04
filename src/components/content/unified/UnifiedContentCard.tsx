@@ -168,10 +168,19 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   const fallbackVideoSrc = bunnyUrls?.mp4 || bunnyUrls?.hls || currentVideoUrl;
   const thumbnailSrc = bunnyUrls?.thumbnail || content.thumbnail_url;
 
-  // Check if download is allowed (only when approved/delivered)
-  const canDownload = showDownload &&
-    ['delivered', 'approved', 'published', 'completed', 'paid', 'corrected'].includes(content.status) &&
-    !!currentVideoUrl;
+  // Estados que permiten descarga para clientes (solo aprobado y pagado)
+  const clientDownloadStatuses = ['approved', 'paid'];
+
+  // Check if download is allowed based on role
+  // - Admins/Creators/Editors: can always download if there's a video
+  // - Clients: only when status is approved or paid
+  const canDownload = showDownload && !!currentVideoUrl && (
+    isAdmin || isCreator || isOwner
+      ? true  // Admin/Creator/Owner can always download
+      : isClient
+        ? clientDownloadStatuses.includes(content.status)  // Clients only when approved
+        : ['delivered', 'approved', 'published', 'completed', 'paid', 'corrected'].includes(content.status)
+  );
 
   const canManage = isAdmin || isOwner || isCreator;
 
@@ -229,14 +238,15 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
         show_on_creator_profile: newValue,
         show_on_client_profile: newValue,
         is_collaborative: newValue,
+        is_published: newValue, // Also mark as published so it appears in feed
         shared_at: newValue ? new Date().toISOString() : null
       }).eq('id', content.id);
       if (error) throw error;
       setKreoonEnabled(newValue);
-      toast.success(newValue ? 'Compartido en Kreoon' : 'Removido de Kreoon');
+      toast.success(newValue ? 'Compartido en Kreoon Social' : 'Removido de Kreoon Social');
       onUpdate?.();
     } catch (error) {
-      toast.error('Error');
+      toast.error('Error al compartir');
     } finally {
       setIsTogglingKreoon(false);
     }
@@ -322,7 +332,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
                   {showKreoonToggle && (
                     <DropdownMenuItem onClick={handleToggleKreoon} disabled={isTogglingKreoon}>
                       <Handshake className="h-4 w-4 mr-2" />
-                      {kreoonEnabled ? 'Quitar de Kreoon' : 'Compartir en Kreoon'}
+                      {kreoonEnabled ? 'Quitar de Kreoon Social' : 'Compartir en Kreoon Social'}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />

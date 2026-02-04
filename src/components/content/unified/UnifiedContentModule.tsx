@@ -76,15 +76,13 @@ const MetricsDashboard = memo(function MetricsDashboard({
   variations,
   views,
   likes,
-  published,
-  kreoonShared
+  kreoonSocial
 }: {
   total: number;
   variations: number;
   views: number;
   likes: number;
-  published: number;
-  kreoonShared: number;
+  kreoonSocial: number;
 }) {
   const formatCount = (count: number) => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -123,18 +121,12 @@ const MetricsDashboard = memo(function MetricsDashboard({
           </div>
           <div className="text-xl md:text-2xl font-bold text-foreground">{formatCount(likes)}</div>
         </div>
-        <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
-          <div className="flex items-center gap-1 md:gap-2 text-green-500 text-xs md:text-sm mb-1">
-            Publicados
-          </div>
-          <div className="text-xl md:text-2xl font-bold text-foreground">{published}/{total}</div>
-        </div>
-        <div className="bg-card rounded-lg p-3 md:p-4 border border-border bg-gradient-to-br from-purple-500/10 to-pink-500/10">
+        <div className="bg-card rounded-lg p-3 md:p-4 border border-border col-span-2 bg-gradient-to-br from-purple-500/10 to-pink-500/10">
           <div className="flex items-center gap-1 md:gap-2 text-purple-500 text-xs md:text-sm mb-1">
             <Handshake className="h-3 w-3 md:h-4 md:w-4" />
-            Kreoon
+            Kreoon Social
           </div>
-          <div className="text-xl md:text-2xl font-bold text-foreground">{kreoonShared}</div>
+          <div className="text-xl md:text-2xl font-bold text-foreground">{kreoonSocial}/{total}</div>
         </div>
       </div>
     </div>
@@ -370,10 +362,9 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
         return filteredContent.filter(c => !['approved', 'published', 'paid', 'completed'].includes(c.status));
       case 'approved':
         return filteredContent.filter(c => ['approved', 'paid', 'completed'].includes(c.status));
-      case 'published':
-        return filteredContent.filter(c => c.is_published);
-      case 'kreoon':
-        return filteredContent.filter(c => c.shared_on_kreoon);
+      case 'kreoon_social':
+        // Kreoon Social: shows content that is published OR shared on Kreoon
+        return filteredContent.filter(c => c.is_published || c.shared_on_kreoon);
       default:
         return filteredContent;
     }
@@ -391,8 +382,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
       variations: totalVariations,
       views: content.reduce((sum, item) => sum + (item.views_count || 0), 0),
       likes: content.reduce((sum, item) => sum + (item.likes_count || 0), 0),
-      published: content.filter(c => c.is_published).length,
-      kreoonShared: content.filter(c => c.shared_on_kreoon).length
+      kreoonSocial: content.filter(c => c.is_published || c.shared_on_kreoon).length
     };
   }, [content]);
 
@@ -590,7 +580,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
       {/* Tabs */}
       <div className="px-4 md:px-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-4">
+          <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="all" className="text-xs">
               Todos
               <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{filteredContent.length}</Badge>
@@ -601,12 +591,12 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
             <TabsTrigger value="approved" className="text-xs">
               Aprobados
             </TabsTrigger>
-            <TabsTrigger value="published" className="text-xs">
-              Publicados
-            </TabsTrigger>
-            <TabsTrigger value="kreoon" className="text-xs">
+            <TabsTrigger value="kreoon_social" className="text-xs">
               <Handshake className="h-3 w-3 mr-1" />
-              Kreoon
+              Kreoon Social
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {content.filter(c => c.is_published || c.shared_on_kreoon).length}
+              </Badge>
             </TabsTrigger>
           </TabsList>
 
