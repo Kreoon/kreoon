@@ -659,11 +659,11 @@ export default function ContentBoard() {
   return (
     <div className="min-h-screen">
       <div className="p-4 md:p-6 space-y-6">
-        {/* Page Header - El Estudio theme */}
+        {/* Page Header - Kreoon Tech */}
         <PageHeader
           icon={Scroll}
-          title="Producciones"
-          subtitle="Centro de control de todas las producciones del estudio"
+          title="Kreoon Producciones"
+          subtitle="Centro de control inteligente de contenido • Powered by AI"
           action={
             <div className="flex items-center gap-2">
               <div className="relative hidden sm:block">

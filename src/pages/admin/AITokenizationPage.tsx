@@ -239,7 +239,7 @@ export default function AITokenizationPage() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
               <Brain className="h-8 w-8 text-primary" />
-              IA Tokenización
+              Kreoon Coins • Valoración IA
             </h1>
             <p className="text-muted-foreground mt-1">
               Sistema de evaluación automática de perfiles con IA

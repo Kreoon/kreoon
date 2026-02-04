@@ -363,11 +363,11 @@ const Content = () => {
     <VideoPlayerProvider>
       <div className="min-h-screen">
         <div className="p-4 md:p-6 space-y-6">
-          {/* Page Header - El Estudio theme */}
+          {/* Page Header - Kreoon Tech */}
           <PageHeader
             icon={Film}
-            title="Archivo"
-            subtitle="Videos finales y producciones publicadas"
+            title="Kreoon Portafolio"
+            subtitle="Biblioteca de contenido publicado • Powered by AI"
             action={
               isAdmin && (
                 <Dialog open={newVideoOpen} onOpenChange={setNewVideoOpen}>

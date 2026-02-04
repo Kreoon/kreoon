@@ -152,7 +152,7 @@ export function AITokensOrgAdmin() {
         description: "Crédito manual por administrador",
       });
 
-      toast.success(`${formatTokens(amount)} tokens agregados correctamente`);
+      toast.success(`${formatTokens(amount)} Kreoon Coins agregados correctamente`);
       setTokenAmount("1000");
       setBalance((prev) =>
         prev
@@ -161,7 +161,7 @@ export function AITokensOrgAdmin() {
       );
     } catch (e: any) {
       console.error(e);
-      toast.error(e?.message || "Error al agregar tokens");
+      toast.error(e?.message || "Error al agregar coins");
     } finally {
       setCrediting(false);
     }
@@ -176,10 +176,10 @@ export function AITokensOrgAdmin() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          Tokens IA por organización
+          Kreoon Coins por organización
         </CardTitle>
         <CardDescription>
-          Agrega tokens de IA manualmente a cualquier organización
+          Agrega Kreoon Coins manualmente a cualquier organización
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -227,7 +227,7 @@ export function AITokensOrgAdmin() {
               <span>
                 Total disponible:{" "}
                 <strong className="text-primary">
-                  {formatTokens(totalAvailable)} tokens
+                  {formatTokens(totalAvailable)} coins
                 </strong>
               </span>
               <span className="text-muted-foreground">
@@ -276,7 +276,7 @@ export function AITokensOrgAdmin() {
           ) : (
             <Plus className="h-4 w-4 mr-2" />
           )}
-          Agregar {formatTokens(parseInt(tokenAmount, 10) || 0)} tokens
+          Agregar {formatTokens(parseInt(tokenAmount, 10) || 0)} coins
         </Button>
       </CardContent>
     </Card>
