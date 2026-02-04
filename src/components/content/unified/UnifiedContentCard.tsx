@@ -14,6 +14,7 @@ import { ContentSettingsDialog } from '@/components/content/ContentSettingsDialo
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { CommentsSection } from '@/components/content/CommentsSection';
 import { extractBunnyIds, getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+import { useDownload } from '@/hooks/unified/useDownload';
 import {
   Download,
   MessageCircle,
@@ -33,7 +34,8 @@ import {
   Heart,
   Eye,
   Play,
-  MoreVertical
+  MoreVertical,
+  X
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -92,6 +94,17 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
+// Build Bunny embed URL with optimal settings
+function buildBunnyEmbedUrl(libraryId: string, videoId: string, autoplay: boolean = true): string {
+  const params = new URLSearchParams({
+    autoplay: String(autoplay),
+    preload: 'true',
+    responsive: 'true',
+    controls: 'true',
+  });
+  return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?${params.toString()}`;
+}
+
 export const UnifiedContentCard = memo(function UnifiedContentCard({
   content,
   userId,
@@ -110,9 +123,9 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   className
 }: UnifiedContentCardProps) {
   const { toast: toastHook } = useToast();
+  const { download, isDownloading: downloadHookLoading } = useDownload();
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -135,20 +148,30 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   const hasMultipleVariants = videoUrls.length > 1;
   const currentVideoUrl = videoUrls[currentVariantIndex] || videoUrls[0];
 
-  // Parse Bunny video info for direct URLs
+  // Parse Bunny video info
+  const bunnyIds = useMemo(
+    () => (currentVideoUrl ? extractBunnyIds(currentVideoUrl) : null),
+    [currentVideoUrl]
+  );
   const bunnyUrls = useMemo(
     () => (currentVideoUrl ? getBunnyVideoUrls(currentVideoUrl) : null),
     [currentVideoUrl]
   );
 
-  // Get best video source (prefer MP4 for faster loading)
-  const videoSrc = bunnyUrls?.mp4 || bunnyUrls?.hls || currentVideoUrl;
+  // Determine if we can use native Bunny iframe (only when libraryId is numeric)
+  const canUseNativePlayer = bunnyIds && /^\d+$/.test(String(bunnyIds.libraryId));
+  const embedUrl = canUseNativePlayer
+    ? buildBunnyEmbedUrl(bunnyIds!.libraryId, bunnyIds!.videoId, true)
+    : null;
+
+  // Fallback video source (MP4 or HLS)
+  const fallbackVideoSrc = bunnyUrls?.mp4 || bunnyUrls?.hls || currentVideoUrl;
   const thumbnailSrc = bunnyUrls?.thumbnail || content.thumbnail_url;
 
   // Check if download is allowed (only when approved/delivered)
   const canDownload = showDownload &&
-    ['delivered', 'approved', 'published', 'completed', 'paid'].includes(content.status) &&
-    !!videoSrc;
+    ['delivered', 'approved', 'published', 'completed', 'paid', 'corrected'].includes(content.status) &&
+    !!currentVideoUrl;
 
   const canManage = isAdmin || isOwner || isCreator;
 
@@ -170,39 +193,16 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
     return actions;
   }, [content.status, showWorkflowActions]);
 
-  // Direct download using video URL
+  // Download using the authenticated hook (gets best quality from Edge Function)
   const handleDownload = async () => {
-    if (isDownloading || !videoSrc) return;
-    setIsDownloading(true);
-
-    try {
-      // Try direct download first
-      const downloadUrl = bunnyUrls?.mp4 || videoSrc;
-
-      const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error('Download failed');
-
-      const blob = await response.blob();
-      const safeName = (content.title || 'video')
-        .toLowerCase().replace(/[^a-z0-9\-_]+/gi, '-').slice(0, 80);
-
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = objectUrl;
-      a.download = `${safeName}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
-      toast.success('Descarga completada');
-    } catch (e) {
-      console.error('download error', e);
-      // Fallback: open in new tab
-      window.open(videoSrc, '_blank');
-      toast.info('Abriendo video en nueva pestaña');
-    } finally {
-      setIsDownloading(false);
-    }
+    if (downloadHookLoading || !currentVideoUrl) return;
+    await download({
+      contentId: content.id,
+      videoUrl: currentVideoUrl,
+      videoUrls: videoUrls.length > 1 ? videoUrls : undefined,
+      title: content.title,
+      variantIndex: currentVariantIndex
+    });
   };
 
   const handleShare = async () => {
@@ -337,20 +337,46 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
         </div>
 
         {/* Video Player or Thumbnail */}
-        {isPlaying && videoSrc ? (
-          <video
-            key={videoSrc}
-            src={videoSrc}
-            className="absolute inset-0 w-full h-full object-contain"
-            controls
-            autoPlay
-            playsInline
-            onEnded={() => setIsPlaying(false)}
-          />
+        {isPlaying ? (
+          <div className="absolute inset-0">
+            {/* Close button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsPlaying(false);
+              }}
+              className="absolute top-2 right-2 z-30 h-8 w-8 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/90 transition-colors"
+              aria-label="Cerrar video"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Native Bunny player (iframe) - best performance */}
+            {embedUrl ? (
+              <iframe
+                src={embedUrl}
+                title={content.title}
+                className="absolute inset-0 w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : fallbackVideoSrc ? (
+              /* Fallback to video element */
+              <video
+                key={fallbackVideoSrc}
+                src={fallbackVideoSrc}
+                className="absolute inset-0 w-full h-full object-contain"
+                controls
+                autoPlay
+                playsInline
+                onEnded={() => setIsPlaying(false)}
+              />
+            ) : null}
+          </div>
         ) : (
           <div
             className="absolute inset-0 cursor-pointer group/play"
-            onClick={() => videoSrc ? setIsPlaying(true) : onOpenFullscreen?.()}
+            onClick={() => currentVideoUrl ? setIsPlaying(true) : onOpenFullscreen?.()}
           >
             {thumbnailSrc ? (
               <img
@@ -366,7 +392,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
             )}
 
             {/* Play Button Overlay */}
-            {videoSrc && (
+            {currentVideoUrl && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/play:bg-black/40 transition-colors">
                 <div className="h-16 w-16 rounded-full bg-white/90 flex items-center justify-center shadow-xl group-hover/play:scale-110 transition-transform">
                   <Play className="h-8 w-8 text-gray-900 ml-1" fill="currentColor" />
@@ -377,7 +403,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
         )}
 
         {/* Variant Navigation */}
-        {hasMultipleVariants && (
+        {hasMultipleVariants && !isPlaying && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
             <button
               onClick={(e) => {
@@ -455,11 +481,11 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
           {canDownload ? (
             <Button
               onClick={handleDownload}
-              disabled={isDownloading}
+              disabled={downloadHookLoading}
               size="sm"
               className="flex-1 h-9 text-xs gap-1.5"
             >
-              {isDownloading ? (
+              {downloadHookLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Download className="h-4 w-4" />
