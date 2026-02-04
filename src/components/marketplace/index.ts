@@ -9,3 +9,10 @@ export { CreatorProfileStats, CreatorStatsMinimal } from './CreatorProfileStats'
 // AI Matching Components
 export { CreatorMatchingCard, CreatorMatchingGrid } from './CreatorMatchingCard';
 export { AIRecommendations } from './AIRecommendations';
+
+// Onboarding Wizards
+export { CompanyOnboarding } from './CompanyOnboarding';
+export { CreatorOnboarding } from './CreatorOnboarding';
+
+// Payment Components
+export { PaymentCard, PaymentBadge } from './PaymentCard';
