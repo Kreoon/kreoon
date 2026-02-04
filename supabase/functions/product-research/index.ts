@@ -890,7 +890,7 @@ COMPETIDORES ANALIZADOS:
 ${prevCompetitors?.competitors?.slice(0, 5).map((c: any) => `- ${c.name}: ${c.promise} | Debilidades: ${c.weaknesses?.join(', ')}`).join('\n') || 'N/A'}
 
 AVATARES DEFINIDOS:
-${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: ${a.situation?.substring(0, 100)}...`).join('\n') || 'N/A'}
+${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: ${a.situation?.dayToDay?.substring(0, 100) || a.situation?.currentFeeling || 'Sin descripción'}...`).join('\n') || 'N/A'}
 
 INSTRUCCIONES CRÍTICAS:
 - Identifica GAPS reales en el mercado, no suposiciones
@@ -1098,7 +1098,7 @@ e) financial (transformación económica):
 ${baseContext}
 
 AVATARES DEFINIDOS:
-${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: ${a.situation?.substring(0, 80)}...`).join('\n') || 'N/A'}
+${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: ${a.situation?.dayToDay?.substring(0, 80) || a.situation?.currentFeeling || 'Sin descripción'}...`).join('\n') || 'N/A'}
 
 DOLORES PRINCIPALES:
 ${prevPains?.pains?.slice(0, 6).map((p: any) => `- ${p.pain}: ${p.why}`).join('\n') || 'N/A'}
