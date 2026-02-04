@@ -18,7 +18,7 @@ import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
 import { TrendingSection } from '@/components/social/TrendingSection';
-import { RefreshCw, Sparkles, Plus, ImageIcon, Film, Compass, Users, TrendingUp } from 'lucide-react';
+import { RefreshCw, Sparkles, Plus, ImageIcon, Film, Compass, Users, TrendingUp, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -47,9 +47,11 @@ interface FeedItem {
   created_at: string;
   is_liked?: boolean;
   is_saved?: boolean;
+  is_collaborative?: boolean;
+  creator_name?: string;
 }
 
-type FeedTab = 'for-you' | 'following';
+type FeedTab = 'for-you' | 'following' | 'collaborations';
 
 export default function FeedPage() {
   const navigate = useNavigate();
@@ -129,8 +131,10 @@ export default function FeedPage() {
     try {
       // For "Following" tab: chronological order
       // For "For You" tab: we'll rely on AI recommendations hook separately
+      // For "Collaborations" tab: only collaborative content
       const isFollowing = activeTab === 'following';
-      
+      const isCollaborations = activeTab === 'collaborations';
+
       // Fetch work content (published videos) - from ALL organizations
       // Include video_urls array for direct Bunny CDN access
       let workQuery = supabase
@@ -146,12 +150,22 @@ export default function FeedPage() {
           client_id,
           views_count,
           likes_count,
-          created_at
+          created_at,
+          shared_on_kreoon,
+          is_collaborative
         `)
-        .eq('is_published', true)
         .or('video_url.not.is.null,bunny_embed_url.not.is.null,video_urls.not.is.null')
         .order('created_at', { ascending: false })
         .limit(50);
+
+      // Filter based on tab
+      if (isCollaborations) {
+        // For collaborations tab: show content shared on Kreoon Social
+        workQuery = workQuery.eq('shared_on_kreoon', true);
+      } else {
+        // For other tabs: show published content
+        workQuery = workQuery.eq('is_published', true);
+      }
 
       if (isFollowing && followingIds.length > 0) {
         workQuery = workQuery.in('creator_id', followingIds);
@@ -215,11 +229,11 @@ export default function FeedPage() {
         .map(w => {
           const profile = profilesMap.get(w.creator_id);
           const client = clientsMap.get((w as any).client_id);
-          
+
           // Prioritize direct Bunny CDN URLs for better loading
           // video_urls array contains direct CDN links, video_url may be embed URL
           const videoUrls = (w as any).video_urls as string[] | null;
-          const directVideoUrl = videoUrls && videoUrls.length > 0 
+          const directVideoUrl = videoUrls && videoUrls.length > 0
             ? videoUrls[0] // First video URL from array (direct CDN)
             : w.video_url || (w as any).bunny_embed_url;
 
@@ -240,6 +254,8 @@ export default function FeedPage() {
             comments_count: 0,
             created_at: w.created_at,
             is_saved: isSaved('work_video', w.id),
+            is_collaborative: (w as any).is_collaborative || false,
+            creator_name: profile?.full_name,
           };
         });
 
@@ -291,9 +307,16 @@ export default function FeedPage() {
       const seed = `feed-${activeTab}-${Math.floor(Date.now() / 60000)}`;
       const shuffled = shuffleSeeded(merged, seed);
 
-      // Apply shuffled data for Following tab or as fallback for For You
-      if (activeTab === 'following' || !useAIRecommendations) {
-        setItems(shuffled);
+      // Apply shuffled data for Following/Collaborations tabs or as fallback for For You
+      if (activeTab === 'following' || activeTab === 'collaborations' || !useAIRecommendations) {
+        // For collaborations tab: only include work items (collaborative content)
+        if (activeTab === 'collaborations') {
+          setItems(workItems.sort((a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          ));
+        } else {
+          setItems(shuffled);
+        }
       } else {
         // For "For You" with AI enabled: only set fallback if we don't have items yet.
         // This prevents fetchFeed() from overwriting the AI-sorted order.
@@ -439,8 +462,8 @@ export default function FeedPage() {
           <div className="flex items-center justify-between">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FeedTab)}>
               <TabsList className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl">
-                <TabsTrigger 
-                  value="for-you" 
+                <TabsTrigger
+                  value="for-you"
                   className="text-sm flex items-center gap-1.5 data-[state=active]:bg-social-accent data-[state=active]:text-white rounded-lg transition-all"
                 >
                   Para Ti
@@ -448,11 +471,18 @@ export default function FeedPage() {
                     <Sparkles className="h-3 w-3" />
                   )}
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="following" 
+                <TabsTrigger
+                  value="following"
                   className="text-sm data-[state=active]:bg-social-accent data-[state=active]:text-white rounded-lg transition-all"
                 >
                   Siguiendo
+                </TabsTrigger>
+                <TabsTrigger
+                  value="collaborations"
+                  className="text-sm flex items-center gap-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white rounded-lg transition-all"
+                >
+                  <Handshake className="h-3.5 w-3.5" />
+                  Colaboraciones
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -525,8 +555,10 @@ export default function FeedPage() {
               </div>
             ) : items.length === 0 ? (
               <div className="text-center py-12 text-social-muted-foreground">
-                {activeTab === 'following' 
+                {activeTab === 'following'
                   ? 'Sigue a creadores para ver su contenido aquí'
+                  : activeTab === 'collaborations'
+                  ? 'No hay contenido colaborativo disponible aún'
                   : 'No hay contenido disponible'}
               </div>
             ) : (

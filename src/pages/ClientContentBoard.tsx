@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw,
-  FileCheck, Scroll, Maximize2, Grid3X3, Columns, Download, Share2
+  FileCheck, Scroll, Maximize2, Grid3X3, Columns, Download, Share2, Presentation, Bell
 } from "lucide-react";
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,8 @@ import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
 import { Card, CardContent } from "@/components/ui/card";
 
 // Unified components
-import { ContentGrid, UnifiedContentViewer, SocialSharePanel } from "@/components/content/unified";
-import { UnifiedContentItem, CardVariant } from "@/hooks/unified";
-import { useDownload } from "@/hooks/unified";
+import { ContentGrid, UnifiedContentViewer, SocialSharePanel, ContentNotificationsDropdown, PresentationMode } from "@/components/content/unified";
+import { UnifiedContentItem, CardVariant, useDownload, useContentNotifications } from "@/hooks/unified";
 
 // Legacy components for Kanban view
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
@@ -120,6 +119,16 @@ export default function ClientContentBoard() {
 
   // Selected items for batch operations
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Presentation mode state
+  const [showPresentation, setShowPresentation] = useState(false);
+
+  // Notifications hook
+  const { notifications, unreadCount } = useContentNotifications({
+    enabled: true,
+    showToasts: true,
+    clientId: clientInfo?.id
+  });
 
   // Fetch client data - react to impersonation changes
   useEffect(() => {
@@ -579,6 +588,21 @@ export default function ClientContentBoard() {
               </Button>
             )}
 
+            {/* Presentation Mode Button */}
+            {unifiedItems.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setShowPresentation(true)}
+                className="gap-2"
+              >
+                <Presentation className="h-4 w-4" />
+                <span className="hidden sm:inline">Presentación</span>
+              </Button>
+            )}
+
+            {/* Notifications Dropdown */}
+            <ContentNotificationsDropdown clientId={clientInfo?.id} />
+
             {/* Refresh */}
             <Button
               variant="outline"
@@ -781,6 +805,20 @@ export default function ClientContentBoard() {
           clientId={shareItem.client_id}
         />
       )}
+
+      {/* Presentation Mode */}
+      <PresentationMode
+        items={unifiedItems}
+        isOpen={showPresentation}
+        onClose={() => setShowPresentation(false)}
+        autoPlay={true}
+        autoAdvance={false}
+        showControls={true}
+        showBranding={true}
+        brandingName={clientInfo?.name}
+        onApprove={handleApprove}
+        onReject={(item) => handleReject(item, 'Requiere correcciones')}
+      />
     </div>
   );
 }

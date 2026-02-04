@@ -177,6 +177,12 @@ export interface Content {
   marketing_rejected_by: string | null;
   marketing_rejection_reason: string | null;
   strategy_status: string | null;
+  // Kreoon Social fields
+  shared_on_kreoon: boolean;
+  show_on_creator_profile: boolean;
+  show_on_client_profile: boolean;
+  is_collaborative: boolean;
+  shared_at: string | null;
   // Relaciones
   client?: Partial<Client>;
   creator?: Partial<Profile>;

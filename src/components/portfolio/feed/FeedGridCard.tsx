@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Play, Heart, MessageCircle, Eye } from 'lucide-react';
+import { Play, Heart, MessageCircle, Eye, Handshake } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 import { motion } from 'framer-motion';
@@ -20,6 +20,8 @@ interface FeedItem {
   likes_count: number;
   comments_count: number;
   created_at: string;
+  is_collaborative?: boolean;
+  creator_name?: string;
 }
 
 interface FeedGridCardProps {
@@ -82,6 +84,14 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
           <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
             <Play className="h-3.5 w-3.5 text-white fill-white" />
           </div>
+
+          {/* Collaborative badge */}
+          {item.is_collaborative && (
+            <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-gradient-to-r from-purple-500/80 to-pink-500/80 border border-white/20">
+              <Handshake className="h-3 w-3 text-white" />
+              <span className="text-white text-[10px] font-medium">Collab</span>
+            </div>
+          )}
           
           {/* Views count - glassmorphism */}
           <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
