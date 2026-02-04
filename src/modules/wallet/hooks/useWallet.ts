@@ -7,8 +7,8 @@ import type {
   Wallet,
   WalletType,
   WalletDisplay,
-  toWalletDisplay,
 } from '../types';
+import { toWalletDisplay } from '../types';
 
 interface UseWalletOptions {
   walletType?: WalletType;
