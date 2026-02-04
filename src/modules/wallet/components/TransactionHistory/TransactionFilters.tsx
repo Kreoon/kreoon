@@ -21,9 +21,8 @@ import type {
   TransactionFilters as TFilters,
   TransactionType,
   TransactionStatus,
-  TRANSACTION_TYPE_LABELS,
-  TRANSACTION_STATUS_LABELS,
 } from '../../types';
+import { TRANSACTION_TYPE_LABELS, TRANSACTION_STATUS_LABELS } from '../../types';
 
 interface TransactionFiltersProps {
   filters: TFilters;

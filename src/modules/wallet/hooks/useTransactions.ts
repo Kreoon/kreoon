@@ -8,8 +8,8 @@ import type {
   TransactionFilters,
   TransactionType,
   TransactionStatus,
-  toTransactionDisplay,
 } from '../types';
+import { toTransactionDisplay } from '../types';
 import type { Currency } from '../types/wallet.types';
 
 interface UseTransactionsOptions {

@@ -9,7 +9,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import type { TransactionFilters, WalletTransaction, formatCurrency, TRANSACTION_TYPE_LABELS, TRANSACTION_STATUS_LABELS } from '../../types';
+import type { TransactionFilters, WalletTransaction } from '../../types';
+import { TRANSACTION_TYPE_LABELS, TRANSACTION_STATUS_LABELS } from '../../types';
 
 interface ExportButtonProps {
   walletId: string;
