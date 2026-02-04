@@ -238,14 +238,15 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
         show_on_creator_profile: newValue,
         show_on_client_profile: newValue,
         is_collaborative: newValue,
+        is_published: newValue, // Also mark as published so it appears in feed
         shared_at: newValue ? new Date().toISOString() : null
       }).eq('id', content.id);
       if (error) throw error;
       setKreoonEnabled(newValue);
-      toast.success(newValue ? 'Compartido en Kreoon' : 'Removido de Kreoon');
+      toast.success(newValue ? 'Compartido en Kreoon Social' : 'Removido de Kreoon Social');
       onUpdate?.();
     } catch (error) {
-      toast.error('Error');
+      toast.error('Error al compartir');
     } finally {
       setIsTogglingKreoon(false);
     }
@@ -331,7 +332,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
                   {showKreoonToggle && (
                     <DropdownMenuItem onClick={handleToggleKreoon} disabled={isTogglingKreoon}>
                       <Handshake className="h-4 w-4 mr-2" />
-                      {kreoonEnabled ? 'Quitar de Kreoon' : 'Compartir en Kreoon'}
+                      {kreoonEnabled ? 'Quitar de Kreoon Social' : 'Compartir en Kreoon Social'}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
