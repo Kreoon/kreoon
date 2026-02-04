@@ -2,15 +2,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Users, User, Brain, MessageSquare, AlertTriangle, Target } from 'lucide-react';
 
+interface AvatarSituation {
+  dayToDay?: string;
+  previousAttempts?: string;
+  whyDidntWork?: string;
+  currentFeeling?: string;
+}
+
+interface AvatarDemographics {
+  age?: string;
+  occupation?: string;
+  familySituation?: string;
+  location?: string;
+  socioeconomicLevel?: string;
+}
+
+interface AvatarPsychographics {
+  awarenessLevel?: string;
+  drivers?: string[];
+  biases?: string[];
+  objections?: string[];
+  values?: string[];
+  deepestFears?: string[];
+}
+
+interface AvatarCommunication {
+  phrases?: string[];
+  frequentExpressions?: string[];
+  preferredTone?: string;
+}
+
 interface AvatarProfile {
   name?: string;
   age?: string;
-  situation?: string;
+  demographics?: AvatarDemographics;
+  situation?: string | AvatarSituation;
   awarenessLevel?: string;
-  drivers?: string;
-  biases?: string;
-  objections?: string;
-  phrases?: string[];
+  psychographics?: AvatarPsychographics;
+  drivers?: string | string[];
+  biases?: string | string[];
+  objections?: string | string[];
+  communication?: AvatarCommunication;
+  phrases?: string[] | string;
 }
 
 interface AvatarProfiles {
@@ -59,10 +92,10 @@ export function AvatarSegmentationTab({ avatarProfiles }: AvatarSegmentationTabP
                   </div>
                   {avatar.name || `Avatar ${idx + 1}`}
                 </CardTitle>
-                {avatar.awarenessLevel && (
+                {(avatar.awarenessLevel || avatar.psychographics?.awarenessLevel) && (
                   <Badge variant="outline" className="text-xs">
                     <Target className="h-3 w-3 mr-1" />
-                    {avatar.awarenessLevel}
+                    {avatar.psychographics?.awarenessLevel || avatar.awarenessLevel}
                   </Badge>
                 )}
               </div>
@@ -75,64 +108,94 @@ export function AvatarSegmentationTab({ avatarProfiles }: AvatarSegmentationTabP
               {avatar.situation && (
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-1">📍 Situación Actual</p>
-                  <p className="text-sm">{avatar.situation}</p>
+                  {typeof avatar.situation === 'string' ? (
+                    <p className="text-sm">{avatar.situation}</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {avatar.situation.dayToDay && <p className="text-sm">{avatar.situation.dayToDay}</p>}
+                      {avatar.situation.currentFeeling && <p className="text-xs text-muted-foreground"><strong>Cómo se siente:</strong> {avatar.situation.currentFeeling}</p>}
+                      {avatar.situation.previousAttempts && <p className="text-xs text-muted-foreground"><strong>Ha intentado:</strong> {avatar.situation.previousAttempts}</p>}
+                    </div>
+                  )}
                 </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Drivers */}
-                {avatar.drivers && (
+                {(avatar.drivers || avatar.psychographics?.drivers) && (
                   <div className="p-3 bg-green-500/5 rounded-lg border border-green-500/20">
                     <p className="text-xs font-medium text-green-600 mb-1 flex items-center gap-1">
                       <Brain className="h-3 w-3" />
                       Drivers Psicológicos
                     </p>
-                    <p className="text-sm">{avatar.drivers}</p>
+                    <p className="text-sm">
+                      {Array.isArray(avatar.psychographics?.drivers)
+                        ? avatar.psychographics.drivers.join(', ')
+                        : Array.isArray(avatar.drivers)
+                          ? avatar.drivers.join(', ')
+                          : avatar.drivers || ''}
+                    </p>
                   </div>
                 )}
 
                 {/* Biases */}
-                {avatar.biases && (
+                {(avatar.biases || avatar.psychographics?.biases) && (
                   <div className="p-3 bg-purple-500/5 rounded-lg border border-purple-500/20">
                     <p className="text-xs font-medium text-purple-600 mb-1 flex items-center gap-1">
                       <Brain className="h-3 w-3" />
                       Sesgos Cognitivos
                     </p>
-                    <p className="text-sm">{avatar.biases}</p>
+                    <p className="text-sm">
+                      {Array.isArray(avatar.psychographics?.biases)
+                        ? avatar.psychographics.biases.join(', ')
+                        : Array.isArray(avatar.biases)
+                          ? avatar.biases.join(', ')
+                          : avatar.biases || ''}
+                    </p>
                   </div>
                 )}
               </div>
 
               {/* Objections */}
-              {avatar.objections && (
+              {(avatar.objections || avatar.psychographics?.objections) && (
                 <div className="p-3 bg-amber-500/5 rounded-lg border border-amber-500/20">
                   <p className="text-xs font-medium text-amber-600 mb-1 flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" />
                     Objeciones Clave
                   </p>
-                  <p className="text-sm">{avatar.objections}</p>
+                  <p className="text-sm">
+                    {Array.isArray(avatar.psychographics?.objections)
+                      ? avatar.psychographics.objections.join(', ')
+                      : Array.isArray(avatar.objections)
+                        ? avatar.objections.join(', ')
+                        : avatar.objections || ''}
+                  </p>
                 </div>
               )}
 
               {/* Phrases */}
-              {avatar.phrases && (
+              {(avatar.phrases || avatar.communication?.phrases) && (
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
                     <MessageSquare className="h-3 w-3" />
                     Frases Reales que Usa
                   </p>
                   <div className="space-y-2">
-                    {Array.isArray(avatar.phrases) ? (
-                      avatar.phrases.map((phrase, pIdx) => (
-                        <div key={pIdx} className="p-2 bg-muted/50 rounded border-l-2 border-primary italic text-sm">
-                          "{phrase}"
+                    {(() => {
+                      const phrases = avatar.communication?.phrases || avatar.phrases;
+                      if (Array.isArray(phrases)) {
+                        return phrases.map((phrase, pIdx) => (
+                          <div key={pIdx} className="p-2 bg-muted/50 rounded border-l-2 border-primary italic text-sm">
+                            "{phrase}"
+                          </div>
+                        ));
+                      }
+                      return (
+                        <div className="p-2 bg-muted/50 rounded border-l-2 border-primary italic text-sm">
+                          "{phrases}"
                         </div>
-                      ))
-                    ) : (
-                      <div className="p-2 bg-muted/50 rounded border-l-2 border-primary italic text-sm">
-                        "{avatar.phrases}"
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 </div>
               )}

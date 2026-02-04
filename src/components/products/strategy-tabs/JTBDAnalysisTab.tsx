@@ -7,10 +7,36 @@ type Desire = string | { desire?: string; emotion?: string; idealState?: string 
 type Objection = string | { objection?: string; belief?: string; counter?: string };
 type Insight = string | { insight?: string; source?: string };
 
+interface JTBDFunctional {
+  description?: string;
+  situation?: string;
+  currentAlternatives?: string;
+  desiredOutcome?: string;
+  statement?: string;
+}
+
+interface JTBDEmotional {
+  description?: string;
+  duringUse?: string;
+  afterUse?: string;
+  avoidFeelings?: string[];
+  underlyingFears?: string[];
+  hopesAndDreams?: string[];
+}
+
+interface JTBDSocial {
+  description?: string;
+  perceivedBy?: string[];
+  desiredStatus?: string;
+  avoidJudgments?: string[];
+  belongingGroup?: string;
+  differentiateFrom?: string;
+}
+
 interface JTBD {
-  functional?: string;
-  emotional?: string;
-  social?: string;
+  functional?: string | JTBDFunctional;
+  emotional?: string | JTBDEmotional;
+  social?: string | JTBDSocial;
   pains?: Pain[];
   desires?: Desire[];
   objections?: Objection[];
@@ -54,8 +80,17 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
               </CardTitle>
               <CardDescription>El trabajo práctico que resuelve</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm">{jtbdData.functional}</p>
+            <CardContent className="space-y-2">
+              {typeof jtbdData.functional === 'string' ? (
+                <p className="text-sm">{jtbdData.functional}</p>
+              ) : (
+                <>
+                  {jtbdData.functional.description && <p className="text-sm">{jtbdData.functional.description}</p>}
+                  {jtbdData.functional.statement && <p className="text-sm font-medium text-blue-600 dark:text-blue-400 italic">"{jtbdData.functional.statement}"</p>}
+                  {jtbdData.functional.situation && <p className="text-xs text-muted-foreground"><strong>Situación:</strong> {jtbdData.functional.situation}</p>}
+                  {jtbdData.functional.desiredOutcome && <p className="text-xs text-muted-foreground"><strong>Resultado deseado:</strong> {jtbdData.functional.desiredOutcome}</p>}
+                </>
+              )}
             </CardContent>
           </Card>
         )}
@@ -69,8 +104,19 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
               </CardTitle>
               <CardDescription>Cómo quiere sentirse el cliente</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm">{jtbdData.emotional}</p>
+            <CardContent className="space-y-2">
+              {typeof jtbdData.emotional === 'string' ? (
+                <p className="text-sm">{jtbdData.emotional}</p>
+              ) : (
+                <>
+                  {jtbdData.emotional.description && <p className="text-sm">{jtbdData.emotional.description}</p>}
+                  {jtbdData.emotional.duringUse && <p className="text-xs text-muted-foreground"><strong>Durante el uso:</strong> {jtbdData.emotional.duringUse}</p>}
+                  {jtbdData.emotional.afterUse && <p className="text-xs text-muted-foreground"><strong>Después:</strong> {jtbdData.emotional.afterUse}</p>}
+                  {jtbdData.emotional.avoidFeelings && jtbdData.emotional.avoidFeelings.length > 0 && (
+                    <p className="text-xs text-muted-foreground"><strong>Evitar sentir:</strong> {jtbdData.emotional.avoidFeelings.join(', ')}</p>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         )}
@@ -84,8 +130,19 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
               </CardTitle>
               <CardDescription>Cómo quiere ser percibido</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm">{jtbdData.social}</p>
+            <CardContent className="space-y-2">
+              {typeof jtbdData.social === 'string' ? (
+                <p className="text-sm">{jtbdData.social}</p>
+              ) : (
+                <>
+                  {jtbdData.social.description && <p className="text-sm">{jtbdData.social.description}</p>}
+                  {jtbdData.social.desiredStatus && <p className="text-xs text-muted-foreground"><strong>Estatus deseado:</strong> {jtbdData.social.desiredStatus}</p>}
+                  {jtbdData.social.belongingGroup && <p className="text-xs text-muted-foreground"><strong>Grupo al que quiere pertenecer:</strong> {jtbdData.social.belongingGroup}</p>}
+                  {jtbdData.social.perceivedBy && jtbdData.social.perceivedBy.length > 0 && (
+                    <p className="text-xs text-muted-foreground"><strong>Percibido por:</strong> {jtbdData.social.perceivedBy.join(', ')}</p>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         )}

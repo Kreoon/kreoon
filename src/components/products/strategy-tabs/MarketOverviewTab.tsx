@@ -2,16 +2,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Globe, TrendingUp, Target, Lightbulb, BarChart3, Brain } from 'lucide-react';
 
+interface MacroVariable {
+  factor?: string;
+  type?: string;
+  impact?: string;
+  implication?: string;
+}
+
+interface Opportunity {
+  opportunity?: string;
+  why?: string;
+  howToCapture?: string;
+}
+
+interface Threat {
+  threat?: string;
+  riskLevel?: string;
+  mitigation?: string;
+}
+
 interface MarketResearch {
   marketSize?: string;
   growthTrend?: string;
   marketState?: string;
   marketStateExplanation?: string;
-  macroVariables?: string[];
+  macroVariables?: (string | MacroVariable)[];
   awarenessLevel?: string;
+  awarenessExplanation?: string;
   summary?: string;
-  opportunities?: string[];
-  threats?: string[];
+  opportunities?: (string | Opportunity)[];
+  threats?: (string | Threat)[];
   rawContent?: string;
   citations?: string[];
 }
@@ -117,12 +137,23 @@ export function MarketOverviewTab({ marketResearch }: MarketOverviewTabProps) {
             <CardDescription>Factores externos que influyen en la demanda</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {marketResearch.macroVariables.map((variable, idx) => (
-                <Badge key={idx} variant="outline">
-                  {variable}
-                </Badge>
-              ))}
+            <div className="space-y-2">
+              {marketResearch.macroVariables.map((variable, idx) => {
+                if (typeof variable === 'string') {
+                  return (
+                    <Badge key={idx} variant="outline">
+                      {variable}
+                    </Badge>
+                  );
+                }
+                return (
+                  <div key={idx} className="p-2 bg-muted/50 rounded border text-sm">
+                    <p className="font-medium">{variable.factor}</p>
+                    {variable.type && <Badge variant="outline" className="text-xs mr-2">{variable.type}</Badge>}
+                    {variable.impact && <p className="text-xs text-muted-foreground mt-1"><strong>Impacto:</strong> {variable.impact}</p>}
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -138,12 +169,23 @@ export function MarketOverviewTab({ marketResearch }: MarketOverviewTabProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {marketResearch.opportunities.slice(0, 6).map((op, idx) => (
-                    <div key={idx} className="flex items-start gap-2 p-2 bg-background rounded border">
-                      <span className="text-green-600">→</span>
-                      <p className="text-sm">{op}</p>
-                    </div>
-                  ))}
+                  {marketResearch.opportunities.slice(0, 6).map((op, idx) => {
+                    if (typeof op === 'string') {
+                      return (
+                        <div key={idx} className="flex items-start gap-2 p-2 bg-background rounded border">
+                          <span className="text-green-600">→</span>
+                          <p className="text-sm">{op}</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={idx} className="p-2 bg-background rounded border">
+                        <p className="text-sm font-medium">{op.opportunity}</p>
+                        {op.why && <p className="text-xs text-muted-foreground mt-1"><strong>Por qué:</strong> {op.why}</p>}
+                        {op.howToCapture && <p className="text-xs text-green-600 mt-1"><strong>Cómo aprovecharlo:</strong> {op.howToCapture}</p>}
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -156,12 +198,23 @@ export function MarketOverviewTab({ marketResearch }: MarketOverviewTabProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {marketResearch.threats.slice(0, 6).map((t, idx) => (
-                    <div key={idx} className="flex items-start gap-2 p-2 bg-background rounded border">
-                      <span className="text-red-600">→</span>
-                      <p className="text-sm">{t}</p>
-                    </div>
-                  ))}
+                  {marketResearch.threats.slice(0, 6).map((t, idx) => {
+                    if (typeof t === 'string') {
+                      return (
+                        <div key={idx} className="flex items-start gap-2 p-2 bg-background rounded border">
+                          <span className="text-red-600">→</span>
+                          <p className="text-sm">{t}</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={idx} className="p-2 bg-background rounded border">
+                        <p className="text-sm font-medium">{t.threat}</p>
+                        {t.riskLevel && <Badge variant="outline" className="text-xs mt-1">{t.riskLevel}</Badge>}
+                        {t.mitigation && <p className="text-xs text-muted-foreground mt-1"><strong>Mitigación:</strong> {t.mitigation}</p>}
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
