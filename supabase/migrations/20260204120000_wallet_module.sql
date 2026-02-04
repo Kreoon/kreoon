@@ -1034,3 +1034,70 @@ GRANT EXECUTE ON FUNCTION public.create_escrow_hold(UUID, UUID, UUID, UUID, NUME
 GRANT EXECUTE ON FUNCTION public.release_escrow(UUID, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION public.refund_escrow(UUID, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.process_withdrawal(UUID, UUID, TEXT, TEXT, TEXT, TEXT) TO service_role;
+
+-- =====================================================
+-- TRIGGER: AUTO-CREATE WALLET ON USER REGISTRATION
+-- =====================================================
+
+-- Función para crear wallet automáticamente al registrar usuario
+CREATE OR REPLACE FUNCTION public.create_wallet_for_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Crear wallet de tipo 'creator' por defecto para nuevos usuarios
+  -- El tipo puede cambiar luego según el rol del usuario
+  INSERT INTO public.wallets (user_id, wallet_type, status)
+  VALUES (NEW.id, 'creator', 'active')
+  ON CONFLICT (user_id, wallet_type) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+-- Trigger que se ejecuta después de insertar un nuevo perfil
+CREATE TRIGGER trigger_create_wallet_on_profile_insert
+  AFTER INSERT ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.create_wallet_for_new_user();
+
+-- =====================================================
+-- INSERTAR WALLET DE PLATAFORMA
+-- =====================================================
+
+-- Crear el wallet de plataforma para recibir fees
+-- Nota: Este wallet no tiene user_id ni organization_id (se permite por constraint modificado)
+-- Usamos una organización especial o lo manejamos de forma diferente
+
+-- Primero, modificamos el constraint para permitir wallet de plataforma sin propietario
+ALTER TABLE public.wallets DROP CONSTRAINT IF EXISTS wallet_owner_check;
+ALTER TABLE public.wallets ADD CONSTRAINT wallet_owner_check CHECK (
+  wallet_type = 'platform' OR
+  (user_id IS NOT NULL AND organization_id IS NULL) OR
+  (user_id IS NULL AND organization_id IS NOT NULL)
+);
+
+-- Insertar wallet de plataforma (solo si no existe)
+INSERT INTO public.wallets (wallet_type, status, currency, available_balance)
+SELECT 'platform', 'active', 'USD', 0.00
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.wallets WHERE wallet_type = 'platform'
+);
+
+-- =====================================================
+-- FUNCIÓN HELPER: Obtener wallet de plataforma
+-- =====================================================
+CREATE OR REPLACE FUNCTION public.get_platform_wallet_id()
+RETURNS UUID
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT id FROM public.wallets WHERE wallet_type = 'platform' LIMIT 1;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_platform_wallet_id() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_platform_wallet_id() TO service_role;
