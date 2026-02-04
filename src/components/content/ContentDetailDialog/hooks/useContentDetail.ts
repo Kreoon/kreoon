@@ -8,6 +8,7 @@ import { useAutoSave } from '@/hooks/useAutoSave';
 import { useUnsavedChangesSafe } from '@/contexts/UnsavedChangesContext';
 import { useTrialGuard } from '@/hooks/useTrialGuard';
 import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
+import { markLocalUpdate } from '@/hooks/useContent';
 
 interface UseContentDetailOptions {
   content: Content | null;
@@ -202,14 +203,16 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
 
   const handleSave = async () => {
     if (!content) return;
-    
+
     // Check trial status before saving
     if (isReadOnly) {
       guardAction(() => {});
       return;
     }
-    
+
     setLoading(true);
+    // Mark as local update to prevent realtime refetch from closing the dialog
+    markLocalUpdate(content.id);
 
     try {
       let updates: any = {};
@@ -373,6 +376,8 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       // Use role-based updates (same logic as handleSave)
       const updates = buildRoleBasedUpdates(data);
       if (!updates) return;
+      // Mark as local update to prevent realtime refetch from closing the dialog
+      markLocalUpdate(content.id);
       await supabase.from('content').update(updates).eq('id', content.id);
     },
     enabled: editMode,

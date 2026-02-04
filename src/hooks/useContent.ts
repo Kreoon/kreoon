@@ -1,8 +1,26 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Content, ContentStatus } from '@/types/database';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
+
+// Global set to track content IDs recently updated by the current session
+// This prevents realtime events from triggering unnecessary refetches
+const recentLocalUpdates = new Set<string>();
+const LOCAL_UPDATE_DEBOUNCE_MS = 3000;
+
+// Helper to mark a content as recently updated locally
+// Exported so other hooks (like useContentDetail) can use it
+export function markLocalUpdate(contentId: string) {
+  recentLocalUpdates.add(contentId);
+  setTimeout(() => recentLocalUpdates.delete(contentId), LOCAL_UPDATE_DEBOUNCE_MS);
+}
+
+// Helper to check if we should skip realtime refetch for this content
+function shouldSkipRealtimeRefetch(contentId?: string): boolean {
+  if (!contentId) return false;
+  return recentLocalUpdates.has(contentId);
+}
 
 interface UseContentOptions {
   userId?: string;
@@ -90,6 +108,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   }, [userId, role, isPlatformRoot, currentOrgId, orgLoading]);
 
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {
+    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
     // If oldStatus is provided, use UP integration
     if (oldStatus) {
       await updateContentStatusWithUP({
@@ -104,7 +123,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
         .select('status')
         .eq('id', contentId)
         .single();
-      
+
       if (currentContent) {
         await updateContentStatusWithUP({
           contentId,
@@ -124,6 +143,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   };
 
   const updateContent = async (contentId: string, updates: Partial<Content>) => {
+    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
     const { error } = await supabase
       .from('content')
       .update(updates)
@@ -134,6 +154,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   };
 
   const deleteContent = async (contentId: string) => {
+    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
     const { error } = await supabase
       .from('content')
       .delete()
@@ -144,13 +165,14 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   };
 
   const approveContent = async (contentId: string, approverId: string) => {
+    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
     // First, fetch current status for UP integration
     const { data: currentContent } = await supabase
       .from('content')
       .select('status')
       .eq('id', contentId)
       .single();
-    
+
     if (currentContent) {
       // Use UP-aware status change
       await updateContentStatusWithUP({
@@ -159,7 +181,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
         newStatus: 'approved'
       });
     }
-    
+
     // Update approved_by separately
     const { error } = await supabase
       .from('content')
@@ -171,9 +193,10 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   };
 
   const approveScript = async (contentId: string, approverId: string) => {
+    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
     const { error } = await supabase
       .from('content')
-      .update({ 
+      .update({
         status: 'script_approved' as ContentStatus,
         script_approved_at: new Date().toISOString(),
         script_approved_by: approverId
@@ -189,6 +212,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   }, [fetchContent]);
 
   // Realtime subscription for automatic sync
+  // Uses debouncing to avoid refetching when local updates trigger realtime events
   useEffect(() => {
     if (!currentOrgId) return;
 
@@ -203,7 +227,13 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
           filter: `organization_id=eq.${currentOrgId}`
         },
         (payload) => {
-          console.log('[Realtime] Content change detected:', payload.eventType);
+          const contentId = (payload.new as { id?: string })?.id || (payload.old as { id?: string })?.id;
+          // Skip refetch if this was a local update (prevents dialog closing during autoSave)
+          if (shouldSkipRealtimeRefetch(contentId)) {
+            console.log('[Realtime] Skipping refetch for local update:', payload.eventType, contentId);
+            return;
+          }
+          console.log('[Realtime] Content change from another user:', payload.eventType);
           fetchContent();
         }
       )
@@ -319,6 +349,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
   }, [options.userId, options.role, options.clientId, options.creatorId, options.editorId, options.showOnlyAssigned, isPlatformRoot, currentOrgId, orgLoading]);
 
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {
+    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
     // If oldStatus is provided, use UP integration
     if (oldStatus) {
       await updateContentStatusWithUP({
@@ -333,7 +364,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
         .select('status')
         .eq('id', contentId)
         .single();
-      
+
       if (currentContent) {
         await updateContentStatusWithUP({
           contentId,
@@ -353,6 +384,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
   };
 
   const deleteContent = async (contentId: string) => {
+    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
     const { error } = await supabase
       .from('content')
       .delete()
@@ -367,6 +399,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
   }, [fetchContent]);
 
   // Realtime subscription for automatic sync
+  // Uses debouncing to avoid refetching when local updates trigger realtime events
   useEffect(() => {
     if (!currentOrgId) return;
 
@@ -381,7 +414,13 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
           filter: `organization_id=eq.${currentOrgId}`
         },
         (payload) => {
-          console.log('[Realtime] Content change detected (filtered):', payload.eventType);
+          const contentId = (payload.new as { id?: string })?.id || (payload.old as { id?: string })?.id;
+          // Skip refetch if this was a local update (prevents dialog closing during autoSave)
+          if (shouldSkipRealtimeRefetch(contentId)) {
+            console.log('[Realtime] Skipping refetch for local update (filtered):', payload.eventType, contentId);
+            return;
+          }
+          console.log('[Realtime] Content change from another user (filtered):', payload.eventType);
           fetchContent();
         }
       )
