@@ -394,23 +394,26 @@ export function StrategicPlaybookTab({
                   )}
 
                   {/* Oportunidades */}
-                  {(phaseData?.opportunities?.length || phaseData?.trustOpportunities?.length ||
-                    phaseData?.decisionMessages?.length || phaseData?.communityOpportunities?.length) && (
-                    <div>
-                      <p className="text-[10px] font-semibold text-green-600 uppercase tracking-wide mb-2">
-                        Oportunidades
-                      </p>
-                      <div className="space-y-1.5">
-                        {(phaseData?.opportunities || phaseData?.trustOpportunities ||
-                          phaseData?.decisionMessages || phaseData?.communityOpportunities)?.slice(0, 4).map((item, idx) => (
-                          <div key={idx} className="flex items-start gap-2 p-2 bg-green-500/5 border-l-2 border-green-500 rounded-r">
-                            <CheckCircle className="h-3 w-3 text-green-500 mt-0.5 shrink-0" />
-                            <p className="text-xs">{item}</p>
-                          </div>
-                        ))}
+                  {(() => {
+                    const opps = [phaseData?.opportunities, phaseData?.trustOpportunities, phaseData?.decisionMessages, phaseData?.communityOpportunities]
+                      .find(arr => Array.isArray(arr) && arr.length > 0);
+                    if (!opps) return null;
+                    return (
+                      <div>
+                        <p className="text-[10px] font-semibold text-green-600 uppercase tracking-wide mb-2">
+                          Oportunidades
+                        </p>
+                        <div className="space-y-1.5">
+                          {opps.slice(0, 4).map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2 p-2 bg-green-500/5 border-l-2 border-green-500 rounded-r">
+                              <CheckCircle className="h-3 w-3 text-green-500 mt-0.5 shrink-0" />
+                              <p className="text-xs">{typeof item === 'string' ? item : item?.opportunity || item?.message || JSON.stringify(item)}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Tip de Hormozi */}
                   <div className="flex items-center gap-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
