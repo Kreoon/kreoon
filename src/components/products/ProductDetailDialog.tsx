@@ -414,9 +414,9 @@ export function ProductDetailDialog({
                     <span className="text-xs font-medium text-primary">Descripción generada por IA</span>
                   </div>
                   <p className="text-sm leading-relaxed">{(product?.content_strategy as any)?.executiveSummary?.marketSummary}</p>
-                  {(product?.content_strategy as any)?.executiveSummary?.keyInsights?.slice(0, 3).map((insight: any, idx: number) => (
+                  {Array.isArray((product?.content_strategy as any)?.executiveSummary?.keyInsights) && (product?.content_strategy as any)?.executiveSummary?.keyInsights?.slice(0, 3).map((insight: any, idx: number) => (
                     <div key={idx} className="mt-2 text-xs text-muted-foreground">
-                      • <strong>{insight.insight}</strong>: {insight.action}
+                      • <strong>{insight.insight || insight.title || ''}</strong>: {insight.action || insight.explanation || ''}
                     </div>
                   ))}
                 </div>
@@ -438,7 +438,7 @@ export function ProductDetailDialog({
               </p>
               
               {/* AI Generated Angles */}
-              {(product?.sales_angles_data as any)?.angles?.length > 0 && (
+              {Array.isArray((product?.sales_angles_data as any)?.angles) && (product?.sales_angles_data as any)?.angles?.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">🤖 Generados por IA ({(product?.sales_angles_data as any)?.angles?.length})</p>
                   <div className="flex flex-wrap gap-2">
