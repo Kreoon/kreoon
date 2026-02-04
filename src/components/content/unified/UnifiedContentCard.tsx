@@ -1,4 +1,4 @@
-import { useState, memo, useCallback } from 'react';
+import { useState, memo, useCallback, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { ContentSettingsDialog } from '@/components/content/ContentSettingsDialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { CommentsSection } from '@/components/content/CommentsSection';
+import { extractBunnyIds, getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 import {
   Download,
   MessageCircle,
@@ -88,41 +89,20 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-// Extract Bunny video ID from URL
-function extractBunnyVideoId(url: string): string | null {
-  if (!url) return null;
-  const embedMatch = url.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
-  if (embedMatch) return embedMatch[2];
-  const cdnMatch = url.match(/b-cdn\.net\/([a-f0-9-]+)/i);
-  if (cdnMatch) return cdnMatch[1];
-  return null;
-}
-
-// Build optimal Bunny embed URL for native player
-function buildBunnyEmbedUrl(url: string): string {
-  // If it's already an embed URL, optimize it
-  if (url.includes('iframe.mediadelivery.net/embed')) {
-    const base = url.split('?')[0];
-    return `${base}?autoplay=false&loop=false&muted=false&preload=metadata&responsive=true`;
-  }
-
-  // If it's a CDN URL, convert to embed
-  const videoId = extractBunnyVideoId(url);
-  if (videoId) {
-    // Default library ID - will be replaced by actual if found in URL
-    let libraryId = '263775';
-    const libMatch = url.match(/embed\/(\d+)\//);
-    if (libMatch) libraryId = libMatch[1];
-    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&loop=false&muted=false&preload=metadata&responsive=true`;
-  }
-
-  return url;
-}
-
 // Check if URL is a Bunny video
 function isBunnyUrl(url: string): boolean {
   if (!url) return false;
-  return url.includes('iframe.mediadelivery.net') || url.includes('b-cdn.net') || url.includes('bunnycdn');
+  return url.includes('mediadelivery.net') || url.includes('b-cdn.net');
+}
+
+// Check if URL is a direct video file
+function isDirectVideoUrl(url: string): boolean {
+  return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) || url.includes('supabase.co/storage');
+}
+
+// Build Bunny embed URL with proper parameters
+function buildBunnyEmbedUrl(libraryId: string, videoId: string): string {
+  return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&responsive=true&controls=true`;
 }
 
 export const UnifiedContentCard = memo(function UnifiedContentCard({
@@ -154,7 +134,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   const [kreoonEnabled, setKreoonEnabled] = useState(content.shared_on_kreoon ?? false);
 
   // Get all video URLs
-  const videoUrls = (() => {
+  const videoUrls = useMemo(() => {
     const urls: string[] = [];
     if (content.bunny_embed_url) urls.push(content.bunny_embed_url);
     if (content.video_url && !urls.includes(content.video_url)) urls.push(content.video_url);
@@ -162,11 +142,29 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
       content.video_urls.filter(u => u?.trim() && !urls.includes(u)).forEach(u => urls.push(u));
     }
     return urls.filter(u => u?.trim());
-  })();
+  }, [content.bunny_embed_url, content.video_url, content.video_urls]);
 
   const hasMultipleVariants = videoUrls.length > 1;
   const currentVideoUrl = videoUrls[currentVariantIndex] || videoUrls[0];
-  const isBunny = isBunnyUrl(currentVideoUrl);
+
+  // Parse Bunny video info
+  const bunnyIds = useMemo(
+    () => (currentVideoUrl ? extractBunnyIds(currentVideoUrl) : null),
+    [currentVideoUrl]
+  );
+  const bunnyUrls = useMemo(
+    () => (currentVideoUrl ? getBunnyVideoUrls(currentVideoUrl) : null),
+    [currentVideoUrl]
+  );
+
+  // Determine player type
+  const isBunny = currentVideoUrl ? isBunnyUrl(currentVideoUrl) : false;
+  const canUseIframe = isBunny && !!bunnyIds && /^\d+$/.test(String(bunnyIds.libraryId));
+  const embedUrl = canUseIframe ? buildBunnyEmbedUrl(bunnyIds!.libraryId, bunnyIds!.videoId) : null;
+  const canUseVideoTag = !!bunnyUrls && (!!bunnyUrls.mp4 || !!bunnyUrls.hls);
+  const videoSrc = canUseVideoTag ? (bunnyUrls!.mp4 || bunnyUrls!.hls) : null;
+  const canUseDirectUrl = !!currentVideoUrl && isDirectVideoUrl(currentVideoUrl);
+  const directVideoSrc = canUseDirectUrl ? currentVideoUrl : null;
 
   // Check if download is allowed (only when approved/delivered)
   const canDownload = showDownload &&
@@ -346,22 +344,24 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
           </div>
         )}
 
-        {/* Native Bunny Video Player */}
-        {currentVideoUrl && isBunny ? (
+        {/* Video Player - Smart detection */}
+        {embedUrl ? (
+          // Use Bunny iframe embed when we have valid numeric libraryId
           <iframe
-            key={`bunny-${currentVideoUrl}-${currentVariantIndex}`}
-            src={buildBunnyEmbedUrl(currentVideoUrl)}
+            key={`embed-${embedUrl}-${currentVariantIndex}`}
+            src={embedUrl}
             className="absolute inset-0 w-full h-full"
             loading="lazy"
-            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             style={{ border: 'none' }}
           />
-        ) : currentVideoUrl ? (
+        ) : (videoSrc || directVideoSrc) ? (
+          // Use native video element for CDN URLs or direct files
           <video
-            key={currentVideoUrl}
-            src={currentVideoUrl}
-            poster={content.thumbnail_url || undefined}
+            key={videoSrc || directVideoSrc}
+            src={videoSrc || directVideoSrc || undefined}
+            poster={bunnyUrls?.thumbnail || content.thumbnail_url || undefined}
             className="w-full h-full object-contain"
             controls
             playsInline
