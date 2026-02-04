@@ -20,10 +20,10 @@ import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
 import { TechGrid, TechParticles, TechOrb } from '@/components/ui/tech-effects';
-import { 
-  Scissors, 
-  Clock, 
-  CheckCircle2, 
+import {
+  Scissors,
+  Clock,
+  CheckCircle2,
   Loader2,
   DollarSign,
   Video,
@@ -31,10 +31,20 @@ import {
   TrendingUp,
   Play,
   ArrowRight,
-  Hammer
+  Film
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
+
+// Importar componentes del sistema "El Estudio"
+import {
+  LevelBadge,
+  CreditsDisplay,
+  ProgressToNextLevel,
+  QuickActions,
+  SeasonBanner,
+  VOCABULARIO_ROL
+} from '@/components/studio';
 
 export default function EditorDashboard() {
   const navigate = useNavigate();
@@ -121,18 +131,20 @@ export default function EditorDashboard() {
       </div>
 
       <div className="relative z-10 space-y-4 p-4 md:p-6">
-        {/* Page Header */}
+        {/* Header de la Sala de Edición - El Estudio */}
         <PageHeader
-          icon={Hammer}
-          title="KREOON Board"
-          subtitle={`Bienvenido, ${profile?.full_name}`}
+          icon={Film}
+          title={VOCABULARIO_ROL.editor.dashboard}
+          subtitle={VOCABULARIO_ROL.editor.bienvenida.replace('la Sala de Edición', `la Sala de Edición, ${profile?.full_name}`)}
           action={
             <div className="flex flex-wrap items-center gap-3">
               <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
               {profile?.is_ambassador && (
                 <AmbassadorBadge size="md" variant="glow" />
               )}
-              <motion.div 
+              <LevelBadge creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
+              <CreditsDisplay creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
+              <motion.div
                 className="flex items-center gap-2 px-4 py-2 rounded-xl border backdrop-blur-xl"
                 style={{
                   background: 'linear-gradient(135deg, hsl(160 100% 45% / 0.15), hsl(160 100% 45% / 0.05))',
@@ -154,6 +166,41 @@ export default function EditorDashboard() {
 
         {/* Season Urgency Banner */}
         <SeasonUrgencyBanner />
+
+        {/* Banner de Temporada - El Estudio */}
+        <SeasonBanner variant="compact" showMetas={false} />
+
+        {/* Progreso al Siguiente Nivel */}
+        <ProgressToNextLevel
+          creditosActuales={totalPaid + (approvedContent.length * 50)}
+          size="sm"
+        />
+
+        {/* Acciones Rápidas de la Sala de Edición */}
+        <QuickActions
+          rol="editor"
+          stats={{
+            pendientes: toEditContent.length + editingContent.length,
+            urgentes: editingContent.length,
+          }}
+          onAction={(action) => {
+            switch (action) {
+              case 'ver_cola':
+                navigate('/board');
+                break;
+              case 'editar':
+                navigate('/board');
+                break;
+              case 'exportar':
+                navigate('/board');
+                break;
+              case 'ver_reel':
+                if (user) navigate(`/portfolio/${user.id}`);
+                break;
+            }
+          }}
+          variant="row"
+        />
 
         {/* Stats Grid - Tech Style */}
         <motion.div 

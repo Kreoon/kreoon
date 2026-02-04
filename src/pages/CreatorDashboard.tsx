@@ -19,19 +19,19 @@ import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/This
 import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
 import { TechPageHeader } from '@/components/layout/TechPageHeader';
 import { TechCard, TechCardContent } from '@/components/ui/tech-card';
-import { 
-  TechGrid, 
-  TechParticles, 
-  TechOrb, 
-  StaggerContainer, 
+import {
+  TechGrid,
+  TechParticles,
+  TechOrb,
+  StaggerContainer,
   StaggerItem,
   DataFlowLines,
   NeonText
 } from '@/components/ui/tech-effects';
-import { 
-  Video, 
-  Clock, 
-  CheckCircle2, 
+import {
+  Video,
+  Clock,
+  CheckCircle2,
   Star,
   ArrowRight,
   Loader2,
@@ -41,9 +41,20 @@ import {
   Play,
   Sword,
   Sparkles,
-  Zap
+  Zap,
+  Clapperboard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Importar componentes del sistema "El Estudio"
+import {
+  LevelBadge,
+  CreditsDisplay,
+  ProgressToNextLevel,
+  QuickActions,
+  SeasonBanner,
+  VOCABULARIO_ROL
+} from '@/components/studio';
 
 export default function CreatorDashboard() {
   const navigate = useNavigate();
@@ -128,15 +139,21 @@ export default function CreatorDashboard() {
       </div>
 
       <div className="relative z-10 space-y-6 p-4 md:p-6">
-        {/* Tech Page Header */}
+        {/* Header del Camerino - El Estudio */}
         <TechPageHeader
-          icon={Sword}
-          title="Creator Dashboard"
-          subtitle={`Bienvenido, ${profile?.full_name}`}
-          badge={showAmbassadorBadge ? <AmbassadorBadge size="md" variant="glow" /> : undefined}
+          icon={Clapperboard}
+          title={VOCABULARIO_ROL.creator.dashboard}
+          subtitle={VOCABULARIO_ROL.creator.bienvenida.replace('tu Camerino', `tu Camerino, ${profile?.full_name}`)}
+          badge={
+            <div className="flex items-center gap-3">
+              {showAmbassadorBadge && <AmbassadorBadge size="md" variant="glow" />}
+              <LevelBadge creditos={totalPaid + (approvedContent.length * 50)} size="md" />
+            </div>
+          }
           action={
             <div className="flex flex-wrap items-center gap-3">
               <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
+              <CreditsDisplay creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
               <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-success/20 to-success/10 border border-success/30 rounded-xl shadow-lg shadow-success/10">
                 <DollarSign className="w-4 h-4 text-success" />
                 <span className="font-bold text-success">
@@ -151,6 +168,41 @@ export default function CreatorDashboard() {
 
         {/* Season Urgency Banner */}
         <SeasonUrgencyBanner />
+
+        {/* Banner de Temporada - El Estudio */}
+        <SeasonBanner variant="compact" showMetas={false} />
+
+        {/* Progreso al Siguiente Nivel */}
+        <ProgressToNextLevel
+          creditosActuales={totalPaid + (approvedContent.length * 50)}
+          size="md"
+        />
+
+        {/* Acciones Rápidas del Camerino */}
+        <QuickActions
+          rol="creator"
+          stats={{
+            pendientes: inProgressContent.length,
+            urgentes: inProgressContent.filter(c => c.status === 'recording').length,
+          }}
+          onAction={(action) => {
+            switch (action) {
+              case 'ver_llamados':
+                navigate('/board');
+                break;
+              case 'ir_rodaje':
+                navigate('/board');
+                break;
+              case 'entregar':
+                navigate('/board');
+                break;
+              case 'ver_reel':
+                if (targetUserId) navigate(`/portfolio/${targetUserId}`);
+                break;
+            }
+          }}
+          variant="grid"
+        />
 
         {/* Dashboard Content */}
         <div className="space-y-6">
