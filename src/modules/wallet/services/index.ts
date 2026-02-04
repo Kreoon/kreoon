@@ -4,3 +4,5 @@ export { EscrowService } from './escrow.service';
 export { WithdrawalService } from './withdrawal.service';
 export { exchangeService } from './exchange.service';
 export { payoutService } from './payout.service';
+export { organizationPaymentsService } from './organization-payments.service';
+export { marketplaceService } from './marketplace.service';
