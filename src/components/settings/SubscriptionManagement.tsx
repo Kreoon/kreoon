@@ -78,16 +78,28 @@ export function SubscriptionManagement() {
   const { data: subscriptions = [], isLoading: loadingSubscriptions } = useQuery({
     queryKey: ["all-subscriptions"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get subscriptions
+      const { data: subs, error: subsError } = await supabase
         .from("user_subscriptions")
-        .select(`
-          *,
-          profiles:user_id (full_name, email)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      return data as unknown as UserSubscription[];
+
+      if (subsError) throw subsError;
+      if (!subs?.length) return [];
+
+      // Then get profiles for those users
+      const userIds = [...new Set(subs.map(s => s.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+      return subs.map(sub => ({
+        ...sub,
+        profiles: profileMap.get(sub.user_id) || null
+      })) as unknown as UserSubscription[];
     },
     enabled: isAdmin,
   });
@@ -96,16 +108,28 @@ export function SubscriptionManagement() {
   const { data: referrals = [], isLoading: loadingReferrals } = useQuery({
     queryKey: ["all-referrals"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get referrals
+      const { data: refs, error: refsError } = await supabase
         .from("referrals")
-        .select(`
-          *,
-          referrer:referrer_id (full_name, email)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      return data as unknown as Referral[];
+
+      if (refsError) throw refsError;
+      if (!refs?.length) return [];
+
+      // Then get profiles for referrers
+      const referrerIds = [...new Set(refs.map(r => r.referrer_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", referrerIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+      return refs.map(ref => ({
+        ...ref,
+        referrer: profileMap.get(ref.referrer_id) || null
+      })) as unknown as Referral[];
     },
     enabled: isAdmin,
   });
