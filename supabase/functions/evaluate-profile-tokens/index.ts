@@ -53,10 +53,10 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const googleApiKey = Deno.env.get('GOOGLE_AI_API_KEY');
 
-    if (!lovableApiKey) {
-      console.error('LOVABLE_API_KEY is not configured');
+    if (!googleApiKey) {
+      console.error('GOOGLE_AI_API_KEY is not configured');
       return new Response(
         JSON.stringify({ error: 'AI service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -259,17 +259,17 @@ COMPLETITUD DEL PERFIL: ${completenessScore}%
 
 ${config.evaluation_prompt || ''}`;
 
-    console.log('Calling Lovable AI for profile evaluation...');
+    console.log('Calling Gemini AI for profile evaluation...');
 
-    // Call Lovable AI
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Call Gemini API directly
+    const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
+        'Authorization': `Bearer ${googleApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: config.ai_model || 'google/gemini-2.5-flash',
+        model: 'gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }

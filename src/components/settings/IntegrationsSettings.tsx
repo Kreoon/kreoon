@@ -153,9 +153,9 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
         docsUrl: "https://huggingface.co/settings/tokens"
       },
       {
-        key: "lovable_ai_enabled",
-        label: "IA Interna (Integrado)",
-        description: "IA integrada en la plataforma. No requiere API Key. Soporta Gemini, GPT-5 y más.",
+        key: "kreoon_ai_enabled",
+        label: "Kreoon IA (Integrado)",
+        description: "IA integrada en la plataforma Kreoon. No requiere API Key. Soporta Gemini, GPT-4o y más.",
         type: "config",
         placeholder: "Habilitado por defecto",
         isSecret: false

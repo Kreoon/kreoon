@@ -38,7 +38,7 @@ export function TrackingAISettings({ organizationId }: TrackingAISettingsProps) 
   
   const [formState, setFormState] = useState({
     enabled: true,
-    provider: 'lovable' as 'lovable' | 'openai' | 'google',
+    provider: 'kreoon' as 'kreoon' | 'openai' | 'google',
     model: 'google/gemini-2.5-flash',
     analysisFrequency: 'daily' as AnalysisFrequency,
     autoAlertsEnabled: true,
@@ -132,7 +132,7 @@ export function TrackingAISettings({ organizationId }: TrackingAISettingsProps) 
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Usa Lovable AI sin necesidad de API keys externos
+                  Usa Kreoon IA sin necesidad de API keys externos
                 </p>
               </div>
 
@@ -222,7 +222,7 @@ export function TrackingAISettings({ organizationId }: TrackingAISettingsProps) 
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Zap className="h-4 w-4 text-primary" />
                 <span>
-                  El AI Insights Engine usa Lovable AI, incluido en tu plan sin costos adicionales por API keys.
+                  El AI Insights Engine usa Kreoon IA, incluido en tu plan sin costos adicionales por API keys.
                 </span>
               </div>
             </CardContent>

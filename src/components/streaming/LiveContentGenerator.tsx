@@ -17,7 +17,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
-import { supabaseLovable } from "@/integrations/supabase/lovable-client";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 

@@ -74,7 +74,7 @@ export function AIModuleConfigDrawer({
   onSave,
 }: AIModuleConfigDrawerProps) {
   const [isActive, setIsActive] = useState(false);
-  const [provider, setProvider] = useState('lovable');
+  const [provider, setProvider] = useState('kreoon');
   const [model, setModel] = useState('google/gemini-2.5-flash');
   const [permissionLevel, setPermissionLevel] = useState('execute');
   const [monthlyLimit, setMonthlyLimit] = useState<string>('');
@@ -82,7 +82,7 @@ export function AIModuleConfigDrawer({
   useEffect(() => {
     if (module) {
       setIsActive(module.is_active);
-      setProvider(module.provider || 'lovable');
+      setProvider(module.provider || 'kreoon');
       setModel(module.model || 'google/gemini-2.5-flash');
       setPermissionLevel(module.permission_level || 'execute');
       setMonthlyLimit(module.monthly_limit?.toString() || '');

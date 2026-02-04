@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { supabaseLovable } from '@/integrations/supabase/lovable-client';
 
 export interface LinkPreview {
   url: string;

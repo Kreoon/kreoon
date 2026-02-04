@@ -69,7 +69,7 @@ export interface AIInsightsConfig {
   id: string;
   organizationId: string;
   enabled: boolean;
-  provider: 'lovable' | 'openai' | 'google';
+  provider: 'kreoon' | 'openai' | 'google';
   model: string;
   analysisFrequency: AnalysisFrequency;
   autoAlertsEnabled: boolean;

@@ -304,7 +304,7 @@ function generateEmailHtml(data: PendingContent): string {
         </p>
         
         <div style="text-align: center; margin-top: 30px;">
-          <a href="https://hfooshsteglylhvrpuka.lovableproject.com/board" 
+          <a href="https://app.kreoon.com/board" 
              style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600;">
             Ver Tablero
           </a>

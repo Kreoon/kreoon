@@ -152,15 +152,56 @@ async function executeResearchStep(
           additionalProperties: false,
           required: ["marketSize", "growthTrend", "marketState", "macroVariables", "awarenessLevel", "summary", "opportunities", "threats"],
           properties: {
-            marketSize: { type: "string", description: "Tamaño del mercado con cifras" },
-            growthTrend: { type: "string", description: "Tendencia de crecimiento con %" },
+            marketSize: { type: "string", description: "Tamaño del mercado con cifras específicas y fuente" },
+            marketSizeSegments: { type: "array", items: { type: "object", properties: { segment: { type: "string" }, value: { type: "string" } } } },
+            growthTrend: { type: "string", description: "CAGR con porcentaje y proyección a 5 años" },
+            growthFactors: { type: "array", minItems: 3, items: { type: "string" } },
             marketState: { type: "string", enum: ["crecimiento", "saturacion", "declive"] },
-            marketStateExplanation: { type: "string" },
-            macroVariables: { type: "array", minItems: 5, maxItems: 7, items: { type: "string" } },
-            awarenessLevel: { type: "string", description: "Nivel de conciencia Eugene Schwartz" },
-            summary: { type: "string", description: "Resumen ejecutivo 2-3 párrafos" },
-            opportunities: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" } },
-            threats: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" } },
+            marketStateExplanation: { type: "string", description: "Justificación detallada del estado del mercado" },
+            marketLifecyclePhase: { type: "string", description: "Fase del ciclo de vida (introducción, crecimiento, madurez, declive)" },
+            macroVariables: {
+              type: "array",
+              minItems: 6,
+              maxItems: 8,
+              items: {
+                type: "object",
+                properties: {
+                  factor: { type: "string" },
+                  type: { type: "string", enum: ["politico", "economico", "social", "tecnologico", "ecologico", "legal"] },
+                  impact: { type: "string" },
+                  implication: { type: "string" }
+                }
+              }
+            },
+            awarenessLevel: { type: "string", enum: ["unaware", "problem_aware", "solution_aware", "product_aware", "most_aware"] },
+            awarenessExplanation: { type: "string", description: "Por qué el mercado está en este nivel de conciencia" },
+            summary: { type: "string", description: "Resumen ejecutivo de 3-4 párrafos con datos concretos" },
+            opportunities: {
+              type: "array",
+              minItems: 5,
+              maxItems: 7,
+              items: {
+                type: "object",
+                properties: {
+                  opportunity: { type: "string" },
+                  why: { type: "string" },
+                  howToCapture: { type: "string" }
+                }
+              }
+            },
+            threats: {
+              type: "array",
+              minItems: 5,
+              maxItems: 7,
+              items: {
+                type: "object",
+                properties: {
+                  threat: { type: "string" },
+                  riskLevel: { type: "string", enum: ["alto", "medio", "bajo"] },
+                  mitigation: { type: "string" }
+                }
+              }
+            },
           },
         },
       },
@@ -176,10 +217,51 @@ async function executeResearchStep(
           additionalProperties: false,
           required: ["functional", "emotional", "social", "insights"],
           properties: {
-            functional: { type: "string", description: "JTBD funcional detallado" },
-            emotional: { type: "string", description: "JTBD emocional detallado" },
-            social: { type: "string", description: "JTBD social detallado" },
-            insights: { type: "array", minItems: 8, maxItems: 12, items: { type: "string" } },
+            functional: {
+              type: "object",
+              properties: {
+                description: { type: "string", description: "Descripción detallada del JTBD funcional (3-4 párrafos)" },
+                situation: { type: "string", description: "En qué situación surge esta necesidad" },
+                currentAlternatives: { type: "string", description: "Qué alternativas usa actualmente" },
+                desiredOutcome: { type: "string", description: "El resultado funcional deseado" },
+                statement: { type: "string", description: "Cuando [situación], quiero [motivación], para poder [resultado]" }
+              }
+            },
+            emotional: {
+              type: "object",
+              properties: {
+                description: { type: "string", description: "Descripción detallada del JTBD emocional (3-4 párrafos)" },
+                duringUse: { type: "string", description: "Cómo quiere sentirse durante el uso" },
+                afterUse: { type: "string", description: "Cómo quiere sentirse después" },
+                avoidFeelings: { type: "array", items: { type: "string" }, description: "Emociones negativas que quiere evitar" },
+                underlyingFears: { type: "array", items: { type: "string" }, description: "Miedos subyacentes" },
+                hopesAndDreams: { type: "array", items: { type: "string" }, description: "Esperanzas y sueños que alimenta" }
+              }
+            },
+            social: {
+              type: "object",
+              properties: {
+                description: { type: "string", description: "Descripción detallada del JTBD social (3-4 párrafos)" },
+                perceivedBy: { type: "array", items: { type: "string" }, description: "Por quién quiere ser percibido (familia, amigos, colegas)" },
+                desiredStatus: { type: "string", description: "Estatus o identidad que quiere proyectar" },
+                avoidJudgments: { type: "array", items: { type: "string" }, description: "Juicios que quiere evitar" },
+                belongingGroup: { type: "string", description: "A qué grupo quiere pertenecer" },
+                differentiateFrom: { type: "string", description: "De qué grupo quiere diferenciarse" }
+              }
+            },
+            insights: {
+              type: "array",
+              minItems: 10,
+              maxItems: 14,
+              items: {
+                type: "object",
+                properties: {
+                  insight: { type: "string" },
+                  category: { type: "string", enum: ["trigger", "momento_verdad", "barrera", "decision", "influenciador", "competencia_indirecta"] },
+                  actionable: { type: "string", description: "Cómo usar este insight en marketing" }
+                }
+              }
+            },
           },
         },
       },
@@ -281,18 +363,66 @@ async function executeResearchStep(
           items: {
             type: "object",
             additionalProperties: false,
-            required: ["name", "age", "situation", "drivers", "phrases"],
+            required: ["name", "demographics", "situation", "psychographics", "communication", "behavior", "purchaseTrigger"],
             properties: {
-              name: { type: "string", description: "Nombre simbólico memorable" },
-              age: { type: "string", description: "Edad y contexto de vida" },
-              situation: { type: "string", description: "Situación actual ANTES del producto" },
-              awarenessLevel: { type: "string" },
-              drivers: { type: "string", description: "3 drivers psicológicos principales" },
-              biases: { type: "string", description: "3 sesgos cognitivos" },
-              objections: { type: "string", description: "3 objeciones específicas" },
-              phrases: { type: "array", minItems: 4, maxItems: 6, items: { type: "string" } },
-              goals: { type: "string" },
-              contentConsumption: { type: "string" }
+              name: { type: "string", description: "Nombre simbólico memorable que refleje su personalidad" },
+              demographics: {
+                type: "object",
+                properties: {
+                  age: { type: "string", description: "Edad específica (no rango)" },
+                  occupation: { type: "string" },
+                  familySituation: { type: "string" },
+                  location: { type: "string" },
+                  socioeconomicLevel: { type: "string" }
+                }
+              },
+              situation: {
+                type: "object",
+                properties: {
+                  dayToDay: { type: "string", description: "Descripción detallada de su día a día (1 párrafo)" },
+                  previousAttempts: { type: "string", description: "Qué ha intentado antes" },
+                  whyDidntWork: { type: "string", description: "Por qué no le ha funcionado" },
+                  currentFeeling: { type: "string", description: "Cómo se siente con su situación actual" }
+                }
+              },
+              psychographics: {
+                type: "object",
+                properties: {
+                  awarenessLevel: { type: "string", enum: ["unaware", "problem_aware", "solution_aware", "product_aware", "most_aware"] },
+                  drivers: { type: "array", minItems: 3, items: { type: "string" }, description: "Drivers psicológicos principales" },
+                  biases: { type: "array", minItems: 3, items: { type: "string" }, description: "Sesgos cognitivos relevantes" },
+                  objections: { type: "array", minItems: 3, items: { type: "string" }, description: "Objeciones específicas de este avatar" },
+                  values: { type: "array", minItems: 3, items: { type: "string" }, description: "Valores personales" },
+                  deepestFears: { type: "array", minItems: 2, items: { type: "string" }, description: "Miedos más profundos" }
+                }
+              },
+              communication: {
+                type: "object",
+                properties: {
+                  phrases: { type: "array", minItems: 5, maxItems: 7, items: { type: "string" }, description: "Frases textuales en primera persona" },
+                  frequentExpressions: { type: "array", items: { type: "string" }, description: "Palabras y expresiones que usa" },
+                  preferredTone: { type: "string", description: "Tono de comunicación que prefiere" }
+                }
+              },
+              behavior: {
+                type: "object",
+                properties: {
+                  shortTermGoals: { type: "string", description: "Metas a 3-6 meses" },
+                  longTermGoals: { type: "string", description: "Metas a 1-3 años" },
+                  contentPlatforms: { type: "array", items: { type: "string" }, description: "Dónde consume contenido" },
+                  influencersFollowed: { type: "string", description: "Tipo de influencers o marcas que sigue" },
+                  researchProcess: { type: "string", description: "Cómo investiga antes de comprar" }
+                }
+              },
+              purchaseTrigger: {
+                type: "object",
+                properties: {
+                  triggerEvent: { type: "string", description: "Qué evento lo llevaría a buscar una solución" },
+                  trustSignals: { type: "string", description: "Qué necesita ver/escuchar para confiar" },
+                  ahamoment: { type: "string", description: "Cuál sería su momento aha" },
+                  actionToday: { type: "string", description: "Qué lo haría actuar HOY" }
+                }
+              }
             }
           }
         },
@@ -362,14 +492,16 @@ async function executeResearchStep(
           items: {
             type: "object",
             additionalProperties: false,
-            required: ["angle", "type", "avatar", "emotion", "hookExample"],
+            required: ["angle", "type", "avatar", "emotion", "hookExample", "whyItWorks"],
             properties: {
-              angle: { type: "string", description: "Descripción del ángulo 2-3 oraciones" },
+              angle: { type: "string", description: "Descripción completa del ángulo (3-4 oraciones)" },
               type: { type: "string", enum: ["educativo", "emocional", "aspiracional", "autoridad", "comparativo", "anti-mercado", "storytelling", "prueba-social", "error-comun"] },
-              avatar: { type: "string" },
-              emotion: { type: "string" },
-              contentType: { type: "string" },
-              hookExample: { type: "string" }
+              avatar: { type: "string", description: "Nombre del avatar específico" },
+              emotion: { type: "string", description: "Emoción específica que activa (no genérica)" },
+              whyItWorks: { type: "string", description: "Por qué funciona psicológicamente este ángulo" },
+              contentType: { type: "string", description: "Formato ideal (Video UGC, Carrusel, Story, etc.)" },
+              hookExample: { type: "string", description: "Hook completo y listo para usar (1-2 oraciones)" },
+              developmentTips: { type: "string", description: "Cómo desarrollar este ángulo en contenido" }
             }
           }
         },
@@ -420,16 +552,24 @@ async function executeResearchStep(
           items: {
             type: "object",
             additionalProperties: false,
-            required: ["name", "format", "objective", "pain", "avatar", "promise"],
+            required: ["name", "format", "objective", "pain", "avatar", "promise", "structure"],
             properties: {
-              name: { type: "string" },
-              format: { type: "string" },
-              objective: { type: "string" },
-              pain: { type: "string" },
-              avatar: { type: "string" },
-              awarenessPhase: { type: "string" },
-              promise: { type: "string" },
-              structure: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" } }
+              name: { type: "string", description: "Nombre irresistible que genere curiosidad" },
+              format: { type: "string", description: "PDF, Video Training, Quiz, Plantilla, etc." },
+              objective: { type: "string", description: "Objetivo de conversión post-descarga" },
+              pain: { type: "string", description: "Dolor principal que ataca" },
+              avatar: { type: "string", description: "Avatar específico" },
+              awarenessPhase: { type: "string", enum: ["problem_aware", "solution_aware", "product_aware"] },
+              promise: { type: "string", description: "Promesa en una oración poderosa" },
+              structure: {
+                type: "array",
+                minItems: 5,
+                maxItems: 7,
+                items: { type: "string" },
+                description: "Secciones o módulos del lead magnet"
+              },
+              deliveryMethod: { type: "string", description: "Cómo se entrega" },
+              estimatedTime: { type: "string", description: "Tiempo de consumo estimado" }
             }
           }
         },
@@ -443,21 +583,32 @@ async function executeResearchStep(
       properties: {
         creatives: {
           type: "array",
-          minItems: 20,
-          maxItems: 25,
+          minItems: 23,
+          maxItems: 27,
           items: {
             type: "object",
             additionalProperties: false,
-            required: ["title", "idea", "format", "esferaPhase"],
+            required: ["number", "title", "idea", "structure", "format", "esferaPhase"],
             properties: {
               number: { type: "number" },
-              angle: { type: "string" },
-              avatar: { type: "string" },
-              title: { type: "string" },
-              idea: { type: "string" },
-              format: { type: "string" },
+              angle: { type: "string", description: "Ángulo de venta que usa" },
+              avatar: { type: "string", description: "Avatar específico objetivo" },
+              title: { type: "string", description: "Hook/Título irresistible (máx 15 palabras)" },
+              idea: { type: "string", description: "Descripción de la idea (3-4 oraciones)" },
+              structure: {
+                type: "object",
+                properties: {
+                  hook: { type: "string", description: "Primeros 3 segundos" },
+                  body: { type: "string", description: "Desarrollo del contenido" },
+                  climax: { type: "string", description: "Punto culminante o revelación" },
+                  cta: { type: "string", description: "Llamada a la acción" }
+                }
+              },
+              format: { type: "string", description: "Video UGC, Talking Head, Carrusel, etc." },
               esferaPhase: { type: "string", enum: ["enganchar", "solucion", "remarketing", "fidelizar"] },
-              duration: { type: "string" }
+              duration: { type: "string", description: "Duración sugerida" },
+              platform: { type: "string", description: "Plataforma ideal" },
+              productionNotes: { type: "string", description: "Qué se necesita para producirlo" }
             }
           }
         },
@@ -475,206 +626,591 @@ async function executeResearchStep(
     const prevSales = previousResults.sales_angles as any;
 
     const prompts: Record<string, string> = {
-      market_overview: `Analiza el mercado usando búsqueda web actualizada.
+      market_overview: `Realiza una INVESTIGACIÓN PROFUNDA del mercado usando búsqueda web actualizada y datos reales de ${targetMarket}.
 
 ${baseContext}
 
 MERCADO OBJETIVO: ${targetMarket}
 
-Genera un análisis de mercado completo con:
-- Tamaño del mercado (cifras específicas)
-- Tendencia de crecimiento (porcentajes)
-- Estado: "crecimiento", "saturacion" o "declive"
-- 5-7 variables macroeconómicas relevantes
-- Nivel de conciencia predominante (Unaware/Problem Aware/Solution Aware/Product Aware/Most Aware)
-- Resumen ejecutivo de 2-3 párrafos
-- 3-5 oportunidades específicas
-- 3-5 amenazas específicas`,
+INSTRUCCIONES CRÍTICAS:
+- USA DATOS REALES Y ACTUALES (busca estadísticas 2024-2025)
+- Cita fuentes cuando sea posible
+- Sé ESPECÍFICO con números, porcentajes y cifras
+- Evita generalidades, cada punto debe tener información concreta
 
-      jtbd: `Basándote en el contexto del producto, define los Jobs To Be Done.
+Genera un ANÁLISIS EXHAUSTIVO incluyendo:
+
+1. TAMAÑO DEL MERCADO:
+   - Valor total del mercado en USD (con fuente)
+   - Segmentación por sub-categorías relevantes
+   - Comparación vs años anteriores
+
+2. TENDENCIA DE CRECIMIENTO:
+   - CAGR (tasa de crecimiento anual compuesta) con porcentaje específico
+   - Proyección a 3-5 años
+   - Factores que impulsan el crecimiento
+
+3. ESTADO DEL MERCADO:
+   - Clasifica como "crecimiento", "saturacion" o "declive"
+   - Justifica con datos concretos por qué está en ese estado
+   - Describe la fase del ciclo de vida del mercado
+
+4. VARIABLES MACROECONÓMICAS (5-7 factores PESTEL):
+   - Políticos/Regulatorios que afectan el mercado
+   - Económicos (inflación, poder adquisitivo, etc.)
+   - Sociales (cambios demográficos, tendencias culturales)
+   - Tecnológicos (innovaciones disruptivas)
+   - Ecológicos/Ambientales si aplica
+   - Legales específicos del sector
+
+5. NIVEL DE CONCIENCIA (Eugene Schwartz):
+   - Determina el nivel predominante del mercado
+   - Explica por qué llegaste a esa conclusión
+   - Implicaciones para la comunicación de marketing
+
+6. RESUMEN EJECUTIVO (3-4 párrafos):
+   - Panorama general del mercado
+   - Principales players y dinámica competitiva
+   - Hacia dónde se dirige el mercado
+   - Recomendación estratégica inicial
+
+7. OPORTUNIDADES (5 mínimo):
+   - Oportunidades concretas y accionables
+   - Por qué representan una oportunidad
+   - Cómo aprovecharlas
+
+8. AMENAZAS (5 mínimo):
+   - Amenazas reales y específicas
+   - Nivel de riesgo (alto/medio/bajo)
+   - Cómo mitigarlas`,
+
+      jtbd: `Analiza a PROFUNDIDAD los Jobs To Be Done (JTBD) del cliente ideal para este producto.
 
 ${baseContext}
 
-Define:
-- JTBD Funcional: La tarea concreta que el cliente quiere completar (detallado)
-- JTBD Emocional: Cómo quiere sentirse durante y después (detallado)
-- JTBD Social: Cómo quiere ser percibido por otros (detallado)
-- 8-12 insights estratégicos basados en investigación real`,
+MARCO TEÓRICO: El framework JTBD de Clayton Christensen nos dice que los clientes "contratan" productos para completar trabajos específicos en sus vidas.
 
-      pains_desires: `Basándote en el producto y el JTBD identificado, genera dolores, deseos y objeciones.
+INSTRUCCIONES CRÍTICAS:
+- Piensa como el cliente, no como el vendedor
+- Usa lenguaje que el cliente realmente usaría
+- Sé extremadamente específico en cada tipo de job
+- Incluye el contexto y las circunstancias
+
+Genera un análisis EXHAUSTIVO:
+
+1. JTBD FUNCIONAL (3-4 párrafos):
+   - ¿Qué tarea específica necesita completar el cliente?
+   - ¿En qué situación surge esta necesidad?
+   - ¿Qué alternativas está usando actualmente?
+   - ¿Cuál es el resultado funcional deseado?
+   - Ejemplo de declaración: "Cuando [situación], quiero [motivación], para poder [resultado esperado]"
+
+2. JTBD EMOCIONAL (3-4 párrafos):
+   - ¿Cómo quiere SENTIRSE el cliente mientras usa el producto?
+   - ¿Qué emociones negativas quiere evitar?
+   - ¿Qué estado emocional espera alcanzar después?
+   - ¿Qué miedos subyacentes tiene?
+   - ¿Qué esperanzas y sueños alimenta?
+
+3. JTBD SOCIAL (3-4 párrafos):
+   - ¿Cómo quiere ser PERCIBIDO por otros?
+   - ¿Ante quién quiere verse bien? (familia, amigos, colegas, sociedad)
+   - ¿Qué estatus o identidad quiere proyectar?
+   - ¿Qué juicios quiere evitar?
+   - ¿A qué grupo quiere pertenecer o de cuál quiere diferenciarse?
+
+4. INSIGHTS ESTRATÉGICOS (10-12 insights):
+   - Cada insight debe ser ACCIONABLE para marketing
+   - Incluye insights sobre: triggers de compra, momentos de verdad, barreras ocultas
+   - Insights sobre el proceso de decisión
+   - Insights sobre influenciadores en la compra
+   - Insights sobre competencia indirecta (alternativas no obvias)`,
+
+      pains_desires: `Realiza un análisis PSICOLÓGICO PROFUNDO de los dolores, deseos y objeciones del cliente ideal.
 
 ${baseContext}
 
 JTBD identificado:
 - Funcional: ${prevJtbd?.jtbd?.functional || 'N/A'}
 - Emocional: ${prevJtbd?.jtbd?.emotional || 'N/A'}
+- Social: ${prevJtbd?.jtbd?.social || 'N/A'}
+
+INSTRUCCIONES CRÍTICAS:
+- Piensa como un psicólogo que entiende motivaciones profundas
+- Usa el lenguaje EXACTO que usaría el cliente (frases entre comillas)
+- Conecta cada dolor/deseo con una emoción específica
+- Sé concreto, evita generalidades como "quiere mejorar su vida"
 
 Genera EXACTAMENTE:
-- 10 dolores profundos (cada uno con: pain, why, impact)
-- 10 deseos aspiracionales (cada uno con: desire, emotion, idealState)
-- 10 objeciones/miedos (cada uno con: objection, belief, counter)`,
 
-      competitors: `Investiga competidores REALES en el mercado ${targetMarket} usando búsqueda web.
+1. 10 DOLORES PROFUNDOS:
+Para cada dolor incluye:
+- pain: El dolor específico (2-3 oraciones descriptivas)
+- why: Por qué duele tanto (la raíz psicológica)
+- impact: Cómo afecta su vida diaria, relaciones, trabajo, autoestima
 
-${baseContext}
+Tipos de dolores a cubrir:
+- 2-3 dolores funcionales (problemas prácticos)
+- 2-3 dolores emocionales (cómo se siente)
+- 2-3 dolores sociales (cómo lo ven otros)
+- 2-3 dolores financieros/de tiempo
 
-Lista 8-10 competidores REALES con presencia online verificable.
-Para cada uno incluye:
-- Nombre real de la empresa
-- Website (si disponible)
-- Instagram/TikTok (si disponible)
-- Promesa de marketing
-- Diferenciador
-- Rango de precios
-- Tono de comunicación
-- Canales principales
-- 2+ fortalezas
-- 2+ debilidades`,
+2. 10 DESEOS ASPIRACIONALES:
+Para cada deseo incluye:
+- desire: El deseo específico (2-3 oraciones descriptivas)
+- emotion: La emoción que sentiría al lograrlo
+- idealState: Descripción vívida de cómo sería su vida (un párrafo)
 
-      avatars: `Crea 5 buyer personas estratégicos basados en la investigación previa.
+Tipos de deseos a cubrir:
+- 2-3 deseos de logro/éxito
+- 2-3 deseos de libertad/autonomía
+- 2-3 deseos de conexión/pertenencia
+- 2-3 deseos de reconocimiento/estatus
 
-${baseContext}
+3. 10 OBJECIONES Y MIEDOS:
+Para cada objeción incluye:
+- objection: La objeción textual ("Es muy caro", "No tengo tiempo")
+- belief: La creencia limitante detrás (por qué realmente objeta)
+- counter: Cómo responder efectivamente (técnica + ejemplo de copy)
 
-Dolores principales identificados:
-${prevPains?.pains?.slice(0, 3).map((p: any) => `- ${p.pain}`).join('\n') || 'N/A'}
+Tipos de objeciones a cubrir:
+- 2-3 sobre precio/inversión
+- 2-3 sobre tiempo/esfuerzo
+- 2-3 sobre confianza/credibilidad
+- 2-3 sobre si funcionará para ellos`,
 
-Deseos principales identificados:
-${prevPains?.desires?.slice(0, 3).map((d: any) => `- ${d.desire}`).join('\n') || 'N/A'}
-
-Crea EXACTAMENTE 5 avatares detallados. Cada uno debe tener:
-- Nombre simbólico memorable
-- Edad y contexto de vida completo
-- Situación actual ANTES del producto
-- Nivel de conciencia (Eugene Schwartz)
-- 3 drivers psicológicos principales
-- 3 sesgos cognitivos relevantes
-- 3 objeciones específicas de este avatar
-- 4-6 frases REALES que usa (entre comillas)
-- Metas a corto y largo plazo
-- Dónde consume contenido`,
-
-      differentiation: `Analiza oportunidades de diferenciación basándote en la competencia y avatares.
+      competitors: `Realiza una INVESTIGACIÓN COMPETITIVA EXHAUSTIVA en el mercado ${targetMarket} usando búsqueda web actualizada.
 
 ${baseContext}
 
-Competidores analizados: ${prevCompetitors?.competitors?.map((c: any) => c.name).join(', ') || 'N/A'}
+INSTRUCCIONES CRÍTICAS:
+- BUSCA competidores REALES con presencia online VERIFICABLE
+- Incluye tanto competidores directos como indirectos
+- Analiza su posicionamiento, no solo lo que venden
+- Sé específico con URLs y precios reales
 
-Avatares: ${prevAvatars?.avatars?.map((a: any) => a.name).join(', ') || 'N/A'}
+Lista 8-10 COMPETIDORES REALES. Para cada uno analiza:
 
-Genera:
-1. DIFERENCIACIÓN:
-   - 4-6 mensajes saturados del mercado (con oportunidad de diferenciarse)
-   - 4-6 dolores mal comunicados (con oportunidad)
-   - 4-6 oportunidades de posicionamiento único
-   - 3-5 emociones no explotadas
+1. INFORMACIÓN BÁSICA:
+- Nombre real de la empresa/marca
+- Website completo (ej: https://ejemplo.com)
+- Instagram (ej: @cuenta)
+- TikTok (ej: @cuenta)
+- Otros canales relevantes
 
-2. INSIGHTS ESFERA (para cada fase):
-   - Enganchar: qué domina, qué está saturado, oportunidades, tipos de hooks
-   - Solución: promesas actuales, objeciones no resueltas, oportunidades de autoridad
-   - Remarketing: prueba social existente, vacíos, mensajes de decisión
-   - Fidelizar: errores comunes, oportunidades de comunidad
+2. ESTRATEGIA DE MARKETING:
+- Promesa de marketing principal (su headline o claim principal)
+- Diferenciador clave (qué los hace únicos según ellos)
+- Tono de comunicación (formal, casual, inspiracional, técnico, etc.)
+- Canales de adquisición principales (ads, SEO, influencers, etc.)
+
+3. OFERTA COMERCIAL:
+- Rango de precios específico (ej: "$197-$997 USD")
+- Modelo de negocio (suscripción, pago único, freemium, etc.)
+- Garantías que ofrecen
+
+4. ANÁLISIS SWOT SIMPLIFICADO:
+- Fortalezas (3 mínimo): ¿qué hacen bien? ¿por qué los clientes los eligen?
+- Debilidades (3 mínimo): ¿dónde fallan? ¿qué quejas tienen sus clientes?
+- Oportunidad para nosotros: ¿cómo podemos diferenciarnos de este competidor?
+
+TIPOS DE COMPETIDORES A INCLUIR:
+- 3-4 competidores directos (mismo producto/servicio)
+- 2-3 competidores indirectos (soluciones alternativas)
+- 1-2 competidores aspiracionales (líderes del mercado)
+- 1-2 competidores emergentes (nuevos pero creciendo)`,
+
+      avatars: `Crea 5 BUYER PERSONAS ULTRA-DETALLADOS basados en la investigación psicográfica previa.
+
+${baseContext}
+
+DOLORES PRINCIPALES IDENTIFICADOS:
+${prevPains?.pains?.slice(0, 5).map((p: any) => `- ${p.pain}: ${p.why}`).join('\n') || 'N/A'}
+
+DESEOS PRINCIPALES IDENTIFICADOS:
+${prevPains?.desires?.slice(0, 5).map((d: any) => `- ${d.desire}: ${d.emotion}`).join('\n') || 'N/A'}
+
+OBJECIONES IDENTIFICADAS:
+${prevPains?.objections?.slice(0, 5).map((o: any) => `- ${o.objection}`).join('\n') || 'N/A'}
+
+INSTRUCCIONES CRÍTICAS:
+- Cada avatar debe sentirse como una PERSONA REAL, no un estereotipo
+- Usa nombres que reflejen su personalidad o situación
+- Incluye detalles específicos que hagan al avatar memorable
+- Las frases deben sonar 100% naturales, como si las escucharas en una conversación
+
+Crea EXACTAMENTE 5 AVATARES. Para cada uno:
+
+1. PERFIL DEMOGRÁFICO:
+- Nombre simbólico memorable (ej: "María La Emprendedora Saturada", "Carlos El Escéptico")
+- Edad específica y etapa de vida (no rangos, una edad concreta)
+- Ocupación/profesión detallada
+- Situación familiar
+- Ubicación típica
+- Nivel socioeconómico
+
+2. SITUACIÓN ACTUAL (ANTES del producto):
+- Descripción detallada de su día a día (un párrafo)
+- Qué ha intentado antes para resolver su problema
+- Por qué no le ha funcionado
+- Cómo se siente con su situación actual
+
+3. PSICOGRAFÍA PROFUNDA:
+- Nivel de conciencia Eugene Schwartz (Unaware/Problem Aware/Solution Aware/Product Aware/Most Aware)
+- 3 drivers psicológicos principales (qué lo mueve a actuar)
+- 3 sesgos cognitivos que tiene (cómo toma decisiones)
+- 3 objeciones específicas de ESTE avatar (no genéricas)
+- Valores personales (qué es importante para esta persona)
+- Miedos más profundos
+
+4. COMUNICACIÓN:
+- 5-6 frases TEXTUALES que dice (entre comillas, en primera persona)
+- Ejemplos: "Ya no sé qué más intentar", "Siento que estoy dejando pasar el tiempo"
+- Palabras y expresiones que usa frecuentemente
+- Tono de comunicación que prefiere
+
+5. COMPORTAMIENTO:
+- Metas a corto plazo (siguiente 3-6 meses)
+- Metas a largo plazo (1-3 años)
+- Dónde consume contenido (plataformas específicas)
+- Influencers o marcas que sigue
+- Cómo investiga antes de comprar
+- Qué lo haría actuar HOY
+
+6. TRIGGER DE COMPRA:
+- ¿Qué evento o situación lo llevaría a buscar una solución?
+- ¿Qué necesita ver/escuchar para confiar?
+- ¿Cuál sería su momento "aha"?`,
+
+      differentiation: `Realiza un ANÁLISIS ESTRATÉGICO DE DIFERENCIACIÓN usando el framework ESFERA y los datos de competencia.
+
+${baseContext}
+
+COMPETIDORES ANALIZADOS:
+${prevCompetitors?.competitors?.slice(0, 5).map((c: any) => `- ${c.name}: ${c.promise} | Debilidades: ${c.weaknesses?.join(', ')}`).join('\n') || 'N/A'}
+
+AVATARES DEFINIDOS:
+${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: ${a.situation?.substring(0, 100)}...`).join('\n') || 'N/A'}
+
+INSTRUCCIONES CRÍTICAS:
+- Identifica GAPS reales en el mercado, no suposiciones
+- Cada oportunidad debe ser accionable y específica
+- Conecta la diferenciación con los avatares identificados
+- El framework ESFERA es: Enganchar → Solución → Remarketing → Fidelizar
+
+Genera un análisis EXHAUSTIVO:
+
+1. ANÁLISIS DE DIFERENCIACIÓN:
+
+a) MENSAJES SATURADOS (5-6):
+Para cada mensaje saturado incluye:
+- message: El mensaje que todos repiten
+- opportunity: Cómo decir lo mismo de forma diferente o qué decir en su lugar
+- example: Ejemplo de copy diferenciado
+
+b) DOLORES MAL COMUNICADOS (5-6):
+Para cada dolor incluye:
+- pain: El dolor que la competencia no comunica bien
+- opportunity: Por qué es una oportunidad
+- howToUse: Cómo usarlo en nuestra comunicación (con ejemplo)
+
+c) OPORTUNIDADES DE POSICIONAMIENTO (5-6):
+Para cada oportunidad incluye:
+- opportunity: La oportunidad específica
+- why: Por qué nadie la está aprovechando
+- execution: Cómo ejecutarla (táctica concreta)
+- forAvatar: Para qué avatar es más relevante
+
+d) EMOCIONES NO EXPLOTADAS (4-5):
+Para cada emoción incluye:
+- emotion: La emoción que nadie está activando
+- howToUse: Cómo activarla en contenido (con ejemplo de hook)
+
+2. INSIGHTS ESFERA DETALLADOS:
+
+ENGANCHAR (Top of Funnel):
+- whatDominates: Qué tipo de contenido domina actualmente
+- whatIsSaturated: Qué está saturado y ya no funciona
+- opportunities: 3-4 oportunidades de diferenciación
+- hookTypes: 5-6 tipos de hooks que funcionarían
+- platforms: Plataformas prioritarias para enganchar
+- contentFormats: Formatos recomendados
+
+SOLUCIÓN (Middle of Funnel):
+- currentPromises: Promesas actuales del mercado
+- unresolvedObjections: Objeciones que nadie está resolviendo
+- authorityOpportunities: Cómo construir autoridad diferenciada
+- educationAngles: Ángulos educativos únicos
+- proofTypes: Tipos de prueba que funcionarían
+
+REMARKETING (Decision Stage):
+- existingSocialProof: Qué prueba social usa la competencia
+- gaps: Vacíos en la comunicación de remarketing
+- decisionMessages: Mensajes que ayudan a decidir
+- urgencyTactics: Tácticas de urgencia éticas
+- objectionHandling: Cómo manejar objeciones finales
+
+FIDELIZAR (Post-Purchase):
+- commonMistakes: Errores comunes post-venta
+- communityOpportunities: Oportunidades de comunidad
+- retentionStrategies: Estrategias de retención
+- referralAngles: Cómo incentivar referidos
 
 3. RESUMEN EJECUTIVO:
-   - Resumen del mercado (1 párrafo)
-   - 3-5 insights clave
-   - 3 acciones inmediatas prioritarias
-   - Recomendación final`,
 
-      sales_angles: `Crea 20 ángulos de venta estratégicos variados.
+- marketSummary: Resumen del estado del mercado (2 párrafos)
+- keyInsights: 5 insights clave más importantes (cada uno con título y explicación)
+- immediateActions: 3 acciones que hacer esta semana (con prioridad y responsable sugerido)
+- finalRecommendation: Recomendación estratégica final (1 párrafo)`,
 
-${baseContext}
-
-Avatares: ${prevAvatars?.avatars?.map((a: any) => a.name).join(', ') || 'N/A'}
-
-Oportunidades de diferenciación: ${prevDiff?.differentiation?.positioningOpportunities?.slice(0, 3).map((o: any) => o.opportunity).join(', ') || 'N/A'}
-
-Genera EXACTAMENTE 20 ángulos de venta. Distribuye entre estos tipos:
-- educativo (enseñar algo nuevo)
-- emocional (conectar con sentimientos)
-- aspiracional (mostrar el yo futuro)
-- autoridad (demostrar expertise)
-- comparativo (vs alternativas)
-- anti-mercado (ir contra lo establecido)
-- storytelling (narrativas)
-- prueba-social (validación externa)
-- error-comun (alertar sobre problemas)
-
-Cada ángulo debe incluir:
-- Descripción del ángulo (2-3 oraciones)
-- Tipo de ángulo
-- Avatar principal
-- Emoción que activa
-- Tipo de contenido ideal
-- Ejemplo de hook/primera frase`,
-
-      puv_transformation: `Construye la Propuesta Única de Valor y tabla de transformación.
+      sales_angles: `Crea 20 ÁNGULOS DE VENTA ESTRATÉGICOS Y CREATIVOS basados en la investigación completa.
 
 ${baseContext}
 
-Ángulos de venta principales:
-${prevSales?.salesAngles?.slice(0, 5).map((a: any) => `- ${a.angle}`).join('\n') || 'N/A'}
+AVATARES Y SUS DRIVERS:
+${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: Drivers: ${a.drivers} | Frases: ${a.phrases?.slice(0, 2).join(', ')}`).join('\n') || 'N/A'}
 
-1. PUV - Propuesta Única de Valor:
-   - Problema central que resuelve (específico)
-   - Resultado tangible y medible
-   - Diferencia fundamental vs mercado
-   - Cliente ideal en una frase
-   - Statement completo (máximo 25 palabras poderosas)
-   - Por qué es creíble y sostenible
+OPORTUNIDADES DE DIFERENCIACIÓN:
+${prevDiff?.differentiation?.positioningOpportunities?.map((o: any) => `- ${o.opportunity}: ${o.why}`).join('\n') || 'N/A'}
 
-2. TRANSFORMACIÓN (antes → después):
-   - Funcional: qué no puede hacer → qué puede hacer
-   - Emocional: cómo se siente antes → cómo se siente después
-   - Identidad: cómo se ve a sí mismo antes → después
-   - Social: cómo lo ven los demás antes → después
-   - Financiero: impacto económico antes → después`,
+DOLORES MAL COMUNICADOS:
+${prevDiff?.differentiation?.poorlyAddressedPains?.map((p: any) => `- ${p.pain}`).join('\n') || 'N/A'}
 
-      lead_magnets: `Diseña 3 lead magnets estratégicos.
+INSTRUCCIONES CRÍTICAS:
+- Cada ángulo debe ser ÚNICO y diferenciado
+- Los hooks deben ser irresistibles y específicos
+- Varía los tipos para tener arsenal completo
+- Conecta cada ángulo con un avatar y emoción específicos
+
+Genera EXACTAMENTE 20 ÁNGULOS DE VENTA:
+
+DISTRIBUCIÓN POR TIPO (2-3 de cada uno):
+- educativo: Enseñar algo nuevo que cambie su perspectiva
+- emocional: Conectar con sentimientos profundos
+- aspiracional: Mostrar la versión mejorada de sí mismos
+- autoridad: Demostrar expertise y credibilidad
+- comparativo: Contrastar con alternativas (sin atacar)
+- anti-mercado: Ir contra lo establecido, ser contrarian
+- storytelling: Narrativas que enganchen
+- prueba-social: Validación externa, testimonios
+- error-comun: Alertar sobre errores que están cometiendo
+
+Para CADA ÁNGULO incluye:
+
+1. angle (3-4 oraciones):
+   - Descripción completa del ángulo
+   - Por qué funciona psicológicamente
+   - Cómo desarrollarlo en contenido
+
+2. type: El tipo de ángulo (de la lista anterior)
+
+3. avatar: Nombre del avatar específico al que apunta
+
+4. emotion: Emoción principal que activa (sé específico: no "felicidad" sino "alivio de finalmente encontrar la solución")
+
+5. contentType: Formato ideal para este ángulo (Video UGC, Carrusel, Story, Reel, Video largo, Imagen, etc.)
+
+6. hookExample: Ejemplo de HOOK completo y listo para usar. Debe ser:
+   - Específico, no genérico
+   - Provocador o intrigante
+   - En primera o segunda persona
+   - Máximo 2 oraciones
+
+EJEMPLOS DE BUENOS HOOKS:
+- "Gasté $5,000 en cursos de marketing y esto es lo único que funcionó"
+- "El error que comete el 90% de [avatar] y que está saboteando sus resultados"
+- "Dejé de [solución común] y mis ventas se triplicaron"`,
+
+      puv_transformation: `Construye una PROPUESTA ÚNICA DE VALOR PODEROSA y una TABLA DE TRANSFORMACIÓN completa.
 
 ${baseContext}
 
-Avatares: ${prevAvatars?.avatars?.map((a: any) => a.name).join(', ') || 'N/A'}
+ÁNGULOS DE VENTA MÁS FUERTES:
+${prevSales?.salesAngles?.slice(0, 8).map((a: any) => `- [${a.type}] ${a.hookExample}`).join('\n') || 'N/A'}
 
-Dolores principales:
-${prevPains?.pains?.slice(0, 5).map((p: any) => `- ${p.pain}`).join('\n') || 'N/A'}
+DIFERENCIADORES CLAVE:
+${prevDiff?.differentiation?.positioningOpportunities?.slice(0, 3).map((o: any) => `- ${o.opportunity}`).join('\n') || 'N/A'}
 
-Crea EXACTAMENTE 3 lead magnets. Cada uno debe tener:
-- Nombre atractivo
-- Formato (PDF, Video, Quiz, Plantilla, etc.)
-- Objetivo de conversión
-- Dolor principal que ataca
-- Avatar específico al que apunta
-- Fase de conciencia objetivo
-- Promesa en una oración
-- 3-5 bullets de contenido/estructura`,
+INSTRUCCIONES CRÍTICAS:
+- La PUV debe ser MEMORABLE y fácil de comunicar
+- El statement debe pasar la "prueba del taxi" (explicable en 10 segundos)
+- La transformación debe ser VÍVIDA y específica
 
-      video_creatives: `Crea 20-25 ideas de contenido/video distribuidas por fase ESFERA.
+Genera:
+
+1. PUV - PROPUESTA ÚNICA DE VALOR:
+
+a) centralProblem (2-3 oraciones):
+   - El problema central ESPECÍFICO que resuelve
+   - Por qué es un problema tan importante
+   - Qué pasa si no se resuelve
+
+b) tangibleResult (2-3 oraciones):
+   - El resultado tangible y MEDIBLE que obtienen
+   - En cuánto tiempo lo obtienen
+   - Cómo sabrán que lo lograron
+
+c) marketDifference (2-3 oraciones):
+   - Qué hace a esta solución FUNDAMENTALMENTE diferente
+   - Por qué las alternativas no funcionan tan bien
+   - El "secreto" o metodología única
+
+d) idealClient (1 oración):
+   - Descripción del cliente ideal en una oración memorable
+   - Ejemplo: "Emprendedores que ya facturan pero no pueden escalar sin quemarse"
+
+e) statement (máximo 25 palabras):
+   - El statement PUV completo y poderoso
+   - Debe incluir: para quién, qué logran, cómo/por qué es único
+   - Ejemplo: "Ayudamos a coaches a conseguir clientes high-ticket sin ads, usando un sistema de contenido que vende mientras duermes"
+
+f) credibility (2-3 oraciones):
+   - Por qué es creíble esta promesa
+   - Qué respalda la afirmación
+   - Por qué es sostenible en el tiempo
+
+2. TABLA DE TRANSFORMACIÓN (Antes → Después):
+
+Para CADA dimensión, describe vívidamente el ANTES y el DESPUÉS:
+
+a) functional (transformación práctica):
+   - before: Qué NO puede hacer, qué le cuesta, qué le toma tiempo (2-3 oraciones)
+   - after: Qué PUEDE hacer ahora, qué le resulta fácil, cuánto tiempo ahorra (2-3 oraciones)
+
+b) emotional (transformación emocional):
+   - before: Cómo se SIENTE (frustrado, ansioso, abrumado, etc.) - ser específico
+   - after: Cómo se SIENTE (confiado, tranquilo, emocionado, etc.) - ser específico
+
+c) identity (transformación de identidad):
+   - before: Cómo se VE a sí mismo (inseguro, estancado, amateur, etc.)
+   - after: Cómo se VE a sí mismo (experto, líder, profesional, etc.)
+
+d) social (transformación social):
+   - before: Cómo lo VEN los demás (su familia, colegas, clientes)
+   - after: Cómo lo VEN los demás (respeto, admiración, referencia)
+
+e) financial (transformación económica):
+   - before: Situación financiera actual (ingresos, gastos, estrés)
+   - after: Situación financiera futura (números específicos si es posible)`,
+
+      lead_magnets: `Diseña 3 LEAD MAGNETS IRRESISTIBLES basados en la investigación de avatares y dolores.
 
 ${baseContext}
 
-Ángulos de venta:
-${prevSales?.salesAngles?.slice(0, 10).map((a: any) => `- ${a.type}: ${a.hookExample}`).join('\n') || 'N/A'}
+AVATARES DEFINIDOS:
+${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: ${a.situation?.substring(0, 80)}...`).join('\n') || 'N/A'}
 
-ESFERA Insights:
-${prevDiff?.esferaInsights ? JSON.stringify(prevDiff.esferaInsights, null, 2).substring(0, 500) : 'N/A'}
+DOLORES PRINCIPALES:
+${prevPains?.pains?.slice(0, 6).map((p: any) => `- ${p.pain}: ${p.why}`).join('\n') || 'N/A'}
 
-Crea 20-25 creativos distribuidos así:
-- 5-6 para Enganchar (atención y curiosidad)
-- 5-6 para Solución (presentar y educar)
-- 5-6 para Remarketing (reforzar decisión)
-- 5-6 para Fidelizar (retención y referidos)
+DESEOS PRINCIPALES:
+${prevPains?.desires?.slice(0, 4).map((d: any) => `- ${d.desire}`).join('\n') || 'N/A'}
 
-Formatos variados: Video UGC, Carrusel, Imagen, Story, Testimonio, etc.
+INSTRUCCIONES CRÍTICAS:
+- Cada lead magnet debe ser tan valioso que lo querrían pagar
+- Los nombres deben ser irresistibles y específicos
+- La estructura debe ser práctica y accionable
+- Variar formatos para diferentes preferencias de consumo
 
-Cada creativo debe tener:
-- Número
-- Ángulo usado
-- Avatar objetivo
-- Título/Hook atractivo
-- Idea principal (2-3 líneas)
-- Formato específico
-- Fase ESFERA: "enganchar", "solucion", "remarketing" o "fidelizar"
-- Duración sugerida`,
+Crea EXACTAMENTE 3 LEAD MAGNETS:
+
+Lead Magnet 1: Para avatar en fase PROBLEM AWARE
+Lead Magnet 2: Para avatar en fase SOLUTION AWARE
+Lead Magnet 3: Para avatar en fase PRODUCT AWARE
+
+Para CADA lead magnet incluye:
+
+1. name: Nombre irresistible (debe generar curiosidad y prometer un resultado)
+   - Ejemplos buenos: "El Método de 7 Días para [resultado]", "La Guía Definitiva de [tema]", "Los 5 Errores que [avatar] Cometen"
+
+2. format: Formato específico
+   - PDF/Ebook, Video Training, Quiz/Assessment, Plantilla/Template, Checklist, Webinar, Mini-Curso, Calculadora
+
+3. objective: Objetivo de conversión (qué queremos que hagan después)
+   - Ejemplo: "Agendar llamada de descubrimiento", "Comprar oferta de entrada"
+
+4. pain: El dolor PRINCIPAL que ataca (conectar con los dolores investigados)
+
+5. avatar: Nombre del avatar específico para el que es
+
+6. awarenessPhase: Fase de conciencia target
+   - "problem_aware", "solution_aware", "product_aware"
+
+7. promise: Promesa en UNA oración poderosa
+   - Debe ser específica, creíble y deseable
+   - Ejemplo: "Descubre el sistema exacto que usamos para generar $10K/mes en solo 2 horas diarias"
+
+8. structure: Array de 5-7 secciones/módulos del lead magnet
+   - Cada bullet debe ser un título de sección atractivo
+   - Debe haber progresión lógica
+   - El último bullet debe ser un CTA o próximo paso
+
+9. deliveryMethod: Cómo se entrega (email, acceso inmediato, drip, etc.)
+
+10. estimatedTime: Tiempo estimado de consumo`,
+
+      video_creatives: `Crea 25 IDEAS DE CONTENIDO/VIDEO con guiones resumidos, distribuidas por fase ESFERA.
+
+${baseContext}
+
+ÁNGULOS DE VENTA DISPONIBLES:
+${prevSales?.salesAngles?.slice(0, 12).map((a: any) => `- [${a.type}] "${a.hookExample}" → Avatar: ${a.avatar}`).join('\n') || 'N/A'}
+
+AVATARES:
+${prevAvatars?.avatars?.map((a: any) => `- ${a.name}`).join(', ') || 'N/A'}
+
+ESFERA INSIGHTS:
+- Enganchar: ${prevDiff?.esferaInsights?.enganchar?.opportunities?.slice(0, 2).join(', ') || 'captar atención'}
+- Solución: ${prevDiff?.esferaInsights?.solucion?.educationAngles?.slice(0, 2).join(', ') || 'educar y presentar'}
+- Remarketing: ${prevDiff?.esferaInsights?.remarketing?.decisionMessages?.slice(0, 2).join(', ') || 'reforzar decisión'}
+- Fidelizar: ${prevDiff?.esferaInsights?.fidelizar?.communityOpportunities?.slice(0, 2).join(', ') || 'retener y referir'}
+
+INSTRUCCIONES CRÍTICAS:
+- Cada idea debe ser PRODUCIBLE (realista para el equipo)
+- Los hooks deben ser IRRESISTIBLES
+- Incluir estructura básica del video (no solo la idea)
+- Variar formatos para mantener el feed fresco
+
+Crea EXACTAMENTE 25 CREATIVOS distribuidos:
+- 6-7 para ENGANCHAR (Top of Funnel - atención y curiosidad)
+- 6-7 para SOLUCIÓN (Middle of Funnel - educar y presentar)
+- 6 para REMARKETING (Decision Stage - reforzar y convertir)
+- 5-6 para FIDELIZAR (Post-Purchase - retener y referir)
+
+Para CADA creativo incluye:
+
+1. number: Número del creativo (1-25)
+
+2. angle: El ángulo de venta que usa (de los investigados)
+
+3. avatar: Avatar específico al que apunta
+
+4. title: Hook/Título IRRESISTIBLE (máximo 15 palabras)
+   - Debe generar curiosidad o provocar emoción
+   - Puede ser pregunta, afirmación controversial, o promesa
+
+5. idea: Descripción de la idea (3-4 oraciones)
+   - De qué trata el contenido
+   - Qué mensaje transmite
+   - Por qué funcionaría
+
+6. structure: Estructura básica del video en 4-5 pasos
+   - Hook (primeros 3 segundos)
+   - Desarrollo (cuerpo del video)
+   - Clímax/Revelación
+   - CTA (llamada a la acción)
+
+7. format: Formato específico
+   - Video UGC, Video Talking Head, Carrusel, Reel/TikTok, Story, Testimonio, Behind the Scenes, Tutorial, Comparación, Meme/Trend
+
+8. esferaPhase: Fase del funnel
+   - "enganchar", "solucion", "remarketing", "fidelizar"
+
+9. duration: Duración sugerida (ej: "15-30 seg", "60-90 seg", "3-5 min")
+
+10. platform: Plataforma ideal (TikTok, Reels, YouTube, Stories, etc.)
+
+11. productionNotes: Notas de producción (qué se necesita para grabarlo)`,
     };
 
     return prompts[stepId] || '';
@@ -687,18 +1223,18 @@ Cada creativo debe tener:
     return { success: false, error: `Unknown step: ${stepId}` };
   }
 
-  // Tokens según complejidad del paso
+  // Tokens aumentados para generar contenido más descriptivo y detallado
   const tokenMap: Record<string, number> = {
-    market_overview: 3500,
-    jtbd: 2500,
-    pains_desires: 4000,
-    competitors: 4500,
-    avatars: 4500,
-    differentiation: 4500,
-    sales_angles: 5000,
-    puv_transformation: 3000,
-    lead_magnets: 2500,
-    video_creatives: 5000,
+    market_overview: 6000,    // Antes: 3500 - Ahora incluye más análisis PESTEL y tendencias
+    jtbd: 5000,               // Antes: 2500 - Más profundidad en cada tipo de job
+    pains_desires: 7000,      // Antes: 4000 - 10 pains, 10 desires, 10 objections con más detalle
+    competitors: 8000,        // Antes: 4500 - 10 competidores con análisis completo
+    avatars: 8000,            // Antes: 4500 - 5 avatares ultra-detallados con psicografía
+    differentiation: 8000,    // Antes: 4500 - ESFERA completo + oportunidades detalladas
+    sales_angles: 8000,       // Antes: 5000 - 20 ángulos con ejemplos completos
+    puv_transformation: 6000, // Antes: 3000 - PUV elaborada + tabla de transformación
+    lead_magnets: 5000,       // Antes: 2500 - 3 lead magnets con estructura completa
+    video_creatives: 8000,    // Antes: 5000 - 25 creativos con guiones resumidos
   };
 
   try {
@@ -864,30 +1400,71 @@ async function consolidateFinalResults(
 function buildProductDescription(briefData: any): string {
   const parts = [];
 
-  if (briefData.productName) parts.push(`**Producto:** ${briefData.productName}`);
+  // Basic Info
+  if (briefData.productName) parts.push(`**Producto/Servicio:** ${briefData.productName}`);
+  if (briefData.businessType) parts.push(`**Tipo de negocio:** ${briefData.businessType === 'personal_brand' ? 'Marca Personal' : 'Producto/Servicio'}`);
   if (briefData.category) parts.push(`**Categoría:** ${briefData.category}${briefData.customCategory ? ` - ${briefData.customCategory}` : ''}`);
   if (briefData.slogan) parts.push(`**Slogan:** ${briefData.slogan}`);
+  if (briefData.currentObjective) parts.push(`**Objetivo actual:** ${briefData.currentObjective}`);
+
+  // Product Details (NEW)
+  if (briefData.priceRange) parts.push(`**Rango de precio:** ${briefData.priceRange}`);
+  if (briefData.yearsInMarket) parts.push(`**Tiempo en el mercado:** ${briefData.yearsInMarket}`);
+  if (briefData.deliveryMethod) parts.push(`**Método de entrega:** ${briefData.deliveryMethod}`);
+  if (briefData.productFormat) parts.push(`**Formato/Estructura:** ${briefData.productFormat}`);
+  if (briefData.guarantees) parts.push(`**Garantías:** ${briefData.guarantees}`);
+  if (briefData.socialProof) parts.push(`**Prueba social existente:** ${briefData.socialProof}`);
+  if (briefData.successStories) parts.push(`**Casos de éxito:** ${briefData.successStories}`);
+
+  // Value Proposition
   if (briefData.mainBenefit) parts.push(`**Beneficio principal:** ${briefData.mainBenefit}`);
   if (briefData.transformation) parts.push(`**Transformación:** ${briefData.transformation}`);
-  if (briefData.differentiator) parts.push(`**Diferenciador:** ${briefData.differentiator}`);
+  if (briefData.differentiator) parts.push(`**Diferenciador único:** ${briefData.differentiator}`);
+  if (briefData.keyIngredients) parts.push(`**Componentes clave:** ${briefData.keyIngredients}`);
+  if (briefData.mustCommunicate) parts.push(`**Comunicación obligatoria:** ${briefData.mustCommunicate}`);
+
+  // Problem & Desire
   if (briefData.problemSolved) parts.push(`**Problema que resuelve:** ${briefData.problemSolved}`);
+  if (briefData.rootCause) parts.push(`**Raíz del problema:** ${briefData.rootCause}`);
+  if (briefData.failedSolutions) parts.push(`**Soluciones que han fallado antes:** ${briefData.failedSolutions}`);
+  if (briefData.urgencyLevel) parts.push(`**Nivel de urgencia:** ${briefData.urgencyLevel}`);
   if (briefData.mainDesire) parts.push(`**Deseo principal:** ${briefData.mainDesire}`);
+  if (briefData.consequenceOfNotBuying) parts.push(`**Consecuencia de no comprar:** ${briefData.consequenceOfNotBuying}`);
   if (briefData.competitiveAdvantage) parts.push(`**Ventaja competitiva:** ${briefData.competitiveAdvantage}`);
 
+  // Neuromarketing
   if (briefData.reptileBrain?.length > 0) parts.push(`**Gatillos reptilianos:** ${briefData.reptileBrain.join(', ')}`);
   if (briefData.limbicBrain?.length > 0) parts.push(`**Emociones objetivo:** ${briefData.limbicBrain.join(', ')}`);
   if (briefData.cortexBrain) parts.push(`**Justificación racional:** ${briefData.cortexBrain}`);
 
+  // Target Audience
   const audienceParts = [];
   if (briefData.targetGender) audienceParts.push(`Género: ${briefData.targetGender}`);
-  if (briefData.targetAgeRange) audienceParts.push(`Edad: ${briefData.targetAgeRange}`);
+  if (briefData.targetAgeRange?.length > 0) audienceParts.push(`Edad: ${Array.isArray(briefData.targetAgeRange) ? briefData.targetAgeRange.join(', ') : briefData.targetAgeRange}`);
   if (briefData.targetOccupation) audienceParts.push(`Ocupación: ${briefData.targetOccupation}`);
-  if (audienceParts.length > 0) parts.push(`**Público:** ${audienceParts.join(', ')}`);
+  if (audienceParts.length > 0) parts.push(`**Público objetivo:** ${audienceParts.join(' | ')}`);
 
   if (briefData.targetInterests?.length > 0) parts.push(`**Intereses:** ${briefData.targetInterests.join(', ')}`);
+  if (briefData.targetHabits) parts.push(`**Hábitos:** ${briefData.targetHabits}`);
+  if (briefData.buyingPower) parts.push(`**Capacidad de pago:** ${briefData.buyingPower}`);
+  if (briefData.decisionInfluencers) parts.push(`**Influenciadores de decisión:** ${briefData.decisionInfluencers}`);
+  if (briefData.informationSources) parts.push(`**Fuentes de información:** ${briefData.informationSources}`);
+  if (briefData.purchaseTriggers) parts.push(`**Triggers de compra:** ${briefData.purchaseTriggers}`);
   if (briefData.commonObjections?.length > 0) parts.push(`**Objeciones comunes:** ${briefData.commonObjections.join(', ')}`);
+  if (briefData.idealScenario) parts.push(`**Escenario ideal post-compra:** ${briefData.idealScenario}`);
+
+  // Content Strategy
   if (briefData.platforms?.length > 0) parts.push(`**Plataformas:** ${briefData.platforms.join(', ')}`);
-  if (briefData.additionalNotes) parts.push(`**Notas:** ${briefData.additionalNotes}`);
+  if (briefData.contentTypes?.length > 0) parts.push(`**Tipos de contenido:** ${briefData.contentTypes.join(', ')}`);
+  if (briefData.useForAds) parts.push(`**Uso para Ads:** ${briefData.useForAds}`);
+  if (briefData.brandVoice) parts.push(`**Voz de marca:** ${briefData.brandVoice}`);
+  if (briefData.brandStrengths) parts.push(`**Fortalezas de marca:** ${briefData.brandStrengths}`);
+  if (briefData.brandRestrictions) parts.push(`**Restricciones:** ${briefData.brandRestrictions}`);
+  if (briefData.competitorContent) parts.push(`**Contenido de competencia:** ${briefData.competitorContent}`);
+  if (briefData.budgetRange) parts.push(`**Presupuesto de producción:** ${briefData.budgetRange}`);
+  if (briefData.referenceContent) parts.push(`**Referencias de contenido:** ${briefData.referenceContent}`);
+  if (briefData.expectedResult) parts.push(`**Resultado esperado:** ${briefData.expectedResult}`);
+  if (briefData.additionalNotes) parts.push(`**Notas adicionales:** ${briefData.additionalNotes}`);
 
   return parts.join('\n');
 }

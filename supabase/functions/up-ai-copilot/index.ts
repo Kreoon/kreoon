@@ -407,7 +407,7 @@ EVALÚA basándote en TODA esta información. Sé específico.`;
 
   let result: any;
   
-  if (provider === "openai" || provider === "lovable") {
+  if (provider === "openai" || provider === "kreoon") {
     result = await callAISingle(provider, model, apiKey, systemPrompt, prompt, tools);
   } else {
     // For providers without native tool support, parse JSON response
@@ -544,7 +544,7 @@ Detecta eventos que podrían haberse producido pero no se registraron.`;
 
   let result: any;
   
-  if (provider === "openai" || provider === "lovable") {
+  if (provider === "openai" || provider === "kreoon") {
     result = await callAISingle(provider, model, apiKey, systemPrompt, prompt, tools);
   } else {
     const rawResult = await callAISingle(provider, model, apiKey, systemPrompt, prompt);
@@ -683,7 +683,7 @@ Detecta patrones de fraude o gaming del sistema.`;
 
   let result: any;
   
-  if (provider === "openai" || provider === "lovable") {
+  if (provider === "openai" || provider === "kreoon") {
     result = await callAISingle(provider, model, apiKey, systemPrompt, prompt, tools);
   } else {
     const rawResult = await callAISingle(provider, model, apiKey, systemPrompt, prompt);
@@ -796,7 +796,7 @@ Genera 3-5 misiones nuevas y relevantes para creadores de contenido UGC.`;
 
   let result: any;
   
-  if (provider === "openai" || provider === "lovable") {
+  if (provider === "openai" || provider === "kreoon") {
     result = await callAISingle(provider, model, apiKey, systemPrompt, prompt, tools);
   } else {
     const rawResult = await callAISingle(provider, model, apiKey, systemPrompt, prompt);
@@ -912,7 +912,7 @@ Sugiere mejoras al sistema de puntos para optimizar engagement y prevenir gaming
 
   let result: any;
   
-  if (provider === "openai" || provider === "lovable") {
+  if (provider === "openai" || provider === "kreoon") {
     result = await callAISingle(provider, model, apiKey, systemPrompt, prompt, tools);
   } else {
     const rawResult = await callAISingle(provider, model, apiKey, systemPrompt, prompt);

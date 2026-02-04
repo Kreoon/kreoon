@@ -140,7 +140,7 @@ export function AIProviderSelector({
                 <SelectItem key={p.key} value={p.key}>
                   <div className="flex items-center gap-2">
                     {p.label}
-                    {p.key === 'lovable' && (
+                    {p.key === 'kreoon' && (
                       <Badge className="text-[10px] px-1 py-0 bg-gradient-to-r from-purple-500 to-pink-500">
                         Incluido
                       </Badge>

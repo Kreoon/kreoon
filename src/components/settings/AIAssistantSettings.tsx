@@ -100,7 +100,7 @@ interface AIFeedback {
   reviewed: boolean;
 }
 
-// AI Models available via Lovable AI Gateway - no external API key required
+// AI Models available via Kreoon IA - no external API key required
 const AI_MODELS = [
   { value: 'google/gemini-3-flash-preview', label: 'Gemini 3 Flash (Recomendado)' },
   { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
@@ -202,7 +202,7 @@ export function AIAssistantSettings() {
           .insert({
             organization_id: orgId,
             is_enabled: false,
-            provider: 'lovable',
+            provider: 'kreoon',
             model: 'google/gemini-2.5-flash',
             assistant_name: 'Asistente',
           })
@@ -508,7 +508,7 @@ export function AIAssistantSettings() {
                 <Label>Modelo IA</Label>
                 <Select
                   value={config?.model ?? 'google/gemini-3-flash-preview'}
-                  onValueChange={(v) => setConfig(c => c ? { ...c, model: v, provider: 'lovable' } : null)}
+                  onValueChange={(v) => setConfig(c => c ? { ...c, model: v, provider: 'kreoon' } : null)}
                 >
                   <SelectTrigger>
                     <SelectValue />

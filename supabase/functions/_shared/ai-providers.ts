@@ -1,6 +1,6 @@
 /**
- * Configuración centralizada de proveedores de IA
- * NOTA: Este archivo elimina Lovable AI Gateway y usa APIs directas
+ * Configuración centralizada de proveedores de IA - Kreoon
+ * Usa APIs directas de los proveedores de IA
  */
 
 export const corsHeaders = {
@@ -8,7 +8,7 @@ export const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-export type AIProviderKey = "gemini" | "openai" | "anthropic" | "perplexity" | "lovable";
+export type AIProviderKey = "gemini" | "openai" | "anthropic" | "perplexity" | "kreoon";
 
 export interface AIMessage {
   role: "system" | "user" | "assistant";
@@ -22,7 +22,7 @@ export interface AIProviderConfig {
   extractContent: (data: any, hasTools?: boolean) => any;
 }
 
-// Proveedores de IA directos (sin Lovable Gateway)
+// Proveedores de IA directos
 export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
   gemini: {
     url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
@@ -115,7 +115,8 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
     }),
     extractContent: (data: any) => data.choices?.[0]?.message?.content || "",
   },
-  lovable: {
+  // Kreoon IA - usa Gemini por defecto (sin API key externa requerida)
+  kreoon: {
     url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     getHeaders: (apiKey: string) => AI_PROVIDERS.gemini.getHeaders(apiKey),
     getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) =>
@@ -124,9 +125,10 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
   },
 };
 
-/** Resuelve provider (lovable -> gemini) */
+/** Resuelve provider (kreoon -> gemini) */
 export function resolveProvider(provider: string): string {
-  return provider === "lovable" ? "gemini" : provider;
+  if (provider === "kreoon" || provider === "lovable") return "gemini";
+  return provider;
 }
 
 /** Obtiene headers para un proveedor */
