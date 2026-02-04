@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSavedItems } from '@/hooks/useSavedItems';
 import { cn } from '@/lib/utils';
-import { Heart, MessageCircle, Bookmark, Share2, Volume2, VolumeX } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Share2, Volume2, VolumeX, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,8 @@ import { useNavigate } from 'react-router-dom';
 import { HLSVideoPlayer } from '@/components/video';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 import { PortfolioCommentsSection } from '@/components/content/PortfolioCommentsSection';
+import { SocialSharePanel } from '@/components/content/unified';
+import { useDownload } from '@/hooks/unified';
 
 interface VideoItem {
   id: string;
@@ -19,15 +21,20 @@ interface VideoItem {
   title?: string;
   caption?: string;
   video_url: string;
+  video_urls?: string[];
   thumbnail_url?: string;
   user_id: string;
   user_name?: string;
   user_avatar?: string;
   client_name?: string;
+  client_id?: string;
+  creator_id?: string;
   views_count: number;
   likes_count: number;
   comments_count: number;
   created_at: string;
+  is_published?: boolean;
+  status?: string;
 }
 
 type VideoFilter = 'all' | 'work' | 'posts';
@@ -42,6 +49,9 @@ interface VideoSlideProps {
   isSaved: boolean;
   onProfileClick: (userId: string) => void;
   onOpenComments: () => void;
+  onShare: () => void;
+  onDownload: () => void;
+  canDownload: boolean;
 }
 
 const VideoSlide = memo(function VideoSlide({
@@ -52,7 +62,10 @@ const VideoSlide = memo(function VideoSlide({
   onSave,
   isSaved,
   onProfileClick,
-  onOpenComments
+  onOpenComments,
+  onShare,
+  onDownload,
+  canDownload
 }: VideoSlideProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
@@ -208,9 +221,22 @@ const VideoSlide = memo(function VideoSlide({
           variant="ghost"
           size="icon"
           className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
+          onClick={onShare}
         >
           <Share2 className="h-6 w-6" />
         </Button>
+
+        {/* Download button - only for approved/published content */}
+        {canDownload && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
+            onClick={onDownload}
+          >
+            <Download className="h-6 w-6" />
+          </Button>
+        )}
 
         <Button
           variant="ghost"
@@ -228,8 +254,9 @@ const VideoSlide = memo(function VideoSlide({
 export default function VideosPage() {
   const { user } = useAuth();
   const { isSaved, toggleSave } = useSavedItems();
+  const { download, canDownload, isDownloading } = useDownload();
   const navigate = useNavigate();
-  
+
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -237,7 +264,11 @@ export default function VideosPage() {
   const [isMuted, setIsMuted] = useState(true);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [commentsVideoId, setCommentsVideoId] = useState<string | null>(null);
-  
+
+  // Share panel state
+  const [showSharePanel, setShowSharePanel] = useState(false);
+  const [shareVideo, setShareVideo] = useState<VideoItem | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleOpenComments = useCallback((videoId: string) => {
@@ -254,7 +285,7 @@ export default function VideosPage() {
         queries.push(
           supabase
             .from('content')
-            .select('id, title, video_url, thumbnail_url, creator_id, client_id, views_count, likes_count, created_at')
+            .select('id, title, video_url, video_urls, thumbnail_url, creator_id, client_id, views_count, likes_count, created_at, is_published, status')
             .eq('is_published', true)
             .not('video_url', 'is', null)
             .order('created_at', { ascending: false })
@@ -285,7 +316,7 @@ export default function VideosPage() {
       }
 
       const results = await Promise.all(queries);
-      
+
       // Process content videos - fetch profiles and clients separately (embeds cause 400)
       let contentVideos: VideoItem[] = [];
       if (filter !== 'posts' && results[0]?.data && results[0].data.length > 0) {
@@ -305,16 +336,21 @@ export default function VideosPage() {
             id: c.id,
             type: 'work' as const,
             title: c.title,
-            video_url: c.video_url,
+            video_url: c.video_urls?.[0] || c.video_url,
+            video_urls: c.video_urls,
             thumbnail_url: c.thumbnail_url,
             user_id: creator?.id ?? c.creator_id,
             user_name: creator?.full_name ?? null,
             user_avatar: creator?.avatar_url ?? null,
             client_name: client?.name ?? null,
+            client_id: c.client_id,
+            creator_id: c.creator_id,
             views_count: c.views_count || 0,
             likes_count: c.likes_count || 0,
             comments_count: 0,
             created_at: c.created_at,
+            is_published: c.is_published,
+            status: c.status,
           };
         });
       }
@@ -322,19 +358,19 @@ export default function VideosPage() {
       // Process post videos - need to fetch profiles separately
       let postVideos: VideoItem[] = [];
       const postsResult = filter === 'posts' ? results[0] : results[1];
-      
+
       if (postsResult?.data && postsResult.data.length > 0) {
         const userIdSet = new Set<string>();
         postsResult.data.forEach((p: any) => userIdSet.add(p.user_id as string));
         const userIds = Array.from(userIdSet);
-        
+
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url')
           .in('id', userIds);
-        
+
         const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
-        
+
         postVideos = postsResult.data.map((p: any) => {
           const profile = profilesMap.get(p.user_id);
           return {
@@ -350,6 +386,8 @@ export default function VideosPage() {
             likes_count: p.likes_count || 0,
             comments_count: p.comments_count || 0,
             created_at: p.created_at,
+            is_published: true, // Posts are always considered published
+            status: 'published',
           };
         });
       }
@@ -404,7 +442,7 @@ export default function VideosPage() {
       const scrollTop = container.scrollTop;
       const height = container.clientHeight;
       const newIndex = Math.round(scrollTop / height);
-      
+
       if (newIndex !== activeIndex && newIndex >= 0 && newIndex < videos.length) {
         setActiveIndex(newIndex);
       }
@@ -426,6 +464,29 @@ export default function VideosPage() {
   const checkIsSaved = (video: VideoItem) => {
     const itemType = video.type === 'work' ? 'work_video' : 'post';
     return isSaved(itemType, video.id);
+  };
+
+  const handleShare = (video: VideoItem) => {
+    setShareVideo(video);
+    setShowSharePanel(true);
+  };
+
+  const handleDownload = (video: VideoItem) => {
+    download({
+      contentId: video.id,
+      videoUrl: video.video_url,
+      videoUrls: video.video_urls,
+      title: video.title || video.caption
+    });
+  };
+
+  const checkCanDownload = (video: VideoItem) => {
+    // For work items, check if published/approved
+    if (video.type === 'work') {
+      return canDownload(video.status || '', video.is_published);
+    }
+    // Posts can always be downloaded (they're public)
+    return true;
   };
 
   if (loading) {
@@ -454,8 +515,8 @@ export default function VideosPage() {
             variant={filter === f ? 'default' : 'secondary'}
             className={cn(
               "cursor-pointer transition-all",
-              filter === f 
-                ? "bg-white text-black" 
+              filter === f
+                ? "bg-white text-black"
                 : "bg-black/50 text-white hover:bg-black/70"
             )}
             onClick={() => setFilter(f)}
@@ -489,6 +550,9 @@ export default function VideosPage() {
               isSaved={checkIsSaved(video)}
               onProfileClick={handleProfileClick}
               onOpenComments={() => handleOpenComments(video.id)}
+              onShare={() => handleShare(video)}
+              onDownload={() => handleDownload(video)}
+              canDownload={checkCanDownload(video)}
             />
           </div>
         ))}
@@ -498,14 +562,28 @@ export default function VideosPage() {
       <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
         <DrawerContent className="h-[70vh] bg-zinc-900 border-0">
           {commentsVideoId && (
-            <PortfolioCommentsSection 
-              postId={commentsVideoId} 
+            <PortfolioCommentsSection
+              postId={commentsVideoId}
               isOpen={commentsOpen}
               onClose={() => setCommentsOpen(false)}
             />
           )}
         </DrawerContent>
       </Drawer>
+
+      {/* Share Panel */}
+      {shareVideo && (
+        <SocialSharePanel
+          open={showSharePanel}
+          onOpenChange={setShowSharePanel}
+          contentId={shareVideo.id}
+          url={`${window.location.origin}/social/u/${shareVideo.user_id}?${shareVideo.type === 'work' ? 'content' : 'post'}=${shareVideo.id}`}
+          title={shareVideo.title || shareVideo.caption || 'Mira este video'}
+          allowKreoonShare={shareVideo.type === 'work'}
+          creatorId={shareVideo.creator_id || shareVideo.user_id}
+          clientId={shareVideo.client_id}
+        />
+      )}
     </div>
   );
 }
