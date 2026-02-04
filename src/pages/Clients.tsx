@@ -438,11 +438,11 @@ const Clients = () => {
     <>
       <div className="min-h-screen">
         <div className="p-4 md:p-6 space-y-6">
-          {/* Page Header - El Estudio theme */}
+          {/* Page Header - Kreoon Tech */}
           <PageHeader
             icon={Castle}
-            title="Patrocinadores"
-            subtitle="Gestiona las marcas y sus representantes"
+            title="Kreoon Clientes"
+            subtitle="Gestión inteligente de marcas y representantes"
             action={
               isAdmin && (
                 <Button
@@ -453,7 +453,7 @@ const Clients = () => {
                   disabled={isReadOnly}
                 >
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nuevo Patrocinador</span>
+                  <span className="hidden sm:inline">Nuevo Cliente</span>
                   <span className="sm:hidden">Nuevo</span>
                 </Button>
               )

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Video, Calendar, Users, Activity, Loader2 } from 'lucide-react';
 
 // Hooks
@@ -92,30 +93,24 @@ export default function Live() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Video className="h-8 w-8 text-primary" />
-            KREOON Live
-          </h1>
-          <p className="text-muted-foreground">
-            Gestiona tus transmisiones en vivo
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Badge variant="default" className="gap-1">
-            <Activity className="h-3 w-3" />
-            Activo
-          </Badge>
-          {stats.organizationHours.available > 0 && (
-            <Badge variant="outline" className="gap-1">
-              {stats.organizationHours.available.toFixed(1)}h disponibles
+    <div className="min-h-screen">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        {/* Page Header - Kreoon Tech */}
+        <PageHeader
+          icon={Video}
+          title="Kreoon Live"
+          subtitle="Gestiona tus transmisiones en vivo"
+          badge={stats.organizationHours.available > 0 ? {
+            text: `${stats.organizationHours.available.toFixed(1)}h disponibles`,
+            variant: 'glow'
+          } : undefined}
+          action={
+            <Badge variant="default" className="gap-1">
+              <Activity className="h-3 w-3" />
+              Activo
             </Badge>
-          )}
-        </div>
-      </div>
+          }
+        />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -173,6 +168,7 @@ export default function Live() {
           />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

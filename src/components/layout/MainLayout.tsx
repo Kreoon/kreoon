@@ -41,7 +41,7 @@ interface MainLayoutProps {
   children: ReactNode;
 }
 
-// Editor navigation items for mobile bottom bar - El Estudio theme
+// Editor navigation items for mobile bottom bar - Kreoon Tech theme
 const editorMobileNavigation = [
   { name: "Edición", href: "/editor-dashboard", icon: LayoutDashboard },
   { name: "Producciones", href: "/board", icon: Kanban },

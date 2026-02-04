@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Briefcase, Eye, Building2, Shield, User, Sparkles, Zap } from "lucide-react";
+import { Bell, Briefcase, Eye, Building2, Shield, User, Sparkles, Zap, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
 import { Badge } from "@/components/ui/badge";
@@ -458,21 +458,25 @@ export function IntegratedNotificationHeader({
         <RootModePopover />
       )}
 
-      {/* Portfolio Button */}
+      {/* Kreoon Social Button - Prominent */}
       <Button
         variant="ghost"
         size="sm"
         onClick={() => navigate('/social')}
         className={cn(
-          "gap-2 rounded-xl",
-          "bg-[hsl(270,100%,60%,0.05)] hover:bg-[hsl(270,100%,60%,0.1)]",
-          "border border-[hsl(270,100%,60%,0.1)] hover:border-[hsl(270,100%,60%,0.2)]",
-          "text-[hsl(270,30%,70%)] hover:text-white",
+          "gap-2 rounded-xl relative overflow-hidden group",
+          "bg-gradient-to-r from-[hsl(270,100%,60%,0.15)] to-[hsl(280,100%,55%,0.1)]",
+          "hover:from-[hsl(270,100%,60%,0.25)] hover:to-[hsl(280,100%,55%,0.2)]",
+          "border border-[hsl(270,100%,60%,0.3)] hover:border-[hsl(270,100%,60%,0.5)]",
+          "text-white hover:text-white",
+          "shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.3)]",
+          "hover:shadow-[0_0_30px_-5px_hsl(270,100%,60%,0.5)]",
           "transition-all duration-300"
         )}
       >
-        <Briefcase className="h-4 w-4" />
-        <span className="hidden sm:inline">Red Social</span>
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(270,100%,60%,0.1)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <Globe className="h-4 w-4 text-[hsl(270,100%,70%)] group-hover:text-white transition-colors" />
+        <span className="hidden sm:inline font-medium">Kreoon Social</span>
       </Button>
 
       {/* Chat Button removed - now using floating button */}

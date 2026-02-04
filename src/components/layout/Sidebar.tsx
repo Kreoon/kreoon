@@ -48,115 +48,110 @@ interface NavSection {
   items: NavItem[];
 }
 
-// Admin navigation organized in sections - EL ESTUDIO theme
+// Admin navigation organized in sections - KREOON TECH theme
 const adminSections: NavSection[] = [
   {
-    label: "EL ESTUDIO",
+    label: "KREOON STUDIO",
     items: [
-      { name: "Sala de Control", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
+      { name: "Control Center", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
-      { name: "Marquesina", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
-      { name: "Cartelera UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
-      { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
-      { name: "En Vivo", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
+      { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
+      { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
+      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
   },
   {
-    label: "BACKSTAGE",
+    label: "GESTIÓN",
     items: [
-      { name: "Archivo", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
-      { name: "Talentos", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
-      { name: "Patrocinadores", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
-      { name: "Elenco", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
+      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
+      { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
+      { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
     ]
   },
   {
-    label: "CAMERINO",
+    label: "CONFIG",
     items: [
-      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
 ];
 
 const strategistSections: NavSection[] = [
   {
-    label: "EL ESTUDIO",
+    label: "KREOON STUDIO",
     items: [
-      { name: "Sala de Control", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
+      { name: "Control Center", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
-      { name: "Marquesina", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
-      { name: "Cartelera UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
-      { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
-      { name: "En Vivo", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
+      { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
+      { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
+      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
   },
   {
-    label: "BACKSTAGE",
+    label: "GESTIÓN",
     items: [
-      { name: "Archivo", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
-      { name: "Talentos", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
-      { name: "Patrocinadores", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
+      { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
+      { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
     ]
   },
   {
-    label: "CAMERINO",
+    label: "CONFIG",
     items: [
-      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
 ];
 
 const editorSections: NavSection[] = [
   {
-    label: "EL ESTUDIO",
+    label: "KREOON STUDIO",
     items: [
-      { name: "Sala de Edición", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Editor Hub", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
     ]
   },
   {
-    label: "CAMERINO",
+    label: "CONFIG",
     items: [
-      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
 ];
 
 const creatorSections: NavSection[] = [
   {
-    label: "EL ESTUDIO",
+    label: "KREOON STUDIO",
     items: [
-      { name: "Mi Camerino", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Creator Hub", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
     ]
   },
   {
-    label: "CAMERINO",
+    label: "CONFIG",
     items: [
-      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
 ];
 
 const clientSections: NavSection[] = [
   {
-    label: "EL ESTUDIO",
+    label: "KREOON STUDIO",
     items: [
-      { name: "Sala VIP", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Client Portal", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
-      { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
     ]
   },
   {
-    label: "CAMERINO",
+    label: "CONFIG",
     items: [
-      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
 ];

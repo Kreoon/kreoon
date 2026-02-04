@@ -102,7 +102,7 @@ export function AITokensPanel({
         type="button"
         onClick={onOpenModal}
         className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm hover:bg-muted/50 transition-colors"
-        title="Tokens de IA"
+        title="Kreoon Coins"
       >
         <Sparkles className="h-4 w-4 text-primary" />
         <span className="font-medium tabular-nums">{formatTokens(totalAvailable)}</span>
@@ -121,7 +121,7 @@ export function AITokensPanel({
         <Sparkles className="h-4 w-4 text-primary shrink-0" />
         <div className="flex flex-col items-start min-w-0">
           <span className="text-sm font-semibold tabular-nums leading-tight">
-            {formatTokens(totalAvailable)} tokens
+            {formatTokens(totalAvailable)} coins
           </span>
           <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
             <div
@@ -140,14 +140,14 @@ export function AITokensPanel({
       {/* 1. Header con balance */}
       <div>
         <p className="text-sm text-muted-foreground mb-1">Balance actual</p>
-        <p className="text-3xl font-bold tabular-nums">{formatTokens(totalAvailable)} tokens</p>
+        <p className="text-3xl font-bold tabular-nums">{formatTokens(totalAvailable)} <span className="text-primary">Kreoon Coins</span></p>
         <div className="mt-2">
           <Progress value={100 - usedPercent} className="h-2" />
           <p className="text-xs text-muted-foreground mt-1">
-            {formatTokens(used)} de {formatTokens(monthlyIncluded)} tokens mensuales usados
+            {formatTokens(used)} de {formatTokens(monthlyIncluded)} coins mensuales usados
           </p>
           {purchased > 0 && (
-            <p className="text-xs text-primary mt-0.5">+ {formatTokens(purchased)} tokens extra</p>
+            <p className="text-xs text-primary mt-0.5">+ {formatTokens(purchased)} coins extra</p>
           )}
         </div>
       </div>
@@ -180,13 +180,13 @@ export function AITokensPanel({
         </div>
       )}
 
-      {/* 4. Alerta tokens bajos */}
+      {/* 4. Alerta coins bajos */}
       {isLowTokens && !isOutOfTokens && (
         <KreoonCard className="p-4 border-amber-500/30 bg-amber-500/10">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-medium text-amber-800 dark:text-amber-200">Te quedan pocos tokens</p>
+              <p className="font-medium text-amber-800 dark:text-amber-200">Te quedan pocos Kreoon Coins</p>
               <div className="flex gap-2 mt-2">
                 <Button size="sm" onClick={() => {}}>
                   <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
@@ -204,10 +204,10 @@ export function AITokensPanel({
         </KreoonCard>
       )}
 
-      {/* 5. Comprar tokens extra */}
+      {/* 5. Comprar Kreoon Coins extra */}
       <div>
-        <p className="text-sm font-medium mb-3">Comprar tokens extra</p>
-        <p className="text-xs text-muted-foreground mb-3">Los tokens extra no expiran</p>
+        <p className="text-sm font-medium mb-3">Comprar Kreoon Coins extra</p>
+        <p className="text-xs text-muted-foreground mb-3">Los Kreoon Coins extra no expiran</p>
         <div className="grid gap-2 sm:grid-cols-3">
           {TOKEN_PACKAGES.map((pkg) => (
             <KreoonCard
@@ -221,7 +221,7 @@ export function AITokensPanel({
                 </span>
               )}
               <p className="text-xl font-bold tabular-nums mt-1">{formatTokens(pkg.tokens)}</p>
-              <p className="text-sm text-muted-foreground">tokens</p>
+              <p className="text-sm text-muted-foreground">coins</p>
               <p className="text-lg font-semibold mt-2">${pkg.price}</p>
             </KreoonCard>
           ))}
@@ -290,7 +290,7 @@ export function AITokensPanel({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              Tokens de IA
+              Kreoon Coins
             </DialogTitle>
           </DialogHeader>
           {panelContent}
@@ -304,7 +304,7 @@ export function AITokensPanel({
     <KreoonCard className="p-4" glow>
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold">Tokens de IA</h3>
+        <h3 className="font-semibold">Kreoon Coins</h3>
       </div>
       {panelContent}
     </KreoonCard>
@@ -358,12 +358,12 @@ export function AITokensOutModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-amber-600">
             <AlertTriangle className="h-5 w-5" />
-            Sin tokens disponibles
+            Sin Kreoon Coins disponibles
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-muted-foreground">
-            Te has quedado sin tokens de IA. Compra más tokens o conecta tu propia API para continuar.
+            Te has quedado sin Kreoon Coins. Compra más coins o conecta tu propia API para continuar.
           </p>
           <div className="flex flex-col gap-2">
             <Button asChild>
@@ -375,7 +375,7 @@ export function AITokensOutModal({
             <Button variant="outline" asChild>
               <Link to="/settings" onClick={() => onOpenChange(false)}>
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                Comprar tokens
+                Comprar Kreoon Coins
               </Link>
             </Button>
           </div>

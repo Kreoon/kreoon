@@ -71,7 +71,7 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'platform_config', icon: Settings2, title: 'Configuración', description: 'Ajustes globales' },
       { key: 'platform_admin', icon: ShieldCheck, title: 'Administración', description: 'Seguridad y datos' },
       { key: 'tracking', icon: BarChart3, title: 'Tracking', description: 'Analytics y píxeles' },
-      { key: 'ai_tokenization', icon: Brain, title: 'IA Tokenización', description: 'Costos por perfil' },
+      { key: 'ai_tokenization', icon: Brain, title: 'Kreoon Coins', description: 'Costos por perfil' },
       { key: 'live_streaming', icon: Video, title: 'KREOON Live', description: 'Config plataforma' },
     ],
   },

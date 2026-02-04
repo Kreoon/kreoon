@@ -356,11 +356,11 @@ export default function Team() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Page Header - El Estudio theme */}
+      {/* Page Header - Kreoon Tech */}
       <PageHeader
         icon={Swords}
-        title={currentOrg?.name ? `Elenco de ${currentOrg.name}` : "Elenco"}
-        subtitle={`Administra los miembros del estudio (${profiles.length} talentos)`}
+        title={currentOrg?.name ? `Kreoon Team • ${currentOrg.name}` : "Kreoon Team"}
+        subtitle={`Gestión inteligente de equipo (${profiles.length} miembros)`}
         action={
           <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
             <DialogTrigger asChild>
@@ -375,7 +375,7 @@ export default function Team() {
                 disabled={isReadOnly}
               >
                 <UserPlus className="w-4 h-4" />
-                Invitar Talento
+                Invitar Miembro
               </Button>
             </DialogTrigger>
             <DialogContent>
