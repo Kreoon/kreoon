@@ -30,9 +30,9 @@ export function useDownload(): UseDownloadReturn {
 
   const canDownload = useCallback((status: string, isPublished?: boolean): boolean => {
     // Content can be downloaded if:
-    // 1. Status is 'approved' or 'published'
+    // 1. Status is in approved/delivered states (matches bunny-download edge function)
     // 2. Content is_published is true
-    const allowedStatuses = ['approved', 'published', 'entregado', 'aprobado'];
+    const allowedStatuses = ['approved', 'published', 'delivered', 'corrected', 'paid', 'completed', 'entregado', 'aprobado'];
     return allowedStatuses.includes(status.toLowerCase()) || isPublished === true;
   }, []);
 
@@ -78,8 +78,10 @@ export function useDownload(): UseDownloadReturn {
 
         if (error) throw error;
 
-        if (data?.downloadUrl) {
-          urlToDownload = data.downloadUrl;
+        // Edge function returns download_url (snake_case)
+        if (data?.download_url) {
+          urlToDownload = data.download_url;
+          console.log(`[useDownload] Using Bunny URL: ${urlToDownload} (quality: ${data.quality}p)`);
         }
       }
 
