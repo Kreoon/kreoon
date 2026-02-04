@@ -1,5 +1,5 @@
 // Wallet Module Pages
 export { WalletPage } from './WalletPage';
 export { TransactionsPage } from './TransactionsPage';
-export { WithdrawPage } from './WithdrawPage';
+export { WithdrawalsPage } from './WithdrawalsPage';
 export { AdminWalletsPage } from './AdminWalletsPage';

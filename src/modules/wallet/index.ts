@@ -109,6 +109,6 @@ export {
 export {
   WalletPage,
   TransactionsPage,
-  WithdrawPage,
+  WithdrawalsPage,
   AdminWalletsPage,
 } from './pages';
