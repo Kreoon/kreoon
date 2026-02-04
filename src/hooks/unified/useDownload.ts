@@ -1,6 +1,43 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+
+// Helper to check and refresh session if needed
+async function ensureValidSession(): Promise<boolean> {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (error) {
+      console.warn('[useDownload] Error getting session:', error);
+      return false;
+    }
+
+    if (!session) {
+      console.warn('[useDownload] No active session');
+      return false;
+    }
+
+    // Check if token is about to expire (within 60 seconds)
+    const expiresAt = session.expires_at;
+    const now = Math.floor(Date.now() / 1000);
+
+    if (expiresAt && expiresAt - now < 60) {
+      console.log('[useDownload] Session expiring soon, refreshing...');
+      const { data, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !data.session) {
+        console.warn('[useDownload] Failed to refresh session:', refreshError);
+        return false;
+      }
+      console.log('[useDownload] Session refreshed successfully');
+    }
+
+    return true;
+  } catch (e) {
+    console.error('[useDownload] Session check error:', e);
+    return false;
+  }
+}
 
 interface DownloadOptions {
   contentId: string;
@@ -62,47 +99,111 @@ export function useDownload(): UseDownloadReturn {
         )
       );
 
-      // Check if it's a Bunny CDN URL that needs proxying
+      // Check if it's a Bunny CDN URL
       const isBunnyUrl = urlToDownload.includes('b-cdn.net') ||
                          urlToDownload.includes('bunnycdn') ||
                          urlToDownload.includes('mediadelivery.net');
 
+      let finalDownloadUrl = urlToDownload;
+      let usedEdgeFunction = false;
+
       if (isBunnyUrl) {
-        // Use Bunny download edge function
-        const { data, error } = await supabase.functions.invoke('bunny-download', {
-          body: {
-            content_id: contentId,
-            video_url: urlToDownload
+        // Check session before calling Edge Function
+        const hasValidSession = await ensureValidSession();
+
+        if (hasValidSession) {
+          // Try Edge Function (provides best quality + auth)
+          try {
+            console.log('[useDownload] Calling bunny-download with valid session');
+            const { data, error } = await supabase.functions.invoke('bunny-download', {
+              body: {
+                content_id: contentId,
+                video_url: urlToDownload
+              }
+            });
+
+            if (!error && data?.download_url) {
+              finalDownloadUrl = data.download_url;
+              usedEdgeFunction = true;
+              console.log(`[useDownload] Edge Function OK: ${finalDownloadUrl} (quality: ${data.quality}p)`);
+            } else {
+              console.warn('[useDownload] Edge Function error:', error);
+              throw error || new Error('No download URL returned');
+            }
+          } catch (edgeFnError) {
+            // Fallback to direct CDN URL if Edge Function fails
+            console.warn('[useDownload] Edge Function failed, using direct CDN fallback:', edgeFnError);
+
+            const bunnyUrls = getBunnyVideoUrls(urlToDownload);
+            if (bunnyUrls?.mp4) {
+              finalDownloadUrl = bunnyUrls.mp4;
+              console.log(`[useDownload] Direct CDN fallback: ${finalDownloadUrl}`);
+            }
           }
-        });
-
-        if (error) throw error;
-
-        // Edge function returns download_url (snake_case)
-        if (data?.download_url) {
-          urlToDownload = data.download_url;
-          console.log(`[useDownload] Using Bunny URL: ${urlToDownload} (quality: ${data.quality}p)`);
+        } else {
+          // No valid session - use direct CDN fallback
+          console.log('[useDownload] No valid session, using direct CDN download');
+          const bunnyUrls = getBunnyVideoUrls(urlToDownload);
+          if (bunnyUrls?.mp4) {
+            finalDownloadUrl = bunnyUrls.mp4;
+            console.log(`[useDownload] Direct CDN: ${finalDownloadUrl}`);
+          }
         }
       }
 
       // Update progress
       setProgress(prev =>
         prev.map(p => p.contentId === contentId
-          ? { ...p, progress: 50, status: 'downloading' }
+          ? { ...p, progress: 30, status: 'downloading' }
           : p
         )
       );
 
       // Fetch the video
-      const response = await fetch(urlToDownload);
-      if (!response.ok) throw new Error('Error al descargar el archivo');
+      const response = await fetch(finalDownloadUrl);
+      if (!response.ok) {
+        throw new Error(`Error al descargar: ${response.status}`);
+      }
 
-      const blob = await response.blob();
+      // Get content length for progress tracking
+      const contentLength = response.headers.get('content-length');
+      const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+
+      // Read the response as a stream for progress tracking
+      let receivedBytes = 0;
+      const reader = response.body?.getReader();
+      const chunks: Uint8Array[] = [];
+
+      if (reader && totalBytes > 0) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          chunks.push(value);
+          receivedBytes += value.length;
+
+          // Update progress (30-90 range for download)
+          const downloadProgress = 30 + Math.round((receivedBytes / totalBytes) * 60);
+          setProgress(prev =>
+            prev.map(p => p.contentId === contentId
+              ? { ...p, progress: downloadProgress, status: 'downloading' }
+              : p
+            )
+          );
+        }
+      } else {
+        // Fallback for when we can't track progress
+        const blob = await response.blob();
+        chunks.push(new Uint8Array(await blob.arrayBuffer()));
+      }
+
+      // Combine chunks into a single blob
+      const blob = new Blob(chunks, { type: 'video/mp4' });
 
       // Update progress
       setProgress(prev =>
         prev.map(p => p.contentId === contentId
-          ? { ...p, progress: 90, status: 'downloading' }
+          ? { ...p, progress: 95, status: 'downloading' }
           : p
         )
       );
@@ -135,7 +236,7 @@ export function useDownload(): UseDownloadReturn {
         )
       );
 
-      toast.success('Descarga completada');
+      toast.success(usedEdgeFunction ? 'Descarga completada (mejor calidad)' : 'Descarga completada');
     } catch (error) {
       console.error('[useDownload] Error:', error);
       setProgress(prev =>
