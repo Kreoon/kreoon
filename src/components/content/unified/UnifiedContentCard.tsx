@@ -1,16 +1,15 @@
 import { useState, useRef, useEffect, memo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useToast } from '@/hooks/use-toast';
 import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 import { ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
-import { SocialStyleVideoPlayer } from '@/components/video/SocialStyleVideoPlayer';
 import { ContentSettingsDialog } from '@/components/content/ContentSettingsDialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { CommentsSection } from '@/components/content/CommentsSection';
@@ -20,7 +19,6 @@ import {
   Eye,
   Download,
   MessageCircle,
-  Share2,
   ChevronLeft,
   ChevronRight,
   User,
@@ -29,13 +27,12 @@ import {
   ThumbsDown,
   FileCheck,
   AlertTriangle,
-  Settings,
   MoreVertical,
-  ExternalLink,
+  Volume2,
+  VolumeX,
   Handshake,
-  Check,
-  X,
-  Star
+  Settings,
+  ExternalLink
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -44,8 +41,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 export interface UnifiedContentItem {
   id: string;
@@ -78,11 +73,9 @@ interface UnifiedContentCardProps {
   isClient?: boolean;
   isCreator?: boolean;
   isOwner?: boolean;
-  showRatings?: boolean;
   showDownload?: boolean;
   showKreoonToggle?: boolean;
   showWorkflowActions?: boolean;
-  showPublishToggle?: boolean;
   onUpdate?: () => void;
   onStatusChange?: (id: string, status: ContentStatus, notes?: string) => Promise<void>;
   onOpenFullscreen?: () => void;
@@ -91,60 +84,18 @@ interface UnifiedContentCardProps {
   className?: string;
 }
 
-// Lazy loaded image with intersection observer
-const LazyThumbnail = memo(function LazyThumbnail({
-  src,
-  alt,
-  className
-}: {
-  src: string | null | undefined;
-  alt: string;
-  className?: string;
-}) {
-  const [loaded, setLoaded] = useState(false);
-  const [inView, setInView] = useState(false);
-  const imgRef = useRef<HTMLDivElement>(null);
+// Format counts
+function formatCount(count: number): string {
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
+}
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '100px' }
-    );
-
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={imgRef} className={cn("relative w-full h-full bg-muted", className)}>
-      {inView && src && (
-        <img
-          src={src}
-          alt={alt}
-          className={cn(
-            "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
-            loaded ? "opacity-100" : "opacity-0"
-          )}
-          onLoad={() => setLoaded(true)}
-          loading="lazy"
-        />
-      )}
-      {(!loaded || !src) && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Play className="h-8 w-8 text-muted-foreground/50" />
-        </div>
-      )}
-    </div>
-  );
-});
+// Build embed URL for Bunny
+function buildEmbedSrc(url: string, nonce?: number): string {
+  const t = nonce ?? Date.now();
+  return `${url}?autoplay=false&loop=true&preload=true&responsive=true&t=${t}`;
+}
 
 export const UnifiedContentCard = memo(function UnifiedContentCard({
   content,
@@ -153,11 +104,9 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   isClient = false,
   isCreator = false,
   isOwner = false,
-  showRatings = false,
   showDownload = true,
   showKreoonToggle = false,
   showWorkflowActions = true,
-  showPublishToggle = false,
   onUpdate,
   onStatusChange,
   onOpenFullscreen,
@@ -166,7 +115,9 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   className
 }: UnifiedContentCardProps) {
   const { toast: toastHook } = useToast();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
+  const [playerNonce, setPlayerNonce] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -175,6 +126,9 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   const [submitting, setSubmitting] = useState(false);
   const [isTogglingKreoon, setIsTogglingKreoon] = useState(false);
   const [kreoonEnabled, setKreoonEnabled] = useState(content.shared_on_kreoon ?? false);
+  const [muted, setMuted] = useState(true);
+  const [playing, setPlaying] = useState(false);
+  const [embedSrc, setEmbedSrc] = useState('');
 
   // Get all video URLs
   const videoUrls = content.video_urls?.filter(u => u?.trim()) || [];
@@ -187,7 +141,22 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
 
   const hasMultipleVariants = videoUrls.length > 1;
   const currentVideoUrl = videoUrls[currentVariantIndex] || videoUrls[0];
-  const hasVideo = currentVideoUrl || content.thumbnail_url;
+
+  // Check if URL is Bunny embed
+  const isBunnyEmbed = !!currentVideoUrl && currentVideoUrl.includes('iframe.mediadelivery.net/embed');
+
+  // Update embed src when video changes
+  useEffect(() => {
+    if (!isBunnyEmbed || !currentVideoUrl) {
+      setEmbedSrc('');
+      return;
+    }
+    setEmbedSrc('about:blank');
+    const t = window.setTimeout(() => {
+      setEmbedSrc(buildEmbedSrc(currentVideoUrl, playerNonce));
+    }, 150);
+    return () => window.clearTimeout(t);
+  }, [isBunnyEmbed, currentVideoUrl, playerNonce]);
 
   // Check if download is allowed (only when approved/delivered)
   const canDownload = showDownload &&
@@ -234,6 +203,25 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
 
     return actions;
   }, [content.status, showWorkflowActions]);
+
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (playing) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setPlaying(!playing);
+    }
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      videoRef.current.muted = !muted;
+    }
+    setMuted(!muted);
+  };
 
   const handleDownload = async () => {
     if (isDownloading || !currentVideoUrl) return;
@@ -368,7 +356,8 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
     }
   };
 
-  const handleLike = () => {
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (onLike) {
       onLike(content.id);
     }
@@ -377,7 +366,11 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
   const actions = getAvailableActions();
 
   return (
-    <Card className={cn("overflow-hidden group", className)}>
+    <Card className={cn(
+      "overflow-hidden group",
+      "hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10",
+      className
+    )}>
       <CardContent className="p-0">
         {/* Video/Thumbnail Section */}
         <div
@@ -385,44 +378,97 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
           style={{ aspectRatio: '9/16', maxHeight: '500px' }}
           onClick={onOpenFullscreen}
         >
-          {currentVideoUrl ? (
-            <SocialStyleVideoPlayer
-              src={currentVideoUrl}
-              poster={content.thumbnail_url || undefined}
-              showControls={true}
-              autoPlay={false}
-            />
-          ) : (
-            <LazyThumbnail
-              src={content.thumbnail_url}
-              alt={content.title}
-            />
-          )}
-
-          {/* Status badge */}
-          <div className="absolute top-3 left-3 z-10">
-            <Badge className={cn("text-xs font-medium", STATUS_COLORS[content.status as keyof typeof STATUS_COLORS] || 'bg-gray-500')}>
+          {/* Status badge - top left */}
+          <div className="absolute top-3 left-3 z-20">
+            <Badge className={cn(
+              "text-xs font-medium",
+              STATUS_COLORS[content.status as keyof typeof STATUS_COLORS] || 'bg-gray-500'
+            )}>
               {STATUS_LABELS[content.status as keyof typeof STATUS_LABELS] || content.status}
             </Badge>
           </div>
 
-          {/* Kreoon Social badge */}
-          {kreoonEnabled && (
-            <div className="absolute top-3 right-3 z-10">
-              <Badge className="bg-purple-600 hover:bg-purple-700 text-white text-xs gap-1">
-                <Handshake className="h-3 w-3" />
-                Kreoon
-              </Badge>
+          {/* Mute toggle - top right */}
+          {!isBunnyEmbed && currentVideoUrl && (
+            <button
+              onClick={toggleMute}
+              className="absolute top-3 right-3 z-20 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            >
+              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
+          )}
+
+          {/* Video Player */}
+          {isBunnyEmbed && currentVideoUrl ? (
+            <iframe
+              key={`${currentVideoUrl}-${playerNonce}`}
+              src={embedSrc || buildEmbedSrc(currentVideoUrl, playerNonce)}
+              className="absolute inset-0 w-full h-full"
+              loading="lazy"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
+              style={{ border: 'none' }}
+            />
+          ) : currentVideoUrl ? (
+            <>
+              <video
+                ref={videoRef}
+                key={currentVideoUrl}
+                src={currentVideoUrl}
+                loop
+                muted={muted}
+                playsInline
+                poster={content.thumbnail_url || undefined}
+                className="w-full h-full object-contain"
+                onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
+              />
+
+              {/* Play overlay */}
+              {!playing && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center"
+                  onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
+                >
+                  <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Play className="h-8 w-8 text-white fill-white ml-1" />
+                  </div>
+                </div>
+              )}
+            </>
+          ) : content.thumbnail_url ? (
+            <>
+              <img
+                src={content.thumbnail_url}
+                alt={content.title}
+                className="w-full h-full object-contain"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Play className="h-8 w-8 text-white fill-white ml-1" />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-white/50">
+              <Play className="h-12 w-12 mb-2" />
+              <span className="text-sm">Sin video</span>
             </div>
           )}
 
-          {/* Variant selector */}
+          {/* Variant navigation - bottom center */}
           {hasMultipleVariants && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setCurrentVariantIndex(prev => Math.max(0, prev - 1));
+                  setCurrentVariantIndex(prev => {
+                    const next = Math.max(0, prev - 1);
+                    if (next !== prev) setPlayerNonce(n => n + 1);
+                    return next;
+                  });
                 }}
                 disabled={currentVariantIndex === 0}
                 className="text-white disabled:opacity-30 p-1"
@@ -435,7 +481,11 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setCurrentVariantIndex(prev => Math.min(videoUrls.length - 1, prev + 1));
+                  setCurrentVariantIndex(prev => {
+                    const next = Math.min(videoUrls.length - 1, prev + 1);
+                    if (next !== prev) setPlayerNonce(n => n + 1);
+                    return next;
+                  });
                 }}
                 disabled={currentVariantIndex === videoUrls.length - 1}
                 className="text-white disabled:opacity-30 p-1"
@@ -446,130 +496,113 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
           )}
         </div>
 
-        {/* Info section */}
-        <div className="p-3 space-y-2">
-          {/* Creator & Title */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Avatar className="h-5 w-5 border border-border">
-                  <AvatarImage src={content.creator?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                    <User className="h-3 w-3" />
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-xs font-medium text-muted-foreground truncate">
-                  {content.creator?.full_name || 'Sin creador'}
-                </span>
-              </div>
-              <p className="text-sm font-medium line-clamp-2">{content.title}</p>
-              {content.client?.name && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  Para: {content.client.name}
-                </p>
-              )}
-            </div>
+        {/* Action bar - Avatar, Download, Like, Comment, More */}
+        <div className="px-3 py-2 flex items-center justify-between border-b border-border">
+          <div className="flex items-center gap-2">
+            {/* Avatar + Download */}
+            <Avatar className="h-6 w-6 border border-border">
+              <AvatarImage src={content.creator?.avatar_url || undefined} />
+              <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                <User className="h-3 w-3" />
+              </AvatarFallback>
+            </Avatar>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-1">
-              {canDownload && (
-                <button
-                  onClick={handleDownload}
-                  disabled={isDownloading}
-                  className={cn(
-                    "p-2 rounded-full transition-colors",
-                    "bg-primary/10 text-primary hover:bg-primary/20",
-                    isDownloading && "opacity-60 cursor-not-allowed"
-                  )}
-                  title="Descargar video"
-                >
-                  {isDownloading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                </button>
-              )}
-
-              {onLike && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleLike(); }}
-                  className={cn(
-                    "p-2 rounded-full transition-colors",
-                    content.is_liked
-                      ? "bg-red-500/10 text-red-500"
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                  )}
-                >
-                  <Heart className="h-4 w-4" fill={content.is_liked ? "currentColor" : "none"} />
-                </button>
-              )}
-
+            {canDownload && (
               <button
-                onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
-                className="p-2 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground transition-colors"
+                onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+                disabled={isDownloading}
+                className={cn(
+                  "p-1.5 rounded-full transition-colors text-primary hover:bg-primary/10",
+                  isDownloading && "opacity-60 cursor-not-allowed"
+                )}
+                title="Descargar video"
               >
-                <MessageCircle className="h-4 w-4" />
+                {isDownloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
               </button>
-
-              {/* Settings menu for owners/admins */}
-              {(isAdmin || isOwner || isCreator) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="p-2 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground transition-colors">
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => setShowSettings(true)}>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Configuración
-                    </DropdownMenuItem>
-
-                    {showKreoonToggle && (
-                      <DropdownMenuItem onClick={handleToggleKreoon} disabled={isTogglingKreoon}>
-                        <Handshake className="h-4 w-4 mr-2" />
-                        {kreoonEnabled ? 'Quitar de Kreoon' : 'Compartir en Kreoon'}
-                      </DropdownMenuItem>
-                    )}
-
-                    {currentVideoUrl && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <a href={currentVideoUrl} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Ver video original
-                          </a>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
+            )}
           </div>
 
-          {/* Stats row */}
-          {(content.views_count !== undefined || content.likes_count !== undefined) && (
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              {content.views_count !== undefined && (
-                <span className="flex items-center gap-1">
-                  <Eye className="h-3 w-3" />
-                  {content.views_count >= 1000
-                    ? `${(content.views_count / 1000).toFixed(1)}K`
-                    : content.views_count}
-                </span>
-              )}
-              {content.likes_count !== undefined && (
-                <span className="flex items-center gap-1">
-                  <Heart className="h-3 w-3" />
-                  {content.likes_count >= 1000
-                    ? `${(content.likes_count / 1000).toFixed(1)}K`
-                    : content.likes_count}
-                </span>
-              )}
-            </div>
+          <div className="flex items-center gap-1">
+            {/* Like button */}
+            {onLike && (
+              <button
+                onClick={handleLike}
+                className={cn(
+                  "p-1.5 rounded-full transition-colors",
+                  content.is_liked
+                    ? "text-red-500"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Heart className="h-4 w-4" fill={content.is_liked ? "currentColor" : "none"} />
+              </button>
+            )}
+
+            {/* Comment button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
+              className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </button>
+
+            {/* More menu */}
+            {(isAdmin || isOwner || isCreator) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setShowSettings(true)}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configuración
+                  </DropdownMenuItem>
+
+                  {showKreoonToggle && (
+                    <DropdownMenuItem onClick={handleToggleKreoon} disabled={isTogglingKreoon}>
+                      <Handshake className="h-4 w-4 mr-2" />
+                      {kreoonEnabled ? 'Quitar de Kreoon' : 'Compartir en Kreoon'}
+                    </DropdownMenuItem>
+                  )}
+
+                  {currentVideoUrl && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <a href={currentVideoUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Ver video original
+                        </a>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </div>
+
+        {/* Stats row - Views and Likes */}
+        <div className="px-3 py-2 flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Eye className="h-3.5 w-3.5" />
+            {formatCount(content.views_count || 0)}
+          </span>
+          <span className="flex items-center gap-1">
+            <Heart className="h-3.5 w-3.5" />
+            {formatCount(content.likes_count || 0)}
+          </span>
+          {kreoonEnabled && (
+            <span className="flex items-center gap-1 text-purple-500">
+              <Handshake className="h-3.5 w-3.5" />
+              Kreoon
+            </span>
           )}
         </div>
 
