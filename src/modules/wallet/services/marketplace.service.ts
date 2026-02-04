@@ -9,7 +9,6 @@ import type {
   SubmitDeliveryInput,
   RequestRevisionInput,
   DeliverableFile,
-  MARKETPLACE_PLATFORM_FEE_PERCENTAGE,
 } from '../types';
 
 export const marketplaceService = {
