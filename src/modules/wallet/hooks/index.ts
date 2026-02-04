@@ -4,3 +4,5 @@ export * from './useTransactions';
 export * from './useEscrow';
 export * from './useWithdrawals';
 export * from './usePaymentMethods';
+export * from './useCurrency';
+export * from './useProviders';
