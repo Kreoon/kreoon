@@ -384,6 +384,7 @@ export const ContentGrid = memo(function ContentGrid({
               selectable={selectable}
               selected={selectedIds.includes(item.id)}
               onSelect={(selected) => handleItemSelect(item.id, selected)}
+              priority={index < 9}
             />
           ))}
         </div>

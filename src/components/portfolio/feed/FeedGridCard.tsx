@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { Play, Heart, MessageCircle, Eye, Handshake } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
@@ -27,6 +27,7 @@ interface FeedItem {
 interface FeedGridCardProps {
   item: FeedItem;
   onClick: () => void;
+  priority?: boolean; // For above-the-fold items
 }
 
 function formatCount(count: number): string {
@@ -35,22 +36,62 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
+function FeedGridCardComponent({ item, onClick, priority = false }: FeedGridCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  
+  const [isInView, setIsInView] = useState(priority);
+  const cardRef = useRef<HTMLDivElement>(null);
+
   // Prefer Bunny CDN thumbnail (always fresh) over stored thumbnail_url
   const bunnyUrls = item.media_type === 'video' ? getBunnyVideoUrls(item.media_url) : null;
   const effectiveThumbnail = bunnyUrls?.thumbnail || item.thumbnail_url;
-  
+
   // Reset error state when item changes
   useEffect(() => {
     setImageError(false);
     setImageLoaded(false);
   }, [item.id]);
 
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    if (priority) {
+      setIsInView(true);
+      return;
+    }
+
+    const element = cardRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: '200px',
+        threshold: 0.01,
+      }
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [priority]);
+
   const renderMedia = () => {
+    // Don't render media until in view (lazy loading)
+    if (!isInView) {
+      return (
+        <div className="w-full h-full flex items-center justify-center bg-social-muted animate-pulse">
+          {item.media_type === 'video' && (
+            <Play className="h-8 w-8 text-social-muted-foreground/50" />
+          )}
+        </div>
+      );
+    }
+
     if (item.media_type === 'video') {
       return (
         <>
@@ -66,6 +107,8 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
                 )}
                 onLoad={() => setImageLoaded(true)}
                 onError={() => setImageError(true)}
+                loading={priority ? "eager" : "lazy"}
+                decoding="async"
               />
 
               {!imageLoaded && (
@@ -79,7 +122,7 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
               <Play className="h-8 w-8 text-social-muted-foreground" />
             </div>
           )}
-          
+
           {/* Video indicator - glassmorphism */}
           <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
             <Play className="h-3.5 w-3.5 text-white fill-white" />
@@ -92,7 +135,7 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
               <span className="text-white text-[10px] font-medium">Collab</span>
             </div>
           )}
-          
+
           {/* Views count - glassmorphism */}
           <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
             <Eye className="h-3 w-3 text-white/80" />
@@ -101,7 +144,7 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
         </>
       );
     }
-    
+
     return (
       <>
         {!imageError ? (
@@ -115,6 +158,8 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
             )}
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-social-muted">
@@ -132,6 +177,7 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
 
   return (
     <motion.div
+      ref={cardRef}
       className="aspect-[4/5] relative group cursor-pointer overflow-hidden bg-social-muted rounded-sm"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
@@ -141,7 +187,7 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
       {renderMedia()}
 
       {/* Hover overlay with glassmorphism */}
-      <motion.div 
+      <motion.div
         className="absolute inset-0 flex items-center justify-center pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: isHovered ? 1 : 0 }}
@@ -149,11 +195,11 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
       >
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-        
+
         {/* Stats with glassmorphism */}
         <div className="relative flex items-center gap-4 px-4 py-2 rounded-full backdrop-blur-xl bg-white/10 border border-white/20 shadow-lg">
           {item.likes_count >= 0 && (
-            <motion.div 
+            <motion.div
               className="flex items-center gap-1.5"
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: isHovered ? 0 : 10, opacity: isHovered ? 1 : 0 }}
@@ -164,7 +210,7 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
             </motion.div>
           )}
           {item.comments_count >= 0 && (
-            <motion.div 
+            <motion.div
               className="flex items-center gap-1.5"
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: isHovered ? 0 : 10, opacity: isHovered ? 1 : 0 }}
@@ -178,7 +224,7 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
       </motion.div>
 
       {/* Subtle border glow on hover */}
-      <div 
+      <div
         className={cn(
           "absolute inset-0 rounded-sm pointer-events-none transition-opacity duration-300",
           "ring-1 ring-inset",
@@ -188,3 +234,7 @@ export default function FeedGridCard({ item, onClick }: FeedGridCardProps) {
     </motion.div>
   );
 }
+
+// Memoize the component to prevent unnecessary re-renders
+const FeedGridCard = memo(FeedGridCardComponent);
+export default FeedGridCard;

@@ -21,6 +21,7 @@ interface ContentCardProps {
   selected?: boolean;
   selectable?: boolean;
   onSelect?: (selected: boolean) => void;
+  priority?: boolean; // For above-the-fold items
 }
 
 export const ContentCard = memo(function ContentCard({
@@ -34,11 +35,41 @@ export const ContentCard = memo(function ContentCard({
   showVariantCount = true,
   selected = false,
   selectable = false,
-  onSelect
+  onSelect,
+  priority = false
 }: ContentCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(priority);
+  const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    if (priority) {
+      setIsInView(true);
+      return;
+    }
+
+    const element = cardRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: '200px',
+        threshold: 0.01,
+      }
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [priority]);
 
   // Get variant count
   const variantCount = item.video_urls?.length || 1;
@@ -207,6 +238,7 @@ export const ContentCard = memo(function ContentCard({
   // Default: Grid variant
   return (
     <div
+      ref={cardRef}
       onClick={onClick}
       className={cn(
         "relative aspect-[4/5] rounded-lg overflow-hidden bg-muted cursor-pointer group",
@@ -215,8 +247,12 @@ export const ContentCard = memo(function ContentCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Thumbnail/Video */}
-      {isVideo && isHovered && item.video_urls?.[0] ? (
+      {/* Thumbnail/Video - lazy loaded */}
+      {!isInView ? (
+        <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
+          {isVideo && <Play className="h-8 w-8 text-muted-foreground/50" />}
+        </div>
+      ) : isVideo && isHovered && item.video_urls?.[0] ? (
         <video
           ref={videoRef}
           src={item.video_urls[0]}
@@ -233,7 +269,8 @@ export const ContentCard = memo(function ContentCard({
             "w-full h-full object-cover transition-transform duration-300",
             isHovered && "scale-105"
           )}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
           onLoad={() => setImageLoaded(true)}
         />
       ) : (
@@ -243,7 +280,7 @@ export const ContentCard = memo(function ContentCard({
       )}
 
       {/* Loading skeleton */}
-      {!imageLoaded && previewUrl && (
+      {isInView && !imageLoaded && previewUrl && (
         <div className="absolute inset-0 bg-muted animate-pulse" />
       )}
 

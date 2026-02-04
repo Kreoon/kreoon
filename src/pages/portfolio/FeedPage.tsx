@@ -567,6 +567,7 @@ export default function FeedPage() {
                   <FeedGridCard
                     key={`${item.type}-${item.id}`}
                     item={item}
+                    priority={index < 9}
                     onClick={() => handleCardClick(index)}
                   />
                 ))}
