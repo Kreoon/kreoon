@@ -37,6 +37,7 @@ import { CurrencyDisplay, CurrencyBadge, formatCurrency, type CurrencyType } fro
 import { useCurrency } from "@/hooks/useCurrency";
 import { UPSystemKPIs } from "@/components/dashboard/UPSystemKPIs";
 import { ActiveSeasonBanner } from "@/components/dashboard/ActiveSeasonBanner";
+import { CollaborativeStats } from "@/components/dashboard/CollaborativeStats";
 // Animated number counter
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -1744,6 +1745,11 @@ export default function Dashboard() {
             {/* UP System KPIs */}
             {currentOrgId && (
               <UPSystemKPIs organizationId={currentOrgId} />
+            )}
+
+            {/* Kreoon Social Collaborative Stats */}
+            {currentOrgId && (
+              <CollaborativeStats organizationId={currentOrgId} />
             )}
 
             {/* Placeholder for future UP features */}
