@@ -3,3 +3,5 @@ export { useSocialShare } from './useSocialShare';
 export type { SocialNetwork } from './useSocialShare';
 export { useUnifiedContent } from './useUnifiedContent';
 export type { UnifiedContentItem, ContentViewMode, ContentFilterStatus } from './useUnifiedContent';
+export { useContentNotifications } from './useContentNotifications';
+export type { ContentNotification } from './useContentNotifications';
