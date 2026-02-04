@@ -390,17 +390,17 @@ const Creators = () => {
     <>
       <div className="min-h-screen">
         <div className="p-4 md:p-6 space-y-6">
-          {/* Page Header */}
+          {/* Page Header - El Estudio theme */}
           <PageHeader
             icon={Sword}
-            title="Creadores"
-            subtitle="Sistema de Talento Inteligente"
+            title="Talentos"
+            subtitle="Sistema de Gestión de Talentos del Estudio"
             action={
               isAdmin && (
-                <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0 font-medieval">
+                <Button variant="glow" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0">
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Reclutar Guerrero</span>
-                  <span className="sm:hidden">Reclutar</span>
+                  <span className="hidden sm:inline">Nuevo Talento</span>
+                  <span className="sm:hidden">Nuevo</span>
                 </Button>
               )
             }

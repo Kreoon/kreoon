@@ -170,16 +170,16 @@ export default function RankingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* Page Header - El Estudio theme */}
       <PageHeader
         icon={Castle}
-        title="KREOON UP"
-        subtitle="Sistema de puntos, logros y ranking de rendimiento"
+        title="Cartelera UP"
+        subtitle="Sistema de créditos, logros y ranking del estudio"
         badge={!isSystemEnabled() ? { text: "⚠️ Sistema Suspendido", variant: "destructive" as const } : undefined}
         action={currentUserRank ? (
-          <Badge className="text-sm px-3 py-1 font-medieval level-gold" variant="outline">
+          <Badge className="text-sm px-3 py-1 level-gold" variant="outline">
             <Sword className="w-3 h-3 mr-1" />
-            Rango #{currentUserRank}
+            Posición #{currentUserRank}
           </Badge>
         ) : undefined}
       />
