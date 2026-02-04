@@ -225,6 +225,8 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       } else if (isAssignedEditorCheck) {
         updates = {
           video_url: formData.video_url || null,
+          video_urls: formData.video_urls.filter(url => url.trim() !== ''),
+          hooks_count: formData.hooks_count,
           notes: formData.notes || null
         };
       } else if (isAdmin) {
@@ -308,13 +310,69 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     }
   };
 
+  // Helper to build role-based updates
+  const buildRoleBasedUpdates = useCallback((data: ContentFormData) => {
+    const isAssignedCreatorCheck = isCreator && content?.creator_id === user?.id && !isAdmin;
+    const isAssignedEditorCheck = isEditor && content?.editor_id === user?.id && !isAdmin;
+
+    if (isAssignedCreatorCheck) {
+      return {
+        drive_url: data.drive_url || null,
+        notes: data.notes || null
+      };
+    } else if (isAssignedEditorCheck) {
+      return {
+        video_url: data.video_url || null,
+        video_urls: data.video_urls.filter(url => url.trim() !== ''),
+        hooks_count: data.hooks_count,
+        notes: data.notes || null
+      };
+    } else if (isAdmin) {
+      return {
+        title: data.title,
+        product: data.product || null,
+        product_id: data.product_id || null,
+        sales_angle: data.sales_angle || null,
+        client_id: data.client_id || null,
+        creator_id: data.creator_id || null,
+        editor_id: data.editor_id || null,
+        strategist_id: data.strategist_id || null,
+        deadline: data.deadline ? new Date(data.deadline).toISOString() : null,
+        start_date: data.start_date ? new Date(data.start_date).toISOString() : null,
+        campaign_week: data.campaign_week || null,
+        reference_url: data.reference_url || null,
+        video_url: data.video_url || null,
+        video_urls: data.video_urls.filter(url => url.trim() !== ''),
+        hooks_count: data.hooks_count,
+        drive_url: data.drive_url || null,
+        script: data.script || null,
+        description: data.description || null,
+        notes: data.notes || null,
+        creator_payment: data.creator_payment,
+        editor_payment: data.editor_payment,
+        creator_paid: data.creator_paid,
+        editor_paid: data.editor_paid,
+        invoiced: data.invoiced,
+        is_published: data.is_published,
+        editor_guidelines: data.editor_guidelines || null,
+        strategist_guidelines: data.strategist_guidelines || null,
+        trafficker_guidelines: data.trafficker_guidelines || null,
+        designer_guidelines: data.designer_guidelines || null,
+        admin_guidelines: data.admin_guidelines || null,
+        sphere_phase: data.sphere_phase || null
+      };
+    }
+    return null;
+  }, [isAdmin, isCreator, isEditor, content?.creator_id, content?.editor_id, user?.id]);
+
   // AutoSave integration
   const { status: autoSaveStatus, lastSaved, forceSave } = useAutoSave({
     data: formData,
     onSave: async (data) => {
       if (!editMode || !content) return;
-      // Silent save - same logic as handleSave but without toast
-      const updates: any = { ...data };
+      // Use role-based updates (same logic as handleSave)
+      const updates = buildRoleBasedUpdates(data);
+      if (!updates) return;
       await supabase.from('content').update(updates).eq('id', content.id);
     },
     enabled: editMode,
