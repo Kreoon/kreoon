@@ -18,6 +18,8 @@ import {
   WithdrawalStats,
   WalletOverview,
 } from '../components/Admin';
+import { ComingSoonBanner, DemoModeIndicator } from '../components/common';
+import { isWalletEnabled } from '../config';
 
 type TabValue = 'withdrawals' | 'wallets' | 'stats';
 
@@ -35,6 +37,9 @@ export function AdminWalletsPage() {
   const initialTab = (searchParams.get('tab') as TabValue) || 'withdrawals';
   const [activeTab, setActiveTab] = useState<TabValue>(initialTab);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Feature flags
+  const walletEnabled = isWalletEnabled();
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as TabValue);
@@ -68,6 +73,9 @@ export function AdminWalletsPage() {
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-7xl">
+      {/* Coming Soon Banner */}
+      {!walletEnabled && <ComingSoonBanner variant="compact" className="mb-6" />}
+
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -145,6 +153,9 @@ export function AdminWalletsPage() {
           <WithdrawalStats />
         </TabsContent>
       </Tabs>
+
+      {/* Demo Mode Indicator */}
+      {!walletEnabled && <DemoModeIndicator />}
     </div>
   );
 }

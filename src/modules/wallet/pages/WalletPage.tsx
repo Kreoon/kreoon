@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Wallet, ArrowDownUp, ArrowUpRight, CreditCard, Plus, Settings } from 'lucide-react';
+import { Wallet, ArrowDownUp, ArrowUpRight, CreditCard, Plus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -8,7 +8,13 @@ import { WalletDashboard } from '../components/WalletDashboard';
 import { TransactionHistory } from '../components/TransactionHistory';
 import { WithdrawalHistory, WithdrawalFormDrawer } from '../components/Withdrawals';
 import { PaymentMethodList, PaymentMethodDrawer } from '../components/PaymentMethods';
+import {
+  ComingSoonBanner,
+  ComingSoonTooltip,
+  DemoModeIndicator,
+} from '../components/common';
 import { useWallet, usePaymentMethods } from '../hooks';
+import { isWalletEnabled, isWithdrawalsEnabled } from '../config';
 
 type TabValue = 'dashboard' | 'transactions' | 'withdrawals' | 'payment-methods';
 
@@ -32,6 +38,10 @@ export function WalletPage() {
   const { walletDisplay, isLoading: isWalletLoading } = useWallet();
   const { paymentMethods, isLoading: isPaymentMethodsLoading } = usePaymentMethods();
 
+  // Feature flags
+  const walletEnabled = isWalletEnabled();
+  const withdrawalsEnabled = isWithdrawalsEnabled();
+
   const handleTabChange = (value: string) => {
     setActiveTab(value as TabValue);
     setSearchParams({ tab: value });
@@ -41,26 +51,39 @@ export function WalletPage() {
   const renderActionButton = () => {
     switch (activeTab) {
       case 'withdrawals':
-        return (
+        const withdrawButton = (
           <Button
-            onClick={() => setWithdrawalDrawerOpen(true)}
+            onClick={() => withdrawalsEnabled && setWithdrawalDrawerOpen(true)}
             className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
-            disabled={!walletDisplay || (walletDisplay.available_balance <= 0)}
+            disabled={!walletDisplay || (walletDisplay.available_balance <= 0) || !withdrawalsEnabled}
           >
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Retiro
           </Button>
         );
+        return withdrawalsEnabled ? (
+          withdrawButton
+        ) : (
+          <ComingSoonTooltip>{withdrawButton}</ComingSoonTooltip>
+        );
+
       case 'payment-methods':
-        return (
+        const methodButton = (
           <Button
-            onClick={() => setPaymentMethodDrawerOpen(true)}
+            onClick={() => walletEnabled && setPaymentMethodDrawerOpen(true)}
             className="bg-gradient-to-r from-[hsl(270,100%,50%)] to-[hsl(280,100%,45%)] hover:from-[hsl(270,100%,45%)] hover:to-[hsl(280,100%,40%)]"
+            disabled={!walletEnabled}
           >
             <Plus className="h-4 w-4 mr-2" />
             Agregar Método
           </Button>
         );
+        return walletEnabled ? (
+          methodButton
+        ) : (
+          <ComingSoonTooltip>{methodButton}</ComingSoonTooltip>
+        );
+
       default:
         return null;
     }
@@ -68,6 +91,9 @@ export function WalletPage() {
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-7xl">
+      {/* Coming Soon Banner */}
+      {!walletEnabled && <ComingSoonBanner variant="compact" className="mb-6" />}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -181,32 +207,36 @@ export function WalletPage() {
           <PaymentMethodList
             paymentMethods={paymentMethods || []}
             isLoading={isPaymentMethodsLoading}
-            onAddNew={() => setPaymentMethodDrawerOpen(true)}
+            onAddNew={() => walletEnabled && setPaymentMethodDrawerOpen(true)}
           />
         </TabsContent>
       </Tabs>
 
-      {/* Withdrawal Drawer */}
-      {walletDisplay && (
+      {/* Withdrawal Drawer - Only open if enabled */}
+      {walletDisplay && withdrawalsEnabled && (
         <WithdrawalFormDrawer
           wallet={walletDisplay}
           open={withdrawalDrawerOpen}
           onClose={() => setWithdrawalDrawerOpen(false)}
           onSuccess={() => {
             setWithdrawalDrawerOpen(false);
-            // Refresh data
           }}
         />
       )}
 
-      {/* Payment Method Drawer */}
-      <PaymentMethodDrawer
-        open={paymentMethodDrawerOpen}
-        onClose={() => setPaymentMethodDrawerOpen(false)}
-        onSuccess={() => {
-          setPaymentMethodDrawerOpen(false);
-        }}
-      />
+      {/* Payment Method Drawer - Only open if enabled */}
+      {walletEnabled && (
+        <PaymentMethodDrawer
+          open={paymentMethodDrawerOpen}
+          onClose={() => setPaymentMethodDrawerOpen(false)}
+          onSuccess={() => {
+            setPaymentMethodDrawerOpen(false);
+          }}
+        />
+      )}
+
+      {/* Demo Mode Indicator */}
+      {!walletEnabled && <DemoModeIndicator />}
     </div>
   );
 }

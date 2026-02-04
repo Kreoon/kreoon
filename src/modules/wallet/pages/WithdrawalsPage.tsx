@@ -12,7 +12,13 @@ import {
   WithdrawalStatusTimeline,
 } from '../components/Withdrawals';
 import { PaymentMethodList, PaymentMethodDrawer } from '../components/PaymentMethods';
+import {
+  ComingSoonBanner,
+  ComingSoonTooltip,
+  DemoModeIndicator,
+} from '../components/common';
 import { useWallet, useWithdrawals, usePaymentMethods } from '../hooks';
+import { isWalletEnabled, isWithdrawalsEnabled } from '../config';
 
 type TabValue = 'history' | 'payment-methods';
 
@@ -32,6 +38,10 @@ export function WithdrawalsPage() {
   });
   const { paymentMethods, isLoading: isPaymentMethodsLoading } = usePaymentMethods();
 
+  // Feature flags
+  const walletEnabled = isWalletEnabled();
+  const withdrawalsEnabled = isWithdrawalsEnabled();
+
   const handleTabChange = (value: string) => {
     setActiveTab(value as TabValue);
     setSearchParams({ tab: value });
@@ -47,7 +57,8 @@ export function WithdrawalsPage() {
     walletDisplay &&
     walletDisplay.available_balance >= 50000 &&
     paymentMethods &&
-    paymentMethods.length > 0;
+    paymentMethods.length > 0 &&
+    withdrawalsEnabled;
 
   if (isWalletLoading) {
     return (
@@ -78,8 +89,22 @@ export function WithdrawalsPage() {
     );
   }
 
+  const withdrawButton = (
+    <Button
+      onClick={() => withdrawalsEnabled && setWithdrawalDrawerOpen(true)}
+      disabled={!canWithdraw}
+      className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      Nuevo Retiro
+    </Button>
+  );
+
   return (
     <div className="container mx-auto py-6 px-4 max-w-5xl">
+      {/* Coming Soon Banner */}
+      {!walletEnabled && <ComingSoonBanner variant="compact" className="mb-6" />}
+
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -107,14 +132,11 @@ export function WithdrawalsPage() {
             </div>
           </div>
 
-          <Button
-            onClick={() => setWithdrawalDrawerOpen(true)}
-            disabled={!canWithdraw}
-            className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nuevo Retiro
-          </Button>
+          {withdrawalsEnabled ? (
+            withdrawButton
+          ) : (
+            <ComingSoonTooltip>{withdrawButton}</ComingSoonTooltip>
+          )}
         </div>
       </div>
 
@@ -243,32 +265,38 @@ export function WithdrawalsPage() {
           <PaymentMethodList
             paymentMethods={paymentMethods || []}
             isLoading={isPaymentMethodsLoading}
-            onAddNew={() => setPaymentMethodDrawerOpen(true)}
+            onAddNew={() => walletEnabled && setPaymentMethodDrawerOpen(true)}
           />
         </TabsContent>
       </Tabs>
 
-      {/* Withdrawal Drawer */}
-      <WithdrawalFormDrawer
-        wallet={walletDisplay}
-        open={withdrawalDrawerOpen}
-        onClose={() => setWithdrawalDrawerOpen(false)}
-        onSuccess={() => {
-          setWithdrawalDrawerOpen(false);
-        }}
-      />
+      {/* Withdrawal Drawer - Only open if enabled */}
+      {withdrawalsEnabled && (
+        <WithdrawalFormDrawer
+          wallet={walletDisplay}
+          open={withdrawalDrawerOpen}
+          onClose={() => setWithdrawalDrawerOpen(false)}
+          onSuccess={() => {
+            setWithdrawalDrawerOpen(false);
+          }}
+        />
+      )}
 
-      {/* Payment Method Drawer */}
-      <PaymentMethodDrawer
-        open={paymentMethodDrawerOpen}
-        onClose={() => setPaymentMethodDrawerOpen(false)}
-        onSuccess={() => {
-          setPaymentMethodDrawerOpen(false);
-          // Switch to payment methods tab
-          setActiveTab('payment-methods');
-          setSearchParams({ tab: 'payment-methods' });
-        }}
-      />
+      {/* Payment Method Drawer - Only open if enabled */}
+      {walletEnabled && (
+        <PaymentMethodDrawer
+          open={paymentMethodDrawerOpen}
+          onClose={() => setPaymentMethodDrawerOpen(false)}
+          onSuccess={() => {
+            setPaymentMethodDrawerOpen(false);
+            setActiveTab('payment-methods');
+            setSearchParams({ tab: 'payment-methods' });
+          }}
+        />
+      )}
+
+      {/* Demo Mode Indicator */}
+      {!walletEnabled && <DemoModeIndicator />}
     </div>
   );
 }

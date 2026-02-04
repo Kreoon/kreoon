@@ -1,5 +1,13 @@
 // Wallet Module - Main exports
 
+// Config
+export {
+  WALLET_CONFIG,
+  isWalletEnabled,
+  isWithdrawalsEnabled,
+  isEscrowEnabled,
+} from './config';
+
 // Types
 export * from './types';
 
@@ -32,6 +40,12 @@ export {
   NoPaymentMethodsState,
   WalletErrorState,
   InsufficientBalanceState,
+  // Coming Soon
+  ComingSoonBanner,
+  ComingSoonOverlay,
+  ComingSoonTooltip,
+  DemoModeIndicator,
+  ComingSoonPageWrapper,
 } from './components/common';
 
 // Dashboard Components

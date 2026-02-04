@@ -16,3 +16,10 @@ export {
   WalletErrorState,
   InsufficientBalanceState,
 } from './EmptyStates';
+export {
+  ComingSoonBanner,
+  ComingSoonOverlay,
+  ComingSoonTooltip,
+  DemoModeIndicator,
+  ComingSoonPageWrapper,
+} from './ComingSoon';
