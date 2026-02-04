@@ -18,6 +18,7 @@ import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
 import { TrendingSection } from '@/components/social/TrendingSection';
+import { CollaborationsFilter } from '@/components/portfolio/feed/CollaborationsFilter';
 import { RefreshCw, Sparkles, Plus, ImageIcon, Film, Compass, Users, TrendingUp, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,6 +75,10 @@ export default function FeedPage() {
   const [showPostUploader, setShowPostUploader] = useState(false);
   const [useAIRecommendations, setUseAIRecommendations] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Collaboration filters
+  const [collabCreatorFilter, setCollabCreatorFilter] = useState<string | null>(null);
+  const [collabClientFilter, setCollabClientFilter] = useState<string | null>(null);
   
   // AI Recommendations hook
   const { 
@@ -162,6 +167,14 @@ export default function FeedPage() {
       if (isCollaborations) {
         // For collaborations tab: show content shared on Kreoon Social
         workQuery = workQuery.eq('shared_on_kreoon', true);
+
+        // Apply collaboration filters
+        if (collabCreatorFilter) {
+          workQuery = workQuery.eq('creator_id', collabCreatorFilter);
+        }
+        if (collabClientFilter) {
+          workQuery = workQuery.eq('client_id', collabClientFilter);
+        }
       } else {
         // For other tabs: show published content
         workQuery = workQuery.eq('is_published', true);
@@ -330,7 +343,7 @@ export default function FeedPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeTab, followingIds, isSaved, useAIRecommendations, items.length]);
+  }, [activeTab, followingIds, isSaved, useAIRecommendations, items.length, collabCreatorFilter, collabClientFilter]);
 
   // Fetch AI recommendations for "For You" tab and apply them
   useEffect(() => {
@@ -537,8 +550,20 @@ export default function FeedPage() {
         )
       )}
 
-      <StoriesBar 
-        followingIds={followingIds} 
+      {/* Collaborations filter */}
+      {activeTab === 'collaborations' && (
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <CollaborationsFilter
+            selectedCreatorId={collabCreatorFilter}
+            selectedClientId={collabClientFilter}
+            onCreatorChange={setCollabCreatorFilter}
+            onClientChange={setCollabClientFilter}
+          />
+        </div>
+      )}
+
+      <StoriesBar
+        followingIds={followingIds}
         onAddStory={() => setShowStoryUploader(true)}
       />
 

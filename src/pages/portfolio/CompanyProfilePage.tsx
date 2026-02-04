@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Building2, Globe, Instagram, MapPin, ExternalLink,
-  Grid3X3, Play, Users, Heart, Settings, ArrowLeft
+  Grid3X3, Play, Users, Heart, Settings, ArrowLeft, Handshake
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CompanyFollowButton } from '@/components/portfolio/CompanyFollowButton';
@@ -82,10 +82,16 @@ export default function CompanyProfilePage() {
   // Creators
   const [creators, setCreators] = useState<{ id: string; full_name: string; avatar_url: string | null; content_count: number }[]>([]);
   const [loadingCreators, setLoadingCreators] = useState(false);
+
+  // Collaborations
+  const [collaborations, setCollaborations] = useState<FeedItem[]>([]);
+  const [loadingCollaborations, setLoadingCollaborations] = useState(false);
+  const [collaborationsCount, setCollaborationsCount] = useState(0);
   
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [modalContentType, setModalContentType] = useState<'content' | 'collaborations'>('content');
 
   useEffect(() => {
     if (username) {
@@ -128,6 +134,7 @@ export default function CompanyProfilePage() {
         fetchFollowersCount(companyData.id),
         fetchContent(companyData.id),
         fetchCreators(companyData.id),
+        fetchCollaborations(companyData.id),
       ]);
     } catch (error) {
       console.error('Error fetching company:', error);
@@ -257,8 +264,76 @@ export default function CompanyProfilePage() {
     }
   };
 
-  const handleCardClick = (index: number) => {
+  const fetchCollaborations = async (companyId: string) => {
+    setLoadingCollaborations(true);
+    try {
+      // Fetch collaborative content (shared_on_kreoon = true)
+      const { data, error } = await supabase
+        .from('content')
+        .select(`
+          id,
+          title,
+          video_url,
+          video_urls,
+          bunny_embed_url,
+          thumbnail_url,
+          creator_id,
+          views_count,
+          likes_count,
+          created_at
+        `)
+        .eq('client_id', companyId)
+        .eq('shared_on_kreoon', true)
+        .or('video_url.not.is.null,bunny_embed_url.not.is.null,video_urls.not.is.null')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      // Get creator profiles
+      const creatorIds = [...new Set((data || []).map(c => c.creator_id).filter(Boolean))] as string[];
+      const { data: profiles } = creatorIds.length > 0
+        ? await supabase.from('profiles').select('id, full_name, avatar_url').in('id', creatorIds)
+        : { data: [] };
+
+      const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+
+      const items: FeedItem[] = (data || []).map(c => {
+        const profile = profilesMap.get(c.creator_id);
+        const videoUrls = c.video_urls as string[] | null;
+        const directVideoUrl = videoUrls && videoUrls.length > 0
+          ? videoUrls[0]
+          : c.video_url || c.bunny_embed_url;
+
+        return {
+          id: c.id,
+          type: 'work' as const,
+          title: c.title,
+          media_url: directVideoUrl,
+          media_type: 'video' as const,
+          thumbnail_url: c.thumbnail_url || undefined,
+          user_id: c.creator_id || '',
+          user_name: profile?.full_name,
+          user_avatar: profile?.avatar_url,
+          views_count: c.views_count || 0,
+          likes_count: c.likes_count || 0,
+          comments_count: 0,
+          created_at: c.created_at,
+        };
+      });
+
+      setCollaborations(items);
+      setCollaborationsCount(items.length);
+    } catch (error) {
+      console.error('Error fetching collaborations:', error);
+    } finally {
+      setLoadingCollaborations(false);
+    }
+  };
+
+  const handleCardClick = (index: number, type: 'content' | 'collaborations' = 'content') => {
     setSelectedIndex(index);
+    setModalContentType(type);
     setModalOpen(true);
   };
 
@@ -413,13 +488,25 @@ export default function CompanyProfilePage() {
                 <Grid3X3 className="h-4 w-4 mr-2" />
                 Contenido
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="creators"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-social-accent data-[state=active]:text-social-accent text-social-muted-foreground"
               >
                 <Users className="h-4 w-4 mr-2" />
                 Creadores
               </TabsTrigger>
+              {collaborationsCount > 0 && (
+                <TabsTrigger
+                  value="collaborations"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-500 text-social-muted-foreground"
+                >
+                  <Handshake className="h-4 w-4 mr-2" />
+                  Colaboraciones
+                  <Badge variant="secondary" className="ml-2 text-xs bg-purple-500/20 text-purple-400">
+                    {collaborationsCount}
+                  </Badge>
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="content" className="mt-4">
@@ -440,7 +527,7 @@ export default function CompanyProfilePage() {
                     <FeedGridCard
                       key={item.id}
                       item={item}
-                      onClick={() => handleCardClick(index)}
+                      onClick={() => handleCardClick(index, 'content')}
                     />
                   ))}
                 </div>
@@ -489,13 +576,49 @@ export default function CompanyProfilePage() {
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="collaborations" className="mt-4">
+              {loadingCollaborations ? (
+                <div className="grid grid-cols-3 gap-1">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <Skeleton key={i} className="aspect-square bg-social-muted" />
+                  ))}
+                </div>
+              ) : collaborations.length === 0 ? (
+                <div className="text-center py-12 text-social-muted-foreground">
+                  <Handshake className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Aún no hay contenido colaborativo</p>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4 p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Handshake className="h-5 w-5 text-purple-500" />
+                      <span className="font-medium text-purple-400">Kreoon Social</span>
+                    </div>
+                    <p className="text-sm text-social-muted-foreground">
+                      Contenido colaborativo donde creadores y marcas trabajan juntos
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {collaborations.map((item, index) => (
+                      <FeedGridCard
+                        key={item.id}
+                        item={item}
+                        onClick={() => handleCardClick(index, 'collaborations')}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </TabsContent>
           </Tabs>
         </div>
       </ScrollArea>
 
       {/* Content Modal */}
       <FeedGridModal
-        items={content}
+        items={modalContentType === 'collaborations' ? collaborations : content}
         initialIndex={selectedIndex}
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}

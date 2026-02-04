@@ -76,7 +76,12 @@ export function useSocialShare(): UseSocialShareReturn {
     }
   }, [getShareUrl]);
 
-  const shareToKreoon = useCallback(async (contentId: string, settings: KreoonSocialSettings) => {
+  const shareToKreoon = useCallback(async (
+    contentId: string,
+    settings: KreoonSocialSettings,
+    creatorId?: string,
+    clientId?: string
+  ) => {
     if (!user?.id) {
       toast.error('Debes iniciar sesión para compartir en Kreoon Social');
       return;
@@ -85,6 +90,13 @@ export function useSocialShare(): UseSocialShareReturn {
     setIsSharing(true);
 
     try {
+      // Get content info for notification
+      const { data: contentData } = await supabase
+        .from('content')
+        .select('title, creator_id, client_id')
+        .eq('id', contentId)
+        .single();
+
       // Update the content to be shared on Kreoon Social
       const { error } = await supabase
         .from('content')
@@ -98,6 +110,54 @@ export function useSocialShare(): UseSocialShareReturn {
         .eq('id', contentId);
 
       if (error) throw error;
+
+      // Send notifications if sharing is enabled
+      if (settings.shareOnKreoon && contentData) {
+        const notificationPromises = [];
+        const contentTitle = contentData.title || 'contenido';
+
+        // Notify creator (if not the current user)
+        if (contentData.creator_id && contentData.creator_id !== user.id) {
+          notificationPromises.push(
+            supabase.from('notifications').insert({
+              user_id: contentData.creator_id,
+              type: 'content_shared',
+              title: 'Contenido compartido en Kreoon Social',
+              message: `Tu contenido "${contentTitle}" ha sido compartido como colaborativo`,
+              data: { content_id: contentId, is_collaborative: settings.isCollaborative },
+              is_read: false
+            })
+          );
+        }
+
+        // Notify client users (via client_users table)
+        if (contentData.client_id) {
+          const { data: clientUsers } = await supabase
+            .from('client_users')
+            .select('user_id')
+            .eq('client_id', contentData.client_id);
+
+          if (clientUsers) {
+            clientUsers.forEach(cu => {
+              if (cu.user_id !== user.id) {
+                notificationPromises.push(
+                  supabase.from('notifications').insert({
+                    user_id: cu.user_id,
+                    type: 'content_shared',
+                    title: 'Nuevo contenido colaborativo',
+                    message: `El contenido "${contentTitle}" está disponible en tu portafolio colaborativo`,
+                    data: { content_id: contentId, is_collaborative: settings.isCollaborative },
+                    is_read: false
+                  })
+                );
+              }
+            });
+          }
+        }
+
+        // Execute all notification inserts
+        await Promise.all(notificationPromises);
+      }
 
       toast.success(
         settings.shareOnKreoon
