@@ -25,6 +25,7 @@ import { FullscreenContentViewer } from '@/components/content/FullscreenContentV
 import { ReviewCard } from '@/components/content/ReviewCard';
 import { ContentVideoCard } from '@/components/content/ContentVideoCard';
 import { ScriptReviewCard } from '@/components/content/ScriptReviewCard';
+import { UnifiedContentModule } from '@/components/content/unified';
 import { useClientRealtimeContent } from '@/hooks/useClientRealtimeContent';
 import { CreateProductBriefWizard } from '@/components/products/CreateProductBriefWizard';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
@@ -1642,91 +1643,15 @@ export default function ClientDashboard() {
           </div>
         )}
 
-        {/* Content Tab */}
-        {activeTab === 'content' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold mb-1">
-                  {stageFilter ? `Contenido: ${
-                    stageFilter === 'inicio' ? 'Inicio' :
-                    stageFilter === 'guion' ? 'Guión' :
-                    stageFilter === 'grabacion' ? 'Grabación' :
-                    stageFilter === 'edicion' ? 'Edición' :
-                    stageFilter === 'correccion' ? 'Corrección' :
-                    stageFilter === 'entrega' ? 'Entrega' : 'Aprobado'
-                  }` : 'Todo el Contenido'}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {stageFilter 
-                    ? `${content.filter(c => {
-                        const stageStatuses: Record<string, string[]> = {
-                          inicio: ['draft', 'script_pending'],
-                          guion: ['script_approved', 'assigned'],
-                          grabacion: ['recording', 'recorded'],
-                          edicion: ['editing', 'review'],
-                          correccion: ['issue'],
-                          entrega: ['delivered', 'corrected'],
-                          aprobado: ['approved', 'paid']
-                        };
-                        return stageStatuses[stageFilter]?.includes(c.status);
-                      }).length} videos en esta etapa`
-                    : `${content.length} videos en total`
-                  }
-                </p>
-              </div>
-              {stageFilter && (
-                <Button variant="outline" size="sm" onClick={() => setStageFilter(null)}>
-                  <X className="h-4 w-4 mr-1" />
-                  Limpiar filtro
-                </Button>
-              )}
-            </div>
-
-            {stageFilter ? (
-              <ContentList 
-                items={content.filter(c => {
-                  const stageStatuses: Record<string, string[]> = {
-                    inicio: ['draft', 'script_pending'],
-                    guion: ['script_approved', 'assigned'],
-                    grabacion: ['recording', 'recorded'],
-                    edicion: ['editing', 'review'],
-                    correccion: ['issue'],
-                    entrega: ['delivered', 'corrected'],
-                    aprobado: ['approved', 'paid']
-                  };
-                  return stageStatuses[stageFilter]?.includes(c.status);
-                })}
-                onSelect={setSelectedContent}
-                onStatusChange={handleQuickStatusChange}
-                userId={user?.id}
-                onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
-                showRatings={true}
-              />
-            ) : (
-              <Tabs defaultValue="all" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-4">
-                  <TabsTrigger value="all" className="text-xs">Todos</TabsTrigger>
-                  <TabsTrigger value="progress" className="text-xs">Progreso</TabsTrigger>
-                  <TabsTrigger value="approved" className="text-xs">Aprobados</TabsTrigger>
-                  <TabsTrigger value="published" className="text-xs">Publicados</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="all">
-                  <ContentList items={content} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} showRatings={true} />
-                </TabsContent>
-                <TabsContent value="progress">
-                  <ContentList items={inProgressContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} showRatings={true} />
-                </TabsContent>
-                <TabsContent value="approved">
-                  <ContentList items={approvedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} showRatings={true} />
-                </TabsContent>
-                <TabsContent value="published">
-                  <ContentList items={publishedContent} onSelect={setSelectedContent} onStatusChange={handleQuickStatusChange} userId={user?.id} onUpdate={() => selectedClientId && fetchClientData(selectedClientId)} showRatings={true} />
-                </TabsContent>
-              </Tabs>
-            )}
-          </div>
+        {/* Content Tab - Unified Module */}
+        {activeTab === 'content' && selectedClientId && (
+          <UnifiedContentModule
+            clientId={selectedClientId}
+            mode="client"
+            showMetrics={false}
+            showKreoonToggle={true}
+            onContentUpdate={() => fetchClientData(selectedClientId)}
+          />
         )}
 
         {/* Company Tab */}

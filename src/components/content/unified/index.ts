@@ -11,3 +11,8 @@ export { SocialSharePanel } from './SocialSharePanel';
 export { ContentNotificationsDropdown } from './ContentNotificationsDropdown';
 
 export { PresentationMode } from './PresentationMode';
+
+export { UnifiedContentCard } from './UnifiedContentCard';
+export type { UnifiedContentItem } from './UnifiedContentCard';
+
+export { UnifiedContentModule } from './UnifiedContentModule';
