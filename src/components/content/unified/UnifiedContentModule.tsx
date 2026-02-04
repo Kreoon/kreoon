@@ -59,11 +59,11 @@ interface FilterState {
   published: 'all' | 'published' | 'unpublished';
 }
 
-// Skeleton loader for grid
+// Skeleton loader for grid - 3 columns
 const ContentGridSkeleton = memo(function ContentGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-      {[...Array(10)].map((_, i) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      {[...Array(6)].map((_, i) => (
         <Skeleton key={i} className="aspect-[9/16] rounded-xl" />
       ))}
     </div>
@@ -633,7 +633,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {tabFilteredContent.map((item, index) => (
                 <UnifiedContentCard
                   key={item.id}
