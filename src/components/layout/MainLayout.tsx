@@ -1,4 +1,5 @@
 import { ReactNode, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { TrialBanner } from "./TrialBanner";
@@ -18,18 +19,53 @@ import { LayoutDashboard, Kanban, Settings, LogOut, Video, Sparkles, Scissors, B
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+// Page transition variants for smooth animations
+const pageVariants = {
+  initial: { opacity: 0, y: 16 },
+  enter: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    }
+  },
+  exit: {
+    opacity: 0,
+    y: -8,
+    transition: { duration: 0.2 }
+  },
+};
+
 interface MainLayoutProps {
   children: ReactNode;
 }
 
-// Editor navigation items for mobile bottom bar
+// Editor navigation items for mobile bottom bar - El Estudio theme
 const editorMobileNavigation = [
-  { name: "Dashboard", href: "/editor-dashboard", icon: LayoutDashboard },
-  { name: "Tablero", href: "/board", icon: Kanban },
-  { name: "Contenido", href: "/social", icon: Video },
-  { name: "Guiones", href: "/scripts", icon: Sparkles },
+  { name: "Edición", href: "/editor-dashboard", icon: LayoutDashboard },
+  { name: "Producciones", href: "/board", icon: Kanban },
+  { name: "Red", href: "/social", icon: Video },
+  { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
   { name: "Config", href: "/settings", icon: Settings },
 ];
+
+// Animated page wrapper component
+function PageWrapper({ children, locationKey }: { children: ReactNode; locationKey: string }) {
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={locationKey}
+        initial="initial"
+        animate="enter"
+        exit="exit"
+        variants={pageVariants}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 export function MainLayout({
   children
@@ -135,11 +171,13 @@ export function MainLayout({
             "pb-16 md:pb-0 transition-all duration-300",
             sidebarCollapsed ? "md:ml-20" : "md:ml-64",
             chatOpen ? 'md:mr-96' : '',
-            "md:pt-14" // Add padding for the header
+            "md:pt-14"
           )}
         >
           <div className="min-h-screen p-4 md:p-6">
-            {children}
+            <PageWrapper locationKey={location.pathname}>
+              {children}
+            </PageWrapper>
           </div>
         </main>
 
@@ -230,15 +268,17 @@ export function MainLayout({
           )}
         >
           <div className="min-h-screen p-4 md:p-6">
-            {children}
+            <PageWrapper locationKey={location.pathname}>
+              {children}
+            </PageWrapper>
           </div>
         </main>
 
         {/* Floating Chat Button */}
-        <EnhancedChatButton 
-          onClick={() => setChatOpen(!chatOpen)} 
-          isOpen={chatOpen} 
-          unreadCount={unreadChatCount} 
+        <EnhancedChatButton
+          onClick={() => setChatOpen(!chatOpen)}
+          isOpen={chatOpen}
+          unreadCount={unreadChatCount}
         />
 
         {/* Chat Panel */}
@@ -249,8 +289,8 @@ export function MainLayout({
       </div>
     );
   }
-  
-  // Default admin/other layout
+
+  // Default admin/other layout - El Estudio theme
   return (
     <div className="min-h-screen bg-background relative">
       {/* Tech ambient background effects */}
@@ -325,19 +365,21 @@ export function MainLayout({
           "transition-all duration-300",
           sidebarCollapsed ? "md:ml-20" : "md:ml-64",
           chatOpen ? 'md:mr-96' : '',
-          "md:pt-14" // Add padding for the header
+          "md:pt-14"
         )}
       >
         <div className="min-h-screen p-4 md:p-6">
-          {children}
+          <PageWrapper locationKey={location.pathname}>
+            {children}
+          </PageWrapper>
         </div>
       </main>
 
       {/* Floating Chat Button */}
-      <EnhancedChatButton 
-        onClick={() => setChatOpen(!chatOpen)} 
-        isOpen={chatOpen} 
-        unreadCount={unreadChatCount} 
+      <EnhancedChatButton
+        onClick={() => setChatOpen(!chatOpen)}
+        isOpen={chatOpen}
+        unreadCount={unreadChatCount}
       />
 
       {/* Chat Panel */}
@@ -345,7 +387,6 @@ export function MainLayout({
 
       {/* Tour Provider */}
       <TourProvider />
-
 
       {/* Ambassador Celebration */}
       <AmbassadorCelebration />

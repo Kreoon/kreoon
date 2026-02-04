@@ -48,31 +48,31 @@ interface NavSection {
   items: NavItem[];
 }
 
-// Admin navigation organized in sections
+// Admin navigation organized in sections - EL ESTUDIO theme
 const adminSections: NavSection[] = [
   {
-    label: "PRINCIPAL",
+    label: "EL ESTUDIO",
     items: [
-      { name: "Board", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
-      { name: "Projects", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
-      { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
-      { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
-      { name: "UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
-      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
-      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
+      { name: "Sala de Control", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
+      { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+      { name: "Marquesina", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
+      { name: "Cartelera UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
+      { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
+      { name: "En Vivo", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
   },
   {
-    label: "GESTIÓN",
+    label: "BACKSTAGE",
     items: [
-      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
-      { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
-      { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
-      { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
+      { name: "Archivo", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
+      { name: "Talentos", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
+      { name: "Patrocinadores", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Elenco", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
     ]
   },
   {
-    label: "CUENTA",
+    label: "CAMERINO",
     items: [
       { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
@@ -81,27 +81,27 @@ const adminSections: NavSection[] = [
 
 const strategistSections: NavSection[] = [
   {
-    label: "PRINCIPAL",
+    label: "EL ESTUDIO",
     items: [
-      { name: "Board", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
-      { name: "Projects", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
-      { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
-      { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
-      { name: "UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
-      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
-      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
+      { name: "Sala de Control", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
+      { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+      { name: "Marquesina", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
+      { name: "Cartelera UP", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
+      { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social", requiresOrg: true },
+      { name: "En Vivo", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
   },
   {
-    label: "GESTIÓN",
+    label: "BACKSTAGE",
     items: [
-      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
-      { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
-      { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Archivo", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
+      { name: "Talentos", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
+      { name: "Patrocinadores", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
     ]
   },
   {
-    label: "CUENTA",
+    label: "CAMERINO",
     items: [
       { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
@@ -110,16 +110,16 @@ const strategistSections: NavSection[] = [
 
 const editorSections: NavSection[] = [
   {
-    label: "PRINCIPAL",
+    label: "EL ESTUDIO",
     items: [
-      { name: "Board", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-      { name: "Projects", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-      { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
+      { name: "Sala de Edición", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
     ]
   },
   {
-    label: "CUENTA",
+    label: "CAMERINO",
     items: [
       { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
@@ -128,16 +128,16 @@ const editorSections: NavSection[] = [
 
 const creatorSections: NavSection[] = [
   {
-    label: "PRINCIPAL",
+    label: "EL ESTUDIO",
     items: [
-      { name: "Board", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-      { name: "Projects", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-      { name: "IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
+      { name: "Mi Camerino", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
     ]
   },
   {
-    label: "CUENTA",
+    label: "CAMERINO",
     items: [
       { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
@@ -146,15 +146,15 @@ const creatorSections: NavSection[] = [
 
 const clientSections: NavSection[] = [
   {
-    label: "PRINCIPAL",
+    label: "EL ESTUDIO",
     items: [
-      { name: "Dashboard", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-      { name: "Board", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
-      { name: "Network", href: "/social", icon: Globe, tourId: "sidebar-social" },
+      { name: "Sala VIP", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Producciones", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "Red Social", href: "/social", icon: Globe, tourId: "sidebar-social" },
     ]
   },
   {
-    label: "CUENTA",
+    label: "CAMERINO",
     items: [
       { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]

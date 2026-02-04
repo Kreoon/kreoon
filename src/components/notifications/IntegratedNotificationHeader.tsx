@@ -402,30 +402,51 @@ export function IntegratedNotificationHeader({
   const totalUnread = unreadCount + unreadChatCount;
 
   return (
-    <div 
+    <div
       className={cn(
-        "fixed top-0 right-0 z-40 h-14 flex items-center gap-2 px-4 border-b border-border bg-background/95 backdrop-blur-sm transition-all duration-300",
+        "fixed top-0 right-0 z-40 h-14 flex items-center gap-3 px-4",
+        "border-b border-[hsl(270,100%,60%,0.1)]",
+        "bg-gradient-to-r from-[hsl(250,20%,4%,0.95)] via-[hsl(250,20%,3%,0.98)] to-[hsl(250,20%,4%,0.95)]",
+        "backdrop-blur-xl",
+        "transition-all duration-300",
         sidebarCollapsed ? "left-20" : "left-64"
       )}
     >
+      {/* Subtle gradient line at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[hsl(270,100%,60%,0.2)] to-transparent" />
+
+      {/* Ambient glow */}
+      <div className="absolute top-0 right-1/4 w-40 h-20 bg-[hsl(270,100%,60%,0.03)] rounded-full blur-3xl pointer-events-none" />
+
       {/* Spacer to push buttons to the right */}
       <div className="flex-1" />
 
-      {/* Profile Button with Avatar - navigates to user's social profile */}
-      <Button
-        variant="ghost"
-        size="icon"
+      {/* User Profile Section - Avatar with name */}
+      <button
         onClick={() => navigate('/social#profile')}
-        className="h-9 w-9 rounded-full p-0"
+        className={cn(
+          "flex items-center gap-2 px-3 py-1.5 rounded-xl",
+          "bg-[hsl(270,100%,60%,0.05)] hover:bg-[hsl(270,100%,60%,0.1)]",
+          "border border-[hsl(270,100%,60%,0.1)] hover:border-[hsl(270,100%,60%,0.2)]",
+          "transition-all duration-300 group"
+        )}
         aria-label="Ver mi perfil"
       >
-        <Avatar className="h-8 w-8">
+        <Avatar className="h-8 w-8 ring-2 ring-[hsl(270,100%,60%,0.2)] group-hover:ring-[hsl(270,100%,60%,0.4)] transition-all">
           <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-          <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+          <AvatarFallback className="text-xs bg-[hsl(270,100%,60%,0.2)] text-[hsl(270,100%,80%)]">
             {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
-      </Button>
+        <div className="hidden sm:flex flex-col items-start">
+          <span className="text-sm font-medium text-white truncate max-w-[120px]">
+            {profile?.full_name || 'Usuario'}
+          </span>
+          <span className="text-[10px] text-[hsl(270,100%,70%,0.6)]">
+            Mi Perfil
+          </span>
+        </div>
+      </button>
 
       {/* Root Org Switcher - only for root admin */}
       {isRootAdmin && (
@@ -439,36 +460,44 @@ export function IntegratedNotificationHeader({
 
       {/* Portfolio Button */}
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={() => navigate('/social')}
-        className="gap-2"
+        className={cn(
+          "gap-2 rounded-xl",
+          "bg-[hsl(270,100%,60%,0.05)] hover:bg-[hsl(270,100%,60%,0.1)]",
+          "border border-[hsl(270,100%,60%,0.1)] hover:border-[hsl(270,100%,60%,0.2)]",
+          "text-[hsl(270,30%,70%)] hover:text-white",
+          "transition-all duration-300"
+        )}
       >
         <Briefcase className="h-4 w-4" />
-        <span className="hidden sm:inline">Portafolio</span>
+        <span className="hidden sm:inline">Red Social</span>
       </Button>
-      
+
       {/* Chat Button removed - now using floating button */}
 
       {/* Notification Button */}
       <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
         <PopoverTrigger asChild>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             className={cn(
-              "relative gap-2 transition-all duration-300",
-              isAnimating && "animate-pulse ring-2 ring-primary",
-              unreadCount > 0 && "border-primary bg-primary/10 hover:bg-primary/20"
+              "relative gap-2 rounded-xl transition-all duration-300",
+              "bg-[hsl(270,100%,60%,0.05)] hover:bg-[hsl(270,100%,60%,0.1)]",
+              "border border-[hsl(270,100%,60%,0.1)] hover:border-[hsl(270,100%,60%,0.2)]",
+              "text-[hsl(270,30%,70%)] hover:text-white",
+              isAnimating && "animate-pulse ring-2 ring-[hsl(270,100%,60%)]",
+              unreadCount > 0 && "border-[hsl(270,100%,60%,0.3)] bg-[hsl(270,100%,60%,0.1)]"
             )}
           >
             <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Notificaciones</span>
+            <span className="hidden sm:inline">Alertas</span>
             {unreadCount > 0 && (
-              <Badge 
-                variant="secondary" 
+              <Badge
                 className={cn(
-                  "ml-1 bg-primary text-primary-foreground text-xs px-1.5 py-0",
+                  "ml-1 bg-[hsl(270,100%,60%)] text-white text-xs px-1.5 py-0",
                   isAnimating && "animate-bounce"
                 )}
               >
