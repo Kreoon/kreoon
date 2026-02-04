@@ -241,16 +241,36 @@ export function useAmbassador() {
 
       // Fetch profiles separately
       const userIds = members.map(m => m.user_id);
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, full_name, avatar_url, email, quality_score_avg")
         .in("id", userIds);
 
-      // Merge data
-      return members.map(m => ({
-        ...m,
-        profile: profiles?.find(p => p.id === m.user_id) || { id: m.user_id, full_name: "Unknown", avatar_url: null, email: "", quality_score_avg: 0 }
-      }));
+      if (profilesError) {
+        console.error("Error fetching ambassador profiles:", profilesError);
+      }
+
+      // Log any missing profiles for debugging
+      const foundProfileIds = new Set(profiles?.map(p => p.id) || []);
+      const missingProfiles = userIds.filter(id => !foundProfileIds.has(id));
+      if (missingProfiles.length > 0) {
+        console.warn("Ambassadors with missing profiles:", missingProfiles);
+      }
+
+      // Merge data - show user_id as identifier if profile is missing
+      return members.map(m => {
+        const profile = profiles?.find(p => p.id === m.user_id);
+        return {
+          ...m,
+          profile: profile || {
+            id: m.user_id,
+            full_name: "Unknown",
+            avatar_url: null,
+            email: "",
+            quality_score_avg: 0
+          }
+        };
+      });
     } catch (error: any) {
       console.error("Error fetching ambassadors:", error);
       return [];

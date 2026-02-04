@@ -7,7 +7,20 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
+// Platform root emails that have full admin access
+const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
+
+// Actions that require ROOT access (destructive operations)
+const ROOT_ONLY_ACTIONS = [
+  "delete_user",
+  "delete_client",
+  "delete_content",
+  "delete_conversation",
+  "delete_product",
+  "delete_notification",
+  "delete_portfolio_post",
+  "delete_referral"
+];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -29,7 +42,7 @@ serve(async (req) => {
       });
     }
 
-    // Verify the caller is the root user
+    // Verify the caller has authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: "No authorization header" }), {
@@ -51,7 +64,7 @@ serve(async (req) => {
 
     // Get the user from auth
     const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
-    
+
     if (userError || !userData?.user) {
       console.error("Auth error:", userError);
       return new Response(JSON.stringify({ error: "Invalid or expired token - please log in again" }), {
@@ -63,20 +76,48 @@ serve(async (req) => {
     const callerEmail = userData.user.email as string;
     const callerId = userData.user.id as string;
 
-    // Check if caller is the root user
-    if (callerEmail !== ROOT_EMAIL) {
-      console.warn(`Unauthorized access attempt by ${callerEmail}`);
-      return new Response(JSON.stringify({ error: "Unauthorized - Root access required" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+    // Check if caller is a root user
+    const isRootUser = ROOT_EMAILS.includes(callerEmail);
+
+    // Check if caller has admin role in user_roles table
+    let isPlatformAdmin = isRootUser;
+    if (!isRootUser) {
+      const { data: adminRole } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", callerId)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      isPlatformAdmin = !!adminRole;
     }
 
-    console.log(`Admin action authorized for ${callerEmail}`);
-
+    // Parse body to get action
     const body = await req.json();
     const { action, userId, email, role, clientId, contentId, conversationId, productId, notificationId, postId, referralId } = body;
-    console.log(`Admin action: ${action} by ${callerEmail}`);
+
+    // Check authorization based on action type
+    if (ROOT_ONLY_ACTIONS.includes(action)) {
+      // Destructive actions require ROOT access
+      if (!isRootUser) {
+        console.warn(`Unauthorized ROOT action attempt by ${callerEmail}: ${action}`);
+        return new Response(JSON.stringify({ error: "Unauthorized - Root access required for this action" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    } else {
+      // Non-destructive actions require platform admin OR root
+      if (!isPlatformAdmin) {
+        console.warn(`Unauthorized admin access attempt by ${callerEmail}: ${action}`);
+        return new Response(JSON.stringify({ error: "Unauthorized - Platform admin access required" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    console.log(`Admin action authorized for ${callerEmail} (root: ${isRootUser}, admin: ${isPlatformAdmin}): ${action}`);
 
     switch (action) {
       case "list_users": {
@@ -112,23 +153,25 @@ serve(async (req) => {
           };
         });
 
-        // Check if root user is missing from auth.users but exists in profiles
-        if (!authUserEmails.has(ROOT_EMAIL.toLowerCase())) {
-          const rootProfile = profiles?.find(p => p.email?.toLowerCase() === ROOT_EMAIL.toLowerCase());
-          if (rootProfile) {
-            const rootRoles = userRoles?.filter(r => r.user_id === rootProfile.id).map(r => r.role) || [];
-            users.unshift({
-              id: rootProfile.id,
-              email: rootProfile.email || ROOT_EMAIL,
-              full_name: rootProfile.full_name || "Root Admin",
-              avatar_url: rootProfile.avatar_url,
-              roles: rootRoles.length > 0 ? rootRoles : ['admin'],
-              created_at: rootProfile.created_at,
-              last_sign_in_at: undefined,
-              email_confirmed_at: rootProfile.created_at,
-              banned: false
-            });
-            console.log(`Added root user from profiles: ${ROOT_EMAIL}`);
+        // Check if any root users are missing from auth.users but exist in profiles
+        for (const rootEmail of ROOT_EMAILS) {
+          if (!authUserEmails.has(rootEmail.toLowerCase())) {
+            const rootProfile = profiles?.find(p => p.email?.toLowerCase() === rootEmail.toLowerCase());
+            if (rootProfile) {
+              const rootRoles = userRoles?.filter(r => r.user_id === rootProfile.id).map(r => r.role) || [];
+              users.unshift({
+                id: rootProfile.id,
+                email: rootProfile.email || rootEmail,
+                full_name: rootProfile.full_name || "Root Admin",
+                avatar_url: rootProfile.avatar_url,
+                roles: rootRoles.length > 0 ? rootRoles : ['admin'],
+                created_at: rootProfile.created_at,
+                last_sign_in_at: undefined,
+                email_confirmed_at: rootProfile.created_at,
+                banned: false
+              });
+              console.log(`Added root user from profiles: ${rootEmail}`);
+            }
           }
         }
 
@@ -307,9 +350,9 @@ serve(async (req) => {
           });
         }
 
-        // Don't allow deleting the root user
-        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
-        if (userData?.user?.email === ROOT_EMAIL) {
+        // Don't allow deleting any root user
+        const { data: targetUserData } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (targetUserData?.user?.email && ROOT_EMAILS.includes(targetUserData.user.email)) {
           return new Response(JSON.stringify({ error: "Cannot delete root user" }), {
             status: 403,
             headers: { ...corsHeaders, "Content-Type": "application/json" }

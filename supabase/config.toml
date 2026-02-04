@@ -146,3 +146,6 @@ verify_jwt = true
 
 [functions.bunny-raw-zip]
 verify_jwt = true
+
+[functions.admin-users]
+verify_jwt = false

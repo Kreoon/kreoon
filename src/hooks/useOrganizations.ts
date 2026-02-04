@@ -48,38 +48,76 @@ export interface OrganizationInvitation {
   accepted_at: string | null;
 }
 
+// Platform root emails that can see all organizations
+const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
+
 export function useOrganizations() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, profile } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [invitations, setInvitations] = useState<OrganizationInvitation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user's organizations
+  // Check if user is platform root (can see all organizations)
+  const isPlatformRoot = user?.email ? ROOT_EMAILS.includes(user.email) : false;
+
+  // Fetch user's organizations (filtered by membership, unless platform root)
   const fetchOrganizations = useCallback(async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('name');
+      let data: any[] = [];
 
-      if (error) throw error;
+      if (isPlatformRoot) {
+        // Platform root can see all organizations
+        const { data: allOrgs, error } = await supabase
+          .from('organizations')
+          .select('*')
+          .order('name');
+
+        if (error) throw error;
+        data = allOrgs || [];
+      } else {
+        // Regular users only see organizations they are members of
+        const { data: memberships, error: memberError } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id);
+
+        if (memberError) throw memberError;
+
+        if (memberships && memberships.length > 0) {
+          const orgIds = memberships.map(m => m.organization_id);
+          const { data: userOrgs, error: orgsError } = await supabase
+            .from('organizations')
+            .select('*')
+            .in('id', orgIds)
+            .order('name');
+
+          if (orgsError) throw orgsError;
+          data = userOrgs || [];
+        }
+      }
+
       // Cast to handle potential legacy 'ambassador' values from DB
       setOrganizations((data || []).map(org => ({
         ...org,
         default_role: org.default_role === 'ambassador' ? null : org.default_role
       })) as Organization[]);
 
-      // Set current org from localStorage or first org
+      // Set current org from profile, localStorage, or first org
+      const profileOrgId = profile?.current_organization_id;
       const savedOrgId = localStorage.getItem('currentOrganizationId');
-      const savedOrg = data?.find(o => o.id === savedOrgId);
-      
-      if (savedOrg) {
-        const cleanOrg = { ...savedOrg, default_role: savedOrg.default_role === 'ambassador' ? null : savedOrg.default_role } as Organization;
+
+      // Priority: profile org > localStorage > first org
+      const targetOrgId = profileOrgId || savedOrgId;
+      const targetOrg = data?.find(o => o.id === targetOrgId);
+
+      if (targetOrg) {
+        const cleanOrg = { ...targetOrg, default_role: targetOrg.default_role === 'ambassador' ? null : targetOrg.default_role } as Organization;
         setCurrentOrg(cleanOrg);
+        localStorage.setItem('currentOrganizationId', targetOrg.id);
       } else if (data && data.length > 0) {
         const cleanOrg = { ...data[0], default_role: data[0].default_role === 'ambassador' ? null : data[0].default_role } as Organization;
         setCurrentOrg(cleanOrg);
@@ -90,7 +128,7 @@ export function useOrganizations() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isPlatformRoot, profile?.current_organization_id]);
 
   // Fetch organization members
   const fetchMembers = useCallback(async (orgId: string) => {
@@ -407,6 +445,7 @@ export function useOrganizations() {
     members,
     invitations,
     loading,
+    isPlatformRoot,
     createOrganization,
     updateOrganization,
     inviteMember,
