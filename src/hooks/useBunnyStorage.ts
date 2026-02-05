@@ -9,9 +9,21 @@ interface UploadProgress {
 
 interface UploadResult {
   success: boolean;
-  cdnUrl?: string;
-  filePath?: string;
+  videoId?: string;
+  embedUrl?: string;
+  thumbnailUrl?: string;
   error?: string;
+}
+
+interface VideoInfo {
+  videoId: string;
+  title: string;
+  status: number;
+  encodeProgress: number;
+  embedUrl: string;
+  thumbnailUrl: string;
+  directUrls: Record<string, string>;
+  isReady: boolean;
 }
 
 export function useBunnyStorage() {
@@ -28,7 +40,7 @@ export function useBunnyStorage() {
     setError(null);
 
     try {
-      // 1. Obtener URL de upload
+      // 1. Get upload URL from Edge Function (creates video in Bunny Stream)
       const { data, error: fnError } = await supabase.functions.invoke('bunny-upload-v2', {
         body: { fileName: file.name, folder },
       });
@@ -37,9 +49,9 @@ export function useBunnyStorage() {
         throw new Error(fnError?.message || data?.error || 'Failed to get upload URL');
       }
 
-      const { uploadUrl, cdnUrl, filePath, accessKey } = data;
+      const { videoId, uploadUrl, embedUrl, thumbnailUrl, accessKey } = data;
 
-      // 2. Subir archivo a Bunny
+      // 2. Upload file to Bunny Stream
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
@@ -65,11 +77,11 @@ export function useBunnyStorage() {
 
         xhr.open('PUT', uploadUrl);
         xhr.setRequestHeader('AccessKey', accessKey);
-        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
         xhr.send(file);
       });
 
-      return { success: true, cdnUrl, filePath };
+      return { success: true, videoId, embedUrl, thumbnailUrl };
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';
@@ -81,10 +93,10 @@ export function useBunnyStorage() {
     }
   }, []);
 
-  const deleteFile = useCallback(async (filePath: string): Promise<boolean> => {
+  const deleteVideo = useCallback(async (videoId: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase.functions.invoke('bunny-delete-v2', {
-        body: { filePath },
+        body: { videoId },
       });
 
       return !error && data?.success;
@@ -93,14 +105,31 @@ export function useBunnyStorage() {
     }
   }, []);
 
-  const getDownloadUrl = useCallback((filePath: string): string => {
-    return `https://cdn.kreoon.com/${filePath}`;
+  const getVideoInfo = useCallback(async (videoId: string): Promise<VideoInfo | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('bunny-download-v2', {
+        body: { videoId },
+      });
+
+      if (error || !data?.success) {
+        return null;
+      }
+
+      return data as VideoInfo;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const getEmbedUrl = useCallback((videoId: string, libraryId: string = '7d2f834ca0b81b2e0a5630621f51859a2c4c910a0ca3'): string => {
+    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}`;
   }, []);
 
   return {
     upload,
-    deleteFile,
-    getDownloadUrl,
+    deleteVideo,
+    getVideoInfo,
+    getEmbedUrl,
     isUploading,
     progress,
     error,

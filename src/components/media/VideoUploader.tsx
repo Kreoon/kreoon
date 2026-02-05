@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 interface VideoUploaderProps {
   folder?: string;
-  onUploadComplete?: (cdnUrl: string, filePath: string) => void;
+  onUploadComplete?: (videoId: string, embedUrl: string, thumbnailUrl: string) => void;
   onRemove?: () => void;
   maxSizeMB?: number;
   accept?: Record<string, string[]>;
@@ -24,12 +24,13 @@ export function VideoUploader({
   className,
 }: VideoUploaderProps) {
   const [uploadedFile, setUploadedFile] = useState<{
-    cdnUrl: string;
-    filePath: string;
+    videoId: string;
+    embedUrl: string;
+    thumbnailUrl: string;
     name: string;
   } | null>(null);
 
-  const { upload, deleteFile, isUploading, progress, error } = useBunnyStorage();
+  const { upload, deleteVideo, isUploading, progress, error } = useBunnyStorage();
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -42,13 +43,14 @@ export function VideoUploader({
 
     const result = await upload(file, folder);
 
-    if (result.success && result.cdnUrl && result.filePath) {
+    if (result.success && result.videoId && result.embedUrl && result.thumbnailUrl) {
       setUploadedFile({
-        cdnUrl: result.cdnUrl,
-        filePath: result.filePath,
+        videoId: result.videoId,
+        embedUrl: result.embedUrl,
+        thumbnailUrl: result.thumbnailUrl,
         name: file.name,
       });
-      onUploadComplete?.(result.cdnUrl, result.filePath);
+      onUploadComplete?.(result.videoId, result.embedUrl, result.thumbnailUrl);
     }
   }, [upload, folder, maxSizeMB, onUploadComplete]);
 
@@ -61,7 +63,7 @@ export function VideoUploader({
 
   const handleRemove = async () => {
     if (uploadedFile) {
-      await deleteFile(uploadedFile.filePath);
+      await deleteVideo(uploadedFile.videoId);
       setUploadedFile(null);
       onRemove?.();
     }
@@ -72,18 +74,21 @@ export function VideoUploader({
       <div className={cn("relative rounded-lg border bg-card p-4", className)}>
         <div className="flex items-center gap-4">
           <div className="flex-shrink-0">
-            <video
-              src={uploadedFile.cdnUrl}
+            <img
+              src={uploadedFile.thumbnailUrl}
+              alt={uploadedFile.name}
               className="h-20 w-32 rounded object-cover bg-black"
-              muted
-              playsInline
+              onError={(e) => {
+                // Thumbnail may not be ready yet during encoding
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{uploadedFile.name}</p>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               <CheckCircle className="h-3 w-3 text-green-500" />
-              Subido correctamente
+              Subido correctamente (procesando...)
             </p>
           </div>
           <Button
