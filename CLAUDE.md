@@ -21,14 +21,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **BaaS**: Supabase (PostgreSQL + Auth + Storage + Edge Functions)
 - **CDN**: Bunny CDN (video hosting, file storage)
 - **AI**: Multi-provider fallback chain (Perplexity → Gemini → OpenAI)
-- **Integrations**: n8n automation, GHL sync, Restream, Spotify
+- **Integrations**: n8n automation, GHL sync, Restream
 
 ### Edge Functions
 50+ Supabase Edge Functions (Deno-based serverless) in `supabase/functions/`:
 - **Content**: `content-ai`, `board-ai`, `portfolio-ai`, `generate-script`, `analyze-video-content`
 - **AI**: `multi-ai`, `up-ai-copilot`, `ai-assistant`, `generate-thumbnail`, `build-image-prompt`
 - **CDN**: `bunny-*` functions (upload, download, storage, webhook, thumbnail, portfolio, raw operations, chat)
-- **Integrations**: `n8n-proxy`, `ghl-sync`, `spotify-search`, `restream-api`, `streaming-webhook`
+- **Integrations**: `n8n-proxy`, `ghl-sync`, `restream-api`, `streaming-webhook`
 - **Automation**: `daily-reminders`, `cleanup-expired-stories`, `cleanup-chat-attachments`, `feed-recommendations`
 - **Security**: `security-check`, `admin-users`
 - **Other**: `send-invitation`, `notify-*`, `interest-extractor`, `evaluate-profile-tokens`, `suggest-role`

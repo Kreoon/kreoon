@@ -221,27 +221,10 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
   },
   {
     id: "audio",
-    title: "Audio y Música",
-    description: "Servicios de audio, música y text-to-speech",
+    title: "Audio y Voz",
+    description: "Servicios de audio y text-to-speech",
     icon: Music,
     integrations: [
-      {
-        key: "spotify_client_id",
-        label: "Spotify Client ID",
-        description: "Client ID de la aplicación de Spotify.",
-        type: "config",
-        placeholder: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        isSecret: false,
-        docsUrl: "https://developer.spotify.com/dashboard"
-      },
-      {
-        key: "spotify_client_secret",
-        label: "Spotify Client Secret",
-        description: "Client Secret de la aplicación de Spotify.",
-        type: "api_key",
-        placeholder: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        isSecret: true
-      },
       {
         key: "elevenlabs_api_key",
         label: "ElevenLabs API Key",

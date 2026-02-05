@@ -42,9 +42,6 @@ verify_jwt = true
 [functions.bunny-delete]
 verify_jwt = true
 
-[functions.spotify-search]
-verify_jwt = false
-
 [functions.security-check]
 verify_jwt = false
 
