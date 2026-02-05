@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Building2, Users, Link2, Mail, User, Camera, Globe } from 'lucide-react';
+import { Building2, Users, Link2, Mail, User, Camera, Globe, Store, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StepProps, RegistrationMode } from '../types';
 
@@ -16,13 +16,22 @@ const accessOptions: AccessOption[] = [
   {
     id: 'create_org',
     icon: Building2,
-    title: 'Crear una Organización',
-    description: 'Agencia, empresa o comunidad con tu propio equipo',
+    title: 'Soy una Organización',
+    description: 'Agencia o comunidad que gestiona equipos de trabajo',
     badge: '30 días gratis',
     subOptions: [
       { id: 'agency', icon: Users, label: 'Agencia' },
-      { id: 'brand', icon: Building2, label: 'Empresa' },
       { id: 'community', icon: Globe, label: 'Comunidad' },
+    ]
+  },
+  {
+    id: 'brand',
+    icon: Store,
+    title: 'Soy una Marca / Empresa',
+    description: 'Busco creadores y editores para mi marca',
+    subOptions: [
+      { id: 'hire', icon: Briefcase, label: 'Contratar talento' },
+      { id: 'content', icon: Camera, label: 'Crear contenido' },
     ]
   },
   {
@@ -38,8 +47,8 @@ const accessOptions: AccessOption[] = [
   {
     id: 'individual',
     icon: User,
-    title: 'Usar KREOON como Creador / Editor',
-    description: 'Portafolio personal y acceso a la red social',
+    title: 'Soy Creador / Editor',
+    description: 'Portafolio personal y acceso a oportunidades',
     subOptions: [
       { id: 'portfolio', icon: Camera, label: 'Portafolio personal' },
       { id: 'social', icon: Globe, label: 'Red social' },

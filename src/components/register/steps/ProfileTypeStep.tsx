@@ -19,12 +19,6 @@ const orgTypes: ProfileOption[] = [
     description: 'Gestiono creadores y campañas para clientes'
   },
   {
-    id: 'brand',
-    icon: Store,
-    title: 'Empresa / Marca',
-    description: 'Creo contenido para mi propia marca'
-  },
-  {
     id: 'community',
     icon: Users,
     title: 'Comunidad',

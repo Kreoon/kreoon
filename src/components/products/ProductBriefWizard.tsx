@@ -32,6 +32,7 @@ import {
   ChevronDown,
   RotateCcw,
   Save,
+  Film,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { invokeProductResearch } from '@/lib/productResearch';
@@ -113,9 +114,21 @@ interface BriefData {
   // Document URL for additional context
   documentUrl: string;
 
+  // Section 7: Video Distribution (Método ESFERA)
+  creativesCount: number;
+  phaseDistribution: PhaseDistribution;
+
   // AI-enhanced fields
   aiSuggestedAngles: string[];
   aiSuggestedHooks: string[];
+}
+
+// Esfera phase distribution
+interface PhaseDistribution {
+  engage: number;
+  solution: number;
+  remarketing: number;
+  fidelize: number;
 }
 
 interface ProductBriefWizardProps {
@@ -132,7 +145,184 @@ const STEPS = [
   { id: 'neuro', title: 'Neuromarketing', description: 'Los 3 cerebros', icon: Brain },
   { id: 'audience', title: 'Avatar', description: 'Cliente ideal', icon: Users },
   { id: 'content', title: 'Contenido', description: 'Estrategia y plataformas', icon: Megaphone },
+  { id: 'videos', title: 'Videos', description: 'Crear nuevos proyectos', icon: Film },
 ];
+
+// Esfera phases configuration
+const ESFERA_PHASES = [
+  {
+    key: 'engage' as const,
+    label: 'ENGANCHAR',
+    icon: '⚡',
+    color: 'bg-cyan-100 dark:bg-cyan-900 border-cyan-300 dark:border-cyan-700',
+    textColor: 'text-cyan-700 dark:text-cyan-300',
+    description: 'Captar atención de audiencia fría',
+    audience: '❄️ Audiencia FRÍA',
+    metaCampaign: 'RECONOCIMIENTO o ALCANCE',
+    contentExamples: 'Hooks impactantes, problemas visibles, patrones rotos',
+  },
+  {
+    key: 'solution' as const,
+    label: 'SOLUCIÓN',
+    icon: '💡',
+    color: 'bg-emerald-100 dark:bg-emerald-900 border-emerald-300 dark:border-emerald-700',
+    textColor: 'text-emerald-700 dark:text-emerald-300',
+    description: 'Mostrar tu producto como LA solución',
+    audience: '🔥 Audiencia TIBIA',
+    metaCampaign: 'VENTAS o CONVERSIONES',
+    contentExamples: 'Demostraciones, beneficios claros, ofertas',
+  },
+  {
+    key: 'remarketing' as const,
+    label: 'REMARKETING',
+    icon: '🔄',
+    color: 'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700',
+    textColor: 'text-amber-700 dark:text-amber-300',
+    description: 'Recuperar a quienes no compraron',
+    audience: '🔥🔥 Audiencia CALIENTE',
+    metaCampaign: 'RETARGETING',
+    contentExamples: 'Testimonios, garantías, urgencia',
+  },
+  {
+    key: 'fidelize' as const,
+    label: 'FIDELIZAR',
+    icon: '💎',
+    color: 'bg-purple-100 dark:bg-purple-900 border-purple-300 dark:border-purple-700',
+    textColor: 'text-purple-700 dark:text-purple-300',
+    description: 'Que vuelvan a comprar y te recomienden',
+    audience: '💰 CLIENTES',
+    metaCampaign: 'ENGAGEMENT de clientes',
+    contentExamples: 'Tips exclusivos, nuevos productos, upsells',
+  },
+];
+
+// Default phase distribution
+const DEFAULT_PHASE_DISTRIBUTION: PhaseDistribution = {
+  engage: 0,
+  solution: 0,
+  remarketing: 0,
+  fidelize: 0,
+};
+
+// Phase defaults for prefilling content items
+const PHASE_DEFAULTS: Record<string, {
+  defaultCTA: string;
+  funnelStage: string;
+  objective: string;
+  techniques: string[];
+  tone: string;
+}> = {
+  engage: {
+    defaultCTA: 'Sígueme para más tips',
+    funnelStage: 'tofu',
+    objective: 'Captar atención y generar awareness',
+    techniques: ['Hook disruptivo', 'Pattern interrupt', 'Curiosidad'],
+    tone: 'Disruptivo, viral, llamativo',
+  },
+  solution: {
+    defaultCTA: 'Link en la bio',
+    funnelStage: 'mofu',
+    objective: 'Demostrar valor y generar interés',
+    techniques: ['Demostración', 'Beneficios claros', 'Testimonios'],
+    tone: 'Persuasivo, confiado, directo',
+  },
+  remarketing: {
+    defaultCTA: 'Aprovecha ahora',
+    funnelStage: 'bofu',
+    objective: 'Superar objeciones y cerrar venta',
+    techniques: ['Objeciones', 'Garantías', 'Escasez'],
+    tone: 'Urgente, resolutivo, confiable',
+  },
+  fidelize: {
+    defaultCTA: 'Comparte con alguien',
+    funnelStage: 'post',
+    objective: 'Aumentar LTV y generar referidos',
+    techniques: ['Comunidad', 'Exclusividad', 'Behind scenes'],
+    tone: 'Cercano, exclusivo, agradecido',
+  },
+};
+
+// Labels for reptile brain triggers
+const REPTILE_LABELS: Record<string, string> = {
+  survival: 'Supervivencia / Seguridad',
+  reproduction: 'Atracción / Seducción',
+  power: 'Poder / Estatus',
+  scarcity: 'Escasez / Urgencia',
+  territory: 'Territorio / Pertenencia',
+  food: 'Placer / Recompensa',
+};
+
+// Labels for limbic emotions
+const LIMBIC_LABELS: Record<string, string> = {
+  happiness: 'Felicidad',
+  confidence: 'Confianza',
+  freedom: 'Libertad',
+  peace: 'Paz / Tranquilidad',
+  pride: 'Orgullo',
+  love: 'Amor / Conexión',
+  excitement: 'Emoción / Aventura',
+  hope: 'Esperanza',
+  belonging: 'Pertenencia',
+  relief: 'Alivio',
+};
+
+// Build strategist guidelines from brief data
+function buildStrategistGuidelines(
+  briefData: BriefData,
+  phase: typeof ESFERA_PHASES[number]
+): string {
+  const phaseDefaults = PHASE_DEFAULTS[phase.key];
+
+  // Map reptile brain values to labels
+  const reptileLabels = briefData.reptileBrain
+    .map(v => REPTILE_LABELS[v] || v)
+    .join(', ') || 'No especificado';
+
+  // Map limbic brain values to labels
+  const limbicLabels = briefData.limbicBrain
+    .map(v => LIMBIC_LABELS[v] || v)
+    .join(', ') || 'No especificado';
+
+  return `## Fase: ${phase.label}
+**Objetivo:** ${phaseDefaults.objective}
+**Audiencia:** ${phase.audience}
+**Campaña Meta sugerida:** ${phase.metaCampaign}
+
+### Contexto del Producto
+- **Nombre:** ${briefData.productName}
+- **Categoría:** ${briefData.category}
+- **Slogan:** ${briefData.slogan}
+- **Beneficio principal:** ${briefData.mainBenefit}
+- **Transformación:** ${briefData.transformation}
+- **Diferenciador:** ${briefData.differentiator}
+
+### Problema que Resuelve
+- **Problema:** ${briefData.problemSolved}
+- **Deseo principal:** ${briefData.mainDesire}
+- **Consecuencia de no comprar:** ${briefData.consequenceOfNotBuying}
+
+### Neuromarketing
+- **Cerebro Reptil:** ${reptileLabels}
+- **Cerebro Límbico:** ${limbicLabels}
+- **Justificación Racional:** ${briefData.cortexBrain}
+
+### Avatar del Cliente
+- **Género:** ${briefData.targetGender === 'female' ? 'Mujeres' : briefData.targetGender === 'male' ? 'Hombres' : 'Ambos'}
+- **Edad:** ${briefData.targetAgeRange.join(', ')}
+- **Ocupación:** ${briefData.targetOccupation}
+- **Intereses:** ${briefData.targetInterests.join(', ')}
+- **Objeciones comunes:** ${briefData.commonObjections.join(', ')}
+
+### Dirección Estratégica para esta Fase
+- **Tono recomendado:** ${phaseDefaults.tone}
+- **Técnicas sugeridas:** ${phaseDefaults.techniques.join(', ')}
+- **CTA sugerido:** ${phaseDefaults.defaultCTA}
+- **Etapa del embudo:** ${phaseDefaults.funnelStage.toUpperCase()}
+
+### Ejemplos de contenido para esta fase
+${phase.contentExamples}
+`.trim();
+}
 
 const CATEGORIES = [
   'Educación / Cursos Online',
@@ -322,6 +512,9 @@ const DEFAULT_BRIEF: BriefData = {
   budgetRange: '',
   // Document
   documentUrl: '',
+  // Video Distribution
+  creativesCount: 0,
+  phaseDistribution: DEFAULT_PHASE_DISTRIBUTION,
   aiSuggestedAngles: [],
   aiSuggestedHooks: [],
 };
@@ -334,6 +527,7 @@ export function ProductBriefWizard({
 }: ProductBriefWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCreatingContent, setIsCreatingContent] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
@@ -461,6 +655,9 @@ export function ProductBriefWizard({
           briefData.brandStrengths.trim() &&
           briefData.expectedResult.trim()
         );
+      case 6:
+        // Videos step is optional - always complete
+        return true;
       default:
         return false;
     }
@@ -643,6 +840,94 @@ Escribe 1-2 frases de complemento para agregar al final.`
         .eq('id', productId);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // Create content items based on phase distribution
+  const handleCreateContentItems = async () => {
+    const totalVideos = Object.values(briefData.phaseDistribution).reduce((a, b) => a + b, 0);
+    if (totalVideos === 0) {
+      toast.error('Selecciona al menos un video para crear');
+      return;
+    }
+
+    setIsCreatingContent(true);
+    try {
+      // Get product info to find client and organization
+      const { data: productData, error: productError } = await supabase
+        .from('products')
+        .select('client_id, clients(organization_id)')
+        .eq('id', productId)
+        .single();
+
+      if (productError) throw productError;
+
+      const clientId = productData?.client_id;
+      const organizationId = (productData?.clients as any)?.organization_id || null;
+
+      // Build content items array
+      const contentItems: Array<{
+        title: string;
+        client_id: string | null;
+        product_id: string;
+        status: 'draft';
+        organization_id: string | null;
+        sphere_phase: string;
+        funnel_stage: string;
+        content_objective: string;
+        cta: string;
+        hooks_count: number;
+        target_platform: string;
+        description: string;
+        strategist_guidelines: string;
+      }> = [];
+
+      // For each phase with videos, create content items
+      for (const phase of ESFERA_PHASES) {
+        const count = briefData.phaseDistribution[phase.key] || 0;
+        const phaseDefaults = PHASE_DEFAULTS[phase.key];
+
+        for (let i = 0; i < count; i++) {
+          contentItems.push({
+            title: `${briefData.productName} - ${phase.label} ${i + 1}`,
+            client_id: clientId,
+            product_id: productId,
+            status: 'draft' as const,
+            organization_id: organizationId,
+            sphere_phase: phase.key,
+            funnel_stage: phaseDefaults.funnelStage,
+            content_objective: phaseDefaults.objective,
+            cta: phaseDefaults.defaultCTA,
+            hooks_count: 3,
+            target_platform: briefData.platforms[0] || 'instagram',
+            description: `Contenido para fase ${phase.label}: ${phase.description}. Objetivo: ${briefData.currentObjective}. Audiencia: ${phase.audience}.`,
+            strategist_guidelines: buildStrategistGuidelines(briefData, phase),
+          });
+        }
+      }
+
+      // Insert all content items
+      const { error: insertError } = await supabase
+        .from('content')
+        .insert(contentItems);
+
+      if (insertError) throw insertError;
+
+      toast.success(`¡${contentItems.length} proyectos creados!`, {
+        description: 'Los proyectos están listos para generar guiones con 1 clic.',
+      });
+
+      // Reset phase distribution after creation
+      updateField('phaseDistribution', DEFAULT_PHASE_DISTRIBUTION);
+
+      onComplete();
+    } catch (error) {
+      console.error('Error creating content items:', error);
+      toast.error('Error al crear los proyectos', {
+        description: error instanceof Error ? error.message : 'Intenta de nuevo',
+      });
+    } finally {
+      setIsCreatingContent(false);
     }
   };
 
@@ -1510,6 +1795,133 @@ Escribe 1-2 frases de complemento para agregar al final.`
           </div>
         );
 
+      case 6: // Videos - Phase Distribution
+        return (
+          <div className="space-y-6">
+            {/* Phase Distribution Info */}
+            <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
+              <div className="flex items-start gap-3">
+                <Film className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium text-primary">Distribución por Fases ESFERA</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Distribuye tus videos según la etapa del embudo de ventas.
+                    Cada fase tiene un objetivo específico para mover a tu audiencia hacia la compra.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Phase Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {ESFERA_PHASES.map((phase) => {
+                const count = briefData.phaseDistribution[phase.key] || 0;
+                const phaseDefaults = PHASE_DEFAULTS[phase.key];
+
+                return (
+                  <Card key={phase.key} className={`${phase.color} border-2 transition-all`}>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className={`text-base flex items-center gap-2 ${phase.textColor}`}>
+                          <span className="text-xl">{phase.icon}</span>
+                          {phase.label}
+                        </CardTitle>
+                        <Badge variant="secondary" className="font-mono">
+                          {phaseDefaults.funnelStage.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <CardDescription className="text-xs">
+                        {phase.audience} • {phase.metaCampaign}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-xs text-muted-foreground">{phase.description}</p>
+
+                      {/* Counter */}
+                      <div className="flex items-center justify-center gap-4 py-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-full"
+                          onClick={() => {
+                            if (count > 0) {
+                              updateField('phaseDistribution', {
+                                ...briefData.phaseDistribution,
+                                [phase.key]: count - 1,
+                              });
+                            }
+                          }}
+                          disabled={count <= 0}
+                        >
+                          <span className="text-lg font-bold">−</span>
+                        </Button>
+                        <span className="text-2xl font-bold min-w-[40px] text-center">{count}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 rounded-full"
+                          onClick={() => {
+                            updateField('phaseDistribution', {
+                              ...briefData.phaseDistribution,
+                              [phase.key]: count + 1,
+                            });
+                          }}
+                        >
+                          <span className="text-lg font-bold">+</span>
+                        </Button>
+                      </div>
+
+                      {/* Phase details */}
+                      <div className="text-xs space-y-1 pt-2 border-t">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Técnicas:</span>
+                          <span className="font-medium">{phaseDefaults.techniques[0]}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">CTA:</span>
+                          <span className="font-medium">{phaseDefaults.defaultCTA}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Summary */}
+            {(() => {
+              const totalVideos = Object.values(briefData.phaseDistribution).reduce((a, b) => a + b, 0);
+              return totalVideos > 0 ? (
+                <Card className="bg-muted/50">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Total de proyectos a crear: {totalVideos}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {ESFERA_PHASES.map(p => {
+                            const c = briefData.phaseDistribution[p.key] || 0;
+                            return c > 0 ? `${p.icon} ${c}` : null;
+                          }).filter(Boolean).join(' • ')}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-primary">
+                        Prellenado con guión
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Los proyectos se crearán con los datos del brief para generar guiones con 1 clic.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">Selecciona cuántos videos crear por cada fase</p>
+                </div>
+              );
+            })()}
+          </div>
+        );
+
       default:
         return null;
     }
@@ -1603,9 +2015,39 @@ Escribe 1-2 frases de complemento para agregar al final.`
             Siguiente <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         ) : (
-          <Button onClick={handleGenerateResearch} disabled={isGenerating || !isStepComplete(0) || !isStepComplete(1) || !isStepComplete(2)} className="gap-2">
-            {isGenerating ? <><Loader2 className="h-4 w-4 animate-spin" /> Generando...</> : <><Sparkles className="h-4 w-4" /> Generar Investigación con IA</>}
-          </Button>
+          <div className="flex gap-2">
+            {/* Create content items button (only on Videos step with videos selected) */}
+            {(() => {
+              const totalVideos = Object.values(briefData.phaseDistribution).reduce((a, b) => a + b, 0);
+              return totalVideos > 0 && (
+                <Button
+                  onClick={handleCreateContentItems}
+                  disabled={isCreatingContent}
+                  variant="default"
+                  className="gap-2"
+                >
+                  {isCreatingContent ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Creando...</>
+                  ) : (
+                    <><Film className="h-4 w-4" /> Crear {totalVideos} Proyectos</>
+                  )}
+                </Button>
+              );
+            })()}
+            {/* Generate research button */}
+            <Button
+              onClick={handleGenerateResearch}
+              disabled={isGenerating || !isStepComplete(0) || !isStepComplete(1) || !isStepComplete(2)}
+              variant={Object.values(briefData.phaseDistribution).reduce((a, b) => a + b, 0) > 0 ? 'outline' : 'default'}
+              className="gap-2"
+            >
+              {isGenerating ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Generando...</>
+              ) : (
+                <><Sparkles className="h-4 w-4" /> Generar Investigación</>
+              )}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -1620,6 +2062,23 @@ Escribe 1-2 frases de complemento para agregar al final.`
               <div>
                 <p className="font-medium">Investigando con Perplexity...</p>
                 <p className="text-sm text-muted-foreground">Analizando mercado, competencia y generando avatares estratégicos. Esto puede tomar 1-2 minutos.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isCreatingContent && (
+        <Card className="border-emerald-500/50 bg-emerald-500/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+                <Film className="h-4 w-4 text-emerald-500 absolute -top-1 -right-1 animate-pulse" />
+              </div>
+              <div>
+                <p className="font-medium">Creando proyectos...</p>
+                <p className="text-sm text-muted-foreground">Configurando proyectos con datos del guionizador prellenados.</p>
               </div>
             </div>
           </CardContent>

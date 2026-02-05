@@ -78,6 +78,7 @@ export function RegistrationWizard() {
   // Determine which steps to show based on registration mode
   const getSteps = () => {
     const isOrgFlow = data.registrationMode === 'create_org';
+    const isBrandFlow = data.registrationMode === 'brand';
     const isJoinFlow = data.registrationMode === 'join_org';
     const isIndividualFlow = data.registrationMode === 'individual';
 
@@ -87,6 +88,16 @@ export function RegistrationWizard() {
         { label: 'Perfil', component: ProfileTypeStep },
         { label: 'Datos', component: BasicDataStep },
         { label: 'Plan', component: PlanSelectionStep },
+        { label: 'Talento', component: TalentAccessStep },
+        { label: 'Confirmar', component: ConfirmationStep },
+      ];
+    }
+
+    if (isBrandFlow) {
+      // Brands/Companies looking for talent - simpler flow
+      return [
+        { label: 'Tipo', component: AccessTypeStep },
+        { label: 'Datos', component: BasicDataStep },
         { label: 'Talento', component: TalentAccessStep },
         { label: 'Confirmar', component: ConfirmationStep },
       ];

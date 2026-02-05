@@ -1,5 +1,5 @@
-export type RegistrationMode = 'create_org' | 'join_org' | 'individual';
-export type OrganizationType = 'agency' | 'brand' | 'community';
+export type RegistrationMode = 'create_org' | 'join_org' | 'individual' | 'brand';
+export type OrganizationType = 'agency' | 'community';
 export type UserRolePrimary = 'creator' | 'editor' | 'both';
 
 export interface RegistrationData {

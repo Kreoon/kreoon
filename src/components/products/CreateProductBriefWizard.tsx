@@ -45,36 +45,50 @@ interface PhaseDistribution {
   fidelize: number;
 }
 
-// Comprehensive brief data structure
+// Comprehensive brief data structure (unified with ProductBriefWizard)
 interface BriefData {
   // Section 0: Business Type
   businessType: 'product_service' | 'personal_brand';
-  
+
   // Section 1: Product Basics
   productName: string;
   category: string;
   customCategory: string;
   currentObjective: string;
   slogan: string;
-  
+  targetMarket: string; // Country/Region for competition analysis
+
   // Section 2: Value & Transformation
   mainBenefit: string;
   transformation: string;
   differentiator: string;
   keyIngredients: string;
   mustCommunicate: string;
-  
+
+  // Section 2.5: Product Details (NEW)
+  priceRange: string;
+  deliveryMethod: string;
+  productFormat: string;
+  guarantees: string;
+  socialProof: string;
+  yearsInMarket: string;
+  successStories: string;
+
   // Section 3: Problem & Desire
   problemSolved: string;
   mainDesire: string;
   consequenceOfNotBuying: string;
   competitiveAdvantage: string;
-  
+  // Deeper problem understanding
+  rootCause: string;
+  failedSolutions: string;
+  urgencyLevel: string;
+
   // Section 4: Neuromarketing
   reptileBrain: string[];
   limbicBrain: string[];
   cortexBrain: string;
-  
+
   // Section 5: Target Audience
   targetGender: string;
   targetAgeRange: string[];
@@ -84,7 +98,12 @@ interface BriefData {
   commonObjections: string[];
   customObjections: string;
   idealScenario: string;
-  
+  // Deeper audience understanding
+  buyingPower: string;
+  decisionInfluencers: string;
+  informationSources: string;
+  purchaseTriggers: string;
+
   // Section 6: Content Strategy
   contentTypes: string[];
   platforms: string[];
@@ -96,7 +115,14 @@ interface BriefData {
   additionalNotes: string;
   creativesCount: number;
   phaseDistribution: PhaseDistribution;
-  
+  // Content strategy details
+  brandVoice: string;
+  competitorContent: string;
+  budgetRange: string;
+
+  // Document URL for additional context
+  documentUrl: string;
+
   // AI-enhanced fields
   aiSuggestedAngles: string[];
   aiSuggestedHooks: string[];
@@ -157,6 +183,126 @@ const ESFERA_PHASES = [
     objective: 'Métricas clave: LTV, Recompra, Referidos, Engagement',
   },
 ];
+
+// Defaults for prefilling content items per phase
+const PHASE_DEFAULTS: Record<string, {
+  defaultCTA: string;
+  funnelStage: string;
+  objective: string;
+  techniques: string[];
+  tone: string;
+}> = {
+  engage: {
+    defaultCTA: 'Sígueme para más tips',
+    funnelStage: 'tofu',
+    objective: 'Captar atención y generar awareness',
+    techniques: ['Hook disruptivo', 'Pattern interrupt', 'Curiosidad'],
+    tone: 'Disruptivo, viral, llamativo',
+  },
+  solution: {
+    defaultCTA: 'Link en la bio',
+    funnelStage: 'mofu',
+    objective: 'Demostrar valor y generar interés',
+    techniques: ['Demostración', 'Beneficios claros', 'Testimonios'],
+    tone: 'Persuasivo, confiado, directo',
+  },
+  remarketing: {
+    defaultCTA: 'Aprovecha ahora',
+    funnelStage: 'bofu',
+    objective: 'Superar objeciones y cerrar venta',
+    techniques: ['Objeciones', 'Garantías', 'Escasez'],
+    tone: 'Urgente, resolutivo, confiable',
+  },
+  fidelize: {
+    defaultCTA: 'Comparte con alguien',
+    funnelStage: 'post',
+    objective: 'Aumentar LTV y generar referidos',
+    techniques: ['Comunidad', 'Exclusividad', 'Behind scenes'],
+    tone: 'Cercano, exclusivo, agradecido',
+  },
+};
+
+// Function to build strategist guidelines based on brief data and phase
+function buildStrategistGuidelines(
+  briefData: BriefData,
+  phase: typeof ESFERA_PHASES[number]
+): string {
+  const phaseDefaults = PHASE_DEFAULTS[phase.key];
+
+  // Map reptile brain values to labels
+  const reptileLabels: Record<string, string> = {
+    survival: 'Seguridad/Supervivencia',
+    reproduction: 'Atracción/Verse bien',
+    power: 'Éxito/Reconocimiento',
+    scarcity: 'No perderse nada (FOMO)',
+    territory: 'Pertenecer a un grupo',
+    food: 'Placer/Recompensa',
+  };
+
+  // Map limbic brain values to labels
+  const limbicLabels: Record<string, string> = {
+    happiness: 'Felicidad',
+    confidence: 'Confianza',
+    freedom: 'Libertad',
+    peace: 'Paz/Tranquilidad',
+    pride: 'Orgullo',
+    love: 'Amor/Conexión',
+    excitement: 'Emoción/Aventura',
+    hope: 'Esperanza',
+    belonging: 'Pertenencia',
+    relief: 'Alivio',
+  };
+
+  const reptileText = briefData.reptileBrain
+    .map(v => reptileLabels[v] || v)
+    .join(', ') || 'No especificado';
+
+  const limbicText = briefData.limbicBrain
+    .map(v => limbicLabels[v] || v)
+    .join(', ') || 'No especificado';
+
+  return `## Fase: ${phase.label}
+**Objetivo:** ${phaseDefaults.objective}
+**Audiencia:** ${phase.audience}
+**Tono recomendado:** ${phaseDefaults.tone}
+
+### Contexto del Producto
+- **Nombre:** ${briefData.productName}
+- **Categoría:** ${briefData.category}
+- **Objetivo actual:** ${briefData.currentObjective}
+- **Slogan:** ${briefData.slogan}
+
+### Propuesta de Valor
+- **Beneficio principal:** ${briefData.mainBenefit}
+- **Transformación:** ${briefData.transformation}
+- **Diferenciador:** ${briefData.differentiator}
+
+### Problema y Deseo
+- **Problema que resuelve:** ${briefData.problemSolved}
+- **Deseo principal:** ${briefData.mainDesire}
+- **Consecuencia de no comprar:** ${briefData.consequenceOfNotBuying}
+
+### Neuromarketing
+- **Cerebro Reptil (instinto):** ${reptileText}
+- **Cerebro Límbico (emoción):** ${limbicText}
+- **Cerebro Córtex (lógica):** ${briefData.cortexBrain || 'No especificado'}
+
+### Avatar del Cliente
+- **Género:** ${briefData.targetGender || 'No especificado'}
+- **Edad:** ${briefData.targetAgeRange.join(', ') || 'No especificado'}
+- **Ocupación:** ${briefData.targetOccupation || 'No especificado'}
+- **Intereses:** ${briefData.targetInterests.join(', ') || 'No especificado'}
+
+### Objeciones a Superar
+${briefData.commonObjections.map(o => `- ${o}`).join('\n') || '- No especificadas'}
+
+### Dirección Estratégica para esta Fase
+- **Técnicas recomendadas:** ${phaseDefaults.techniques.join(', ')}
+- **CTA sugerido:** ${phaseDefaults.defaultCTA}
+- **Tipo de campaña Meta:** ${phase.metaCampaign}
+- **Ejemplos de contenido:** ${phase.contentExamples}
+`.trim();
+}
 
 interface ClientPackage {
   id: string;
@@ -290,6 +436,21 @@ const INTERESTS = [
   'Espiritualidad',
 ];
 
+const TARGET_MARKETS = [
+  'México',
+  'Colombia',
+  'Argentina',
+  'España',
+  'Chile',
+  'Perú',
+  'Estados Unidos (Hispano)',
+  'Latinoamérica (LATAM)',
+  'Centroamérica',
+  'Sudamérica',
+  'Europa (Hispano)',
+  'Global (Español)',
+];
+
 const DEFAULT_PHASE_DISTRIBUTION: PhaseDistribution = {
   engage: 0,
   solution: 0,
@@ -304,18 +465,33 @@ const DEFAULT_BRIEF: BriefData = {
   customCategory: '',
   currentObjective: '',
   slogan: '',
+  targetMarket: '',
   mainBenefit: '',
   transformation: '',
   differentiator: '',
   keyIngredients: '',
   mustCommunicate: '',
+  // Product Details
+  priceRange: '',
+  deliveryMethod: '',
+  productFormat: '',
+  guarantees: '',
+  socialProof: '',
+  yearsInMarket: '',
+  successStories: '',
+  // Problem & Desire
   problemSolved: '',
   mainDesire: '',
   consequenceOfNotBuying: '',
   competitiveAdvantage: '',
+  rootCause: '',
+  failedSolutions: '',
+  urgencyLevel: '',
+  // Neuromarketing
   reptileBrain: [],
   limbicBrain: [],
   cortexBrain: '',
+  // Target Audience
   targetGender: '',
   targetAgeRange: [],
   targetOccupation: '',
@@ -324,6 +500,11 @@ const DEFAULT_BRIEF: BriefData = {
   commonObjections: [],
   customObjections: '',
   idealScenario: '',
+  buyingPower: '',
+  decisionInfluencers: '',
+  informationSources: '',
+  purchaseTriggers: '',
+  // Content Strategy
   contentTypes: [],
   platforms: [],
   useForAds: '',
@@ -334,6 +515,11 @@ const DEFAULT_BRIEF: BriefData = {
   additionalNotes: '',
   creativesCount: 0,
   phaseDistribution: DEFAULT_PHASE_DISTRIBUTION,
+  brandVoice: '',
+  competitorContent: '',
+  budgetRange: '',
+  // Document
+  documentUrl: '',
   aiSuggestedAngles: [],
   aiSuggestedHooks: [],
 };
@@ -719,19 +905,35 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
       if (totalFromPhases > 0) {
         const contentItems: any[] = [];
 
-        // Create content items for each phase
+        // Create content items for each phase with prefilled guionizador data
         ESFERA_PHASES.forEach((phase) => {
           const count = briefData.phaseDistribution[phase.key];
+          const phaseDefaults = PHASE_DEFAULTS[phase.key];
+
           for (let i = 0; i < count; i++) {
             contentItems.push({
+              // Basic info
               title: `${briefData.productName} - ${phase.label} ${i + 1}`,
               client_id: clientId,
               product_id: newProduct.id,
               status: 'draft' as const,
               organization_id: clientData?.organization_id || null,
-              description: `Contenido para fase ${phase.label}: ${phase.description}. Objetivo: ${briefData.currentObjective}`,
-              target_platform: briefData.platforms[0] || null,
+
+              // Sphere phase
               sphere_phase: phase.key,
+              funnel_stage: phaseDefaults.funnelStage,
+              content_objective: phaseDefaults.objective,
+
+              // Guionizador prefilled fields
+              cta: phaseDefaults.defaultCTA,
+              hooks_count: 3,
+              target_platform: briefData.platforms[0] || 'instagram',
+
+              // Description with context
+              description: `Contenido para fase ${phase.label}: ${phase.description}.\n\nObjetivo: ${briefData.currentObjective}\nTécnicas: ${phaseDefaults.techniques.join(', ')}\nTono: ${phaseDefaults.tone}`,
+
+              // Strategist guidelines generated from brief
+              strategist_guidelines: buildStrategistGuidelines(briefData, phase),
             });
           }
         });
@@ -938,8 +1140,8 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
             <div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="slogan">
-                  {briefData.businessType === 'personal_brand' 
-                    ? '¿Tienes una frase que te represente? *' 
+                  {briefData.businessType === 'personal_brand'
+                    ? '¿Tienes una frase que te represente? *'
                     : '¿Tienes una frase que represente tu producto? *'}
                 </Label>
                 {renderEnhanceButton('slogan')}
@@ -955,6 +1157,42 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                 className="mt-1"
                 rows={2}
               />
+            </div>
+
+            <div>
+              <Label>¿En qué mercado/región vendes principalmente?</Label>
+              <p className="text-xs text-muted-foreground mb-1">
+                Esto enfoca el análisis de competencia en tu mercado objetivo
+              </p>
+              <Select value={briefData.targetMarket} onValueChange={(v) => updateField('targetMarket', v)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Selecciona el mercado objetivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TARGET_MARKETS.map(market => (
+                    <SelectItem key={market} value={market}>{market}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Document Upload for additional context */}
+            <div className="p-4 bg-muted/30 rounded-lg border border-dashed">
+              <div className="flex items-center gap-2 mb-2">
+                <Package className="h-4 w-4 text-primary" />
+                <Label>Documento del producto (Opcional)</Label>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">
+                Sube un documento con información adicional del producto. La IA lo leerá para enriquecer la investigación.
+              </p>
+              <Input
+                value={briefData.documentUrl || ''}
+                onChange={(e) => updateField('documentUrl', e.target.value)}
+                placeholder="https://drive.google.com/... o URL del documento"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Formatos soportados: PDF, Google Docs, archivos de texto.
+              </p>
             </div>
           </div>
         );
@@ -1041,6 +1279,91 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                 rows={2}
               />
             </div>
+
+            {/* Product Details Section */}
+            <div className="pt-4 border-t">
+              <p className="text-sm font-medium text-primary mb-4">Detalles del Producto/Servicio (opcional pero útil)</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Rango de precio</Label>
+                  <Input
+                    value={briefData.priceRange || ''}
+                    onChange={(e) => updateField('priceRange', e.target.value)}
+                    placeholder="Ej: $197-$497 USD, $50/mes"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label>¿Cuánto tiempo llevas en el mercado?</Label>
+                  <Select value={briefData.yearsInMarket || ''} onValueChange={(v) => updateField('yearsInMarket', v)}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Selecciona" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="nuevo">Nuevo (menos de 1 año)</SelectItem>
+                      <SelectItem value="1-3">1-3 años</SelectItem>
+                      <SelectItem value="3-5">3-5 años</SelectItem>
+                      <SelectItem value="5+">Más de 5 años</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <Label>¿Cómo se entrega el producto/servicio?</Label>
+                <Input
+                  value={briefData.deliveryMethod || ''}
+                  onChange={(e) => updateField('deliveryMethod', e.target.value)}
+                  placeholder="Ej: Plataforma online, sesiones 1:1, envío físico, descarga digital..."
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="mt-4">
+                <Label>¿Qué formato tiene? (para servicios: estructura)</Label>
+                <Textarea
+                  value={briefData.productFormat || ''}
+                  onChange={(e) => updateField('productFormat', e.target.value)}
+                  placeholder="Ej: 8 módulos + 12 sesiones grupales + comunidad privada"
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+
+              <div className="mt-4">
+                <Label>¿Qué garantías ofreces?</Label>
+                <Input
+                  value={briefData.guarantees || ''}
+                  onChange={(e) => updateField('guarantees', e.target.value)}
+                  placeholder="Ej: 30 días de devolución, garantía de resultados..."
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="mt-4">
+                <Label>Prueba social existente (testimonios, casos de éxito, números)</Label>
+                <Textarea
+                  value={briefData.socialProof || ''}
+                  onChange={(e) => updateField('socialProof', e.target.value)}
+                  placeholder="Ej: +500 alumnos, 4.8 estrellas, testimonios de expertos..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+
+              <div className="mt-4">
+                <Label>Casos de éxito o transformaciones reales</Label>
+                <Textarea
+                  value={briefData.successStories || ''}
+                  onChange={(e) => updateField('successStories', e.target.value)}
+                  placeholder="Ej: Juan pasó de $2K a $15K/mes en 3 meses usando el método..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+            </div>
           </div>
         );
 
@@ -1109,6 +1432,48 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                 className="mt-1"
                 rows={2}
               />
+            </div>
+
+            {/* Deeper Problem Understanding */}
+            <div className="pt-4 border-t">
+              <p className="text-sm font-medium text-primary mb-4">Profundizando en el problema (opcional pero muy útil)</p>
+
+              <div>
+                <Label>¿Cuál es la RAÍZ del problema? (no el síntoma)</Label>
+                <Textarea
+                  value={briefData.rootCause || ''}
+                  onChange={(e) => updateField('rootCause', e.target.value)}
+                  placeholder="Ej: No es que no tengan tiempo, es que no saben priorizar. No es que no vendan, es que no tienen un sistema..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+
+              <div className="mt-4">
+                <Label>¿Qué soluciones han INTENTADO antes y por qué fallaron?</Label>
+                <Textarea
+                  value={briefData.failedSolutions || ''}
+                  onChange={(e) => updateField('failedSolutions', e.target.value)}
+                  placeholder="Ej: Cursos genéricos (no personalizados), coaches sin experiencia real, apps que no dan seguimiento..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+
+              <div className="mt-4">
+                <Label>¿Qué tan URGENTE es resolver este problema para el cliente?</Label>
+                <Select value={briefData.urgencyLevel || ''} onValueChange={(v) => updateField('urgencyLevel', v)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Nivel de urgencia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="critical">Crítico - Les está costando dinero/salud/relaciones ahora</SelectItem>
+                    <SelectItem value="high">Alto - Lo necesitan resolver pronto</SelectItem>
+                    <SelectItem value="medium">Medio - Les gustaría resolverlo pero no es urgente</SelectItem>
+                    <SelectItem value="low">Bajo - Es un "nice to have"</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         );
@@ -1301,6 +1666,59 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                 rows={2}
               />
             </div>
+
+            {/* Deeper Audience Understanding */}
+            <div className="pt-4 border-t">
+              <p className="text-sm font-medium text-primary mb-4">Comportamiento de compra (opcional)</p>
+
+              <div>
+                <Label>Capacidad de pago del cliente ideal</Label>
+                <Select value={briefData.buyingPower || ''} onValueChange={(v) => updateField('buyingPower', v)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecciona" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Bajo - Buscan lo más económico</SelectItem>
+                    <SelectItem value="medium">Medio - Invierten si ven valor</SelectItem>
+                    <SelectItem value="high">Alto - Pagan por calidad y resultados</SelectItem>
+                    <SelectItem value="premium">Premium - El precio no es objeción si es lo mejor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="mt-4">
+                <Label>¿Quién influye en su decisión de compra?</Label>
+                <Textarea
+                  value={briefData.decisionInfluencers || ''}
+                  onChange={(e) => updateField('decisionInfluencers', e.target.value)}
+                  placeholder="Ej: Su pareja, su coach, amigos emprendedores, reviews de YouTube..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+
+              <div className="mt-4">
+                <Label>¿Dónde buscan información antes de comprar?</Label>
+                <Textarea
+                  value={briefData.informationSources || ''}
+                  onChange={(e) => updateField('informationSources', e.target.value)}
+                  placeholder="Ej: Google, YouTube, Instagram, grupos de Facebook, podcasts..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+
+              <div className="mt-4">
+                <Label>¿Qué evento o situación los llevaría a comprar HOY?</Label>
+                <Textarea
+                  value={briefData.purchaseTriggers || ''}
+                  onChange={(e) => updateField('purchaseTriggers', e.target.value)}
+                  placeholder="Ej: Perdieron un cliente importante, su competencia los superó, un diagnóstico médico..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+            </div>
           </div>
         );
 
@@ -1421,6 +1839,55 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                 className="mt-1"
                 rows={2}
               />
+            </div>
+
+            {/* Content Strategy Details */}
+            <div className="pt-4 border-t">
+              <p className="text-sm font-medium text-primary mb-4">Personalidad de marca (opcional)</p>
+
+              <div>
+                <Label>¿Cuál es la voz/personalidad de tu marca?</Label>
+                <Select value={briefData.brandVoice || ''} onValueChange={(v) => updateField('brandVoice', v)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecciona el tono principal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="professional">Profesional y autoritativo</SelectItem>
+                    <SelectItem value="friendly">Cercano y amigable</SelectItem>
+                    <SelectItem value="inspirational">Inspiracional y motivacional</SelectItem>
+                    <SelectItem value="edgy">Directo y provocador</SelectItem>
+                    <SelectItem value="educational">Educativo y didáctico</SelectItem>
+                    <SelectItem value="luxurious">Exclusivo y premium</SelectItem>
+                    <SelectItem value="fun">Divertido y entretenido</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="mt-4">
+                <Label>¿Qué contenido hace tu competencia? (para diferenciarnos)</Label>
+                <Textarea
+                  value={briefData.competitorContent || ''}
+                  onChange={(e) => updateField('competitorContent', e.target.value)}
+                  placeholder="Ej: Hacen muchos talking heads aburridos, solo promocionan, no educan..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+
+              <div className="mt-4">
+                <Label>Presupuesto aproximado para producción de contenido</Label>
+                <Select value={briefData.budgetRange || ''} onValueChange={(v) => updateField('budgetRange', v)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecciona rango" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Bajo - Solo celular y edición básica</SelectItem>
+                    <SelectItem value="medium">Medio - Equipo básico, editor dedicado</SelectItem>
+                    <SelectItem value="high">Alto - Producción profesional, equipo completo</SelectItem>
+                    <SelectItem value="premium">Premium - Sin límites, máxima calidad</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         );
