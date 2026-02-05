@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, useMemo, ReactNode } from "react";
 import { useStrategistClients } from "@/hooks/useStrategistClients";
 
 interface StrategistClient {
@@ -26,8 +26,17 @@ const StrategistClientContext = createContext<StrategistClientContextType | null
 export function StrategistClientProvider({ children }: { children: ReactNode }) {
   const strategistClients = useStrategistClients();
 
+  const contextValue = useMemo(() => strategistClients, [
+    strategistClients.clients,
+    strategistClients.selectedClientId,
+    strategistClients.setSelectedClientId,
+    strategistClients.selectedClient,
+    strategistClients.loading,
+    strategistClients.refetch
+  ]);
+
   return (
-    <StrategistClientContext.Provider value={strategistClients}>
+    <StrategistClientContext.Provider value={contextValue}>
       {children}
     </StrategistClientContext.Provider>
   );

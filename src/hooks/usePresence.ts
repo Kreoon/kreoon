@@ -25,6 +25,10 @@ export function usePresence() {
   const lastActivityRef = useRef<number>(Date.now());
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isUpdatingRef = useRef(false);
+  const pathnameRef = useRef(location.pathname);
+
+  // Keep pathname ref updated
+  pathnameRef.current = location.pathname;
 
   const getPageName = useCallback((pathname: string) => {
     return PAGE_NAMES[pathname] || pathname;
@@ -41,12 +45,12 @@ export function usePresence() {
         .upsert({
           user_id: user.id,
           is_online: isOnline,
-          current_page: currentPage || getPageName(location.pathname),
+          current_page: currentPage || getPageName(pathnameRef.current),
           last_activity: new Date().toISOString(),
           last_seen: new Date().toISOString()
-        }, { 
+        }, {
           onConflict: 'user_id',
-          ignoreDuplicates: false 
+          ignoreDuplicates: false
         });
     } catch (error) {
       // Silently ignore presence errors to not affect UX
@@ -54,13 +58,14 @@ export function usePresence() {
     } finally {
       isUpdatingRef.current = false;
     }
-  }, [user?.id, location.pathname, getPageName]);
+  }, [user?.id, getPageName]);
 
   // Track user activity
   const handleActivity = useCallback(() => {
     lastActivityRef.current = Date.now();
   }, []);
 
+  // Main effect for event listeners and interval - stable dependencies
   useEffect(() => {
     if (!user?.id) return;
 
@@ -83,7 +88,7 @@ export function usePresence() {
     // Update presence less frequently (every 60 seconds instead of 30)
     updateIntervalRef.current = setInterval(() => {
       const isActive = Date.now() - lastActivityRef.current < 120000; // 2 minutes
-      updatePresence(isActive, getPageName(location.pathname));
+      updatePresence(isActive, getPageName(pathnameRef.current));
     }, 60000);
 
     return () => {
@@ -94,9 +99,9 @@ export function usePresence() {
         clearInterval(updateIntervalRef.current);
       }
     };
-  }, [user?.id, updatePresence, handleActivity, getPageName, location.pathname]);
+  }, [user?.id, updatePresence, handleActivity, getPageName]);
 
-  // Update when page changes (debounced)
+  // Update when page changes (debounced) - separate effect for pathname changes
   useEffect(() => {
     if (!user?.id) return;
     const timeout = setTimeout(() => {

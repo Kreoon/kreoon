@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface BrandingSettings {
@@ -190,8 +190,14 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     };
   }, [fetchBranding]);
 
+  const contextValue = useMemo(() => ({
+    branding,
+    loading,
+    refetch: fetchBranding
+  }), [branding, loading, fetchBranding]);
+
   return (
-    <BrandingContext.Provider value={{ branding, loading, refetch: fetchBranding }}>
+    <BrandingContext.Provider value={contextValue}>
       {children}
     </BrandingContext.Provider>
   );

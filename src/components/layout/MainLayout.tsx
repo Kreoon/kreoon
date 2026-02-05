@@ -213,7 +213,7 @@ export function MainLayout({
           <div className="flex-1 flex justify-center">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden">
-                <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" />
+                <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" loading="lazy" />
               </div>
               <span className="text-sm font-bold">Portal Cliente</span>
             </div>
@@ -293,8 +293,8 @@ export function MainLayout({
   // Default admin/other layout - El Estudio theme
   return (
     <div className="min-h-screen bg-background relative">
-      {/* Tech ambient background effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+      {/* Tech ambient background effects - hidden on mobile for performance */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 hidden md:block">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/[0.03] rounded-full blur-[200px]" />
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-violet-500/[0.02] rounded-full blur-[180px]" />
         <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-primary/[0.02] rounded-full blur-[150px]" />
@@ -317,7 +317,7 @@ export function MainLayout({
         <div className="flex-1 flex justify-center">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden">
-              <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" />
+              <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" loading="lazy" />
             </div>
             <span className="text-sm font-bold">KREOON</span>
           </div>

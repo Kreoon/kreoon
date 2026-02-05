@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { useTrackingEngine, TrackEventOptions } from '@/hooks/useTrackingEngine';
 
 interface TrackingContextValue {
@@ -31,19 +31,47 @@ const TrackingContext = createContext<TrackingContextValue | null>(null);
 
 export function TrackingProvider({ children }: { children: React.ReactNode }) {
   const tracking = useTrackingEngine();
+  const trackingRef = useRef(tracking);
+  trackingRef.current = tracking;
 
   // Auto-track page views on route change
   useEffect(() => {
     const handlePopState = () => {
-      tracking.trackPageView(window.location.pathname);
+      trackingRef.current.trackPageView(window.location.pathname);
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [tracking]);
+  }, []);
+
+  const contextValue = useMemo(() => tracking, [
+    tracking.trackEvent,
+    tracking.trackPageView,
+    tracking.trackButtonClick,
+    tracking.trackFormSubmit,
+    tracking.trackSearch,
+    tracking.trackError,
+    tracking.trackUserLogin,
+    tracking.trackUserLogout,
+    tracking.trackProfileUpdate,
+    tracking.trackContentUpload,
+    tracking.trackContentApproval,
+    tracking.trackStatusChange,
+    tracking.trackCardCreated,
+    tracking.trackCardMoved,
+    tracking.trackVideoView,
+    tracking.trackVideoLike,
+    tracking.trackVideoShare,
+    tracking.trackFollow,
+    tracking.trackMessageSent,
+    tracking.trackAIRequest,
+    tracking.trackAIResponse,
+    tracking.startViewTimer,
+    tracking.endViewTimer
+  ]);
 
   return (
-    <TrackingContext.Provider value={tracking}>
+    <TrackingContext.Provider value={contextValue}>
       {children}
     </TrackingContext.Provider>
   );
