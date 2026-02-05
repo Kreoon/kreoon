@@ -310,12 +310,16 @@ export function BunnyMultiVideoUploader({
     // Best-effort: delete from Bunny CDN via edge function
     // This may fail with 401 if token is stale, but the URL is already removed from DB above
     try {
-      await supabase.functions.invoke('bunny-delete', {
+      const { error } = await supabase.functions.invoke('bunny-delete', {
         body: { content_id: contentId, video_url: embedUrl, field: 'video_urls' }
       });
-      console.log('[BunnyMultiVideoUploader] Video deleted from Bunny CDN');
+      if (error) {
+        console.warn('[BunnyMultiVideoUploader] Bunny CDN cleanup failed (non-critical):', error);
+      } else {
+        console.log('[BunnyMultiVideoUploader] Video deleted from Bunny CDN');
+      }
     } catch (error) {
-      console.warn('[BunnyMultiVideoUploader] Bunny CDN cleanup failed (non-critical):', error);
+      console.warn('[BunnyMultiVideoUploader] Bunny CDN cleanup error:', error);
     }
 
     toast({

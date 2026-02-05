@@ -64,10 +64,16 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
 
   const [formData, setFormData] = useState<ContentFormData>(initialFormData);
   const originalFormDataRef = useRef<ContentFormData>(initialFormData);
+  const skipNextContentResetRef = useRef(false);
 
   // Initialize form data from content
   useEffect(() => {
     if (content) {
+      // Skip reset if we just saved (onUpdate refetch should not overwrite local state)
+      if (skipNextContentResetRef.current) {
+        skipNextContentResetRef.current = false;
+        return;
+      }
       const existingVideoUrls = (content as any).video_urls || [];
       const hooksCount = (content as any).hooks_count || Math.max(existingVideoUrls.length, 1);
       const videoUrls = Array.from({ length: hooksCount }, (_, i) => existingVideoUrls[i] || '');
@@ -305,6 +311,8 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       markAsSaved('content-detail');
       toast({ title: 'Cambios guardados' });
       setEditMode(false);
+      // Skip the next formData reset from content prop change (prevents dialog "refresh")
+      skipNextContentResetRef.current = true;
       onUpdate?.();
     } catch (error) {
       toast({ title: 'Error al guardar', variant: 'destructive' });
