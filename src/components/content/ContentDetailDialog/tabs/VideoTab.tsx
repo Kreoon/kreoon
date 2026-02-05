@@ -189,7 +189,7 @@ export function VideoTab({
               hooksCount={formData.hooks_count}
               onUploadComplete={(urls) => {
                 setFormData(prev => ({ ...prev, video_urls: urls }));
-                onUpdate?.();
+                if (!editMode) setEditMode(true);
               }}
               disabled={!canEditVideo}
             />
