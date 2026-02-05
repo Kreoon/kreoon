@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { supabase, SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2, CheckCircle, XCircle, Video, RefreshCw, Plus, Trash2 } from "lucide-react";
 
@@ -149,45 +149,27 @@ export function BunnyMultiVideoUploader({
     ));
 
     try {
-      const supabaseUrl = SUPABASE_FUNCTIONS_URL;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No autenticado');
-
-      // Step 1: Get upload credentials from edge function (no file data sent)
-      const createUrl = new URL(`${supabaseUrl}/functions/v1/bunny-upload`);
-      createUrl.searchParams.set('content_id', contentId);
-      createUrl.searchParams.set('title', `${title} - Variable ${index + 1}`);
-      createUrl.searchParams.set('variant_index', String(index));
-
-      const credResponse = await fetch(createUrl.toString(), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+      // Step 1: Get upload credentials from bunny-upload-v2
+      const { data: credentials, error: fnError } = await supabase.functions.invoke('bunny-upload-v2', {
+        body: { fileName: file.name, folder: `content/${contentId}` },
       });
 
-      if (!credResponse.ok) {
-        const errorData = await credResponse.json().catch(() => ({}));
-        throw new Error(errorData?.error || `Error obteniendo credenciales: ${credResponse.status}`);
+      if (fnError || !credentials?.success || !credentials?.uploadUrl) {
+        throw new Error(fnError?.message || credentials?.error || 'No se pudieron obtener las credenciales de subida');
       }
 
-      const credentials = await credResponse.json();
-      if (!credentials?.success || !credentials?.uploadUrl) {
-        throw new Error('No se pudieron obtener las credenciales de subida');
-      }
-
-      setUploads(prev => prev.map(u => 
+      setUploads(prev => prev.map(u =>
         u.id === uploadId ? { ...u, progress: 10 } : u
       ));
 
       // Step 2: Upload directly to Bunny from browser using XHR for progress
       const xhr = new XMLHttpRequest();
-      
+
       await new Promise<void>((resolve, reject) => {
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
             const percentComplete = Math.round((event.loaded / event.total) * 80) + 10;
-            setUploads(prev => prev.map(u => 
+            setUploads(prev => prev.map(u =>
               u.id === uploadId ? { ...u, progress: percentComplete } : u
             ));
           }
@@ -210,53 +192,33 @@ export function BunnyMultiVideoUploader({
         xhr.send(file);
       });
 
-      setUploads(prev => prev.map(u => 
+      setUploads(prev => prev.map(u =>
         u.id === uploadId ? { ...u, progress: 95 } : u
       ));
 
-      // Step 3: Confirm upload to update database
-      const confirmResponse = await fetch(`${supabaseUrl}/functions/v1/bunny-upload`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content_id: contentId,
-          video_id: credentials.video_id,
-          embed_url: credentials.embed_url,
-          variant_index: index,
-        }),
-      });
-
-      if (!confirmResponse.ok) {
-        const errorData = await confirmResponse.json().catch(() => ({}));
-        throw new Error(errorData?.error || 'Error confirmando subida');
-      }
-
-      // Update with embed URL
-      const newEmbedUrl = credentials.embed_url || '';
+      // Step 3: Update with embed URL and notify parent
+      const newEmbedUrl = credentials.embedUrl || '';
       setUploads(prev => {
-        const newUploads = prev.map(u => 
-          u.id === uploadId ? { 
-            ...u, 
-            progress: 100, 
-            videoId: credentials.video_id,
+        const newUploads = prev.map(u =>
+          u.id === uploadId ? {
+            ...u,
+            progress: 100,
+            videoId: credentials.videoId,
             embedUrl: newEmbedUrl,
             status: 'processing' as const
           } : u
         );
-        
+
         // Notify parent with all URLs
         const allUrls = newUploads.map(u => u.embedUrl);
         onUploadComplete?.(allUrls);
-        
+
         return newUploads;
       });
 
       // Start polling for processing status
       pollIntervals.current[uploadId] = setInterval(() => {
-        pollVideoStatus(uploadId, credentials.video_id);
+        pollVideoStatus(uploadId, credentials.videoId);
       }, 5000);
 
       toast({

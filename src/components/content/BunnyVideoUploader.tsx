@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { supabase, SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2, CheckCircle, XCircle, Video, RefreshCw } from "lucide-react";
 
@@ -122,37 +122,20 @@ export function BunnyVideoUploader({
     setProgress(0);
 
     try {
-      const supabaseUrl = SUPABASE_FUNCTIONS_URL;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No autenticado');
-
-      // Step 1: Get upload credentials from edge function (no file data sent)
-      const createUrl = new URL(`${supabaseUrl}/functions/v1/bunny-upload`);
-      createUrl.searchParams.set('content_id', contentId);
-      createUrl.searchParams.set('title', title);
-
-      const credResponse = await fetch(createUrl.toString(), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+      // Step 1: Get upload credentials from bunny-upload-v2
+      const { data: credentials, error: fnError } = await supabase.functions.invoke('bunny-upload-v2', {
+        body: { fileName: file.name, folder: `content/${contentId}` },
       });
 
-      if (!credResponse.ok) {
-        const errorData = await credResponse.json().catch(() => ({}));
-        throw new Error(errorData?.error || `Error obteniendo credenciales: ${credResponse.status}`);
-      }
-
-      const credentials = await credResponse.json();
-      if (!credentials?.success || !credentials?.uploadUrl) {
-        throw new Error('No se pudieron obtener las credenciales de subida');
+      if (fnError || !credentials?.success || !credentials?.uploadUrl) {
+        throw new Error(fnError?.message || credentials?.error || 'No se pudieron obtener las credenciales de subida');
       }
 
       setProgress(10);
 
       // Step 2: Upload directly to Bunny from browser using XHR for progress
       const xhr = new XMLHttpRequest();
-      
+
       await new Promise<void>((resolve, reject) => {
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
@@ -178,39 +161,17 @@ export function BunnyVideoUploader({
         xhr.send(file);
       });
 
-      setProgress(95);
-
-      // Step 3: Confirm upload to update database
-      const confirmResponse = await fetch(`${supabaseUrl}/functions/v1/bunny-upload`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content_id: contentId,
-          video_id: credentials.video_id,
-          embed_url: credentials.embed_url,
-          variant_index: 0,
-        }),
-      });
-
-      if (!confirmResponse.ok) {
-        const errorData = await confirmResponse.json().catch(() => ({}));
-        throw new Error(errorData?.error || 'Error confirmando subida');
-      }
-
       setProgress(100);
-      setVideoId(credentials.video_id);
+      setVideoId(credentials.videoId);
 
-      if (credentials.embed_url) {
-        onUploadComplete?.(credentials.embed_url);
+      if (credentials.embedUrl) {
+        onUploadComplete?.(credentials.embedUrl);
       }
 
       // Start polling for processing status
       setStatus('processing');
       pollIntervalRef.current = setInterval(() => {
-        pollVideoStatus(credentials.video_id);
+        pollVideoStatus(credentials.videoId);
       }, 5000);
 
       toast({
