@@ -30,8 +30,5 @@ export { StreamPlayer } from './components/StreamPlayer';
 export { useStreamingAI, type FullLiveContentResult } from './hooks/useStreamingAI';
 export { useStreamingRealtime } from './hooks/useStreamingRealtime';
 
-// Live Content Generator (paquete completo Live Shopping)
-export { LiveContentGenerator } from '../streaming/LiveContentGenerator';
-
 // Constants
 export * from './LiveStreamingConstants';

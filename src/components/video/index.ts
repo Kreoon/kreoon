@@ -5,7 +5,6 @@ export type { HLSVideoPlayerRef } from './HLSVideoPlayer';
 export { BunnyVideoPlayer } from './BunnyVideoPlayer';
 export type { BunnyVideoPlayerRef } from './BunnyVideoPlayer';
 
-export { TikTokVideoFeed } from './TikTokVideoFeed';
 export { VideoThumbnail } from './VideoThumbnail';
 
 // Hook for custom implementations

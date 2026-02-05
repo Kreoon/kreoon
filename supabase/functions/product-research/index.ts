@@ -1283,6 +1283,8 @@ async function savePartialResults(
 
   if (error) {
     console.error("[product-research] savePartialResults error:", error);
+    // Don't throw - we don't want to lose progress in memory even if DB write fails
+    // The consolidation at the end will retry the full save
   }
 }
 
@@ -1560,11 +1562,21 @@ serve(async (req) => {
         continue;
       }
 
-      // Check dependencies
-      const depsMet = step.dependsOn.every((d) => completedSteps.includes(d));
-      if (!depsMet) {
-        console.log(`[product-research] Dependencies not met for ${step.id}, skipping`);
-        continue;
+      // Check dependencies - fail if a required step hasn't completed
+      const missingDeps = step.dependsOn.filter((d) => !completedSteps.includes(d));
+      if (missingDeps.length > 0) {
+        const errMsg = `Dependencies not met for ${step.id}: missing ${missingDeps.join(', ')}`;
+        console.error(`[product-research] ${errMsg}`);
+        await savePartialResults(supabase, productId, results, completedSteps);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            completedSteps,
+            failedStep: step.id,
+            error: errMsg,
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
       console.log(`[product-research] === Step ${i + 1}/${RESEARCH_STEPS.length}: ${step.name} ===`);
