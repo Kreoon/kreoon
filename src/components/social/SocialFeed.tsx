@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { SocialFeedCard, SocialFeedItem, SocialFeedCardRef } from './SocialFeedCard';
 import { useGlobalMute } from '@/contexts/VideoPlayerContext';
 import { Loader2 } from 'lucide-react';
+import { preloadHLSVideo, clearPreloadCache } from '@/hooks/useHLSPlayer';
 
 interface SocialFeedProps {
   items: SocialFeedItem[];
@@ -54,6 +55,37 @@ export function SocialFeed({
 
     return () => observer.disconnect();
   }, [items, activeIndex]);
+
+  // Preload adjacent videos for instant playback
+  useEffect(() => {
+    // Preload next 2 videos
+    const preloadAhead = 2;
+    for (let i = 1; i <= preloadAhead; i++) {
+      const nextIndex = activeIndex + i;
+      if (nextIndex < items.length) {
+        const nextItem = items[nextIndex];
+        if (nextItem.mediaType === 'video') {
+          const videoUrl = nextItem.videoUrls?.[0] || nextItem.mediaUrl;
+          if (videoUrl) {
+            preloadHLSVideo(videoUrl);
+          }
+        }
+      }
+    }
+
+    // Clear preload cache for videos far behind
+    return () => {
+      if (activeIndex > 3) {
+        const oldItem = items[activeIndex - 3];
+        if (oldItem?.mediaType === 'video') {
+          const videoUrl = oldItem.videoUrls?.[0] || oldItem.mediaUrl;
+          if (videoUrl) {
+            clearPreloadCache(videoUrl);
+          }
+        }
+      }
+    };
+  }, [activeIndex, items]);
 
   // Handle audio unlock
   const handleUnlockAudio = useCallback(() => {
