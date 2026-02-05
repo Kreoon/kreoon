@@ -74,6 +74,10 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
         skipNextContentResetRef.current = false;
         return;
       }
+      // Don't reset formData while in edit mode - prevents losing changes on Realtime refetch
+      if (editMode) {
+        return;
+      }
       const existingVideoUrls = (content as any).video_urls || [];
       const hooksCount = (content as any).hooks_count || Math.max(existingVideoUrls.length, 1);
       const videoUrls = Array.from({ length: hooksCount }, (_, i) => existingVideoUrls[i] || '');
