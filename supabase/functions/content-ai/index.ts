@@ -388,13 +388,13 @@ serve(async (req) => {
   }
 
   try {
-    // Use Kreoon (external) database if configured, otherwise fallback to Lovable Cloud
+    // Use Kreoon database if configured, otherwise fallback to default
     let supabase;
     if (isKreoonConfigured()) {
       console.log("[content-ai] Using Kreoon database");
       supabase = getKreoonClient();
     } else {
-      console.log("[content-ai] Kreoon not configured, using Lovable Cloud");
+      console.log("[content-ai] Kreoon not configured, using default database");
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       supabase = createClient(supabaseUrl, supabaseKey);

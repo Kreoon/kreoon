@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    // Lovable Cloud (source)
+    // Legacy source database
     const sourceUrl = Deno.env.get('SUPABASE_URL');
     const sourceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
@@ -28,7 +28,7 @@ serve(async (req) => {
     }
 
     if (!sourceUrl || !sourceKey) {
-      return new Response(JSON.stringify({ error: 'Credenciales Lovable Cloud no configuradas' }), {
+      return new Response(JSON.stringify({ error: 'Credenciales de origen no configuradas' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -54,16 +54,16 @@ serve(async (req) => {
 
     // ACTION: full_sync - Complete sync for admin user to Kreoon
     if (action === 'full_sync') {
-      const oldId = Deno.env.get('LEGACY_ADMIN_USER_ID') || '06aa55b0-61ea-41f0-9708-7a3d322b6795'; // Legacy ID in Lovable Cloud
+      const oldId = Deno.env.get('LEGACY_ADMIN_USER_ID') || '06aa55b0-61ea-41f0-9708-7a3d322b6795'; // Legacy ID in source DB
       const targetAuthId = newAuthId || Deno.env.get('KREOON_ROOT_AUTH_ID') || '577c72dc-f088-4e99-a109-e88e035a0540'; // Kreoon Auth ID
       
-      console.log(`[full_sync] Source: Lovable Cloud, Dest: Kreoon`);
+      console.log(`[full_sync] Source: Legacy DB, Dest: Kreoon`);
       console.log(`[full_sync] Mapping ${oldId} -> ${targetAuthId}`);
       
       const results: Record<string, unknown> = {};
 
-      // Step 1: Get admin profile from Lovable Cloud
-      console.log('Step 1: Reading admin profile from Lovable Cloud');
+      // Step 1: Get admin profile from legacy source
+      console.log('Step 1: Reading admin profile from legacy source');
       const { data: sourceProfile, error: profileErr } = await sourceClient
         .from('profiles')
         .select('*')
@@ -317,7 +317,7 @@ serve(async (req) => {
     if (action === 'check_status') {
       const targetId = newAuthId || Deno.env.get('KREOON_ROOT_AUTH_ID') || '577c72dc-f088-4e99-a109-e88e035a0540';
       
-      // Check source (Lovable Cloud)
+      // Check source (Legacy DB)
       const { data: sourceProfile } = await sourceClient
         .from('profiles')
         .select('id, email, active_role')

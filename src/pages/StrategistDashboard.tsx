@@ -131,7 +131,7 @@ export default function StrategistDashboard() {
     setGeneratedScript("");
 
     try {
-      const response = await supabaseLovable.functions.invoke('generate-script', {
+      const response = await supabase.functions.invoke('generate-script', {
         body: {
           product_name: selectedProduct.name,
           strategy: selectedProduct.strategy || '',
@@ -152,7 +152,7 @@ export default function StrategistDashboard() {
         } else if (response.error.message?.includes('402')) {
           toast({
             title: 'Créditos agotados',
-            description: 'Necesitas agregar créditos a tu workspace de Lovable.',
+            description: 'Necesitas agregar créditos a tu cuenta.',
             variant: 'destructive'
           });
         } else {

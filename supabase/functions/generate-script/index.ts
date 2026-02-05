@@ -97,7 +97,7 @@ serve(async (req) => {
   }
 
   try {
-    // Use Kreoon (external) database if configured, otherwise fallback to Lovable Cloud
+    // Use Kreoon database if configured, otherwise fallback to default
     let supabase;
     if (isKreoonConfigured()) {
       console.log("[generate-script] Using Kreoon database");

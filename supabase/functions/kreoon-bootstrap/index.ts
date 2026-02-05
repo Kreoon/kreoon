@@ -264,7 +264,7 @@ serve(async (req) => {
     if (action === 'sync_batch') {
       const { table, batchSize = 50, offset = 0 } = await req.json().catch(() => ({}));
       
-      // Source (Lovable Cloud)
+      // Source (Legacy DB)
       const sourceUrl = Deno.env.get('SUPABASE_URL');
       const sourceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 

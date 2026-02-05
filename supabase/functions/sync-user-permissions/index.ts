@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    // Lovable Cloud (source - has original data with old IDs)
+    // Legacy source DB (has original data with old IDs)
     const sourceUrl = Deno.env.get('SUPABASE_URL');
     const sourceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     

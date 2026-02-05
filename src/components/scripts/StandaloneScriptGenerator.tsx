@@ -439,7 +439,7 @@ export function StandaloneScriptGenerator() {
   };
 
   const callWebhook = async (webhookUrl: string, payload: any): Promise<any> => {
-    const { data, error } = await supabaseLovable.functions.invoke('n8n-proxy', {
+    const { data, error } = await supabase.functions.invoke('n8n-proxy', {
       body: {
         webhookUrl,
         payload,

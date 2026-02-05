@@ -57,7 +57,7 @@ export default function AISettingsSection() {
           <div className="flex flex-wrap gap-2 mt-4">
             <Badge variant="secondary" className="bg-background/50">
               <Zap className="h-3 w-3 mr-1" />
-              Lovable AI incluido
+              Kreoon AI incluido
             </Badge>
             <Badge variant="outline" className="bg-background/50">
               <Cpu className="h-3 w-3 mr-1" />

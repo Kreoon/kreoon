@@ -102,7 +102,7 @@ interface GenerationStep {
   status: "pending" | "generating" | "done" | "error";
 }
 
-// AI Models available via Lovable AI Gateway - no external API key required
+// AI Models available via Kreoon AI - no external API key required
 const AI_MODELS = [
   { value: "google/gemini-3-flash-preview", label: "Gemini 3 Flash (Recomendado)" },
   { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
@@ -1213,7 +1213,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     }
   }, [customPrompts, loadingPrompts]);
 
-  // No provider selection needed - using Lovable AI gateway
+  // No provider selection needed - using Kreoon AI
 
   // Pre-fill avatar from product if available
   useEffect(() => {
@@ -1724,7 +1724,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       fullPrompt += `\n\n---\nGUIÓN GENERADO:\n${previousScript}`;
     }
 
-    const { data, error } = await supabaseLovable.functions.invoke(CONTENT_AI_FUNCTION, {
+    const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
       body: {
         action: formData.use_perplexity ? "research_and_generate" : "generate_script",
         organizationId,

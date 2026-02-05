@@ -30,7 +30,7 @@
 | `src/hooks/useScriptPrompts.ts` | Prompts de guiones (creador, editor, strategist, etc.) | `supabase` | `useScriptPrompts`, `DEFAULT_SCRIPT_PROMPTS`, `ScriptPromptsConfig` |
 | `src/hooks/useBoardAI.ts` | Llamar board-ai para análisis de tarjetas/board | `supabase`, `useToast` | `useBoardAI`, interfaces de análisis |
 | `src/hooks/useOrganizationAI.ts` | Config de proveedores IA, defaults, módulos org | `supabase`, `useAuth` | `useOrganizationAI`, `AI_PROVIDERS_CONFIG`, `AI_MODULES` |
-| `src/hooks/usePortfolioAI.ts` | Ejecutar acciones IA en portfolio (caption, bio, search, etc.) | `supabase`, `supabaseLovable`, `usePortfolioAIConfig`, `toast` | `usePortfolioAI` |
+| `src/hooks/usePortfolioAI.ts` | Ejecutar acciones IA en portfolio (caption, bio, search, etc.) | `supabase`, `usePortfolioAIConfig`, `toast` | `usePortfolioAI` |
 | `src/hooks/usePortfolioAIConfig.ts` | Configuración de IA en portfolio (features, model) | `supabase` | `usePortfolioAIConfig`, `PortfolioAIFeatures` |
 | `src/hooks/useTalentAI.ts` | Llamar talent-ai para matching, quality, risk, etc. | `supabase`, `useOrgOwner`, `toast` | `useTalentAI`, interfaces de resultado |
 | `src/hooks/useAIChat.ts` | Chat con IA (contexto general) | — | `useAIChat` |
@@ -276,7 +276,7 @@ flowchart LR
 | Área | Inconsistencia |
 |------|----------------|
 | **Module keys** | `board_cards` vs `board.cards.ai` — LEGACY_MODULE_MAPPINGS mapea; board-ai usa `board_cards`, aiModuleKeys usa `board.cards.ai` |
-| **Provider** | `lovable` vs `gemini` — Algunas funciones mapean lovable→gemini, otras no |
+| **Provider** | `kreoon` vs `gemini` — Algunas funciones mapean kreoon→gemini, otras no |
 | **Tabla módulos** | `organization_ai_modules` vs RPC `register_ai_module` — module_key con guión bajo en algunas migraciones |
 | **Prompts table** | `organization_ai_prompts` — module_key `scripts` en ScriptPromptsConfig; content-ai busca por module |
 | **Edge Function naming** | `streaming_ai` vs `streaming-ai-generate` — Module key `streaming_ai`, función `streaming-ai-generate` |

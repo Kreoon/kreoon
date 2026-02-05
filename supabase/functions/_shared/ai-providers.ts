@@ -127,7 +127,7 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
 
 /** Resuelve provider (kreoon -> gemini) */
 export function resolveProvider(provider: string): string {
-  if (provider === "kreoon" || provider === "lovable") return "gemini";
+  if (provider === "kreoon") return "gemini";
   return provider;
 }
 
@@ -152,7 +152,7 @@ export function extractContent(provider: string, response: any, hasTools?: boole
   return config.extractContent(response, hasTools);
 }
 
-// Mapeo de modelos Lovable a modelos directos
+// Mapeo de modelos a proveedores directos
 export const MODEL_MAP: Record<string, { provider: string; model: string }> = {
   // Gemini models
   "google/gemini-2.5-flash": { provider: "gemini", model: "gemini-2.5-flash" },

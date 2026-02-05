@@ -111,7 +111,7 @@ export function useAIChat() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabaseLovable.functions.invoke('ai-assistant', {
+      const { data, error } = await supabase.functions.invoke('ai-assistant', {
         body: { 
           message: content.trim(), 
           organizationId: orgId,

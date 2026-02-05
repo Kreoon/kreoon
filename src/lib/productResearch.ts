@@ -3,7 +3,7 @@
  *
  * Usa fetch con URL explícita de Kreoon para garantizar que la petición
  * llegue al proyecto correcto, independientemente de variables de entorno
- * o configuraciones de despliegue (Lovable, Vercel, etc.).
+ * o configuraciones de despliegue (Vercel, etc.).
  */
 import { supabase } from '@/integrations/supabase/client';
 

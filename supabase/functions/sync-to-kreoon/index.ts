@@ -145,7 +145,7 @@ serve(async (req) => {
   }
 
   try {
-    // Lovable Cloud (source)
+    // Legacy source database
     const sourceUrl = Deno.env.get('SUPABASE_URL');
     const sourceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
@@ -161,7 +161,7 @@ serve(async (req) => {
     }
 
     if (!sourceUrl || !sourceKey) {
-      return new Response(JSON.stringify({ error: 'Lovable Cloud credentials not configured' }), {
+      return new Response(JSON.stringify({ error: 'Source database credentials not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

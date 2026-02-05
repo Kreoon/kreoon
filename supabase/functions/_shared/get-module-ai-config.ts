@@ -37,8 +37,8 @@ function normalizeProviderModel(provider: string, model: string): { provider: st
   let p = provider;
   let m = model;
 
-  // Kreoon IA usa Gemini por defecto (antes era "lovable")
-  if (p === "kreoon" || p === "lovable") {
+  // Kreoon IA usa Gemini por defecto
+  if (p === "kreoon") {
     p = "gemini";
     if (m.startsWith("google/")) {
       m = m.replace("google/", "");
@@ -195,8 +195,8 @@ export async function getModuleAIConfigsWithFallback(
     ? defaults?.tablero_model || defaults?.default_model
     : defaults?.default_model) || "gemini-2.5-flash";
 
-  // Kreoon IA usa Gemini por defecto (antes era "lovable")
-  if (preferredProvider === "kreoon" || preferredProvider === "lovable") {
+  // Kreoon IA usa Gemini por defecto
+  if (preferredProvider === "kreoon") {
     preferredProvider = "gemini";
     if (preferredModel.startsWith("google/")) {
       preferredModel = preferredModel.replace("google/", "");

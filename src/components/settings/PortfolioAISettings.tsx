@@ -18,7 +18,7 @@ const AI_FEATURES: { key: keyof PortfolioAIFeatures; label: string; description:
   { key: 'ai_recommendations', label: 'Recomendaciones', description: 'Sugerir creadores y contenido', icon: <Users className="h-4 w-4" /> },
 ];
 
-// AI Models available via Lovable AI Gateway - no external API key required
+// AI Models available via Kreoon AI - no external API key required
 const AI_MODELS = [
   { value: 'google/gemini-3-flash-preview', label: 'Gemini 3 Flash (Recomendado)' },
   { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },

@@ -52,7 +52,7 @@ export function useLinkPreview() {
       }
 
       // Fetch from edge function
-      const { data, error } = await supabaseLovable.functions.invoke('fetch-document', {
+      const { data, error } = await supabase.functions.invoke('fetch-document', {
         body: { url, type: 'metadata' }
       });
 

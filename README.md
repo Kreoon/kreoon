@@ -1,97 +1,77 @@
-# Welcome to your Lovable project
+# KREOON - Creative Operating System
 
-## Project info
+El sistema operativo creativo. Gestiona creadores, contenido, proyectos y resultados desde una plataforma.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Project Info
 
-## How can I edit this code?
+**Production URL**: https://kreoon.app
 
-There are several ways of editing your application.
+## How to Edit This Code
 
-**Use Lovable**
+### Local Development
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requirements: Node.js & npm - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to the project directory
+cd kreoon
 
-# Step 3: Install the necessary dependencies.
+# Install dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server (localhost:8080)
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Other Options
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **GitHub**: Edit files directly in the GitHub web interface
+- **Codespaces**: Use GitHub Codespaces for cloud-based development
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## Estructura del proyecto (src/)
+## Project Structure (src/)
 
 ```
 src/
 ├── components/
-│   ├── ui/          # Componentes base reutilizables (shadcn-ui, botones, cards, etc.)
+│   ├── ui/          # Base reusable components (shadcn-ui, buttons, cards, etc.)
 │   ├── board/       # Kanban, EnhancedContentCard, EnhancedKanbanColumn, BoardConfigDialog
 │   ├── dashboard/   # DraggableContentCard, DroppableKanbanColumn, TechKpi*, GoalsChart, etc.
 │   ├── content/     # ContentDetailDialog, ReviewCard, ContentVideoCard
-│   ├── settings/    # Paneles de configuración (NotificationSettings, Billing, etc.)
-│   ├── points/      # UP, logros, leaderboards, badges
-│   ├── portfolio/   # Feed, perfil público, social
+│   ├── settings/    # Settings panels (NotificationSettings, Billing, etc.)
+│   ├── points/      # UP, achievements, leaderboards, badges
+│   ├── portfolio/   # Feed, public profile, social
 │   ├── layout/      # MainLayout, PageHeader
 │   └── ...
 ├── hooks/           # Custom hooks (useAuth, useContent, useBoardSettings, etc.)
 ├── lib/             # utils, statusUtils, edgeFunctions, roles, prompts
-├── types/           # database.ts, tracking.ts (tipos TypeScript centralizados)
-├── integrations/supabase/  # client.ts (Kreoon), lovable-client.ts (Edge Functions), types
+├── types/           # database.ts, tracking.ts (centralized TypeScript types)
+├── integrations/supabase/  # client.ts, types
 ├── contexts/        # Auth, Impersonation, Trial, Tracking, Branding, etc.
-└── pages/           # Rutas principales; settings/sections para configuración
+└── pages/           # Main routes; settings/sections for configuration
 ```
 
-## What technologies are used for this project?
+## Tech Stack
 
-This project is built with:
+- **Framework**: React 18 + TypeScript + Vite
+- **UI**: shadcn-ui + Tailwind CSS
+- **Backend**: Supabase (Auth, Database, Edge Functions, Storage)
+- **State**: TanStack Query v5
+- **CDN**: Bunny CDN
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-- Supabase (auth, database, Edge Functions)
-- TanStack Query
+## Deployment
 
-## How can I deploy this project?
+- **Frontend**: Vercel (auto-deploy from GitHub)
+- **Edge Functions**: `npx supabase functions deploy <function-name>`
+- **Database**: Supabase PostgreSQL
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Commands
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```sh
+npm run dev      # Development server (localhost:8080)
+npm run build    # Production build
+npm run lint     # Run ESLint
+npm run preview  # Preview production build
+```

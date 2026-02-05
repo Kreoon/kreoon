@@ -61,7 +61,7 @@ export interface AIUsageLog {
   created_at: string;
 }
 
-// Available providers with their models (Direct API - No Lovable Gateway)
+// Available providers with their models (Direct API)
 export const AI_PROVIDERS_CONFIG = {
   gemini: {
     key: 'gemini',

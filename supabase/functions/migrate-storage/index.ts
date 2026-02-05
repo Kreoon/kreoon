@@ -20,7 +20,7 @@ serve(async (req) => {
       });
     }
 
-    // Cliente origen (Lovable Cloud)
+    // Cliente origen (Legacy DB)
     const sourceClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!

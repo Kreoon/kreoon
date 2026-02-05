@@ -1,9 +1,9 @@
 /**
  * Kreoon Supabase Client for Edge Functions
- * 
- * This shared module provides a Supabase client that connects to the 
- * external Kreoon database instead of the default Lovable Cloud database.
- * 
+ *
+ * This shared module provides a Supabase client that connects to the
+ * Kreoon database for Edge Functions.
+ *
  * Usage in Edge Functions:
  * import { createKreoonClient, getKreoonClient } from "../_shared/kreoon-client.ts";
  * 

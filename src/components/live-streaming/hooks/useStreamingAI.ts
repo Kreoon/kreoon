@@ -43,7 +43,7 @@ export function useStreamingAI(options?: UseStreamingAIOptions) {
   }): Promise<AIGenerationResult> => {
     setLoading(true);
     try {
-      const { data, error } = await supabaseLovable.functions.invoke('streaming-ai-generate', {
+      const { data, error } = await supabase.functions.invoke('streaming-ai-generate', {
         body: {
           action: 'generate_event_content',
           eventType: params.eventType,
@@ -76,7 +76,7 @@ export function useStreamingAI(options?: UseStreamingAIOptions) {
   const improveTitle = async (currentTitle: string, eventType: string): Promise<string> => {
     setLoading(true);
     try {
-      const { data, error } = await supabaseLovable.functions.invoke('streaming-ai-generate', {
+      const { data, error } = await supabase.functions.invoke('streaming-ai-generate', {
         body: {
           action: 'improve_title',
           currentTitle,
@@ -98,7 +98,7 @@ export function useStreamingAI(options?: UseStreamingAIOptions) {
   const improveDescription = async (currentDescription: string, eventType: string): Promise<string> => {
     setLoading(true);
     try {
-      const { data, error } = await supabaseLovable.functions.invoke('streaming-ai-generate', {
+      const { data, error } = await supabase.functions.invoke('streaming-ai-generate', {
         body: {
           action: 'improve_description',
           currentDescription,
@@ -123,7 +123,7 @@ export function useStreamingAI(options?: UseStreamingAIOptions) {
   ): Promise<FullLiveContentResult | null> => {
     setLoading(true);
     try {
-      const { data, error } = await supabaseLovable.functions.invoke("streaming-ai-generate", {
+      const { data, error } = await supabase.functions.invoke("streaming-ai-generate", {
         body: {
           action: "generate_full",
           organizationId,

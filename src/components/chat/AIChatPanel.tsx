@@ -80,7 +80,7 @@ export function AIChatPanel({ isOpen, onClose, organizationId }: AIChatPanelProp
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabaseLovable.functions.invoke('ai-assistant', {
+      const { data, error } = await supabase.functions.invoke('ai-assistant', {
         body: {
           message: userMessage.content,
           organizationId,
