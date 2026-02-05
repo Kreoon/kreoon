@@ -6,60 +6,96 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+interface BunnyVideoInfo {
+  guid: string;
+  title: string;
+  status: number;
+  encodeProgress: number;
+  availableResolutions: string;
+}
+
+/**
+ * Bunny Download V2 - Gets video info and URLs from Bunny Stream
+ * Uses: BUNNY_API_KEY, BUNNY_LIBRARY_ID
+ */
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { filePath } = await req.json();
+    const { videoId } = await req.json();
 
-    if (!filePath) {
+    if (!videoId) {
       return new Response(
-        JSON.stringify({ success: false, error: "filePath is required" }),
+        JSON.stringify({ success: false, error: "videoId is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Leer secrets
-    const storageZone = Deno.env.get("BUNNY_STORAGE_ZONE")!;
-    const storageHostname = Deno.env.get("BUNNY_STORAGE_HOSTNAME")!;
-    const storagePassword = Deno.env.get("BUNNY_STORAGE_PASSWORD")!;
-    const cdnHostname = Deno.env.get("BUNNY_CDN_HOSTNAME")!;
+    // Read secrets
+    const bunnyApiKey = Deno.env.get("BUNNY_API_KEY")!;
+    const bunnyLibraryId = Deno.env.get("BUNNY_LIBRARY_ID")!;
 
-    // Descargar archivo de Bunny
-    const downloadUrl = `https://${storageHostname}/${storageZone}/${filePath}`;
-
-    const response = await fetch(downloadUrl, {
-      method: "GET",
-      headers: {
-        "AccessKey": storagePassword,
-      },
-    });
-
-    if (!response.ok) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `File not found: ${response.status}`
-        }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!bunnyApiKey || !bunnyLibraryId) {
+      throw new Error("Missing BUNNY_API_KEY or BUNNY_LIBRARY_ID");
     }
 
-    // Retornar el archivo con headers correctos
-    const contentType = response.headers.get("content-type") || "application/octet-stream";
-    const fileData = await response.arrayBuffer();
+    // Get video info from Bunny Stream
+    const response = await fetch(
+      `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoId}`,
+      {
+        method: "GET",
+        headers: {
+          "AccessKey": bunnyApiKey,
+        },
+      }
+    );
 
-    return new Response(fileData, {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${filePath.split('/').pop()}"`,
-      },
+    if (!response.ok) {
+      if (response.status === 404) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Video not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const errorText = await response.text();
+      throw new Error(`Failed to get video: ${errorText}`);
+    }
+
+    const videoInfo: BunnyVideoInfo = await response.json();
+
+    // Build URLs
+    const cdnBase = `https://vz-7d2f834c-a0b.b-cdn.net/${videoId}`;
+    const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoId}`;
+
+    // Parse available resolutions
+    const resolutions = videoInfo.availableResolutions?.split(",") || [];
+    const directUrls: Record<string, string> = {};
+
+    resolutions.forEach(res => {
+      if (res) {
+        directUrls[res] = `${cdnBase}/play_${res}.mp4`;
+      }
     });
 
+    return new Response(
+      JSON.stringify({
+        success: true,
+        videoId: videoInfo.guid,
+        title: videoInfo.title,
+        status: videoInfo.status,
+        encodeProgress: videoInfo.encodeProgress,
+        embedUrl,
+        thumbnailUrl: `${cdnBase}/thumbnail.jpg`,
+        directUrls,
+        isReady: videoInfo.status === 4, // Status 4 = Finished encoding
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
   } catch (error) {
+    console.error("[bunny-download-v2] Error:", error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
