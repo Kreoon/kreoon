@@ -152,3 +152,12 @@ verify_jwt = true
 
 [functions.admin-reset-password]
 verify_jwt = true
+
+[functions.bunny-upload-v2]
+verify_jwt = true
+
+[functions.bunny-download-v2]
+verify_jwt = true
+
+[functions.bunny-delete-v2]
+verify_jwt = true
