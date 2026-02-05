@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useEffect, useState, useCallback } from 'react';
+import { forwardRef, useImperativeHandle, useEffect, useState, memo } from 'react';
 import { Play, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHLSPlayer, getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
@@ -28,7 +28,7 @@ interface HLSVideoPlayerProps {
   onLoadComplete?: () => void;
 }
 
-export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>(
+export const HLSVideoPlayer = memo(forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>(
   function HLSVideoPlayer(
     {
       src,
@@ -161,7 +161,9 @@ export const HLSVideoPlayer = forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>
       </div>
     );
   }
-);
+));
+
+HLSVideoPlayer.displayName = 'HLSVideoPlayer';
 
 /**
  * Get thumbnail URL for a Bunny video

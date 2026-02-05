@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { Play, Eye } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo, memo } from 'react';
+import { Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 
@@ -21,7 +21,7 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-export function VideoThumbnail({
+export const VideoThumbnail = memo(function VideoThumbnail({
   id,
   videoUrl,
   thumbnailUrl,
@@ -37,8 +37,8 @@ export function VideoThumbnail({
   const [isHovering, setIsHovering] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Get Bunny thumbnail if not provided
-  const bunnyUrls = videoUrl ? getBunnyVideoUrls(videoUrl) : null;
+  // Memoize Bunny URL resolution to prevent recalculation on every render
+  const bunnyUrls = useMemo(() => videoUrl ? getBunnyVideoUrls(videoUrl) : null, [videoUrl]);
   const effectiveThumbnailUrl = thumbnailUrl || bunnyUrls?.thumbnail;
   const previewVideoUrl = bunnyUrls?.mp4;
 
@@ -77,6 +77,8 @@ export function VideoThumbnail({
         <img
           src={effectiveThumbnailUrl}
           alt={title || 'Video'}
+          loading="lazy"
+          decoding="async"
           className={cn(
             "w-full h-full object-cover transition-opacity duration-300",
             imageLoaded ? "opacity-100" : "opacity-0",
@@ -96,14 +98,15 @@ export function VideoThumbnail({
         <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
       )}
 
-      {/* Hover video preview */}
+      {/* Hover video preview - only load source when hovering */}
       {hoverPreview && previewVideoUrl && (
         <video
           ref={videoRef}
-          src={previewVideoUrl}
+          src={isHovering ? previewVideoUrl : undefined}
           muted
           loop
           playsInline
+          preload="none"
           className={cn(
             "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
             isHovering ? "opacity-100" : "opacity-0"
@@ -130,4 +133,6 @@ export function VideoThumbnail({
       )}
     </div>
   );
-}
+});
+
+VideoThumbnail.displayName = 'VideoThumbnail';

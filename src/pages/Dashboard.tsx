@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
   Video, Users, CheckCircle, Clock, DollarSign, TrendingUp, 
@@ -38,29 +38,52 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { UPSystemKPIs } from "@/components/dashboard/UPSystemKPIs";
 import { ActiveSeasonBanner } from "@/components/dashboard/ActiveSeasonBanner";
 import { CollaborativeStats } from "@/components/dashboard/CollaborativeStats";
-// Animated number counter
+
+// Optimized animated number counter using requestAnimationFrame (60fps, minimal re-renders)
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-  
+  const [displayValue, setDisplayValue] = useState(value);
+  const prevValueRef = useRef(value);
+
   useEffect(() => {
-    const duration = 1000;
-    const steps = 30;
-    const increment = value / steps;
-    let current = 0;
-    
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= value) {
-        setDisplayValue(value);
-        clearInterval(timer);
+    // Skip animation if value hasn't changed or is 0
+    if (value === prevValueRef.current || value === 0) {
+      setDisplayValue(value);
+      prevValueRef.current = value;
+      return;
+    }
+
+    const startValue = prevValueRef.current;
+    const endValue = value;
+    const duration = 800; // Slightly faster for snappier feel
+    let startTime: number | null = null;
+    let animationId: number;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease-out curve for smoother deceleration
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const currentValue = Math.floor(startValue + (endValue - startValue) * easeOut);
+
+      setDisplayValue(currentValue);
+
+      if (progress < 1) {
+        animationId = requestAnimationFrame(animate);
       } else {
-        setDisplayValue(Math.floor(current));
+        setDisplayValue(endValue);
       }
-    }, duration / steps);
-    
-    return () => clearInterval(timer);
+    };
+
+    animationId = requestAnimationFrame(animate);
+    prevValueRef.current = value;
+
+    return () => {
+      if (animationId) cancelAnimationFrame(animationId);
+    };
   }, [value]);
-  
+
   return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
 };
 

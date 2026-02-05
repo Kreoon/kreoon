@@ -109,7 +109,8 @@ export const AutoPauseVideo = forwardRef<HTMLDivElement, AutoPauseVideoProps>(
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            const visible = entry.isIntersecting && entry.intersectionRatio >= 0.5;
+            // Lower threshold (0.1) for faster loading, start preload when 10% visible
+            const visible = entry.isIntersecting && entry.intersectionRatio >= 0.1;
             setIsVisible(visible);
 
             if (visible) {
@@ -122,8 +123,9 @@ export const AutoPauseVideo = forwardRef<HTMLDivElement, AutoPauseVideoProps>(
           });
         },
         {
-          threshold: 0.5,
-          rootMargin: "0px"
+          threshold: 0.1,
+          // Preload 200px before entering viewport for smoother experience
+          rootMargin: "200px 0px"
         }
       );
 
@@ -278,7 +280,8 @@ const AutoPauseNativeVideo = forwardRef<HTMLDivElement, AutoPauseNativeVideoProp
         (entries) => {
           entries.forEach((entry) => {
             if (videoRef.current) {
-              if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+              // Lower threshold for faster response
+              if (entry.isIntersecting && entry.intersectionRatio >= 0.1) {
                 // Video is visible - autoplay if enabled
                 if (autoPlay) {
                   videoRef.current.play().catch(() => {
@@ -293,8 +296,9 @@ const AutoPauseNativeVideo = forwardRef<HTMLDivElement, AutoPauseNativeVideoProp
           });
         },
         {
-          threshold: 0.5,
-          rootMargin: "0px"
+          threshold: 0.1,
+          // Preload 200px before entering viewport
+          rootMargin: "200px 0px"
         }
       );
 

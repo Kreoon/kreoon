@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -120,29 +120,48 @@ interface Product {
   updated_at: string | null;
 }
 
-// Animated number counter
+// Optimized animated number counter using requestAnimationFrame
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-  
+  const [displayValue, setDisplayValue] = useState(value);
+  const prevValueRef = useRef(value);
+
   useEffect(() => {
+    if (value === prevValueRef.current || value === 0) {
+      setDisplayValue(value);
+      prevValueRef.current = value;
+      return;
+    }
+
+    const startValue = prevValueRef.current;
+    const endValue = value;
     const duration = 800;
-    const steps = 25;
-    const increment = value / steps;
-    let current = 0;
-    
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= value) {
-        setDisplayValue(value);
-        clearInterval(timer);
+    let startTime: number | null = null;
+    let animationId: number;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const currentValue = Math.floor(startValue + (endValue - startValue) * easeOut);
+
+      setDisplayValue(currentValue);
+
+      if (progress < 1) {
+        animationId = requestAnimationFrame(animate);
       } else {
-        setDisplayValue(Math.floor(current));
+        setDisplayValue(endValue);
       }
-    }, duration / steps);
-    
-    return () => clearInterval(timer);
+    };
+
+    animationId = requestAnimationFrame(animate);
+    prevValueRef.current = value;
+
+    return () => {
+      if (animationId) cancelAnimationFrame(animationId);
+    };
   }, [value]);
-  
+
   return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
 };
 

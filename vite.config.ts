@@ -142,6 +142,37 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
+            // HLS manifests - cache for 1 hour (faster subsequent loads)
+            urlPattern: /\.m3u8$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'hls-manifest-cache-v1',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 // 1 hour
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Video thumbnails from Bunny CDN - long cache
+            urlPattern: /^https:\/\/.*\.b-cdn\.net\/.*thumbnail/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'bunny-thumbnail-cache-v1',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Video content from Bunny CDN
             urlPattern: /^https:\/\/.*\.b-cdn\.net\/.*/i,
             handler: 'CacheFirst',
             options: {
