@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Building2,
@@ -109,8 +109,11 @@ const ROLE_OPTIONS: Array<{ value: string; label: string; icon: React.ReactNode;
 export default function OrgRegister() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isConfirmed = searchParams.get("confirmed") === "true";
 
   const [loading, setLoading] = useState(true);
+  const [completingRegistration, setCompletingRegistration] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -168,6 +171,101 @@ export default function OrgRegister() {
       setSelectedRole(organization.default_role);
     }
   }, [organization?.default_role]);
+
+  // Handle completing registration after email confirmation
+  useEffect(() => {
+    const completeOrgRegistration = async () => {
+      // Check if user just confirmed their email
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      // Check for pending organization registration
+      const pendingReg = localStorage.getItem("pendingOrgRegistration");
+      const userMeta = session.user.user_metadata;
+
+      // Get pending org info from either localStorage or user metadata
+      const pendingOrgId = pendingReg
+        ? JSON.parse(pendingReg).orgId
+        : userMeta?.pending_org_id;
+      const pendingRole = pendingReg
+        ? JSON.parse(pendingReg).role
+        : userMeta?.pending_org_role;
+
+      if (!pendingOrgId || !pendingRole) return;
+
+      // Verify this is for the current organization
+      if (organization && pendingOrgId === organization.id) {
+        setCompletingRegistration(true);
+        try {
+          // Wait for profile to be created by trigger
+          let profileExists = false;
+          for (let i = 0; i < 5; i++) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("id", session.user.id)
+              .single();
+            if (profile) {
+              profileExists = true;
+              break;
+            }
+            await new Promise((r) => setTimeout(r, 300));
+          }
+
+          if (!profileExists) {
+            await supabase.from("profiles").upsert(
+              {
+                id: session.user.id,
+                email: session.user.email || "",
+                full_name: userMeta?.full_name || session.user.email || "",
+              },
+              { onConflict: "id" }
+            );
+          }
+
+          // Complete the organization registration
+          const { error: regError } = await supabase.rpc("register_user_to_organization", {
+            p_organization_id: pendingOrgId,
+            p_user_id: session.user.id,
+            p_role: pendingRole,
+          });
+
+          if (regError) {
+            console.error("Error completing org registration:", regError);
+            toast.error("Error al completar el registro en la organización");
+          } else {
+            // Clear pending registration
+            localStorage.removeItem("pendingOrgRegistration");
+
+            // Notify about new member
+            supabase.functions
+              .invoke("notify-new-member", {
+                body: {
+                  user_id: session.user.id,
+                  organization_id: pendingOrgId,
+                  role: pendingRole,
+                  user_name: userMeta?.full_name || "",
+                  user_email: session.user.email || "",
+                },
+              })
+              .catch(() => {});
+
+            toast.success("¡Registro completado exitosamente!");
+            navigate(`/welcome?role=${pendingRole}`);
+          }
+        } catch (err) {
+          console.error("Error completing registration:", err);
+          toast.error("Error al completar el registro");
+        } finally {
+          setCompletingRegistration(false);
+        }
+      }
+    };
+
+    if (isConfirmed && organization) {
+      completeOrgRegistration();
+    }
+  }, [isConfirmed, organization, navigate]);
 
   const fetchOrganization = async () => {
     try {
@@ -299,8 +397,13 @@ export default function OrgRegister() {
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: { full_name: fullName.trim() },
+          emailRedirectTo: `${window.location.origin}/auth/org/${slug}?confirmed=true`,
+          data: {
+            full_name: fullName.trim(),
+            pending_org_id: organization.id,
+            pending_org_role: roleToAssign,
+            pending_org_slug: slug,
+          },
         },
       });
 
@@ -318,9 +421,20 @@ export default function OrgRegister() {
         return;
       }
 
+      // If no session, email confirmation is required
+      // Store pending org info in localStorage as backup
       if (!authData.session) {
+        localStorage.setItem(
+          "pendingOrgRegistration",
+          JSON.stringify({
+            orgId: organization.id,
+            role: roleToAssign,
+            slug: slug,
+            userId: authData.user.id,
+          })
+        );
         toast.success(
-          "Cuenta creada. Revisa tu correo para confirmar tu email y luego inicia sesión.",
+          "Cuenta creada. Revisa tu correo para confirmar tu email y completar el registro.",
         );
         navigate("/auth", { replace: true });
         return;
@@ -610,18 +724,32 @@ export default function OrgRegister() {
     </div>
   );
 
-  if (loading) {
+  if (loading || completingRegistration) {
     return (
       <AuthLayout showBranding leftColumnContent={leftColumnContent}>
         <KreoonCard className="w-full max-w-md p-6">
           <div className="flex flex-col items-center gap-4">
-            <div className="h-12 w-12 animate-pulse rounded-xl bg-kreoon-bg-secondary" />
-            <div className="h-6 w-48 animate-pulse rounded bg-kreoon-bg-secondary" />
-            <div className="h-4 w-64 animate-pulse rounded bg-kreoon-bg-secondary" />
-            <div className="mt-6 w-full space-y-3">
-              <div className="h-10 w-full animate-pulse rounded-xl bg-kreoon-bg-secondary" />
-              <div className="h-10 w-full animate-pulse rounded-xl bg-kreoon-bg-secondary" />
-            </div>
+            {completingRegistration ? (
+              <>
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <h3 className="text-lg font-semibold text-kreoon-text-primary">
+                  Completando registro...
+                </h3>
+                <p className="text-sm text-kreoon-text-secondary text-center">
+                  Estamos agregándote a la organización
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="h-12 w-12 animate-pulse rounded-xl bg-kreoon-bg-secondary" />
+                <div className="h-6 w-48 animate-pulse rounded bg-kreoon-bg-secondary" />
+                <div className="h-4 w-64 animate-pulse rounded bg-kreoon-bg-secondary" />
+                <div className="mt-6 w-full space-y-3">
+                  <div className="h-10 w-full animate-pulse rounded-xl bg-kreoon-bg-secondary" />
+                  <div className="h-10 w-full animate-pulse rounded-xl bg-kreoon-bg-secondary" />
+                </div>
+              </>
+            )}
           </div>
         </KreoonCard>
       </AuthLayout>
