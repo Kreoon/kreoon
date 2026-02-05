@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -154,12 +155,13 @@ export function SocialSharePanel({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" aria-describedby="social-share-desc">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
             Compartir
           </DialogTitle>
+          <DialogDescription id="social-share-desc" className="sr-only">Compartir contenido en redes sociales</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
