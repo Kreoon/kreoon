@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -301,7 +301,8 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
   if (isDraftOrScriptPending) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-3xl max-h-[95vh] overflow-hidden p-0 gap-0">
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-3xl max-h-[95vh] overflow-hidden p-0 gap-0" aria-describedby="client-detail-draft-desc">
+          <DialogDescription id="client-detail-draft-desc" className="sr-only">Detalle del contenido en borrador</DialogDescription>
           {/* Header */}
           <div className="relative border-b bg-gradient-to-r from-primary/5 via-background to-primary/5">
             <button
@@ -526,7 +527,8 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-6xl max-h-[95vh] overflow-hidden p-0 gap-0">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-6xl max-h-[95vh] overflow-hidden p-0 gap-0" aria-describedby="client-detail-desc">
+        <DialogDescription id="client-detail-desc" className="sr-only">Detalle del contenido</DialogDescription>
         {/* Header */}
         <div className="relative border-b bg-gradient-to-r from-primary/5 via-background to-primary/5">
           <button
@@ -891,7 +893,8 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
 
       {/* Rating Dialog for Approval */}
       <Dialog open={showRatingDialog} onOpenChange={setShowRatingDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="client-rating-desc">
+          <DialogDescription id="client-rating-desc" className="sr-only">Califica y aprueba el contenido</DialogDescription>
           <div className="space-y-6">
             <div className="text-center">
               <div className="mx-auto w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mb-3">

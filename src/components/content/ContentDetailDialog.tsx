@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +33,7 @@ import {
   Calendar, User, Video, Link as LinkIcon, 
   DollarSign, FileText, Save, ExternalLink,
   Clock, CheckCircle, Trash2, MessageSquare, Send, FolderOpen, Package, Lock, Share2,
-  Plus, X, Clipboard, Megaphone, Target, Upload, Download, Loader2, Image
+  Plus, X, Clipboard, Megaphone, Target, Upload, Image
 } from "lucide-react";
 import {
   AlertDialog,
@@ -47,72 +47,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// Download Video Button Component
-function DownloadVideoButton({ contentId, videoUrl, variantIndex, title }: {
-  contentId: string;
-  videoUrl: string;
-  variantIndex: number;
-  title: string;
-}) {
-  const [downloading, setDownloading] = useState(false);
-  const { toast } = useToast();
-
-  const handleDownload = async () => {
-    setDownloading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({ title: "Debes iniciar sesión", variant: "destructive" });
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('bunny-download', {
-        body: { content_id: contentId, video_url: videoUrl }
-      });
-
-      if (error) throw error;
-
-      if (data.download_url) {
-        // Create a temporary link and trigger download
-        const link = document.createElement('a');
-        link.href = data.download_url;
-        link.download = `${title}_variable_${variantIndex + 1}.mp4`;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast({ title: "Descarga iniciada", description: "El video se está descargando" });
-      }
-    } catch (error) {
-      console.error('Download error:', error);
-      toast({ 
-        title: "Error al descargar", 
-        description: error instanceof Error ? error.message : "No se pudo descargar el video",
-        variant: "destructive" 
-      });
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleDownload}
-      disabled={downloading}
-      className="h-7 px-2 text-xs"
-    >
-      {downloading ? (
-        <Loader2 className="h-3 w-3 animate-spin mr-1" />
-      ) : (
-        <Download className="h-3 w-3 mr-1" />
-      )}
-      Descargar
-    </Button>
-  );
-}
 
 interface ContentDetailDialogProps {
   content: Content | null;
@@ -659,7 +593,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   const canEnterEditMode = isAdmin || isAssignedCreator || isAssignedEditor;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0" aria-describedby="content-detail-desc">
+        <DialogDescription id="content-detail-desc" className="sr-only">Detalle del proyecto de contenido</DialogDescription>
         {/* Hero Header - Landing Page Style */}
         <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-6 sm:p-8 border-b">
           {/* Background Pattern */}
@@ -910,23 +845,11 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 {/* Embedded Bunny Videos based on hooks_count */}
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                   {formData.video_urls.map((videoUrl, index) => {
-                    // Determine if download is allowed
-                    const approvedStatuses = ['approved', 'paid', 'delivered'];
-                    const canDownloadVideo = isAdmin || (isClient && approvedStatuses.includes(currentStatus || content.status));
-                    
                     return (
                     <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Variable {index + 1}</span>
                         <div className="flex items-center gap-2">
-                          {videoUrl && canDownloadVideo && (
-                            <DownloadVideoButton 
-                              contentId={content.id}
-                              videoUrl={videoUrl}
-                              variantIndex={index}
-                              title={content.title}
-                            />
-                          )}
                           {videoUrl && (
                             <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
                               <CheckCircle className="h-3 w-3 mr-1" />

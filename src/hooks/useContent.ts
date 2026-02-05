@@ -7,13 +7,22 @@ import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 // Global set to track content IDs recently updated by the current session
 // This prevents realtime events from triggering unnecessary refetches
 const recentLocalUpdates = new Set<string>();
+const localUpdateTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const LOCAL_UPDATE_DEBOUNCE_MS = 3000;
 
 // Helper to mark a content as recently updated locally
 // Exported so other hooks (like useContentDetail) can use it
-export function markLocalUpdate(contentId: string) {
+// durationMs allows extending the window for long operations like video encoding
+export function markLocalUpdate(contentId: string, durationMs: number = LOCAL_UPDATE_DEBOUNCE_MS) {
   recentLocalUpdates.add(contentId);
-  setTimeout(() => recentLocalUpdates.delete(contentId), LOCAL_UPDATE_DEBOUNCE_MS);
+  // Clear any existing timer for this content before setting a new one
+  const existingTimer = localUpdateTimers.get(contentId);
+  if (existingTimer) clearTimeout(existingTimer);
+  const timer = setTimeout(() => {
+    recentLocalUpdates.delete(contentId);
+    localUpdateTimers.delete(contentId);
+  }, durationMs);
+  localUpdateTimers.set(contentId, timer);
 }
 
 // Helper to check if we should skip realtime refetch for this content
