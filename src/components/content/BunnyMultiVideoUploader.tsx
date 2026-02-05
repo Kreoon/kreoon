@@ -72,6 +72,16 @@ export function BunnyMultiVideoUploader({
   }, []);
 
   const pollVideoStatus = async (uploadId: string, videoGuid: string) => {
+    // Guard: don't poll if videoId is missing
+    if (!videoGuid) {
+      console.warn('[BunnyMultiVideoUploader] Skipping poll - no videoId');
+      if (pollIntervals.current[uploadId]) {
+        clearInterval(pollIntervals.current[uploadId]);
+        delete pollIntervals.current[uploadId];
+      }
+      return;
+    }
+
     console.log('[BunnyMultiVideoUploader] Polling status for:', videoGuid);
     try {
       const { data, error } = await supabase.functions.invoke('bunny-status', {
@@ -164,6 +174,18 @@ export function BunnyMultiVideoUploader({
         throw new Error(fnError?.message || credentials?.error || 'No se pudieron obtener las credenciales de subida');
       }
 
+      console.log('[BunnyMultiVideoUploader] Upload credentials:', JSON.stringify(credentials));
+
+      // Extract videoId robustly - try multiple field names and URL parsing
+      const extractedVideoId = credentials.videoId
+        || credentials.video_id
+        || credentials.guid
+        || credentials.uploadUrl?.split('/').pop()
+        || credentials.embedUrl?.split('/').pop()
+        || null;
+
+      console.log('[BunnyMultiVideoUploader] Extracted videoId:', extractedVideoId);
+
       setUploads(prev => prev.map(u =>
         u.id === uploadId ? { ...u, progress: 10 } : u
       ));
@@ -203,14 +225,14 @@ export function BunnyMultiVideoUploader({
       ));
 
       // Step 3: Update with embed URL and notify parent
-      const newEmbedUrl = credentials.embedUrl || '';
+      const newEmbedUrl = credentials.embedUrl || credentials.embed_url || '';
       let allUrls: string[] = [];
       setUploads(prev => {
         const newUploads = prev.map(u =>
           u.id === uploadId ? {
             ...u,
             progress: 100,
-            videoId: credentials.videoId,
+            videoId: extractedVideoId,
             embedUrl: newEmbedUrl,
             status: 'processing' as const
           } : u
@@ -222,10 +244,17 @@ export function BunnyMultiVideoUploader({
       // Notify parent outside of state updater to avoid cascading renders
       setTimeout(() => onUploadComplete?.(allUrls), 0);
 
-      // Start polling for processing status
-      pollIntervals.current[uploadId] = setInterval(() => {
-        pollVideoStatus(uploadId, credentials.videoId);
-      }, 5000);
+      // Start polling for processing status only if we have a videoId
+      if (extractedVideoId) {
+        pollIntervals.current[uploadId] = setInterval(() => {
+          pollVideoStatus(uploadId, extractedVideoId);
+        }, 5000);
+      } else {
+        console.warn('[BunnyMultiVideoUploader] No videoId available, marking as completed without polling');
+        setUploads(prev => prev.map(u =>
+          u.id === uploadId ? { ...u, status: 'completed' } : u
+        ));
+      }
 
       toast({
         title: "Video subido",

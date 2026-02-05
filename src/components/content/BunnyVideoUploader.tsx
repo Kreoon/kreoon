@@ -52,6 +52,15 @@ export function BunnyVideoUploader({
   }, []);
 
   const pollVideoStatus = async (videoGuid: string) => {
+    if (!videoGuid) {
+      console.warn('[BunnyVideoUploader] Skipping poll - no videoId');
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+      return;
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('bunny-status', {
         body: { content_id: contentId, video_id: videoGuid }
@@ -131,6 +140,18 @@ export function BunnyVideoUploader({
         throw new Error(fnError?.message || credentials?.error || 'No se pudieron obtener las credenciales de subida');
       }
 
+      console.log('[BunnyVideoUploader] Upload credentials:', JSON.stringify(credentials));
+
+      // Extract videoId robustly - try multiple field names and URL parsing
+      const extractedVideoId = credentials.videoId
+        || credentials.video_id
+        || credentials.guid
+        || credentials.uploadUrl?.split('/').pop()
+        || credentials.embedUrl?.split('/').pop()
+        || null;
+
+      console.log('[BunnyVideoUploader] Extracted videoId:', extractedVideoId);
+
       setProgress(10);
 
       // Step 2: Upload directly to Bunny from browser using XHR for progress
@@ -162,17 +183,23 @@ export function BunnyVideoUploader({
       });
 
       setProgress(100);
-      setVideoId(credentials.videoId);
+      setVideoId(extractedVideoId);
 
-      if (credentials.embedUrl) {
-        onUploadComplete?.(credentials.embedUrl);
+      const embedUrl = credentials.embedUrl || credentials.embed_url || '';
+      if (embedUrl) {
+        onUploadComplete?.(embedUrl);
       }
 
-      // Start polling for processing status
+      // Start polling for processing status only if we have a videoId
       setStatus('processing');
-      pollIntervalRef.current = setInterval(() => {
-        pollVideoStatus(credentials.videoId);
-      }, 5000);
+      if (extractedVideoId) {
+        pollIntervalRef.current = setInterval(() => {
+          pollVideoStatus(extractedVideoId);
+        }, 5000);
+      } else {
+        console.warn('[BunnyVideoUploader] No videoId available, marking as completed');
+        setStatus('completed');
+      }
 
       toast({
         title: "Video subido",
