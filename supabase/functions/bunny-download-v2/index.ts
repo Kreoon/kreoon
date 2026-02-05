@@ -36,6 +36,7 @@ serve(async (req) => {
     // Read secrets
     const bunnyApiKey = Deno.env.get("BUNNY_API_KEY")!;
     const bunnyLibraryId = Deno.env.get("BUNNY_LIBRARY_ID")!;
+    const bunnyCdnHostname = Deno.env.get("BUNNY_CDN_HOSTNAME") || "";
 
     if (!bunnyApiKey || !bunnyLibraryId) {
       throw new Error("Missing BUNNY_API_KEY or BUNNY_LIBRARY_ID");
@@ -66,7 +67,8 @@ serve(async (req) => {
     const videoInfo: BunnyVideoInfo = await response.json();
 
     // Build URLs
-    const cdnBase = `https://vz-7d2f834c-a0b.b-cdn.net/${videoId}`;
+    const cdnHostname = bunnyCdnHostname || `vz-${bunnyLibraryId}.b-cdn.net`;
+    const cdnBase = `https://${cdnHostname}/${videoId}`;
     const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoId}`;
 
     // Parse available resolutions

@@ -121,7 +121,7 @@ export function useBunnyStorage() {
     }
   }, []);
 
-  const getEmbedUrl = useCallback((videoId: string, libraryId: string = '7d2f834ca0b81b2e0a5630621f51859a2c4c910a0ca3'): string => {
+  const getEmbedUrl = useCallback((videoId: string, libraryId: string = '568434'): string => {
     return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}`;
   }, []);
 
