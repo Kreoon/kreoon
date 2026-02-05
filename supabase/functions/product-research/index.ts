@@ -106,26 +106,41 @@ async function executeResearchStep(
   const runPerplexity = async (prompt: string, schema: any, schemaName: string, maxTokens = 4000) => {
     console.log(`[product-research] Running step: ${schemaName} with ${maxTokens} tokens`);
 
-    const res = await fetch("https://api.perplexity.ai/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${perplexityApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "sonar-pro",
-        max_tokens: maxTokens,
-        temperature: 0.2,
-        messages: [
-          {
-            role: "system",
-            content: "Eres un experto en investigación de mercado. Responde SOLO en español. Devuelve ÚNICAMENTE JSON válido, sin explicaciones, sin markdown, sin texto adicional."
-          },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_schema", json_schema: { name: schemaName, schema } },
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout per step
+
+    let res: Response;
+    try {
+      res = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${perplexityApiKey}`,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: "sonar-pro",
+          max_tokens: maxTokens,
+          temperature: 0.2,
+          messages: [
+            {
+              role: "system",
+              content: "Eres un experto en investigación de mercado. Responde SOLO en español. Devuelve ÚNICAMENTE JSON válido, sin explicaciones, sin markdown, sin texto adicional."
+            },
+            { role: "user", content: prompt },
+          ],
+          response_format: { type: "json_schema", json_schema: { name: schemaName, schema } },
+        }),
+      });
+    } catch (fetchErr: any) {
+      clearTimeout(timeoutId);
+      if (fetchErr.name === "AbortError") {
+        throw new Error(`Perplexity timeout after 90s for ${schemaName}`);
+      }
+      throw fetchErr;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!res.ok) {
       const errorText = await res.text();

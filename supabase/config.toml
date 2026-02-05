@@ -117,6 +117,9 @@ verify_jwt = true
 [functions.analyze-video-content]
 verify_jwt = true
 
+[functions.save-product-brief]
+verify_jwt = true
+
 [functions.product-research]
 verify_jwt = false
 

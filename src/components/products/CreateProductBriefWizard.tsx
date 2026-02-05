@@ -661,8 +661,10 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
     }
 
     setIsGenerating(true);
+    let createdProductId: string | null = null;
+
     try {
-      // Step 1: Create the product in database
+      // Step 1: Create the product in database (saves the brief)
       const { data: newProduct, error: createError } = await supabase
         .from('products')
         .insert({
@@ -676,16 +678,34 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
         .single();
 
       if (createError) throw createError;
+      createdProductId = newProduct.id;
 
       toast.success('Producto creado, iniciando investigación con IA...');
 
       // Step 2: Call the research function (Kreoon directo)
-      const { data, error } = await invokeProductResearch({ productId: newProduct.id, briefData });
+      // Research errors are handled separately - product is already saved
+      let researchSuccess = false;
+      try {
+        const { data, error } = await invokeProductResearch({ productId: newProduct.id, briefData });
 
-      if (error) throw error;
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Error al generar la investigación');
+        if (error) {
+          console.error('Research function error:', error);
+          toast.error('Error al generar la investigación', {
+            description: 'El brief fue guardado. Puedes reintentar la investigación desde el detalle del producto.'
+          });
+        } else if (!data?.success) {
+          console.error('Research returned failure:', data?.error);
+          toast.error('La investigación no se completó', {
+            description: data?.error || 'El brief fue guardado. Puedes reintentar desde el detalle del producto.'
+          });
+        } else {
+          researchSuccess = true;
+        }
+      } catch (researchError) {
+        console.error('Research exception:', researchError);
+        toast.error('Error al generar la investigación', {
+          description: 'El brief fue guardado. Puedes reintentar la investigación desde el detalle del producto.'
+        });
       }
 
       // Step 3: Get the client's organization_id
@@ -698,9 +718,9 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
       // Step 4: Create the content items automatically with phase distribution
       if (totalFromPhases > 0) {
         const contentItems: any[] = [];
-        
+
         // Create content items for each phase
-        ESFERA_PHASES.forEach((phase, phaseIndex) => {
+        ESFERA_PHASES.forEach((phase) => {
           const count = briefData.phaseDistribution[phase.key];
           for (let i = 0; i < count; i++) {
             contentItems.push({
@@ -730,17 +750,29 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
         }
       }
 
-      toast.success('¡Investigación completada!', {
-        description: 'El producto ha sido creado con análisis de mercado completo.'
-      });
+      if (researchSuccess) {
+        toast.success('¡Investigación completada!', {
+          description: 'El producto ha sido creado con análisis de mercado completo.'
+        });
+      }
+
       // Clear the draft after successful creation
       clearDraft(clientId);
       onComplete(newProduct.id);
     } catch (error) {
       console.error('Error creating product:', error);
-      toast.error('Error al crear el producto', {
-        description: error instanceof Error ? error.message : 'Intenta de nuevo'
-      });
+      // If the product was already created, still navigate to it
+      if (createdProductId) {
+        toast.error('Error parcial', {
+          description: 'El producto fue creado pero hubo un problema adicional. Revisa el detalle del producto.'
+        });
+        clearDraft(clientId);
+        onComplete(createdProductId);
+      } else {
+        toast.error('Error al crear el producto', {
+          description: error instanceof Error ? error.message : 'Intenta de nuevo'
+        });
+      }
     } finally {
       setIsGenerating(false);
     }
