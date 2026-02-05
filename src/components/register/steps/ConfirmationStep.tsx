@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2, Check, Building2, User, Crown, Sparkles, Rocket, Users } from 'lucide-react';
+import { ArrowLeft, Loader2, Check, Building2, User, Crown, Sparkles, Rocket, Users, Store } from 'lucide-react';
 import { StepProps } from '../types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +13,7 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
   const navigate = useNavigate();
 
   const isOrgFlow = data.registrationMode === 'create_org';
+  const isBrandFlow = data.registrationMode === 'brand';
   const isJoinFlow = data.registrationMode === 'join_org';
 
   const getOrgTypeLabel = () => {
@@ -114,7 +115,7 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
 
           await supabase
             .from('profiles')
-            .update({ 
+            .update({
               current_organization_id: orgData.id,
               organization_status: 'active',
               country: data.country,
@@ -126,9 +127,63 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
           title: '¡Organización creada!',
           description: 'Tu prueba de 30 días ha comenzado',
         });
-        
+
         // Redirect org creators to dashboard
         navigate('/dashboard');
+      } else if (isBrandFlow) {
+        // Brands are created as organizations with type 'brand' and client role
+        const brandName = data.organizationName || data.fullName;
+        const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .insert({
+            name: brandName,
+            slug: brandSlug + '-' + Date.now().toString(36),
+            organization_type: 'brand',
+            admin_name: data.fullName,
+            admin_email: data.email,
+            is_registration_open: false,
+            created_by: authData.user.id,
+            subscription_status: 'active',
+          })
+          .select('id')
+          .single();
+
+        if (orgError) throw orgError;
+
+        if (orgData) {
+          // Brand owners get client role (they're looking for talent)
+          await supabase.from('organization_members').insert({
+            organization_id: orgData.id,
+            user_id: authData.user.id,
+            role: 'client',
+            is_owner: true,
+          });
+
+          await supabase.from('organization_member_roles').insert({
+            organization_id: orgData.id,
+            user_id: authData.user.id,
+            role: 'client',
+          });
+
+          await supabase
+            .from('profiles')
+            .update({
+              current_organization_id: orgData.id,
+              organization_status: 'active',
+              country: data.country,
+            })
+            .eq('id', authData.user.id);
+        }
+
+        toast({
+          title: '¡Cuenta de marca creada!',
+          description: 'Ya puedes buscar y contratar talento',
+        });
+
+        // Redirect brands to explore/find talent
+        navigate('/portfolio/explore');
       } else if (isJoinFlow) {
         const { data: org } = await supabase
           .from('organizations')
@@ -224,7 +279,16 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
         { label: 'Prueba gratis', value: '30 días activos', icon: Rocket },
       ];
     }
-    
+
+    if (isBrandFlow) {
+      return [
+        { label: 'Tipo de acceso', value: 'Marca / Empresa', icon: Store },
+        { label: 'Nombre de marca', value: data.organizationName || data.fullName, icon: Sparkles },
+        { label: 'Objetivo', value: 'Buscar y contratar talento', icon: Users },
+        { label: 'Acceso inmediato', value: 'Explorar creadores', icon: Rocket },
+      ];
+    }
+
     if (isJoinFlow) {
       return [
         { label: 'Tipo de acceso', value: 'Unirse a organización', icon: Users },
@@ -232,7 +296,7 @@ export function ConfirmationStep({ data, onBack }: StepProps) {
         { label: 'Acceso inmediato', value: 'Panel de la organización', icon: Rocket },
       ];
     }
-    
+
     return [
       { label: 'Tipo de acceso', value: 'Perfil individual', icon: User },
       { label: 'Rol principal', value: getUserRoleLabel(), icon: Sparkles },

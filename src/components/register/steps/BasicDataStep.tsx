@@ -29,6 +29,7 @@ export function BasicDataStep({ data, updateData, onNext, onBack }: StepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isOrgFlow = data.registrationMode === 'create_org';
+  const isBrandFlow = data.registrationMode === 'brand';
 
   const generateUsername = (name: string) => {
     return name.toLowerCase()
@@ -97,6 +98,12 @@ export function BasicDataStep({ data, updateData, onNext, onBack }: StepProps) {
       }
     }
 
+    if (isBrandFlow) {
+      if (!data.organizationName.trim()) {
+        newErrors.organizationName = 'El nombre de la marca es requerido';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -124,7 +131,7 @@ export function BasicDataStep({ data, updateData, onNext, onBack }: StepProps) {
         className="text-center mb-10"
       >
         <h1 className="text-3xl md:text-4xl font-bold mb-4">
-          {isOrgFlow ? 'Datos de tu organización' : 'Tus datos básicos'}
+          {isOrgFlow ? 'Datos de tu organización' : isBrandFlow ? 'Datos de tu marca' : 'Tus datos básicos'}
         </h1>
         <p className="text-muted-foreground text-lg">
           Solo lo esencial para comenzar
@@ -229,6 +236,33 @@ export function BasicDataStep({ data, updateData, onNext, onBack }: StepProps) {
             )}
           </div>
         </div>
+
+        {/* Brand specific */}
+        {isBrandFlow && (
+          <div className="pt-4 border-t border-border space-y-4">
+            <div>
+              <Label htmlFor="brandName" className="text-sm font-medium text-foreground">
+                Nombre de tu marca / empresa
+              </Label>
+              <Input
+                id="brandName"
+                value={data.organizationName}
+                onChange={(e) => updateData({ organizationName: e.target.value })}
+                placeholder="Mi Empresa S.A."
+                className={cn(
+                  'mt-1.5 h-12 bg-card border-border',
+                  errors.organizationName && 'border-destructive'
+                )}
+              />
+              {errors.organizationName && (
+                <p className="text-destructive text-xs mt-1">{errors.organizationName}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Este nombre aparecerá en tu perfil de marca
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Organization specific */}
         {isOrgFlow && (
