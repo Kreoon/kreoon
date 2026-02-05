@@ -292,37 +292,36 @@ export function BunnyMultiVideoUploader({
   };
 
   const handleRemove = async (uploadId: string, index: number, embedUrl: string) => {
-    if (!embedUrl) {
-      // If no URL, just reset local state
-      setUploads(prev => prev.map(u =>
+    // Update UI immediately and compute updated URLs
+    let updatedUrls: string[] = [];
+    setUploads(prev => {
+      const newUploads = prev.map(u =>
         u.id === uploadId ? { ...u, embedUrl: '', status: 'idle' as const, progress: 0 } : u
-      ));
-      return;
-    }
+      );
+      updatedUrls = newUploads.map(u => u.embedUrl);
+      return newUploads;
+    });
 
-    // Update UI immediately
-    setUploads(prev => prev.map(u =>
-      u.id === uploadId ? { ...u, embedUrl: '', status: 'idle' as const, progress: 0 } : u
-    ));
+    // Notify parent to auto-save updated URLs to DB
+    setTimeout(() => onUploadComplete?.(updatedUrls), 0);
 
+    if (!embedUrl) return;
+
+    // Best-effort: delete from Bunny CDN via edge function
+    // This may fail with 401 if token is stale, but the URL is already removed from DB above
     try {
-      // Delete from Bunny and database
       await supabase.functions.invoke('bunny-delete', {
         body: { content_id: contentId, video_url: embedUrl, field: 'video_urls' }
       });
-
-      toast({
-        title: "Video eliminado",
-        description: "El video se elimino correctamente"
-      });
+      console.log('[BunnyMultiVideoUploader] Video deleted from Bunny CDN');
     } catch (error) {
-      console.error('Delete error:', error);
-      toast({
-        title: "Error al eliminar",
-        description: "No se pudo eliminar completamente el video",
-        variant: "destructive"
-      });
+      console.warn('[BunnyMultiVideoUploader] Bunny CDN cleanup failed (non-critical):', error);
     }
+
+    toast({
+      title: "Video eliminado",
+      description: "El video se elimino correctamente"
+    });
   };
 
   const getStatusIcon = (status: VideoUpload['status']) => {
