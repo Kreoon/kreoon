@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Platform root emails that have full admin access
-const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
+const ROOT_EMAILS = (Deno.env.get("ROOT_ADMIN_EMAILS") || "jacsolucionesgraficas@gmail.com,kairosgp.sas@gmail.com").split(",").map(e => e.trim());
 
 // Actions that require ROOT access (destructive operations)
 const ROOT_ONLY_ACTIONS = [
@@ -32,7 +32,7 @@ serve(async (req) => {
     // Falls back to KREOON_* vars for backwards compatibility
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || Deno.env.get('KREOON_SUPABASE_URL');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('KREOON_SERVICE_ROLE_KEY');
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indqa2JxY3J4d3NtdnR4bXFnaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NDQwNTYsImV4cCI6MjA4NTAyMDA1Nn0.BorqcEBToDVeFBDQktZoCjCndYwB0bc6jlKmSJn-Wi8';
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
 
     if (!supabaseUrl || !serviceRoleKey) {
       console.error("Database credentials not configured");

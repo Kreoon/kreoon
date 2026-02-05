@@ -34,7 +34,7 @@ ON CONFLICT (code) DO UPDATE SET
 
 -- Tabla de tasas de cambio (historial)
 CREATE TABLE IF NOT EXISTS exchange_rates (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     from_currency VARCHAR(3) NOT NULL REFERENCES supported_currencies(code),
     to_currency VARCHAR(3) NOT NULL REFERENCES supported_currencies(code),
     rate DECIMAL(18,8) NOT NULL,
@@ -129,7 +129,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Tabla de conversiones realizadas (auditoría)
 CREATE TABLE IF NOT EXISTS currency_conversions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Contexto
     wallet_id UUID REFERENCES wallets(id),

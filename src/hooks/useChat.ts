@@ -177,11 +177,13 @@ export function useChat() {
       // This should happen even if user has no other conversations
       if (orgId) {
         // Fetch organization name
-        const { data: orgData } = await supabase
+        const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .select('name')
           .eq('id', orgId)
           .single();
+
+        if (orgError) throw orgError;
 
         const orgName = orgData?.name || 'IA';
         const aiAssistantName = `Asistente ${orgName}`;
@@ -466,13 +468,15 @@ export function useChat() {
         },
         async (payload) => {
           const newMessage = payload.new as ChatMessage;
-          
+
           // Fetch sender profile
-          const { data: profile } = await supabase
+          const { data: profile, error: profileErr } = await supabase
             .from('profiles')
             .select('id, full_name, avatar_url')
             .eq('id', newMessage.sender_id)
             .single();
+
+          if (profileErr) throw profileErr;
 
           setMessages(prev => [...prev, { ...newMessage, sender: profile || undefined }]);
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { AINotification } from '@/components/ai/AICopilotBubble';
 
 interface AICopilotContextType {
@@ -43,14 +43,16 @@ export function AICopilotProvider({ children }: { children: ReactNode }) {
     setNotifications([]);
   }, []);
 
+  const contextValue = useMemo(() => ({
+    notifications,
+    addNotification,
+    dismissNotification,
+    markAsRead,
+    clearAllNotifications,
+  }), [notifications, addNotification, dismissNotification, markAsRead, clearAllNotifications]);
+
   return (
-    <AICopilotContext.Provider value={{
-      notifications,
-      addNotification,
-      dismissNotification,
-      markAsRead,
-      clearAllNotifications,
-    }}>
+    <AICopilotContext.Provider value={contextValue}>
       {children}
     </AICopilotContext.Provider>
   );

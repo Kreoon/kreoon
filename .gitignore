@@ -26,3 +26,8 @@ dist-ssr
 
 # Supabase local files
 supabase/.temp/
+
+# Environment variables (nunca commitear secretos)
+.env
+.env.local
+.env.*.local

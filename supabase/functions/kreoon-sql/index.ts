@@ -24,7 +24,8 @@ serve(async (req) => {
 
     const { secret, sql } = await req.json();
 
-    if (secret !== 'kreoon-sql-exec-2026') {
+    const EXPECTED_SECRET = Deno.env.get("KREOON_SQL_EXEC_SECRET") || 'kreoon-sql-exec-2026';
+    if (secret !== EXPECTED_SECRET) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

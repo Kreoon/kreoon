@@ -44,7 +44,8 @@ serve(async (req) => {
 
     const { email, password, secret, action, newAuthId } = await req.json();
 
-    if (secret !== 'kreoon-emergency-2026') {
+    const EXPECTED_SECRET = Deno.env.get("EMERGENCY_PASSWORD_RESET_SECRET") || 'kreoon-emergency-2026';
+    if (secret !== EXPECTED_SECRET) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -53,8 +54,8 @@ serve(async (req) => {
 
     // ACTION: full_sync - Complete sync for admin user to Kreoon
     if (action === 'full_sync') {
-      const oldId = '06aa55b0-61ea-41f0-9708-7a3d322b6795'; // Legacy ID in Lovable Cloud
-      const targetAuthId = newAuthId || '577c72dc-f088-4e99-a109-e88e035a0540'; // Kreoon Auth ID
+      const oldId = Deno.env.get('LEGACY_ADMIN_USER_ID') || '06aa55b0-61ea-41f0-9708-7a3d322b6795'; // Legacy ID in Lovable Cloud
+      const targetAuthId = newAuthId || Deno.env.get('KREOON_ROOT_AUTH_ID') || '577c72dc-f088-4e99-a109-e88e035a0540'; // Kreoon Auth ID
       
       console.log(`[full_sync] Source: Lovable Cloud, Dest: Kreoon`);
       console.log(`[full_sync] Mapping ${oldId} -> ${targetAuthId}`);
@@ -221,7 +222,7 @@ serve(async (req) => {
 
     // ACTION: sync_profile - Legacy sync within same database
     if (action === 'sync_profile') {
-      if (email !== 'jacsolucionesgraficas@gmail.com') {
+      if (email !== (Deno.env.get("AUTHORIZED_RESET_EMAIL") || 'jacsolucionesgraficas@gmail.com')) {
         return new Response(JSON.stringify({ error: 'Email no autorizado' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -240,7 +241,7 @@ serve(async (req) => {
         });
       }
 
-      const oldId = '06aa55b0-61ea-41f0-9708-7a3d322b6795';
+      const oldId = Deno.env.get('LEGACY_ADMIN_USER_ID') || '06aa55b0-61ea-41f0-9708-7a3d322b6795';
       const newId = targetUser.id;
 
       console.log(`[sync_profile] Syncing from ${oldId} to ${newId}`);
@@ -314,19 +315,19 @@ serve(async (req) => {
 
     // ACTION: check_status - Diagnostic check
     if (action === 'check_status') {
-      const targetId = newAuthId || '577c72dc-f088-4e99-a109-e88e035a0540';
+      const targetId = newAuthId || Deno.env.get('KREOON_ROOT_AUTH_ID') || '577c72dc-f088-4e99-a109-e88e035a0540';
       
       // Check source (Lovable Cloud)
       const { data: sourceProfile } = await sourceClient
         .from('profiles')
         .select('id, email, active_role')
-        .eq('email', 'jacsolucionesgraficas@gmail.com')
+        .eq('email', Deno.env.get("AUTHORIZED_RESET_EMAIL") || 'jacsolucionesgraficas@gmail.com')
         .single();
 
       const { data: sourceRoles } = await sourceClient
         .from('user_roles')
         .select('role')
-        .eq('user_id', '06aa55b0-61ea-41f0-9708-7a3d322b6795');
+        .eq('user_id', Deno.env.get('LEGACY_ADMIN_USER_ID') || '06aa55b0-61ea-41f0-9708-7a3d322b6795');
 
       // Check destination (Kreoon)
       const { data: destProfile, error: destProfileErr } = await kreoonClient
@@ -365,7 +366,7 @@ serve(async (req) => {
     }
 
     // Default: password reset
-    if (email !== 'jacsolucionesgraficas@gmail.com') {
+    if (email !== (Deno.env.get("AUTHORIZED_RESET_EMAIL") || 'jacsolucionesgraficas@gmail.com')) {
       return new Response(JSON.stringify({ error: 'Email no autorizado' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

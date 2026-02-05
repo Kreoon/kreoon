@@ -39,12 +39,14 @@ export function useAIChat() {
     const fetchConfig = async () => {
       if (!orgId) return;
       
-      const { data } = await supabase
+      const { data, error: configError } = await supabase
         .from('ai_assistant_config')
         .select('assistant_name, is_enabled')
         .eq('organization_id', orgId)
         .single();
-      
+
+      if (configError) throw configError;
+
       if (data) {
         setAssistantConfig({
           name: data.assistant_name,

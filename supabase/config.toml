@@ -117,6 +117,9 @@ verify_jwt = true
 [functions.analyze-video-content]
 verify_jwt = true
 
+[functions.save-product-brief]
+verify_jwt = true
+
 [functions.product-research]
 verify_jwt = false
 
@@ -167,3 +170,30 @@ verify_jwt = true
 
 [functions.bunny-thumbnail-v2]
 verify_jwt = true
+
+[functions.ai-creator-matching]
+verify_jwt = true
+
+[functions.bulk-password-reset]
+verify_jwt = false
+
+[functions.emergency-password-reset]
+verify_jwt = false
+
+[functions.kreoon-sql]
+verify_jwt = false
+
+[functions.notify-new-member]
+verify_jwt = false
+
+[functions.org-public-info]
+verify_jwt = false
+
+[functions.sync-user-permissions]
+verify_jwt = false
+
+[functions.talent-ai]
+verify_jwt = true
+
+[functions.update-exchange-rates]
+verify_jwt = false

@@ -178,7 +178,7 @@ export function useBoardSettings(organizationId: string | null) {
         });
       } else if (!settingsRes.error) {
         // Crear board_settings por defecto si no existe
-        const { data: newSettings } = await supabase
+        const { data: newSettings, error: insertErr } = await supabase
           .from('board_settings')
           .insert({
             organization_id: organizationId,
@@ -189,6 +189,9 @@ export function useBoardSettings(organizationId: string | null) {
           })
           .select()
           .single();
+
+        if (insertErr) throw insertErr;
+
         if (newSettings) {
           setSettings({
             ...newSettings,
@@ -344,7 +347,7 @@ export function useBoardSettings(organizationId: string | null) {
 
     try {
       const maxOrder = Math.max(0, ...statuses.map(s => s.sort_order));
-      const { data: newStatus, error } = await supabase
+      const { data: newStatus, error: createErr } = await supabase
         .from('organization_statuses')
         .insert({
           organization_id: organizationId,
@@ -358,7 +361,7 @@ export function useBoardSettings(organizationId: string | null) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (createErr) throw createErr;
 
       setStatuses(prev => [...prev, newStatus]);
       toast({ title: 'Estado creado' });
@@ -452,7 +455,7 @@ export function useBoardSettings(organizationId: string | null) {
         if (error) throw error;
         setRules(prev => prev.map(r => r.id === existing.id ? { ...r, ...updates } : r));
       } else {
-        const { data, error } = await supabase
+        const { data, error: insertRuleErr } = await supabase
           .from('board_status_rules')
           .insert({
             organization_id: organizationId,
@@ -462,7 +465,7 @@ export function useBoardSettings(organizationId: string | null) {
           .select()
           .single();
 
-        if (error) throw error;
+        if (insertRuleErr) throw insertRuleErr;
         setRules(prev => [...prev, {
           ...data,
           required_fields: data.required_fields as string[],
@@ -488,7 +491,7 @@ export function useBoardSettings(organizationId: string | null) {
     if (!organizationId) return null;
 
     try {
-      const { data: newField, error } = await supabase
+      const { data: newField, error: fieldErr } = await supabase
         .from('board_custom_fields')
         .insert({
           organization_id: organizationId,
@@ -497,7 +500,7 @@ export function useBoardSettings(organizationId: string | null) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (fieldErr) throw fieldErr;
 
       setCustomFields(prev => [...prev, {
         ...newField,
@@ -568,7 +571,7 @@ export function useBoardSettings(organizationId: string | null) {
         if (error) throw error;
         setPermissions(prev => prev.map(p => p.id === existing.id ? { ...p, ...updates } : p));
       } else {
-        const { data, error } = await supabase
+        const { data, error: permErr } = await supabase
           .from('board_permissions')
           .insert({
             organization_id: organizationId,
@@ -578,7 +581,7 @@ export function useBoardSettings(organizationId: string | null) {
           .select()
           .single();
 
-        if (error) throw error;
+        if (permErr) throw permErr;
         setPermissions(prev => [...prev, {
           ...data,
           allowed_statuses: data.allowed_statuses || null

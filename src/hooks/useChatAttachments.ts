@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_FUNCTIONS_URL } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -69,7 +69,7 @@ export function useChatAttachments() {
 
       // Upload to Bunny via edge function
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bunny-chat-upload?conversation_id=${conversationId}`,
+        `${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-chat-upload?conversation_id=${conversationId}`,
         {
           method: 'POST',
           headers: {

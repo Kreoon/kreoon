@@ -126,11 +126,13 @@ export function useClientRealtimeNotifications() {
             if (contentError || content?.client_id !== clientId) return;
 
             // Get the commenter's name
-            const { data: profile } = await supabase
+            const { data: profile, error: profileErr } = await supabase
               .from('profiles')
               .select('full_name')
               .eq('id', payload.new.user_id)
               .single();
+
+            if (profileErr) throw profileErr;
 
             toast({
               title: '💬 Nuevo comentario',

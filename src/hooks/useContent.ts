@@ -76,15 +76,15 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
       const { data, error: queryError } = await query;
 
       if (queryError) throw queryError;
-      
+
       // Obtener perfiles de creadores y editores
       const contentData = data || [];
       const creatorIds = [...new Set(contentData.filter(c => c.creator_id).map(c => c.creator_id))];
       const editorIds = [...new Set(contentData.filter(c => c.editor_id).map(c => c.editor_id))];
-      
+
       let creatorMap = new Map();
       let editorMap = new Map();
-      
+
       if (creatorIds.length > 0) {
         const { data: creators } = await supabase
           .from('profiles')
@@ -92,7 +92,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
           .in('id', creatorIds);
         creators?.forEach(c => creatorMap.set(c.id, c));
       }
-      
+
       if (editorIds.length > 0) {
         const { data: editors } = await supabase
           .from('profiles')
@@ -100,13 +100,13 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
           .in('id', editorIds);
         editors?.forEach(e => editorMap.set(e.id, e));
       }
-      
+
       const contentWithProfiles = contentData.map(item => ({
         ...item,
         creator: item.creator_id ? creatorMap.get(item.creator_id) : null,
         editor: item.editor_id ? editorMap.get(item.editor_id) : null
       }));
-      
+
       setContent(contentWithProfiles as unknown as Content[]);
     } catch (err) {
       console.error('Error fetching content:', err);
@@ -127,11 +127,13 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
       });
     } else {
       // Fetch current status if not provided
-      const { data: currentContent } = await supabase
+      const { data: currentContent, error: contentErr } = await supabase
         .from('content')
         .select('status')
         .eq('id', contentId)
         .single();
+
+      if (contentErr) throw contentErr;
 
       if (currentContent) {
         await updateContentStatusWithUP({
@@ -176,11 +178,13 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   const approveContent = async (contentId: string, approverId: string) => {
     markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
     // First, fetch current status for UP integration
-    const { data: currentContent } = await supabase
+    const { data: currentContent, error: approveErr } = await supabase
       .from('content')
       .select('status')
       .eq('id', contentId)
       .single();
+
+    if (approveErr) throw approveErr;
 
     if (currentContent) {
       // Use UP-aware status change
@@ -368,11 +372,13 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
       });
     } else {
       // Fetch current status if not provided
-      const { data: currentContent } = await supabase
+      const { data: currentContent, error: statusErr } = await supabase
         .from('content')
         .select('status')
         .eq('id', contentId)
         .single();
+
+      if (statusErr) throw statusErr;
 
       if (currentContent) {
         await updateContentStatusWithUP({

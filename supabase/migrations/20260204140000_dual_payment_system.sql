@@ -9,7 +9,7 @@
 
 -- Métodos de cobro de la organización (para cobrar a sus clientes)
 CREATE TABLE IF NOT EXISTS organization_payment_gateways (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
 
     -- Tipo de pasarela
@@ -43,7 +43,7 @@ CREATE INDEX idx_org_payment_gateways_org ON organization_payment_gateways(organ
 
 -- Métodos de pago de la organización (para pagar a su equipo)
 CREATE TABLE IF NOT EXISTS organization_payout_methods (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
 
     -- Tipo de método
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS organization_payment_settings (
 
 -- Pagos de clientes a organizaciones
 CREATE TABLE IF NOT EXISTS organization_client_payments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id),
 
     -- Cliente que paga
@@ -164,7 +164,7 @@ CREATE INDEX idx_org_client_payments_status ON organization_client_payments(stat
 
 -- Pagos de organizaciones a su equipo
 CREATE TABLE IF NOT EXISTS organization_team_payments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id),
 
     -- A quién se paga
@@ -218,7 +218,7 @@ CREATE INDEX idx_org_team_payments_status ON organization_team_payments(status);
 
 -- Contratos directos usuario ↔ creador/editor
 CREATE TABLE IF NOT EXISTS marketplace_contracts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Partes del contrato
     client_user_id UUID NOT NULL REFERENCES auth.users(id),
@@ -283,7 +283,7 @@ CREATE INDEX idx_marketplace_contracts_status ON marketplace_contracts(status);
 
 -- Mensajes del contrato
 CREATE TABLE IF NOT EXISTS marketplace_contract_messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     contract_id UUID NOT NULL REFERENCES marketplace_contracts(id) ON DELETE CASCADE,
     sender_id UUID NOT NULL REFERENCES auth.users(id),
     message TEXT NOT NULL,
@@ -295,7 +295,7 @@ CREATE INDEX idx_contract_messages_contract ON marketplace_contract_messages(con
 
 -- Entregables del contrato
 CREATE TABLE IF NOT EXISTS marketplace_contract_deliverables (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     contract_id UUID NOT NULL REFERENCES marketplace_contracts(id) ON DELETE CASCADE,
 
     title VARCHAR(255) NOT NULL,

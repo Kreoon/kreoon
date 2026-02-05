@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -106,26 +106,41 @@ async function executeResearchStep(
   const runPerplexity = async (prompt: string, schema: any, schemaName: string, maxTokens = 4000) => {
     console.log(`[product-research] Running step: ${schemaName} with ${maxTokens} tokens`);
 
-    const res = await fetch("https://api.perplexity.ai/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${perplexityApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "sonar-pro",
-        max_tokens: maxTokens,
-        temperature: 0.2,
-        messages: [
-          {
-            role: "system",
-            content: "Eres un experto en investigación de mercado. Responde SOLO en español. Devuelve ÚNICAMENTE JSON válido, sin explicaciones, sin markdown, sin texto adicional."
-          },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_schema", json_schema: { name: schemaName, schema } },
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout per step
+
+    let res: Response;
+    try {
+      res = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${perplexityApiKey}`,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: "sonar-pro",
+          max_tokens: maxTokens,
+          temperature: 0.2,
+          messages: [
+            {
+              role: "system",
+              content: "Eres un experto en investigación de mercado. Responde SOLO en español. Devuelve ÚNICAMENTE JSON válido, sin explicaciones, sin markdown, sin texto adicional."
+            },
+            { role: "user", content: prompt },
+          ],
+          response_format: { type: "json_schema", json_schema: { name: schemaName, schema } },
+        }),
+      });
+    } catch (fetchErr: any) {
+      clearTimeout(timeoutId);
+      if (fetchErr.name === "AbortError") {
+        throw new Error(`Perplexity timeout after 90s for ${schemaName}`);
+      }
+      throw fetchErr;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!res.ok) {
       const errorText = await res.text();
@@ -1268,6 +1283,8 @@ async function savePartialResults(
 
   if (error) {
     console.error("[product-research] savePartialResults error:", error);
+    // Don't throw - we don't want to lose progress in memory even if DB write fails
+    // The consolidation at the end will retry the full save
   }
 }
 
@@ -1545,11 +1562,21 @@ serve(async (req) => {
         continue;
       }
 
-      // Check dependencies
-      const depsMet = step.dependsOn.every((d) => completedSteps.includes(d));
-      if (!depsMet) {
-        console.log(`[product-research] Dependencies not met for ${step.id}, skipping`);
-        continue;
+      // Check dependencies - fail if a required step hasn't completed
+      const missingDeps = step.dependsOn.filter((d) => !completedSteps.includes(d));
+      if (missingDeps.length > 0) {
+        const errMsg = `Dependencies not met for ${step.id}: missing ${missingDeps.join(', ')}`;
+        console.error(`[product-research] ${errMsg}`);
+        await savePartialResults(supabase, productId, results, completedSteps);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            completedSteps,
+            failedStep: step.id,
+            error: errMsg,
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
       console.log(`[product-research] === Step ${i + 1}/${RESEARCH_STEPS.length}: ${step.name} ===`);
