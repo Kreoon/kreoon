@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -624,7 +625,8 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[95vh] p-0 overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[95vh] p-0 overflow-hidden flex flex-col" aria-describedby="script-review-desc">
+        <DialogDescription id="script-review-desc" className="sr-only">Revisión del guión del contenido</DialogDescription>
         {/* Fixed Header with Actions */}
         <div className="sticky top-0 z-20 bg-background border-b shrink-0">
           <div className="p-4 sm:p-5">

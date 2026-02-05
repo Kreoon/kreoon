@@ -58,7 +58,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
         .from('content')
         .select(`
           *,
-          client:clients(*)
+          client:clients(id,name,logo_url)
         `)
         .order('created_at', { ascending: false });
 
@@ -283,7 +283,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
         .from('content')
         .select(`
           *,
-          client:clients(*)
+          client:clients(id,name,logo_url)
         `)
         .order('created_at', { ascending: false });
 

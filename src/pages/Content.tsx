@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Plus, Film } from "lucide-react";
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -84,9 +84,10 @@ const Content = () => {
                       <span className="sm:hidden">Nueva</span>
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-[95vw] sm:max-w-md">
+                  <DialogContent className="max-w-[95vw] sm:max-w-md" aria-describedby="add-portfolio-video-desc">
                     <DialogHeader>
                       <DialogTitle>Agregar Video al Portafolio</DialogTitle>
+                      <DialogDescription id="add-portfolio-video-desc" className="sr-only">Agregar un video al portafolio</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 pt-4">
                       <div className="space-y-2">
