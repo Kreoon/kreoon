@@ -116,13 +116,14 @@ export function usePortfolioPermissions(): PortfolioPermissions {
         // Fetch role-based permissions from DB
         const userRoles = roles || [];
         if (userRoles.length > 0) {
-          const { data: permData } = await supabase
+          const { data: permData, error: permError } = await supabase
             .from('portfolio_permissions')
             .select('permissions')
             .eq('organization_id', organizationId)
             .in('role', userRoles);
 
-          if (permData && permData.length > 0) {
+          // Ignore RLS errors (403) - fall through to role-based defaults
+          if (!permError && permData && permData.length > 0) {
             // Merge permissions (grant if any role has permission)
             const merged = { ...DEFAULT_PERMISSIONS };
             permData.forEach(p => {
