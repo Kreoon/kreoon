@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
+import { SUPABASE_FUNCTIONS_URL, SUPABASE_ANON_KEY } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2, CheckCircle, XCircle, Video, RefreshCw, Plus, Trash2 } from "lucide-react";
 
@@ -23,9 +24,9 @@ interface BunnyMultiVideoUploaderProps {
   showPreview?: boolean;
 }
 
-export function BunnyMultiVideoUploader({ 
-  contentId, 
-  title, 
+export function BunnyMultiVideoUploader({
+  contentId,
+  title,
   currentUrls = [],
   hooksCount,
   onUploadComplete,
@@ -96,7 +97,7 @@ export function BunnyMultiVideoUploader({
       }
 
       if (data?.status === 'completed') {
-        setUploads(prev => prev.map(u => 
+        setUploads(prev => prev.map(u =>
           u.id === uploadId ? { ...u, status: 'completed' } : u
         ));
         if (pollIntervals.current[uploadId]) {
@@ -104,11 +105,11 @@ export function BunnyMultiVideoUploader({
           delete pollIntervals.current[uploadId];
         }
         toast({
-          title: "¡Video listo!",
+          title: "Video listo!",
           description: "El video se ha procesado correctamente"
         });
       } else if (data?.status === 'failed') {
-        setUploads(prev => prev.map(u => 
+        setUploads(prev => prev.map(u =>
           u.id === uploadId ? { ...u, status: 'failed' } : u
         ));
         if (pollIntervals.current[uploadId]) {
@@ -124,7 +125,7 @@ export function BunnyMultiVideoUploader({
         // Still processing
         const progress = data?.encode_progress || 50;
         console.log('[BunnyMultiVideoUploader] Still processing, progress:', progress);
-        setUploads(prev => prev.map(u => 
+        setUploads(prev => prev.map(u =>
           u.id === uploadId ? { ...u, progress } : u
         ));
       }
@@ -141,7 +142,7 @@ export function BunnyMultiVideoUploader({
     const validTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
     if (!validTypes.includes(file.type)) {
       toast({
-        title: "Formato no válido",
+        title: "Formato no valido",
         description: "Por favor sube un archivo MP4, WebM, MOV o AVI",
         variant: "destructive"
       });
@@ -160,43 +161,32 @@ export function BunnyMultiVideoUploader({
     }
 
     // Update upload state
-    setUploads(prev => prev.map(u => 
+    setUploads(prev => prev.map(u =>
       u.id === uploadId ? { ...u, status: 'uploading', progress: 0 } : u
     ));
 
     try {
-      // Step 1: Get upload credentials from bunny-upload-v2
-      const { data: credentials, error: fnError } = await supabase.functions.invoke('bunny-upload-v2', {
-        body: { fileName: file.name, folder: `content/${contentId}` },
-      });
-
-      if (fnError || !credentials?.success || !credentials?.uploadUrl) {
-        throw new Error(fnError?.message || credentials?.error || 'No se pudieron obtener las credenciales de subida');
+      // Get auth token for the edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No hay sesion activa. Por favor inicia sesion de nuevo.');
       }
 
-      console.log('[BunnyMultiVideoUploader] Upload credentials:', JSON.stringify(credentials));
+      // Build FormData with file + metadata
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileName', file.name);
+      formData.append('folder', `content/${contentId}`);
 
-      // Extract videoId robustly - try multiple field names and URL parsing
-      const extractedVideoId = credentials.videoId
-        || credentials.video_id
-        || credentials.guid
-        || credentials.uploadUrl?.split('/').pop()
-        || credentials.embedUrl?.split('/').pop()
-        || null;
-
-      console.log('[BunnyMultiVideoUploader] Extracted videoId:', extractedVideoId);
-
-      setUploads(prev => prev.map(u =>
-        u.id === uploadId ? { ...u, progress: 10 } : u
-      ));
-
-      // Step 2: Upload directly to Bunny from browser using XHR for progress
+      // Upload via XHR to edge function for progress tracking
+      // The edge function proxies the file to Bunny server-side (no CORS issues)
       const xhr = new XMLHttpRequest();
 
-      await new Promise<void>((resolve, reject) => {
+      const response = await new Promise<any>((resolve, reject) => {
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
-            const percentComplete = Math.round((event.loaded / event.total) * 80) + 10;
+            // Progress 0-90% for upload to edge function
+            const percentComplete = Math.round((event.loaded / event.total) * 90);
             setUploads(prev => prev.map(u =>
               u.id === uploadId ? { ...u, progress: percentComplete } : u
             ));
@@ -205,35 +195,51 @@ export function BunnyMultiVideoUploader({
 
         xhr.addEventListener('load', () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
+            try {
+              resolve(JSON.parse(xhr.responseText));
+            } catch {
+              reject(new Error('Respuesta invalida del servidor'));
+            }
           } else {
-            reject(new Error(`Error de Bunny: ${xhr.status}`));
+            let errorMsg = `Error del servidor: ${xhr.status}`;
+            try {
+              const errData = JSON.parse(xhr.responseText);
+              if (errData.error) errorMsg = errData.error;
+            } catch { /* ignore parse error */ }
+            reject(new Error(errorMsg));
           }
         });
 
         xhr.addEventListener('error', () => reject(new Error('Error de red')));
         xhr.addEventListener('abort', () => reject(new Error('Subida cancelada')));
 
-        xhr.open('PUT', credentials.uploadUrl);
-        xhr.setRequestHeader('AccessKey', credentials.accessKey);
-        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-        xhr.send(file);
+        xhr.open('POST', `${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-upload-v2`);
+        xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
+        xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+        // NOTE: Do NOT set Content-Type for FormData - browser sets it with boundary
+        xhr.send(formData);
       });
 
-      setUploads(prev => prev.map(u =>
-        u.id === uploadId ? { ...u, progress: 95 } : u
-      ));
+      console.log('[BunnyMultiVideoUploader] Upload response:', JSON.stringify(response));
 
-      // Step 3: Update with embed URL and notify parent
-      const newEmbedUrl = credentials.embedUrl || credentials.embed_url || '';
+      if (!response.success) {
+        throw new Error(response.error || 'Error al subir el video');
+      }
+
+      const videoId = response.videoId;
+      const embedUrl = response.embedUrl || '';
+
+      console.log('[BunnyMultiVideoUploader] videoId:', videoId, 'embedUrl:', embedUrl);
+
+      // Update state with result
       let allUrls: string[] = [];
       setUploads(prev => {
         const newUploads = prev.map(u =>
           u.id === uploadId ? {
             ...u,
             progress: 100,
-            videoId: extractedVideoId,
-            embedUrl: newEmbedUrl,
+            videoId: videoId || null,
+            embedUrl,
             status: 'processing' as const
           } : u
         );
@@ -245,9 +251,9 @@ export function BunnyMultiVideoUploader({
       setTimeout(() => onUploadComplete?.(allUrls), 0);
 
       // Start polling for processing status only if we have a videoId
-      if (extractedVideoId) {
+      if (videoId) {
         pollIntervals.current[uploadId] = setInterval(() => {
-          pollVideoStatus(uploadId, extractedVideoId);
+          pollVideoStatus(uploadId, videoId);
         }, 5000);
       } else {
         console.warn('[BunnyMultiVideoUploader] No videoId available, marking as completed without polling');
@@ -258,12 +264,12 @@ export function BunnyMultiVideoUploader({
 
       toast({
         title: "Video subido",
-        description: `Variable ${index + 1} se está procesando en Bunny.net`
+        description: `Variable ${index + 1} se esta procesando en Bunny.net`
       });
 
     } catch (error) {
       console.error('Upload error:', error);
-      setUploads(prev => prev.map(u => 
+      setUploads(prev => prev.map(u =>
         u.id === uploadId ? { ...u, status: 'failed' } : u
       ));
       toast({
@@ -280,7 +286,7 @@ export function BunnyMultiVideoUploader({
   };
 
   const handleRetry = (uploadId: string) => {
-    setUploads(prev => prev.map(u => 
+    setUploads(prev => prev.map(u =>
       u.id === uploadId ? { ...u, status: 'idle', progress: 0, videoId: null } : u
     ));
   };
@@ -288,14 +294,14 @@ export function BunnyMultiVideoUploader({
   const handleRemove = async (uploadId: string, index: number, embedUrl: string) => {
     if (!embedUrl) {
       // If no URL, just reset local state
-      setUploads(prev => prev.map(u => 
+      setUploads(prev => prev.map(u =>
         u.id === uploadId ? { ...u, embedUrl: '', status: 'idle' as const, progress: 0 } : u
       ));
       return;
     }
 
     // Update UI immediately
-    setUploads(prev => prev.map(u => 
+    setUploads(prev => prev.map(u =>
       u.id === uploadId ? { ...u, embedUrl: '', status: 'idle' as const, progress: 0 } : u
     ));
 
@@ -307,7 +313,7 @@ export function BunnyMultiVideoUploader({
 
       toast({
         title: "Video eliminado",
-        description: "El video se eliminó correctamente"
+        description: "El video se elimino correctamente"
       });
     } catch (error) {
       console.error('Delete error:', error);
@@ -351,7 +357,7 @@ export function BunnyMultiVideoUploader({
 
   const renderBunnyEmbed = (embedUrl: string) => {
     if (!embedUrl) return null;
-    
+
     // Extract video ID from Bunny embed URL
     // Format: https://iframe.mediadelivery.net/embed/{library_id}/{video_id}
     if (embedUrl.includes('iframe.mediadelivery.net') || embedUrl.includes('bunny')) {
@@ -366,7 +372,7 @@ export function BunnyMultiVideoUploader({
         />
       );
     }
-    
+
     // Fallback for other video URLs
     if (embedUrl.match(/\.(mp4|webm|ogg)$/i)) {
       return (
@@ -378,7 +384,7 @@ export function BunnyMultiVideoUploader({
         />
       );
     }
-    
+
     return (
       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
         <a href={embedUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
@@ -412,9 +418,9 @@ export function BunnyMultiVideoUploader({
                 </Button>
               )}
               {upload.embedUrl && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => handleRemove(upload.id, index, upload.embedUrl)}
                   className="h-7 w-7 text-destructive hover:text-destructive"
                 >
@@ -426,14 +432,14 @@ export function BunnyMultiVideoUploader({
 
           {/* Video Preview - Vertical Format */}
           {showPreview && upload.embedUrl && upload.status === 'completed' && (
-            <div 
+            <div
               className="rounded-lg overflow-hidden bg-black flex items-center justify-center mx-auto"
               style={{ aspectRatio: '9/16', maxHeight: '300px', width: 'auto' }}
             >
               {renderBunnyEmbed(upload.embedUrl)}
             </div>
           )}
-          
+
           {/* Upload Button & Progress */}
           <div className="flex items-center gap-2">
             <input
@@ -444,7 +450,7 @@ export function BunnyMultiVideoUploader({
               className="hidden"
               disabled={disabled || upload.status === 'uploading' || upload.status === 'processing'}
             />
-            
+
             <Button
               variant={upload.status === 'completed' ? 'outline' : 'default'}
               size="sm"
@@ -455,7 +461,7 @@ export function BunnyMultiVideoUploader({
               {getStatusIcon(upload.status)}
               {upload.status === 'completed' ? 'Reemplazar' : getStatusText(upload.status)}
             </Button>
-            
+
             {upload.status === 'completed' && (
               <span className="text-xs text-green-600 flex items-center gap-1">
                 <CheckCircle className="h-3 w-3" />
@@ -463,7 +469,7 @@ export function BunnyMultiVideoUploader({
               </span>
             )}
           </div>
-          
+
           {/* Progress Bar */}
           {(upload.status === 'uploading' || upload.status === 'processing') && (
             <div className="space-y-1">
