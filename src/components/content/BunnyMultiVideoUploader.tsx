@@ -291,7 +291,7 @@ export function BunnyMultiVideoUploader({
     ));
   };
 
-  const handleRemove = async (uploadId: string, index: number, embedUrl: string) => {
+  const handleRemove = (uploadId: string, index: number, embedUrl: string) => {
     // Update UI immediately and compute updated URLs
     let updatedUrls: string[] = [];
     setUploads(prev => {
@@ -302,30 +302,15 @@ export function BunnyMultiVideoUploader({
       return newUploads;
     });
 
-    // Notify parent to auto-save updated URLs to DB
+    // Notify parent to auto-save updated URLs to DB (removes URL from database)
     setTimeout(() => onUploadComplete?.(updatedUrls), 0);
 
-    if (!embedUrl) return;
-
-    // Best-effort: delete from Bunny CDN via edge function
-    // This may fail with 401 if token is stale, but the URL is already removed from DB above
-    try {
-      const { error } = await supabase.functions.invoke('bunny-delete', {
-        body: { content_id: contentId, video_url: embedUrl, field: 'video_urls' }
+    if (embedUrl) {
+      toast({
+        title: "Video eliminado",
+        description: "El video se elimino del proyecto"
       });
-      if (error) {
-        console.warn('[BunnyMultiVideoUploader] Bunny CDN cleanup failed (non-critical):', error);
-      } else {
-        console.log('[BunnyMultiVideoUploader] Video deleted from Bunny CDN');
-      }
-    } catch (error) {
-      console.warn('[BunnyMultiVideoUploader] Bunny CDN cleanup error:', error);
     }
-
-    toast({
-      title: "Video eliminado",
-      description: "El video se elimino correctamente"
-    });
   };
 
   const getStatusIcon = (status: VideoUpload['status']) => {
@@ -364,13 +349,15 @@ export function BunnyMultiVideoUploader({
     // Extract video ID from Bunny embed URL
     // Format: https://iframe.mediadelivery.net/embed/{library_id}/{video_id}
     if (embedUrl.includes('iframe.mediadelivery.net') || embedUrl.includes('bunny')) {
+      // Add autoplay=false to prevent videos from auto-playing
+      const embedSrc = embedUrl.includes('?') ? `${embedUrl}&autoplay=false` : `${embedUrl}?autoplay=false`;
       return (
         <iframe
-          src={embedUrl}
+          src={embedSrc}
           loading="lazy"
           className="w-full h-full border-0"
           style={{ aspectRatio: '9/16' }}
-          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+          allow="accelerometer; gyroscope; encrypted-media; picture-in-picture"
           allowFullScreen
         />
       );

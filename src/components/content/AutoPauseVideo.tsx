@@ -47,7 +47,7 @@ function getDirectThumbnailUrl(url: string): string | null {
 }
 
 export const AutoPauseVideo = forwardRef<HTMLDivElement, AutoPauseVideoProps>(
-  ({ src, className, style, index = 0, autoPlay = true, muted = true, loop = true, contentId, thumbnailUrl }, ref) => {
+  ({ src, className, style, index = 0, autoPlay = false, muted = true, loop = false, contentId, thumbnailUrl }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [iframeSrc, setIframeSrc] = useState<string | null>(null);
@@ -89,23 +89,19 @@ export const AutoPauseVideo = forwardRef<HTMLDivElement, AutoPauseVideoProps>(
       }
     };
 
-    // Build Bunny embed URL with autoplay params
+    // Build Bunny embed URL with playback params
     const buildBunnyUrl = (baseUrl: string, shouldAutoplay: boolean) => {
       try {
         const url = new URL(baseUrl);
-        if (shouldAutoplay) {
-          url.searchParams.set('autoplay', 'true');
-          if (muted) url.searchParams.set('muted', 'true');
-          if (loop) url.searchParams.set('loop', 'true');
-        }
+        url.searchParams.set('autoplay', shouldAutoplay ? 'true' : 'false');
+        if (muted) url.searchParams.set('muted', 'true');
+        if (loop) url.searchParams.set('loop', 'true');
         return url.toString();
       } catch {
         // If URL parsing fails, append params manually
         const separator = baseUrl.includes('?') ? '&' : '?';
-        const params = shouldAutoplay 
-          ? `autoplay=true${muted ? '&muted=true' : ''}${loop ? '&loop=true' : ''}`
-          : '';
-        return params ? `${baseUrl}${separator}${params}` : baseUrl;
+        const params = `autoplay=${shouldAutoplay ? 'true' : 'false'}${muted ? '&muted=true' : ''}${loop ? '&loop=true' : ''}`;
+        return `${baseUrl}${separator}${params}`;
       }
     };
 
@@ -152,7 +148,7 @@ export const AutoPauseVideo = forwardRef<HTMLDivElement, AutoPauseVideoProps>(
               loading="lazy"
               className="w-full h-full border-0"
               style={{ aspectRatio: '9/16' }}
-              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+              allow="accelerometer; gyroscope; encrypted-media; picture-in-picture"
               allowFullScreen
             />
           ) : (
@@ -208,7 +204,7 @@ export const AutoPauseVideo = forwardRef<HTMLDivElement, AutoPauseVideoProps>(
           loading="lazy"
           className="w-full h-full border-0"
           style={style}
-          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+          allow="accelerometer; gyroscope; encrypted-media; picture-in-picture"
           allowFullScreen
         />
       </div>
@@ -264,7 +260,7 @@ interface AutoPauseNativeVideoProps {
 }
 
 const AutoPauseNativeVideo = forwardRef<HTMLDivElement, AutoPauseNativeVideoProps>(
-  ({ src, className, style, autoPlay = true, muted = true, loop = true }, ref) => {
+  ({ src, className, style, autoPlay = false, muted = true, loop = false }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
