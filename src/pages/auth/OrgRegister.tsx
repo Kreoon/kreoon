@@ -15,6 +15,9 @@ import {
   Scissors,
   Briefcase,
   Mail,
+  Lightbulb,
+  Target,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -78,10 +81,13 @@ const registerSchema = z
     path: ["confirmPassword"],
   });
 
-const ROLE_OPTIONS: Array<{ value: string; label: string; icon: React.ReactNode }> = [
-  { value: "creator", label: "Creador de Contenido", icon: <Video className="h-4 w-4" /> },
-  { value: "editor", label: "Editor de Video", icon: <Scissors className="h-4 w-4" /> },
-  { value: "client", label: "Cliente / Marca", icon: <Briefcase className="h-4 w-4" /> },
+const ROLE_OPTIONS: Array<{ value: string; label: string; icon: React.ReactNode; description?: string }> = [
+  { value: "creator", label: "Creador de Contenido", icon: <Video className="h-4 w-4" />, description: "Creo contenido de video y UGC" },
+  { value: "editor", label: "Productor Audio-Visual", icon: <Scissors className="h-4 w-4" />, description: "Edito videos profesionalmente" },
+  { value: "strategist", label: "Estratega", icon: <Lightbulb className="h-4 w-4" />, description: "Planifico estrategias de contenido" },
+  { value: "trafficker", label: "Trafficker", icon: <Target className="h-4 w-4" />, description: "Gestiono campañas publicitarias" },
+  { value: "team_leader", label: "Líder de Equipo", icon: <Users className="h-4 w-4" />, description: "Coordino equipos de trabajo" },
+  { value: "client", label: "Cliente / Marca", icon: <Briefcase className="h-4 w-4" />, description: "Soy cliente de la organización" },
 ];
 
 export default function OrgRegister() {
@@ -652,7 +658,12 @@ export default function OrgRegister() {
                       <SelectItem key={r.value} value={r.value}>
                         <div className="flex items-center gap-2">
                           {r.icon}
-                          <span>{r.label}</span>
+                          <div className="flex flex-col">
+                            <span>{r.label}</span>
+                            {r.description && (
+                              <span className="text-xs text-kreoon-text-muted">{r.description}</span>
+                            )}
+                          </div>
                         </div>
                       </SelectItem>
                     ))}

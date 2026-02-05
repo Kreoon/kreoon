@@ -55,9 +55,12 @@ interface OrgRegistrationConfig {
 }
 
 const ROLE_OPTIONS = [
-  { value: 'creator', label: 'Creador' },
-  { value: 'editor', label: 'Editor' },
-  { value: 'client', label: 'Cliente' },
+  { value: 'creator', label: 'Creador de Contenido' },
+  { value: 'editor', label: 'Productor Audio-Visual' },
+  { value: 'strategist', label: 'Estratega' },
+  { value: 'trafficker', label: 'Trafficker' },
+  { value: 'team_leader', label: 'Líder de Equipo' },
+  { value: 'client', label: 'Cliente / Marca' },
 ];
 
 export function OrgRegistrationSettings() {
