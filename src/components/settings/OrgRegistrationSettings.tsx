@@ -13,11 +13,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { 
-  Copy, 
-  RefreshCw, 
-  Link as LinkIcon, 
-  Lock, 
+import {
+  Copy,
+  RefreshCw,
+  Link as LinkIcon,
+  Lock,
   Unlock,
   Users,
   Shield,
@@ -28,7 +28,13 @@ import {
   Palette,
   ImageIcon,
   Upload,
-  Building2
+  Building2,
+  Plus,
+  X,
+  Instagram,
+  Globe,
+  BarChart3,
+  Sparkles
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -39,6 +45,19 @@ interface RegistrationPageConfig {
   banner_url?: string;
   primary_color?: string;
   show_description?: boolean;
+  // Landing page enhancements
+  tagline?: string;
+  benefits?: string[]; // List of benefits/features
+  cta_text?: string;
+  social_instagram?: string;
+  social_tiktok?: string;
+  social_linkedin?: string;
+  social_website?: string;
+  stats_members?: number;
+  stats_campaigns?: number;
+  stats_videos?: number;
+  show_stats?: boolean;
+  banner_overlay_opacity?: number; // 0-100
 }
 
 interface OrgRegistrationConfig {
@@ -74,6 +93,7 @@ export function OrgRegistrationSettings() {
   const [pageConfig, setPageConfig] = useState<RegistrationPageConfig>({});
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const [newBenefit, setNewBenefit] = useState('');
 
   const canManage = isOrgOwner || isPlatformRoot;
 
@@ -638,7 +658,270 @@ export function OrgRegistrationSettings() {
                 disabled={saving}
               />
             </div>
+
+            {/* Banner opacity control */}
+            <div className="space-y-2">
+              <Label>Opacidad del banner ({pageConfig.banner_overlay_opacity ?? 40}%)</Label>
+              <input
+                type="range"
+                min="10"
+                max="100"
+                value={pageConfig.banner_overlay_opacity ?? 40}
+                onChange={(e) => setPageConfig(prev => ({ ...prev, banner_overlay_opacity: Number(e.target.value) }))}
+                onMouseUp={() => handleUpdatePageConfig({ banner_overlay_opacity: pageConfig.banner_overlay_opacity })}
+                onTouchEnd={() => handleUpdatePageConfig({ banner_overlay_opacity: pageConfig.banner_overlay_opacity })}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground">
+                Ajusta qué tanto se ve el banner de fondo (mayor = más visible)
+              </p>
+            </div>
+
+            {/* Tagline */}
+            <div className="space-y-2">
+              <Label>Tagline / Eslogan</Label>
+              <Input
+                value={pageConfig.tagline || ''}
+                onChange={(e) => setPageConfig(prev => ({ ...prev, tagline: e.target.value }))}
+                onBlur={() => handleUpdatePageConfig({ tagline: pageConfig.tagline })}
+                placeholder="Ej: La comunidad de creadores más grande de LATAM"
+              />
+              <p className="text-xs text-muted-foreground">
+                Una frase corta que describe tu organización
+              </p>
+            </div>
+
+            {/* CTA Text */}
+            <div className="space-y-2">
+              <Label>Texto del botón de registro</Label>
+              <Input
+                value={pageConfig.cta_text || ''}
+                onChange={(e) => setPageConfig(prev => ({ ...prev, cta_text: e.target.value }))}
+                onBlur={() => handleUpdatePageConfig({ cta_text: pageConfig.cta_text })}
+                placeholder="Crear cuenta"
+              />
+              <p className="text-xs text-muted-foreground">
+                Texto del botón principal (por defecto: "Crear cuenta")
+              </p>
+            </div>
           </CardContent>
+        </Card>
+      )}
+
+      {/* Benefits/Features */}
+      {config.is_registration_open && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-primary/10">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Beneficios y Características</CardTitle>
+                <CardDescription>
+                  Lista de beneficios que se muestran en la landing de registro
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Current benefits */}
+            <div className="space-y-2">
+              {(pageConfig.benefits || []).map((benefit, index) => (
+                <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                  <span className="flex-1 text-sm">{benefit}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => {
+                      const newBenefits = (pageConfig.benefits || []).filter((_, i) => i !== index);
+                      handleUpdatePageConfig({ benefits: newBenefits });
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            {/* Add new benefit */}
+            <div className="flex items-center gap-2">
+              <Input
+                value={newBenefit}
+                onChange={(e) => setNewBenefit(e.target.value)}
+                placeholder="Ej: Acceso a campañas exclusivas"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newBenefit.trim()) {
+                    handleUpdatePageConfig({
+                      benefits: [...(pageConfig.benefits || []), newBenefit.trim()]
+                    });
+                    setNewBenefit('');
+                  }
+                }}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={!newBenefit.trim()}
+                onClick={() => {
+                  if (newBenefit.trim()) {
+                    handleUpdatePageConfig({
+                      benefits: [...(pageConfig.benefits || []), newBenefit.trim()]
+                    });
+                    setNewBenefit('');
+                  }
+                }}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Máximo 6 beneficios recomendados
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Social Links */}
+      {config.is_registration_open && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-primary/10">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Redes Sociales</CardTitle>
+                <CardDescription>
+                  Enlaces a tus redes sociales (se mostrarán en la landing)
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Instagram className="h-4 w-4" /> Instagram
+                </Label>
+                <Input
+                  value={pageConfig.social_instagram || ''}
+                  onChange={(e) => setPageConfig(prev => ({ ...prev, social_instagram: e.target.value }))}
+                  onBlur={() => handleUpdatePageConfig({ social_instagram: pageConfig.social_instagram })}
+                  placeholder="@tu_cuenta"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                  </svg>
+                  TikTok
+                </Label>
+                <Input
+                  value={pageConfig.social_tiktok || ''}
+                  onChange={(e) => setPageConfig(prev => ({ ...prev, social_tiktok: e.target.value }))}
+                  onBlur={() => handleUpdatePageConfig({ social_tiktok: pageConfig.social_tiktok })}
+                  placeholder="@tu_cuenta"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  </svg>
+                  LinkedIn
+                </Label>
+                <Input
+                  value={pageConfig.social_linkedin || ''}
+                  onChange={(e) => setPageConfig(prev => ({ ...prev, social_linkedin: e.target.value }))}
+                  onBlur={() => handleUpdatePageConfig({ social_linkedin: pageConfig.social_linkedin })}
+                  placeholder="https://linkedin.com/company/..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Globe className="h-4 w-4" /> Sitio Web
+                </Label>
+                <Input
+                  value={pageConfig.social_website || ''}
+                  onChange={(e) => setPageConfig(prev => ({ ...prev, social_website: e.target.value }))}
+                  onBlur={() => handleUpdatePageConfig({ social_website: pageConfig.social_website })}
+                  placeholder="https://tusitio.com"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stats */}
+      {config.is_registration_open && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-primary/10">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Estadísticas</CardTitle>
+                  <CardDescription>
+                    Números que demuestran el valor de tu organización
+                  </CardDescription>
+                </div>
+              </div>
+              <Switch
+                checked={pageConfig.show_stats || false}
+                onCheckedChange={(checked) => handleUpdatePageConfig({ show_stats: checked })}
+                disabled={saving}
+              />
+            </div>
+          </CardHeader>
+          {pageConfig.show_stats && (
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Miembros activos</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={pageConfig.stats_members || ''}
+                    onChange={(e) => setPageConfig(prev => ({ ...prev, stats_members: Number(e.target.value) || undefined }))}
+                    onBlur={() => handleUpdatePageConfig({ stats_members: pageConfig.stats_members })}
+                    placeholder="150"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Campañas realizadas</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={pageConfig.stats_campaigns || ''}
+                    onChange={(e) => setPageConfig(prev => ({ ...prev, stats_campaigns: Number(e.target.value) || undefined }))}
+                    onBlur={() => handleUpdatePageConfig({ stats_campaigns: pageConfig.stats_campaigns })}
+                    placeholder="50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Videos producidos</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={pageConfig.stats_videos || ''}
+                    onChange={(e) => setPageConfig(prev => ({ ...prev, stats_videos: Number(e.target.value) || undefined }))}
+                    onBlur={() => handleUpdatePageConfig({ stats_videos: pageConfig.stats_videos })}
+                    placeholder="500"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Deja en blanco los campos que no quieras mostrar
+              </p>
+            </CardContent>
+          )}
         </Card>
       )}
 

@@ -18,6 +18,9 @@ import {
   Lightbulb,
   Target,
   Users,
+  Instagram,
+  Globe,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -43,6 +46,19 @@ interface RegistrationPageConfig {
   banner_url?: string;
   primary_color?: string;
   show_description?: boolean;
+  // Landing page enhancements
+  tagline?: string;
+  benefits?: string[];
+  cta_text?: string;
+  social_instagram?: string;
+  social_tiktok?: string;
+  social_linkedin?: string;
+  social_website?: string;
+  stats_members?: number;
+  stats_campaigns?: number;
+  stats_videos?: number;
+  show_stats?: boolean;
+  banner_overlay_opacity?: number;
 }
 
 interface Organization {
@@ -375,65 +391,221 @@ export default function OrgRegister() {
     pageConfig.welcome_message ?? organization?.description ?? "Únete a nuestra organización";
   const primaryColor = pageConfig.primary_color ?? "#7c3aed";
 
+  const bannerOpacity = (pageConfig.banner_overlay_opacity ?? 40) / 100;
+  const benefits = pageConfig.benefits || [];
+  const showStats = pageConfig.show_stats && (pageConfig.stats_members || pageConfig.stats_campaigns || pageConfig.stats_videos);
+  const hasSocials = pageConfig.social_instagram || pageConfig.social_tiktok || pageConfig.social_linkedin || pageConfig.social_website;
+
   const leftColumnContent = organization && (
     <div className="relative flex h-full min-h-screen flex-col overflow-hidden">
+      {/* Banner background with configurable opacity */}
       {pageConfig.banner_url && (
         <div
-          className="absolute inset-0 opacity-20"
+          className="absolute inset-0"
           style={{
             backgroundImage: `url(${pageConfig.banner_url})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
+            opacity: bannerOpacity,
           }}
           aria-hidden
         />
       )}
+      {/* Gradient overlay */}
       <div
-        className="absolute inset-0 bg-kreoon-gradient-dark"
-        aria-hidden
-      />
-      <div
-        className="absolute top-1/4 left-1/4 h-64 w-64 rounded-full opacity-30"
+        className="absolute inset-0"
         style={{
-          background: `radial-gradient(circle, ${primaryColor}50 0%, transparent 70%)`,
-          filter: "blur(50px)",
+          background: `linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.8) 100%)`,
         }}
         aria-hidden
       />
+      {/* Accent glow */}
+      <div
+        className="absolute top-1/4 left-1/4 h-64 w-64 rounded-full opacity-20"
+        style={{
+          background: `radial-gradient(circle, ${primaryColor} 0%, transparent 70%)`,
+          filter: "blur(80px)",
+        }}
+        aria-hidden
+      />
+      <div
+        className="absolute bottom-1/4 right-1/4 h-48 w-48 rounded-full opacity-15"
+        style={{
+          background: `radial-gradient(circle, ${primaryColor} 0%, transparent 70%)`,
+          filter: "blur(60px)",
+        }}
+        aria-hidden
+      />
+
       <div className="relative flex flex-1 flex-col p-8 lg:p-10">
+        {/* Header with logo */}
         <div className="flex items-center gap-3">
           {organization.logo_url ? (
             <img
               src={organization.logo_url}
               alt={organization.name}
-              className="h-12 w-12 rounded-xl object-cover"
+              className="h-14 w-14 rounded-xl object-cover ring-2 ring-white/20"
             />
           ) : (
             <div
-              className="flex h-12 w-12 items-center justify-center rounded-xl"
-              style={{ backgroundColor: `${primaryColor}30` }}
+              className="flex h-14 w-14 items-center justify-center rounded-xl ring-2 ring-white/20"
+              style={{ backgroundColor: `${primaryColor}40` }}
             >
-              <Building2 className="h-6 w-6" style={{ color: primaryColor }} />
+              <Building2 className="h-7 w-7" style={{ color: primaryColor }} />
             </div>
           )}
-          <span
-            className="text-xl font-bold tracking-tight text-kreoon-text-primary"
-            style={{ color: primaryColor }}
-          >
-            {organization.name}
-          </span>
-        </div>
-        <div className="mt-12 flex flex-1 flex-col justify-center space-y-4">
-          <h2 className="text-2xl font-bold text-kreoon-text-primary lg:text-3xl">
-            {welcomeTitle}
-          </h2>
-          <p className="text-kreoon-text-secondary">{welcomeMessage}</p>
-          {pageConfig.show_description &&
-            organization.description &&
-            pageConfig.welcome_message !== organization.description && (
-              <p className="text-sm text-kreoon-text-muted">{organization.description}</p>
+          <div>
+            <span
+              className="text-xl font-bold tracking-tight"
+              style={{ color: primaryColor }}
+            >
+              {organization.name}
+            </span>
+            {pageConfig.tagline && (
+              <p className="text-sm text-white/60">{pageConfig.tagline}</p>
             )}
+          </div>
         </div>
+
+        {/* Main content area */}
+        <div className="mt-10 flex flex-1 flex-col justify-center space-y-8">
+          {/* Welcome section */}
+          <div className="space-y-4">
+            <h2 className="text-3xl font-bold text-white lg:text-4xl">
+              {welcomeTitle}
+            </h2>
+            <p className="text-lg text-white/80 leading-relaxed">{welcomeMessage}</p>
+            {pageConfig.show_description &&
+              organization.description &&
+              pageConfig.welcome_message !== organization.description && (
+                <p className="text-sm text-white/60">{organization.description}</p>
+              )}
+          </div>
+
+          {/* Benefits section */}
+          {benefits.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50">
+                Beneficios
+              </h3>
+              <ul className="space-y-3">
+                {benefits.slice(0, 6).map((benefit, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <CheckCircle2
+                      className="h-5 w-5 shrink-0 mt-0.5"
+                      style={{ color: primaryColor }}
+                    />
+                    <span className="text-white/90">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Stats section */}
+          {showStats && (
+            <div className="grid grid-cols-3 gap-4">
+              {pageConfig.stats_members && (
+                <div
+                  className="rounded-xl p-4 text-center"
+                  style={{ backgroundColor: `${primaryColor}15` }}
+                >
+                  <div
+                    className="text-2xl font-bold"
+                    style={{ color: primaryColor }}
+                  >
+                    {pageConfig.stats_members}+
+                  </div>
+                  <div className="text-xs text-white/60 mt-1">Miembros</div>
+                </div>
+              )}
+              {pageConfig.stats_campaigns && (
+                <div
+                  className="rounded-xl p-4 text-center"
+                  style={{ backgroundColor: `${primaryColor}15` }}
+                >
+                  <div
+                    className="text-2xl font-bold"
+                    style={{ color: primaryColor }}
+                  >
+                    {pageConfig.stats_campaigns}+
+                  </div>
+                  <div className="text-xs text-white/60 mt-1">Campañas</div>
+                </div>
+              )}
+              {pageConfig.stats_videos && (
+                <div
+                  className="rounded-xl p-4 text-center"
+                  style={{ backgroundColor: `${primaryColor}15` }}
+                >
+                  <div
+                    className="text-2xl font-bold"
+                    style={{ color: primaryColor }}
+                  >
+                    {pageConfig.stats_videos}+
+                  </div>
+                  <div className="text-xs text-white/60 mt-1">Videos</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer with social links */}
+        {hasSocials && (
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <div className="flex items-center gap-4">
+              {pageConfig.social_instagram && (
+                <a
+                  href={`https://instagram.com/${pageConfig.social_instagram.replace('@', '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  title="Instagram"
+                >
+                  <Instagram className="h-5 w-5 text-white/80" />
+                </a>
+              )}
+              {pageConfig.social_tiktok && (
+                <a
+                  href={`https://tiktok.com/${pageConfig.social_tiktok.replace('@', '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  title="TikTok"
+                >
+                  <svg className="h-5 w-5 text-white/80" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                  </svg>
+                </a>
+              )}
+              {pageConfig.social_linkedin && (
+                <a
+                  href={pageConfig.social_linkedin.startsWith('http') ? pageConfig.social_linkedin : `https://linkedin.com/company/${pageConfig.social_linkedin}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  title="LinkedIn"
+                >
+                  <svg className="h-5 w-5 text-white/80" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  </svg>
+                </a>
+              )}
+              {pageConfig.social_website && (
+                <a
+                  href={pageConfig.social_website.startsWith('http') ? pageConfig.social_website : `https://${pageConfig.social_website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  title="Sitio Web"
+                >
+                  <Globe className="h-5 w-5 text-white/80" />
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -731,7 +903,7 @@ export default function OrgRegister() {
                 loading={submitting}
                 disabled={submitting}
               >
-                Crear cuenta
+                {pageConfig.cta_text || 'Crear cuenta'}
               </KreoonButton>
 
               <p className="text-center text-xs text-kreoon-text-muted">
