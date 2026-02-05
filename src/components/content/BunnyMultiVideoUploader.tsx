@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { SUPABASE_FUNCTIONS_URL, SUPABASE_ANON_KEY } from "@/integrations/supabase/client";
+import { SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2, CheckCircle, XCircle, Video, RefreshCw, Plus, Trash2 } from "lucide-react";
 
@@ -166,19 +166,19 @@ export function BunnyMultiVideoUploader({
     ));
 
     try {
-      // Get auth token for the edge function
+      // Get user id for the edge function
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No hay sesion activa. Por favor inicia sesion de nuevo.');
-      }
+      const userId = session?.user?.id || 'anonymous';
 
       // Build FormData with file + metadata
+      // Uses bunny-portfolio-upload (deployed, verify_jwt=false, server-side proxy)
+      // type='featured' skips DB record creation - just uploads to Bunny
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('fileName', file.name);
-      formData.append('folder', `content/${contentId}`);
+      formData.append('user_id', userId);
+      formData.append('type', 'featured');
 
-      // Upload via XHR to edge function for progress tracking
+      // Upload via XHR for progress tracking
       // The edge function proxies the file to Bunny server-side (no CORS issues)
       const xhr = new XMLHttpRequest();
 
@@ -213,10 +213,9 @@ export function BunnyMultiVideoUploader({
         xhr.addEventListener('error', () => reject(new Error('Error de red')));
         xhr.addEventListener('abort', () => reject(new Error('Subida cancelada')));
 
-        xhr.open('POST', `${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-upload-v2`);
-        xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
-        xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
-        // NOTE: Do NOT set Content-Type for FormData - browser sets it with boundary
+        xhr.open('POST', `${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`);
+        // No auth headers needed - bunny-portfolio-upload has verify_jwt = false
+        // Do NOT set Content-Type for FormData - browser sets it with boundary
         xhr.send(formData);
       });
 
@@ -226,8 +225,9 @@ export function BunnyMultiVideoUploader({
         throw new Error(response.error || 'Error al subir el video');
       }
 
-      const videoId = response.videoId;
-      const embedUrl = response.embedUrl || '';
+      // bunny-portfolio-upload returns: video_id, embed_url, thumbnail_url
+      const videoId = response.video_id;
+      const embedUrl = response.embed_url || '';
 
       console.log('[BunnyMultiVideoUploader] videoId:', videoId, 'embedUrl:', embedUrl);
 
