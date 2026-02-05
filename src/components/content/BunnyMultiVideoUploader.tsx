@@ -49,13 +49,19 @@ export function BunnyMultiVideoUploader({
     setUploads(initialUploads);
   }, [hooksCount]);
 
-  // Update uploads when currentUrls change
+  // Update uploads when currentUrls change, but don't overwrite active uploads
   useEffect(() => {
-    setUploads(prev => prev.map((upload, index) => ({
-      ...upload,
-      embedUrl: currentUrls[index] || upload.embedUrl,
-      status: currentUrls[index] ? 'completed' : upload.status
-    })));
+    setUploads(prev => prev.map((upload, index) => {
+      // Don't overwrite uploads that are actively uploading or processing
+      if (upload.status === 'uploading' || upload.status === 'processing') {
+        return upload;
+      }
+      return {
+        ...upload,
+        embedUrl: currentUrls[index] || upload.embedUrl,
+        status: currentUrls[index] ? 'completed' : upload.status
+      };
+    }));
   }, [currentUrls]);
 
   // Cleanup polling on unmount
@@ -198,6 +204,7 @@ export function BunnyMultiVideoUploader({
 
       // Step 3: Update with embed URL and notify parent
       const newEmbedUrl = credentials.embedUrl || '';
+      let allUrls: string[] = [];
       setUploads(prev => {
         const newUploads = prev.map(u =>
           u.id === uploadId ? {
@@ -208,13 +215,12 @@ export function BunnyMultiVideoUploader({
             status: 'processing' as const
           } : u
         );
-
-        // Notify parent with all URLs
-        const allUrls = newUploads.map(u => u.embedUrl);
-        onUploadComplete?.(allUrls);
-
+        allUrls = newUploads.map(u => u.embedUrl);
         return newUploads;
       });
+
+      // Notify parent outside of state updater to avoid cascading renders
+      setTimeout(() => onUploadComplete?.(allUrls), 0);
 
       // Start polling for processing status
       pollIntervals.current[uploadId] = setInterval(() => {
