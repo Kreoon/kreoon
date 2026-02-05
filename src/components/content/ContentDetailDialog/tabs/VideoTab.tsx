@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -14,53 +13,10 @@ import { PermissionsGate, EditableField } from '../components/PermissionsGate';
 import { SectionCard } from '../components/SectionCard';
 import { TabProps } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { supabase } from '@/integrations/supabase/client';
 import { markLocalUpdate } from '@/hooks/useContent';
-import { Video, Share2, Lock, Download, Loader2, ExternalLink } from 'lucide-react';
-
-// Download button component
-function DownloadVideoButton({ contentId, videoUrl, variantIndex, title }: {
-  contentId: string;
-  videoUrl: string;
-  variantIndex: number;
-  title: string;
-}) {
-  const [downloading, setDownloading] = useState(false);
-  const { toast } = useToast();
-
-  const handleDownload = async () => {
-    setDownloading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('bunny-download', {
-        body: { content_id: contentId, video_url: videoUrl }
-      });
-      if (error) throw error;
-      if (data.download_url) {
-        const link = document.createElement('a');
-        link.href = data.download_url;
-        link.download = `${title}_v${variantIndex + 1}.mp4`;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast({ title: 'Descarga iniciada' });
-      }
-    } catch (error) {
-      toast({ title: 'Error al descargar', variant: 'destructive' });
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  return (
-    <Button variant="ghost" size="sm" onClick={handleDownload} disabled={downloading} className="h-7 px-2 text-xs">
-      {downloading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Download className="h-3 w-3 mr-1" />}
-      Descargar
-    </Button>
-  );
-}
+import { Video, Share2, Lock, ExternalLink } from 'lucide-react';
 
 interface VideoTabProps extends TabProps {
   selectedProduct: any;
@@ -77,15 +33,11 @@ export function VideoTab({
   selectedProduct,
   readOnly = false,
 }: VideoTabProps) {
-  const { isAdmin, isClient } = useAuth();
   const { currentOrgId } = useOrgOwner();
   // Combine permissions with readOnly prop for effective edit capability
   const canEditVideo = permissions.can('content.video', 'edit') && !readOnly;
   const effectiveEditMode = editMode && !readOnly;
-  const canDownload = permissions.can('content.video.download', 'view');
   const currentStatus = content?.status || 'draft';
-  const approvedStatuses = ['approved', 'paid', 'delivered', 'corrected'];
-  const canDownloadVideo = isAdmin || (isClient && approvedStatuses.includes(currentStatus));
 
   return (
     <div className="space-y-6">
@@ -194,7 +146,8 @@ export function VideoTab({
                 // Auto-save video URLs to DB immediately to prevent loss on Realtime refetch
                 const contentId = content?.id;
                 if (contentId) {
-                  markLocalUpdate(contentId);
+                  // Use 5-minute window to cover video encoding time
+                  markLocalUpdate(contentId, 5 * 60 * 1000);
                   supabase
                     .from('content')
                     .update({ video_urls: urls } as any)
@@ -217,9 +170,6 @@ export function VideoTab({
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Variable {i + 1}</span>
                     <div className="flex items-center gap-2">
-                      {url && canDownloadVideo && (
-                        <DownloadVideoButton contentId={content?.id || ''} videoUrl={url} variantIndex={i} title={content?.title || 'video'} />
-                      )}
                       {url && (
                         <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
                           <a href={url} target="_blank" rel="noopener noreferrer">

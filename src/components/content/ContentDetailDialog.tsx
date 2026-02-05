@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -593,7 +593,8 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   const canEnterEditMode = isAdmin || isAssignedCreator || isAssignedEditor;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0" aria-describedby="content-detail-desc">
+        <DialogDescription id="content-detail-desc" className="sr-only">Detalle del proyecto de contenido</DialogDescription>
         {/* Hero Header - Landing Page Style */}
         <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-6 sm:p-8 border-b">
           {/* Background Pattern */}
