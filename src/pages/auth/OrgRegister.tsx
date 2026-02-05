@@ -115,7 +115,7 @@ export default function OrgRegister() {
     if (!fullName.trim() || !email.trim() || !organization?.id) return;
     setLoadingSuggestion(true);
     try {
-      const response = await supabaseLovable.functions.invoke("suggest-role", {
+      const response = await supabase.functions.invoke("suggest-role", {
         body: {
           fullName: fullName.trim(),
           email: email.trim(),
@@ -150,7 +150,7 @@ export default function OrgRegister() {
   const fetchOrganization = async () => {
     try {
       const { data: edgeData, error: edgeError } =
-        await supabaseLovable.functions.invoke("org-public-info", {
+        await supabase.functions.invoke("org-public-info", {
           body: { slug },
         });
 
@@ -342,7 +342,7 @@ export default function OrgRegister() {
         return;
       }
 
-      supabaseLovable.functions
+      supabase.functions
         .invoke("notify-new-member", {
           body: {
             user_id: userId,
