@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { supabase } from '@/integrations/supabase/client';
+import { markLocalUpdate } from '@/hooks/useContent';
 import { Video, Share2, Lock, Download, Loader2, ExternalLink } from 'lucide-react';
 
 // Download button component
@@ -190,6 +191,22 @@ export function VideoTab({
               onUploadComplete={(urls) => {
                 setFormData(prev => ({ ...prev, video_urls: urls }));
                 if (!editMode) setEditMode(true);
+                // Auto-save video URLs to DB immediately to prevent loss on Realtime refetch
+                const contentId = content?.id;
+                if (contentId) {
+                  markLocalUpdate(contentId);
+                  supabase
+                    .from('content')
+                    .update({ video_urls: urls } as any)
+                    .eq('id', contentId)
+                    .then(({ error }) => {
+                      if (error) {
+                        console.error('[VideoTab] Failed to auto-save video URLs:', error);
+                      } else {
+                        console.log('[VideoTab] Auto-saved video URLs to database');
+                      }
+                    });
+                }
               }}
               disabled={!canEditVideo}
             />
