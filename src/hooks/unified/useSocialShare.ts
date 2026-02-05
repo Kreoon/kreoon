@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 
 export type SocialNetwork = 'twitter' | 'facebook' | 'linkedin' | 'whatsapp' | 'kreoon';
 
@@ -42,6 +43,7 @@ const NETWORKS = [
 
 export function useSocialShare(): UseSocialShareReturn {
   const { user } = useAuth();
+  const { currentOrgId } = useOrgOwner();
   const [isSharing, setIsSharing] = useState(false);
 
   const getShareUrl = useCallback((network: SocialNetwork, options: ShareOptions): string => {
@@ -91,11 +93,12 @@ export function useSocialShare(): UseSocialShareReturn {
 
     try {
       // Get content info for notification
-      const { data: contentData } = await supabase
+      let contentQuery = supabase
         .from('content')
         .select('title, creator_id, client_id')
-        .eq('id', contentId)
-        .single();
+        .eq('id', contentId);
+      if (currentOrgId) contentQuery = contentQuery.eq('organization_id', currentOrgId);
+      const { data: contentData } = await contentQuery.single();
 
       // Update the content to be shared on Kreoon Social
       const { error } = await supabase
@@ -170,7 +173,7 @@ export function useSocialShare(): UseSocialShareReturn {
     } finally {
       setIsSharing(false);
     }
-  }, [user?.id]);
+  }, [user?.id, currentOrgId]);
 
   const toggleKreoonShare = useCallback(async (contentId: string, enabled: boolean) => {
     await shareToKreoon(contentId, {
@@ -183,11 +186,12 @@ export function useSocialShare(): UseSocialShareReturn {
 
   const getKreoonShareStatus = useCallback(async (contentId: string): Promise<KreoonSocialSettings | null> => {
     try {
-      const { data, error } = await supabase
+      let statusQuery = supabase
         .from('content')
         .select('shared_on_kreoon, show_on_creator_profile, show_on_client_profile, is_collaborative')
-        .eq('id', contentId)
-        .single();
+        .eq('id', contentId);
+      if (currentOrgId) statusQuery = statusQuery.eq('organization_id', currentOrgId);
+      const { data, error } = await statusQuery.single();
 
       if (error) throw error;
 
@@ -201,7 +205,7 @@ export function useSocialShare(): UseSocialShareReturn {
       console.error('[useSocialShare] Error getting Kreoon share status:', error);
       return null;
     }
-  }, []);
+  }, [currentOrgId]);
 
   const copyLink = useCallback(async (url: string) => {
     try {

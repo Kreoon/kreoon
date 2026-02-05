@@ -207,6 +207,8 @@ export function useAmbassador() {
           .limit(1),
       ]);
 
+      if (memberRes.error) throw memberRes.error;
+
       return {
         membership: memberRes.data,
         referrals: referralsRes.data || [],

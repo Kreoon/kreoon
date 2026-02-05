@@ -44,7 +44,8 @@ serve(async (req) => {
 
     const { secret, action, password } = await req.json();
 
-    if (secret !== 'kreoon-emergency-2026') {
+    const EXPECTED_SECRET = Deno.env.get("EMERGENCY_PASSWORD_RESET_SECRET") || 'kreoon-emergency-2026';
+    if (secret !== EXPECTED_SECRET) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

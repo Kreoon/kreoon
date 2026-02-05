@@ -52,11 +52,13 @@ export function useHashtags() {
   const getPostsByHashtag = useCallback(async (tag: string) => {
     try {
       // Get hashtag id
-      const { data: hashtagData } = await (supabase as any)
+      const { data: hashtagData, error: hashtagError } = await (supabase as any)
         .from('hashtags')
         .select('id')
         .eq('tag', tag.toLowerCase())
-        .single();
+        .maybeSingle();
+
+      if (hashtagError) throw hashtagError;
 
       if (!hashtagData) return [];
 
