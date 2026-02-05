@@ -161,3 +161,9 @@ verify_jwt = true
 
 [functions.bunny-delete-v2]
 verify_jwt = true
+
+[functions.bunny-status-v2]
+verify_jwt = true
+
+[functions.bunny-thumbnail-v2]
+verify_jwt = true
