@@ -408,8 +408,13 @@ serve(async (req) => {
       case "assign_to_org": {
         // Assign a user to an organization with a specific role
         const { organizationId, assignRole } = body;
+        console.log("assign_to_org params:", { userId, organizationId, assignRole });
+
         if (!userId || !organizationId || !assignRole) {
-          return new Response(JSON.stringify({ error: "User ID, organization ID, and role required" }), {
+          console.error("Missing params:", { userId: !!userId, organizationId: !!organizationId, assignRole: !!assignRole });
+          return new Response(JSON.stringify({
+            error: `Missing required params: ${!userId ? 'userId ' : ''}${!organizationId ? 'organizationId ' : ''}${!assignRole ? 'assignRole' : ''}`.trim()
+          }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });

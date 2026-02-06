@@ -205,6 +205,12 @@ export function PlatformUsersManagement() {
 
     setActionLoading(assignDialog.id);
     try {
+      console.log("Assigning user to org:", {
+        userId: assignDialog.id,
+        organizationId: selectedOrgId,
+        assignRole: selectedRole,
+      });
+
       // Use admin edge function to bypass RLS
       const { data, error } = await supabase.functions.invoke("admin-users", {
         body: {
@@ -215,7 +221,14 @@ export function PlatformUsersManagement() {
         }
       });
 
-      if (error) throw error;
+      console.log("Response:", { data, error });
+
+      if (error) {
+        // Try to extract error message from FunctionsHttpError
+        const errorBody = error.context?.body ? await error.context.json().catch(() => null) : null;
+        const errorMsg = errorBody?.error || error.message || "Error desconocido";
+        throw new Error(errorMsg);
+      }
       if (data?.error) throw new Error(data.error);
 
       toast.success(`${assignDialog.full_name} asignado a la organización`);
