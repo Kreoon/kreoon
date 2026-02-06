@@ -355,8 +355,164 @@ serve(async (req) => {
 
         const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
         if (error) throw error;
-        
+
         console.log(`User ${userId} deleted`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "create_profile": {
+        // Create profile for a user who doesn't have one (trigger failed)
+        const { fullName } = body;
+        if (!userId || !email) {
+          return new Response(JSON.stringify({ error: "User ID and email required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Check if profile already exists
+        const { data: existingProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (existingProfile) {
+          return new Response(JSON.stringify({ success: true, message: "Profile already exists" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Create profile using admin client (bypasses RLS)
+        const { error: profileError } = await supabaseAdmin
+          .from("profiles")
+          .insert({
+            id: userId,
+            email: email,
+            full_name: fullName || email.split('@')[0],
+          });
+
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          throw profileError;
+        }
+
+        console.log(`Profile created for user ${userId} (${email})`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "assign_to_org": {
+        // Assign a user to an organization with a specific role
+        const { organizationId, assignRole } = body;
+        if (!userId || !organizationId || !assignRole) {
+          return new Response(JSON.stringify({ error: "User ID, organization ID, and role required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // First ensure the user has a profile
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (!profile) {
+          return new Response(JSON.stringify({ error: "User must have a profile first. Create profile before assigning to org." }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Remove from all previous organizations
+        await supabaseAdmin
+          .from("organization_members")
+          .delete()
+          .eq("user_id", userId);
+
+        await supabaseAdmin
+          .from("organization_member_roles")
+          .delete()
+          .eq("user_id", userId);
+
+        // Insert new membership
+        const { error: memberError } = await supabaseAdmin
+          .from("organization_members")
+          .insert({
+            organization_id: organizationId,
+            user_id: userId,
+            role: assignRole,
+            is_owner: false,
+          });
+
+        if (memberError) {
+          console.error("Error inserting organization member:", memberError);
+          throw memberError;
+        }
+
+        // Insert role
+        const { error: roleError } = await supabaseAdmin
+          .from("organization_member_roles")
+          .insert({
+            organization_id: organizationId,
+            user_id: userId,
+            role: assignRole,
+          });
+
+        if (roleError) {
+          console.error("Error inserting organization member role:", roleError);
+          // Don't throw - membership was created
+        }
+
+        // Update current org in profile
+        const { error: profileUpdateError } = await supabaseAdmin
+          .from("profiles")
+          .update({ current_organization_id: organizationId })
+          .eq("id", userId);
+
+        if (profileUpdateError) {
+          console.error("Error updating profile org:", profileUpdateError);
+        }
+
+        console.log(`User ${userId} assigned to org ${organizationId} with role ${assignRole}`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "remove_from_org": {
+        // Remove a user from their current organization
+        if (!userId) {
+          return new Response(JSON.stringify({ error: "User ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Remove from organization_members
+        await supabaseAdmin
+          .from("organization_members")
+          .delete()
+          .eq("user_id", userId);
+
+        // Remove from organization_member_roles
+        await supabaseAdmin
+          .from("organization_member_roles")
+          .delete()
+          .eq("user_id", userId);
+
+        // Clear current org in profile
+        await supabaseAdmin
+          .from("profiles")
+          .update({ current_organization_id: null })
+          .eq("id", userId);
+
+        console.log(`User ${userId} removed from all organizations`);
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });

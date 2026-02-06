@@ -205,48 +205,25 @@ export function PlatformUsersManagement() {
 
     setActionLoading(assignDialog.id);
     try {
-      // First, remove user from ALL previous organizations to avoid duplicates
-      await supabase
-        .from('organization_members')
-        .delete()
-        .eq('user_id', assignDialog.id);
+      // Use admin edge function to bypass RLS
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: {
+          action: "assign_to_org",
+          userId: assignDialog.id,
+          organizationId: selectedOrgId,
+          assignRole: selectedRole,
+        }
+      });
 
-      await supabase
-        .from('organization_member_roles')
-        .delete()
-        .eq('user_id', assignDialog.id);
-
-      // Insert new membership in the selected organization
-      await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: selectedOrgId,
-          user_id: assignDialog.id,
-          role: selectedRole,
-          is_owner: false,
-        });
-
-      // Insert role into organization_member_roles
-      await supabase
-        .from('organization_member_roles')
-        .insert({
-          organization_id: selectedOrgId,
-          user_id: assignDialog.id,
-          role: selectedRole,
-        });
-
-      // Update current org in profile
-      await supabase
-        .from('profiles')
-        .update({ current_organization_id: selectedOrgId })
-        .eq('id', assignDialog.id);
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast.success(`${assignDialog.full_name} asignado a la organización`);
       setAssignDialog(null);
       fetchData();
     } catch (error: any) {
       console.error("Error assigning user:", error);
-      toast.error("Error al asignar usuario");
+      toast.error("Error al asignar usuario: " + (error.message || "Error desconocido"));
     } finally {
       setActionLoading(null);
     }
@@ -257,40 +234,18 @@ export function PlatformUsersManagement() {
 
     setActionLoading(user.id);
     try {
-      // 1) Remove membership for the current org
-      const { error: memberError } = await supabase
-        .from("organization_members")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("organization_id", user.current_organization_id);
+      // Use admin edge function to bypass RLS
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: {
+          action: "remove_from_org",
+          userId: user.id,
+        }
+      });
 
-      if (memberError) throw memberError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      // 2) Clear current_organization_id in profile
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ current_organization_id: null })
-        .eq("id", user.id);
-
-      if (profileError) throw profileError;
-
-      // 3) Verify (avoid “toast success but still assigned”)
-      const { data: verifyProfile, error: verifyError } = await supabase
-        .from("profiles")
-        .select("current_organization_id")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (verifyError) throw verifyError;
-
-      if (verifyProfile?.current_organization_id) {
-        toast.error(
-          `No se pudo remover completamente: aún tiene organización asignada.`
-        );
-      } else {
-        toast.success(`${user.full_name} removido de la organización`);
-      }
-
+      toast.success(`${user.full_name} removido de la organización`);
       fetchData();
     } catch (error: any) {
       console.error("Error removing user:", error);
@@ -361,24 +316,23 @@ export function PlatformUsersManagement() {
   const handleCreateProfile = async (user: UserData) => {
     setActionLoading(user.id);
     try {
-      // Create profile manually for users who don't have one
-      const { error } = await supabase
-        .from('profiles')
-        .insert({
-          id: user.id,
+      // Create profile via admin edge function (bypasses RLS)
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: {
+          action: "create_profile",
+          userId: user.id,
           email: user.email,
-          full_name: user.full_name || user.email.split('@')[0],
-        });
+          fullName: user.full_name || user.email.split('@')[0],
+        }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
       toast.success(`Perfil creado para ${user.full_name || user.email}`);
       fetchData();
     } catch (error: any) {
-      if (error.code === '23505') {
-        toast.info("El usuario ya tiene un perfil");
-      } else {
-        toast.error("Error al crear perfil: " + (error.message || "Error desconocido"));
-      }
+      toast.error("Error al crear perfil: " + (error.message || "Error desconocido"));
     } finally {
       setActionLoading(null);
     }
