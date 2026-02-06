@@ -160,17 +160,26 @@ const ACTION_TO_MODULE: Record<string, string> = {
   improve_script: "scripts",
 };
 
-// Get fallback config when primary fails (from env)
-function getFallbackConfig(primaryProvider: string): { provider: string; model: string; apiKey: string } | null {
-  const googleKey = Deno.env.get("GOOGLE_AI_API_KEY");
-  const openaiKey = Deno.env.get("OPENAI_API_KEY");
-  if (primaryProvider === "gemini" && openaiKey) {
-    return { provider: "openai", model: "gpt-4o-mini", apiKey: openaiKey };
+// Get all available fallback providers (excludes primary)
+function getAllAvailableFallbacks(primaryProvider: string): Array<{ provider: string; model: string; apiKey: string }> {
+  const fallbacks: Array<{ provider: string; model: string; apiKey: string }> = [];
+
+  const providers: Array<{ key: string; envVar: string; model: string }> = [
+    { key: "gemini", envVar: "GOOGLE_AI_API_KEY", model: "gemini-2.5-flash" },
+    { key: "openai", envVar: "OPENAI_API_KEY", model: "gpt-4o-mini" },
+    { key: "anthropic", envVar: "ANTHROPIC_API_KEY", model: "claude-sonnet-4-20250514" },
+  ];
+
+  for (const p of providers) {
+    if (p.key !== primaryProvider) {
+      const apiKey = Deno.env.get(p.envVar);
+      if (apiKey) {
+        fallbacks.push({ provider: p.key, model: p.model, apiKey });
+      }
+    }
   }
-  if (primaryProvider === "openai" && googleKey) {
-    return { provider: "gemini", model: "gemini-2.5-flash", apiKey: googleKey };
-  }
-  return null;
+
+  return fallbacks;
 }
 
 // Log AI usage; returns execution id for feedback loop
@@ -307,22 +316,13 @@ async function callAI(
   model: string,
   systemPrompt: string,
   userPrompt: string,
-  fallbackProvider?: string | null,
-  fallbackApiKey?: string | null,
-  fallbackModel?: string | null
+  fallbacks?: Array<{ provider: string; model: string; apiKey: string }>
 ): Promise<string> {
   const configs = [
     { provider, model, apiKey },
-    ...(fallbackProvider && fallbackApiKey
-      ? [
-          {
-            provider: fallbackProvider,
-            model: fallbackModel || (fallbackProvider === "gemini" ? "gemini-2.5-flash" : "gpt-4o-mini"),
-            apiKey: fallbackApiKey,
-          },
-        ]
-      : []),
+    ...(fallbacks || []),
   ];
+  console.log("[content-ai] AI chain:", configs.map(c => `${c.provider}/${c.model}`).join(" → "));
   const { result } = await callAIWithFallback(configs, systemPrompt, userPrompt);
   return typeof result === "string" ? result : String(result ?? "");
 }
@@ -423,10 +423,10 @@ serve(async (req) => {
     const moduleKey = ACTION_TO_MODULE[action] || "content_detail";
 
     let aiConfig;
-    let fallback: { provider: string; model: string; apiKey: string } | null = null;
+    let fallbacks: Array<{ provider: string; model: string; apiKey: string }> = [];
     try {
       aiConfig = await getModuleAIConfig(supabase, organizationId, moduleKey);
-      fallback = getFallbackConfig(aiConfig.provider);
+      fallbacks = getAllAvailableFallbacks(aiConfig.provider);
     } catch (error: any) {
       if (error.message?.startsWith("MODULE_INACTIVE:")) {
         const module = error.message.split(":")[1];
@@ -639,7 +639,7 @@ IMPORTANTE:
           console.log("[content-ai] Full system prompt length:", fullSystemPrompt.length);
           console.log("[content-ai] Template variables replaced, Perplexity:", usePerplexity);
 
-          result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt, fallbackProvider, fallbackApiKey, fallbackModel);
+          result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt, fallbacks);
 
           await logAIUsage(supabase, {
             organizationId,
@@ -672,7 +672,7 @@ TONO: ${data?.tone || "Profesional y dinámico"}
 
 Genera un guion completo con timestamps, descripciones visuales y sugerencias de audio.`;
 
-        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.generate_script, legacyPrompt, fallbackProvider, fallbackApiKey, fallbackModel);
+        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.generate_script, legacyPrompt, fallbacks);
         break;
       }
 
@@ -684,7 +684,7 @@ ${data?.video_url ? `VIDEO URL: ${data.video_url}` : ""}
 
 Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y sugerencias específicas de mejora.`;
 
-        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.analyze_content, analyzePrompt, fallbackProvider, fallbackApiKey, fallbackModel);
+        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.analyze_content, analyzePrompt, fallbacks);
         break;
       }
 
@@ -695,7 +695,7 @@ Proporciona un análisis completo con puntuación del 1-10 para cada aspecto y s
 
         // For chat, build the full conversation
         const userMessage = data.messages[data.messages.length - 1]?.content || "";
-        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.chat, userMessage, fallbackProvider, fallbackApiKey, fallbackModel);
+        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.chat, userMessage, fallbacks);
         break;
       }
 
@@ -710,7 +710,7 @@ ${data?.feedback || "Hazlo más dinámico y atractivo"}
 
 Devuelve el guion mejorado manteniendo el formato HTML estructurado.`;
 
-        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.improve_script, improvePrompt, fallbackProvider, fallbackApiKey, fallbackModel);
+        result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, SYSTEM_PROMPTS.improve_script, improvePrompt, fallbacks);
         break;
       }
 

@@ -28,6 +28,8 @@ function getEnvApiKey(provider: string): string {
       return Deno.env.get("OPENAI_API_KEY") || "";
     case "anthropic":
       return Deno.env.get("ANTHROPIC_API_KEY") || "";
+    case "perplexity":
+      return Deno.env.get("PERPLEXITY_API_KEY") || "";
     default:
       return Deno.env.get("GOOGLE_AI_API_KEY") || "";
   }
@@ -37,15 +39,25 @@ function normalizeProviderModel(provider: string, model: string): { provider: st
   let p = provider;
   let m = model;
 
+  // Handle model prefixes (google/, openai/, anthropic/, perplexity/)
+  if (m.startsWith("google/")) {
+    p = "gemini";
+    m = m.replace("google/", "");
+  } else if (m.startsWith("openai/")) {
+    p = "openai";
+    m = m.replace("openai/", "");
+  } else if (m.startsWith("anthropic/")) {
+    p = "anthropic";
+    m = m.replace("anthropic/", "");
+  } else if (m.startsWith("perplexity/")) {
+    p = "perplexity";
+    m = m.replace("perplexity/", "");
+  }
+
   // Kreoon IA usa Gemini por defecto
   if (p === "kreoon") {
     p = "gemini";
-    if (m.startsWith("google/")) {
-      m = m.replace("google/", "");
-    } else if (m.startsWith("openai/")) {
-      p = "openai";
-      m = m.replace("openai/", "").replace("gpt-5", "gpt-4o").replace("gpt-5-mini", "gpt-4o-mini");
-    }
+    m = m || "gemini-2.5-flash";
   }
 
   return { provider: p, model: m };

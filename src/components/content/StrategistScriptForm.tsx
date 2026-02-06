@@ -102,14 +102,21 @@ interface GenerationStep {
   status: "pending" | "generating" | "done" | "error";
 }
 
-// AI Models available via Kreoon AI - no external API key required
+// AI Models available - real model IDs
 const AI_MODELS = [
-  { value: "google/gemini-3-flash-preview", label: "Gemini 3 Flash (Recomendado)" },
-  { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  // Gemini
+  { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash (Recomendado)" },
   { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro (Avanzado)" },
-  { value: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite (Rápido)" },
-  { value: "openai/gpt-5", label: "GPT-5" },
-  { value: "openai/gpt-5-mini", label: "GPT-5 Mini (Rápido)" },
+  { value: "google/gemini-2.0-flash", label: "Gemini 2.0 Flash (Rápido)" },
+  // OpenAI
+  { value: "openai/gpt-4o", label: "GPT-4o" },
+  { value: "openai/gpt-4o-mini", label: "GPT-4o Mini (Rápido)" },
+  // Anthropic
+  { value: "anthropic/claude-sonnet-4-20250514", label: "Claude Sonnet 4 (Avanzado)" },
+  { value: "anthropic/claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 (Rápido)" },
+  // Perplexity (con búsqueda en tiempo real)
+  { value: "perplexity/llama-3.1-sonar-large-128k-online", label: "Perplexity Sonar Large (Búsqueda Online)" },
+  { value: "perplexity/llama-3.1-sonar-small-128k-online", label: "Perplexity Sonar Small (Rápido)" },
 ];
 
 const NARRATIVE_STRUCTURES = [
@@ -1185,7 +1192,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     admin_prompt: DEFAULT_PROMPTS.admin,
     reference_transcription: "",
     video_strategies: "",
-    ai_model: "google/gemini-3-flash-preview",
+    ai_model: "google/gemini-2.5-flash",
     video_duration: "",
     target_platform: "",
     use_perplexity: false,
@@ -1197,6 +1204,106 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     audience: false,
   });
   const [customPerplexityQuery, setCustomPerplexityQuery] = useState("");
+
+  // Track AI prefill status
+  const [prefillStatus, setPrefillStatus] = useState<{
+    isPrefilled: boolean;
+    prefilledAt: string | null;
+    fieldsLoaded: string[];
+  }>({
+    isPrefilled: false,
+    prefilledAt: null,
+    fieldsLoaded: [],
+  });
+
+  // Load prefill data from content record if available
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPrefillData = async () => {
+      if (!contentId) return;
+
+      try {
+        const { data: contentData, error } = await supabase
+          .from('content')
+          .select('ai_prefilled, ai_prefilled_at, selected_pain, selected_desire, selected_objection, target_country, narrative_structure, video_duration, ideal_avatar, sales_angle, suggested_hooks, cta, target_platform')
+          .eq('id', contentId)
+          .maybeSingle();
+
+        if (error || !contentData || cancelled) return;
+
+        // Check if this content was AI-prefilled
+        if (contentData.ai_prefilled) {
+          const fieldsLoaded: string[] = [];
+          const updates: Partial<ScriptFormData> = {};
+
+          // Load prefilled values into form if they exist and form fields are empty
+          if (contentData.selected_pain) {
+            updates.selected_pain = contentData.selected_pain;
+            fieldsLoaded.push('dolor');
+          }
+          if (contentData.selected_desire) {
+            updates.selected_desire = contentData.selected_desire;
+            fieldsLoaded.push('deseo');
+          }
+          if (contentData.selected_objection) {
+            updates.selected_objection = contentData.selected_objection;
+            fieldsLoaded.push('objeción');
+          }
+          if (contentData.target_country) {
+            updates.target_country = contentData.target_country;
+            fieldsLoaded.push('país');
+          }
+          if (contentData.narrative_structure) {
+            updates.narrative_structure = contentData.narrative_structure;
+            fieldsLoaded.push('estructura');
+          }
+          if (contentData.video_duration) {
+            updates.video_duration = contentData.video_duration;
+            fieldsLoaded.push('duración');
+          }
+          if (contentData.ideal_avatar) {
+            updates.ideal_avatar = contentData.ideal_avatar;
+            fieldsLoaded.push('avatar');
+          }
+          if (contentData.sales_angle) {
+            updates.sales_angle = contentData.sales_angle;
+            fieldsLoaded.push('ángulo');
+          }
+          if (contentData.cta) {
+            updates.cta = contentData.cta;
+            fieldsLoaded.push('CTA');
+          }
+          if (contentData.target_platform) {
+            updates.target_platform = contentData.target_platform;
+            fieldsLoaded.push('plataforma');
+          }
+          // Handle suggested_hooks (JSONB array)
+          if (contentData.suggested_hooks && Array.isArray(contentData.suggested_hooks)) {
+            updates.hooks = contentData.suggested_hooks as string[];
+            fieldsLoaded.push('hooks');
+          }
+
+          if (Object.keys(updates).length > 0) {
+            setFormData(prev => ({ ...prev, ...updates }));
+            setPrefillStatus({
+              isPrefilled: true,
+              prefilledAt: contentData.ai_prefilled_at,
+              fieldsLoaded,
+            });
+          }
+        }
+      } catch (e) {
+        console.error('[StrategistScriptForm] Error loading prefill data:', e);
+      }
+    };
+
+    loadPrefillData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [contentId]);
 
   // Update prompts when custom prompts are loaded
   useEffect(() => {
@@ -1897,6 +2004,31 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           {AI_MODELS.find(m => m.value === formData.ai_model)?.label || "IA"}
         </Badge>
       </div>
+
+      {/* AI Prefill Banner */}
+      {prefillStatus.isPrefilled && (
+        <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+          <div className="flex items-center gap-2">
+            <Bot className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                Formulario pre-llenado con IA
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400">
+                Los campos fueron sugeridos automáticamente basándose en la investigación de mercado.
+                {prefillStatus.fieldsLoaded.length > 0 && (
+                  <> Campos: {prefillStatus.fieldsLoaded.join(', ')}.</>
+                )}
+              </p>
+            </div>
+            {prefillStatus.prefilledAt && (
+              <Badge variant="outline" className="text-xs text-green-600 border-green-600 shrink-0">
+                {new Date(prefillStatus.prefilledAt).toLocaleDateString()}
+              </Badge>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Document Loading Section */}
       {hasDocumentUrls && (
