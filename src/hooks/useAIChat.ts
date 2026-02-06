@@ -43,16 +43,19 @@ export function useAIChat() {
         .from('ai_assistant_config')
         .select('assistant_name, is_enabled')
         .eq('organization_id', orgId)
-        .single();
+        .maybeSingle();
 
-      if (configError) throw configError;
-
-      if (data) {
-        setAssistantConfig({
-          name: data.assistant_name,
-          isEnabled: data.is_enabled
-        });
+      if (configError) {
+        console.warn('[AI Chat] Config not found, using defaults:', configError.message);
+        // Use defaults if config doesn't exist
+        setAssistantConfig({ name: 'Kiro', isEnabled: true });
+        return;
       }
+
+      setAssistantConfig({
+        name: data?.assistant_name || 'Kiro',
+        isEnabled: data?.is_enabled ?? true
+      });
     };
 
     fetchConfig();

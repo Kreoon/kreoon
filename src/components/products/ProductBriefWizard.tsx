@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { invokeProductResearch } from '@/lib/productResearch';
+import { generatePrefillData, type PrefillData } from '@/services/scriptPrefillService';
 import { toast } from 'sonner';
 
 // Comprehensive brief data structure
@@ -853,19 +854,29 @@ Escribe 1-2 frases de complemento para agregar al final.`
 
     setIsCreatingContent(true);
     try {
-      // Get product info to find client and organization
+      // Get product info to find client
       const { data: productData, error: productError } = await supabase
         .from('products')
-        .select('client_id, clients(organization_id)')
+        .select('client_id')
         .eq('id', productId)
         .single();
 
       if (productError) throw productError;
 
       const clientId = productData?.client_id;
-      const organizationId = (productData?.clients as any)?.organization_id || null;
 
-      // Build content items array
+      // Get organization_id from clients table if client exists
+      let organizationId: string | null = null;
+      if (clientId) {
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('organization_id')
+          .eq('id', clientId)
+          .single();
+        organizationId = clientData?.organization_id || null;
+      }
+
+      // Build content items array with prefill data
       const contentItems: Array<{
         title: string;
         client_id: string | null;
@@ -880,14 +891,44 @@ Escribe 1-2 frases de complemento para agregar al final.`
         target_platform: string;
         description: string;
         strategist_guidelines: string;
+        // Prefill fields
+        selected_pain?: string;
+        selected_desire?: string;
+        selected_objection?: string;
+        target_country?: string;
+        narrative_structure?: string;
+        video_duration?: string;
+        ideal_avatar?: string;
+        sales_angle?: string;
+        suggested_hooks?: string[];
+        ai_prefilled?: boolean;
+        ai_prefilled_at?: string;
       }> = [];
 
-      // For each phase with videos, create content items
+      // Track content index per phase for prefill variety
+      const phaseIndexes: Record<string, number> = {};
+
+      // For each phase with videos, create content items with AI prefills
       for (const phase of ESFERA_PHASES) {
         const count = briefData.phaseDistribution[phase.key] || 0;
         const phaseDefaults = PHASE_DEFAULTS[phase.key];
+        phaseIndexes[phase.key] = 0;
 
         for (let i = 0; i < count; i++) {
+          // Generate AI prefill data for this content item
+          let prefillData: PrefillData | null = null;
+          try {
+            prefillData = await generatePrefillData({
+              productId,
+              spherePhase: phase.key as 'engage' | 'solution' | 'remarketing' | 'fidelize',
+              contentIndex: phaseIndexes[phase.key],
+            });
+            phaseIndexes[phase.key]++;
+          } catch (prefillError) {
+            console.warn('[ProductBriefWizard] Error generating prefill:', prefillError);
+            // Continue without prefill if it fails
+          }
+
           contentItems.push({
             title: `${briefData.productName} - ${phase.label} ${i + 1}`,
             client_id: clientId,
@@ -897,11 +938,25 @@ Escribe 1-2 frases de complemento para agregar al final.`
             sphere_phase: phase.key,
             funnel_stage: phaseDefaults.funnelStage,
             content_objective: phaseDefaults.objective,
-            cta: phaseDefaults.defaultCTA,
+            cta: prefillData?.cta || phaseDefaults.defaultCTA,
             hooks_count: 3,
             target_platform: briefData.platforms[0] || 'instagram',
             description: `Contenido para fase ${phase.label}: ${phase.description}. Objetivo: ${briefData.currentObjective}. Audiencia: ${phase.audience}.`,
             strategist_guidelines: buildStrategistGuidelines(briefData, phase),
+            // Include AI prefill data if available
+            ...(prefillData && {
+              selected_pain: prefillData.selected_pain,
+              selected_desire: prefillData.selected_desire,
+              selected_objection: prefillData.selected_objection,
+              target_country: prefillData.target_country,
+              narrative_structure: prefillData.narrative_structure,
+              video_duration: prefillData.video_duration,
+              ideal_avatar: prefillData.ideal_avatar,
+              sales_angle: prefillData.sales_angle,
+              suggested_hooks: prefillData.suggested_hooks,
+              ai_prefilled: true,
+              ai_prefilled_at: new Date().toISOString(),
+            }),
           });
         }
       }

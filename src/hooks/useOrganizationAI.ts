@@ -187,27 +187,24 @@ export function useOrganizationAI(organizationId?: string) {
     try {
       const existing = providers.find(p => p.provider_key === providerKey);
 
-      if (existing) {
-        const { error } = await supabase
-          .from('organization_ai_providers')
-          .update({ is_enabled: enabled, updated_at: new Date().toISOString() })
-          .eq('id', existing.id);
-        if (error) throw error;
-      } else {
-        const defaultModels = providerKey === 'perplexity'
-          ? PERPLEXITY_MODELS.map(m => m.value)
-          : (AI_PROVIDERS_CONFIG[providerKey as keyof typeof AI_PROVIDERS_CONFIG]?.models.map(m => m.value) || []);
-        const { error } = await supabase
-          .from('organization_ai_providers')
-          .insert({
-            organization_id: organizationId,
-            provider_key: providerKey,
-            is_enabled: enabled,
-            available_models: defaultModels,
-            configured_by: user?.id
-          });
-        if (error) throw error;
-      }
+      // Use upsert to handle both insert and update cases (avoids 409 duplicate key error)
+      const defaultModels = providerKey === 'perplexity'
+        ? PERPLEXITY_MODELS.map(m => m.value)
+        : (AI_PROVIDERS_CONFIG[providerKey as keyof typeof AI_PROVIDERS_CONFIG]?.models.map(m => m.value) || []);
+
+      const { error } = await supabase
+        .from('organization_ai_providers')
+        .upsert({
+          organization_id: organizationId,
+          provider_key: providerKey,
+          is_enabled: enabled,
+          available_models: existing?.available_models || defaultModels,
+          configured_by: user?.id,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'organization_id,provider_key'
+        });
+      if (error) throw error;
 
       await fetchData();
     } catch (error) {
@@ -226,32 +223,25 @@ export function useOrganizationAI(organizationId?: string) {
     try {
       const existing = providers.find(p => p.provider_key === providerKey);
 
-      if (existing) {
-        const { error } = await supabase
-          .from('organization_ai_providers')
-          .update({ 
-            api_key_encrypted: apiKey, // In production, encrypt this!
-            updated_at: new Date().toISOString(),
-            configured_by: user?.id
-          })
-          .eq('id', existing.id);
-        if (error) throw error;
-      } else {
-        const defaultModels = providerKey === 'perplexity'
-          ? PERPLEXITY_MODELS.map(m => m.value)
-          : (AI_PROVIDERS_CONFIG[providerKey as keyof typeof AI_PROVIDERS_CONFIG]?.models.map(m => m.value) || []);
-        const { error } = await supabase
-          .from('organization_ai_providers')
-          .insert({
-            organization_id: organizationId,
-            provider_key: providerKey,
-            is_enabled: true,
-            api_key_encrypted: apiKey,
-            available_models: defaultModels,
-            configured_by: user?.id
-          });
-        if (error) throw error;
-      }
+      // Use upsert to handle both insert and update cases (avoids 409 duplicate key error)
+      const defaultModels = providerKey === 'perplexity'
+        ? PERPLEXITY_MODELS.map(m => m.value)
+        : (AI_PROVIDERS_CONFIG[providerKey as keyof typeof AI_PROVIDERS_CONFIG]?.models.map(m => m.value) || []);
+
+      const { error } = await supabase
+        .from('organization_ai_providers')
+        .upsert({
+          organization_id: organizationId,
+          provider_key: providerKey,
+          is_enabled: existing?.is_enabled ?? true,
+          api_key_encrypted: apiKey,
+          available_models: existing?.available_models || defaultModels,
+          configured_by: user?.id,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'organization_id,provider_key'
+        });
+      if (error) throw error;
 
       await fetchData();
     } catch (error) {

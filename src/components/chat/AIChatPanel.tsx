@@ -35,17 +35,22 @@ export function AIChatPanel({ isOpen, onClose, organizationId }: AIChatPanelProp
   // Fetch assistant config
   useEffect(() => {
     const fetchConfig = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('ai_assistant_config')
         .select('assistant_name, is_enabled')
         .eq('organization_id', organizationId)
-        .single();
-      
+        .maybeSingle();
+
+      if (error) {
+        console.warn('[AIChatPanel] Config fetch error, using defaults:', error.message);
+        return;
+      }
+
       if (data?.assistant_name) {
         setAssistantName(data.assistant_name);
       }
     };
-    
+
     if (organizationId) {
       fetchConfig();
     }

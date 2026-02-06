@@ -1886,6 +1886,8 @@ export type Database = {
           ai_assignment_reason: string | null
           ai_delay_risk: string | null
           ai_quality_score: number | null
+          ai_prefilled: boolean | null
+          ai_prefilled_at: string | null
           approved_at: string | null
           approved_at_v2: string | null
           approved_by: string | null
@@ -1930,6 +1932,7 @@ export type Database = {
           hook: string | null
           hooks_count: number | null
           id: string
+          ideal_avatar: string | null
           invoiced: boolean | null
           is_ambassador_content: boolean | null
           is_paid: boolean | null
@@ -1943,6 +1946,7 @@ export type Database = {
           marketing_rejected_at: string | null
           marketing_rejected_by: string | null
           marketing_rejection_reason: string | null
+          narrative_structure: string | null
           notes: string | null
           organization_id: string | null
           paid_at: string | null
@@ -1963,6 +1967,9 @@ export type Database = {
           script_approved_by: string | null
           script_pending_at: string | null
           script_version: number | null
+          selected_desire: string | null
+          selected_objection: string | null
+          selected_pain: string | null
           sequence_number: string | null
           sphere_phase: Database["public"]["Enums"]["sphere_phase"] | null
           start_date: string | null
@@ -1973,12 +1980,15 @@ export type Database = {
           strategy_rated_by: string | null
           strategy_rating: number | null
           strategy_status: string | null
+          suggested_hooks: Json | null
+          target_country: string | null
           target_platform: string | null
           thumbnail_url: string | null
           title: string
           trafficker_guidelines: string | null
           updated_at: string | null
           video_processing_started_at: string | null
+          video_duration: string | null
           video_processing_status: string | null
           video_url: string | null
           video_urls: string[] | null
@@ -1990,6 +2000,8 @@ export type Database = {
           ai_assignment_reason?: string | null
           ai_delay_risk?: string | null
           ai_quality_score?: number | null
+          ai_prefilled?: boolean | null
+          ai_prefilled_at?: string | null
           approved_at?: string | null
           approved_at_v2?: string | null
           approved_by?: string | null
@@ -2034,6 +2046,7 @@ export type Database = {
           hook?: string | null
           hooks_count?: number | null
           id?: string
+          ideal_avatar?: string | null
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
           is_paid?: boolean | null
@@ -2047,6 +2060,7 @@ export type Database = {
           marketing_rejected_at?: string | null
           marketing_rejected_by?: string | null
           marketing_rejection_reason?: string | null
+          narrative_structure?: string | null
           notes?: string | null
           organization_id?: string | null
           paid_at?: string | null
@@ -2067,6 +2081,9 @@ export type Database = {
           script_approved_by?: string | null
           script_pending_at?: string | null
           script_version?: number | null
+          selected_desire?: string | null
+          selected_objection?: string | null
+          selected_pain?: string | null
           sequence_number?: string | null
           sphere_phase?: Database["public"]["Enums"]["sphere_phase"] | null
           start_date?: string | null
@@ -2077,11 +2094,14 @@ export type Database = {
           strategy_rated_by?: string | null
           strategy_rating?: number | null
           strategy_status?: string | null
+          suggested_hooks?: Json | null
+          target_country?: string | null
           target_platform?: string | null
           thumbnail_url?: string | null
           title: string
           trafficker_guidelines?: string | null
           updated_at?: string | null
+          video_duration?: string | null
           video_processing_started_at?: string | null
           video_processing_status?: string | null
           video_url?: string | null
@@ -2094,6 +2114,8 @@ export type Database = {
           ai_assignment_reason?: string | null
           ai_delay_risk?: string | null
           ai_quality_score?: number | null
+          ai_prefilled?: boolean | null
+          ai_prefilled_at?: string | null
           approved_at?: string | null
           approved_at_v2?: string | null
           approved_by?: string | null
@@ -2138,6 +2160,7 @@ export type Database = {
           hook?: string | null
           hooks_count?: number | null
           id?: string
+          ideal_avatar?: string | null
           invoiced?: boolean | null
           is_ambassador_content?: boolean | null
           is_paid?: boolean | null
@@ -2151,6 +2174,7 @@ export type Database = {
           marketing_rejected_at?: string | null
           marketing_rejected_by?: string | null
           marketing_rejection_reason?: string | null
+          narrative_structure?: string | null
           notes?: string | null
           organization_id?: string | null
           paid_at?: string | null
@@ -2171,6 +2195,9 @@ export type Database = {
           script_approved_by?: string | null
           script_pending_at?: string | null
           script_version?: number | null
+          selected_desire?: string | null
+          selected_objection?: string | null
+          selected_pain?: string | null
           sequence_number?: string | null
           sphere_phase?: Database["public"]["Enums"]["sphere_phase"] | null
           start_date?: string | null
@@ -2181,11 +2208,14 @@ export type Database = {
           strategy_rated_by?: string | null
           strategy_rating?: number | null
           strategy_status?: string | null
+          suggested_hooks?: Json | null
+          target_country?: string | null
           target_platform?: string | null
           thumbnail_url?: string | null
           title?: string
           trafficker_guidelines?: string | null
           updated_at?: string | null
+          video_duration?: string | null
           video_processing_started_at?: string | null
           video_processing_status?: string | null
           video_url?: string | null
