@@ -32,7 +32,6 @@ serve(async (req) => {
     // Falls back to KREOON_* vars for backwards compatibility
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || Deno.env.get('KREOON_SUPABASE_URL');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('KREOON_SERVICE_ROLE_KEY');
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
 
     if (!supabaseUrl || !serviceRoleKey) {
       console.error("Database credentials not configured");
@@ -56,14 +55,9 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Create a client with the user's token to get their identity
-    const supabaseAuth = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    // Get the user from auth
-    const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
+    // Extract JWT token and verify using admin client (more reliable than anonKey)
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !userData?.user) {
       console.error("Auth error:", userError);

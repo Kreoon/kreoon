@@ -75,6 +75,7 @@ interface UserData {
   current_organization_id: string | null;
   organization_name: string | null;
   isPlatformAdmin: boolean;
+  hasProfile: boolean;
 }
 
 interface Organization {
@@ -107,13 +108,22 @@ export function PlatformUsersManagement() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch all profiles directly (no edge function needed)
-      const { data: profilesData, error: profilesError } = await supabase
+      // Fetch ALL users from Supabase Auth via admin edge function
+      const { data: authResult, error: authError } = await supabase.functions.invoke("admin-users", {
+        body: { action: "list_users" }
+      });
+
+      if (authError) {
+        console.error("Auth list error:", authError);
+        throw authError;
+      }
+
+      const authUsers = authResult?.users || [];
+
+      // Fetch profiles for additional data
+      const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, email, full_name, avatar_url, current_organization_id, created_at, active_role')
-        .order('full_name');
-      
-      if (profilesError) throw profilesError;
+        .select('id, email, full_name, avatar_url, current_organization_id, active_role');
 
       // Fetch all user roles
       const { data: userRolesData } = await supabase
@@ -125,60 +135,63 @@ export function PlatformUsersManagement() {
         .from('organizations')
         .select('id, name, slug')
         .order('name');
-      
+
       setOrganizations(orgsData || []);
 
-      // Fetch org memberships
-      const userIds = profilesData?.map(p => p.id) || [];
+      // Fetch org memberships for all users
+      const userIds = authUsers.map((u: any) => u.id);
       const { data: membersData } = await supabase
         .from('organization_members')
         .select('user_id, organization_id, role')
         .in('user_id', userIds);
 
       // Build maps
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
       const orgNamesMap = new Map(orgsData?.map(o => [o.id, o.name]) || []);
       const platformAdminIds = new Set(
         userRolesData?.filter(r => r.role === 'admin').map(r => r.user_id) || []
       );
 
-      // Build enhanced users from profiles
-      const enhancedUsers: UserData[] = (profilesData || []).map((profile) => {
+      // Build enhanced users from auth users (includes ALL registered users)
+      const enhancedUsers: UserData[] = authUsers.map((authUser: any) => {
+        const profile = profilesMap.get(authUser.id);
         const userMember = membersData?.find(
-          m => m.user_id === profile.id && m.organization_id === profile.current_organization_id
+          m => m.user_id === authUser.id && m.organization_id === (profile?.current_organization_id || null)
         );
-        const userRoles = userRolesData?.filter(r => r.user_id === profile.id).map(r => r.role) || [];
-        
+        const userRoles = userRolesData?.filter(r => r.user_id === authUser.id).map(r => r.role) || [];
+
         // Check if user is platform admin
-        const isAdminByRole = platformAdminIds.has(profile.id);
-        const isRootUser = profile.email === ROOT_EMAIL;
-        
+        const isAdminByRole = platformAdminIds.has(authUser.id);
+        const isRootUser = authUser.email === ROOT_EMAIL;
+
         return {
-          id: profile.id,
-          email: profile.email || '',
-          full_name: profile.full_name || 'Sin nombre',
-          avatar_url: profile.avatar_url,
-          active_role: profile.active_role as AppRole | null,
-          roles: userMember?.role 
-            ? [userMember.role as AppRole] 
-            : userRoles.length > 0 
+          id: authUser.id,
+          email: authUser.email || '',
+          full_name: authUser.full_name || profile?.full_name || 'Sin nombre',
+          avatar_url: authUser.avatar_url || profile?.avatar_url || null,
+          active_role: (profile?.active_role as AppRole | null) || null,
+          roles: userMember?.role
+            ? [userMember.role as AppRole]
+            : userRoles.length > 0
               ? userRoles as AppRole[]
               : [],
-          created_at: profile.created_at,
-          last_sign_in_at: null, // Not available from profiles
-          email_confirmed_at: profile.created_at, // Assume confirmed if profile exists
-          banned: false, // Not tracking this in profiles
-          current_organization_id: profile.current_organization_id || null,
-          organization_name: profile.current_organization_id 
-            ? orgNamesMap.get(profile.current_organization_id) || null 
+          created_at: authUser.created_at,
+          last_sign_in_at: authUser.last_sign_in_at || null,
+          email_confirmed_at: authUser.email_confirmed_at || null,
+          banned: authUser.banned || false,
+          current_organization_id: profile?.current_organization_id || null,
+          organization_name: profile?.current_organization_id
+            ? orgNamesMap.get(profile.current_organization_id) || null
             : null,
-          isPlatformAdmin: isAdminByRole || isRootUser
+          isPlatformAdmin: isAdminByRole || isRootUser,
+          hasProfile: !!profile
         };
       });
 
       setUsers(enhancedUsers);
     } catch (error: any) {
       console.error("Error fetching data:", error);
-      toast.error("Error al cargar datos");
+      toast.error("Error al cargar datos: " + (error.message || "Error desconocido"));
     } finally {
       setLoading(false);
     }
@@ -333,13 +346,39 @@ export function PlatformUsersManagement() {
   const handleResetPassword = async (user: UserData) => {
     setActionLoading(user.id);
     try {
-      const { error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "reset_password", userId: user.id }
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "send_password_reset", email: user.email }
       });
       if (error) throw error;
       toast.success(`Email de restablecimiento enviado a ${user.email}`);
     } catch (error: any) {
-      toast.error("Error al enviar email de restablecimiento");
+      toast.error("Error al enviar email de restablecimiento: " + (error.message || "Error desconocido"));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCreateProfile = async (user: UserData) => {
+    setActionLoading(user.id);
+    try {
+      // Create profile manually for users who don't have one
+      const { error } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name || user.email.split('@')[0],
+        });
+
+      if (error) throw error;
+      toast.success(`Perfil creado para ${user.full_name || user.email}`);
+      fetchData();
+    } catch (error: any) {
+      if (error.code === '23505') {
+        toast.info("El usuario ya tiene un perfil");
+      } else {
+        toast.error("Error al crear perfil: " + (error.message || "Error desconocido"));
+      }
     } finally {
       setActionLoading(null);
     }
@@ -377,9 +416,23 @@ export function PlatformUsersManagement() {
   // Split users by assignment status
   const unassignedUsers = filteredUsers.filter(u => !u.current_organization_id);
   const assignedUsers = filteredUsers.filter(u => u.current_organization_id);
-  
+
   // Platform admins are users with 'admin' role in user_roles table (not org-level)
   const platformAdmins = users.filter(u => u.isPlatformAdmin);
+
+  // Users without profiles (trigger failed)
+  const usersWithoutProfiles = filteredUsers.filter(u => !u.hasProfile);
+
+  // Users with unconfirmed emails
+  const unconfirmedUsers = filteredUsers.filter(u => !u.email_confirmed_at);
+
+  // Stats
+  const stats = {
+    total: users.length,
+    confirmed: users.filter(u => u.email_confirmed_at).length,
+    withProfiles: users.filter(u => u.hasProfile).length,
+    inOrgs: users.filter(u => u.current_organization_id).length
+  };
 
   if (!isRoot) {
     return (
@@ -399,12 +452,28 @@ export function PlatformUsersManagement() {
           <AvatarFallback>{user.full_name?.charAt(0) || '?'}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium truncate">{user.full_name}</p>
             {user.isPlatformAdmin && (
               <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-xs">
                 <Crown className="h-3 w-3 mr-1" />
                 Admin Plataforma
+              </Badge>
+            )}
+            {user.banned && (
+              <Badge variant="destructive" className="text-xs">
+                <Ban className="h-3 w-3 mr-1" />
+                Bloqueado
+              </Badge>
+            )}
+            {!user.email_confirmed_at && (
+              <Badge variant="secondary" className="text-xs text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30">
+                Email sin confirmar
+              </Badge>
+            )}
+            {!user.hasProfile && (
+              <Badge variant="secondary" className="text-xs text-red-600 bg-red-100 dark:bg-red-900/30">
+                Sin perfil
               </Badge>
             )}
           </div>
@@ -425,6 +494,11 @@ export function PlatformUsersManagement() {
                 {ROLE_LABELS[role]}
               </Badge>
             ))}
+            {user.last_sign_in_at && (
+              <span className="text-xs text-muted-foreground">
+                Último acceso: {format(new Date(user.last_sign_in_at), "d MMM yyyy", { locale: es })}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -466,6 +540,12 @@ export function PlatformUsersManagement() {
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
+          {!user.hasProfile && (
+            <DropdownMenuItem onClick={() => handleCreateProfile(user)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Crear perfil
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => handleResetPassword(user)}>
             <Mail className="h-4 w-4 mr-2" />
             Enviar reset de contraseña
@@ -520,24 +600,56 @@ export function PlatformUsersManagement() {
         </Button>
       </div>
 
-      <Tabs defaultValue="platform-admins" className="w-full">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="p-3">
+          <div className="text-2xl font-bold">{stats.total}</div>
+          <div className="text-xs text-muted-foreground">Total usuarios</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-2xl font-bold text-green-600">{stats.confirmed}</div>
+          <div className="text-xs text-muted-foreground">Email confirmado</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-2xl font-bold text-blue-600">{stats.withProfiles}</div>
+          <div className="text-xs text-muted-foreground">Con perfil</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-2xl font-bold text-purple-600">{stats.inOrgs}</div>
+          <div className="text-xs text-muted-foreground">En organizaciones</div>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="all" className="w-full">
         <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="platform-admins" className="gap-2">
-            <Crown className="h-4 w-4" />
-            Admins Plataforma ({platformAdmins.length})
-          </TabsTrigger>
           <TabsTrigger value="all" className="gap-2">
             <Users className="h-4 w-4" />
             Todos ({filteredUsers.length})
           </TabsTrigger>
+          <TabsTrigger value="platform-admins" className="gap-2">
+            <Crown className="h-4 w-4" />
+            Admins ({platformAdmins.length})
+          </TabsTrigger>
           <TabsTrigger value="unassigned" className="gap-2">
             <UserPlus className="h-4 w-4" />
-            Sin asignar ({unassignedUsers.length})
+            Sin org ({unassignedUsers.length})
           </TabsTrigger>
           <TabsTrigger value="assigned" className="gap-2">
             <Building2 className="h-4 w-4" />
-            Asignados ({assignedUsers.length})
+            En org ({assignedUsers.length})
           </TabsTrigger>
+          {usersWithoutProfiles.length > 0 && (
+            <TabsTrigger value="no-profile" className="gap-2 text-red-600">
+              <XCircle className="h-4 w-4" />
+              Sin perfil ({usersWithoutProfiles.length})
+            </TabsTrigger>
+          )}
+          {unconfirmedUsers.length > 0 && (
+            <TabsTrigger value="unconfirmed" className="gap-2 text-yellow-600">
+              <Mail className="h-4 w-4" />
+              Sin confirmar ({unconfirmedUsers.length})
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="platform-admins" className="mt-4">
@@ -611,6 +723,56 @@ export function PlatformUsersManagement() {
           ) : (
             <div className="space-y-2">
               {assignedUsers.map(user => (
+                <UserCard key={user.id} user={user} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="no-profile" className="mt-4">
+          <Card className="mb-4 border-red-500/30 bg-red-500/5">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">
+                <XCircle className="h-4 w-4 inline mr-2 text-red-500" />
+                Estos usuarios se registraron pero el trigger de creación de perfil falló.
+                Usa "Crear perfil" en el menú de acciones para solucionar el problema.
+              </p>
+            </CardContent>
+          </Card>
+          {usersWithoutProfiles.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                Todos los usuarios tienen perfil
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {usersWithoutProfiles.map(user => (
+                <UserCard key={user.id} user={user} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="unconfirmed" className="mt-4">
+          <Card className="mb-4 border-yellow-500/30 bg-yellow-500/5">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">
+                <Mail className="h-4 w-4 inline mr-2 text-yellow-500" />
+                Estos usuarios no han confirmado su email. Puedes enviarles un reset de contraseña
+                que también confirmará su email, o esperar a que completen el proceso.
+              </p>
+            </CardContent>
+          </Card>
+          {unconfirmedUsers.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                Todos los usuarios han confirmado su email
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {unconfirmedUsers.map(user => (
                 <UserCard key={user.id} user={user} />
               ))}
             </div>
