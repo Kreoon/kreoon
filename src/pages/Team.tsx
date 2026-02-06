@@ -276,14 +276,16 @@ export default function Team() {
     );
   }
 
-  const noRole = profiles.filter(p => p.roles.length === 0);
-  const admins = profiles.filter(p => p.roles.includes('admin'));
-  const strategists = profiles.filter(p => p.roles.includes('strategist'));
-  const creators = profiles.filter(p => p.roles.includes('creator'));
-  const editors = profiles.filter(p => p.roles.includes('editor'));
-  const clientUsers = profiles.filter(p => p.roles.includes('client'));
-  const traffickers = profiles.filter(p => p.roles.includes('trafficker'));
-  const teamLeaders = profiles.filter(p => p.roles.includes('team_leader'));
+  // Excluir usuarios con rol cliente del equipo (se gestionan en /clients)
+  const teamProfiles = profiles.filter(p => !p.roles.includes('client'));
+
+  const noRole = teamProfiles.filter(p => p.roles.length === 0);
+  const admins = teamProfiles.filter(p => p.roles.includes('admin'));
+  const strategists = teamProfiles.filter(p => p.roles.includes('strategist'));
+  const creators = teamProfiles.filter(p => p.roles.includes('creator'));
+  const editors = teamProfiles.filter(p => p.roles.includes('editor'));
+  const traffickers = teamProfiles.filter(p => p.roles.includes('trafficker'));
+  const teamLeaders = teamProfiles.filter(p => p.roles.includes('team_leader'));
 
   // Reusable user card component
   const UserCard = ({ profile, showAddRole = true }: { profile: Profile & { roles: AppRole[] }, showAddRole?: boolean }) => (
@@ -360,7 +362,7 @@ export default function Team() {
       <PageHeader
         icon={Swords}
         title={currentOrg?.name ? `Kreoon Team • ${currentOrg.name}` : "Kreoon Team"}
-        subtitle={`Gestión inteligente de equipo (${profiles.length} miembros)`}
+        subtitle={`Gestión inteligente de equipo (${teamProfiles.length} miembros)`}
         action={
           <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
             <DialogTrigger asChild>
@@ -406,11 +408,14 @@ export default function Team() {
                       <SelectItem value="admin">Administrador</SelectItem>
                       <SelectItem value="creator">Creador de Contenido</SelectItem>
                       <SelectItem value="editor">Productor Audio-Visual</SelectItem>
-                      <SelectItem value="client">Cliente</SelectItem>
                       <SelectItem value="strategist">Estratega</SelectItem>
-                      <SelectItem value="ambassador">Embajador</SelectItem>
+                      <SelectItem value="trafficker">Trafficker</SelectItem>
+                      <SelectItem value="team_leader">Líder de Equipo</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Para agregar clientes, usa la sección Clientes
+                  </p>
                 </div>
               </div>
               <DialogFooter>
@@ -467,10 +472,6 @@ export default function Team() {
           <TabsTrigger value="team_leaders" className="gap-2">
             <Star className="w-4 h-4" />
             Líderes ({teamLeaders.length})
-          </TabsTrigger>
-          <TabsTrigger value="clients" className="gap-2">
-            <User className="w-4 h-4" />
-            Clientes ({clientUsers.length})
           </TabsTrigger>
         </TabsList>
 
@@ -649,30 +650,6 @@ export default function Team() {
           </Card>
         </TabsContent>
 
-        {/* Client Users Tab */}
-        <TabsContent value="clients" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5 text-info" />
-                Usuarios Clientes ({clientUsers.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {clientUsers.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No hay usuarios con rol de cliente
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {clientUsers.map(profile => (
-                    <UserCard key={profile.id} profile={profile} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {/* Add/Change Role Dialog */}
@@ -707,11 +684,14 @@ export default function Team() {
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="creator">Creador de Contenido</SelectItem>
                   <SelectItem value="editor">Productor Audio-Visual</SelectItem>
-                  <SelectItem value="client">Cliente</SelectItem>
                   <SelectItem value="strategist">Estratega</SelectItem>
-                  <SelectItem value="ambassador">Embajador</SelectItem>
+                  <SelectItem value="trafficker">Trafficker</SelectItem>
+                  <SelectItem value="team_leader">Líder de Equipo</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Para gestionar clientes, usa la sección Clientes
+              </p>
             </div>
 
             {selectedUser?.roles.length ? (
