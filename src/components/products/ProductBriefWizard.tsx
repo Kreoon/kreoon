@@ -37,6 +37,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { invokeProductResearch } from '@/lib/productResearch';
 import { generatePrefillData, type PrefillData } from '@/services/scriptPrefillService';
+import { ResearchProgressIndicator } from './ResearchProgressIndicator';
 import { toast } from 'sonner';
 
 // Comprehensive brief data structure
@@ -2106,22 +2107,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
         )}
       </div>
 
-      {isGenerating && (
-        <Card className="border-primary/50 bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <Sparkles className="h-4 w-4 text-primary absolute -top-1 -right-1 animate-pulse" />
-              </div>
-              <div>
-                <p className="font-medium">Investigando con Perplexity...</p>
-                <p className="text-sm text-muted-foreground">Analizando mercado, competencia y generando avatares estratégicos. Esto puede tomar 1-2 minutos.</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <ResearchProgressIndicator productId={productId} isGenerating={isGenerating} />
 
       {isCreatingContent && (
         <Card className="border-emerald-500/50 bg-emerald-500/5">

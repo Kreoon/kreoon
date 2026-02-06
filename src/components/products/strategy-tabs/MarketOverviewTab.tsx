@@ -148,7 +148,7 @@ export function MarketOverviewTab({ marketResearch }: MarketOverviewTabProps) {
                 }
                 return (
                   <div key={idx} className="p-2 bg-muted/50 rounded border text-sm">
-                    <p className="font-medium">{variable.factor}</p>
+                    <p className="font-medium">{variable.factor || variable.name || 'Variable macroeconómica'}</p>
                     {variable.type && <Badge variant="outline" className="text-xs mr-2">{variable.type}</Badge>}
                     {variable.impact && <p className="text-xs text-muted-foreground mt-1"><strong>Impacto:</strong> {variable.impact}</p>}
                   </div>
@@ -180,7 +180,7 @@ export function MarketOverviewTab({ marketResearch }: MarketOverviewTabProps) {
                     }
                     return (
                       <div key={idx} className="p-2 bg-background rounded border">
-                        <p className="text-sm font-medium">{op.opportunity}</p>
+                        <p className="text-sm font-medium">{op.opportunity || op.text || 'Oportunidad identificada'}</p>
                         {op.why && <p className="text-xs text-muted-foreground mt-1"><strong>Por qué:</strong> {op.why}</p>}
                         {op.howToCapture && <p className="text-xs text-green-600 mt-1"><strong>Cómo aprovecharlo:</strong> {op.howToCapture}</p>}
                       </div>
@@ -209,7 +209,7 @@ export function MarketOverviewTab({ marketResearch }: MarketOverviewTabProps) {
                     }
                     return (
                       <div key={idx} className="p-2 bg-background rounded border">
-                        <p className="text-sm font-medium">{t.threat}</p>
+                        <p className="text-sm font-medium">{t.threat || t.text || 'Amenaza identificada'}</p>
                         {t.riskLevel && <Badge variant="outline" className="text-xs mt-1">{t.riskLevel}</Badge>}
                         {t.mitigation && <p className="text-xs text-muted-foreground mt-1"><strong>Mitigación:</strong> {t.mitigation}</p>}
                       </div>

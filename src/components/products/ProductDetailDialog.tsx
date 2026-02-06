@@ -20,14 +20,16 @@ import {
   SalesAnglesTab,
   PUVTransformationTab,
   LeadMagnetsCreativesTab,
+  ContentCalendarTab,
+  LaunchStrategyTab,
 } from "./strategy-tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { 
-  Package, FileText, Users, Target, Save, 
+  Package, FileText, Users, Target, Save,
   File, FolderOpen, Plus, X, Sparkles, ClipboardList,
-  Globe, Briefcase, Swords, Lightbulb, Brain, Trophy, Gift, Video, Download
+  Globe, Briefcase, Swords, Lightbulb, Brain, Trophy, Gift, Video, Download, Calendar, Rocket, ExternalLink
 } from "lucide-react";
 import { generateProductResearchPdf } from "./productResearchPdfGenerator";
 
@@ -53,6 +55,8 @@ interface Product {
   avatar_profiles?: any | null;
   sales_angles_data?: any | null;
   content_strategy?: any | null;
+  content_calendar?: any | null;
+  launch_strategy?: any | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -206,13 +210,19 @@ export function ProductDetailDialog({
   // Extract JTBD data from ideal_avatar if it's stored as JSON
   const jtbdData = (() => {
     try {
+      // Try ideal_avatar first (stored as JSON string)
       if (product?.ideal_avatar && typeof product.ideal_avatar === 'string') {
         const parsed = JSON.parse(product.ideal_avatar);
-        return parsed.jtbd || null;
+        if (parsed?.jtbd) return parsed.jtbd;
       }
-    } catch {
-      return null;
-    }
+    } catch { /* ignore parse error */ }
+    // Fallback: try market_research.jtbd
+    try {
+      const mr = typeof product?.market_research === 'string'
+        ? JSON.parse(product.market_research)
+        : product?.market_research;
+      if (mr?.jtbd) return mr.jtbd;
+    } catch { /* ignore */ }
     return null;
   })();
 
@@ -259,7 +269,7 @@ export function ProductDetailDialog({
                 Diferenciación
               </TabsTrigger>
             </TabsList>
-            <TabsList className="grid grid-cols-6 h-auto gap-1">
+            <TabsList className="grid grid-cols-8 h-auto gap-1">
               <TabsTrigger value="esfera" className="gap-1 text-xs py-2">
                 <Brain className="h-3 w-3" />
                 Playbook
@@ -275,6 +285,14 @@ export function ProductDetailDialog({
               <TabsTrigger value="leads" className="gap-1 text-xs py-2">
                 <Gift className="h-3 w-3" />
                 Leads
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-1 text-xs py-2">
+                <Calendar className="h-3 w-3" />
+                Parrilla
+              </TabsTrigger>
+              <TabsTrigger value="launch" className="gap-1 text-xs py-2">
+                <Rocket className="h-3 w-3" />
+                Lanzamiento
               </TabsTrigger>
               <TabsTrigger value="info" className="text-xs py-2">Info</TabsTrigger>
               <TabsTrigger value="files" className="text-xs py-2">Archivos</TabsTrigger>
@@ -392,6 +410,14 @@ export function ProductDetailDialog({
 
           <TabsContent value="leads" className="mt-4">
             <LeadMagnetsCreativesTab salesAnglesData={product?.sales_angles_data as any} />
+          </TabsContent>
+
+          <TabsContent value="calendar" className="mt-4">
+            <ContentCalendarTab contentCalendar={product?.content_calendar as any} />
+          </TabsContent>
+
+          <TabsContent value="launch" className="mt-4">
+            <LaunchStrategyTab launchStrategy={product?.launch_strategy as any} />
           </TabsContent>
 
           <TabsContent value="info" className="space-y-4 mt-4">
@@ -537,17 +563,27 @@ export function ProductDetailDialog({
         </Tabs>
 
         <div className="flex justify-between items-center pt-4 pb-4 border-t mt-4 shrink-0 px-6">
-          {/* Export PDF Button - Always visible if product exists */}
-          {product && (product.market_research || product.competitor_analysis || product.avatar_profiles || product.sales_angles_data || product.content_strategy) && (
-            <Button 
-              variant="outline" 
-              onClick={() => generateProductResearchPdf({ product: product as any })}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Exportar PDF
-            </Button>
+          {/* Research buttons - visible if product has research data */}
+          {product && (product.market_research || product.competitor_analysis || product.avatar_profiles || product.sales_angles_data || product.content_strategy) ? (
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                onClick={() => window.open(`/research/${product.id}`, '_blank')}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Ver Investigacion
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => generateProductResearchPdf({ product: product as any })}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                PDF
+              </Button>
+            </div>
+          ) : (
+            <div />
           )}
-          {!product && <div />}
           
           {canEdit && (
             <Button onClick={handleSave} disabled={loading}>

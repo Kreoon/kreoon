@@ -287,7 +287,7 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
           <CardContent>
             <div className="space-y-2">
               {jtbdData.insights.map((insight, idx) => {
-                const insightText = typeof insight === 'string' ? insight : (insight as any)?.insight || (insight as any)?.text || JSON.stringify(insight);
+                const insightText = typeof insight === 'string' ? insight : (insight as any)?.insight || (insight as any)?.text || (insight as any)?.source || (insight as any)?.trigger || 'Insight disponible';
                 return (
                   <div key={idx} className="flex items-start gap-2 p-3 bg-background rounded border">
                     <span className="text-xs font-bold text-primary mt-0.5">💡</span>

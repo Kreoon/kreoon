@@ -407,7 +407,7 @@ export function StrategicPlaybookTab({
                           {opps.slice(0, 4).map((item: any, idx: number) => (
                             <div key={idx} className="flex items-start gap-2 p-2 bg-green-500/5 border-l-2 border-green-500 rounded-r">
                               <CheckCircle className="h-3 w-3 text-green-500 mt-0.5 shrink-0" />
-                              <p className="text-xs">{typeof item === 'string' ? item : item?.opportunity || item?.message || JSON.stringify(item)}</p>
+                              <p className="text-xs">{typeof item === 'string' ? item : (item?.opportunity || item?.message || item?.trustOpportunity || item?.decision || item?.community || item?.text || 'Oportunidad disponible')}</p>
                             </div>
                           ))}
                         </div>
