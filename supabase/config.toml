@@ -148,7 +148,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.admin-users]
-verify_jwt = true
+verify_jwt = false
 
 [functions.admin-reset-password]
 verify_jwt = true
