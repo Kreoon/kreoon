@@ -364,42 +364,48 @@ serve(async (req) => {
 
       case "create_profile": {
         // Create profile for a user who doesn't have one (trigger failed)
-        const { fullName } = body;
-        if (!userId || !email) {
-          return new Response(JSON.stringify({ error: "User ID and email required" }), {
+        const { fullName, organizationId: profileOrgId } = body;
+        if (!userId) {
+          return new Response(JSON.stringify({ error: "User ID required" }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
         }
 
-        // Check if profile already exists
-        const { data: existingProfile } = await supabaseAdmin
-          .from("profiles")
-          .select("id")
-          .eq("id", userId)
-          .maybeSingle();
-
-        if (existingProfile) {
-          return new Response(JSON.stringify({ success: true, message: "Profile already exists" }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+        // Get user info from auth
+        const { data: authUserData, error: authUserErr } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (authUserErr) {
+          console.error("Error getting auth user for create_profile:", authUserErr);
+          throw authUserErr;
         }
 
-        // Create profile using admin client (bypasses RLS)
+        const userEmail = authUserData.user.email || email || '';
+        const userName = fullName
+          || authUserData.user.user_metadata?.full_name
+          || authUserData.user.user_metadata?.name
+          || userEmail.split('@')[0]
+          || 'Usuario';
+
+        // Use UPSERT - creates if not exists, updates if exists
         const { error: profileError } = await supabaseAdmin
           .from("profiles")
-          .insert({
+          .upsert({
             id: userId,
-            email: email,
-            full_name: fullName || email.split('@')[0],
+            email: userEmail,
+            full_name: userName,
+            is_active: true,
+            current_organization_id: profileOrgId || null,
+          }, {
+            onConflict: 'id',
+            ignoreDuplicates: false
           });
 
         if (profileError) {
-          console.error("Error creating profile:", profileError);
+          console.error("Error upserting profile:", profileError);
           throw profileError;
         }
 
-        console.log(`Profile created for user ${userId} (${email})`);
+        console.log(`Profile created/updated for user ${userId} (${userEmail})`);
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -410,69 +416,51 @@ serve(async (req) => {
         const { organizationId, assignRole } = body;
         console.log("assign_to_org params:", { userId, organizationId, assignRole });
 
-        if (!userId || !organizationId || !assignRole) {
-          console.error("Missing params:", { userId: !!userId, organizationId: !!organizationId, assignRole: !!assignRole });
+        if (!userId || !organizationId) {
+          console.error("Missing params:", { userId: !!userId, organizationId: !!organizationId });
           return new Response(JSON.stringify({
-            error: `Missing required params: ${!userId ? 'userId ' : ''}${!organizationId ? 'organizationId ' : ''}${!assignRole ? 'assignRole' : ''}`.trim()
+            error: `Missing required params: ${!userId ? 'userId ' : ''}${!organizationId ? 'organizationId' : ''}`.trim()
           }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
         }
 
-        // Get user info from auth to auto-create profile if needed
+        // Get user info from auth
         const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
         if (authUserError) {
           console.error("Error getting auth user:", authUserError);
           throw authUserError;
         }
 
-        // Check if profile exists
-        const { data: existingProfile } = await supabaseAdmin
+        const userEmail = authUser.user.email || '';
+        const fullName = authUser.user.user_metadata?.full_name
+          || authUser.user.user_metadata?.name
+          || userEmail.split('@')[0]
+          || 'Usuario';
+        const roleToAssign = assignRole || 'creator';
+
+        console.log(`Assigning user ${userId} (${userEmail}) to org ${organizationId} with role ${roleToAssign}`);
+
+        // Use UPSERT for profile - creates if not exists, updates if exists
+        // This avoids NOT NULL constraint issues
+        const { error: upsertError } = await supabaseAdmin
           .from("profiles")
-          .select("id, active_role")
-          .eq("id", userId)
-          .maybeSingle();
+          .upsert({
+            id: userId,
+            email: userEmail,
+            full_name: fullName,
+            current_organization_id: organizationId,
+            is_active: true,
+            active_role: roleToAssign,
+          }, {
+            onConflict: 'id',
+            ignoreDuplicates: false
+          });
 
-        if (!existingProfile) {
-          // AUTO-CREATE profile if it doesn't exist
-          const userEmail = authUser.user.email || '';
-          const fullName = authUser.user.user_metadata?.full_name
-            || authUser.user.user_metadata?.name
-            || userEmail.split('@')[0]
-            || 'Usuario';
-
-          console.log(`Auto-creating profile for user ${userId} (${userEmail})`);
-
-          const { error: createProfileError } = await supabaseAdmin
-            .from("profiles")
-            .insert({
-              id: userId,
-              email: userEmail,
-              full_name: fullName,
-              current_organization_id: organizationId,
-              is_active: true,
-              active_role: assignRole,
-            });
-
-          if (createProfileError) {
-            console.error("Error auto-creating profile:", createProfileError);
-            throw createProfileError;
-          }
-        } else {
-          // Update existing profile
-          const { error: profileUpdateError } = await supabaseAdmin
-            .from("profiles")
-            .update({
-              current_organization_id: organizationId,
-              active_role: assignRole,
-              is_active: true,
-            })
-            .eq("id", userId);
-
-          if (profileUpdateError) {
-            console.error("Error updating profile org:", profileUpdateError);
-          }
+        if (upsertError) {
+          console.error("Error upserting profile:", JSON.stringify(upsertError));
+          throw new Error(`Failed to upsert profile: ${upsertError.message}`);
         }
 
         // Remove from all previous organizations
@@ -492,7 +480,7 @@ serve(async (req) => {
           .insert({
             organization_id: organizationId,
             user_id: userId,
-            role: assignRole,
+            role: roleToAssign,
             is_owner: false,
           });
 
@@ -507,7 +495,7 @@ serve(async (req) => {
           .insert({
             organization_id: organizationId,
             user_id: userId,
-            role: assignRole,
+            role: roleToAssign,
           });
 
         if (roleError) {
@@ -515,7 +503,7 @@ serve(async (req) => {
           // Don't throw - membership was created
         }
 
-        console.log(`User ${userId} assigned to org ${organizationId} with role ${assignRole}`);
+        console.log(`User ${userId} assigned to org ${organizationId} with role ${roleToAssign}`);
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
